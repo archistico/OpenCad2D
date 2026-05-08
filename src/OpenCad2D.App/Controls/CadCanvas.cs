@@ -11,6 +11,7 @@ using OpenCad2D.Tools.Selection;
 using OpenCad2D.App.Viewport;
 using System;
 using System.Collections.Generic;
+using OpenCad2D.Interaction.Snapping;
 
 namespace OpenCad2D.App.Controls;
 
@@ -26,6 +27,9 @@ public sealed class CadCanvas : Control
 
     private bool _isPanning;
     private Point _lastPanScreenPoint;
+
+    private readonly Pen _snapMarkerPen = new(Brushes.Yellow, 1.5);
+    private SnapCandidate? _currentSnapCandidate;
 
     private readonly Pen _gridMinorPen = new(
         new SolidColorBrush(Color.FromRgb(45, 45, 45)),
@@ -94,6 +98,68 @@ public sealed class CadCanvas : Control
         }
 
         DrawActiveToolPreview(context);
+        DrawSnapMarker(context);
+    }
+
+    private void DrawSnapMarker(DrawingContext context)
+    {
+        if (_currentSnapCandidate is null)
+        {
+            return;
+        }
+
+        Point screenPoint = ToScreenPoint(_currentSnapCandidate.Point);
+
+        const double size = 5;
+
+        var rect = new Rect(
+            screenPoint.X - size,
+            screenPoint.Y - size,
+            size * 2,
+            size * 2);
+
+        context.DrawRectangle(
+            null,
+            _snapMarkerPen,
+            rect);
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(screenPoint.X - size - 3, screenPoint.Y),
+            new Point(screenPoint.X + size + 3, screenPoint.Y));
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(screenPoint.X, screenPoint.Y - size - 3),
+            new Point(screenPoint.X, screenPoint.Y + size + 3));
+    }
+
+    private void UpdateCurrentSnapCandidate(Point2D modelPoint)
+    {
+        if (Workspace is null ||
+            Workspace.Context.EnabledSnaps == SnapKind.None ||
+            Workspace.Context.SnapTolerance <= 0)
+        {
+            _currentSnapCandidate = null;
+            return;
+        }
+
+        Point2D? basePoint = null;
+
+        if (Workspace.ToolController.ActiveTool is TwoPointToolBase twoPointTool)
+        {
+            basePoint = twoPointTool.FirstPoint;
+        }
+
+        var request = new SnapRequest(
+            Workspace.Document,
+            modelPoint,
+            Workspace.Context.SnapTolerance,
+            Workspace.Context.EnabledSnaps,
+            basePoint,
+            Workspace.Context.GridSettings);
+
+        _currentSnapCandidate = Workspace.SnapService.Snap(request);
     }
 
     private void DrawGrid(DrawingContext context)
@@ -468,6 +534,8 @@ public sealed class CadCanvas : Control
 
         Point2D modelPoint = ToModelPoint(position);
 
+        UpdateCurrentSnapCandidate(modelPoint);
+
         ToolResult result = Workspace.ToolController.OnPointerPressed(
             new PointerInfo(
                 modelPoint,
@@ -500,6 +568,8 @@ public sealed class CadCanvas : Control
 
             Point2D modelPoint = ToModelPoint(position);
 
+            _currentSnapCandidate = null;
+
             NotifyWorkspaceChanged(
                 ToolResult.Updated("Pan."),
                 modelPoint);
@@ -509,6 +579,8 @@ public sealed class CadCanvas : Control
         }
 
         Point2D point = ToModelPoint(position);
+
+        UpdateCurrentSnapCandidate(point);
 
         ToolResult result = Workspace.ToolController.OnPointerMoved(
             new PointerInfo(
@@ -534,6 +606,8 @@ public sealed class CadCanvas : Control
         Point position = e.GetPosition(this);
 
         Point2D modelPoint = ToModelPoint(position);
+
+        UpdateCurrentSnapCandidate(modelPoint);
 
         if (_isPanning)
         {
@@ -678,5 +752,11 @@ public sealed class CadCanvas : Control
         return new Rect(
             topLeft,
             bottomRight);
+    }
+
+    public void ClearSnapMarker()
+    {
+        _currentSnapCandidate = null;
+        InvalidateVisual();
     }
 }

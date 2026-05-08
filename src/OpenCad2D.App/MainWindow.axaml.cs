@@ -26,7 +26,7 @@ public partial class MainWindow : Window
     {
         _viewModel.SetTool(ToolId.Selection);
         RefreshStatus();
-        CadCanvas.InvalidateVisual();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void Line_Click(
@@ -35,7 +35,7 @@ public partial class MainWindow : Window
     {
         _viewModel.SetTool(ToolId.Line);
         RefreshStatus();
-        CadCanvas.InvalidateVisual();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void Rectangle_Click(
@@ -44,7 +44,7 @@ public partial class MainWindow : Window
     {
         _viewModel.SetTool(ToolId.Rectangle);
         RefreshStatus();
-        CadCanvas.InvalidateVisual();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void Move_Click(
@@ -53,7 +53,7 @@ public partial class MainWindow : Window
     {
         _viewModel.SetTool(ToolId.Move);
         RefreshStatus();
-        CadCanvas.InvalidateVisual();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void Copy_Click(
@@ -62,7 +62,7 @@ public partial class MainWindow : Window
     {
         _viewModel.SetTool(ToolId.Copy);
         RefreshStatus();
-        CadCanvas.InvalidateVisual();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void Delete_Click(
@@ -71,7 +71,7 @@ public partial class MainWindow : Window
     {
         _viewModel.DeleteSelection();
         RefreshStatus();
-        CadCanvas.InvalidateVisual();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void Undo_Click(
@@ -80,7 +80,7 @@ public partial class MainWindow : Window
     {
         _viewModel.Undo();
         RefreshStatus();
-        CadCanvas.InvalidateVisual();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void Redo_Click(
@@ -89,7 +89,7 @@ public partial class MainWindow : Window
     {
         _viewModel.Redo();
         RefreshStatus();
-        CadCanvas.InvalidateVisual();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void CadCanvas_WorkspaceChanged(
