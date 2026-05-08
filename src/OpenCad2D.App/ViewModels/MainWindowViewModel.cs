@@ -26,6 +26,7 @@ public sealed class MainWindowViewModel
                 SnapKind.Quadrant |
                 SnapKind.Intersection |
                 SnapKind.Perpendicular |
+                SnapKind.Tangent |
                 SnapKind.Grid,
             snapTolerance: 8,
             selectionTolerance: 6,

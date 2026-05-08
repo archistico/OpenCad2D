@@ -103,6 +103,12 @@
 							  IsChecked="True"
 							  Click="SnapPerpendicular_Changed" />
 
+					<CheckBox x:Name="SnapTangentCheckBox"
+							  Content="Tangent"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="SnapTangent_Changed" />
+
 					<CheckBox x:Name="SnapGridCheckBox"
 							  Content="Grid"
 							  Foreground="#CCCCCC"

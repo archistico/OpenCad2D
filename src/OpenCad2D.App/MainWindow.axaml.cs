@@ -184,4 +184,13 @@ public partial class MainWindow : Window
             SnapKind.Perpendicular,
             SnapPerpendicularCheckBox.IsChecked == true);
     }
+
+    private void SnapTangent_Changed(
+    object? sender,
+    RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Tangent,
+            SnapTangentCheckBox.IsChecked == true);
+    }
 }
