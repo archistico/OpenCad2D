@@ -8,14 +8,15 @@ public sealed class SnapService
     private readonly IReadOnlyList<ISnapProvider> _providers;
 
     public SnapService()
-        : this(new ISnapProvider[]
-        {
-            new EndpointSnapProvider(),
-            new MidpointSnapProvider(),
-            new CenterSnapProvider(),
-            new PerpendicularSnapProvider(),
-            new NearestSnapProvider()
-        })
+    : this(new ISnapProvider[]
+    {
+        new EndpointSnapProvider(),
+        new MidpointSnapProvider(),
+        new CenterSnapProvider(),
+        new QuadrantSnapProvider(),
+        new PerpendicularSnapProvider(),
+        new NearestSnapProvider()
+    })
     {
     }
 

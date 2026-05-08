@@ -266,4 +266,139 @@ public sealed class SnapServiceTests
         Assert.Equal(SnapKind.Endpoint, result.Kind);
         Assert.Equal(new Point2D(0, 0), result.Point);
     }
+
+    [Fact]
+    public void Snap_WithQuadrantEnabledOnCircle_ShouldReturnRightQuadrant()
+    {
+        var document = new CadDocument();
+
+        var circle = new CircleEntity(
+            new Point2D(10, 10),
+            5);
+
+        document.AddEntity(circle);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(15.2, 10.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Quadrant);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Quadrant, result.Kind);
+        Assert.Equal(15, result.Point.X, precision: 10);
+        Assert.Equal(10, result.Point.Y, precision: 10);
+        Assert.Equal(circle.Id, result.EntityId);
+    }
+
+    [Fact]
+    public void Snap_WithQuadrantEnabledOnCircle_ShouldReturnTopQuadrant()
+    {
+        var document = new CadDocument();
+
+        var circle = new CircleEntity(
+            new Point2D(10, 10),
+            5);
+
+        document.AddEntity(circle);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(10.1, 15.2),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Quadrant);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Quadrant, result.Kind);
+        Assert.Equal(10, result.Point.X, precision: 10);
+        Assert.Equal(15, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_WithQuadrantEnabledOnArc_ShouldReturnQuadrantInsideArc()
+    {
+        var document = new CadDocument();
+
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(180));
+
+        document.AddEntity(arc);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(0.2, 10.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Quadrant);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Quadrant, result.Kind);
+        Assert.Equal(0, result.Point.X, precision: 10);
+        Assert.Equal(10, result.Point.Y, precision: 10);
+        Assert.Equal(arc.Id, result.EntityId);
+    }
+
+    [Fact]
+    public void Snap_WithQuadrantEnabledOnArc_ShouldIgnoreQuadrantOutsideArc()
+    {
+        var document = new CadDocument();
+
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(180));
+
+        document.AddEntity(arc);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(0.1, -10.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Quadrant);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Snap_WithQuadrantDisabled_ShouldReturnNullNearCircleQuadrant()
+    {
+        var document = new CadDocument();
+
+        var circle = new CircleEntity(
+            new Point2D(0, 0),
+            10);
+
+        document.AddEntity(circle);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(10.1, 0.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Center);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.Null(result);
+    }
 }
