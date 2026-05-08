@@ -7,6 +7,9 @@ namespace OpenCad2D.App.ViewModels;
 
 public sealed class MainWindowViewModel
 {
+    private Point2D _mousePosition = Point2D.Origin;
+    private string _lastMessage = "Ready.";
+
     public MainWindowViewModel()
     {
         Workspace = new CadWorkspace(
@@ -27,6 +30,42 @@ public sealed class MainWindowViewModel
 
     public string ActiveToolName =>
         Workspace.ToolController.ActiveToolName;
+
+    public int EntityCount =>
+        Workspace.Document.Entities.Count;
+
+    public int SelectedCount =>
+        Workspace.SelectionSet.Count;
+
+    public string LastMessage =>
+        _lastMessage;
+
+    public string MousePositionText =>
+        $"X: {_mousePosition.X:0.###}   Y: {_mousePosition.Y:0.###}";
+
+    public string StatusText =>
+        $"Tool: {ActiveToolName}   |   Entities: {EntityCount}   |   Selected: {SelectedCount}   |   {MousePositionText}   |   {LastMessage}";
+
+    public void SetMousePosition(Point2D point)
+    {
+        _mousePosition = point;
+    }
+
+    public void SetLastResult(ToolResult result)
+    {
+        if (!string.IsNullOrWhiteSpace(result.Message))
+        {
+            _lastMessage = result.Message;
+        }
+    }
+
+    public void SetMessage(string message)
+    {
+        if (!string.IsNullOrWhiteSpace(message))
+        {
+            _lastMessage = message;
+        }
+    }
 
     private void SeedDemoDrawing()
     {
@@ -57,28 +96,44 @@ public sealed class MainWindowViewModel
                 isClosed: true));
     }
 
-    public void SetTool(ToolId toolId)
+    public ToolResult SetTool(ToolId toolId)
     {
-        Workspace.SetActiveTool(toolId);
+        ToolResult result = Workspace.SetActiveTool(toolId);
+        SetLastResult(result);
+        SetMessage($"Tool changed to {Workspace.ToolController.ActiveToolName}.");
+
+        return result;
     }
 
-    public void Undo()
+    public ToolResult Undo()
     {
-        Workspace.ActionController.Undo();
+        ToolResult result = Workspace.ActionController.Undo();
+        SetLastResult(result);
+
+        return result;
     }
 
-    public void Redo()
+    public ToolResult Redo()
     {
-        Workspace.ActionController.Redo();
+        ToolResult result = Workspace.ActionController.Redo();
+        SetLastResult(result);
+
+        return result;
     }
 
-    public void DeleteSelection()
+    public ToolResult DeleteSelection()
     {
-        Workspace.ActionController.DeleteSelection();
+        ToolResult result = Workspace.ActionController.DeleteSelection();
+        SetLastResult(result);
+
+        return result;
     }
 
-    public void Cancel()
+    public ToolResult Cancel()
     {
-        Workspace.ActionController.CancelActiveTool();
+        ToolResult result = Workspace.ActionController.CancelActiveTool();
+        SetLastResult(result);
+
+        return result;
     }
 }

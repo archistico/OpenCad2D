@@ -32,6 +32,8 @@ public sealed class CadCanvas : Control
         set => SetValue(WorkspaceProperty, value);
     }
 
+    public event EventHandler<CadCanvasWorkspaceChangedEventArgs>? WorkspaceChanged;
+
     public CadCanvas()
     {
         Focusable = true;
@@ -66,6 +68,17 @@ public sealed class CadCanvas : Control
         }
 
         DrawActiveToolPreview(context);
+    }
+
+    private void NotifyWorkspaceChanged(
+        ToolResult result,
+        Point2D mousePosition)
+    {
+        WorkspaceChanged?.Invoke(
+            this,
+            new CadCanvasWorkspaceChangedEventArgs(
+                result,
+                mousePosition));
     }
 
     private void DrawActiveToolPreview(DrawingContext context)
@@ -269,8 +282,8 @@ public sealed class CadCanvas : Control
     }
 
     private void OnPointerPressed(
-        object? sender,
-        PointerPressedEventArgs e)
+    object? sender,
+    PointerPressedEventArgs e)
     {
         if (Workspace is null)
         {
@@ -280,18 +293,23 @@ public sealed class CadCanvas : Control
         Focus();
 
         Point position = e.GetPosition(this);
+        Point2D modelPoint = ToModelPoint(position);
 
-        Workspace.ToolController.OnPointerPressed(
+        ToolResult result = Workspace.ToolController.OnPointerPressed(
             new PointerInfo(
-                ToModelPoint(position),
+                modelPoint,
                 GetModifiers(e.KeyModifiers)));
+
+        NotifyWorkspaceChanged(
+            result,
+            modelPoint);
 
         InvalidateVisual();
     }
 
     private void OnPointerMoved(
-        object? sender,
-        PointerEventArgs e)
+    object? sender,
+    PointerEventArgs e)
     {
         if (Workspace is null)
         {
@@ -299,18 +317,23 @@ public sealed class CadCanvas : Control
         }
 
         Point position = e.GetPosition(this);
+        Point2D modelPoint = ToModelPoint(position);
 
-        Workspace.ToolController.OnPointerMoved(
+        ToolResult result = Workspace.ToolController.OnPointerMoved(
             new PointerInfo(
-                ToModelPoint(position),
+                modelPoint,
                 GetModifiers(e.KeyModifiers)));
+
+        NotifyWorkspaceChanged(
+            result,
+            modelPoint);
 
         InvalidateVisual();
     }
 
     private void OnPointerReleased(
-        object? sender,
-        PointerReleasedEventArgs e)
+    object? sender,
+    PointerReleasedEventArgs e)
     {
         if (Workspace is null)
         {
@@ -318,50 +341,56 @@ public sealed class CadCanvas : Control
         }
 
         Point position = e.GetPosition(this);
+        Point2D modelPoint = ToModelPoint(position);
 
-        Workspace.ToolController.OnPointerReleased(
+        ToolResult result = Workspace.ToolController.OnPointerReleased(
             new PointerInfo(
-                ToModelPoint(position),
+                modelPoint,
                 GetModifiers(e.KeyModifiers)));
+
+        NotifyWorkspaceChanged(
+            result,
+            modelPoint);
 
         InvalidateVisual();
     }
 
     private void OnKeyDown(
-        object? sender,
-        KeyEventArgs e)
+    object? sender,
+    KeyEventArgs e)
     {
         if (Workspace is null)
         {
             return;
         }
 
+        ToolResult? result = null;
+
         if (e.Key == Key.Escape)
         {
-            Workspace.ActionController.CancelActiveTool();
-            InvalidateVisual();
-            return;
+            result = Workspace.ActionController.CancelActiveTool();
+        }
+        else if (e.Key == Key.Delete)
+        {
+            result = Workspace.ActionController.DeleteSelection();
+        }
+        else if (e.Key == Key.Z &&
+                 e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            result = Workspace.ActionController.Undo();
+        }
+        else if (e.Key == Key.Y &&
+                 e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            result = Workspace.ActionController.Redo();
         }
 
-        if (e.Key == Key.Delete)
+        if (result is not null)
         {
-            Workspace.ActionController.DeleteSelection();
-            InvalidateVisual();
-            return;
-        }
+            NotifyWorkspaceChanged(
+                result,
+                Point2D.Origin);
 
-        if (e.Key == Key.Z &&
-            e.KeyModifiers.HasFlag(KeyModifiers.Control))
-        {
-            Workspace.ActionController.Undo();
-            InvalidateVisual();
-            return;
-        }
-
-        if (e.Key == Key.Y &&
-            e.KeyModifiers.HasFlag(KeyModifiers.Control))
-        {
-            Workspace.ActionController.Redo();
             InvalidateVisual();
         }
     }

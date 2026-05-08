@@ -56,7 +56,20 @@
 			</StackPanel>
 		</Border>
 
-		<controls:CadCanvas Workspace="{Binding Workspace}" />
+		<Border DockPanel.Dock="Bottom"
+                Background="#252526"
+                Padding="8,5">
+
+			<TextBlock x:Name="StatusTextBlock"
+                       Text="Ready."
+                       Foreground="#CCCCCC"
+                       FontFamily="Consolas"
+                       FontSize="12" />
+		</Border>
+
+		<controls:CadCanvas x:Name="CadCanvas"
+                            Workspace="{Binding Workspace}"
+                            WorkspaceChanged="CadCanvas_WorkspaceChanged" />
 
 	</DockPanel>
 </Window>
