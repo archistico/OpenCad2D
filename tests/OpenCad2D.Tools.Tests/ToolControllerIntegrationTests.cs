@@ -266,4 +266,84 @@ public sealed class ToolControllerIntegrationTests
         Assert.Equal(new Point2D(5, 5), movedLine.Start);
         Assert.Equal(new Point2D(15, 5), movedLine.End);
     }
+
+    [Fact]
+    public void ChangingFromSelectionToolToMoveTool_ShouldKeepSelection()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+        selectionSet.Select(line.Id);
+
+        var context = new ToolContext(
+            document,
+            history,
+            new SnapService(),
+            selectionSet: selectionSet,
+            selectionTolerance: 1);
+
+        var controller = new ToolController(
+            context,
+            new SelectionTool());
+
+        controller.SetActiveTool(new MoveTool());
+
+        Assert.True(selectionSet.Contains(line.Id));
+        Assert.Equal(1, selectionSet.Count);
+        Assert.IsType<MoveTool>(controller.ActiveTool);
+    }
+
+    [Fact]
+    public void SelectionToolThenDeleteTool_ShouldSelectAndDeleteEntity()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+
+        var context = new ToolContext(
+            document,
+            history,
+            new SnapService(),
+            selectionSet: selectionSet,
+            selectionTolerance: 1);
+
+        var controller = new ToolController(
+            context,
+            new SelectionTool());
+
+        controller.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 0.2)));
+
+        controller.OnPointerReleased(
+            new PointerInfo(new Point2D(5, 0.2)));
+
+        Assert.True(selectionSet.Contains(line.Id));
+
+        controller.SetActiveTool(new DeleteTool());
+
+        ToolResult deleteResult = controller.OnPointerPressed(
+            new PointerInfo(new Point2D(0, 0)));
+
+        Assert.Equal(ToolResultKind.Completed, deleteResult.Kind);
+        Assert.Equal(0, document.Entities.Count);
+        Assert.True(selectionSet.IsEmpty);
+        Assert.True(history.CanUndo);
+
+        history.Undo(document);
+
+        Assert.Equal(1, document.Entities.Count);
+        Assert.True(document.Entities.Contains(line.Id));
+    }
 }

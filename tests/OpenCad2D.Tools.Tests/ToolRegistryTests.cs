@@ -17,6 +17,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Rectangle));
         Assert.True(registry.Contains(ToolId.Move));
         Assert.True(registry.Contains(ToolId.Copy));
+        Assert.True(registry.Contains(ToolId.Delete));
     }
 
     [Fact]
@@ -26,7 +27,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(5, tools.Count);
+        Assert.Equal(6, tools.Count);
 
         Assert.Contains(
             tools,
@@ -47,6 +48,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Copy);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Delete);
     }
 
     [Fact]
@@ -81,10 +86,22 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Modify");
 
-        Assert.Equal(3, tools.Count);
+        Assert.Equal(4, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Selection);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Move);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Copy);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Delete);
+    }
+
+    [Fact]
+    public void Create_Delete_ShouldReturnDeleteTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Delete);
+
+        Assert.IsType<DeleteTool>(tool);
+        Assert.Equal("Delete", tool.Name);
     }
 
     [Fact]

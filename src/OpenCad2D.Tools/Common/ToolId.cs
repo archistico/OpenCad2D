@@ -9,5 +9,6 @@ public enum ToolId
     Line,
     Rectangle,
     Move,
-    Copy
+    Copy,
+    Delete
 }

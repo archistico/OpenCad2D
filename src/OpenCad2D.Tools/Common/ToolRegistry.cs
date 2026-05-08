@@ -56,6 +56,14 @@ public sealed class ToolRegistry
                 "Copy",
                 "Modify"),
             () => new CopyTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Delete,
+                "Delete",
+                "Delete",
+                "Modify"),
+            () => new DeleteTool());
     }
 
     public IReadOnlyList<ToolDescriptor> Tools =>
