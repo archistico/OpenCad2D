@@ -302,4 +302,40 @@ public sealed class DistanceServiceTests
         Assert.Equal(2, result.X, precision: 10);
         Assert.Equal(2, result.Y, precision: 10);
     }
+
+    [Fact]
+    public void DistancePointToBoundingBox_WhenPointIsInside_ShouldReturnZero()
+    {
+        var box = new BoundingBox2D(0, 0, 10, 10);
+
+        double result = DistanceService.DistancePointToBoundingBox(
+            new Point2D(5, 5),
+            box);
+
+        Assert.Equal(0, result, precision: 10);
+    }
+
+    [Fact]
+    public void DistancePointToBoundingBox_WhenPointIsOutsideHorizontally_ShouldReturnHorizontalDistance()
+    {
+        var box = new BoundingBox2D(0, 0, 10, 10);
+
+        double result = DistanceService.DistancePointToBoundingBox(
+            new Point2D(15, 5),
+            box);
+
+        Assert.Equal(5, result, precision: 10);
+    }
+
+    [Fact]
+    public void DistancePointToBoundingBox_WhenPointIsOutsideDiagonally_ShouldReturnDiagonalDistance()
+    {
+        var box = new BoundingBox2D(0, 0, 10, 10);
+
+        double result = DistanceService.DistancePointToBoundingBox(
+            new Point2D(13, 14),
+            box);
+
+        Assert.Equal(5, result, precision: 10);
+    }
 }

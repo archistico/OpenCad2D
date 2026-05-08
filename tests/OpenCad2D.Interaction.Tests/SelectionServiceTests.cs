@@ -180,4 +180,92 @@ public sealed class SelectionServiceTests
 
         Assert.Empty(result);
     }
+
+    [Fact]
+    public void SelectByWindow_Crossing_WithLineBoundingBoxTouchingButLineNotIntersecting_ShouldNotSelectLine()
+    {
+        var document = new CadDocument();
+
+        // This line's bounding box intersects the selection window,
+        // but the segment itself does not cross it.
+        var line = new LineEntity(
+            new Point2D(-5, -5),
+            new Point2D(-1, -1));
+
+        document.AddEntity(line);
+
+        var service = new SelectionService();
+
+        IReadOnlyList<EntityId> result = service.SelectByWindow(
+            document,
+            new BoundingBox2D(0, 0, 10, 10),
+            WindowSelectionMode.Crossing);
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void SelectByWindow_Crossing_WithLineCrossingWindow_ShouldSelectLine()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(-5, 5),
+            new Point2D(5, 5));
+
+        document.AddEntity(line);
+
+        var service = new SelectionService();
+
+        IReadOnlyList<EntityId> result = service.SelectByWindow(
+            document,
+            new BoundingBox2D(0, 0, 10, 10),
+            WindowSelectionMode.Crossing);
+
+        Assert.Single(result);
+        Assert.Contains(line.Id, result);
+    }
+
+    [Fact]
+    public void SelectByWindow_Crossing_WithCircleCrossingWindow_ShouldSelectCircle()
+    {
+        var document = new CadDocument();
+
+        var circle = new CircleEntity(
+            new Point2D(12, 5),
+            3);
+
+        document.AddEntity(circle);
+
+        var service = new SelectionService();
+
+        IReadOnlyList<EntityId> result = service.SelectByWindow(
+            document,
+            new BoundingBox2D(0, 0, 10, 10),
+            WindowSelectionMode.Crossing);
+
+        Assert.Single(result);
+        Assert.Contains(circle.Id, result);
+    }
+
+    [Fact]
+    public void SelectByWindow_Crossing_WithCircleOutsideWindow_ShouldNotSelectCircle()
+    {
+        var document = new CadDocument();
+
+        var circle = new CircleEntity(
+            new Point2D(20, 5),
+            3);
+
+        document.AddEntity(circle);
+
+        var service = new SelectionService();
+
+        IReadOnlyList<EntityId> result = service.SelectByWindow(
+            document,
+            new BoundingBox2D(0, 0, 10, 10),
+            WindowSelectionMode.Crossing);
+
+        Assert.Empty(result);
+    }
 }

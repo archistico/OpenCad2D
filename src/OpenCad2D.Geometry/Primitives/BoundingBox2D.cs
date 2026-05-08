@@ -55,4 +55,20 @@ public readonly record struct BoundingBox2D(
             Math.Max(first.X, second.X),
             Math.Max(first.Y, second.Y));
     }
+
+    public IReadOnlyList<LineSegment2D> GetEdges()
+    {
+        var bottomLeft = new Point2D(MinX, MinY);
+        var bottomRight = new Point2D(MaxX, MinY);
+        var topRight = new Point2D(MaxX, MaxY);
+        var topLeft = new Point2D(MinX, MaxY);
+
+        return new[]
+        {
+            new LineSegment2D(bottomLeft, bottomRight),
+            new LineSegment2D(bottomRight, topRight),
+            new LineSegment2D(topRight, topLeft),
+            new LineSegment2D(topLeft, bottomLeft)
+        };
+    }
 }

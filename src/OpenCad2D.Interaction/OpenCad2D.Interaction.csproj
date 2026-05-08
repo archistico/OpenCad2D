@@ -5,11 +5,6 @@
     <ProjectReference Include="..\OpenCad2D.Geometry\OpenCad2D.Geometry.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="HitTesting\" />
-    <Folder Include="Selection\" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

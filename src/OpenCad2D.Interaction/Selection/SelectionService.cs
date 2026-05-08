@@ -1,6 +1,7 @@
 ﻿using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Geometry.Operations;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.HitTesting;
 
@@ -64,9 +65,44 @@ public sealed class SelectionService
                 window.Contains(entityBounds),
 
             WindowSelectionMode.Crossing =>
-                window.Intersects(entityBounds),
+                MatchesCrossingWindow(entity, window),
 
             _ => throw new ArgumentOutOfRangeException(nameof(mode))
+        };
+    }
+
+    private static bool MatchesCrossingWindow(
+        CadEntity entity,
+        BoundingBox2D window)
+    {
+        if (!window.Intersects(entity.GetBoundingBox()))
+        {
+            return false;
+        }
+
+        return entity switch
+        {
+            LineEntity line =>
+                RectangleIntersectionService.IntersectsSegment(
+                    window,
+                    line.Geometry),
+
+            PolylineEntity polyline =>
+                RectangleIntersectionService.IntersectsPolyline(
+                    window,
+                    polyline.Geometry),
+
+            CircleEntity circle =>
+                RectangleIntersectionService.IntersectsCircle(
+                    window,
+                    circle.Geometry),
+
+            ArcEntity arc =>
+                RectangleIntersectionService.IntersectsArc(
+                    window,
+                    arc.Geometry),
+
+            _ => window.Intersects(entity.GetBoundingBox())
         };
     }
 }

@@ -41,4 +41,26 @@ public sealed class BoundingBox2DTests
 
         Assert.False(first.Intersects(second));
     }
+
+    [Fact]
+    public void GetEdges_ShouldReturnFourEdges()
+    {
+        var box = new BoundingBox2D(0, 0, 10, 20);
+
+        IReadOnlyList<LineSegment2D> edges = box.GetEdges();
+
+        Assert.Equal(4, edges.Count);
+
+        Assert.Equal(new Point2D(0, 0), edges[0].Start);
+        Assert.Equal(new Point2D(10, 0), edges[0].End);
+
+        Assert.Equal(new Point2D(10, 0), edges[1].Start);
+        Assert.Equal(new Point2D(10, 20), edges[1].End);
+
+        Assert.Equal(new Point2D(10, 20), edges[2].Start);
+        Assert.Equal(new Point2D(0, 20), edges[2].End);
+
+        Assert.Equal(new Point2D(0, 20), edges[3].Start);
+        Assert.Equal(new Point2D(0, 0), edges[3].End);
+    }
 }

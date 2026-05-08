@@ -161,4 +161,19 @@ public static class DistanceService
 
         return point.DistanceTo(closestPoint);
     }
+
+    public static double DistancePointToBoundingBox(
+    Point2D point,
+    BoundingBox2D box)
+    {
+        double dx = Math.Max(
+            Math.Max(box.MinX - point.X, 0),
+            point.X - box.MaxX);
+
+        double dy = Math.Max(
+            Math.Max(box.MinY - point.Y, 0),
+            point.Y - box.MaxY);
+
+        return Math.Sqrt(dx * dx + dy * dy);
+    }
 }
