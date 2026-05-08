@@ -210,4 +210,64 @@ public sealed class ToolControllerIntegrationTests
         Assert.Equal(new Point2D(0, 0), restoredLine.Start);
         Assert.Equal(new Point2D(10, 0), restoredLine.End);
     }
+
+    [Fact]
+    public void ToolRegistryWithToolController_ShouldCreateAndSwitchTools()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var context = new ToolContext(
+            document,
+            history,
+            new SnapService(),
+            selectionSet: selectionSet,
+            selectionTolerance: 1);
+
+        var registry = new ToolRegistry();
+
+        var controller = new ToolController(
+            context,
+            registry.Create(ToolId.Line));
+
+        controller.OnPointerPressed(
+            new PointerInfo(new Point2D(0, 0)));
+
+        ToolResult lineResult = controller.OnPointerPressed(
+            new PointerInfo(new Point2D(10, 0)));
+
+        Assert.Equal(ToolResultKind.Completed, lineResult.Kind);
+
+        var createdLine = Assert.Single(
+            document.Entities.All.OfType<LineEntity>());
+
+        controller.SetActiveTool(
+            registry.Create(ToolId.Selection));
+
+        controller.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 0.2)));
+
+        controller.OnPointerReleased(
+            new PointerInfo(new Point2D(5, 0.2)));
+
+        Assert.True(selectionSet.Contains(createdLine.Id));
+
+        controller.SetActiveTool(
+            registry.Create(ToolId.Move),
+            cancelCurrentTool: false);
+
+        controller.OnPointerPressed(
+            new PointerInfo(new Point2D(0, 0)));
+
+        ToolResult moveResult = controller.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 5)));
+
+        Assert.Equal(ToolResultKind.Completed, moveResult.Kind);
+
+        var movedLine = (LineEntity)document.Entities.GetRequired(createdLine.Id);
+
+        Assert.Equal(new Point2D(5, 5), movedLine.Start);
+        Assert.Equal(new Point2D(15, 5), movedLine.End);
+    }
 }

@@ -1,0 +1,178 @@
+﻿using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Selection;
+
+namespace OpenCad2D.Tools.Tests;
+
+public sealed class ToolRegistryTests
+{
+    [Fact]
+    public void Constructor_ShouldRegisterDefaultTools()
+    {
+        var registry = new ToolRegistry();
+
+        Assert.True(registry.Contains(ToolId.Selection));
+        Assert.True(registry.Contains(ToolId.Line));
+        Assert.True(registry.Contains(ToolId.Rectangle));
+        Assert.True(registry.Contains(ToolId.Move));
+        Assert.True(registry.Contains(ToolId.Copy));
+    }
+
+    [Fact]
+    public void Tools_ShouldReturnAllRegisteredDescriptors()
+    {
+        var registry = new ToolRegistry();
+
+        IReadOnlyList<ToolDescriptor> tools = registry.Tools;
+
+        Assert.Equal(5, tools.Count);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Selection);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Line);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Rectangle);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Move);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Copy);
+    }
+
+    [Fact]
+    public void GetDescriptor_ShouldReturnDescriptor()
+    {
+        var registry = new ToolRegistry();
+
+        ToolDescriptor descriptor = registry.GetDescriptor(ToolId.Line);
+
+        Assert.Equal(ToolId.Line, descriptor.Id);
+        Assert.Equal("Line", descriptor.Name);
+        Assert.Equal("Line", descriptor.DisplayName);
+        Assert.Equal("Draw", descriptor.Category);
+    }
+
+    [Fact]
+    public void GetByCategory_Draw_ShouldReturnDrawingTools()
+    {
+        var registry = new ToolRegistry();
+
+        IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
+
+        Assert.Equal(2, tools.Count);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
+    }
+
+    [Fact]
+    public void GetByCategory_Modify_ShouldReturnModifyTools()
+    {
+        var registry = new ToolRegistry();
+
+        IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Modify");
+
+        Assert.Equal(3, tools.Count);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Selection);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Move);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Copy);
+    }
+
+    [Fact]
+    public void Create_Selection_ShouldReturnSelectionTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Selection);
+
+        Assert.IsType<SelectionTool>(tool);
+        Assert.Equal("Selection", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Line_ShouldReturnLineTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Line);
+
+        Assert.IsType<LineTool>(tool);
+        Assert.Equal("Line", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Rectangle_ShouldReturnRectangleTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Rectangle);
+
+        Assert.IsType<RectangleTool>(tool);
+        Assert.Equal("Rectangle", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Move_ShouldReturnMoveTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Move);
+
+        Assert.IsType<MoveTool>(tool);
+        Assert.Equal("Move", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Copy_ShouldReturnCopyTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Copy);
+
+        Assert.IsType<CopyTool>(tool);
+        Assert.Equal("Copy", tool.Name);
+    }
+
+    [Fact]
+    public void Create_ShouldReturnNewToolInstanceEveryTime()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool first = registry.Create(ToolId.Line);
+        ICadTool second = registry.Create(ToolId.Line);
+
+        Assert.NotSame(first, second);
+        Assert.IsType<LineTool>(first);
+        Assert.IsType<LineTool>(second);
+    }
+
+    [Fact]
+    public void GetByCategory_ShouldBeCaseInsensitive()
+    {
+        var registry = new ToolRegistry();
+
+        IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
+
+        Assert.Equal(2, tools.Count);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
+    }
+
+    [Fact]
+    public void GetByCategory_WithEmptyCategory_ShouldThrow()
+    {
+        var registry = new ToolRegistry();
+
+        Assert.Throws<ArgumentException>(
+            () => registry.GetByCategory(""));
+    }
+}

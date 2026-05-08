@@ -1,0 +1,133 @@
+﻿using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Selection;
+
+namespace OpenCad2D.Tools.Common;
+
+/// <summary>
+/// Central registry used to describe and create CAD tools.
+/// </summary>
+public sealed class ToolRegistry
+{
+    private readonly Dictionary<ToolId, Func<ICadTool>> _factories;
+    private readonly Dictionary<ToolId, ToolDescriptor> _descriptors;
+
+    public ToolRegistry()
+    {
+        _factories = new Dictionary<ToolId, Func<ICadTool>>();
+        _descriptors = new Dictionary<ToolId, ToolDescriptor>();
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Selection,
+                "Selection",
+                "Selection",
+                "Modify"),
+            () => new SelectionTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Line,
+                "Line",
+                "Line",
+                "Draw"),
+            () => new LineTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Rectangle,
+                "Rectangle",
+                "Rectangle",
+                "Draw"),
+            () => new RectangleTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Move,
+                "Move",
+                "Move",
+                "Modify"),
+            () => new MoveTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Copy,
+                "Copy",
+                "Copy",
+                "Modify"),
+            () => new CopyTool());
+    }
+
+    public IReadOnlyList<ToolDescriptor> Tools =>
+        _descriptors.Values
+            .OrderBy(descriptor => descriptor.Category)
+            .ThenBy(descriptor => descriptor.DisplayName)
+            .ToList();
+
+    public IReadOnlyList<ToolDescriptor> GetByCategory(string category)
+    {
+        if (string.IsNullOrWhiteSpace(category))
+        {
+            throw new ArgumentException(
+                "Category cannot be empty.",
+                nameof(category));
+        }
+
+        return _descriptors.Values
+            .Where(descriptor => string.Equals(
+                descriptor.Category,
+                category,
+                StringComparison.OrdinalIgnoreCase))
+            .OrderBy(descriptor => descriptor.DisplayName)
+            .ToList();
+    }
+
+    public bool Contains(ToolId id)
+    {
+        return _factories.ContainsKey(id);
+    }
+
+    public ToolDescriptor GetDescriptor(ToolId id)
+    {
+        if (!_descriptors.TryGetValue(id, out ToolDescriptor? descriptor))
+        {
+            throw new KeyNotFoundException(
+                $"Tool descriptor '{id}' was not found.");
+        }
+
+        return descriptor;
+    }
+
+    public ICadTool Create(ToolId id)
+    {
+        if (!_factories.TryGetValue(id, out Func<ICadTool>? factory))
+        {
+            throw new KeyNotFoundException(
+                $"Tool factory '{id}' was not found.");
+        }
+
+        return factory();
+    }
+
+    private void Register(
+        ToolDescriptor descriptor,
+        Func<ICadTool> factory)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+        ArgumentNullException.ThrowIfNull(factory);
+
+        if (_factories.ContainsKey(descriptor.Id))
+        {
+            throw new InvalidOperationException(
+                $"Tool '{descriptor.Id}' is already registered.");
+        }
+
+        _descriptors.Add(
+            descriptor.Id,
+            descriptor);
+
+        _factories.Add(
+            descriptor.Id,
+            factory);
+    }
+}
