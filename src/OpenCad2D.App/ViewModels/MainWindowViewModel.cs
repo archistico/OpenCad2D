@@ -9,6 +9,12 @@ public sealed class MainWindowViewModel
 {
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
+    private SnapCandidate? _currentSnapCandidate;
+
+    public string SnapText =>
+    _currentSnapCandidate is null
+        ? "Snap: -"
+        : $"Snap: {_currentSnapCandidate.Kind}";
 
     public MainWindowViewModel()
     {
@@ -45,11 +51,16 @@ public sealed class MainWindowViewModel
         $"X: {_mousePosition.X:0.###}   Y: {_mousePosition.Y:0.###}";
 
     public string StatusText =>
-        $"Tool: {ActiveToolName}   |   Entities: {EntityCount}   |   Selected: {SelectedCount}   |   {MousePositionText}   |   {LastMessage}";
+        $"Tool: {ActiveToolName}   |   Entities: {EntityCount}   |   Selected: {SelectedCount}   |   {MousePositionText}   |   {SnapText}   |   {LastMessage}";
 
     public void SetMousePosition(Point2D point)
     {
         _mousePosition = point;
+    }
+
+    public void SetCurrentSnapCandidate(SnapCandidate? candidate)
+    {
+        _currentSnapCandidate = candidate;
     }
 
     public void SetLastResult(ToolResult result)

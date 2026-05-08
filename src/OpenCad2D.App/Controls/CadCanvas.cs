@@ -301,14 +301,15 @@ public sealed class CadCanvas : Control
     }
 
     private void NotifyWorkspaceChanged(
-        ToolResult result,
-        Point2D mousePosition)
+    ToolResult result,
+    Point2D mousePosition)
     {
         WorkspaceChanged?.Invoke(
             this,
             new CadCanvasWorkspaceChangedEventArgs(
                 result,
-                mousePosition));
+                mousePosition,
+                _currentSnapCandidate));
     }
 
     private void DrawActiveToolPreview(DrawingContext context)
@@ -757,6 +758,11 @@ public sealed class CadCanvas : Control
     public void ClearSnapMarker()
     {
         _currentSnapCandidate = null;
+
+        NotifyWorkspaceChanged(
+            ToolResult.None(),
+            Point2D.Origin);
+
         InvalidateVisual();
     }
 }

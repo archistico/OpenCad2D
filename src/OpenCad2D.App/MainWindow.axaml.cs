@@ -93,11 +93,12 @@ public partial class MainWindow : Window
     }
 
     private void CadCanvas_WorkspaceChanged(
-        object? sender,
-        CadCanvasWorkspaceChangedEventArgs e)
+    object? sender,
+    CadCanvasWorkspaceChangedEventArgs e)
     {
         _viewModel.SetMousePosition(e.MousePosition);
         _viewModel.SetLastResult(e.Result);
+        _viewModel.SetCurrentSnapCandidate(e.SnapCandidate);
 
         RefreshStatus();
     }

@@ -13,9 +13,10 @@
 		<vm:MainWindowViewModel />
 	</Design.DataContext>
 
-	<DockPanel>
+	<Grid RowDefinitions="Auto,*,Auto">
 
-		<Border DockPanel.Dock="Top"
+		<!-- Toolbar -->
+		<Border Grid.Row="0"
                 Background="#252526"
                 Padding="8">
 
@@ -56,20 +57,27 @@
 			</StackPanel>
 		</Border>
 
-		<Border DockPanel.Dock="Bottom"
-                Background="#252526"
-                Padding="8,5">
-
-			<TextBlock x:Name="StatusTextBlock"
-                       Text="Ready."
-                       Foreground="#CCCCCC"
-                       FontFamily="Consolas"
-                       FontSize="12" />
-		</Border>
-
-		<controls:CadCanvas x:Name="CadCanvas"
+		<!-- Canvas CAD -->
+		<controls:CadCanvas Grid.Row="1"
+                            x:Name="CadCanvas"
                             Workspace="{Binding Workspace}"
                             WorkspaceChanged="CadCanvas_WorkspaceChanged" />
 
-	</DockPanel>
+		<!-- Status bar -->
+		<Border Grid.Row="2"
+                Background="#111111"
+                BorderBrush="#3A3A3A"
+                BorderThickness="0,1,0,0"
+                Padding="8,5"
+                MinHeight="28">
+
+			<TextBlock x:Name="StatusTextBlock"
+                       Text="Ready."
+                       Foreground="#E0E0E0"
+                       FontFamily="Consolas"
+                       FontSize="12"
+                       VerticalAlignment="Center" />
+		</Border>
+
+	</Grid>
 </Window>
