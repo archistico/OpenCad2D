@@ -1,5 +1,3 @@
-````
-
 # Architecture
 
 OpenCad2D is organized around a simple principle: the CAD logic must remain independent from the graphical user interface.
