@@ -70,4 +70,17 @@ public sealed class PolylineEntity : CadEntity
             IsLocked,
             DrawOrder);
     }
+
+    public override CadEntity WithId(EntityId id)
+    {
+        return new PolylineEntity(
+            Vertices,
+            IsClosed,
+            id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder);
+    }
 }

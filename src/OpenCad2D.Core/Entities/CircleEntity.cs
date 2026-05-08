@@ -72,4 +72,17 @@ public sealed class CircleEntity : CadEntity
             IsLocked,
             DrawOrder);
     }
+
+    public override CadEntity WithId(EntityId id)
+    {
+        return new CircleEntity(
+            Center,
+            Radius,
+            id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder);
+    }
 }

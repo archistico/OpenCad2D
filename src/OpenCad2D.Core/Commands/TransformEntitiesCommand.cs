@@ -8,7 +8,7 @@ namespace OpenCad2D.Core.Commands;
 /// <summary>
 /// Transforms existing entities using a 2D matrix.
 /// </summary>
-public sealed class TransformEntitiesCommand : ICadCommand
+public class TransformEntitiesCommand : ICadCommand
 {
     private readonly IReadOnlyList<EntityId> _entityIds;
     private readonly Matrix2D _matrix;
@@ -34,7 +34,7 @@ public sealed class TransformEntitiesCommand : ICadCommand
         _matrix = matrix;
     }
 
-    public string Name => "Transform entities";
+    public virtual string Name => "Transform entities";
 
     public void Execute(CadDocument document)
     {

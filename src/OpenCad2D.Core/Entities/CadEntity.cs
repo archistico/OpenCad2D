@@ -48,6 +48,8 @@ public abstract class CadEntity
 
     public abstract CadEntity Transform(Matrix2D matrix);
 
+    public abstract CadEntity WithId(EntityId id);
+
     protected T CopyCommonTo<T>(T entity)
         where T : CadEntity
     {

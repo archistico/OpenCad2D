@@ -73,4 +73,31 @@ public readonly record struct Matrix2D(
             OffsetX * other.M11 + OffsetY * other.M21 + other.OffsetX,
             OffsetX * other.M12 + OffsetY * other.M22 + other.OffsetY);
     }
+
+    public static Matrix2D Mirror(Line2D mirrorLine)
+    {
+        Vector2D direction = mirrorLine.NormalizedDirection;
+
+        double ux = direction.X;
+        double uy = direction.Y;
+
+        double m11 = 2 * ux * ux - 1;
+        double m12 = 2 * ux * uy;
+        double m21 = 2 * ux * uy;
+        double m22 = 2 * uy * uy - 1;
+
+        double x0 = mirrorLine.Point.X;
+        double y0 = mirrorLine.Point.Y;
+
+        double offsetX = x0 - (m11 * x0 + m12 * y0);
+        double offsetY = y0 - (m21 * x0 + m22 * y0);
+
+        return new Matrix2D(
+            m11,
+            m12,
+            m21,
+            m22,
+            offsetX,
+            offsetY);
+    }
 }
