@@ -148,4 +148,25 @@ public sealed class MainWindowViewModel
 
         return result;
     }
+
+    public bool IsSnapEnabled(SnapKind snapKind)
+    {
+        return Workspace.Context.EnabledSnaps.HasFlag(snapKind);
+    }
+
+    public void SetSnapEnabled(
+        SnapKind snapKind,
+        bool isEnabled)
+    {
+        if (isEnabled)
+        {
+            Workspace.Context.EnabledSnaps |= snapKind;
+        }
+        else
+        {
+            Workspace.Context.EnabledSnaps &= ~snapKind;
+        }
+
+        SetMessage($"Snap settings updated: {Workspace.Context.EnabledSnaps}");
+    }
 }

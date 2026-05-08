@@ -5,8 +5,8 @@
         x:Class="OpenCad2D.App.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="OpenCad2D"
-        Width="1100"
-        Height="750"
+        Width="1200"
+        Height="760"
         Background="#1E1E1E">
 
 	<Design.DataContext>
@@ -20,39 +20,90 @@
                 Background="#252526"
                 Padding="8">
 
-			<StackPanel Orientation="Horizontal"
-                        Spacing="8">
+			<StackPanel Orientation="Vertical"
+                        Spacing="6">
 
-				<Button Content="Select"
-                        Click="Select_Click" />
+				<StackPanel Orientation="Horizontal"
+                            Spacing="8">
 
-				<Button Content="Line"
-                        Click="Line_Click" />
+					<Button Content="Select"
+                            Click="Select_Click" />
 
-				<Button Content="Rectangle"
-                        Click="Rectangle_Click" />
+					<Button Content="Line"
+                            Click="Line_Click" />
 
-				<Button Content="Move"
-                        Click="Move_Click" />
+					<Button Content="Rectangle"
+                            Click="Rectangle_Click" />
 
-				<Button Content="Copy"
-                        Click="Copy_Click" />
+					<Button Content="Move"
+                            Click="Move_Click" />
 
-				<Button Content="Delete"
-                        Click="Delete_Click" />
+					<Button Content="Copy"
+                            Click="Copy_Click" />
 
-				<Separator />
+					<Button Content="Delete"
+                            Click="Delete_Click" />
 
-				<Button Content="Undo"
-                        Click="Undo_Click" />
+					<Separator />
 
-				<Button Content="Redo"
-                        Click="Redo_Click" />
+					<Button Content="Undo"
+                            Click="Undo_Click" />
 
-				<TextBlock Text="Ctrl+Z / Ctrl+Y / Canc / Esc / Rotella zoom / Tasto centrale pan / Home reset view"
-                           Foreground="#CCCCCC"
-                           VerticalAlignment="Center"
-                           Margin="16,0,0,0" />
+					<Button Content="Redo"
+                            Click="Redo_Click" />
+
+					<TextBlock Text="Ctrl+Z / Ctrl+Y / Canc / Esc / Rotella zoom / Tasto centrale pan / Home reset view"
+                               Foreground="#CCCCCC"
+                               VerticalAlignment="Center"
+                               Margin="16,0,0,0" />
+
+				</StackPanel>
+
+				<StackPanel Orientation="Horizontal"
+            Spacing="10">
+
+					<TextBlock Text="Snap:"
+							   Foreground="#CCCCCC"
+							   VerticalAlignment="Center"
+							   FontWeight="Bold" />
+
+					<CheckBox x:Name="SnapEndpointCheckBox"
+							  Content="Endpoint"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="SnapEndpoint_Changed" />
+
+					<CheckBox x:Name="SnapMidpointCheckBox"
+							  Content="Midpoint"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="SnapMidpoint_Changed" />
+
+					<CheckBox x:Name="SnapCenterCheckBox"
+							  Content="Center"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="SnapCenter_Changed" />
+
+					<CheckBox x:Name="SnapQuadrantCheckBox"
+							  Content="Quadrant"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="SnapQuadrant_Changed" />
+
+					<CheckBox x:Name="SnapIntersectionCheckBox"
+							  Content="Intersection"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="SnapIntersection_Changed" />
+
+					<CheckBox x:Name="SnapGridCheckBox"
+							  Content="Grid"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="SnapGrid_Changed" />
+
+				</StackPanel>
 
 			</StackPanel>
 		</Border>

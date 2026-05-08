@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 
 namespace OpenCad2D.App;
@@ -107,5 +108,71 @@ public partial class MainWindow : Window
     {
         StatusTextBlock.Text = _viewModel.StatusText;
         Title = $"OpenCad2D - {_viewModel.ActiveToolName}";
+    }
+
+    private void SnapEndpoint_Changed(
+    object? sender,
+    RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Endpoint,
+            SnapEndpointCheckBox.IsChecked == true);
+    }
+
+    private void SnapMidpoint_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Midpoint,
+            SnapMidpointCheckBox.IsChecked == true);
+    }
+
+    private void SnapCenter_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Center,
+            SnapCenterCheckBox.IsChecked == true);
+    }
+
+    private void SnapQuadrant_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Quadrant,
+            SnapQuadrantCheckBox.IsChecked == true);
+    }
+
+    private void SnapIntersection_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Intersection,
+            SnapIntersectionCheckBox.IsChecked == true);
+    }
+
+    private void SnapGrid_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Grid,
+            SnapGridCheckBox.IsChecked == true);
+    }
+
+    private void SetSnapFromCheckBox(
+        SnapKind snapKind,
+        bool isEnabled)
+    {
+        _viewModel.SetSnapEnabled(
+            snapKind,
+            isEnabled);
+
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
     }
 }
