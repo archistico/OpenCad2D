@@ -1,6 +1,7 @@
 ﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
@@ -251,5 +252,17 @@ public sealed class CadWorkspaceTests
 
         Assert.Same(gridSettings, workspace.GridSettings);
         Assert.Same(gridSettings, workspace.Context.GridSettings);
+    }
+
+    [Fact]
+    public void Constructor_ShouldConfigureCurrentLayer()
+    {
+        var layerId = new LayerId("Walls");
+
+        var workspace = new CadWorkspace(
+            currentLayerId: layerId);
+
+        Assert.Equal(layerId, workspace.CurrentLayerId);
+        Assert.Equal(layerId, workspace.Context.CurrentLayerId);
     }
 }
