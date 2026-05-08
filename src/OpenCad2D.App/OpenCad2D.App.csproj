@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.0.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.0.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.2" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.0.2" />
+    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.1">
+      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenCad2D.Core\OpenCad2D.Core.csproj" />
+    <ProjectReference Include="..\OpenCad2D.Geometry\OpenCad2D.Geometry.csproj" />
+    <ProjectReference Include="..\OpenCad2D.Interaction\OpenCad2D.Interaction.csproj" />
+    <ProjectReference Include="..\OpenCad2D.Tools\OpenCad2D.Tools.csproj" />
+  </ItemGroup>
+</Project>
