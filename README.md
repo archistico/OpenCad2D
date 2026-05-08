@@ -1,8 +1,10 @@
 # OpenCad2D
 
-**OpenCad2D** is an experimental open-source 2D CAD project built with **C#**, **.NET 8** and **Avalonia UI**.
+**OpenCad2D** is an experimental open-source 2D CAD application built with **C#**, **.NET 8** and **Avalonia UI**.
 
-The goal is to create a clean, testable and cross-platform CAD core, with a modern UI and a codebase that can be studied, extended and improved over time.
+The project started as an attempt to build a small but clean CAD system from the ground up, with a strong separation between the geometric core, the document model, the interaction logic and the graphical user interface.
+
+The long-term goal is not only to create a usable 2D CAD application, but also to keep the code understandable, testable and easy to extend.
 
 ![OpenCad2D screenshot](screenshot.png)
 
@@ -12,122 +14,43 @@ The goal is to create a clean, testable and cross-platform CAD core, with a mode
 
 OpenCad2D is currently an early prototype.
 
-The project is not intended to replace mature CAD software yet.  
-At this stage, the focus is on building a solid internal architecture:
+It is not meant to replace mature CAD software yet. The current focus is on building a solid internal architecture: geometry, entities, commands, snapping, selection, tools and a first cross-platform UI.
 
-- geometry primitives;
-- CAD entities;
-- document model;
-- command history;
-- undo / redo;
-- selection;
-- object snapping;
-- tool system;
-- basic Avalonia UI.
+Even at this early stage, the application already supports basic drawing and editing workflows. You can draw lines and rectangles, select entities, move them, copy them, delete them and use undo/redo. The Avalonia UI includes a drawing canvas, zoom, pan, grid display, snap markers and a status bar.
 
 ---
 
-## Current features
+## What OpenCad2D can do today
 
-### Geometry core
+The current prototype includes a small but functional CAD core.
 
-The project currently includes basic 2D geometry primitives and operations:
+The geometry layer contains basic 2D primitives such as points, vectors, line segments, lines, circles, arcs, polylines and bounding boxes. It also includes operations for distances, transformations and intersections.
 
-- points;
-- vectors;
-- line segments;
-- infinite lines;
-- circles;
-- arcs;
-- polylines;
-- bounding boxes;
-- transformations;
-- distances;
-- intersections.
+The core document model supports CAD entities such as lines, circles, arcs and polylines. Rectangles are represented as closed polylines. The document is modified through commands, so operations such as adding, deleting, moving, copying, rotating, scaling and mirroring entities can be handled consistently and can participate in undo/redo.
 
-### CAD entities
+Interaction logic is kept outside the UI. Selection, hit testing and object snapping are implemented in dedicated libraries. This makes the application easier to test and keeps the Avalonia layer thin.
 
-Supported CAD entities:
+The current snapping system supports endpoint, midpoint, center, quadrant, intersection, perpendicular, tangent and grid snapping. The UI shows a visual snap marker and displays the current snap type in the status bar.
 
-- line;
-- circle;
-- arc;
-- polyline;
-- rectangle as closed polyline.
-
-### Commands
-
-The command system supports undo and redo.
-
-Implemented commands include:
-
-- add entity;
-- delete entities;
-- replace entities;
-- move entities;
-- copy entities;
-- rotate entities;
-- scale entities;
-- mirror entities.
-
-### Selection
-
-Selection currently supports:
-
-- point selection;
-- shift-click toggle selection;
-- window selection;
-- crossing selection;
-- selection preview;
-- selected entity highlighting.
-
-### Object snapping
-
-Available snap modes:
-
-- endpoint;
-- midpoint;
-- center;
-- quadrant;
-- intersection;
-- perpendicular;
-- tangent;
-- grid.
-
-The UI also shows a snap marker and the current snap type in the status bar.
-
-### Tools
-
-Implemented logical tools:
-
-- selection tool;
-- line tool;
-- rectangle tool;
-- move tool;
-- copy tool;
-- delete tool.
-
-Tools are coordinated through a `ToolController` and created through a `ToolRegistry`.
-
-### UI
-
-The current Avalonia UI includes:
-
-- drawing canvas;
-- toolbar;
-- snap toolbar;
-- status bar;
-- zoom with mouse wheel;
-- pan with middle mouse button;
-- view reset with `Home`;
-- undo with `Ctrl+Z`;
-- redo with `Ctrl+Y`;
-- delete selection with `Delete`;
-- cancel active tool with `Esc`.
+The tool system is also UI-independent. Tools such as Selection, Line, Rectangle, Move, Copy and Delete work through a shared tool context and are coordinated by a tool controller. This means the same logic can be tested without launching the graphical application.
 
 ---
 
-## Solution structure
+## User interface
+
+The current desktop application is built with Avalonia UI.
+
+The UI includes a toolbar for tools, a toolbar for snap modes, a drawing canvas, a grid, a status bar and basic viewport navigation.
+
+You can zoom with the mouse wheel, pan with the middle mouse button and reset the view with the `Home` key. The status bar shows the active tool, entity count, selected entity count, model-space mouse coordinates, current snap type and the latest tool message.
+
+Keyboard shortcuts are available for common operations: `Ctrl+Z` for undo, `Ctrl+Y` for redo, `Delete` for deleting the current selection and `Esc` for cancelling the active tool.
+
+---
+
+## Architecture
+
+OpenCad2D is split into several projects.
 
 ```text
 OpenCad2D/
@@ -145,63 +68,29 @@ OpenCad2D/
     OpenCad2D.Tools.Tests/
 ````
 
-### `OpenCad2D.Geometry`
+`OpenCad2D.Geometry` contains the low-level geometric primitives and operations. This project does not depend on the CAD document model or on the UI.
 
-Contains low-level geometry primitives and operations.
+`OpenCad2D.Core` contains the CAD document model, entities, layers, styles, commands and command history.
 
-This project does not depend on the CAD document model or on the UI.
+`OpenCad2D.Interaction` contains hit testing, selection services and snapping services.
 
-### `OpenCad2D.Core`
+`OpenCad2D.Tools` contains the UI-independent tool system. It includes the tool context, tool controller, tool registry, action controller and the main drawing and editing tools.
 
-Contains the CAD document model:
-
-* entities;
-* layers;
-* styles;
-* commands;
-* command history;
-* undo / redo.
-
-### `OpenCad2D.Interaction`
-
-Contains interaction-related logic:
-
-* hit testing;
-* selection services;
-* snapping services.
-
-### `OpenCad2D.Tools`
-
-Contains UI-independent CAD tools and controllers:
-
-* tool context;
-* tool controller;
-* tool registry;
-* action controller;
-* workspace;
-* drawing tools;
-* editing tools.
-
-### `OpenCad2D.App`
-
-Avalonia-based desktop application.
-
-The UI is intentionally thin: most CAD logic lives in the core libraries and is covered by tests.
+`OpenCad2D.App` is the Avalonia desktop application. It is intentionally thin: most CAD logic lives in the core libraries and is covered by tests.
 
 ---
 
 ## Requirements
 
-* .NET 8 SDK
-* Avalonia UI
+OpenCad2D currently targets **.NET 8**.
 
-To check your installed SDK:
+You need the .NET 8 SDK installed.
 
 ```bash
 dotnet --version
 ```
 
-The project currently targets:
+The project is currently developed and tested with:
 
 ```text
 net8.0
@@ -219,7 +108,7 @@ dotnet build
 
 ---
 
-## Run the Avalonia app
+## Run the desktop application
 
 ```bash
 dotnet run --project src/OpenCad2D.App
@@ -233,62 +122,21 @@ dotnet run --project src/OpenCad2D.App
 dotnet test
 ```
 
-The project includes tests for:
-
-* geometry primitives;
-* intersections;
-* distances;
-* CAD entities;
-* commands;
-* undo / redo;
-* snapping;
-* selection;
-* tools;
-* workspace;
-* controllers.
+The test suite covers geometry primitives, distance calculations, intersections, CAD entities, commands, undo/redo, selection, snapping, tools, controllers and workspace behavior.
 
 ---
 
 ## Basic usage
 
-### Draw a line
+To draw a line, select the `Line` tool, click the first point and then click the second point.
 
-1. Select `Line`.
-2. Click the first point.
-3. Click the second point.
+To draw a rectangle, select the `Rectangle` tool, click the first corner and then click the opposite corner.
 
-### Draw a rectangle
+To select entities, choose the `Select` tool and click an entity. You can use `Shift + click` to toggle selection. You can also drag from left to right for window selection or from right to left for crossing selection.
 
-1. Select `Rectangle`.
-2. Click the first corner.
-3. Click the opposite corner.
+To move or copy entities, select them first, choose `Move` or `Copy`, click a base point and then click a destination point.
 
-### Select entities
-
-1. Select `Select`.
-2. Click an entity to select it.
-3. Use `Shift + click` to toggle selection.
-4. Drag left-to-right for window selection.
-5. Drag right-to-left for crossing selection.
-
-### Move entities
-
-1. Select one or more entities.
-2. Select `Move`.
-3. Click the base point.
-4. Click the destination point.
-
-### Copy entities
-
-1. Select one or more entities.
-2. Select `Copy`.
-3. Click the base point.
-4. Click the destination point.
-
-### Delete entities
-
-1. Select one or more entities.
-2. Press `Delete` or click `Delete`.
+To delete entities, select them and press `Delete` or use the `Delete` button.
 
 ---
 
@@ -308,46 +156,29 @@ The project includes tests for:
 
 ## Design goals
 
-OpenCad2D is designed around a few core principles:
+OpenCad2D is designed around a few principles.
 
-* keep the CAD core independent from the UI;
-* keep geometry operations testable;
-* keep tools independent from Avalonia;
-* use commands for document modifications;
-* support undo and redo from the beginning;
-* make interaction logic reusable;
-* keep the architecture understandable.
+The CAD core should remain independent from the UI. Geometry and document logic should be testable without launching the desktop application. Tools should not depend directly on Avalonia. Document changes should go through commands so undo and redo are available from the beginning.
+
+The codebase should also remain understandable. The project is intentionally developed step by step, with small components and tests around the important behaviors.
 
 ---
 
 ## Roadmap
 
-Possible next steps:
+The next major areas of work are layer management, current layer support, entity colors and line weights in the canvas, save/load support and import/export features.
 
-* layer management UI;
-* current layer support;
-* entity colors and line weights in the canvas;
-* save / load document format;
-* DXF import / export;
-* SVG export;
-* PDF export;
-* text entity;
-* dimension entities;
-* trim / extend tools;
-* offset tool;
-* fillet / chamfer tools;
-* better viewport fitting;
-* command line input;
-* property panel;
-* multi-selection improvements.
+Future directions may include DXF import/export, SVG export, PDF export, text entities, dimension entities, trim and extend tools, offset, fillet, chamfer, better viewport fitting, command-line input, a property panel and richer multi-selection behavior.
 
 ---
 
 ## License
 
-License not specified yet.
+OpenCad2D is released under the **GNU General Public License v3.0 or later**.
 
-Before using this project in production or redistributing it, please check the license once it is added.
+This means the software can be used, studied, modified and redistributed, but distributed modified versions must preserve the same software freedom.
+
+See the `LICENSE` file for details.
 
 ---
 
