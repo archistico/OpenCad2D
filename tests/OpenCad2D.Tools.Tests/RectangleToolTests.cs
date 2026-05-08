@@ -5,6 +5,8 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -304,6 +306,43 @@ public sealed class RectangleToolTests
         Assert.Null(tool.FirstPoint);
         Assert.Null(tool.CurrentPoint);
         Assert.Equal(0, context.Document.Entities.Count);
+    }
+
+    [Fact]
+    public void SecondPointerPress_ShouldCreateRectangleOnCurrentLayer()
+    {
+        CadDocument document = new();
+
+        var layerId = new LayerId("Rooms");
+
+        document.Layers.Add(
+            new Layer(
+                layerId,
+                "Rooms",
+                OpenCad2D.Core.Styling.CadColor.FromRgb(0, 180, 255),
+                OpenCad2D.Core.Styling.LineWeight.FromMillimeters(0.25)));
+
+        var context = new ToolContext(
+            document,
+            new CommandHistory(),
+            new SnapService(),
+            currentLayerId: layerId);
+
+        var tool = new RectangleTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 5)));
+
+        var rectangle = Assert.Single(
+            document.Entities.All.OfType<PolylineEntity>());
+
+        Assert.Equal(layerId, rectangle.LayerId);
+        Assert.True(rectangle.IsClosed);
     }
 
     private static ToolContext CreateContext(

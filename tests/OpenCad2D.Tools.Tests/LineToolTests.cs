@@ -5,6 +5,8 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -334,6 +336,42 @@ public sealed class LineToolTests
         Assert.Equal(new Point2D(20, 0), created.Start);
         Assert.Equal(5, created.End.X, precision: 10);
         Assert.Equal(Math.Sqrt(75), created.End.Y, precision: 10);
+    }
+
+    [Fact]
+    public void SecondPointerPress_ShouldCreateLineOnCurrentLayer()
+    {
+        CadDocument document = new();
+
+        var layerId = new LayerId("Walls");
+
+        document.Layers.Add(
+            new Layer(
+                layerId,
+                "Walls",
+                OpenCad2D.Core.Styling.CadColor.FromRgb(255, 0, 0),
+                OpenCad2D.Core.Styling.LineWeight.FromMillimeters(0.25)));
+
+        var context = new ToolContext(
+            document,
+            new CommandHistory(),
+            new SnapService(),
+            currentLayerId: layerId);
+
+        var tool = new LineTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        var line = Assert.Single(
+            document.Entities.All.OfType<LineEntity>());
+
+        Assert.Equal(layerId, line.LayerId);
     }
 
     private static ToolContext CreateContext(

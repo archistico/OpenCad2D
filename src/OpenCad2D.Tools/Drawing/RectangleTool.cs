@@ -3,6 +3,7 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Core.Identifiers;
 
 namespace OpenCad2D.Tools.Drawing;
 
@@ -25,9 +26,19 @@ public sealed class RectangleTool : TwoPointToolBase
             return null;
         }
 
-        return CreateRectangleEntity(
+        return CreatePreviewRectangleEntity(
             FirstPoint.Value,
             CurrentPoint.Value);
+    }
+
+    private static PolylineEntity CreatePreviewRectangleEntity(
+        Point2D firstCorner,
+        Point2D oppositeCorner)
+    {
+        return CreateRectangleEntity(
+            firstCorner,
+            oppositeCorner,
+            LayerId.Default);
     }
 
     protected override ToolResult OnFirstPointSelected(
@@ -57,7 +68,8 @@ public sealed class RectangleTool : TwoPointToolBase
 
         PolylineEntity rectangle = CreateRectangleEntity(
             firstPoint,
-            secondPoint);
+            secondPoint,
+            context.CurrentLayerId);
 
         context.CommandHistory.Execute(
             context.Document,
@@ -81,18 +93,20 @@ public sealed class RectangleTool : TwoPointToolBase
 
     private static PolylineEntity CreateRectangleEntity(
         Point2D firstCorner,
-        Point2D oppositeCorner)
+        Point2D oppositeCorner,
+        LayerId layerId)
     {
         var vertices = new[]
         {
-            firstCorner,
-            new Point2D(oppositeCorner.X, firstCorner.Y),
-            oppositeCorner,
-            new Point2D(firstCorner.X, oppositeCorner.Y)
-        };
+        firstCorner,
+        new Point2D(oppositeCorner.X, firstCorner.Y),
+        oppositeCorner,
+        new Point2D(firstCorner.X, oppositeCorner.Y)
+    };
 
         return new PolylineEntity(
             vertices,
-            isClosed: true);
+            isClosed: true,
+            layerId: layerId);
     }
 }

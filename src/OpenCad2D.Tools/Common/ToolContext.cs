@@ -1,5 +1,6 @@
 ﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 
@@ -17,6 +18,7 @@ public sealed class ToolContext
         SelectionSet? selectionSet = null,
         SelectionService? selectionService = null,
         GridSettings? gridSettings = null,
+        LayerId? currentLayerId = null,
         SnapKind enabledSnaps = SnapKind.None,
         double snapTolerance = 0,
         double selectionTolerance = 5,
@@ -53,6 +55,7 @@ public sealed class ToolContext
         SelectionSet = selectionSet ?? new SelectionSet();
         SelectionService = selectionService ?? new SelectionService();
         GridSettings = gridSettings ?? new GridSettings();
+        CurrentLayerId = currentLayerId ?? LayerId.Default;
         EnabledSnaps = enabledSnaps;
         SnapTolerance = snapTolerance;
         SelectionTolerance = selectionTolerance;
@@ -70,6 +73,8 @@ public sealed class ToolContext
     public SelectionService SelectionService { get; }
 
     public GridSettings GridSettings { get; }
+
+    public LayerId CurrentLayerId { get; set; }
 
     public SnapKind EnabledSnaps { get; set; }
 
