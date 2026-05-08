@@ -23,40 +23,48 @@
 			<StackPanel Orientation="Vertical"
                         Spacing="6">
 
-				<StackPanel Orientation="Horizontal"
-                            Spacing="8">
+				<StackPanel Grid.Row="0"
+            Orientation="Horizontal"
+            Spacing="6"
+            Margin="8">
 
 					<Button Content="Select"
-                            Click="Select_Click" />
+							Click="Select_Click" />
 
 					<Button Content="Line"
-                            Click="Line_Click" />
+							Click="Line_Click" />
 
 					<Button Content="Rectangle"
-                            Click="Rectangle_Click" />
+							Click="Rectangle_Click" />
 
 					<Button Content="Move"
-                            Click="Move_Click" />
+							Click="Move_Click" />
 
 					<Button Content="Copy"
-                            Click="Copy_Click" />
+							Click="Copy_Click" />
 
 					<Button Content="Delete"
-                            Click="Delete_Click" />
-
-					<Separator />
+							Click="Delete_Click" />
 
 					<Button Content="Undo"
-                            Click="Undo_Click" />
+							Click="Undo_Click" />
 
 					<Button Content="Redo"
-                            Click="Redo_Click" />
+							Click="Redo_Click" />
 
-					<TextBlock Text="Ctrl+Z / Ctrl+Y / Canc / Esc / Rotella zoom / Tasto centrale pan / Home reset view"
-                               Foreground="#CCCCCC"
-                               VerticalAlignment="Center"
-                               Margin="16,0,0,0" />
+					<Separator Margin="8,0" />
 
+					<TextBlock Text="Layer:"
+						VerticalAlignment="Center"
+						Margin="4,0,6,0" />
+
+					<ComboBox x:Name="LayerComboBox"
+							  Width="150"
+							  SelectionChanged="LayerComboBox_SelectionChanged" />
+
+					<Separator Margin="8,0" />
+
+					<!-- Qui tieni le tue CheckBox degli snap -->
 				</StackPanel>
 
 				<StackPanel Orientation="Horizontal"

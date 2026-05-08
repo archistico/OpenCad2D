@@ -4,6 +4,7 @@ using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Core.Layers;
 
 namespace OpenCad2D.App;
 
@@ -18,7 +19,30 @@ public partial class MainWindow : Window
         _viewModel = new MainWindowViewModel();
         DataContext = _viewModel;
 
+        InitializeLayerComboBox();
+
         RefreshStatus();
+    }
+
+    private void InitializeLayerComboBox()
+    {
+        LayerComboBox.ItemsSource = _viewModel.LayerNames;
+        LayerComboBox.SelectedItem = _viewModel.CurrentLayer.Name;
+    }
+
+    private void LayerComboBox_SelectionChanged(
+    object? sender,
+    SelectionChangedEventArgs e)
+    {
+        if (LayerComboBox.SelectedItem is not string selectedLayerName)
+        {
+            return;
+        }
+
+        _viewModel.SetCurrentLayerByName(selectedLayerName);
+
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
     }
 
     private void Select_Click(
