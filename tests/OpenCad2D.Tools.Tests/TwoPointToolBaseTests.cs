@@ -184,8 +184,9 @@ public sealed class TwoPointToolBaseTests
             document ?? new CadDocument(),
             new CommandHistory(),
             new SnapService(),
-            enabledSnaps,
-            snapTolerance);
+            selectionSet: null,
+            enabledSnaps: enabledSnaps,
+            snapTolerance: snapTolerance);
     }
 
     private sealed class FakeTwoPointTool : TwoPointToolBase

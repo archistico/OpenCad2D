@@ -1,5 +1,6 @@
 ﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
+using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 
 namespace OpenCad2D.Tools.Common;
@@ -13,6 +14,7 @@ public sealed class ToolContext
         CadDocument document,
         CommandHistory commandHistory,
         SnapService snapService,
+        SelectionSet? selectionSet = null,
         SnapKind enabledSnaps = SnapKind.None,
         double snapTolerance = 0)
     {
@@ -30,6 +32,7 @@ public sealed class ToolContext
         Document = document;
         CommandHistory = commandHistory;
         SnapService = snapService;
+        SelectionSet = selectionSet ?? new SelectionSet();
         EnabledSnaps = enabledSnaps;
         SnapTolerance = snapTolerance;
     }
@@ -39,6 +42,8 @@ public sealed class ToolContext
     public CommandHistory CommandHistory { get; }
 
     public SnapService SnapService { get; }
+
+    public SelectionSet SelectionSet { get; }
 
     public SnapKind EnabledSnaps { get; set; }
 

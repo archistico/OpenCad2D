@@ -16,8 +16,8 @@ public sealed class LineToolTests
         var tool = new LineTool();
 
         Assert.Equal("Line", tool.Name);
-        Assert.Equal(LineToolState.WaitingForFirstPoint, tool.State);
-        Assert.Null(tool.StartPoint);
+        Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
+        Assert.Null(tool.FirstPoint);
         Assert.Null(tool.CurrentPoint);
     }
 
@@ -32,8 +32,8 @@ public sealed class LineToolTests
             new PointerInfo(new Point2D(1, 2)));
 
         Assert.Equal(ToolResultKind.Started, result.Kind);
-        Assert.Equal(LineToolState.WaitingForSecondPoint, tool.State);
-        Assert.Equal(new Point2D(1, 2), tool.StartPoint);
+        Assert.Equal(TwoPointToolState.WaitingForSecondPoint, tool.State);
+        Assert.Equal(new Point2D(1, 2), tool.FirstPoint);
         Assert.Equal(new Point2D(1, 2), tool.CurrentPoint);
         Assert.Equal(0, context.Document.Entities.Count);
     }
@@ -79,8 +79,8 @@ public sealed class LineToolTests
 
         Assert.Equal(ToolResultKind.Completed, result.Kind);
         Assert.Equal(1, context.Document.Entities.Count);
-        Assert.Equal(LineToolState.WaitingForFirstPoint, tool.State);
-        Assert.Null(tool.StartPoint);
+        Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
+        Assert.Null(tool.FirstPoint);
         Assert.Null(tool.CurrentPoint);
 
         var line = Assert.Single(context.Document.Entities.All.OfType<LineEntity>());
@@ -105,7 +105,7 @@ public sealed class LineToolTests
 
         Assert.Equal(ToolResultKind.None, result.Kind);
         Assert.Equal(0, context.Document.Entities.Count);
-        Assert.Equal(LineToolState.WaitingForSecondPoint, tool.State);
+        Assert.Equal(TwoPointToolState.WaitingForSecondPoint, tool.State);
     }
 
     [Fact]
@@ -121,8 +121,8 @@ public sealed class LineToolTests
         ToolResult result = tool.Cancel(context);
 
         Assert.Equal(ToolResultKind.Cancelled, result.Kind);
-        Assert.Equal(LineToolState.WaitingForFirstPoint, tool.State);
-        Assert.Null(tool.StartPoint);
+        Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
+        Assert.Null(tool.FirstPoint);
         Assert.Null(tool.CurrentPoint);
         Assert.False(tool.HasPreview);
     }
@@ -172,7 +172,7 @@ public sealed class LineToolTests
             context,
             new PointerInfo(new Point2D(101, 101)));
 
-        Assert.Equal(new Point2D(100, 100), tool.StartPoint);
+        Assert.Equal(new Point2D(100, 100), tool.FirstPoint);
     }
 
     [Fact]
@@ -287,7 +287,8 @@ public sealed class LineToolTests
             document ?? new CadDocument(),
             new CommandHistory(),
             new SnapService(),
-            enabledSnaps,
-            snapTolerance);
+            selectionSet: null,
+            enabledSnaps: enabledSnaps,
+            snapTolerance: snapTolerance);
     }
 }
