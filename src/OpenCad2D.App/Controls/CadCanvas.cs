@@ -12,6 +12,8 @@ using OpenCad2D.App.Viewport;
 using System;
 using System.Collections.Generic;
 using OpenCad2D.Interaction.Snapping;
+using OpenCad2D.Core.Layers;
+using OpenCad2D.Core.Styling;
 
 namespace OpenCad2D.App.Controls;
 
@@ -89,16 +91,52 @@ public sealed class CadCanvas : Control
 
         foreach (CadEntity entity in Workspace.Document.Entities.All)
         {
+            Pen pen = Workspace.SelectionSet.Contains(entity.Id)
+                ? _selectedPen
+                : CreateEntityPen(entity);
+
             DrawEntity(
                 context,
                 entity,
-                Workspace.SelectionSet.Contains(entity.Id)
-                    ? _selectedPen
-                    : _entityPen);
+                pen);
         }
 
         DrawActiveToolPreview(context);
         DrawSnapMarker(context);
+    }
+
+    private Pen CreateEntityPen(CadEntity entity)
+    {
+        CadColor color = ResolveEntityColor(entity);
+
+        var brush = new SolidColorBrush(
+            Color.FromRgb(
+                color.R,
+                color.G,
+                color.B));
+
+        return new Pen(brush, 1);
+    }
+
+    private CadColor ResolveEntityColor(CadEntity entity)
+    {
+        if (!entity.Style.Color.IsByLayer)
+        {
+            return entity.Style.Color;
+        }
+
+        if (Workspace is null)
+        {
+            return CadColor.FromRgb(255, 255, 255);
+        }
+
+        if (!Workspace.Document.Layers.TryGet(entity.LayerId, out Layer? layer) ||
+            layer is null)
+        {
+            return CadColor.FromRgb(255, 255, 255);
+        }
+
+        return layer.Color;
     }
 
     private void DrawSnapMarker(DrawingContext context)
