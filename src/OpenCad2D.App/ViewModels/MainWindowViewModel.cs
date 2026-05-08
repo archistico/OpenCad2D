@@ -18,7 +18,8 @@ public sealed class MainWindowViewModel
                 SnapKind.Midpoint |
                 SnapKind.Center |
                 SnapKind.Quadrant |
-                SnapKind.Intersection,
+                SnapKind.Intersection |
+                SnapKind.Grid,
             snapTolerance: 8,
             selectionTolerance: 6,
             selectionDragThreshold: 4);
