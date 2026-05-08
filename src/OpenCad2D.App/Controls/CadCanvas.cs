@@ -27,6 +27,22 @@ public sealed class CadCanvas : Control
     private bool _isPanning;
     private Point _lastPanScreenPoint;
 
+    private readonly Pen _gridMinorPen = new(
+        new SolidColorBrush(Color.FromRgb(45, 45, 45)),
+        1);
+
+    private readonly Pen _gridMajorPen = new(
+        new SolidColorBrush(Color.FromRgb(60, 60, 60)),
+        1);
+
+    private readonly Pen _axisXPen = new(
+        new SolidColorBrush(Color.FromRgb(120, 70, 70)),
+        1.5);
+
+    private readonly Pen _axisYPen = new(
+        new SolidColorBrush(Color.FromRgb(70, 120, 70)),
+        1.5);
+
     public ViewportTransform Viewport => _viewport;
 
     public static readonly StyledProperty<CadWorkspace?> WorkspaceProperty =
@@ -60,6 +76,8 @@ public sealed class CadCanvas : Control
             _backgroundBrush,
             Bounds);
 
+        DrawGrid(context);
+
         if (Workspace is null)
         {
             return;
@@ -76,6 +94,144 @@ public sealed class CadCanvas : Control
         }
 
         DrawActiveToolPreview(context);
+    }
+
+    private void DrawGrid(DrawingContext context)
+    {
+        double minorStep = GetNiceGridStep();
+
+        if (minorStep <= 0)
+        {
+            return;
+        }
+
+        double majorStep = minorStep * 5;
+
+        Point2D topLeftModel = ToModelPoint(new Point(0, 0));
+        Point2D bottomRightModel = ToModelPoint(new Point(Bounds.Width, Bounds.Height));
+
+        double minX = Math.Min(topLeftModel.X, bottomRightModel.X);
+        double maxX = Math.Max(topLeftModel.X, bottomRightModel.X);
+        double minY = Math.Min(topLeftModel.Y, bottomRightModel.Y);
+        double maxY = Math.Max(topLeftModel.Y, bottomRightModel.Y);
+
+        double startX = Math.Floor(minX / minorStep) * minorStep;
+        double endX = Math.Ceiling(maxX / minorStep) * minorStep;
+
+        double startY = Math.Floor(minY / minorStep) * minorStep;
+        double endY = Math.Ceiling(maxY / minorStep) * minorStep;
+
+        for (double x = startX; x <= endX; x += minorStep)
+        {
+            Pen pen = IsMultipleOf(x, majorStep)
+                ? _gridMajorPen
+                : _gridMinorPen;
+
+            Point p1 = ToScreenPoint(new Point2D(x, startY));
+            Point p2 = ToScreenPoint(new Point2D(x, endY));
+
+            context.DrawLine(
+                pen,
+                p1,
+                p2);
+        }
+
+        for (double y = startY; y <= endY; y += minorStep)
+        {
+            Pen pen = IsMultipleOf(y, majorStep)
+                ? _gridMajorPen
+                : _gridMinorPen;
+
+            Point p1 = ToScreenPoint(new Point2D(startX, y));
+            Point p2 = ToScreenPoint(new Point2D(endX, y));
+
+            context.DrawLine(
+                pen,
+                p1,
+                p2);
+        }
+
+        DrawAxes(
+            context,
+            minX,
+            maxX,
+            minY,
+            maxY);
+    }
+
+    private void DrawAxes(
+        DrawingContext context,
+        double minX,
+        double maxX,
+        double minY,
+        double maxY)
+    {
+        if (minY <= 0 && maxY >= 0)
+        {
+            context.DrawLine(
+                _axisXPen,
+                ToScreenPoint(new Point2D(minX, 0)),
+                ToScreenPoint(new Point2D(maxX, 0)));
+        }
+
+        if (minX <= 0 && maxX >= 0)
+        {
+            context.DrawLine(
+                _axisYPen,
+                ToScreenPoint(new Point2D(0, minY)),
+                ToScreenPoint(new Point2D(0, maxY)));
+        }
+    }
+
+    private double GetNiceGridStep()
+    {
+        const double targetScreenSpacing = 40.0;
+
+        double rawModelStep = _viewport.ScreenLengthToModel(targetScreenSpacing);
+
+        if (rawModelStep <= 0)
+        {
+            return 10;
+        }
+
+        double exponent = Math.Floor(Math.Log10(rawModelStep));
+        double magnitude = Math.Pow(10, exponent);
+        double normalized = rawModelStep / magnitude;
+
+        double niceNormalized;
+
+        if (normalized <= 1)
+        {
+            niceNormalized = 1;
+        }
+        else if (normalized <= 2)
+        {
+            niceNormalized = 2;
+        }
+        else if (normalized <= 5)
+        {
+            niceNormalized = 5;
+        }
+        else
+        {
+            niceNormalized = 10;
+        }
+
+        return niceNormalized * magnitude;
+    }
+
+    private static bool IsMultipleOf(
+        double value,
+        double step)
+    {
+        if (step <= 0)
+        {
+            return false;
+        }
+
+        double quotient = value / step;
+
+        return Math.Abs(quotient - Math.Round(quotient)) < 1e-6;
     }
 
     private void NotifyWorkspaceChanged(
