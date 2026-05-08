@@ -126,4 +126,39 @@ public static class DistanceService
 
         return point.DistanceTo(closestPoint);
     }
+
+    public static Point2D ClosestPointOnPolyline(
+    Point2D point,
+    Polyline2D polyline)
+    {
+        ArgumentNullException.ThrowIfNull(polyline);
+
+        IReadOnlyList<LineSegment2D> segments = polyline.GetSegments();
+
+        Point2D closestPoint = ClosestPointOnSegment(point, segments[0]);
+        double bestDistance = point.DistanceTo(closestPoint);
+
+        for (int index = 1; index < segments.Count; index++)
+        {
+            Point2D candidate = ClosestPointOnSegment(point, segments[index]);
+            double candidateDistance = point.DistanceTo(candidate);
+
+            if (candidateDistance < bestDistance)
+            {
+                closestPoint = candidate;
+                bestDistance = candidateDistance;
+            }
+        }
+
+        return closestPoint;
+    }
+
+    public static double DistancePointToPolyline(
+        Point2D point,
+        Polyline2D polyline)
+    {
+        Point2D closestPoint = ClosestPointOnPolyline(point, polyline);
+
+        return point.DistanceTo(closestPoint);
+    }
 }

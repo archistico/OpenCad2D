@@ -227,4 +227,79 @@ public sealed class DistanceServiceTests
 
         Assert.Equal(expected, result, precision: 10);
     }
+
+    [Fact]
+    public void ClosestPointOnPolyline_ShouldReturnClosestPointOnNearestSegment()
+    {
+        var polyline = new Polyline2D(new[]
+        {
+        new Point2D(0, 0),
+        new Point2D(10, 0),
+        new Point2D(10, 10)
+    });
+
+        Point2D point = new(7, 2);
+
+        Point2D result = DistanceService.ClosestPointOnPolyline(point, polyline);
+
+        Assert.Equal(7, result.X, precision: 10);
+        Assert.Equal(0, result.Y, precision: 10);
+    }
+
+    [Fact]
+    public void ClosestPointOnPolyline_WithPointNearSecondSegment_ShouldReturnClosestPointOnSecondSegment()
+    {
+        var polyline = new Polyline2D(new[]
+        {
+        new Point2D(0, 0),
+        new Point2D(10, 0),
+        new Point2D(10, 10)
+    });
+
+        Point2D point = new(13, 6);
+
+        Point2D result = DistanceService.ClosestPointOnPolyline(point, polyline);
+
+        Assert.Equal(10, result.X, precision: 10);
+        Assert.Equal(6, result.Y, precision: 10);
+    }
+
+    [Fact]
+    public void DistancePointToPolyline_ShouldReturnCorrectDistance()
+    {
+        var polyline = new Polyline2D(new[]
+        {
+        new Point2D(0, 0),
+        new Point2D(10, 0),
+        new Point2D(10, 10)
+    });
+
+        Point2D point = new(13, 6);
+
+        double result = DistanceService.DistancePointToPolyline(point, polyline);
+
+        Assert.Equal(3, result, precision: 10);
+    }
+
+    [Fact]
+    public void ClosestPointOnClosedPolyline_ShouldConsiderClosingSegment()
+    {
+        var polyline = new Polyline2D(
+            new[]
+            {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(10, 10)
+            },
+            isClosed: true);
+
+        Point2D point = new(-1, 5);
+
+        Point2D result = DistanceService.ClosestPointOnPolyline(point, polyline);
+
+        // Closing segment is from (10,10) to (0,0).
+        // The closest point from (-1,5) to that diagonal is around (2,2).
+        Assert.Equal(2, result.X, precision: 10);
+        Assert.Equal(2, result.Y, precision: 10);
+    }
 }
