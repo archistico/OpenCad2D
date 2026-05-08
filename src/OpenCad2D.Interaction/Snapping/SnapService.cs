@@ -16,6 +16,7 @@ public sealed class SnapService
         new QuadrantSnapProvider(),
         new IntersectionSnapProvider(),
         new PerpendicularSnapProvider(),
+        new TangentSnapProvider(),
         new NearestSnapProvider(),
         new GridSnapProvider()
     })

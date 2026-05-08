@@ -302,6 +302,40 @@ public sealed class LineToolTests
         Assert.Equal(new Point2D(20, 50), line.End);
     }
 
+    [Fact]
+    public void SecondPointerPress_WithTangentSnap_ShouldCreateTangentLineToCircle()
+    {
+        CadDocument document = new();
+
+        var circle = new CircleEntity(
+            new Point2D(0, 0),
+            10);
+
+        document.AddEntity(circle);
+
+        var context = CreateContext(
+            document,
+            enabledSnaps: SnapKind.Tangent,
+            snapTolerance: 1);
+
+        var tool = new LineTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(20, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 8.66)));
+
+        var created = Assert.Single(
+            context.Document.Entities.All.OfType<LineEntity>());
+
+        Assert.Equal(new Point2D(20, 0), created.Start);
+        Assert.Equal(5, created.End.X, precision: 10);
+        Assert.Equal(Math.Sqrt(75), created.End.Y, precision: 10);
+    }
+
     private static ToolContext CreateContext(
         CadDocument? document = null,
         SnapKind enabledSnaps = SnapKind.None,
