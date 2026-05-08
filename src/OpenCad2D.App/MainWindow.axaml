@@ -48,7 +48,7 @@
 				<Button Content="Redo"
                         Click="Redo_Click" />
 
-				<TextBlock Text="Ctrl+Z / Ctrl+Y / Canc / Esc"
+				<TextBlock Text="Ctrl+Z / Ctrl+Y / Canc / Esc / Rotella zoom / Tasto centrale pan / Home reset view"
                            Foreground="#CCCCCC"
                            VerticalAlignment="Center"
                            Margin="16,0,0,0" />

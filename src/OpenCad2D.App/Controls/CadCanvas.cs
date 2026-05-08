@@ -8,6 +8,7 @@ using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Selection;
+using OpenCad2D.App.Viewport;
 using System;
 using System.Collections.Generic;
 
@@ -21,6 +22,12 @@ public sealed class CadCanvas : Control
     private readonly Pen _selectionWindowPen = new(Brushes.LightGreen, 1);
     private readonly IBrush _backgroundBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30));
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
+    private readonly ViewportTransform _viewport = new();
+
+    private bool _isPanning;
+    private Point _lastPanScreenPoint;
+
+    public ViewportTransform Viewport => _viewport;
 
     public static readonly StyledProperty<CadWorkspace?> WorkspaceProperty =
         AvaloniaProperty.Register<CadCanvas, CadWorkspace?>(
@@ -41,6 +48,7 @@ public sealed class CadCanvas : Control
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;
         PointerReleased += OnPointerReleased;
+        PointerWheelChanged += OnPointerWheelChanged;
         KeyDown += OnKeyDown;
     }
 
@@ -170,7 +178,7 @@ public sealed class CadCanvas : Control
             return;
         }
 
-        Rect rect = ToRect(window.Value);
+        Rect rect = ToScreenRect(window.Value);
 
         context.DrawRectangle(
             _selectionWindowFill,
@@ -178,27 +186,27 @@ public sealed class CadCanvas : Control
             rect);
     }
 
-    private static void DrawEntity(
-        DrawingContext context,
-        CadEntity entity,
-        Pen pen)
+    private void DrawEntity(
+    DrawingContext context,
+    CadEntity entity,
+    Pen pen)
     {
         switch (entity)
         {
             case LineEntity line:
                 context.DrawLine(
                     pen,
-                    ToPoint(line.Start),
-                    ToPoint(line.End));
+                    ToScreenPoint(line.Start),
+                    ToScreenPoint(line.End));
                 break;
 
             case CircleEntity circle:
                 context.DrawEllipse(
                     null,
                     pen,
-                    ToPoint(circle.Center),
-                    circle.Radius,
-                    circle.Radius);
+                    ToScreenPoint(circle.Center),
+                    _viewport.ModelLengthToScreen(circle.Radius),
+                    _viewport.ModelLengthToScreen(circle.Radius));
                 break;
 
             case ArcEntity arc:
@@ -217,10 +225,10 @@ public sealed class CadCanvas : Control
         }
     }
 
-    private static void DrawPolyline(
-        DrawingContext context,
-        PolylineEntity polyline,
-        Pen pen)
+    private void DrawPolyline(
+    DrawingContext context,
+    PolylineEntity polyline,
+    Pen pen)
     {
         IReadOnlyList<Point2D> vertices = polyline.Vertices;
 
@@ -228,23 +236,23 @@ public sealed class CadCanvas : Control
         {
             context.DrawLine(
                 pen,
-                ToPoint(vertices[i]),
-                ToPoint(vertices[i + 1]));
+                ToScreenPoint(vertices[i]),
+                ToScreenPoint(vertices[i + 1]));
         }
 
         if (polyline.IsClosed && vertices.Count > 1)
         {
             context.DrawLine(
                 pen,
-                ToPoint(vertices[^1]),
-                ToPoint(vertices[0]));
+                ToScreenPoint(vertices[^1]),
+                ToScreenPoint(vertices[0]));
         }
     }
 
-    private static void DrawArc(
-        DrawingContext context,
-        ArcEntity arc,
-        Pen pen)
+    private void DrawArc(
+    DrawingContext context,
+    ArcEntity arc,
+    Pen pen)
     {
         const int segments = 48;
 
@@ -274,8 +282,8 @@ public sealed class CadCanvas : Control
 
             context.DrawLine(
                 pen,
-                ToPoint(previous),
-                ToPoint(current));
+                ToScreenPoint(previous),
+                ToScreenPoint(current));
 
             previous = current;
         }
@@ -293,6 +301,15 @@ public sealed class CadCanvas : Control
         Focus();
 
         Point position = e.GetPosition(this);
+
+        if (e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed)
+        {
+            _isPanning = true;
+            _lastPanScreenPoint = position;
+            e.Pointer.Capture(this);
+            return;
+        }
+
         Point2D modelPoint = ToModelPoint(position);
 
         ToolResult result = Workspace.ToolController.OnPointerPressed(
@@ -317,16 +334,34 @@ public sealed class CadCanvas : Control
         }
 
         Point position = e.GetPosition(this);
-        Point2D modelPoint = ToModelPoint(position);
+
+        if (_isPanning)
+        {
+            Vector delta = position - _lastPanScreenPoint;
+
+            _viewport.Pan(delta);
+            _lastPanScreenPoint = position;
+
+            Point2D modelPoint = ToModelPoint(position);
+
+            NotifyWorkspaceChanged(
+                ToolResult.Updated("Pan."),
+                modelPoint);
+
+            InvalidateVisual();
+            return;
+        }
+
+        Point2D point = ToModelPoint(position);
 
         ToolResult result = Workspace.ToolController.OnPointerMoved(
             new PointerInfo(
-                modelPoint,
+                point,
                 GetModifiers(e.KeyModifiers)));
 
         NotifyWorkspaceChanged(
             result,
-            modelPoint);
+            point);
 
         InvalidateVisual();
     }
@@ -341,7 +376,21 @@ public sealed class CadCanvas : Control
         }
 
         Point position = e.GetPosition(this);
+
         Point2D modelPoint = ToModelPoint(position);
+
+        if (_isPanning)
+        {
+            _isPanning = false;
+            e.Pointer.Capture(null);
+
+            NotifyWorkspaceChanged(
+                ToolResult.Updated("Pan completed."),
+                modelPoint);
+
+            InvalidateVisual();
+            return;
+        }
 
         ToolResult result = Workspace.ToolController.OnPointerReleased(
             new PointerInfo(
@@ -383,6 +432,17 @@ public sealed class CadCanvas : Control
                  e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
             result = Workspace.ActionController.Redo();
+        } 
+        else if (e.Key == Key.Home)
+        {
+            _viewport.Reset();
+
+            NotifyWorkspaceChanged(
+                ToolResult.Updated("View reset."),
+                Point2D.Origin);
+
+            InvalidateVisual();
+            return;
         }
 
         if (result is not null)
@@ -418,26 +478,49 @@ public sealed class CadCanvas : Control
         return result;
     }
 
-    private static Point ToPoint(Point2D point)
+    private void OnPointerWheelChanged(
+    object? sender,
+    PointerWheelEventArgs e)
     {
-        return new Point(
-            point.X,
-            point.Y);
+        Point screenPoint = e.GetPosition(this);
+
+        double zoomFactor = e.Delta.Y > 0
+            ? 1.15
+            : 1.0 / 1.15;
+
+        _viewport.ZoomAt(
+            screenPoint,
+            zoomFactor);
+
+        Point2D modelPoint = ToModelPoint(screenPoint);
+
+        NotifyWorkspaceChanged(
+            ToolResult.Updated($"Zoom: {_viewport.Scale:0.###}x"),
+            modelPoint);
+
+        InvalidateVisual();
     }
 
-    private static Point2D ToModelPoint(Point point)
+    private Point ToScreenPoint(Point2D point)
     {
-        return new Point2D(
-            point.X,
-            point.Y);
+        return _viewport.ModelToScreen(point);
     }
 
-    private static Rect ToRect(BoundingBox2D box)
+    private Point2D ToModelPoint(Point screenPoint)
     {
+        return _viewport.ScreenToModel(screenPoint);
+    }
+
+    private Rect ToScreenRect(BoundingBox2D box)
+    {
+        Point topLeft = _viewport.ModelToScreen(
+            new Point2D(box.MinX, box.MinY));
+
+        Point bottomRight = _viewport.ModelToScreen(
+            new Point2D(box.MaxX, box.MaxY));
+
         return new Rect(
-            box.MinX,
-            box.MinY,
-            box.Width,
-            box.Height);
+            topLeft,
+            bottomRight);
     }
 }
