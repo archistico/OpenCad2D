@@ -82,4 +82,149 @@ public sealed class DistanceServiceTests
 
         Assert.Equal(4, result);
     }
+
+    [Fact]
+    public void ClosestPointOnCircle_WithExternalPoint_ShouldReturnPointOnCircle()
+    {
+        var circle = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        Point2D point = new(20, 0);
+
+        Point2D result = DistanceService.ClosestPointOnCircle(point, circle);
+
+        Assert.Equal(10, result.X, precision: 10);
+        Assert.Equal(0, result.Y, precision: 10);
+    }
+
+    [Fact]
+    public void ClosestPointOnCircle_WithPointAtCenter_ShouldReturnRightPoint()
+    {
+        var circle = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        Point2D point = new(0, 0);
+
+        Point2D result = DistanceService.ClosestPointOnCircle(point, circle);
+
+        Assert.Equal(10, result.X, precision: 10);
+        Assert.Equal(0, result.Y, precision: 10);
+    }
+
+    [Fact]
+    public void DistancePointToCircle_WithExternalPoint_ShouldReturnCorrectDistance()
+    {
+        var circle = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        Point2D point = new(15, 0);
+
+        double result = DistanceService.DistancePointToCircle(point, circle);
+
+        Assert.Equal(5, result, precision: 10);
+    }
+
+    [Fact]
+    public void DistancePointToCircle_WithInternalPoint_ShouldReturnCorrectDistance()
+    {
+        var circle = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        Point2D point = new(6, 0);
+
+        double result = DistanceService.DistancePointToCircle(point, circle);
+
+        Assert.Equal(4, result, precision: 10);
+    }
+
+    [Fact]
+    public void ClosestPointOnArc_WhenProjectionFallsInsideArc_ShouldReturnProjectedPoint()
+    {
+        var arc = new Arc2D(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+
+        Point2D point = new(20, 20);
+
+        Point2D result = DistanceService.ClosestPointOnArc(point, arc);
+
+        double expected = Math.Sqrt(50);
+
+        Assert.Equal(expected, result.X, precision: 10);
+        Assert.Equal(expected, result.Y, precision: 10);
+    }
+
+    [Fact]
+    public void ClosestPointOnArc_WhenProjectionFallsOutsideArc_ShouldReturnNearestEndpoint()
+    {
+        var arc = new Arc2D(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+
+        Point2D point = new(-20, 0);
+
+        Point2D result = DistanceService.ClosestPointOnArc(point, arc);
+
+        Assert.Equal(0, result.X, precision: 10);
+        Assert.Equal(10, result.Y, precision: 10);
+    }
+
+    [Fact]
+    public void ClosestPointOnArc_WithPointAtCenter_ShouldReturnStartPoint()
+    {
+        var arc = new Arc2D(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+
+        Point2D point = new(0, 0);
+
+        Point2D result = DistanceService.ClosestPointOnArc(point, arc);
+
+        Assert.Equal(10, result.X, precision: 10);
+        Assert.Equal(0, result.Y, precision: 10);
+    }
+
+    [Fact]
+    public void DistancePointToArc_WhenProjectionFallsInsideArc_ShouldReturnCorrectDistance()
+    {
+        var arc = new Arc2D(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+
+        Point2D point = new(20, 0);
+
+        double result = DistanceService.DistancePointToArc(point, arc);
+
+        Assert.Equal(10, result, precision: 10);
+    }
+
+    [Fact]
+    public void DistancePointToArc_WhenProjectionFallsOutsideArc_ShouldReturnDistanceToEndpoint()
+    {
+        var arc = new Arc2D(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+
+        Point2D point = new(-10, 0);
+
+        double result = DistanceService.DistancePointToArc(point, arc);
+
+        double expected = Math.Sqrt(200);
+
+        Assert.Equal(expected, result, precision: 10);
+    }
 }
