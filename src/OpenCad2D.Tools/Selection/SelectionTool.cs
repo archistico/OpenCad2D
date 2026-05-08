@@ -12,6 +12,7 @@ public sealed class SelectionTool : ICadTool
 {
     private Point2D? _dragStartPoint;
     private Point2D? _dragCurrentPoint;
+    private PointerModifiers _pressedModifiers;
     private bool _isDraggingWindow;
 
     public string Name => "Selection";
@@ -65,11 +66,10 @@ public sealed class SelectionTool : ICadTool
 
         _dragStartPoint = pointer.ModelPoint;
         _dragCurrentPoint = pointer.ModelPoint;
+        _pressedModifiers = pointer.Modifiers;
         _isDraggingWindow = false;
 
-        return SelectByPoint(
-            context,
-            pointer);
+        return ToolResult.None();
     }
 
     public ToolResult OnPointerMoved(
@@ -107,11 +107,71 @@ public sealed class SelectionTool : ICadTool
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
-        if (!HasWindowPreview ||
-            _dragStartPoint is null)
+        if (_dragStartPoint is null)
         {
-            ResetDragState();
+            return ToolResult.None();
+        }
 
+        ToolResult result = _isDraggingWindow
+            ? SelectByWindow(context, pointer)
+            : SelectByPoint(context, pointer);
+
+        ResetDragState();
+
+        return result;
+    }
+
+    public ToolResult Cancel(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        ResetDragState();
+        context.SelectionSet.Clear();
+
+        return ToolResult.Cancelled("Selection cleared.");
+    }
+
+    private ToolResult SelectByPoint(
+        ToolContext context,
+        PointerInfo pointer)
+    {
+        EntityId? selectedId = context.SelectionService.SelectByPoint(
+            context.Document,
+            pointer.ModelPoint,
+            context.SelectionTolerance);
+
+        bool shiftPressed = HasShift(pointer);
+
+        if (selectedId is null)
+        {
+            if (!shiftPressed)
+            {
+                context.SelectionSet.Clear();
+
+                return ToolResult.Updated("Selection cleared.");
+            }
+
+            return ToolResult.None("Nothing selected.");
+        }
+
+        if (shiftPressed)
+        {
+            context.SelectionSet.Toggle(selectedId.Value);
+
+            return ToolResult.Updated("Selection toggled.");
+        }
+
+        context.SelectionSet.ReplaceWith(selectedId.Value);
+
+        return ToolResult.Updated("Entity selected.");
+    }
+
+    private ToolResult SelectByWindow(
+        ToolContext context,
+        PointerInfo pointer)
+    {
+        if (_dragStartPoint is null)
+        {
             return ToolResult.None();
         }
 
@@ -132,7 +192,9 @@ public sealed class SelectionTool : ICadTool
                 window,
                 mode);
 
-        if (pointer.IsShiftPressed)
+        bool shiftPressed = HasShift(pointer);
+
+        if (shiftPressed)
         {
             foreach (EntityId id in selectedIds)
             {
@@ -144,55 +206,16 @@ public sealed class SelectionTool : ICadTool
             context.SelectionSet.ReplaceWith(selectedIds);
         }
 
-        ResetDragState();
-
         return ToolResult.Updated(
             mode == WindowSelectionMode.Inside
                 ? "Window selection completed."
                 : "Crossing selection completed.");
     }
 
-    public ToolResult Cancel(ToolContext context)
+    private bool HasShift(PointerInfo pointer)
     {
-        ArgumentNullException.ThrowIfNull(context);
-
-        ResetDragState();
-        context.SelectionSet.Clear();
-
-        return ToolResult.Cancelled("Selection cleared.");
-    }
-
-    private static ToolResult SelectByPoint(
-        ToolContext context,
-        PointerInfo pointer)
-    {
-        EntityId? selectedId = context.SelectionService.SelectByPoint(
-            context.Document,
-            pointer.ModelPoint,
-            context.SelectionTolerance);
-
-        if (selectedId is null)
-        {
-            if (!pointer.IsShiftPressed)
-            {
-                context.SelectionSet.Clear();
-
-                return ToolResult.Updated("Selection cleared.");
-            }
-
-            return ToolResult.None("Nothing selected.");
-        }
-
-        if (pointer.IsShiftPressed)
-        {
-            context.SelectionSet.Toggle(selectedId.Value);
-
-            return ToolResult.Updated("Selection toggled.");
-        }
-
-        context.SelectionSet.ReplaceWith(selectedId.Value);
-
-        return ToolResult.Updated("Entity selected.");
+        return pointer.IsShiftPressed ||
+               _pressedModifiers.HasFlag(PointerModifiers.Shift);
     }
 
     private static bool ShouldStartWindowSelection(
@@ -216,6 +239,7 @@ public sealed class SelectionTool : ICadTool
     {
         _dragStartPoint = null;
         _dragCurrentPoint = null;
+        _pressedModifiers = PointerModifiers.None;
         _isDraggingWindow = false;
     }
 }

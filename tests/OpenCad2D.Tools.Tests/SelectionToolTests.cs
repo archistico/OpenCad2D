@@ -38,7 +38,11 @@ public sealed class SelectionToolTests
 
         var tool = new SelectionTool();
 
-        ToolResult result = tool.OnPointerPressed(
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0.2)));
+
+        ToolResult result = tool.OnPointerReleased(
             context,
             new PointerInfo(new Point2D(5, 0.2)));
 
@@ -73,7 +77,11 @@ public sealed class SelectionToolTests
 
         var tool = new SelectionTool();
 
-        ToolResult result = tool.OnPointerPressed(
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(50, 50)));
+
+        ToolResult result = tool.OnPointerReleased(
             context,
             new PointerInfo(new Point2D(50, 50)));
 
@@ -108,6 +116,10 @@ public sealed class SelectionToolTests
         var tool = new SelectionTool();
 
         tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(25, 0.2)));
+
+        tool.OnPointerReleased(
             context,
             new PointerInfo(new Point2D(25, 0.2)));
 
@@ -148,6 +160,12 @@ public sealed class SelectionToolTests
                 new Point2D(25, 0.2),
                 PointerModifiers.Shift));
 
+        tool.OnPointerReleased(
+            context,
+            new PointerInfo(
+                new Point2D(25, 0.2),
+                PointerModifiers.Shift));
+
         Assert.True(selectionSet.Contains(first.Id));
         Assert.True(selectionSet.Contains(second.Id));
         Assert.Equal(2, selectionSet.Count);
@@ -179,6 +197,12 @@ public sealed class SelectionToolTests
                 new Point2D(5, 0.2),
                 PointerModifiers.Shift));
 
+        tool.OnPointerReleased(
+            context,
+            new PointerInfo(
+                new Point2D(5, 0.2),
+                PointerModifiers.Shift));
+
         Assert.False(selectionSet.Contains(line.Id));
         Assert.True(selectionSet.IsEmpty);
     }
@@ -203,7 +227,13 @@ public sealed class SelectionToolTests
 
         var tool = new SelectionTool();
 
-        ToolResult result = tool.OnPointerPressed(
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(
+                new Point2D(50, 50),
+                PointerModifiers.Shift));
+
+        ToolResult result = tool.OnPointerReleased(
             context,
             new PointerInfo(
                 new Point2D(50, 50),
@@ -235,6 +265,10 @@ public sealed class SelectionToolTests
         var tool = new SelectionTool();
 
         tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        tool.OnPointerReleased(
             context,
             new PointerInfo(new Point2D(5, 0)));
 
@@ -271,9 +305,60 @@ public sealed class SelectionToolTests
             context,
             new PointerInfo(new Point2D(5, 0)));
 
+        tool.OnPointerReleased(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
         Assert.False(selectionSet.Contains(bottom.Id));
         Assert.True(selectionSet.Contains(top.Id));
         Assert.Equal(1, selectionSet.Count);
+    }
+
+    [Fact]
+    public void ShiftDrag_ShouldNotToggleEntityOnPointerPressedBeforeWindowSelection()
+    {
+        CadDocument document = new();
+        SelectionSet selectionSet = new();
+
+        var inside = new LineEntity(
+            new Point2D(2, 2),
+            new Point2D(8, 2));
+
+        document.AddEntity(inside);
+        selectionSet.Select(inside.Id);
+
+        var context = CreateContext(
+            document,
+            selectionSet,
+            selectionTolerance: 5,
+            selectionDragThreshold: 1);
+
+        var tool = new SelectionTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(
+                new Point2D(0, 0),
+                PointerModifiers.Shift));
+
+        // Dopo il press la selezione deve essere ancora invariata.
+        Assert.True(selectionSet.Contains(inside.Id));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(
+                new Point2D(10, 10),
+                PointerModifiers.Shift));
+
+        tool.OnPointerReleased(
+            context,
+            new PointerInfo(
+                new Point2D(10, 10),
+                PointerModifiers.Shift));
+
+        // La toggle deve avvenire una sola volta, al rilascio.
+        Assert.False(selectionSet.Contains(inside.Id));
+        Assert.True(selectionSet.IsEmpty);
     }
 
     [Fact]
