@@ -16,7 +16,8 @@ public sealed class SnapService
         new QuadrantSnapProvider(),
         new IntersectionSnapProvider(),
         new PerpendicularSnapProvider(),
-        new NearestSnapProvider()
+        new NearestSnapProvider(),
+        new GridSnapProvider()
     })
     {
     }
@@ -69,6 +70,7 @@ public sealed class SnapService
             SnapKind.Quadrant => 5,
             SnapKind.Tangent => 6,
             SnapKind.Nearest => 100,
+            SnapKind.Grid => 200,
             _ => 1000
         };
     }

@@ -166,7 +166,8 @@ public abstract class TwoPointToolBase : ICadTool
             cursorPoint,
             context.SnapTolerance,
             context.EnabledSnaps,
-            basePoint);
+            basePoint,
+            context.GridSettings);
 
         SnapCandidate? candidate = context.SnapService.Snap(request);
 

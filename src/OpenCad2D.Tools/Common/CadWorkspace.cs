@@ -17,6 +17,7 @@ public sealed class CadWorkspace
         SnapService? snapService = null,
         SelectionService? selectionService = null,
         ToolRegistry? toolRegistry = null,
+        GridSettings? gridSettings = null,
         SnapKind enabledSnaps = SnapKind.None,
         double snapTolerance = 0,
         double selectionTolerance = 5,
@@ -29,6 +30,7 @@ public sealed class CadWorkspace
         SnapService = snapService ?? new SnapService();
         SelectionService = selectionService ?? new SelectionService();
         ToolRegistry = toolRegistry ?? new ToolRegistry();
+        GridSettings = gridSettings ?? new GridSettings();
 
         Context = new ToolContext(
             Document,
@@ -36,6 +38,7 @@ public sealed class CadWorkspace
             SnapService,
             selectionSet: SelectionSet,
             selectionService: SelectionService,
+            gridSettings: GridSettings,
             enabledSnaps: enabledSnaps,
             snapTolerance: snapTolerance,
             selectionTolerance: selectionTolerance,
@@ -61,6 +64,8 @@ public sealed class CadWorkspace
     public SelectionService SelectionService { get; }
 
     public ToolRegistry ToolRegistry { get; }
+
+    public GridSettings GridSettings { get; }
 
     public ToolContext Context { get; }
 

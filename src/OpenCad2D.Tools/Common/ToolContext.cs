@@ -16,6 +16,7 @@ public sealed class ToolContext
         SnapService snapService,
         SelectionSet? selectionSet = null,
         SelectionService? selectionService = null,
+        GridSettings? gridSettings = null,
         SnapKind enabledSnaps = SnapKind.None,
         double snapTolerance = 0,
         double selectionTolerance = 5,
@@ -51,6 +52,7 @@ public sealed class ToolContext
         SnapService = snapService;
         SelectionSet = selectionSet ?? new SelectionSet();
         SelectionService = selectionService ?? new SelectionService();
+        GridSettings = gridSettings ?? new GridSettings();
         EnabledSnaps = enabledSnaps;
         SnapTolerance = snapTolerance;
         SelectionTolerance = selectionTolerance;
@@ -66,6 +68,8 @@ public sealed class ToolContext
     public SelectionSet SelectionSet { get; }
 
     public SelectionService SelectionService { get; }
+
+    public GridSettings GridSettings { get; }
 
     public SnapKind EnabledSnaps { get; set; }
 

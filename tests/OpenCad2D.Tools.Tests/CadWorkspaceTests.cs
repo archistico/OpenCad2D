@@ -237,4 +237,19 @@ public sealed class CadWorkspaceTests
         Assert.IsType<SelectionTool>(
             workspace.ToolController.ActiveTool);
     }
+
+    [Fact]
+    public void Constructor_ShouldConfigureGridSettings()
+    {
+        var gridSettings = new GridSettings(
+            step: 25,
+            originX: 5,
+            originY: 10);
+
+        var workspace = new CadWorkspace(
+            gridSettings: gridSettings);
+
+        Assert.Same(gridSettings, workspace.GridSettings);
+        Assert.Same(gridSettings, workspace.Context.GridSettings);
+    }
 }

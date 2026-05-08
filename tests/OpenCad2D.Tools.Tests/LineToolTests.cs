@@ -278,6 +278,30 @@ public sealed class LineToolTests
         Assert.Equal(new Point2D(5, 0), created.End);
     }
 
+    [Fact]
+    public void SecondPointerPress_WithGridSnap_ShouldUseSnappedPoint()
+    {
+        var context = CreateContext(
+            enabledSnaps: SnapKind.Grid,
+            snapTolerance: 10);
+
+        var tool = new LineTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(23.2, 46.8)));
+
+        var line = Assert.Single(
+            context.Document.Entities.All.OfType<LineEntity>());
+
+        Assert.Equal(new Point2D(0, 0), line.Start);
+        Assert.Equal(new Point2D(20, 50), line.End);
+    }
+
     private static ToolContext CreateContext(
         CadDocument? document = null,
         SnapKind enabledSnaps = SnapKind.None,

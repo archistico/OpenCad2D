@@ -4,7 +4,7 @@ using OpenCad2D.Geometry.Primitives;
 namespace OpenCad2D.Interaction.Snapping;
 
 /// <summary>
-/// Contains all information required to evaluate object snaps.
+/// Describes a snapping request at a given cursor point.
 /// </summary>
 public sealed class SnapRequest
 {
@@ -13,7 +13,8 @@ public sealed class SnapRequest
         Point2D cursorPoint,
         double tolerance,
         SnapKind enabledSnaps,
-        Point2D? basePoint = null)
+        Point2D? basePoint = null,
+        GridSettings? gridSettings = null)
     {
         ArgumentNullException.ThrowIfNull(document);
 
@@ -29,27 +30,20 @@ public sealed class SnapRequest
         Tolerance = tolerance;
         EnabledSnaps = enabledSnaps;
         BasePoint = basePoint;
+        GridSettings = gridSettings ?? new GridSettings();
     }
 
     public CadDocument Document { get; }
 
-    /// <summary>
-    /// Current cursor position in model coordinates.
-    /// </summary>
     public Point2D CursorPoint { get; }
 
-    /// <summary>
-    /// Optional base point used by contextual snaps such as perpendicular and tangent.
-    /// </summary>
     public Point2D? BasePoint { get; }
 
-    /// <summary>
-    /// Snap tolerance expressed in model units.
-    /// In the UI this will usually be converted from pixels.
-    /// </summary>
     public double Tolerance { get; }
 
     public SnapKind EnabledSnaps { get; }
+
+    public GridSettings GridSettings { get; }
 
     public bool IsEnabled(SnapKind kind)
     {
