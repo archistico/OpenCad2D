@@ -97,6 +97,12 @@
 							  IsChecked="True"
 							  Click="SnapIntersection_Changed" />
 
+					<CheckBox x:Name="SnapPerpendicularCheckBox"
+							  Content="Perpendicular"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="SnapPerpendicular_Changed" />
+
 					<CheckBox x:Name="SnapGridCheckBox"
 							  Content="Grid"
 							  Foreground="#CCCCCC"

@@ -175,4 +175,13 @@ public partial class MainWindow : Window
         RefreshStatus();
         CadCanvas.ClearSnapMarker();
     }
+
+    private void SnapPerpendicular_Changed(
+    object? sender,
+    RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Perpendicular,
+            SnapPerpendicularCheckBox.IsChecked == true);
+    }
 }
