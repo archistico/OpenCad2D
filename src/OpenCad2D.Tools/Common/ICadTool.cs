@@ -15,5 +15,15 @@ public interface ICadTool
         ToolContext context,
         PointerInfo pointer);
 
+    ToolResult OnPointerReleased(
+        ToolContext context,
+        PointerInfo pointer)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(pointer);
+
+        return ToolResult.None();
+    }
+
     ToolResult Cancel(ToolContext context);
 }

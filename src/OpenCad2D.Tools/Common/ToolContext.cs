@@ -18,7 +18,8 @@ public sealed class ToolContext
         SelectionService? selectionService = null,
         SnapKind enabledSnaps = SnapKind.None,
         double snapTolerance = 0,
-        double selectionTolerance = 5)
+        double selectionTolerance = 5,
+        double selectionDragThreshold = 1)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(commandHistory);
@@ -38,6 +39,13 @@ public sealed class ToolContext
                 "Selection tolerance cannot be negative.");
         }
 
+        if (selectionDragThreshold < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(selectionDragThreshold),
+                "Selection drag threshold cannot be negative.");
+        }
+
         Document = document;
         CommandHistory = commandHistory;
         SnapService = snapService;
@@ -46,6 +54,7 @@ public sealed class ToolContext
         EnabledSnaps = enabledSnaps;
         SnapTolerance = snapTolerance;
         SelectionTolerance = selectionTolerance;
+        SelectionDragThreshold = selectionDragThreshold;
     }
 
     public CadDocument Document { get; }
@@ -63,4 +72,6 @@ public sealed class ToolContext
     public double SnapTolerance { get; set; }
 
     public double SelectionTolerance { get; set; }
+
+    public double SelectionDragThreshold { get; set; }
 }
