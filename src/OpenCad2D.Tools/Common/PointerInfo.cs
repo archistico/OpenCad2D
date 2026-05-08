@@ -7,10 +7,24 @@ namespace OpenCad2D.Tools.Common;
 /// </summary>
 public sealed class PointerInfo
 {
-    public PointerInfo(Point2D modelPoint)
+    public PointerInfo(
+        Point2D modelPoint,
+        PointerModifiers modifiers = PointerModifiers.None)
     {
         ModelPoint = modelPoint;
+        Modifiers = modifiers;
     }
 
     public Point2D ModelPoint { get; }
+
+    public PointerModifiers Modifiers { get; }
+
+    public bool IsShiftPressed =>
+        Modifiers.HasFlag(PointerModifiers.Shift);
+
+    public bool IsControlPressed =>
+        Modifiers.HasFlag(PointerModifiers.Control);
+
+    public bool IsAltPressed =>
+        Modifiers.HasFlag(PointerModifiers.Alt);
 }

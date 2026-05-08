@@ -350,8 +350,8 @@ public sealed class CopyToolTests
             document ?? new CadDocument(),
             history ?? new CommandHistory(),
             new SnapService(),
-            selectionSet,
-            enabledSnaps,
-            snapTolerance);
+            selectionSet: selectionSet,
+            enabledSnaps: enabledSnaps,
+            snapTolerance: snapTolerance);
     }
 }
