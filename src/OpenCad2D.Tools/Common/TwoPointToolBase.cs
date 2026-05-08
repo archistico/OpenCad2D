@@ -109,6 +109,15 @@ public abstract class TwoPointToolBase : ICadTool
         return ToolResult.Cancelled($"{Name} command cancelled.");
     }
 
+    public virtual ToolResult Deactivate(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        Reset();
+
+        return ToolResult.None($"{Name} tool deactivated.");
+    }
+
     protected void Reset()
     {
         _firstPoint = null;

@@ -25,23 +25,26 @@ public sealed class ToolController
 
     public ToolResult LastResult { get; private set; }
 
-    public ToolResult SetActiveTool(
-        ICadTool tool,
-        bool cancelCurrentTool = true)
+    public ToolResult SetActiveTool(ICadTool tool)
     {
         ArgumentNullException.ThrowIfNull(tool);
 
-        ToolResult result = ToolResult.None();
-
-        if (cancelCurrentTool)
-        {
-            result = ActiveTool.Cancel(_context);
-        }
+        ToolResult result = ActiveTool.Deactivate(_context);
 
         ActiveTool = tool;
         LastResult = result;
 
         return result;
+    }
+
+    public ToolResult SetActiveToolWithoutDeactivating(ICadTool tool)
+    {
+        ArgumentNullException.ThrowIfNull(tool);
+
+        ActiveTool = tool;
+        LastResult = ToolResult.None();
+
+        return LastResult;
     }
 
     public ToolResult OnPointerPressed(PointerInfo pointer)

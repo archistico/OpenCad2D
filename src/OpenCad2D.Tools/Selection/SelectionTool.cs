@@ -131,6 +131,15 @@ public sealed class SelectionTool : ICadTool
         return ToolResult.Cancelled("Selection cleared.");
     }
 
+    public ToolResult Deactivate(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        ResetDragState();
+
+        return ToolResult.None("Selection tool deactivated.");
+    }
+
     private ToolResult SelectByPoint(
         ToolContext context,
         PointerInfo pointer)

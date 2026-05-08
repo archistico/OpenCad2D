@@ -697,4 +697,41 @@ public sealed class SelectionToolTests
             selectionDragThreshold: selectionDragThreshold);
     }
 
+    [Fact]
+    public void Deactivate_ShouldClearPreviewButKeepSelection()
+    {
+        CadDocument document = new();
+        SelectionSet selectionSet = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+        selectionSet.Select(line.Id);
+
+        var context = CreateContext(
+            document,
+            selectionSet,
+            selectionDragThreshold: 1);
+
+        var tool = new SelectionTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(10, 10)));
+
+        Assert.True(tool.HasWindowPreview);
+
+        ToolResult result = tool.Deactivate(context);
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.False(tool.HasWindowPreview);
+        Assert.True(selectionSet.Contains(line.Id));
+        Assert.Equal(1, selectionSet.Count);
+    }
 }

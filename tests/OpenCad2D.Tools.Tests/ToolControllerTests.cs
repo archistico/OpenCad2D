@@ -92,6 +92,7 @@ public sealed class ToolControllerTests
 
         Assert.Equal(ToolResultKind.Cancelled, result.Kind);
         Assert.Equal(1, tool.CancelCount);
+        Assert.Equal(0, tool.DeactivateCount);
         Assert.Equal(ToolResultKind.Cancelled, controller.LastResult.Kind);
     }
 
@@ -113,7 +114,7 @@ public sealed class ToolControllerTests
     }
 
     [Fact]
-    public void SetActiveTool_ByDefault_ShouldCancelPreviousTool()
+    public void SetActiveTool_ShouldDeactivatePreviousToolButNotCancelIt()
     {
         ToolContext context = CreateContext();
         var first = new FakeTool("First");
@@ -125,14 +126,16 @@ public sealed class ToolControllerTests
 
         ToolResult result = controller.SetActiveTool(second);
 
-        Assert.Equal(ToolResultKind.Cancelled, result.Kind);
-        Assert.Equal(1, first.CancelCount);
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(1, first.DeactivateCount);
+        Assert.Equal(0, first.CancelCount);
+        Assert.Equal(0, second.DeactivateCount);
         Assert.Equal(0, second.CancelCount);
         Assert.Equal(second, controller.ActiveTool);
     }
 
     [Fact]
-    public void SetActiveTool_WithCancelCurrentToolFalse_ShouldNotCancelPreviousTool()
+    public void SetActiveToolWithoutDeactivating_ShouldNotDeactivatePreviousTool()
     {
         ToolContext context = CreateContext();
         var first = new FakeTool("First");
@@ -142,11 +145,10 @@ public sealed class ToolControllerTests
             context,
             first);
 
-        ToolResult result = controller.SetActiveTool(
-            second,
-            cancelCurrentTool: false);
+        ToolResult result = controller.SetActiveToolWithoutDeactivating(second);
 
         Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(0, first.DeactivateCount);
         Assert.Equal(0, first.CancelCount);
         Assert.Equal(second, controller.ActiveTool);
     }
@@ -197,6 +199,8 @@ public sealed class ToolControllerTests
 
         public int CancelCount { get; private set; }
 
+        public int DeactivateCount { get; private set; }
+
         public Point2D? LastPointerPoint { get; private set; }
 
         public ToolResult OnPointerPressed(
@@ -234,6 +238,13 @@ public sealed class ToolControllerTests
             CancelCount++;
 
             return ToolResult.Cancelled("Cancelled.");
+        }
+
+        public ToolResult Deactivate(ToolContext context)
+        {
+            DeactivateCount++;
+
+            return ToolResult.None("Deactivated.");
         }
     }
 }

@@ -48,8 +48,7 @@ public sealed class ToolControllerIntegrationTests
         Assert.Equal(1, selectionSet.Count);
 
         controller.SetActiveTool(
-            new MoveTool(),
-            cancelCurrentTool: false);
+            new MoveTool());
 
         controller.OnPointerPressed(
             new PointerInfo(new Point2D(0, 0)));
@@ -109,8 +108,7 @@ public sealed class ToolControllerIntegrationTests
         Assert.Equal(1, selectionSet.Count);
 
         controller.SetActiveTool(
-            new CopyTool(),
-            cancelCurrentTool: false);
+            new CopyTool());
 
         controller.OnPointerPressed(
             new PointerInfo(new Point2D(0, 0)));
@@ -185,8 +183,7 @@ public sealed class ToolControllerIntegrationTests
         Assert.Equal(1, selectionSet.Count);
 
         controller.SetActiveTool(
-            new MoveTool(),
-            cancelCurrentTool: false);
+            new MoveTool());
 
         controller.OnPointerPressed(
             new PointerInfo(new Point2D(0, 0)));
@@ -254,8 +251,7 @@ public sealed class ToolControllerIntegrationTests
         Assert.True(selectionSet.Contains(createdLine.Id));
 
         controller.SetActiveTool(
-            registry.Create(ToolId.Move),
-            cancelCurrentTool: false);
+            registry.Create(ToolId.Move));
 
         controller.OnPointerPressed(
             new PointerInfo(new Point2D(0, 0)));
