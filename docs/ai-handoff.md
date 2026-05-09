@@ -30,6 +30,7 @@ The project currently supports:
 - drawing rectangles;
 - drawing circles;
 - selecting entities;
+- grip editing for selected line and circle entities;
 - moving selected entities;
 - copying selected entities;
 - deleting selected entities;
@@ -51,6 +52,11 @@ The project currently supports:
 - Ortho mode;
 - viewport zoom and pan;
 - Zoom Extents;
+- internal JSON persistence through `.opencad2d.json`;
+- New, Open, Save and Save As file commands;
+- dirty-state tracking through command history generation;
+- save-confirmation dialogs before New, Open and window close;
+- viewport persistence;
 - UCS/WCS coordinate distinction;
 - geometry tolerance strategy;
 - spatial index abstraction;
@@ -58,9 +64,9 @@ The project currently supports:
 - ViewModel property notifications through `INotifyPropertyChanged`;
 - UI feedback for the active command/tool, current layer, snap type and measurement state.
 
-Recently completed areas include command line input, Ortho mode, `CircleTool` and Zoom Extents.
+Recently completed areas include command line input, Ortho mode, `CircleTool`, Zoom Extents, grip editing and persistence.
 
-The next major areas are property panel, richer layer management, additional drawing tools, persistence and more advanced modify commands.
+The next major areas are property panel, richer layer management, additional drawing tools and more advanced modify commands.
 
 ---
 
@@ -72,6 +78,7 @@ src/
   OpenCad2D.Core/
   OpenCad2D.Interaction/
   OpenCad2D.Tools/
+  OpenCad2D.Persistence/
   OpenCad2D.App/
 
 tests/
@@ -79,12 +86,14 @@ tests/
   OpenCad2D.Core.Tests/
   OpenCad2D.Interaction.Tests/
   OpenCad2D.Tools.Tests/
+  OpenCad2D.Persistence.Tests/
 ```
 
 Dependency direction:
 
 ```text
 OpenCad2D.App -> OpenCad2D.Tools -> OpenCad2D.Interaction -> OpenCad2D.Core -> OpenCad2D.Geometry
+OpenCad2D.App -> OpenCad2D.Persistence -> OpenCad2D.Core -> OpenCad2D.Geometry
 ```
 
 Reverse dependencies should be avoided.
@@ -111,7 +120,10 @@ The following rules are important and should be preserved.
 - App renders and forwards input.
 - Document mutations must go through `CadDocument`.
 - User-facing document changes should go through commands.
+- Dirty state should be tracked from command history generation.
 - Tools should not know about Avalonia.
+- Persistence must not depend on App, Tools or Interaction.
+- Domain entities must not carry serialization attributes.
 - Viewport conversion belongs to the UI layer.
 - Tools receive model/user coordinates through `PointerInfo`.
 - Snapping and selection work in model coordinates.
@@ -122,6 +134,8 @@ The following rules are important and should be preserved.
 - Locked layer entities may still be used for snapping.
 - Locked layer entities must not be modified, removed or transformed.
 - Spatial queries should be preferred over full document scans when interaction is cursor-area based.
+- File dialogs and save-confirmation dialogs belong to App.
+- Serialization format details belong to `OpenCad2D.Persistence`.
 - Floating-point comparisons should use `GeometryTolerance`.
 
 ---
@@ -860,6 +874,103 @@ Immediate tool/action for deleting the current selection.
 
 ---
 
+## 21.5. Grip editing
+
+Grip editing is implemented as a UI-independent tool in `OpenCad2D.Tools`.
+
+Activation rule:
+
+```text
+TAB with no selection      -> no grip edit
+TAB with one selection     -> edit that entity
+TAB with multiple selected -> edit the last selected entity
+```
+
+Current supported entities:
+
+```text
+LineEntity   -> start, midpoint, end grips
+CircleEntity -> center and four quadrant grips
+```
+
+Grip editing uses providers:
+
+- `IGripProvider`;
+- `GripProviderRegistry`;
+- `LineGripProvider`;
+- `CircleGripProvider`.
+
+`GripEditTool` exposes current grips, hot grip, warm grip and preview entity. The Avalonia canvas renders these states but does not own the editing logic.
+
+Grip edits are committed through `ReplaceEntitiesCommand`, preserving the original entity id and keeping undo/redo behavior consistent.
+
+When multiple entities are selected, the grip tool intentionally edits only the last selected entity. This keeps the interaction focused while preserving the rest of the selection.
+
+Locked-layer protection is preserved because locked-layer entities are not selectable and `CadDocument.ReplaceEntity/ReplaceEntities` still reject replacements on locked layers.
+
+---
+
+## 21.6. Persistence
+
+Persistence is implemented in the dedicated `OpenCad2D.Persistence` project.
+
+The internal file extension is:
+
+```text
+.opencad2d.json
+```
+
+The format is JSON, UTF-8, indented for readability, and versioned from the beginning with:
+
+```json
+{
+  "version": 1
+}
+```
+
+The persistence project contains:
+
+- DTO classes under `Dto/`;
+- `IDocumentSerializer`;
+- `JsonDocumentSerializer`;
+- `EntityDtoJsonConverter`;
+- persistence-specific exceptions.
+
+The serializer handles:
+
+- layers, including visibility and locked state;
+- line entities;
+- circle entities;
+- arc entities;
+- polyline entities;
+- current layer id;
+- viewport pan and zoom;
+- saved timestamp;
+- unknown entity types, which are skipped rather than crashing the loader.
+
+`OpenCad2D.App` owns file dialogs and calls the serializer. `OpenCad2D.Core` does not know about persistence.
+
+Current file commands:
+
+```text
+Ctrl+N        New
+Ctrl+O        Open
+Ctrl+S        Save
+Ctrl+Shift+S  Save As
+```
+
+Dirty state is tracked through `CommandHistory.CurrentGeneration`. `CadWorkspace` stores the saved generation and exposes `IsDirty` and `MarkSaved()`.
+
+Before New, Open or window close, the App shows a save-confirmation dialog when the document is dirty:
+
+```text
+Save       -> save, then continue
+Don't Save -> discard changes, then continue
+Cancel     -> abort the operation
+```
+
+---
+
 ## 22. Important invariants
 
 Preserve these invariants:
@@ -881,6 +992,10 @@ Preserve these invariants:
 - Ortho applies to interactive second-point workflows, previews, measurements and direct distance entry.
 - Explicit typed coordinates remain exact.
 - Zoom Extents uses visible entities only.
+- Grip editing must preserve entity ids and use replace commands.
+- Persistence must remain isolated in `OpenCad2D.Persistence`.
+- File dialogs must remain in `OpenCad2D.App`.
+- Dirty state is based on command history generation.
 - Tools must remain UI-independent.
 
 ---
@@ -890,12 +1005,10 @@ Preserve these invariants:
 Known limitations:
 
 - no full layer manager yet;
-- no persistent file format yet;
 - no property panel yet;
 - no polyline drawing tool yet;
 - no arc drawing tool yet;
 - no text entities or dimensions yet;
-- no file menu yet;
 - no DXF/SVG/PDF import/export yet;
 - spatial index is still linear;
 - command line does not yet support polar syntax such as `@10<45`;
@@ -907,16 +1020,16 @@ Known limitations:
 
 Suggested next development order:
 
-1. Add/update docs after the latest tool and viewport changes.
+1. Add/update docs after persistence and grip editing.
 2. Add a first property panel.
 3. Add PolylineTool.
 4. Add ArcTool.
-5. Add JSON save/load.
-6. Add richer layer management.
-7. Add text entity and TextTool.
-8. Add dimensions.
-9. Replace `LinearSpatialIndex` with a real spatial structure when needed.
-10. Add GitHub Actions.
+5. Add richer layer management.
+6. Add text entity and TextTool.
+7. Add dimensions.
+8. Replace `LinearSpatialIndex` with a real spatial structure when needed.
+9. Add GitHub Actions.
+10. Add export formats such as SVG/PDF/DXF.
 
 ---
 
@@ -1014,3 +1127,28 @@ Responsibilities:
 - convert screen input to model/user coordinates.
 
 It should not implement CAD document mutation rules.
+
+
+### CommandHistory
+
+Responsibilities added by persistence:
+
+- expose `CurrentGeneration`;
+- increment generation when commands execute, undo or redo;
+- allow `CadWorkspace` to compare the current generation with the last saved generation.
+
+This is the basis for dirty-state tracking.
+
+### OpenCad2D.Persistence
+
+Responsibilities:
+
+- convert `CadDocument` to persistence DTOs;
+- convert persistence DTOs back to `CadDocument`;
+- save and load JSON files;
+- preserve entity ids and layer ids;
+- preserve current layer id and viewport state;
+- reject unsupported file versions;
+- skip unknown entity types where possible.
+
+It must not depend on Avalonia, Tools or Interaction.

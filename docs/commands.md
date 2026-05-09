@@ -18,6 +18,8 @@ If the user runs undo, `CommandHistory` calls the command's `Undo` method.
 
 If the user runs redo, `CommandHistory` executes the command again.
 
+`CommandHistory` also exposes a generation counter used by the workspace to track dirty state for persistence.
+
 This keeps document changes predictable and centralized.
 
 ---
@@ -71,6 +73,21 @@ push command to undo stack
 ```
 
 This means command implementations must be deterministic and reversible.
+
+### Generation counter and dirty state
+
+Persistence uses command history generation to know whether the document has unsaved changes.
+
+Conceptually:
+
+```text
+Execute command -> generation changes
+Undo command    -> generation changes
+Redo command    -> generation changes
+Save/Open/New   -> workspace marks current generation as saved
+```
+
+`CadWorkspace.IsDirty` compares the current generation with the saved generation. This avoids scattering dirty flags across document mutation methods.
 
 ---
 
@@ -182,6 +199,7 @@ It is useful for operations where the same logical entity remains, but its geome
 
 Examples:
 
+- grip edit;
 - move;
 - rotate;
 - scale;
@@ -202,7 +220,7 @@ replace new entities with old entities
 
 When executed, it calls `CadDocument.ReplaceEntities(...)`.
 
-If one of the target entities belongs to a locked layer, `CadDocument` rejects the replacement. This protects move, rotate, scale, mirror and future modify commands.
+If one of the target entities belongs to a locked layer, `CadDocument` rejects the replacement. This protects grip editing, move, rotate, scale, mirror and future modify commands.
 
 ---
 
@@ -337,6 +355,15 @@ Circle -> user types 100,50 -> point sent to CircleTool as center
 Circle -> user types 25 -> CircleTool creates CircleEntity and AddEntityCommand
 ```
 
+Grip editing follows the same principle:
+
+```text
+TAB -> GripEditTool
+click grip -> choose destination
+GripEditTool creates replacement entity
+ReplaceEntitiesCommand commits the edit
+```
+
 ---
 
 ## Ortho mode and commands
@@ -392,6 +419,7 @@ Expected behavior:
 Draw Line       -> undo removes line
 Draw Rectangle  -> undo removes rectangle polyline
 Draw Circle     -> undo removes circle
+Grip edit       -> undo restores original geometry
 Move entities   -> undo restores original positions
 Copy entities   -> undo removes copied entities
 Delete entities -> undo restores deleted entities
@@ -411,6 +439,8 @@ Command tests should verify:
 - entity ids are preserved where appropriate;
 - copied entities receive new ids;
 - locked-layer mutation rules are respected;
+- grip edits preserve entity ids;
+- dirty-state generation changes when commands execute or undo;
 - document mutation goes through `CadDocument`.
 
 Tool tests should verify that tools create the correct commands, but command behavior itself should be tested separately where possible.

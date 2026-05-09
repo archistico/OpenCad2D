@@ -12,7 +12,7 @@ This separation is the most important design rule in the project.
 
 ## Solution structure
 
-The solution is divided into five main projects.
+The solution is divided into six main projects.
 
 ```text
 src/
@@ -20,6 +20,7 @@ src/
   OpenCad2D.Core/
   OpenCad2D.Interaction/
   OpenCad2D.Tools/
+  OpenCad2D.Persistence/
   OpenCad2D.App/
 ```
 
@@ -31,7 +32,9 @@ Each project has a specific responsibility.
 
 `OpenCad2D.Interaction` contains UI-independent interaction services such as hit testing, selection and object snapping.
 
-`OpenCad2D.Tools` contains UI-independent CAD tools, controllers, tool contexts, command line parsing and the runtime workspace.
+`OpenCad2D.Tools` contains UI-independent CAD tools, controllers, tool contexts, command line parsing, grip editing and the runtime workspace.
+
+`OpenCad2D.Persistence` contains the internal JSON persistence format, DTOs, serializer, file I/O helpers and persistence-specific exceptions.
 
 `OpenCad2D.App` is the Avalonia desktop application.
 
@@ -43,6 +46,11 @@ OpenCad2D.App
       -> OpenCad2D.Interaction
           -> OpenCad2D.Core
               -> OpenCad2D.Geometry
+
+OpenCad2D.App
+  -> OpenCad2D.Persistence
+      -> OpenCad2D.Core
+          -> OpenCad2D.Geometry
 ```
 
 No project should depend on a project above it.
@@ -62,6 +70,7 @@ Avalonia may:
 - host tool buttons;
 - host layer controls;
 - host the command line;
+- host file dialogs and save-confirmation dialogs;
 - convert screen coordinates to model coordinates;
 - forward input to the workspace/tool system;
 - manage viewport operations such as pan, zoom and Zoom Extents.
@@ -73,7 +82,8 @@ Avalonia should not:
 - implement geometric algorithms;
 - implement selection rules;
 - implement locked-layer rules;
-- implement command undo/redo behavior.
+- implement command undo/redo behavior;
+- contain JSON serialization details.
 
 ---
 
@@ -114,7 +124,8 @@ It contains:
 - entity collections;
 - spatial indexing;
 - commands;
-- command history.
+- command history;
+- command history generation for dirty-state tracking.
 
 ### CadDocument mutation boundary
 
@@ -192,7 +203,8 @@ It contains:
 - drawing tools;
 - modify tools;
 - command line input parser;
-- input constraint services such as Ortho.
+- input constraint services such as Ortho;
+- grip providers and `GripEditTool`.
 
 Tools receive `PointerInfo`, not Avalonia events.
 
@@ -340,6 +352,74 @@ This avoids duplicating command line and Ortho logic in every tool.
 
 ---
 
+
+## Grip editing architecture
+
+Grip editing belongs to `OpenCad2D.Tools`, not to Avalonia.
+
+The App renders grip markers and forwards pointer input. The actual grip state machine, provider lookup, preview entity and final replacement command live in the tool layer.
+
+Current grip model:
+
+```text
+LineEntity   -> start, midpoint, end
+CircleEntity -> center, four quadrant grips
+```
+
+Activation rule:
+
+```text
+TAB with exactly one selected entity -> edit that entity
+TAB with multiple selected entities  -> edit the last selected entity
+TAB with no selection                -> do nothing
+```
+
+The grip tool uses `ReplaceEntitiesCommand` for committed edits. This preserves entity ids and keeps undo/redo behavior consistent. Preview does not modify the document.
+
+`CadCanvas` may render cold, hot and warm grips, but it must not decide how a grip modifies an entity.
+
+---
+
+## Persistence layer
+
+`OpenCad2D.Persistence` is responsible for saving and loading drawings.
+
+It depends only on:
+
+- `OpenCad2D.Core`;
+- `OpenCad2D.Geometry`.
+
+It must not depend on:
+
+- `OpenCad2D.App`;
+- `OpenCad2D.Tools`;
+- `OpenCad2D.Interaction`;
+- Avalonia.
+
+The internal file format is JSON with the extension:
+
+```text
+.opencad2d.json
+```
+
+Version 1 serializes:
+
+- format version;
+- save timestamp;
+- current layer id;
+- viewport pan and zoom;
+- layers, including color, line weight, visibility and locked state;
+- line entities;
+- circle entities;
+- arc entities;
+- polyline entities.
+
+The serializer maps between domain objects and DTOs. Domain entities must not contain persistence attributes or JSON-specific logic.
+
+Unknown entity types are skipped where possible so that older builds can partially load files created by newer builds. Unsupported document versions throw a specific exception.
+
+---
+
 ## App layer
 
 `OpenCad2D.App` is the Avalonia application.
@@ -350,6 +430,7 @@ Current responsibilities:
 - render selected entities;
 - render preview entities;
 - render CircleTool preview;
+- render grip markers and grip-edit preview;
 - render temporary base-point/vector feedback;
 - render the grid;
 - render snap markers;
@@ -358,9 +439,14 @@ Current responsibilities:
 - host the left tool panel;
 - host the snap/Ortho bar;
 - host the command line;
+- host file command UI;
+- host save/open dialogs;
+- host save-confirmation dialogs;
 - host the status bar;
 - forward pointer input to the workspace;
 - forward typed command-line input to the workspace;
+- call `OpenCad2D.Persistence` for New/Open/Save/Save As;
+- apply loaded viewport state;
 - manage pan, zoom and Zoom Extents.
 
 ### Viewport
@@ -389,6 +475,33 @@ empty documents should not crash
 Zoom Extents does not modify the document. It only changes the viewport transform.
 
 ---
+
+
+### File commands and dirty state
+
+The App owns document-level file commands:
+
+```text
+New
+Open
+Save
+Save As
+```
+
+These commands use Avalonia storage dialogs and the persistence serializer. The serializer knows the file format; the App knows the user workflow.
+
+Dirty state is exposed by `CadWorkspace.IsDirty`, which compares the current `CommandHistory.CurrentGeneration` with the last saved generation. After saving or loading, the workspace calls `MarkSaved()`.
+
+Before New, Open or window close, the App shows a save-confirmation dialog when the document is dirty.
+
+```text
+Save       -> save and continue
+Don't Save -> discard and continue
+Cancel     -> abort
+```
+
+---
+
 
 ## Layers
 

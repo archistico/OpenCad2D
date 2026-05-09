@@ -22,6 +22,7 @@ The application already supports a basic but functional CAD workflow:
 - drawing rectangles;
 - drawing circles;
 - selecting entities by point, window and crossing selection;
+- grip editing for selected line and circle entities;
 - moving, copying and deleting selected entities;
 - undo and redo;
 - object snapping;
@@ -32,6 +33,9 @@ The application already supports a basic but functional CAD workflow:
 - direct distance entry;
 - Ortho mode;
 - zoom, pan, view reset and Zoom Extents;
+- internal JSON save/load through `.opencad2d.json` files;
+- New, Open, Save and Save As file commands;
+- dirty-state tracking and save-confirmation dialogs;
 - CAD-style crosshair cursor;
 - visual feedback for the active command, current layer, snap type and temporary measurements.
 
@@ -43,11 +47,13 @@ The current prototype includes a tested CAD core and a first Avalonia desktop ap
 
 The geometry layer contains 2D primitives such as points, vectors, line segments, lines, circles, arcs, polylines and bounding boxes. It also contains operations for distances, transformations, intersections, user coordinate systems and numeric tolerance handling.
 
-The core document model supports CAD entities such as lines, circles, arcs and polylines. Rectangles are represented as closed polylines. Entities belong to layers and are stored inside a `CadDocument`.
+The core document model supports CAD entities such as lines, circles, arcs and polylines. Rectangles are represented as closed polylines. Entities belong to layers and are stored inside a `CadDocument`. Drawings can be saved and reopened through the internal `.opencad2d.json` format.
 
 Document edits are represented through commands. Adding, deleting, moving, copying, rotating, scaling, mirroring and replacing entities are handled by undoable commands. More complex future operations can be grouped through `CompositeCommand`, so operations such as trim, extend, fillet and chamfer can become a single undo step.
 
 Interaction logic is kept outside the UI. Hit testing, selection and object snapping live in dedicated libraries and work in model coordinates. This keeps the Avalonia layer thin and makes the interaction behavior testable.
+
+Grip editing is available for selected line and circle entities. Press `Tab` to enter grip edit mode; when multiple entities are selected, the last selected entity is edited. Grip edits are committed through replace commands, so undo/redo remains consistent.
 
 The current snapping system supports:
 
@@ -71,6 +77,7 @@ The desktop application is built with **Avalonia UI**.
 
 The UI currently includes:
 
+- file commands for New, Open, Save and Save As;
 - a lightweight top bar;
 - a vertical left tool panel grouped by tool category;
 - a layer selector;
@@ -84,6 +91,8 @@ The UI currently includes:
 - a fixed command line input box;
 - a status bar with coordinates and temporary measurements;
 - zoom, pan, view reset and Zoom Extents support.
+
+File commands use Avalonia dialogs and the `OpenCad2D.Persistence` serializer. The window title shows the current file name and an asterisk when the drawing has unsaved changes.
 
 The standard mouse cursor is hidden over the canvas and replaced by a large crosshair. A small rectangle around the intersection identifies the exact picking point.
 
@@ -164,6 +173,10 @@ creates or moves along an exact horizontal distance of 50.
 
 | Action | Shortcut |
 | --- | --- |
+| New drawing | `Ctrl+N` |
+| Open drawing | `Ctrl+O` |
+| Save drawing | `Ctrl+S` |
+| Save As | `Ctrl+Shift+S` |
 | Undo | `Ctrl+Z` |
 | Redo | `Ctrl+Y` |
 | Delete selection | `Delete` |
@@ -172,6 +185,7 @@ creates or moves along an exact horizontal distance of 50.
 | Zoom | mouse wheel |
 | Pan | middle mouse button |
 | Zoom Extents | `Home` |
+| Enter Grip Edit | `Tab` |
 
 `Esc` has CAD-like behavior: the first press cancels the active operation, while a second press clears the current selection if no operation is in progress.
 
@@ -187,6 +201,8 @@ To draw a circle, select the `Circle` tool, choose the center point, then choose
 
 To select entities, choose the `Select` tool and click an entity. Use `Shift + click` to toggle selection. Drag from left to right for window selection or from right to left for crossing selection.
 
+To edit grips, select one or more entities and press `Tab`. If exactly one entity is selected, that entity enters grip edit mode. If multiple entities are selected, the last selected entity is edited. Lines expose start, midpoint and end grips. Circles expose center and quadrant grips. Grip edits are undoable.
+
 To move or copy entities, select them first, choose `Move` or `Copy`, click a base point and then click a destination point. The destination point can come from the mouse, a snap, coordinates or direct distance entry.
 
 To delete entities, select them and press `Delete` or use the delete command.
@@ -196,6 +212,8 @@ To hide a layer, choose it from the layer selector and disable its visibility ch
 To lock a layer, choose it from the layer selector and enable its locked checkbox. Entities on locked layers remain visible and can still be used for snapping, but they cannot be selected, moved, deleted or transformed.
 
 To fit the visible drawing in the canvas, use `Zoom Extents` or press `Home`. Zoom Extents considers visible entities only. Hidden layers are ignored; locked layers are included because they remain visible.
+
+To save the drawing, use `Save` or `Save As`. OpenCad2D writes an internal JSON format with the `.opencad2d.json` extension. `New`, `Open` and closing the window ask whether unsaved changes should be saved, discarded or cancelled.
 
 ---
 
@@ -209,6 +227,7 @@ src/
   OpenCad2D.Core/
   OpenCad2D.Interaction/
   OpenCad2D.Tools/
+  OpenCad2D.Persistence/
   OpenCad2D.App/
 
 tests/
@@ -216,6 +235,7 @@ tests/
   OpenCad2D.Core.Tests/
   OpenCad2D.Interaction.Tests/
   OpenCad2D.Tools.Tests/
+  OpenCad2D.Persistence.Tests/
   OpenCad2D.App.Tests/
 ```
 
@@ -223,6 +243,7 @@ The dependency direction is intentional:
 
 ```text
 App -> Tools -> Interaction -> Core -> Geometry
+App -> Persistence -> Core -> Geometry
 ```
 
 `OpenCad2D.Geometry` contains low-level geometric primitives, operations, transformations, tolerance handling and coordinate system support.
@@ -232,6 +253,8 @@ App -> Tools -> Interaction -> Core -> Geometry
 `OpenCad2D.Interaction` contains hit testing, selection and snapping services.
 
 `OpenCad2D.Tools` contains UI-independent CAD tools, tool controllers, action controllers and the runtime workspace.
+
+`OpenCad2D.Persistence` contains the internal JSON serializer, DTO model, file I/O helpers and persistence-specific exceptions. It depends on Core and Geometry, but not on App, Tools or Interaction.
 
 `OpenCad2D.App` is the Avalonia desktop application. It handles presentation, input, viewport navigation and rendering.
 
@@ -288,8 +311,9 @@ Technical documentation lives in the [`docs`](docs/) folder.
 Recommended reading:
 
 - [Architecture](docs/architecture.md) — project structure, dependency rules, coordinate systems, document model, command line input and UI boundaries.
-- [Commands](docs/commands.md) — undo/redo, command design, `CompositeCommand` and document mutation rules.
-- [Tools](docs/tools.md) — tool lifecycle, `ToolContext`, pointer input, command line input, Ortho mode and tool behavior.
+- [Commands](docs/commands.md) — undo/redo, command design, `CompositeCommand`, dirty-state generation and document mutation rules.
+- [Tools](docs/tools.md) — tool lifecycle, `ToolContext`, pointer input, command line input, Ortho mode, grip editing and tool behavior.
+- [Persistence](docs/persistence.md) — internal JSON format, serializer architecture, file commands, viewport persistence and dirty-state tracking.
 - [Snapping](docs/snapping.md) — snap kinds, snap providers, search areas, priorities and visual markers.
 - [Roadmap](docs/roadmap.md) — current status, next development phases and long-term direction.
 - [AI Handoff Document](docs/ai-handoff.md) — for AI-assisted development and project handoff.
@@ -322,12 +346,24 @@ From the repository root:
 dotnet build
 ```
 
+If `make` is available, the repository also supports:
+
+```bash
+make build
+```
+
 ---
 
 ## Run the desktop application
 
 ```bash
 dotnet run --project src/OpenCad2D.App
+```
+
+Or:
+
+```bash
+make run
 ```
 
 ---
@@ -338,7 +374,25 @@ dotnet run --project src/OpenCad2D.App
 dotnet test
 ```
 
-The test suite covers geometry primitives, coordinate systems, tolerance behavior, intersections, CAD entities, document behavior, spatial indexing, commands, undo/redo, composite commands, selection, snapping, tools, controllers and workspace behavior.
+Or:
+
+```bash
+make test
+```
+
+To build and test together:
+
+```bash
+make check
+```
+
+To remove all `bin` and `obj` folders under `src` and `tests`:
+
+```bash
+make clean
+```
+
+The test suite covers geometry primitives, coordinate systems, tolerance behavior, intersections, CAD entities, document behavior, spatial indexing, commands, undo/redo, composite commands, selection, snapping, tools, grip editing, persistence round-trips, controllers and workspace behavior.
 
 ---
 
@@ -350,6 +404,7 @@ OpenCad2D follows a few practical rules:
 - Geometry should not depend on the document model or the UI.
 - User-facing document changes should go through commands.
 - Commands should modify the document through the `CadDocument` API.
+- Persistence should stay in `OpenCad2D.Persistence` and must not depend on Avalonia, Tools or Interaction.
 - Tools should work in model/user coordinates, not screen pixels.
 - The UI should convert input and render output, not own CAD behavior.
 - The command line should resolve input to points and forward them to the active tool, not create entities directly.
@@ -375,18 +430,21 @@ Recently completed:
 9. temporary vector and measurement feedback;
 10. Ortho mode;
 11. CircleTool;
-12. Zoom Extents.
+12. Zoom Extents;
+13. Grip editing for Line and Circle entities;
+14. internal JSON persistence;
+15. New/Open/Save/Save As;
+16. dirty-state tracking and save-confirmation dialogs.
 
 The next planned areas are:
 
 1. property panel;
 2. polyline tool;
 3. arc tool;
-4. internal JSON save/load;
-5. richer layer management;
-6. more modify tools such as offset, trim, extend, fillet and chamfer;
-7. dimensions;
-8. SVG, PDF and DXF import/export.
+4. richer layer management;
+5. more modify tools such as offset, trim, extend, fillet and chamfer;
+6. dimensions;
+7. SVG, PDF and DXF import/export.
 
 See the [roadmap](docs/roadmap.md) for more detail.
 

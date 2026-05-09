@@ -2,7 +2,7 @@
 
 The tool system is the layer that turns user intent into CAD operations.
 
-A tool represents something the user can do in the drawing area: select entities, draw a line, draw a rectangle, draw a circle, move selected entities, copy them or delete them.
+A tool represents something the user can do in the drawing area: select entities, draw a line, draw a rectangle, draw a circle, edit grips, move selected entities, copy them or delete them.
 
 Tools are not part of the UI. They do not depend on Avalonia and do not handle Avalonia events directly. They work with model/user coordinates and with the CAD runtime context.
 
@@ -125,6 +125,7 @@ Current tools using or following this model include:
 - `LineTool`;
 - `RectangleTool`;
 - `CircleTool`;
+- `GripEditTool`;
 - `MoveTool`;
 - `CopyTool`.
 
@@ -283,6 +284,8 @@ Supported behavior:
 
 Hidden layer entities are ignored by selection through document visibility rules.
 
+Selection order is preserved so that workflows such as grip editing can identify the last selected entity.
+
 Locked layer entities are also ignored by selection. This is handled through selectable-entity queries, not by checking Avalonia UI state.
 
 ```text
@@ -378,6 +381,53 @@ Circle -> 100,50 -> 25
 The preview should show the temporary circle while the user moves the pointer after choosing the center.
 
 Ortho mode can constrain the radius point direction, but the radius is still calculated as the distance from the center.
+
+---
+
+
+## GripEditTool
+
+`GripEditTool` modifies existing entities by dragging characteristic control points called grips.
+
+It is activated with `Tab` from selection state.
+
+Activation rule:
+
+```text
+no selected entity       -> do nothing
+one selected entity      -> edit that entity
+multiple selected        -> edit the last selected entity
+```
+
+This keeps multi-selection available while still making grip editing unambiguous.
+
+Current grip providers:
+
+```text
+LineEntity   -> start, midpoint, end
+CircleEntity -> center, quadrant 0, quadrant 90, quadrant 180, quadrant 270
+```
+
+Grip states:
+
+```text
+Cold -> visible grip
+Hot  -> cursor hovering near grip
+Warm -> active grip waiting for destination
+```
+
+The tool exposes grip state and preview data for `CadCanvas`, but it does not depend on Avalonia.
+
+Committed grip edits use `ReplaceEntitiesCommand`, preserving the entity id. Undo and redo therefore work through the normal command history.
+
+`Esc` behavior:
+
+```text
+Grip active -> cancel active grip and return to idle grip edit
+Grip idle   -> exit grip edit and return to SelectionTool
+```
+
+Grip editing must respect locked-layer protection. In normal usage locked-layer entities cannot enter grip editing because they are not selectable. `CadDocument` still rejects replacement as a final safeguard.
 
 ---
 
@@ -477,6 +527,7 @@ Selection
 Line
 Rectangle
 Circle
+GripEdit
 Move
 Copy
 Delete
@@ -506,6 +557,7 @@ Tools should expose enough state for the UI to render preview feedback without m
 
 Current temporary feedback includes:
 
+- grip markers and grip-edit preview entities;
 - preview entities;
 - base-point marker;
 - vector line from base point to current point;
