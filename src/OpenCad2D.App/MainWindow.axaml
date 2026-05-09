@@ -84,6 +84,24 @@
                             Orientation="Horizontal"
                             Spacing="8">
 
+                    <Button Classes="global-button"
+                            Content="New"
+                            Click="New_Click" />
+
+                    <Button Classes="global-button"
+                            Content="Open"
+                            Click="Open_Click" />
+
+                    <Button Classes="global-button"
+                            Content="Save"
+                            Click="Save_Click" />
+
+                    <Button Classes="global-button"
+                            Content="Save As"
+                            Click="SaveAs_Click" />
+
+                    <Separator Margin="8,0" />
+
                     <TextBlock Text="Layer:"
                                Foreground="#CCCCCC"
                                VerticalAlignment="Center"

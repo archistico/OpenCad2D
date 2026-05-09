@@ -1,17 +1,28 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
+using Avalonia.Layout;
+using Avalonia.Platform.Storage;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Persistence;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace OpenCad2D.App;
 
 public partial class MainWindow : Window
 {
+    private static readonly FilePickerFileType OpenCad2DFileType = new("OpenCad2D drawing")
+    {
+        Patterns = new[] { "*.opencad2d.json" },
+        MimeTypes = new[] { "application/json" }
+    };
+
     private readonly MainWindowViewModel _viewModel;
 
     public MainWindow()
@@ -49,6 +60,184 @@ public partial class MainWindow : Window
     private void RefreshLayerLockedCheckBox()
     {
         LayerLockedCheckBox.IsChecked = _viewModel.CurrentLayer.IsLocked;
+    }
+
+    private void New_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.NewDocument();
+
+        CadCanvas.ResetViewport();
+        InitializeLayerComboBox();
+        RefreshLayerControls();
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private async void Open_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
+                {
+                    Title = "Open OpenCad2D drawing",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { OpenCad2DFileType }
+                });
+
+            if (files.Count == 0)
+            {
+                return;
+            }
+
+            string? filePath = files[0].TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Open",
+                    "Only local files are supported in this version.");
+                return;
+            }
+
+            var viewportState = _viewModel.OpenFromFile(filePath);
+
+            CadCanvas.ApplyViewportState(viewportState);
+            InitializeLayerComboBox();
+            RefreshLayerControls();
+            RefreshStatus();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+            CadCanvas.Focus();
+        }
+        catch (DocumentLoadException exception)
+        {
+            await ShowMessageAsync(
+                "Open failed",
+                exception.Message);
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Open failed",
+                exception.Message);
+        }
+    }
+
+    private async void Save_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        await SaveAsync(forceSaveAs: false);
+    }
+
+    private async void SaveAs_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        await SaveAsync(forceSaveAs: true);
+    }
+
+    private async Task SaveAsync(bool forceSaveAs)
+    {
+        try
+        {
+            string? filePath = _viewModel.CurrentFilePath;
+
+            if (forceSaveAs || string.IsNullOrWhiteSpace(filePath))
+            {
+                IStorageFile? file = await StorageProvider.SaveFilePickerAsync(
+                    new FilePickerSaveOptions
+                    {
+                        Title = "Save OpenCad2D drawing",
+                        SuggestedFileName = _viewModel.CurrentFileName == "Untitled"
+                            ? "drawing.opencad2d.json"
+                            : _viewModel.CurrentFileName,
+                        DefaultExtension = "opencad2d.json",
+                        FileTypeChoices = new[] { OpenCad2DFileType }
+                    });
+
+                if (file is null)
+                {
+                    return;
+                }
+
+                filePath = file.TryGetLocalPath();
+
+                if (string.IsNullOrWhiteSpace(filePath))
+                {
+                    await ShowMessageAsync(
+                        "Save",
+                        "Only local files are supported in this version.");
+                    return;
+                }
+            }
+
+            _viewModel.SaveToFile(
+                filePath,
+                CadCanvas.GetViewportState());
+
+            RefreshStatus();
+            CadCanvas.Focus();
+        }
+        catch (DocumentSaveException exception)
+        {
+            await ShowMessageAsync(
+                "Save failed",
+                exception.Message);
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Save failed",
+                exception.Message);
+        }
+    }
+
+    private async Task ShowMessageAsync(
+        string title,
+        string message)
+    {
+        var dialog = new Window
+        {
+            Title = title,
+            Width = 420,
+            Height = 180,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(18),
+                Spacing = 14,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = message,
+                        TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                    },
+                    new Button
+                    {
+                        Content = "OK",
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        MinWidth = 80
+                    }
+                }
+            }
+        };
+
+        if (dialog.Content is StackPanel panel &&
+            panel.Children[1] is Button button)
+        {
+            button.Click += (_, _) => dialog.Close();
+        }
+
+        await dialog.ShowDialog(this);
     }
 
     private void LayerVisibleCheckBox_Click(
@@ -251,7 +440,7 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
-    private void Window_KeyDown(
+    private async void Window_KeyDown(
         object? sender,
         KeyEventArgs e)
     {
@@ -262,6 +451,39 @@ public partial class MainWindow : Window
 
         if (e.Source is TextBox)
         {
+            return;
+        }
+
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
+            e.Key == Key.N)
+        {
+            New_Click(sender, e);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
+            e.Key == Key.O)
+        {
+            Open_Click(sender, e);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
+            e.KeyModifiers.HasFlag(KeyModifiers.Shift) &&
+            e.Key == Key.S)
+        {
+            await SaveAsync(forceSaveAs: true);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
+            e.Key == Key.S)
+        {
+            await SaveAsync(forceSaveAs: false);
+            e.Handled = true;
             return;
         }
 
@@ -380,7 +602,7 @@ public partial class MainWindow : Window
 
     private void RefreshStatus()
     {
-        Title = $"OpenCad2D - {_viewModel.ActiveToolName}";
+        Title = _viewModel.WindowTitle;
 
         RefreshActiveToolUi();
     }

@@ -9,6 +9,7 @@ using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
+using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
@@ -1349,6 +1350,35 @@ public sealed class CadCanvas : Control
         return new Rect(
             topLeft,
             bottomRight);
+    }
+
+
+    public ViewportStateDto GetViewportState()
+    {
+        return new ViewportStateDto
+        {
+            PanX = _viewport.PanX,
+            PanY = _viewport.PanY,
+            Zoom = _viewport.Zoom
+        };
+    }
+
+    public void ApplyViewportState(ViewportStateDto viewportState)
+    {
+        ArgumentNullException.ThrowIfNull(viewportState);
+
+        _viewport.SetState(
+            viewportState.PanX,
+            viewportState.PanY,
+            viewportState.Zoom <= 0 ? 1.0 : viewportState.Zoom);
+
+        InvalidateVisual();
+    }
+
+    public void ResetViewport()
+    {
+        _viewport.Reset();
+        InvalidateVisual();
     }
 
     public ToolResult ZoomExtents()

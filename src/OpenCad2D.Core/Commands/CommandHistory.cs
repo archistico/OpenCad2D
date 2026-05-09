@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Documents;
 
 namespace OpenCad2D.Core.Commands;
 
@@ -18,6 +18,14 @@ public sealed class CommandHistory
 
     public bool CanRedo => _redoStack.Count > 0;
 
+    /// <summary>
+    /// Represents the current command position of the document.
+    /// It increases when commands are executed or redone and decreases when commands are undone.
+    /// CadWorkspace uses this value to determine whether the current document state differs from
+    /// the last saved state.
+    /// </summary>
+    public int CurrentGeneration { get; private set; }
+
     public void Execute(CadDocument document, ICadCommand command)
     {
         ArgumentNullException.ThrowIfNull(document);
@@ -27,6 +35,7 @@ public sealed class CommandHistory
 
         _undoStack.Push(command);
         _redoStack.Clear();
+        CurrentGeneration++;
     }
 
     public void Undo(CadDocument document)
@@ -43,6 +52,7 @@ public sealed class CommandHistory
         command.Undo(document);
 
         _redoStack.Push(command);
+        CurrentGeneration--;
     }
 
     public void Redo(CadDocument document)
@@ -59,11 +69,20 @@ public sealed class CommandHistory
         command.Execute(document);
 
         _undoStack.Push(command);
+        CurrentGeneration++;
+    }
+
+
+    public void RegisterExternalChange()
+    {
+        _redoStack.Clear();
+        CurrentGeneration++;
     }
 
     public void Clear()
     {
         _undoStack.Clear();
         _redoStack.Clear();
+        CurrentGeneration = 0;
     }
 }

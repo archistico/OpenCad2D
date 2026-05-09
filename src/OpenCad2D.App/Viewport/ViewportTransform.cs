@@ -16,6 +16,12 @@ public sealed class ViewportTransform
 
     public Vector Offset { get; private set; } = new(0, 0);
 
+    public double PanX => Offset.X;
+
+    public double PanY => Offset.Y;
+
+    public double Zoom => Scale;
+
     public Point ModelToScreen(Point2D modelPoint)
     {
         return new Point(
@@ -123,9 +129,23 @@ public sealed class ViewportTransform
             screenCenter.Y - modelCenter.Y * Scale);
     }
 
+    public void SetState(
+        double panX,
+        double panY,
+        double zoom)
+    {
+        Scale = Math.Clamp(
+            zoom,
+            MinScale,
+            MaxScale);
+
+        Offset = new Vector(
+            panX,
+            panY);
+    }
+
     public void Reset()
     {
-        Scale = 1.0;
-        Offset = new Vector(0, 0);
+        SetState(0, 0, 1.0);
     }
 }

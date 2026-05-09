@@ -58,7 +58,7 @@ public sealed class ToolContext
             currentLayerId ?? LayerId.Default);
     }
 
-    public CadDocument Document { get; }
+    public CadDocument Document { get; internal set; }
 
     public ToolCommandContext Commands { get; }
 
