@@ -191,14 +191,18 @@ public partial class MainWindow : Window
         object? sender,
         KeyEventArgs e)
     {
-        if (e.Key != Key.Enter)
+        if (e.Key == Key.Enter)
         {
+            SubmitCommandInputText();
+            e.Handled = true;
             return;
         }
 
-        SubmitCommandInputText();
-
-        e.Handled = true;
+        if (e.Key == Key.Escape && !string.IsNullOrEmpty(CommandInputTextBox.Text))
+        {
+            ClearCommandInputText();
+            e.Handled = true;
+        }
     }
 
     private void Window_TextInput(
@@ -231,6 +235,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (e.Source is TextBox)
+        {
+            return;
+        }
+
         if (e.Key == Key.Enter && !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
         {
             SubmitCommandInputText();
@@ -247,7 +256,7 @@ public partial class MainWindow : Window
 
         if (e.Key == Key.Escape && !string.IsNullOrEmpty(CommandInputTextBox.Text))
         {
-            CommandInputTextBox.Text = string.Empty;
+            ClearCommandInputText();
             e.Handled = true;
         }
     }
@@ -258,7 +267,7 @@ public partial class MainWindow : Window
 
         _viewModel.SubmitCommandInput(input);
 
-        CommandInputTextBox.Text = string.Empty;
+        ClearCommandInputText();
 
         RefreshStatus();
 
@@ -286,6 +295,12 @@ public partial class MainWindow : Window
         CommandInputTextBox.Text = text[..^1];
         CommandInputTextBox.CaretIndex = CommandInputTextBox.Text.Length;
         CommandInputTextBox.Focus();
+    }
+
+    private void ClearCommandInputText()
+    {
+        CommandInputTextBox.Text = string.Empty;
+        CommandInputTextBox.CaretIndex = 0;
     }
 
     private static bool IsCommandInputText(string text)
