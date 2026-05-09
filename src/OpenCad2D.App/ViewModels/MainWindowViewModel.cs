@@ -58,6 +58,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public bool CurrentLayerIsLocked => CurrentLayer.IsLocked;
 
+    public bool IsOrthoEnabled => Workspace.Context.IsOrthoEnabled;
+
     public string ActiveToolName =>
         Workspace.ToolController.ActiveToolName;
 
@@ -114,6 +116,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
             Point2D targetPoint = _currentSnapCandidate?.Point ?? _mousePosition;
+
+            targetPoint = ToolInputConstraintService.ApplyOrtho(
+                Workspace.Context.IsOrthoEnabled,
+                basePoint,
+                targetPoint);
 
             if (Workspace.GeometryTolerance.ArePointsEqual(basePoint, targetPoint))
             {
@@ -233,6 +240,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
         Point2D directionPoint = _currentSnapCandidate?.Point ?? _mousePosition;
+
+        directionPoint = ToolInputConstraintService.ApplyOrtho(
+            Workspace.Context.IsOrthoEnabled,
+            basePoint,
+            directionPoint);
+
         Vector2D direction = basePoint.VectorTo(directionPoint);
 
         if (Workspace.GeometryTolerance.ArePointsEqual(basePoint, directionPoint))
@@ -442,6 +455,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(StatusText));
     }
 
+    public void SetOrthoEnabled(bool isEnabled)
+    {
+        Workspace.Context.IsOrthoEnabled = isEnabled;
+
+        SetMessage(isEnabled
+            ? "Ortho mode enabled."
+            : "Ortho mode disabled.");
+
+        OnPropertiesChanged(
+            nameof(IsOrthoEnabled),
+            nameof(MeasurementText),
+            nameof(StatusText));
+    }
+
     public void NotifyDocumentStateChanged()
     {
         OnPropertiesChanged(
@@ -454,6 +481,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayer),
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
+            nameof(IsOrthoEnabled),
             nameof(CurrentLayerText),
             nameof(MousePositionText),
             nameof(MeasurementText),
@@ -479,6 +507,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayer),
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
+            nameof(IsOrthoEnabled),
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
             nameof(MeasurementText),

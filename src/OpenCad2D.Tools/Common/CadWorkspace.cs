@@ -122,7 +122,21 @@ public sealed class CadWorkspace
             worldPoint,
             CurrentUcs.WorldToUser(worldPoint));
 
-        return ToolController.OnPointerPressed(pointer);
+        bool originalOrthoState = Context.IsOrthoEnabled;
+
+        try
+        {
+            // Command-line points have already been resolved explicitly by the caller.
+            // In particular, direct distance entry applies Ortho while calculating
+            // the final point, while absolute and relative coordinates must remain exact.
+            Context.IsOrthoEnabled = false;
+
+            return ToolController.OnPointerPressed(pointer);
+        }
+        finally
+        {
+            Context.IsOrthoEnabled = originalOrthoState;
+        }
     }
 
     public ToolResult SetCurrentLayerLocked(bool isLocked)

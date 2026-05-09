@@ -270,6 +270,14 @@
                           Content="Grid"
                           IsChecked="True"
                           Click="SnapGrid_Changed" />
+
+                <Separator Margin="4,0" />
+
+                <CheckBox x:Name="OrthoCheckBox"
+                          Classes="snap-check"
+                          Content="Ortho"
+                          IsChecked="False"
+                          Click="Ortho_Changed" />
             </StackPanel>
         </Border>
 

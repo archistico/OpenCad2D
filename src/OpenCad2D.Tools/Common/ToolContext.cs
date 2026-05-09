@@ -76,6 +76,12 @@ public sealed class ToolContext
     /// </summary>
     public Point2D? CurrentBasePoint { get; set; }
 
+    /// <summary>
+    /// When enabled, second points for two-point tools are constrained to the
+    /// closest horizontal or vertical direction from the current base point.
+    /// </summary>
+    public bool IsOrthoEnabled { get; set; }
+
     /*
      * Compatibility properties.
      * Keep them temporarily so existing tools continue to compile.

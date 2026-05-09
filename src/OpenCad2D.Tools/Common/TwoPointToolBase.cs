@@ -39,6 +39,15 @@ public abstract class TwoPointToolBase : ICadTool
             pointer.ModelPoint,
             _firstPoint);
 
+        if (State == TwoPointToolState.WaitingForSecondPoint &&
+            _firstPoint is not null)
+        {
+            point = ToolInputConstraintService.ApplyOrtho(
+                context.IsOrthoEnabled,
+                _firstPoint.Value,
+                point);
+        }
+
         if (State == TwoPointToolState.WaitingForFirstPoint)
         {
             _firstPoint = point;
@@ -94,14 +103,19 @@ public abstract class TwoPointToolBase : ICadTool
             return ToolResult.None();
         }
 
-        _currentPoint = ApplySnap(
+        Point2D point = ApplySnap(
             context,
             pointer.ModelPoint,
             _firstPoint);
 
+        _currentPoint = ToolInputConstraintService.ApplyOrtho(
+            context.IsOrthoEnabled,
+            _firstPoint!.Value,
+            point);
+
         return OnPreviewUpdated(
             context,
-            _firstPoint!.Value,
+            _firstPoint.Value,
             _currentPoint.Value);
     }
 

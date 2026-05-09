@@ -419,6 +419,18 @@ public partial class MainWindow : Window
             SnapTangentCheckBox.IsChecked == true);
     }
 
+    private void Ortho_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetOrthoEnabled(OrthoCheckBox.IsChecked == true);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+    }
+
     private void SetSnapFromCheckBox(
         SnapKind snapKind,
         bool isEnabled)
