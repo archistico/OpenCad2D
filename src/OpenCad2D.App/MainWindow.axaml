@@ -105,10 +105,16 @@
 							  SelectionChanged="LayerComboBox_SelectionChanged" />
 
 					<CheckBox x:Name="LayerVisibleCheckBox"
-							  Content="Visible"
+						Content="Visible"
+						Foreground="#CCCCCC"
+						IsChecked="True"
+						Click="LayerVisibleCheckBox_Click" />
+
+					<CheckBox x:Name="LayerLockedCheckBox"
+							  Content="Locked"
 							  Foreground="#CCCCCC"
-							  IsChecked="True"
-							  Click="LayerVisibleCheckBox_Click" />
+							  IsChecked="False"
+							  Click="LayerLockedCheckBox_Click" />
 
 					<Separator Margin="8,0" />
 

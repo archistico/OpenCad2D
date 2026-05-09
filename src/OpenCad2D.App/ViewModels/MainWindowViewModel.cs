@@ -7,8 +7,8 @@ using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace OpenCad2D.App.ViewModels;
@@ -19,24 +19,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
 
-    public IReadOnlyList<string> LayerNames =>
-    Workspace.Document.Layers.All
-        .OrderBy(layer => layer.Name)
-        .Select(layer => layer.Name)
-        .ToList();
-
     public MainWindowViewModel()
     {
         Workspace = new CadWorkspace(
-            enabledSnaps:
-                SnapKind.Endpoint |
-                SnapKind.Midpoint |
-                SnapKind.Center |
-                SnapKind.Quadrant |
-                SnapKind.Intersection |
-                SnapKind.Perpendicular |
-                SnapKind.Tangent |
-                SnapKind.Grid,
+            enabledSnaps: SnapKind.Endpoint |
+                          SnapKind.Midpoint |
+                          SnapKind.Center |
+                          SnapKind.Quadrant |
+                          SnapKind.Intersection |
+                          SnapKind.Perpendicular |
+                          SnapKind.Tangent |
+                          SnapKind.Grid,
             snapTolerance: 8,
             selectionTolerance: 6,
             selectionDragThreshold: 4);
@@ -47,21 +40,33 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public CadWorkspace Workspace { get; }
 
-    public IReadOnlyList<Layer> Layers =>
-        Workspace.Document.Layers.All
-            .OrderBy(layer => layer.Name)
-            .ToList();
+    public IReadOnlyList<string> LayerNames => Workspace.Document.Layers.All
+        .OrderBy(layer => layer.Name)
+        .Select(layer => layer.Name)
+        .ToList();
+
+    public IReadOnlyList<Layer> Layers => Workspace.Document.Layers.All
+        .OrderBy(layer => layer.Name)
+        .ToList();
 
     public Layer CurrentLayer =>
         Workspace.Document.Layers.GetRequired(Workspace.CurrentLayerId);
 
-    public string ActiveToolName => Workspace.ToolController.ActiveToolName;
+    public bool CurrentLayerIsVisible => CurrentLayer.IsVisible;
 
-    public int EntityCount => Workspace.Document.Entities.Count;
+    public bool CurrentLayerIsLocked => CurrentLayer.IsLocked;
 
-    public int SelectedCount => Workspace.SelectionSet.Count;
+    public string ActiveToolName =>
+        Workspace.ToolController.ActiveToolName;
 
-    public string LastMessage => _lastMessage;
+    public int EntityCount =>
+        Workspace.Document.Entities.Count;
+
+    public int SelectedCount =>
+        Workspace.SelectionSet.Count;
+
+    public string LastMessage =>
+        _lastMessage;
 
     public string MousePositionText
     {
@@ -69,9 +74,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             Point2D userPoint = Workspace.CurrentUcs.WorldToUser(_mousePosition);
 
-            return
-                $"WCS X: {_mousePosition.X:0.###} Y: {_mousePosition.Y:0.###} | " +
-                $"UCS X: {userPoint.X:0.###} Y: {userPoint.Y:0.###}";
+            return $"WCS X: {_mousePosition.X:0.###} Y: {_mousePosition.Y:0.###} | " +
+                   $"UCS X: {userPoint.X:0.###} Y: {userPoint.Y:0.###}";
         }
     }
 
@@ -80,12 +84,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             ? "Snap: -"
             : $"Snap: {_currentSnapCandidate.Kind}";
 
-    public string CurrentLayerText =>
-        $"Layer: {CurrentLayer.Name}";
+    public string CurrentLayerText
+    {
+        get
+        {
+            string visibility = CurrentLayer.IsVisible
+                ? "Visible"
+                : "Hidden";
+
+            string locked = CurrentLayer.IsLocked
+                ? "Locked"
+                : "Unlocked";
+
+            return $"Layer: {CurrentLayer.Name} ({visibility}, {locked})";
+        }
+    }
 
     public string StatusText =>
         $"Tool: {ActiveToolName} | " +
-        $"Layer: {CurrentLayer.Name} | " +
+        $"{CurrentLayerText} | " +
         $"Entities: {EntityCount} | " +
         $"Selected: {SelectedCount} | " +
         $"{MousePositionText} | " +
@@ -112,26 +129,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public void SetLastResult(ToolResult result)
     {
-        if (!string.IsNullOrWhiteSpace(result.Message))
+        if (string.IsNullOrWhiteSpace(result.Message))
         {
-            _lastMessage = result.Message;
-
-            OnPropertiesChanged(
-                nameof(LastMessage),
-                nameof(StatusText));
+            return;
         }
+
+        _lastMessage = result.Message;
+
+        OnPropertiesChanged(
+            nameof(LastMessage),
+            nameof(StatusText));
     }
 
     public void SetMessage(string message)
     {
-        if (!string.IsNullOrWhiteSpace(message))
+        if (string.IsNullOrWhiteSpace(message))
         {
-            _lastMessage = message;
-
-            OnPropertiesChanged(
-                nameof(LastMessage),
-                nameof(StatusText));
+            return;
         }
+
+        _lastMessage = message;
+
+        OnPropertiesChanged(
+            nameof(LastMessage),
+            nameof(StatusText));
     }
 
     public void SetCurrentLayer(Layer layer)
@@ -143,6 +164,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         SetMessage($"Current layer changed to '{layer.Name}'.");
 
         NotifyLayerStateChanged();
+    }
+
+    public void SetCurrentLayerByName(string layerName)
+    {
+        Layer? layer = Workspace.Document.Layers.All
+            .FirstOrDefault(layer => layer.Name == layerName);
+
+        if (layer is null)
+        {
+            return;
+        }
+
+        SetCurrentLayer(layer);
     }
 
     public void SetCurrentLayerVisibility(bool isVisible)
@@ -160,6 +194,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         NotifyLayerStateChanged();
         NotifyDocumentStateChanged();
+    }
+
+    public ToolResult SetCurrentLayerLocked(bool isLocked)
+    {
+        string layerName = CurrentLayer.Name;
+
+        ToolResult result = Workspace.SetCurrentLayerLocked(isLocked);
+
+        SetLastResult(result);
+
+        SetMessage(
+            isLocked
+                ? $"Layer '{layerName}' locked."
+                : $"Layer '{layerName}' unlocked.");
+
+        NotifyLayerStateChanged();
+        NotifyDocumentStateChanged();
+
+        return result;
     }
 
     public ToolResult SetTool(ToolId toolId)
@@ -232,8 +285,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public void SetSnapEnabled(
-    SnapKind snapKind,
-    bool isEnabled)
+        SnapKind snapKind,
+        bool isEnabled)
     {
         if (isEnabled)
         {
@@ -248,6 +301,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(SnapText),
+            nameof(StatusText));
+    }
+
+    public void NotifyDocumentStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(StatusText),
+            nameof(EntityCount),
+            nameof(SelectedCount),
+            nameof(ActiveToolName),
+            nameof(LayerNames),
+            nameof(Layers),
+            nameof(CurrentLayer),
+            nameof(CurrentLayerIsVisible),
+            nameof(CurrentLayerIsLocked),
+            nameof(CurrentLayerText),
+            nameof(MousePositionText),
+            nameof(SnapText),
+            nameof(LastMessage));
+    }
+
+    private void NotifyLayerStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(LayerNames),
+            nameof(Layers),
+            nameof(CurrentLayer),
+            nameof(CurrentLayerIsVisible),
+            nameof(CurrentLayerIsLocked),
+            nameof(CurrentLayerText),
             nameof(StatusText));
     }
 
@@ -285,19 +368,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 name,
                 color,
                 LineWeight.FromMillimeters(0.25)));
-    }
-
-    public void SetCurrentLayerByName(string layerName)
-    {
-        Layer? layer = Workspace.Document.Layers.All
-            .FirstOrDefault(layer => layer.Name == layerName);
-
-        if (layer is null)
-        {
-            return;
-        }
-
-        SetCurrentLayer(layer);
     }
 
     private void SeedDemoDrawing()
@@ -345,44 +415,5 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             OnPropertyChanged(propertyName);
         }
-    }
-
-    public void NotifyDocumentStateChanged()
-    {
-        OnPropertiesChanged(
-            nameof(StatusText),
-            nameof(EntityCount),
-            nameof(SelectedCount),
-            nameof(ActiveToolName),
-            nameof(LayerNames),
-            nameof(Layers),
-            nameof(CurrentLayer),
-            nameof(CurrentLayerText),
-            nameof(MousePositionText),
-            nameof(SnapText),
-            nameof(LastMessage));
-    }
-
-    private void NotifyStatusChanged()
-    {
-        OnPropertiesChanged(
-            nameof(StatusText),
-            nameof(LastMessage),
-            nameof(MousePositionText),
-            nameof(SnapText),
-            nameof(CurrentLayerText),
-            nameof(EntityCount),
-            nameof(SelectedCount),
-            nameof(ActiveToolName));
-    }
-
-    private void NotifyLayerStateChanged()
-    {
-        OnPropertiesChanged(
-            nameof(LayerNames),
-            nameof(Layers),
-            nameof(CurrentLayer),
-            nameof(CurrentLayerText),
-            nameof(StatusText));
     }
 }

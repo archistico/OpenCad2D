@@ -1,10 +1,11 @@
 ﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Geometry;
+using OpenCad2D.Geometry.Coordinates;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
-using OpenCad2D.Geometry.Coordinates;
-using OpenCad2D.Geometry;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -88,6 +89,18 @@ public sealed class CadWorkspace
         set => Context.CurrentLayerId = value;
     }
 
+    public CoordinateSystem2D CurrentUcs
+    {
+        get => Context.CurrentUcs;
+        set => Context.CurrentUcs = value;
+    }
+
+    public GeometryTolerance GeometryTolerance
+    {
+        get => Context.GeometryTolerance;
+        set => Context.GeometryTolerance = value;
+    }
+
     public ToolResult SetActiveTool(ToolId toolId)
     {
         ICadTool tool = ToolRegistry.Create(toolId);
@@ -102,16 +115,51 @@ public sealed class CadWorkspace
         return ToolController.SetActiveToolWithoutDeactivating(tool);
     }
 
-    public CoordinateSystem2D CurrentUcs
+    public ToolResult SetCurrentLayerLocked(bool isLocked)
     {
-        get => Context.CurrentUcs;
-        set => Context.CurrentUcs = value;
+        Document.Layers.SetLocked(
+            CurrentLayerId,
+            isLocked);
+
+        int removedSelections = ClearSelectionOfNonSelectableEntities();
+
+        string message = isLocked
+            ? "Current layer locked."
+            : "Current layer unlocked.";
+
+        if (removedSelections > 0)
+        {
+            message += $" {removedSelections} selected entity/entities removed from selection.";
+        }
+
+        return ToolResult.Completed(message);
     }
 
-    public GeometryTolerance GeometryTolerance
+    public int ClearSelectionOfNonSelectableEntities()
     {
-        get => Context.GeometryTolerance;
-        set => Context.GeometryTolerance = value;
+        int removed = 0;
+
+        foreach (EntityId entityId in SelectionSet.SelectedIds.ToList())
+        {
+            if (!Document.Entities.Contains(entityId))
+            {
+                SelectionSet.Deselect(entityId);
+                removed++;
+                continue;
+            }
+
+            CadEntity entity = Document.Entities.GetRequired(entityId);
+
+            if (Document.IsEntitySelectable(entity))
+            {
+                continue;
+            }
+
+            SelectionSet.Deselect(entityId);
+            removed++;
+        }
+
+        return removed;
     }
 
     public ToolResult Escape()

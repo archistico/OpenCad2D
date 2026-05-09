@@ -18,11 +18,11 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _viewModel = new MainWindowViewModel();
+
         DataContext = _viewModel;
 
         InitializeLayerComboBox();
-        RefreshLayerVisibleCheckBox();
-
+        RefreshLayerControls();
         RefreshStatus();
     }
 
@@ -31,13 +31,23 @@ public partial class MainWindow : Window
         LayerComboBox.ItemsSource = _viewModel.LayerNames;
         LayerComboBox.SelectedItem = _viewModel.CurrentLayer.Name;
 
-        RefreshLayerVisibleCheckBox();
+        RefreshLayerControls();
     }
 
+    private void RefreshLayerControls()
+    {
+        RefreshLayerVisibleCheckBox();
+        RefreshLayerLockedCheckBox();
+    }
 
     private void RefreshLayerVisibleCheckBox()
     {
         LayerVisibleCheckBox.IsChecked = _viewModel.CurrentLayer.IsVisible;
+    }
+
+    private void RefreshLayerLockedCheckBox()
+    {
+        LayerLockedCheckBox.IsChecked = _viewModel.CurrentLayer.IsLocked;
     }
 
     private void LayerVisibleCheckBox_Click(
@@ -48,7 +58,22 @@ public partial class MainWindow : Window
 
         _viewModel.SetCurrentLayerVisibility(isVisible);
 
-        RefreshLayerVisibleCheckBox();
+        RefreshLayerControls();
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+    }
+
+    private void LayerLockedCheckBox_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        bool isLocked = LayerLockedCheckBox.IsChecked == true;
+
+        _viewModel.SetCurrentLayerLocked(isLocked);
+
+        RefreshLayerControls();
         RefreshStatus();
 
         CadCanvas.ClearSnapMarker();
@@ -56,8 +81,8 @@ public partial class MainWindow : Window
     }
 
     private void LayerComboBox_SelectionChanged(
-    object? sender,
-    SelectionChangedEventArgs e)
+        object? sender,
+        SelectionChangedEventArgs e)
     {
         if (LayerComboBox.SelectedItem is not string selectedLayerName)
         {
@@ -66,7 +91,7 @@ public partial class MainWindow : Window
 
         _viewModel.SetCurrentLayerByName(selectedLayerName);
 
-        RefreshLayerVisibleCheckBox();
+        RefreshLayerControls();
         RefreshStatus();
 
         CadCanvas.ClearSnapMarker();
@@ -77,7 +102,9 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.SetTool(ToolId.Selection);
+
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 
@@ -86,7 +113,9 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.SetTool(ToolId.Line);
+
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 
@@ -95,7 +124,9 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.SetTool(ToolId.Rectangle);
+
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 
@@ -104,7 +135,9 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.SetTool(ToolId.Move);
+
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 
@@ -113,7 +146,9 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.SetTool(ToolId.Copy);
+
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 
@@ -122,7 +157,9 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.DeleteSelection();
+
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 
@@ -131,7 +168,9 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.Undo();
+
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 
@@ -140,13 +179,15 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.Redo();
+
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 
     private void CadCanvas_WorkspaceChanged(
-    object? sender,
-    CadCanvasWorkspaceChangedEventArgs e)
+        object? sender,
+        CadCanvasWorkspaceChangedEventArgs e)
     {
         _viewModel.SetMousePosition(e.MousePosition);
         _viewModel.SetLastResult(e.Result);
@@ -164,8 +205,8 @@ public partial class MainWindow : Window
     }
 
     private void SnapEndpoint_Changed(
-    object? sender,
-    RoutedEventArgs e)
+        object? sender,
+        RoutedEventArgs e)
     {
         SetSnapFromCheckBox(
             SnapKind.Endpoint,
@@ -217,6 +258,24 @@ public partial class MainWindow : Window
             SnapGridCheckBox.IsChecked == true);
     }
 
+    private void SnapPerpendicular_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Perpendicular,
+            SnapPerpendicularCheckBox.IsChecked == true);
+    }
+
+    private void SnapTangent_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Tangent,
+            SnapTangentCheckBox.IsChecked == true);
+    }
+
     private void SetSnapFromCheckBox(
         SnapKind snapKind,
         bool isEnabled)
@@ -226,25 +285,8 @@ public partial class MainWindow : Window
             isEnabled);
 
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
-    }
-
-    private void SnapPerpendicular_Changed(
-    object? sender,
-    RoutedEventArgs e)
-    {
-        SetSnapFromCheckBox(
-            SnapKind.Perpendicular,
-            SnapPerpendicularCheckBox.IsChecked == true);
-    }
-
-    private void SnapTangent_Changed(
-    object? sender,
-    RoutedEventArgs e)
-    {
-        SetSnapFromCheckBox(
-            SnapKind.Tangent,
-            SnapTangentCheckBox.IsChecked == true);
     }
 
     private void RefreshActiveToolUi()
@@ -253,8 +295,8 @@ public partial class MainWindow : Window
 
         SetActiveToolButton(
             SelectButton,
-            activeToolName.Equals("Select", StringComparison.OrdinalIgnoreCase)
-            || activeToolName.Equals("Selection", StringComparison.OrdinalIgnoreCase));
+            activeToolName.Equals("Select", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("Selection", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             LineButton,
@@ -272,13 +314,12 @@ public partial class MainWindow : Window
             CopyButton,
             activeToolName.Equals("Copy", StringComparison.OrdinalIgnoreCase));
 
-        ActiveCommandTextBlock.Text =
-            $"Comando attivo: {activeToolName}";
+        ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }
 
     private static void SetActiveToolButton(
-    Button button,
-    bool isActive)
+        Button button,
+        bool isActive)
     {
         const string activeClassName = "active-tool";
 
