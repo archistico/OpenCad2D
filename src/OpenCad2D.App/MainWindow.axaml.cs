@@ -24,6 +24,8 @@ public partial class MainWindow : Window
     };
 
     private readonly MainWindowViewModel _viewModel;
+    private bool _closeConfirmed;
+
 
     public MainWindow()
     {
@@ -36,6 +38,8 @@ public partial class MainWindow : Window
         InitializeLayerComboBox();
         RefreshLayerControls();
         RefreshStatus();
+
+        Closing += Window_Closing;
     }
 
     private void InitializeLayerComboBox()
@@ -62,10 +66,15 @@ public partial class MainWindow : Window
         LayerLockedCheckBox.IsChecked = _viewModel.CurrentLayer.IsLocked;
     }
 
-    private void New_Click(
+    private async void New_Click(
         object? sender,
         RoutedEventArgs e)
     {
+        if (!await ConfirmProceedWithUnsavedChangesAsync())
+        {
+            return;
+        }
+
         _viewModel.NewDocument();
 
         CadCanvas.ResetViewport();
@@ -83,6 +92,11 @@ public partial class MainWindow : Window
     {
         try
         {
+            if (!await ConfirmProceedWithUnsavedChangesAsync())
+            {
+                return;
+            }
+
             IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
                 new FilePickerOpenOptions
                 {
@@ -144,7 +158,7 @@ public partial class MainWindow : Window
         await SaveAsync(forceSaveAs: true);
     }
 
-    private async Task SaveAsync(bool forceSaveAs)
+    private async Task<bool> SaveAsync(bool forceSaveAs)
     {
         try
         {
@@ -165,7 +179,7 @@ public partial class MainWindow : Window
 
                 if (file is null)
                 {
-                    return;
+                    return false;
                 }
 
                 filePath = file.TryGetLocalPath();
@@ -175,7 +189,7 @@ public partial class MainWindow : Window
                     await ShowMessageAsync(
                         "Save",
                         "Only local files are supported in this version.");
-                    return;
+                    return false;
                 }
             }
 
@@ -185,19 +199,134 @@ public partial class MainWindow : Window
 
             RefreshStatus();
             CadCanvas.Focus();
+
+            return true;
         }
         catch (DocumentSaveException exception)
         {
             await ShowMessageAsync(
                 "Save failed",
                 exception.Message);
+
+            return false;
         }
         catch (Exception exception)
         {
             await ShowMessageAsync(
                 "Save failed",
                 exception.Message);
+
+            return false;
         }
+    }
+
+    private enum SaveChangesChoice
+    {
+        Cancel,
+        Save,
+        DontSave
+    }
+
+    private async Task<bool> ConfirmProceedWithUnsavedChangesAsync()
+    {
+        if (!_viewModel.IsDirty)
+        {
+            return true;
+        }
+
+        SaveChangesChoice choice = await ShowSaveChangesDialogAsync();
+
+        if (choice == SaveChangesChoice.Cancel)
+        {
+            return false;
+        }
+
+        if (choice == SaveChangesChoice.DontSave)
+        {
+            return true;
+        }
+
+        return await SaveAsync(forceSaveAs: false);
+    }
+
+    private async Task<SaveChangesChoice> ShowSaveChangesDialogAsync()
+    {
+        var saveButton = new Button
+        {
+            Content = "Save",
+            MinWidth = 92
+        };
+
+        var dontSaveButton = new Button
+        {
+            Content = "Don't Save",
+            MinWidth = 92
+        };
+
+        var cancelButton = new Button
+        {
+            Content = "Cancel",
+            MinWidth = 92
+        };
+
+        var dialog = new Window
+        {
+            Title = "Save changes?",
+            Width = 460,
+            Height = 190,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Content = new StackPanel
+            {
+                Margin = new Avalonia.Thickness(18),
+                Spacing = 16,
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = $"Save changes to '{_viewModel.CurrentFileName}' before continuing?",
+                        TextWrapping = Avalonia.Media.TextWrapping.Wrap
+                    },
+                    new StackPanel
+                    {
+                        Orientation = Orientation.Horizontal,
+                        HorizontalAlignment = HorizontalAlignment.Right,
+                        Spacing = 8,
+                        Children =
+                        {
+                            saveButton,
+                            dontSaveButton,
+                            cancelButton
+                        }
+                    }
+                }
+            }
+        };
+
+        saveButton.Click += (_, _) => dialog.Close(SaveChangesChoice.Save);
+        dontSaveButton.Click += (_, _) => dialog.Close(SaveChangesChoice.DontSave);
+        cancelButton.Click += (_, _) => dialog.Close(SaveChangesChoice.Cancel);
+
+        return await dialog.ShowDialog<SaveChangesChoice>(this);
+    }
+
+    private async void Window_Closing(
+        object? sender,
+        WindowClosingEventArgs e)
+    {
+        if (_closeConfirmed || !_viewModel.IsDirty)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+
+        if (!await ConfirmProceedWithUnsavedChangesAsync())
+        {
+            return;
+        }
+
+        _closeConfirmed = true;
+        Close();
     }
 
     private async Task ShowMessageAsync(

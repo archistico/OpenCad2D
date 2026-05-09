@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "savedAt": "2026-05-09T21:33:27.7552797\u002B00:00",
+  "savedAt": "2026-05-09T21:38:30.8223986\u002B00:00",
   "settings": {
     "currentLayerId": "0"
   },
@@ -95,8 +95,8 @@
       "layerId": "0"
     },
     {
-      "startX": 50,
-      "startY": 50,
+      "startX": 65,
+      "startY": 155,
       "endX": 250,
       "endY": 180,
       "type": "Line",
