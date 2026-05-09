@@ -21,7 +21,10 @@ public sealed class RectangleTool : TwoPointToolBase
             return null;
         }
 
-        if (!CanCreateRectangle(FirstPoint.Value, CurrentPoint.Value))
+        if (!CanCreateRectangle(
+            FirstPoint.Value,
+            CurrentPoint.Value,
+            GeometryTolerance.Default))
         {
             return null;
         }
@@ -57,11 +60,11 @@ public sealed class RectangleTool : TwoPointToolBase
     }
 
     protected override ToolResult OnSecondPointSelected(
-        ToolContext context,
-        Point2D firstPoint,
-        Point2D secondPoint)
+    ToolContext context,
+    Point2D firstPoint,
+    Point2D secondPoint)
     {
-        if (!CanCreateRectangle(firstPoint, secondPoint))
+        if (!CanCreateRectangle(firstPoint, secondPoint, context))
         {
             return ToolResult.None("Rectangle width and height must be greater than zero.");
         }
@@ -84,11 +87,32 @@ public sealed class RectangleTool : TwoPointToolBase
     }
 
     private static bool CanCreateRectangle(
-        Point2D firstCorner,
-        Point2D oppositeCorner)
+    Point2D firstCorner,
+    Point2D oppositeCorner,
+    ToolContext context)
     {
-        return !Tolerance.AreEqual(firstCorner.X, oppositeCorner.X)
-            && !Tolerance.AreEqual(firstCorner.Y, oppositeCorner.Y);
+        return CanCreateRectangle(
+            firstCorner,
+            oppositeCorner,
+            context.GeometryTolerance);
+    }
+
+    private static bool CanCreateRectangle(
+        Point2D firstCorner,
+        Point2D oppositeCorner,
+        GeometryTolerance tolerance)
+    {
+        return !tolerance.AreDistancesEqual(firstCorner.X, oppositeCorner.X)
+            && !tolerance.AreDistancesEqual(firstCorner.Y, oppositeCorner.Y);
+    }
+
+    private static bool IsValidRectangle(
+        Point2D firstCorner,
+        Point2D oppositeCorner,
+        ToolContext context)
+    {
+        return !context.GeometryTolerance.AreDistancesEqual(firstCorner.X, oppositeCorner.X)
+            && !context.GeometryTolerance.AreDistancesEqual(firstCorner.Y, oppositeCorner.Y);
     }
 
     private static PolylineEntity CreateRectangleEntity(

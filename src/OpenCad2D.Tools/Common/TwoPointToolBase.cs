@@ -56,7 +56,7 @@ public abstract class TwoPointToolBase : ICadTool
                     "Tool is waiting for second point but first point is missing.");
             }
 
-            if (AreSamePoint(_firstPoint.Value, point))
+            if (AreSamePoint(_firstPoint.Value, point, context))
             {
                 return ToolResult.None("Second point must be different from first point.");
             }
@@ -174,9 +174,11 @@ public abstract class TwoPointToolBase : ICadTool
         return candidate?.Point ?? cursorPoint;
     }
 
-    private static bool AreSamePoint(Point2D first, Point2D second)
+    private static bool AreSamePoint(
+        Point2D first,
+        Point2D second,
+        ToolContext context)
     {
-        return Tolerance.AreEqual(first.X, second.X)
-            && Tolerance.AreEqual(first.Y, second.Y);
+        return context.GeometryTolerance.ArePointsEqual(first, second);
     }
 }

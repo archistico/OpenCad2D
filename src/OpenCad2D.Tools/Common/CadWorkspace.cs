@@ -4,6 +4,7 @@ using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Geometry.Coordinates;
+using OpenCad2D.Geometry;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -26,7 +27,8 @@ public sealed class CadWorkspace
         double selectionTolerance = 5,
         double selectionDragThreshold = 1,
         ToolId initialToolId = ToolId.Selection,
-        CoordinateSystem2D? currentUcs = null)
+        CoordinateSystem2D? currentUcs = null,
+        GeometryTolerance? geometryTolerance = null)
     {
         Document = document ?? new CadDocument();
         CommandHistory = commandHistory ?? new CommandHistory();
@@ -48,7 +50,8 @@ public sealed class CadWorkspace
             snapTolerance: snapTolerance,
             selectionTolerance: selectionTolerance,
             selectionDragThreshold: selectionDragThreshold,
-            currentUcs: currentUcs);
+            currentUcs: currentUcs,
+            geometryTolerance: geometryTolerance);
 
         ToolController = new ToolController(
             Context,
@@ -103,5 +106,11 @@ public sealed class CadWorkspace
     {
         get => Context.CurrentUcs;
         set => Context.CurrentUcs = value;
+    }
+
+    public GeometryTolerance GeometryTolerance
+    {
+        get => Context.GeometryTolerance;
+        set => Context.GeometryTolerance = value;
     }
 }

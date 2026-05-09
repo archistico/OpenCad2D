@@ -2,18 +2,19 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using OpenCad2D.App.Viewport;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Layers;
+using OpenCad2D.Core.Styling;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Selection;
-using OpenCad2D.App.Viewport;
 using System;
 using System.Collections.Generic;
-using OpenCad2D.Interaction.Snapping;
-using OpenCad2D.Core.Layers;
-using OpenCad2D.Core.Styling;
 
 namespace OpenCad2D.App.Controls;
 
@@ -26,6 +27,8 @@ public sealed class CadCanvas : Control
     private readonly IBrush _backgroundBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30));
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
     private readonly ViewportTransform _viewport = new();
+
+    private const double GridLineDetectionTolerance = 1e-6;
 
     private bool _isPanning;
     private Point _lastPanScreenPoint;
@@ -377,7 +380,10 @@ public sealed class CadCanvas : Control
 
         double quotient = value / step;
 
-        return Math.Abs(quotient - Math.Round(quotient)) < 1e-6;
+        return Tolerance.AreEqual(
+            quotient,
+            Math.Round(quotient),
+            GridLineDetectionTolerance);
     }
 
     private void NotifyWorkspaceChanged(

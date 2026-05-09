@@ -8,9 +8,26 @@ namespace OpenCad2D.Geometry.Operations;
 public static class IntersectionService
 {
     public static IntersectionResult IntersectSegments(
+    LineSegment2D first,
+    LineSegment2D second,
+    double tolerance = Tolerance.Default)
+    {
+        GeometryTolerance geometryTolerance = new(
+            distance: tolerance,
+            angle: GeometryTolerance.Default.Angle,
+            parameter: tolerance,
+            vectorLength: tolerance);
+
+        return IntersectSegments(
+            first,
+            second,
+            geometryTolerance);
+    }
+
+    public static IntersectionResult IntersectSegments(
         LineSegment2D first,
         LineSegment2D second,
-        double tolerance = Tolerance.Default)
+        GeometryTolerance tolerance)
     {
         Point2D p = first.Start;
         Point2D q = second.Start;
@@ -22,20 +39,20 @@ public static class IntersectionService
         Vector2D qMinusP = p.VectorTo(q);
         double qMinusPCrossR = qMinusP.Cross(r);
 
-        if (Tolerance.IsZero(r.LengthSquared, tolerance) ||
-            Tolerance.IsZero(s.LengthSquared, tolerance))
+        if (tolerance.IsVectorLengthZero(r.Length) ||
+            tolerance.IsVectorLengthZero(s.Length))
         {
             return IntersectionResult.None;
         }
 
-        if (Tolerance.IsZero(rCrossS, tolerance) &&
-            Tolerance.IsZero(qMinusPCrossR, tolerance))
+        if (tolerance.IsDistanceZero(rCrossS) &&
+            tolerance.IsDistanceZero(qMinusPCrossR))
         {
             return IntersectCollinearSegments(first, second, tolerance);
         }
 
-        if (Tolerance.IsZero(rCrossS, tolerance) &&
-            !Tolerance.IsZero(qMinusPCrossR, tolerance))
+        if (tolerance.IsDistanceZero(rCrossS) &&
+            !tolerance.IsDistanceZero(qMinusPCrossR))
         {
             return IntersectionResult.None;
         }
@@ -43,8 +60,8 @@ public static class IntersectionService
         double t = qMinusP.Cross(s) / rCrossS;
         double u = qMinusP.Cross(r) / rCrossS;
 
-        if (IsWithinUnitInterval(t, tolerance) &&
-            IsWithinUnitInterval(u, tolerance))
+        if (tolerance.IsParameterWithinUnitInterval(t) &&
+            tolerance.IsParameterWithinUnitInterval(u))
         {
             Point2D intersectionPoint = new(
                 p.X + t * r.X,
@@ -57,9 +74,9 @@ public static class IntersectionService
     }
 
     private static IntersectionResult IntersectCollinearSegments(
-        LineSegment2D first,
-        LineSegment2D second,
-        double tolerance)
+    LineSegment2D first,
+    LineSegment2D second,
+    GeometryTolerance tolerance)
     {
         bool firstStartOnSecond = IsPointOnSegment(first.Start, second, tolerance);
         bool firstEndOnSecond = IsPointOnSegment(first.End, second, tolerance);
@@ -69,16 +86,20 @@ public static class IntersectionService
         int count = 0;
         Point2D? lastPoint = null;
 
-        AddIfOnSegment(first.Start, firstStartOnSecond, ref count, ref lastPoint);
-        AddIfOnSegment(first.End, firstEndOnSecond, ref count, ref lastPoint);
-        AddIfOnSegment(second.Start, secondStartOnFirst, ref count, ref lastPoint);
-        AddIfOnSegment(second.End, secondEndOnFirst, ref count, ref lastPoint);
+        AddIfOnSegment(first.Start, firstStartOnSecond, ref count, ref lastPoint, tolerance);
+        AddIfOnSegment(first.End, firstEndOnSecond, ref count, ref lastPoint, tolerance);
+        AddIfOnSegment(second.Start, secondStartOnFirst, ref count, ref lastPoint, tolerance);
+        AddIfOnSegment(second.End, secondEndOnFirst, ref count, ref lastPoint, tolerance);
 
         if (count == 0)
+        {
             return IntersectionResult.None;
+        }
 
         if (count == 1 && lastPoint.HasValue)
+        {
             return IntersectionResult.SinglePoint(lastPoint.Value);
+        }
 
         return IntersectionResult.Overlapping();
     }
@@ -87,13 +108,19 @@ public static class IntersectionService
         Point2D point,
         bool isOnSegment,
         ref int count,
-        ref Point2D? lastPoint)
+        ref Point2D? lastPoint,
+        GeometryTolerance tolerance)
     {
         if (!isOnSegment)
+        {
             return;
+        }
 
-        if (lastPoint.HasValue && AreSamePoint(lastPoint.Value, point))
+        if (lastPoint.HasValue &&
+            tolerance.ArePointsEqual(lastPoint.Value, point))
+        {
             return;
+        }
 
         count++;
         lastPoint = point;
@@ -102,21 +129,27 @@ public static class IntersectionService
     private static bool IsPointOnSegment(
         Point2D point,
         LineSegment2D segment,
-        double tolerance)
+        GeometryTolerance tolerance)
     {
         Vector2D segmentVector = segment.Start.VectorTo(segment.End);
         Vector2D startToPoint = segment.Start.VectorTo(point);
 
-        if (!Tolerance.IsZero(segmentVector.Cross(startToPoint), tolerance))
+        if (!tolerance.IsDistanceZero(segmentVector.Cross(startToPoint)))
+        {
             return false;
+        }
 
         double dot = startToPoint.Dot(segmentVector);
 
-        if (dot < -tolerance)
+        if (dot < -tolerance.Distance)
+        {
             return false;
+        }
 
-        if (dot > segmentVector.LengthSquared + tolerance)
+        if (dot > segmentVector.LengthSquared + tolerance.Distance)
+        {
             return false;
+        }
 
         return true;
     }
