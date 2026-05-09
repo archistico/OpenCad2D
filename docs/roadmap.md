@@ -10,116 +10,204 @@ OpenCad2D should become a usable 2D CAD application, but the first priority is t
 
 ## Current status
 
-OpenCad2D currently has a working prototype with a basic Avalonia UI and a tested CAD core.
+OpenCad2D currently has a working Avalonia prototype with a tested CAD core.
 
-The project already includes geometry primitives, CAD entities, document collections, layers, commands, undo/redo, hit testing, selection, snapping, drawing tools, editing tools and a custom canvas.
+The project already includes:
 
-The current UI supports drawing lines and rectangles, selecting entities, moving, copying, deleting, undo/redo, zoom, pan, grid display, snap markers and snap toggles.
+```text
+geometry primitives
+coordinate systems / UCS foundation
+numeric tolerance strategy
+CAD entities
+document collections
+layers
+hidden layer behavior
+spatial index abstraction
+commands
+composite commands
+undo/redo
+hit testing
+selection
+snapping
+drawing tools
+editing tools
+custom canvas
+CAD-style crosshair
+snap markers by snap type
+basic ViewModel notifications
+```
 
-The next phase is to make the prototype more CAD-like by improving layers, viewport behavior, entity styling, document persistence and core drawing tools.
+The UI supports drawing lines and rectangles, selecting entities, moving, copying, deleting, undo/redo, zoom, pan, grid display, snap toggles, active command feedback, layer selection and layer visibility toggling.
+
+The current development direction is to finish the core editing foundations before adding many new entity types.
 
 ---
 
-## Phase 1 - Consolidate the current prototype
+## Completed consolidation work
 
-The current prototype works, but some concepts need to be connected more completely.
+Several architectural risks have already been addressed.
 
-The most important one is layer support.
+### Hidden layer behavior
 
-The core already contains `Layer`, `LayerId` and `LayerCollection`. The tools also have access to `CurrentLayerId`. The next step is to expose the current layer in the UI and make layer properties visible in the canvas.
+Hidden layers are not only hidden visually. Entities on hidden layers are also ignored by hit testing, selection and snapping.
+
+This behavior is centralized through document visibility queries.
+
+### UCS foundation
+
+The project has a basic user coordinate system model.
+
+Entities remain stored in WCS/model coordinates, while `PointerInfo` can carry both WCS and UCS points.
+
+This prepares future support for relative coordinates, user-defined origins and rotated coordinate systems.
+
+### Numeric tolerance strategy
+
+`GeometryTolerance` separates tolerances for distances, angles, parameters and vector lengths.
+
+New geometric algorithms should use this strategy instead of raw equality checks.
+
+### Composite commands
+
+`CompositeCommand` allows several commands to behave as one undoable operation.
+
+This prepares the project for future operations such as trim, extend, fillet, chamfer and offset.
+
+### ToolContext decomposition
+
+`ToolContext` is organized into focused sub-contexts:
+
+```text
+Commands
+Selection
+Snapping
+Coordinates
+Creation
+```
+
+This avoids turning the context into a God Object.
+
+### Document mutation boundary
+
+Commands should mutate entities through `CadDocument`, not directly through `EntityCollection`.
+
+This prepares future locked-layer and document-level validation rules.
+
+### Spatial index abstraction
+
+The entity collection owns an `ISpatialIndex` implementation.
+
+The current implementation is linear, but hit testing, selection and snapping can query by area instead of being permanently coupled to full document scans.
+
+### CAD-like UI feedback
+
+The UI now has or is designed around:
+
+```text
+active command indicator
+CAD-style crosshair
+precise center pick box
+snap markers by snap type
+status updates through ViewModel notifications
+```
+
+---
+
+## Phase 1 - Finish layer editing rules
+
+Layer support is partially implemented.
 
 ### Current layer in the UI
 
-Add a layer selector to the toolbar.
-
-The user should be able to choose the current layer before drawing.
+The toolbar exposes the current layer.
 
 New entities created by drawing tools should use the selected layer.
 
-Initial demo layers can be simple:
-
-```text
-0
-Walls
-Furniture
-Annotations
-```
-
-This does not need a full layer manager yet. A simple ComboBox is enough for the first version.
-
 ### Layer colors
 
-Entities whose color is set to `ByLayer` should be rendered using the color of their layer.
+Entities whose color is set to `ByLayer` should render using the color of their layer.
 
-Entities with an explicit color should use their own color.
+Entities with explicit color should use their own color.
 
-This will make the drawing visually clearer and will give immediate value to the layer system.
+The rendering path should continue using cached pens/brushes to avoid per-frame allocations.
 
 ### Layer visibility
 
-Hidden layers should not be drawn.
+Implemented behavior:
 
-Entities on hidden layers should also be ignored by hit testing, selection and snapping.
-
-This avoids selecting or snapping to geometry that the user cannot see.
+```text
+hidden layer entities are not drawn
+hidden layer entities are not selected
+hidden layer entities are not used by snapping
+```
 
 ### Locked layers
 
-Locked layers should be visible but not editable.
+Next important layer task:
 
-Entities on locked layers should not be selectable or modifiable.
+```text
+locked layer entities remain visible
+locked layer entities can be used as snap references
+locked layer entities cannot be removed, replaced or transformed
+```
 
-The exact behavior can be refined later, but the first rule should be simple: visible but protected.
+Locked-layer enforcement should happen at the `CadDocument` mutation boundary.
 
 ---
 
 ## Phase 2 - Improve viewport and canvas behavior
 
-The canvas is already functional, but CAD usability depends heavily on viewport behavior.
+The canvas is functional, but CAD usability depends heavily on viewport behavior.
 
 ### Zoom extents
 
 Add a `Zoom Extents` action.
 
-This should compute the bounding box of all visible entities and adapt the viewport so the whole drawing fits inside the canvas.
-
-This is a very useful command even in an early CAD prototype.
+It should compute the bounding box of all visible entities and adapt the viewport so the whole drawing fits inside the canvas.
 
 ### Better grid behavior
 
-The current grid works, but it can become more useful.
+Future grid improvements:
 
-Future improvements should include a configurable grid step, clearer major and minor grid lines, and better alignment between the visual grid and grid snapping.
+```text
+configurable grid step
+major/minor grid lines
+better relation between visible grid and grid snapping
+UCS-aware grid display
+```
 
-### Screen-based pick tolerance
+### Screen-based pick and snap tolerance
 
-Some interactions currently use tolerance values in model units.
+Some interactions currently use model-unit tolerances.
 
-This can feel inconsistent when zooming in or out.
+This can feel inconsistent when zooming.
 
-A future improvement should define pick and snap tolerance in screen pixels, then convert them to model units using the viewport transform.
+A future improvement should define pick and snap tolerance in screen pixels and convert them to model units using the viewport transform.
 
-This is closer to typical CAD behavior.
+### Crosshair refinement
 
-### Better snap markers
+The CAD crosshair should remain clear and non-intrusive.
 
-The current snap marker is functional.
+Possible refinements:
 
-Later, different snap kinds should have different visual markers.
-
-For example, endpoint, midpoint, center, intersection, perpendicular, tangent and grid snaps could each have a distinct marker shape.
+```text
+configurable color/opacity
+crosshair constrained to drawing canvas
+center pick box size setting
+optional snap label near cursor
+```
 
 ---
 
 ## Phase 3 - Add essential drawing tools
 
-Once layers and viewport behavior are more stable, the next step is to add more CAD entities and tools.
+After layer locking and viewport improvements, add more core drawing tools.
 
 ### Circle tool
 
 Add a tool to draw circles by center and radius.
 
-This should use the existing `CircleEntity` and should support snapping for both the center point and radius point.
+It should use `CircleEntity` and support snapping for both center and radius point.
 
 ### Arc tool
 
@@ -143,9 +231,7 @@ Later, polyline editing and arc segments can be considered.
 
 Add a basic text entity and a tool to place text.
 
-The first version can support position, text content, height and rotation.
-
-Text is important for technical drawings and annotations.
+The first version can support position, content, height and rotation.
 
 ---
 
@@ -153,23 +239,30 @@ Text is important for technical drawings and annotations.
 
 A CAD application needs a way to inspect selected entities.
 
-The first version can be simple and mostly read-only.
-
 ### Property panel
 
 Add a side panel that displays information about the current selection.
 
-For one selected line, it can show type, layer, start point, end point and length.
+Examples:
 
-For one selected circle, it can show type, layer, center and radius.
-
-For multiple selected entities, it can show the number of selected objects and common properties.
+```text
+selected line: type, layer, start point, end point, length
+selected circle: type, layer, center, radius
+multiple selection: object count and common properties
+```
 
 ### Editable properties
 
 After the read-only panel works, selected entity properties can become editable.
 
-For example, the user may change the layer of selected entities or edit a circle radius directly.
+Examples:
+
+```text
+change entity layer
+change color mode
+edit line endpoints
+edit circle radius
+```
 
 These modifications should go through commands so they can be undone.
 
@@ -185,15 +278,23 @@ A real application needs save and open support.
 
 Before implementing DXF, add a simple internal JSON format.
 
-A possible extension is:
+Possible extension:
 
 ```text
 .opencad2d.json
 ```
 
-The format should contain layers, entities, styles and document metadata.
+The format should contain:
 
-The goal is not to create a universal CAD exchange format. The goal is to save and reopen OpenCad2D drawings reliably.
+```text
+layers
+entities
+styles
+document metadata
+current settings where appropriate
+```
+
+The goal is not universal CAD exchange. The goal is reliable save/reopen for OpenCad2D drawings.
 
 ### File actions
 
@@ -214,7 +315,7 @@ Add a document dirty state.
 
 The window title can show an asterisk when the document has unsaved changes.
 
-For example:
+Example:
 
 ```text
 OpenCad2D - drawing.opencad2d *
@@ -224,7 +325,7 @@ OpenCad2D - drawing.opencad2d *
 
 ## Phase 6 - Add modify tools
 
-After the basic drawing tools and persistence are in place, the project can grow toward more practical CAD editing.
+After basic drawing tools and persistence, the project can grow toward practical CAD editing.
 
 ### Offset
 
@@ -236,9 +337,11 @@ The user should select an entity, specify an offset distance and choose the side
 
 ### Trim
 
-Trim is more complex because it requires detecting intersections and cutting entities.
+Trim requires detecting intersections and cutting entities.
 
-It should be added only after the intersection system is strong enough.
+It should be added only after intersection handling is robust.
+
+Trim will likely use `ReplaceEntitiesCommand` or `CompositeCommand`.
 
 ### Extend
 
@@ -248,9 +351,11 @@ It should probably be developed after or together with trim.
 
 ### Fillet and chamfer
 
-Fillet and chamfer are useful modify tools, but they are more advanced.
+Fillet and chamfer are useful modify tools but more advanced.
 
 They should come after trim and extend.
+
+They will likely require `CompositeCommand`, because a single user operation may replace multiple entities and add or remove geometry.
 
 ---
 
@@ -270,7 +375,15 @@ Add dimensions for circles and arcs.
 
 ### Dimension styles
 
-Later, add dimension styles for text height, arrow size, offsets and formatting.
+Later, add dimension styles for:
+
+```text
+text height
+arrow size
+offsets
+precision
+unit formatting
+```
 
 ---
 
@@ -314,15 +427,57 @@ The first version should support only a small subset of DXF entities.
 
 ---
 
-## Phase 9 - Project quality and automation
+## Phase 9 - Performance and scalability
 
-Some project-quality tasks should be added early and maintained continuously.
+Some performance foundations are already in place, but more work will be needed for large drawings.
+
+### Spatial index implementation
+
+The current `LinearSpatialIndex` is a baseline.
+
+Future work should evaluate:
+
+```text
+Quadtree
+R-Tree
+Uniform grid
+hybrid approaches
+```
+
+Important requirements:
+
+```text
+fast query by bounding box
+safe updates after add/remove/replace
+support for large entities crossing many regions
+predictable behavior with 10k+ entities
+```
+
+### Rendering optimization
+
+Continue avoiding per-frame allocations.
+
+Current direction:
+
+```text
+cache pens by color/thickness
+avoid allocating brushes per entity per frame
+limit expensive geometry calculations during Render
+```
+
+Future improvements may include viewport culling and cached drawing primitives.
+
+---
+
+## Phase 10 - Project quality and automation
+
+Project quality tasks should be added early and maintained continuously.
 
 ### GitHub Actions
 
 Add a CI workflow that runs restore, build and tests on every push and pull request.
 
-A first workflow can simply run:
+First workflow:
 
 ```text
 dotnet restore
@@ -334,13 +489,11 @@ dotnet test
 
 Add issue templates for bugs, features and tasks.
 
-This will make the repository more organized as the project grows.
-
 ### Documentation
 
 Keep technical documentation in the `docs/` folder.
 
-The first documentation set should include:
+Core documents:
 
 ```text
 architecture.md
@@ -350,29 +503,35 @@ commands.md
 roadmap.md
 ```
 
-More documents can be added later for persistence, rendering, layers and import/export.
+Future documents may include:
+
+```text
+layers.md
+rendering.md
+persistence.md
+spatial-indexing.md
+coordinate-systems.md
+```
 
 ---
 
 ## Recommended next steps
 
-The next concrete development steps should be:
+Recommended next concrete steps:
 
 ```text
-1. Add the current layer selector to the UI.
-2. Render entities using layer colors.
-3. Implement hidden layer behavior.
-4. Implement locked layer behavior.
-5. Add Zoom Extents.
-6. Add CircleTool.
-7. Add PolylineTool.
-8. Add internal JSON save/load.
+1. Implement locked layer behavior through CadDocument mutation validation.
+2. Add layer lock UI checkbox.
+3. Add Zoom Extents.
+4. Add CircleTool.
+5. Add ArcTool or PolylineTool.
+6. Add property panel for selected entities.
+7. Add internal JSON save/load.
+8. Replace LinearSpatialIndex with a real spatial index when performance requires it.
 9. Add GitHub Actions.
 ```
 
-This order improves the existing prototype before adding too many new entities and tools.
-
-It also keeps the architecture aligned with the current design: core behavior remains testable, while the Avalonia UI stays mostly responsible for presentation and input forwarding.
+This order finishes the editing foundation before adding too many advanced tools.
 
 ---
 
@@ -384,5 +543,11 @@ OpenCad2D should remain open source, understandable and extensible.
 
 It should not try to implement every feature at once.
 
-The preferred development style is incremental: one concept, one set of tests, one working UI improvement at a time.
+The preferred development style is incremental:
 
+```text
+one concept
+one set of tests
+one working UI improvement
+one architectural rule preserved
+```

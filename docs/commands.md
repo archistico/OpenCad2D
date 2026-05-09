@@ -2,7 +2,7 @@
 
 Commands are the mechanism used by OpenCad2D to modify the document in a controlled and undoable way.
 
-A CAD application needs reliable undo and redo from the beginning. For this reason, user-facing operations should not directly mutate the document from the UI. Instead, they should be represented by command objects.
+A CAD application needs reliable undo and redo from the beginning. User-facing operations should not directly mutate the document from the UI. Instead, they should be represented by command objects and executed through `CommandHistory`.
 
 A command knows how to execute an operation and how to undo it.
 
@@ -10,7 +10,7 @@ A command knows how to execute an operation and how to undo it.
 
 ## Main idea
 
-When the user performs an operation, such as drawing a line, moving entities or deleting selected objects, the tool creates a command.
+When the user performs an operation, such as drawing a line, moving entities or deleting selected objects, the active tool creates a command.
 
 The command is executed through `CommandHistory`.
 
@@ -28,11 +28,12 @@ This keeps document changes predictable and centralized.
 
 All commands implement `ICadCommand`.
 
-A command exposes a name and two operations:
+A command exposes:
 
 ```text
-Execute
-Undo
+Name
+Execute(CadDocument document)
+Undo(CadDocument document)
 ```
 
 `Execute` applies the operation to a `CadDocument`.
@@ -57,15 +58,44 @@ When a new command is executed after an undo, the redo stack is cleared. This is
 
 ---
 
+## CadDocument as mutation boundary
+
+Commands should modify entities through the `CadDocument` API.
+
+Correct:
+
+```csharp
+document.AddEntity(entity);
+document.AddEntities(entities);
+document.ReplaceEntity(entity);
+document.ReplaceEntities(entities);
+document.RemoveEntity(id);
+document.RemoveEntities(ids);
+```
+
+Avoid this in commands:
+
+```csharp
+document.Entities.Add(entity);
+document.Entities.Replace(entity);
+document.Entities.RemoveMany(ids);
+```
+
+`EntityCollection` may be queried by commands, but mutation should go through `CadDocument`.
+
+This rule is important because document-level validation belongs in `CadDocument`. For example, locked layer rules should be enforced in `RemoveEntity`, `RemoveEntities`, `ReplaceEntity` and `ReplaceEntities`. If commands bypass the document, those future rules would be skipped.
+
+---
+
 ## AddEntityCommand
 
 `AddEntityCommand` adds one or more entities to the document.
 
 It is used by drawing tools such as `LineTool` and `RectangleTool`.
 
-When executed, it adds the entities to the document.
+When executed, it calls the document API to add entities.
 
-When undone, it removes the same entities by id.
+When undone, it removes the same entities by id through the document API.
 
 This command is simple but fundamental, because every drawing operation starts from adding new entities.
 
@@ -77,13 +107,13 @@ This command is simple but fundamental, because every drawing operation starts f
 
 Before deleting, it stores the entities that will be removed.
 
-This is necessary because undo must be able to restore the exact original entities.
+This is necessary because undo must restore the exact original entities.
 
-When executed, the command removes the selected entities.
+When executed, the command removes the selected entities through `CadDocument.RemoveEntities(...)`.
 
-When undone, it adds the previously deleted entities back to the document.
+When undone, it adds the previously deleted entities back through `CadDocument.AddEntities(...)`.
 
-This command is used by `DeleteTool`.
+This command is used by `DeleteTool` and by keyboard delete actions.
 
 ---
 
@@ -91,13 +121,15 @@ This command is used by `DeleteTool`.
 
 `ReplaceEntitiesCommand` replaces existing entities with new versions.
 
-It is useful when an operation changes the geometry or properties of existing entities while keeping their identifiers.
+It is useful when an operation changes geometry or properties while preserving entity identifiers.
 
 Before replacing, it stores the original entities.
 
-When undone, the original entities are restored.
+When executed, it calls `CadDocument.ReplaceEntities(...)`.
 
-This command is useful as a general mechanism for entity modification.
+When undone, it restores the original entities through the same document API.
+
+This command is useful as a general mechanism for entity modification and for future operations such as trim, extend, fillet, chamfer and property edits.
 
 ---
 
@@ -107,7 +139,7 @@ This command is useful as a general mechanism for entity modification.
 
 It is the base command for operations such as move, rotate, scale and mirror.
 
-When executed, it stores the original entities and replaces them with transformed versions.
+When executed, it stores the original entities, creates transformed versions and replaces them through `CadDocument.ReplaceEntities(...)`.
 
 When undone, it restores the original entities.
 
@@ -119,7 +151,7 @@ The command itself does not decide what transformation means. It simply applies 
 
 `MoveEntitiesCommand` moves selected entities by a displacement vector.
 
-Internally, it uses a translation matrix.
+Internally, it uses a translation matrix and inherits undo behavior from `TransformEntitiesCommand`.
 
 The selected entities keep their identifiers.
 
@@ -135,11 +167,13 @@ This command is used by `MoveTool`.
 
 Unlike move, copy does not modify the original entities.
 
-When executed, it creates new entities with new identifiers.
+When first executed, it creates copied entities with new identifiers.
 
-When undone, it removes the copied entities.
+Undo removes the copied entities through the document API.
 
-This behavior is important: copied entities must not reuse the identifiers of the original entities.
+Redo should re-add the same copied entities with the same generated identifiers, rather than generating new identifiers every time. This keeps redo deterministic and avoids unstable command behavior.
+
+Copying from a locked layer may be allowed in the future because it does not modify the source entities. The copied entities should normally be created on the appropriate target/current layer according to the tool's creation rules.
 
 ---
 
@@ -147,9 +181,9 @@ This behavior is important: copied entities must not reuse the identifiers of th
 
 `RotateEntitiesCommand` rotates selected entities around a center point by an angle.
 
-It is based on a rotation matrix.
+It is based on a rotation matrix and inherits the common transform behavior.
 
-The command keeps the same entity identifiers and replaces the entities with rotated versions.
+The command keeps the same entity identifiers and replaces entities with rotated versions.
 
 Undo restores the original entities.
 
@@ -173,25 +207,57 @@ Undo restores the original entities.
 
 It uses a mirror transformation matrix.
 
-The operation replaces the selected entities with mirrored versions while keeping their identifiers.
+The operation replaces selected entities with mirrored versions while keeping their identifiers.
 
 Undo restores the original entities.
 
 ---
 
+## CompositeCommand
+
+`CompositeCommand` represents a single undoable command composed of several child commands.
+
+It is needed because many real CAD operations are not single simple mutations.
+
+For example, a future fillet operation may need to:
+
+```text
+shorten the first entity
+shorten the second entity
+add a fillet arc
+```
+
+The user should undo that as one operation.
+
+`CompositeCommand.Execute` executes child commands in order.
+
+`CompositeCommand.Undo` undoes child commands in reverse order.
+
+If execution fails after some child commands have already run, the composite command should undo the executed children to roll the document back to its previous state.
+
+This is not a full document transaction system, but it provides the first necessary layer for atomic multi-step CAD operations.
+
+---
+
 ## Commands and tools
 
-Tools should generally not modify the document directly.
+Tools should not modify the document directly.
 
 A tool interprets user input and creates the appropriate command.
 
-For example, `LineTool` waits for two points. When the second point is selected, it creates a `LineEntity` and executes an `AddEntityCommand`.
+Examples:
 
-`MoveTool` waits for a base point and a destination point. It calculates the displacement and executes a `MoveEntitiesCommand`.
+```text
+LineTool       -> AddEntityCommand
+RectangleTool  -> AddEntityCommand
+MoveTool       -> MoveEntitiesCommand
+CopyTool       -> CopyEntitiesCommand
+DeleteTool     -> DeleteEntitiesCommand
+future Fillet  -> CompositeCommand
+future Trim    -> ReplaceEntitiesCommand or CompositeCommand
+```
 
-`DeleteTool` reads the current selection and executes a `DeleteEntitiesCommand`.
-
-This keeps tool logic focused on interaction and keeps document mutation inside commands.
+This keeps tool logic focused on interaction and document mutation inside commands.
 
 ---
 
@@ -201,11 +267,11 @@ Commands operate on entities in the document.
 
 Selection is stored separately in `SelectionSet`.
 
-For example, `MoveTool` reads selected ids from `SelectionSet`, then passes those ids to `MoveEntitiesCommand`.
+For example, `MoveTool` reads selected ids from the tool selection context and passes those ids to `MoveEntitiesCommand`.
 
 The command itself does not own the selection.
 
-This separation is useful because undoing a command should restore document geometry, but not necessarily restore UI selection state unless we explicitly decide to support that later.
+This separation is useful because undoing a command should restore document geometry, but not necessarily restore UI selection state unless that is explicitly supported later.
 
 Currently, commands focus on document state, not selection state.
 
@@ -233,13 +299,20 @@ Copy creates new identifiers because it creates new entities.
 
 Delete removes existing identifiers from the document, and undo restores the original entities with their original identifiers.
 
-This behavior should remain consistent as new commands are added.
+Redo should be deterministic. A command that generated new entities during first execution should normally reuse the same generated entities during redo.
 
 ---
 
 ## Direct document modification
 
-Direct modification of `CadDocument` is acceptable in some cases, such as tests, initialization and demo seed data.
+Direct modification of `CadDocument` is acceptable in limited cases:
+
+```text
+tests
+initialization
+demo seed data
+low-level setup
+```
 
 For user-facing editing operations, direct modification should be avoided.
 
@@ -269,11 +342,11 @@ Commands should be self-contained enough to undo their own effects.
 
 Commands should validate invalid input early.
 
-For example, commands that receive a list of entity ids should reject empty lists when an empty operation would be meaningless.
+Commands receiving entity ids should reject empty lists when an empty operation would be meaningless.
 
 Commands should fail clearly when required entities are not found.
 
-This makes bugs easier to diagnose during development.
+Commands should fail through document-level validation when the operation violates document rules, such as future locked-layer restrictions.
 
 ---
 
@@ -294,35 +367,40 @@ redo command if needed
 assert modified state again
 ```
 
-Command tests should verify both normal behavior and edge cases.
+Command tests should verify normal behavior and edge cases.
 
-For example, delete command tests should verify that deleted entities are restored by undo. Copy command tests should verify that copied entities have different identifiers from the originals.
+Important cases include:
+
+```text
+deleted entities are restored by undo
+copied entities have different ids from originals
+copy redo reuses the same generated ids
+transform undo restores original geometry
+composite command is one undo step
+commands mutate through CadDocument
+```
 
 ---
 
 ## Guidelines for new commands
 
-A new command should implement `ICadCommand`.
+A new command should:
 
-It should only do one clear operation.
+```text
+implement ICadCommand
+have a clear name
+validate constructor parameters
+store enough information to undo itself
+avoid Avalonia and UI concepts
+avoid mouse or keyboard state
+modify entities only through CadDocument
+preserve identifiers when modifying existing entities
+create new identifiers when creating new entities
+store deleted entities for undo
+have focused tests for execute, undo and redo
+```
 
-It should validate constructor parameters.
-
-It should store enough information to undo itself.
-
-It should not depend on Avalonia or any UI concept.
-
-It should not read mouse input or keyboard state.
-
-It should modify the document only through the document API.
-
-If it transforms entities, it should preserve identifiers unless the operation creates new entities.
-
-If it creates new entities, it should assign new identifiers.
-
-If it deletes entities, it should store the deleted entities for undo.
-
-The command should have focused tests for execute, undo and redo behavior.
+For multi-step operations, prefer `CompositeCommand` over manually performing multiple unrelated document mutations.
 
 ---
 
@@ -330,11 +408,14 @@ The command should have focused tests for execute, undo and redo behavior.
 
 The command system can be extended in several useful ways.
 
-One improvement is command grouping. Some complex operations may need to execute several commands but appear as one undo step.
+Possible future improvements:
 
-Another improvement is command descriptions for the UI, so the status bar or future command history panel can show more meaningful messages.
+```text
+command descriptions for UI/history panels
+document dirty-state tracking
+selection-state undo, if explicitly needed
+full document transaction or ChangeSetCommand
+command serialization for macros or scripting
+```
 
-Selection state could also become undoable in the future, although this should be handled carefully because selection is UI state, while commands currently focus on document state.
-
-A future save system may use command history to detect whether the document has unsaved changes.
-
+A full document transaction system is not required yet. `CompositeCommand` is the current lightweight solution for grouping operations atomically.

@@ -4,9 +4,9 @@ The tool system is the layer that turns user intent into CAD operations.
 
 A tool represents something the user can do in the drawing area: select entities, draw a line, draw a rectangle, move selected entities, copy them or delete them.
 
-The most important architectural decision is that tools are not part of the UI. They do not depend on Avalonia and they do not handle Avalonia events directly. They work with model-space data and with the CAD runtime context.
+Tools are not part of the UI. They do not depend on Avalonia and do not handle Avalonia events directly. They work with model/user coordinates and with the CAD runtime context.
 
-This makes tools easy to test and keeps the UI thin.
+This keeps tools testable and keeps the UI thin.
 
 ---
 
@@ -14,15 +14,35 @@ This makes tools easy to test and keeps the UI thin.
 
 The UI receives mouse and keyboard input.
 
-The canvas converts screen coordinates into model coordinates.
+The canvas converts screen coordinates into model coordinates and user coordinates.
 
 Then the input is forwarded to the active CAD tool.
 
 The tool decides what to do.
 
-For example, when the `LineTool` receives the first pointer press, it stores the first point. When it receives the second pointer press, it creates a `LineEntity` and executes an `AddEntityCommand`.
+For example, when `LineTool` receives the first pointer press, it stores the first point. When it receives the second pointer press, it creates a `LineEntity` and executes an `AddEntityCommand`.
 
-The UI does not create the line directly. It only forwards input.
+The UI does not create the line directly. It only forwards input and renders the result.
+
+---
+
+## PointerInfo
+
+`PointerInfo` represents pointer input after the UI has converted it into CAD coordinates.
+
+It contains:
+
+```text
+ModelPoint   point in WCS/model coordinates
+UserPoint    point in the current UCS
+Modifiers    Shift, Control, Alt
+```
+
+This is important because tools should not know about the viewport or Avalonia coordinates.
+
+The canvas owns screen-to-model conversion. The current UCS owns model-to-user conversion.
+
+Existing tools may continue to use `ModelPoint`. Future tools can use `UserPoint` for UCS-aware input and coordinate display.
 
 ---
 
@@ -30,25 +50,131 @@ The UI does not create the line directly. It only forwards input.
 
 `ToolContext` is the shared runtime context used by tools.
 
-It gives tools access to the objects they need in order to work:
+It used to expose many unrelated properties directly. To avoid becoming a God Object, it is now organized into focused sub-contexts.
+
+Current structure:
 
 ```text
-CadDocument
-CommandHistory
-SelectionSet
-SelectionService
-SnapService
-GridSettings
-CurrentLayerId
-EnabledSnaps
-SnapTolerance
-SelectionTolerance
-SelectionDragThreshold
+ToolContext
+  Document
+  Commands
+  Selection
+  Snapping
+  Coordinates
+  Creation
 ```
 
-A tool should not create its own document, command history or selection set. It should use the ones provided by the context.
+New tool code should prefer these grouped contexts.
 
-This keeps all tools working on the same drawing state.
+---
+
+## ToolCommandContext
+
+`ToolCommandContext` provides command execution services.
+
+It wraps the command history and exposes operations such as:
+
+```text
+Execute
+Undo
+Redo
+CanUndo
+CanRedo
+```
+
+Typical usage:
+
+```csharp
+context.Commands.Execute(
+    context.Document,
+    new AddEntityCommand(entity));
+```
+
+Tools should use this instead of directly working with `CommandHistory`.
+
+---
+
+## ToolSelectionContext
+
+`ToolSelectionContext` provides selection state, selection services and selection settings.
+
+It contains:
+
+```text
+Set             SelectionSet
+Service         SelectionService
+Tolerance       point selection tolerance
+DragThreshold   threshold before window selection starts
+HasSelection
+SelectedIds
+```
+
+Typical usage:
+
+```csharp
+if (!context.Selection.HasSelection)
+{
+    return ToolResult.None("No entities selected.");
+}
+
+IReadOnlyList<EntityId> ids = context.Selection.SelectedIds.ToList();
+```
+
+---
+
+## ToolSnapContext
+
+`ToolSnapContext` provides snapping services and settings.
+
+It contains:
+
+```text
+Service        SnapService
+EnabledSnaps   enabled snap flags
+Tolerance      snap tolerance
+GridSettings   grid snapping configuration
+```
+
+Two-point tools use snapping through their shared base class.
+
+---
+
+## ToolCoordinateContext
+
+`ToolCoordinateContext` provides coordinate and precision settings.
+
+It contains:
+
+```text
+CurrentUcs
+GeometryTolerance
+```
+
+New geometric decisions inside tools should use `context.Coordinates.GeometryTolerance` rather than raw magic numbers.
+
+---
+
+## ToolCreationContext
+
+`ToolCreationContext` contains defaults used when tools create new entities.
+
+Currently it contains:
+
+```text
+CurrentLayerId
+```
+
+In the future it can grow to include:
+
+```text
+current color mode
+current line weight
+current line type
+current text style
+current dimension style
+```
+
+This avoids adding many unrelated `Current...` properties directly to `ToolContext`.
 
 ---
 
@@ -57,31 +183,37 @@ This keeps all tools working on the same drawing state.
 `ToolContext` provides only model-side services required by CAD tools.
 
 It may contain:
-- the active document;
-- undoable command execution;
-- selection state and selection services;
-- snapping services and snapping settings;
-- current entity creation defaults;
-- current coordinate system and geometry tolerance.
+
+```text
+active document
+undoable command execution
+selection state and selection services
+snapping services and snapping settings
+entity creation defaults
+current coordinate system
+geometry tolerance
+```
 
 It must not contain:
-- UI controls;
-- viewport or screen-to-model conversion logic;
-- dialogs, message boxes or status bar services;
-- file system, persistence or export services;
-- rendering services;
-- application-level configuration unrelated to tool execution.
+
+```text
+Avalonia controls
+viewport or screen-to-model conversion logic
+dialogs, message boxes or status bar services
+file system, persistence or export services
+rendering services
+application-level configuration unrelated to tool execution
+```
 
 Pointer coordinates must be converted before entering tools.
-Tools receive model/user coordinates through `PointerInfo`.
 
---- 
+---
 
 ## ICadTool
 
 `ICadTool` is the common interface implemented by all tools.
 
-It exposes the basic pointer lifecycle:
+It exposes the basic lifecycle:
 
 ```text
 OnPointerPressed
@@ -91,7 +223,7 @@ Cancel
 Deactivate
 ```
 
-`OnPointerPressed`, `OnPointerMoved` and `OnPointerReleased` receive model-space pointer information through `PointerInfo`.
+`OnPointerPressed`, `OnPointerMoved` and `OnPointerReleased` receive `PointerInfo`.
 
 `Cancel` is used when the user explicitly cancels the current operation, usually with `Esc`.
 
@@ -101,39 +233,24 @@ The distinction between `Cancel` and `Deactivate` is important.
 
 ---
 
-## Cancel vs Deactivate
+## Cancel, Deactivate and Escape
 
 `Cancel` and `Deactivate` are intentionally different.
 
-Cancel means that the user wants to cancel the current tool operation.
+Cancel means that the user wants to cancel the current operation.
 
 Deactivate means that the application is switching from one tool to another.
 
-For example, `SelectionTool.Cancel()` clears the current selection because pressing `Esc` while selecting should cancel the selection state.
+For example, changing from `SelectionTool` to `MoveTool` must not clear the current selection. Otherwise the move operation would have nothing to work on.
 
-However, `SelectionTool.Deactivate()` does not clear the selection. This is important because a common workflow is:
+`Esc` behavior is layered:
 
 ```text
-Select an entity
-Switch to Move
-Move the selected entity
+first Esc   cancels the active tool operation if one is in progress
+second Esc  clears selection if no tool operation is active
 ```
 
-If changing from `SelectionTool` to `MoveTool` cleared the selection, the move operation would have nothing to work on.
-
-This is why `ToolController.SetActiveTool(...)` calls `Deactivate`, not `Cancel`.
-
----
-
-## PointerInfo
-
-`PointerInfo` represents input in model coordinates.
-
-It contains the current model-space point and keyboard modifiers such as Shift, Control and Alt.
-
-The UI is responsible for converting screen coordinates to model coordinates before creating `PointerInfo`.
-
-This keeps tools independent from the viewport and from the UI framework.
+This behavior belongs to `CadWorkspace.Escape()` or equivalent workspace-level logic, not to Avalonia event handlers.
 
 ---
 
@@ -143,7 +260,7 @@ Tools return a `ToolResult`.
 
 A result describes what happened after an input event.
 
-Current result kinds include:
+Common result kinds include:
 
 ```text
 None
@@ -153,15 +270,9 @@ Completed
 Cancelled
 ```
 
-The result can also contain a message.
+The result can contain a message.
 
-The UI can use this message in the status bar. For example, after creating a line, `LineTool` can return:
-
-```text
-Line created.
-```
-
-This gives the user feedback without coupling tools to the UI.
+The UI can use this message in the status bar. This gives feedback without coupling tools to the UI.
 
 ---
 
@@ -176,17 +287,22 @@ second point
 execute operation
 ```
 
-Examples are line, rectangle, move and copy.
+Examples:
+
+```text
+LineTool
+RectangleTool
+MoveTool
+CopyTool
+```
 
 `TwoPointToolBase` implements this shared behavior.
 
 It stores the first point, updates the current point while the pointer moves, applies snapping and resets the tool after completion.
 
-Derived tools only need to define what happens when the two points are known.
+Derived tools only define what happens when the two points are known.
 
-For example, `LineTool` creates a line. `MoveTool` computes a displacement. `CopyTool` computes the same displacement but creates copied entities instead of replacing the originals.
-
-This avoids duplicating the same state machine in every two-point tool.
+`Cancel` should return `ToolResult.None()` if there is no active first point/current operation. This allows `Esc` to move on to selection clearing only when there is nothing left to cancel.
 
 ---
 
@@ -198,7 +314,7 @@ The first point is stored after the first click.
 
 The second point creates a line from the first point to the second point.
 
-The created line uses the current layer from `ToolContext.CurrentLayerId`.
+The created line uses `context.Creation.CurrentLayerId`.
 
 The operation is executed through `AddEntityCommand`, so it is undoable.
 
@@ -214,39 +330,48 @@ The second point is the opposite corner.
 
 The rectangle is represented by four vertices and `IsClosed = true`.
 
-Like `LineTool`, it uses the current layer and creates the entity through `AddEntityCommand`.
+Rectangle validity should use `context.Coordinates.GeometryTolerance` so that nearly-zero width or height is rejected consistently.
+
+Like `LineTool`, it creates the entity through `AddEntityCommand`.
 
 ---
 
 ## SelectionTool
 
-`SelectionTool` modifies the `SelectionSet`.
+`SelectionTool` modifies the `SelectionSet` through the tool selection context.
 
-It supports point selection, shift-click toggle, window selection and crossing selection.
+It supports:
 
-The tool uses `SelectionService` to determine which entities are selected.
+```text
+point selection
+shift-click toggle
+window selection
+crossing selection
+```
 
-Point selection is applied on pointer release, not on pointer press. This avoids a common issue where a drag operation could accidentally trigger a click selection before the selection window is completed.
+Point selection is applied on pointer release, not pointer press. This avoids accidentally selecting by click before a drag window is completed.
 
 When the user drags from left to right, the selection mode is window selection. Entities must be fully inside the selection rectangle.
 
 When the user drags from right to left, the selection mode is crossing selection. Entities only need to intersect the selection rectangle.
 
+Hidden layer entities are ignored by selection through document visibility rules.
+
 ---
 
 ## MoveTool
 
-`MoveTool` moves the currently selected entities.
+`MoveTool` moves selected entities.
 
 It uses the first point as the base point and the second point as the destination point.
 
-The displacement is calculated as:
+The displacement is:
 
 ```text
 secondPoint - firstPoint
 ```
 
-Then the tool executes a `MoveEntitiesCommand`.
+Then the tool executes `MoveEntitiesCommand` through `context.Commands`.
 
 The selected entities keep their identifiers, but their geometry is transformed.
 
@@ -256,7 +381,7 @@ Because the operation is command-based, it can be undone and redone.
 
 ## CopyTool
 
-`CopyTool` copies the currently selected entities.
+`CopyTool` copies selected entities.
 
 It uses the same two-point displacement logic as `MoveTool`.
 
@@ -266,17 +391,17 @@ The original entities remain unchanged.
 
 The operation is executed through `CopyEntitiesCommand`, so it can be undone.
 
+Preview copies may use temporary ids because they are not inserted into the document.
+
 ---
 
 ## DeleteTool
 
 `DeleteTool` deletes the current selection.
 
-Unlike line, rectangle, move and copy, delete is not really a two-point operation.
+Unlike line, rectangle, move and copy, delete is not a two-point operation.
 
-It can be executed directly through its `Execute` method, or through `OnPointerPressed` when used as a normal tool.
-
-After deleting the selected entities, it clears the selection.
+After deleting selected entities, it clears the selection.
 
 The operation is executed through `DeleteEntitiesCommand`, so undo restores the deleted entities.
 
@@ -286,7 +411,7 @@ The operation is executed through `DeleteEntitiesCommand`, so undo restores the 
 
 `ToolController` owns the active tool.
 
-The UI should not call tools directly in most cases. It should call the controller:
+The UI should not call concrete tools directly in most cases. It should call the controller:
 
 ```text
 OnPointerPressed
@@ -295,8 +420,6 @@ OnPointerReleased
 CancelActiveTool
 SetActiveTool
 ```
-
-The controller forwards events to the active tool.
 
 When the active tool changes, the controller deactivates the previous tool.
 
@@ -310,29 +433,17 @@ This keeps tool switching behavior consistent.
 
 It maps a `ToolId` to a concrete tool instance.
 
-For example:
+Example:
 
 ```text
-ToolId.Line       -> LineTool
-ToolId.Rectangle  -> RectangleTool
-ToolId.Move       -> MoveTool
+ToolId.Selection   -> SelectionTool
+ToolId.Line        -> LineTool
+ToolId.Rectangle   -> RectangleTool
+ToolId.Move        -> MoveTool
+ToolId.Copy        -> CopyTool
 ```
 
 This avoids creating tools directly from the UI.
-
-Instead of writing:
-
-```csharp
-new LineTool()
-```
-
-the application can use:
-
-```csharp
-registry.Create(ToolId.Line)
-```
-
-This keeps the UI less dependent on concrete tool classes.
 
 ---
 
@@ -349,21 +460,34 @@ DeleteSelection
 CancelActiveTool
 ```
 
-This is useful because these actions are usually triggered from different UI places: toolbar buttons, menu items or keyboard shortcuts.
-
-For example, the UI can map `Ctrl+Z` to `ActionController.Undo()` and `Delete` to `ActionController.DeleteSelection()`.
+These actions can be triggered from toolbar buttons, menu items or keyboard shortcuts.
 
 ---
 
 ## CadWorkspace
 
-`CadWorkspace` aggregates the runtime objects needed by the application.
+`CadWorkspace` aggregates runtime objects needed by the application.
 
-It owns or exposes the document, command history, selection set, snap service, selection service, tool registry, tool context, tool controller and action controller.
+It owns or exposes:
+
+```text
+CadDocument
+CommandHistory
+SelectionSet
+SnapService
+SelectionService
+ToolRegistry
+ToolContext
+ToolController
+CadActionController
+current UCS
+geometry tolerance
+current layer
+```
 
 The Avalonia application can create one workspace and use it as the central runtime object.
 
-This keeps application startup simple.
+Workspace-level behavior such as `Escape()` is useful when the behavior spans multiple concepts, such as tool cancellation followed by selection clearing.
 
 ---
 
@@ -377,23 +501,40 @@ When a tool already has a first point, that point is passed as `BasePoint` in th
 
 This is important for contextual snaps such as perpendicular and tangent.
 
-For example, after the first click of `LineTool`, the first point becomes the base point. The second point can then snap to a perpendicular or tangent point.
-
 ---
 
 ## Preview behavior
 
 Some tools expose preview entities.
 
-`LineTool` can return a preview line.
+Examples:
 
-`RectangleTool` can return a preview rectangle.
+```text
+LineTool       preview line
+RectangleTool  preview rectangle
+MoveTool       transformed selected entities
+CopyTool       copied selected entities
+```
 
-`MoveTool` and `CopyTool` can return preview entities transformed by the current displacement.
-
-The UI is responsible for rendering previews. The tools only provide the temporary geometry.
+The UI is responsible for rendering previews. Tools only provide temporary geometry.
 
 This keeps rendering separate from tool behavior.
+
+---
+
+## Active command feedback
+
+The UI should always show which command/tool is active.
+
+This is not part of the tool logic itself, but tools provide enough state through `ToolController` and `MainWindowViewModel` for the UI to display:
+
+```text
+active toolbar button
+active command label
+window title/status text
+```
+
+For modal tools such as line, rectangle, move and copy, this feedback is important because the next click depends on the active tool.
 
 ---
 
@@ -401,33 +542,40 @@ This keeps rendering separate from tool behavior.
 
 Tools are designed to be tested without running Avalonia.
 
-A test can create a `CadDocument`, a `CommandHistory`, a `SelectionSet` and a `ToolContext`.
+A test can create a document, command history, selection set and tool context.
 
-Then it can send pointer events to a tool and verify the resulting document state.
+Then it can send pointer events to a tool and verify document state.
 
-For example, a `LineTool` test can send two pointer presses and assert that a `LineEntity` was created.
+Examples:
 
-A `MoveTool` test can select an entity, send two pointer presses and assert that the entity moved.
-
-This testability is one of the main reasons why tools are UI-independent.
+```text
+LineTool creates a LineEntity after two clicks
+RectangleTool rejects zero-size rectangles
+MoveTool moves selected entities
+CopyTool creates new entities
+SelectionTool selects visible entities only
+Esc cancels an active two-point operation
+```
 
 ---
 
 ## Guidelines for new tools
 
-A new tool should stay UI-independent.
+A new tool should:
 
-It should work in model coordinates.
-
-It should use `ToolContext` instead of creating its own services.
-
-If it changes the document, it should usually execute a command.
+```text
+stay UI-independent
+work in model/user coordinates
+use ToolContext sub-contexts
+execute commands for document changes
+use CadDocument mutation through commands
+use GeometryTolerance for geometric validity checks
+use snapping through the existing snapping flow
+preserve selection unless explicitly cancelling selection
+return meaningful ToolResult messages
+have focused tests
+```
 
 If it follows the first-point / second-point pattern, it should probably derive from `TwoPointToolBase`.
 
-If it needs selection, it should read selected identifiers from `SelectionSet`.
-
-If it needs snapping, it should rely on the existing snapping flow.
-
-The UI should not contain the tool logic. It should only activate the tool, forward input and render the result.
-
+If it performs a complex multi-entity operation, it should create a `CompositeCommand` or a focused command that internally uses document-level mutation APIs.
