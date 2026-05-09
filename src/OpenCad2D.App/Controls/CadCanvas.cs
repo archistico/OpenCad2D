@@ -28,6 +28,14 @@ public sealed class CadCanvas : Control
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
     private readonly ViewportTransform _viewport = new();
 
+    private readonly Dictionary<PenCacheKey, Pen> _penCache = new();
+
+    private readonly record struct PenCacheKey(
+        byte R,
+        byte G,
+        byte B,
+        double Thickness);
+
     private const double GridLineDetectionTolerance = 1e-6;
 
     private bool _isPanning;
@@ -97,7 +105,7 @@ public sealed class CadCanvas : Control
         {
             Pen pen = Workspace.SelectionSet.Contains(entity.Id)
                 ? _selectedPen
-                : CreateEntityPen(entity);
+                : GetOrCreateEntityPen(entity);
 
             DrawEntity(
                 context,
@@ -142,9 +150,21 @@ public sealed class CadCanvas : Control
             ToScreenPoint(yEnd));
     }
 
-    private Pen CreateEntityPen(CadEntity entity)
+    private Pen GetOrCreateEntityPen(CadEntity entity)
     {
         CadColor color = ResolveEntityColor(entity);
+        double thickness = 1;
+
+        var key = new PenCacheKey(
+            color.R,
+            color.G,
+            color.B,
+            thickness);
+
+        if (_penCache.TryGetValue(key, out Pen? cachedPen))
+        {
+            return cachedPen;
+        }
 
         var brush = new SolidColorBrush(
             Color.FromRgb(
@@ -152,7 +172,13 @@ public sealed class CadCanvas : Control
                 color.G,
                 color.B));
 
-        return new Pen(brush, 1);
+        var pen = new Pen(
+            brush,
+            thickness);
+
+        _penCache.Add(key, pen);
+
+        return pen;
     }
 
     private readonly Pen _ucsAxisXPen = new(
