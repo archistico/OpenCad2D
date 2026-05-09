@@ -1,0 +1,428 @@
+using System.Globalization;
+using System.Text.Json;
+using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
+using OpenCad2D.Core.Styling;
+using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Persistence.Dto;
+
+namespace OpenCad2D.Persistence;
+
+/// <summary>
+/// JSON serializer for the internal OpenCad2D v1 file format.
+/// </summary>
+public sealed class JsonDocumentSerializer : IDocumentSerializer
+{
+    public const int CurrentVersion = 1;
+
+    private static readonly JsonSerializerOptions JsonOptions = CreateJsonOptions();
+
+    public DocumentDto Serialize(
+        CadDocument document,
+        string currentLayerId,
+        ViewportStateDto viewport)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+        ArgumentNullException.ThrowIfNull(viewport);
+
+        return new DocumentDto
+        {
+            Version = CurrentVersion,
+            SavedAt = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = currentLayerId
+            },
+            Viewport = new ViewportStateDto
+            {
+                PanX = viewport.PanX,
+                PanY = viewport.PanY,
+                Zoom = viewport.Zoom
+            },
+            Layers = document.Layers.All
+                .Select(ToDto)
+                .ToList(),
+            Entities = document.Entities.All
+                .Select(ToDto)
+                .Where(dto => dto is not null)
+                .Cast<EntityDto>()
+                .ToList()
+        };
+    }
+
+    public CadDocument Deserialize(
+        DocumentDto dto,
+        out string currentLayerId,
+        out ViewportStateDto viewport)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+
+        if (dto.Version != CurrentVersion)
+        {
+            throw new UnsupportedDocumentVersionException(dto.Version);
+        }
+
+        CadDocument document = new();
+
+        foreach (LayerDto layerDto in dto.Layers)
+        {
+            Layer layer = FromDto(layerDto);
+
+            if (document.Layers.Contains(layer.Id))
+            {
+                document.Layers.Replace(layer);
+            }
+            else
+            {
+                document.Layers.Add(layer);
+            }
+        }
+
+        foreach (EntityDto entityDto in dto.Entities)
+        {
+            CadEntity? entity = FromDto(entityDto);
+
+            if (entity is null)
+            {
+                continue;
+            }
+
+            if (!document.Layers.Contains(entity.LayerId))
+            {
+                continue;
+            }
+
+            document.AddEntity(entity);
+        }
+
+        currentLayerId = string.IsNullOrWhiteSpace(dto.Settings.CurrentLayerId)
+            ? LayerId.Default.Value
+            : dto.Settings.CurrentLayerId;
+
+        if (!document.Layers.Contains(new LayerId(currentLayerId)))
+        {
+            currentLayerId = LayerId.Default.Value;
+        }
+
+        viewport = dto.Viewport ?? new ViewportStateDto();
+
+        return document;
+    }
+
+    public void SaveToFile(
+        DocumentDto dto,
+        string filePath)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "File path cannot be empty.",
+                nameof(filePath));
+        }
+
+        try
+        {
+            string? directory = Path.GetDirectoryName(filePath);
+
+            if (!string.IsNullOrWhiteSpace(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            string json = JsonSerializer.Serialize(dto, JsonOptions);
+
+            File.WriteAllText(filePath, json);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or System.Security.SecurityException or NotSupportedException)
+        {
+            throw new DocumentSaveException(
+                $"Cannot save OpenCad2D document to '{filePath}'.",
+                exception);
+        }
+    }
+
+    public DocumentDto LoadFromFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "File path cannot be empty.",
+                nameof(filePath));
+        }
+
+        try
+        {
+            string json = File.ReadAllText(filePath);
+
+            DocumentDto? dto = JsonSerializer.Deserialize<DocumentDto>(json, JsonOptions);
+
+            if (dto is null)
+            {
+                throw new DocumentLoadException(
+                    $"File '{filePath}' does not contain a valid OpenCad2D document.");
+            }
+
+            if (dto.Version != CurrentVersion)
+            {
+                throw new UnsupportedDocumentVersionException(dto.Version);
+            }
+
+            return dto;
+        }
+        catch (UnsupportedDocumentVersionException)
+        {
+            throw;
+        }
+        catch (DocumentLoadException)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or NotSupportedException)
+        {
+            throw new DocumentLoadException(
+                $"Cannot load OpenCad2D document from '{filePath}'.",
+                exception);
+        }
+    }
+
+    public static string ToJson(DocumentDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+
+        return JsonSerializer.Serialize(dto, JsonOptions);
+    }
+
+    public static DocumentDto FromJson(string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            throw new ArgumentException(
+                "JSON cannot be empty.",
+                nameof(json));
+        }
+
+        try
+        {
+            DocumentDto? dto = JsonSerializer.Deserialize<DocumentDto>(json, JsonOptions);
+
+            if (dto is null)
+            {
+                throw new DocumentLoadException(
+                    "JSON does not contain a valid OpenCad2D document.");
+            }
+
+            if (dto.Version != CurrentVersion)
+            {
+                throw new UnsupportedDocumentVersionException(dto.Version);
+            }
+
+            return dto;
+        }
+        catch (UnsupportedDocumentVersionException)
+        {
+            throw;
+        }
+        catch (DocumentLoadException)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is JsonException or NotSupportedException)
+        {
+            throw new DocumentLoadException(
+                "Cannot load OpenCad2D document from JSON.",
+                exception);
+        }
+    }
+
+    private static LayerDto ToDto(Layer layer)
+    {
+        return new LayerDto
+        {
+            Id = layer.Id.Value,
+            Name = layer.Name,
+            Color = ToHex(layer.Color),
+            LineWeight = layer.LineWeight.Millimeters,
+            IsVisible = layer.IsVisible,
+            IsLocked = layer.IsLocked
+        };
+    }
+
+    private static EntityDto? ToDto(CadEntity entity)
+    {
+        return entity switch
+        {
+            LineEntity line => new LineEntityDto
+            {
+                Id = line.Id.ToString(),
+                LayerId = line.LayerId.Value,
+                StartX = line.Start.X,
+                StartY = line.Start.Y,
+                EndX = line.End.X,
+                EndY = line.End.Y
+            },
+
+            CircleEntity circle => new CircleEntityDto
+            {
+                Id = circle.Id.ToString(),
+                LayerId = circle.LayerId.Value,
+                CenterX = circle.Center.X,
+                CenterY = circle.Center.Y,
+                Radius = circle.Radius
+            },
+
+            ArcEntity arc => new ArcEntityDto
+            {
+                Id = arc.Id.ToString(),
+                LayerId = arc.LayerId.Value,
+                CenterX = arc.Center.X,
+                CenterY = arc.Center.Y,
+                Radius = arc.Radius,
+                StartAngleDegrees = arc.StartAngle.Degrees,
+                EndAngleDegrees = arc.EndAngle.Degrees,
+                IsCounterClockwise = arc.IsCounterClockwise
+            },
+
+            PolylineEntity polyline => new PolylineEntityDto
+            {
+                Id = polyline.Id.ToString(),
+                LayerId = polyline.LayerId.Value,
+                IsClosed = polyline.IsClosed,
+                Vertices = polyline.Vertices
+                    .Select(vertex => new PointDto
+                    {
+                        X = vertex.X,
+                        Y = vertex.Y
+                    })
+                    .ToList()
+            },
+
+            _ => null
+        };
+    }
+
+    private static Layer FromDto(LayerDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Id))
+        {
+            throw new DocumentLoadException(
+                "A layer has an empty id.");
+        }
+
+        return new Layer(
+            new LayerId(dto.Id),
+            string.IsNullOrWhiteSpace(dto.Name) ? dto.Id : dto.Name,
+            FromHex(dto.Color),
+            LineWeight.FromMillimeters(Math.Max(0, dto.LineWeight)),
+            dto.IsVisible,
+            dto.IsLocked);
+    }
+
+    private static CadEntity? FromDto(EntityDto dto)
+    {
+        if (dto is UnknownEntityDto)
+        {
+            return null;
+        }
+
+        EntityId id = ParseEntityId(dto.Id);
+        LayerId layerId = new(string.IsNullOrWhiteSpace(dto.LayerId) ? LayerId.Default.Value : dto.LayerId);
+
+        return dto switch
+        {
+            LineEntityDto line => new LineEntity(
+                new Point2D(line.StartX, line.StartY),
+                new Point2D(line.EndX, line.EndY),
+                id,
+                layerId),
+
+            CircleEntityDto circle => new CircleEntity(
+                new Point2D(circle.CenterX, circle.CenterY),
+                circle.Radius,
+                id,
+                layerId),
+
+            ArcEntityDto arc => new ArcEntity(
+                new Point2D(arc.CenterX, arc.CenterY),
+                arc.Radius,
+                Angle.FromDegrees(arc.StartAngleDegrees),
+                Angle.FromDegrees(arc.EndAngleDegrees),
+                arc.IsCounterClockwise,
+                id,
+                layerId),
+
+            PolylineEntityDto polyline => new PolylineEntity(
+                polyline.Vertices.Select(vertex => new Point2D(vertex.X, vertex.Y)),
+                polyline.IsClosed,
+                id,
+                layerId),
+
+            _ => null
+        };
+    }
+
+    private static EntityId ParseEntityId(string value)
+    {
+        if (!Guid.TryParse(value, out Guid guid))
+        {
+            throw new DocumentLoadException(
+                $"Invalid entity id '{value}'.");
+        }
+
+        return new EntityId(guid);
+    }
+
+    private static string ToHex(CadColor color)
+    {
+        return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+
+    private static CadColor FromHex(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return CadColor.FromRgb(255, 255, 255);
+        }
+
+        string hex = value.Trim();
+
+        if (hex.StartsWith('#'))
+        {
+            hex = hex[1..];
+        }
+
+        if (hex.Length != 6)
+        {
+            return CadColor.FromRgb(255, 255, 255);
+        }
+
+        try
+        {
+            byte r = Convert.ToByte(hex[0..2], 16);
+            byte g = Convert.ToByte(hex[2..4], 16);
+            byte b = Convert.ToByte(hex[4..6], 16);
+
+            return CadColor.FromRgb(r, g, b);
+        }
+        catch (FormatException)
+        {
+            return CadColor.FromRgb(255, 255, 255);
+        }
+    }
+
+    private static JsonSerializerOptions CreateJsonOptions()
+    {
+        JsonSerializerOptions options = new()
+        {
+            WriteIndented = true,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        };
+
+        options.Converters.Add(new EntityDtoJsonConverter());
+
+        return options;
+    }
+}
