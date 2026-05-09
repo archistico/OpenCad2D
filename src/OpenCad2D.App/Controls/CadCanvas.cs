@@ -12,6 +12,7 @@ using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Grips;
 using OpenCad2D.Tools.Selection;
 using System;
 using System.Collections.Generic;
@@ -32,6 +33,14 @@ public sealed class CadCanvas : Control
     private readonly IBrush _basePointMarkerFill = new SolidColorBrush(
         Color.FromArgb(80, 255, 190, 70));
     private readonly Pen _selectionWindowPen = new(Brushes.LightGreen, 1);
+    private readonly Pen _gripColdPen = new(
+        new SolidColorBrush(Color.FromRgb(80, 210, 255)),
+        1.5);
+    private readonly IBrush _gripHotFill = new SolidColorBrush(Color.FromRgb(70, 210, 120));
+    private readonly IBrush _gripWarmFill = new SolidColorBrush(Color.FromRgb(255, 90, 90));
+    private readonly Pen _gripWarmPen = new(
+        new SolidColorBrush(Color.FromRgb(255, 150, 150)),
+        1.5);
     private readonly IBrush _backgroundBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30));
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
     private readonly ViewportTransform _viewport = new();
@@ -480,12 +489,7 @@ public sealed class CadCanvas : Control
             return;
         }
 
-        Point2D? basePoint = null;
-
-        if (Workspace.ToolController.ActiveTool is TwoPointToolBase twoPointTool)
-        {
-            basePoint = twoPointTool.FirstPoint;
-        }
+        Point2D? basePoint = Workspace.Context.CurrentBasePoint;
 
         var request = new SnapRequest(
             Workspace.Document,
@@ -685,6 +689,10 @@ public sealed class CadCanvas : Control
             case SelectionTool selectionTool:
                 DrawSelectionPreview(context, selectionTool);
                 break;
+
+            case GripEditTool gripEditTool:
+                DrawGripEditPreview(context, gripEditTool);
+                break;
         }
 
         if (Workspace.ToolController.ActiveTool is TwoPointToolBase twoPointTool)
@@ -737,6 +745,117 @@ public sealed class CadCanvas : Control
             end,
             markerRadius,
             markerRadius);
+    }
+
+
+    private void DrawGripEditPreview(
+        DrawingContext context,
+        GripEditTool tool)
+    {
+        if (tool.PreviewEntity is not null)
+        {
+            DrawEntity(
+                context,
+                tool.PreviewEntity,
+                _previewPen);
+        }
+
+        DrawGripMeasurementPreview(
+            context,
+            tool);
+
+        DrawGripMarkers(
+            context,
+            tool);
+    }
+
+    private void DrawGripMeasurementPreview(
+        DrawingContext context,
+        GripEditTool tool)
+    {
+        if (Workspace?.Context.CurrentBasePoint is null ||
+            tool.CurrentDestination is null)
+        {
+            return;
+        }
+
+        Point start = ToScreenPoint(Workspace.Context.CurrentBasePoint.Value);
+        Point end = ToScreenPoint(tool.CurrentDestination.Value);
+        const double markerRadius = 4;
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            start,
+            markerRadius,
+            markerRadius);
+
+        context.DrawLine(
+            _measurementVectorPen,
+            start,
+            end);
+
+        context.DrawEllipse(
+            null,
+            _measurementVectorPen,
+            end,
+            markerRadius,
+            markerRadius);
+    }
+
+    private void DrawGripMarkers(
+        DrawingContext context,
+        GripEditTool tool)
+    {
+        IReadOnlyList<GripPoint> grips = tool.CurrentGrips;
+
+        for (int i = 0; i < grips.Count; i++)
+        {
+            Point point = ToScreenPoint(grips[i].Position);
+
+            bool isWarm = tool.WarmGripIndex == i;
+            bool isHot = tool.HotGripIndex == i;
+
+            DrawGripMarker(
+                context,
+                point,
+                isHot,
+                isWarm);
+        }
+    }
+
+    private void DrawGripMarker(
+        DrawingContext context,
+        Point center,
+        bool isHot,
+        bool isWarm)
+    {
+        const double size = 8;
+        double half = size / 2.0;
+
+        var rect = new Rect(
+            center.X - half,
+            center.Y - half,
+            size,
+            size);
+
+        IBrush? fill = null;
+        Pen pen = _gripColdPen;
+
+        if (isWarm)
+        {
+            fill = _gripWarmFill;
+            pen = _gripWarmPen;
+        }
+        else if (isHot)
+        {
+            fill = _gripHotFill;
+        }
+
+        context.DrawRectangle(
+            fill,
+            pen,
+            rect);
     }
 
     private void DrawLinePreview(
@@ -1074,6 +1193,11 @@ public sealed class CadCanvas : Control
                  e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
             result = Workspace.ActionController.Redo();
+        }
+        else if (e.Key == Key.Tab)
+        {
+            result = Workspace.EnterGripEditModeForSelection();
+            e.Handled = result.Changed;
         }
         else if (e.Key == Key.Home)
         {

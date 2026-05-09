@@ -265,6 +265,19 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (e.Key == Key.Tab)
+        {
+            ToolResult result = _viewModel.EnterGripEditModeForSelection();
+
+            RefreshStatus();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+            CadCanvas.Focus();
+
+            e.Handled = result.Changed;
+            return;
+        }
+
         if (e.Key == Key.Enter && !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
         {
             SubmitCommandInputText();

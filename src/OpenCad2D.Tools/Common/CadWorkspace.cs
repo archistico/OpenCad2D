@@ -7,6 +7,8 @@ using OpenCad2D.Geometry.Coordinates;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
+using OpenCad2D.Tools.Grips;
+using OpenCad2D.Tools.Selection;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -39,6 +41,7 @@ public sealed class CadWorkspace
         SelectionService = selectionService ?? new SelectionService();
         ToolRegistry = toolRegistry ?? new ToolRegistry();
         GridSettings = gridSettings ?? new GridSettings();
+        GripProviders = new GripProviderRegistry();
 
         Context = new ToolContext(
             Document,
@@ -77,6 +80,8 @@ public sealed class CadWorkspace
     public ToolRegistry ToolRegistry { get; }
 
     public GridSettings GridSettings { get; }
+
+    public GripProviderRegistry GripProviders { get; }
 
     public ToolContext Context { get; }
 
@@ -139,6 +144,61 @@ public sealed class CadWorkspace
         }
     }
 
+
+    public ToolResult EnterGripEditModeForSelection()
+    {
+        EntityId? entityId = SelectionSet.LastSelectedId;
+
+        if (entityId is null)
+        {
+            return ToolResult.None("No selected entity for grip edit.");
+        }
+
+        return EnterGripEditMode(entityId.Value);
+    }
+
+    public ToolResult EnterGripEditMode(EntityId entityId)
+    {
+        if (!Document.Entities.TryGet(entityId, out CadEntity? entity) ||
+            entity is null)
+        {
+            return ToolResult.None("Cannot enter grip edit mode because the entity was not found.");
+        }
+
+        if (!Document.IsEntitySelectable(entity))
+        {
+            return ToolResult.None("Cannot enter grip edit mode because the entity is not selectable.");
+        }
+
+        if (GripProviders.FindProvider(entity) is null)
+        {
+            return ToolResult.None("Selected entity does not support grip editing.");
+        }
+
+        var gripEditTool = new GripEditTool(
+            entityId,
+            GripProviders);
+
+        ToolResult activationResult = gripEditTool.Activate(Context);
+
+        if (gripEditTool.ShouldExit)
+        {
+            return activationResult;
+        }
+
+        ToolController.SetActiveToolWithoutDeactivating(gripEditTool);
+
+        return activationResult.Changed
+            ? activationResult
+            : ToolResult.Started("Grip edit started.");
+    }
+
+    public ToolResult ExitGripEditMode()
+    {
+        return ToolController.SetActiveToolWithoutDeactivating(
+            new SelectionTool());
+    }
+
     public ToolResult SetCurrentLayerLocked(bool isLocked)
     {
         Document.Layers.SetLocked(
@@ -188,6 +248,20 @@ public sealed class CadWorkspace
 
     public ToolResult Escape()
     {
+        if (ToolController.ActiveTool is GripEditTool gripEditTool)
+        {
+            ToolResult gripCancelResult = gripEditTool.Cancel(Context);
+
+            if (gripEditTool.ShouldExit)
+            {
+                ExitGripEditMode();
+
+                return ToolResult.Cancelled("Grip edit exited.");
+            }
+
+            return gripCancelResult;
+        }
+
         ToolResult cancelResult = ActionController.CancelActiveTool();
 
         if (cancelResult.Changed)

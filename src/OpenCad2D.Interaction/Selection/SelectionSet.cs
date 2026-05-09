@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Identifiers;
 
 namespace OpenCad2D.Interaction.Selection;
 
@@ -9,12 +9,21 @@ namespace OpenCad2D.Interaction.Selection;
 public sealed class SelectionSet
 {
     private readonly HashSet<EntityId> _selectedIds = new();
+    private readonly List<EntityId> _selectionOrder = new();
 
-    public IReadOnlyCollection<EntityId> SelectedIds => _selectedIds;
+    public IReadOnlyCollection<EntityId> SelectedIds => _selectionOrder;
 
     public int Count => _selectedIds.Count;
 
     public bool IsEmpty => _selectedIds.Count == 0;
+
+    /// <summary>
+    /// Gets the last entity that became selected.
+    /// This is used by grip editing when multiple entities are selected.
+    /// </summary>
+    public EntityId? LastSelectedId => _selectionOrder.Count == 0
+        ? null
+        : _selectionOrder[^1];
 
     public bool Contains(EntityId entityId)
     {
@@ -23,7 +32,12 @@ public sealed class SelectionSet
 
     public void Select(EntityId entityId)
     {
-        _selectedIds.Add(entityId);
+        if (!_selectedIds.Add(entityId))
+        {
+            return;
+        }
+
+        _selectionOrder.Add(entityId);
     }
 
     public void SelectMany(IEnumerable<EntityId> entityIds)
@@ -38,15 +52,23 @@ public sealed class SelectionSet
 
     public void Deselect(EntityId entityId)
     {
-        _selectedIds.Remove(entityId);
+        if (!_selectedIds.Remove(entityId))
+        {
+            return;
+        }
+
+        _selectionOrder.Remove(entityId);
     }
 
     public void Toggle(EntityId entityId)
     {
-        if (!_selectedIds.Add(entityId))
+        if (_selectedIds.Contains(entityId))
         {
-            _selectedIds.Remove(entityId);
+            Deselect(entityId);
+            return;
         }
+
+        Select(entityId);
     }
 
     public void ReplaceWith(EntityId entityId)
@@ -66,5 +88,6 @@ public sealed class SelectionSet
     public void Clear()
     {
         _selectedIds.Clear();
+        _selectionOrder.Clear();
     }
 }

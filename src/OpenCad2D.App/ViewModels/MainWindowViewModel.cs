@@ -6,6 +6,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
+using OpenCad2D.Tools.Grips;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -117,8 +118,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
             Point2D targetPoint = _currentSnapCandidate?.Point ?? _mousePosition;
 
+            bool shouldApplyOrtho = true;
+
+            if (Workspace.ToolController.ActiveTool is GripEditTool gripEditTool &&
+                gripEditTool.ActiveGripKind == GripKind.ResizeRadius)
+            {
+                shouldApplyOrtho = false;
+            }
+
             targetPoint = ToolInputConstraintService.ApplyOrtho(
-                Workspace.Context.IsOrthoEnabled,
+                Workspace.Context.IsOrthoEnabled && shouldApplyOrtho,
                 basePoint,
                 targetPoint);
 
@@ -241,8 +250,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
         Point2D directionPoint = _currentSnapCandidate?.Point ?? _mousePosition;
 
+        bool shouldApplyOrtho = true;
+
+        if (Workspace.ToolController.ActiveTool is GripEditTool gripEditTool &&
+            gripEditTool.ActiveGripKind == GripKind.ResizeRadius)
+        {
+            shouldApplyOrtho = false;
+        }
+
         directionPoint = ToolInputConstraintService.ApplyOrtho(
-            Workspace.Context.IsOrthoEnabled,
+            Workspace.Context.IsOrthoEnabled && shouldApplyOrtho,
             basePoint,
             directionPoint);
 
@@ -361,6 +378,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 : $"Layer '{layerName}' unlocked.");
 
         NotifyLayerStateChanged();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+
+    public ToolResult EnterGripEditModeForSelection()
+    {
+        ToolResult result = Workspace.EnterGripEditModeForSelection();
+
+        SetLastResult(result);
         NotifyDocumentStateChanged();
 
         return result;
