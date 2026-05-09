@@ -1,8 +1,9 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Coordinates;
+using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 
@@ -69,12 +70,17 @@ public sealed class ToolContext
 
     public ToolCreationContext Creation { get; }
 
+    /// <summary>
+    /// Current point from which command-line relative coordinates and direct distance entry are measured.
+    /// Tools that collect a first point should set this value when that first point is accepted.
+    /// </summary>
+    public Point2D? CurrentBasePoint { get; set; }
+
     /*
      * Compatibility properties.
      * Keep them temporarily so existing tools continue to compile.
      * New code should prefer Commands, Selection, Snapping, Coordinates and Creation.
      */
-
     public CommandHistory CommandHistory => Commands.History;
 
     public SnapService SnapService => Snapping.Service;

@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Geometry;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 
@@ -43,6 +43,7 @@ public abstract class TwoPointToolBase : ICadTool
         {
             _firstPoint = point;
             _currentPoint = point;
+            context.CurrentBasePoint = point;
             State = TwoPointToolState.WaitingForSecondPoint;
 
             return OnFirstPointSelected(context, point);
@@ -56,9 +57,13 @@ public abstract class TwoPointToolBase : ICadTool
                     "Tool is waiting for second point but first point is missing.");
             }
 
-            if (AreSamePoint(_firstPoint.Value, point, context))
+            if (AreSamePoint(
+                    _firstPoint.Value,
+                    point,
+                    context))
             {
-                return ToolResult.None("Second point must be different from first point.");
+                return ToolResult.None(
+                    "Second point must be different from first point.");
             }
 
             ToolResult result = OnSecondPointSelected(
@@ -68,7 +73,7 @@ public abstract class TwoPointToolBase : ICadTool
 
             if (ShouldResetAfterSecondPoint(result))
             {
-                Reset();
+                Reset(context);
             }
 
             return result;
@@ -104,7 +109,7 @@ public abstract class TwoPointToolBase : ICadTool
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        Reset();
+        Reset(context);
 
         return ToolResult.Cancelled($"{Name} command cancelled.");
     }
@@ -113,23 +118,29 @@ public abstract class TwoPointToolBase : ICadTool
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        Reset();
+        Reset(context);
 
         return ToolResult.None($"{Name} tool deactivated.");
     }
 
-    protected void Reset()
+    protected void Reset(ToolContext? context = null)
     {
         _firstPoint = null;
         _currentPoint = null;
         State = TwoPointToolState.WaitingForFirstPoint;
+
+        if (context is not null)
+        {
+            context.CurrentBasePoint = null;
+        }
     }
 
     protected virtual ToolResult OnFirstPointSelected(
         ToolContext context,
         Point2D firstPoint)
     {
-        return ToolResult.Started("Specify second point.");
+        return ToolResult.Started(
+            "Specify second point, type coordinates, or type distance.");
     }
 
     protected virtual ToolResult OnPreviewUpdated(

@@ -1,10 +1,11 @@
-﻿using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -18,6 +19,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
+    private readonly CommandInputParser _commandInputParser = new();
 
     public MainWindowViewModel()
     {
@@ -100,6 +102,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+
+    public string CommandPromptText
+    {
+        get
+        {
+            return Workspace.Context.CurrentBasePoint is null
+                ? "Specify first point or type coordinates:"
+                : "Specify second point, type coordinates, relative coordinates, or distance:";
+        }
+    }
+
     public string StatusText =>
         $"Tool: {ActiveToolName} | " +
         $"{CurrentLayerText} | " +
@@ -108,6 +121,101 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         $"{MousePositionText} | " +
         $"{SnapText} | " +
         $"{LastMessage}";
+
+
+    public ToolResult SubmitCommandInput(string? input)
+    {
+        CommandInputParseResult parseResult = _commandInputParser.Parse(input);
+
+        if (!parseResult.IsValid)
+        {
+            ToolResult invalidResult = ToolResult.None(parseResult.ErrorMessage);
+            SetLastResult(invalidResult);
+            NotifyCommandInputStateChanged();
+            return invalidResult;
+        }
+
+        if (!TryResolveCommandInputPoint(parseResult, out Point2D worldPoint, out string? errorMessage))
+        {
+            ToolResult invalidResult = ToolResult.None(errorMessage);
+            SetLastResult(invalidResult);
+            NotifyCommandInputStateChanged();
+            return invalidResult;
+        }
+
+        ToolResult result = Workspace.SubmitPointFromCommandLine(worldPoint);
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyCommandInputStateChanged();
+
+        return result;
+    }
+
+    private bool TryResolveCommandInputPoint(
+        CommandInputParseResult parseResult,
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        switch (parseResult.Kind)
+        {
+            case CommandInputKind.AbsolutePoint:
+                worldPoint = Workspace.CurrentUcs.UserToWorld(parseResult.Point!.Value);
+                return true;
+
+            case CommandInputKind.RelativePoint:
+                if (Workspace.Context.CurrentBasePoint is null)
+                {
+                    errorMessage = "Relative coordinates require a base point.";
+                    return false;
+                }
+
+                Vector2D worldOffset = Workspace.CurrentUcs.UserVectorToWorld(parseResult.Offset!.Value);
+                worldPoint = Workspace.Context.CurrentBasePoint.Value + worldOffset;
+                return true;
+
+            case CommandInputKind.Distance:
+                return TryResolveDirectDistancePoint(
+                    parseResult.Distance!.Value,
+                    out worldPoint,
+                    out errorMessage);
+
+            default:
+                errorMessage = "Unsupported command input.";
+                return false;
+        }
+    }
+
+    private bool TryResolveDirectDistancePoint(
+        double distance,
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Direct distance requires a base point.";
+            return false;
+        }
+
+        Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
+        Point2D directionPoint = _currentSnapCandidate?.Point ?? _mousePosition;
+        Vector2D direction = basePoint.VectorTo(directionPoint);
+
+        if (Workspace.GeometryTolerance.ArePointsEqual(basePoint, directionPoint))
+        {
+            errorMessage = "Move the cursor to indicate a direction.";
+            return false;
+        }
+
+        worldPoint = basePoint + direction.Normalize() * distance;
+        return true;
+    }
 
     public void SetMousePosition(Point2D point)
     {
@@ -319,6 +427,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerText),
             nameof(MousePositionText),
             nameof(SnapText),
+            nameof(LastMessage),
+            nameof(CommandPromptText));
+    }
+
+    private void NotifyCommandInputStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(CommandPromptText),
+            nameof(StatusText),
             nameof(LastMessage));
     }
 
@@ -331,6 +448,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
             nameof(CurrentLayerText),
+            nameof(CommandPromptText),
             nameof(StatusText));
     }
 

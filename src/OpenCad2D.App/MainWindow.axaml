@@ -7,7 +7,9 @@
         Title="OpenCad2D"
         Width="1200"
         Height="760"
-        Background="#1E1E1E">
+        Background="#1E1E1E"
+        KeyDown="Window_KeyDown"
+        TextInput="Window_TextInput">
 
     <Window.Styles>
         <Style Selector="Button.tool-button">
@@ -67,7 +69,7 @@
         <vm:MainWindowViewModel />
     </Design.DataContext>
 
-    <Grid RowDefinitions="Auto,*,Auto,Auto">
+    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto">
 
         <!-- Top bar: session/global state -->
         <Border Grid.Row="0"
@@ -271,8 +273,39 @@
             </StackPanel>
         </Border>
 
-        <!-- Status bar -->
+        <!-- Command line -->
         <Border Grid.Row="3"
+                Background="#1B1B1B"
+                BorderBrush="#3A3A3A"
+                BorderThickness="0,1,0,0"
+                Padding="8,6">
+
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="8">
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding CommandPromptText}"
+                           Foreground="#CCCCCC"
+                           VerticalAlignment="Center"
+                           FontFamily="Consolas"
+                           FontSize="12" />
+
+                <TextBox Grid.Column="1"
+                         x:Name="CommandInputTextBox"
+                         Background="#111111"
+                         Foreground="#FFFFFF"
+                         BorderBrush="#555555"
+                         BorderThickness="1"
+                         FontFamily="Consolas"
+                         FontSize="13"
+                         Padding="6,3"
+                         PlaceholderText="100,50   |   @50,0   |   5"
+                         KeyDown="CommandInputTextBox_KeyDown" />
+            </Grid>
+        </Border>
+
+        <!-- Status bar -->
+        <Border Grid.Row="4"
                 Background="#111111"
                 BorderBrush="#3A3A3A"
                 BorderThickness="0,1,0,0"

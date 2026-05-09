@@ -1,9 +1,10 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Coordinates;
+using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 
@@ -113,6 +114,15 @@ public sealed class CadWorkspace
         ICadTool tool = ToolRegistry.Create(toolId);
 
         return ToolController.SetActiveToolWithoutDeactivating(tool);
+    }
+
+    public ToolResult SubmitPointFromCommandLine(Point2D worldPoint)
+    {
+        var pointer = new PointerInfo(
+            worldPoint,
+            CurrentUcs.WorldToUser(worldPoint));
+
+        return ToolController.OnPointerPressed(pointer);
     }
 
     public ToolResult SetCurrentLayerLocked(bool isLocked)

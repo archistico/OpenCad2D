@@ -1,5 +1,6 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Input;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.Core.Layers;
@@ -183,6 +184,133 @@ public partial class MainWindow : Window
         RefreshStatus();
 
         CadCanvas.ClearSnapMarker();
+    }
+
+
+    private void CommandInputTextBox_KeyDown(
+        object? sender,
+        KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter)
+        {
+            return;
+        }
+
+        SubmitCommandInputText();
+
+        e.Handled = true;
+    }
+
+    private void Window_TextInput(
+        object? sender,
+        TextInputEventArgs e)
+    {
+        if (ReferenceEquals(e.Source, CommandInputTextBox))
+        {
+            return;
+        }
+
+        string text = e.Text ?? string.Empty;
+
+        if (!IsCommandInputText(text))
+        {
+            return;
+        }
+
+        AppendTextToCommandInput(text);
+
+        e.Handled = true;
+    }
+
+    private void Window_KeyDown(
+        object? sender,
+        KeyEventArgs e)
+    {
+        if (ReferenceEquals(e.Source, CommandInputTextBox))
+        {
+            return;
+        }
+
+        if (e.Key == Key.Enter && !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
+        {
+            SubmitCommandInputText();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Back && !string.IsNullOrEmpty(CommandInputTextBox.Text))
+        {
+            RemoveLastCommandInputCharacter();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape && !string.IsNullOrEmpty(CommandInputTextBox.Text))
+        {
+            CommandInputTextBox.Text = string.Empty;
+            e.Handled = true;
+        }
+    }
+
+    private void SubmitCommandInputText()
+    {
+        string input = CommandInputTextBox.Text ?? string.Empty;
+
+        _viewModel.SubmitCommandInput(input);
+
+        CommandInputTextBox.Text = string.Empty;
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void AppendTextToCommandInput(string text)
+    {
+        CommandInputTextBox.Text = (CommandInputTextBox.Text ?? string.Empty) + text;
+        CommandInputTextBox.CaretIndex = CommandInputTextBox.Text.Length;
+        CommandInputTextBox.Focus();
+    }
+
+    private void RemoveLastCommandInputCharacter()
+    {
+        string text = CommandInputTextBox.Text ?? string.Empty;
+
+        if (text.Length == 0)
+        {
+            return;
+        }
+
+        CommandInputTextBox.Text = text[..^1];
+        CommandInputTextBox.CaretIndex = CommandInputTextBox.Text.Length;
+        CommandInputTextBox.Focus();
+    }
+
+    private static bool IsCommandInputText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return false;
+        }
+
+        foreach (char character in text)
+        {
+            if (char.IsDigit(character))
+            {
+                continue;
+            }
+
+            if (character is ',' or '.' or '-' or '+' or '@' or ' ')
+            {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     private void CadCanvas_WorkspaceChanged(
