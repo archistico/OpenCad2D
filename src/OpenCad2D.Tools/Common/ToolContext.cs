@@ -1,15 +1,16 @@
 ﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Geometry;
+using OpenCad2D.Geometry.Coordinates;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
-using OpenCad2D.Geometry.Coordinates;
-using OpenCad2D.Geometry;
 
 namespace OpenCad2D.Tools.Common;
 
 /// <summary>
-/// Provides shared services and state required by CAD tools.
+/// Provides the runtime services required by CAD tools.
+/// Keep this class small: group related state into focused sub-contexts.
 /// </summary>
 public sealed class ToolContext
 {
@@ -32,65 +33,97 @@ public sealed class ToolContext
         ArgumentNullException.ThrowIfNull(commandHistory);
         ArgumentNullException.ThrowIfNull(snapService);
 
-        if (snapTolerance < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(snapTolerance),
-                "Snap tolerance cannot be negative.");
-        }
-
-        if (selectionTolerance < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(selectionTolerance),
-                "Selection tolerance cannot be negative.");
-        }
-
-        if (selectionDragThreshold < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(selectionDragThreshold),
-                "Selection drag threshold cannot be negative.");
-        }
-
         Document = document;
-        CommandHistory = commandHistory;
-        SnapService = snapService;
-        SelectionSet = selectionSet ?? new SelectionSet();
-        SelectionService = selectionService ?? new SelectionService();
-        GridSettings = gridSettings ?? new GridSettings();
-        CurrentLayerId = currentLayerId ?? LayerId.Default;
-        EnabledSnaps = enabledSnaps;
-        SnapTolerance = snapTolerance;
-        SelectionTolerance = selectionTolerance;
-        SelectionDragThreshold = selectionDragThreshold;
-        CurrentUcs = currentUcs ?? CoordinateSystem2D.World;
-        GeometryTolerance = geometryTolerance ?? GeometryTolerance.Default;
+
+        Commands = new ToolCommandContext(commandHistory);
+
+        Selection = new ToolSelectionContext(
+            selectionSet ?? new SelectionSet(),
+            selectionService ?? new SelectionService(),
+            selectionTolerance,
+            selectionDragThreshold);
+
+        Snapping = new ToolSnapContext(
+            snapService,
+            enabledSnaps,
+            snapTolerance,
+            gridSettings ?? new GridSettings());
+
+        Coordinates = new ToolCoordinateContext(
+            currentUcs ?? CoordinateSystem2D.World,
+            geometryTolerance ?? GeometryTolerance.Default);
+
+        Creation = new ToolCreationContext(
+            currentLayerId ?? LayerId.Default);
     }
 
     public CadDocument Document { get; }
 
-    public CommandHistory CommandHistory { get; }
+    public ToolCommandContext Commands { get; }
 
-    public SnapService SnapService { get; }
+    public ToolSelectionContext Selection { get; }
 
-    public SelectionSet SelectionSet { get; }
+    public ToolSnapContext Snapping { get; }
 
-    public SelectionService SelectionService { get; }
+    public ToolCoordinateContext Coordinates { get; }
 
-    public GridSettings GridSettings { get; }
+    public ToolCreationContext Creation { get; }
 
-    public LayerId CurrentLayerId { get; set; }
+    /*
+     * Compatibility properties.
+     * Keep them temporarily so existing tools continue to compile.
+     * New code should prefer Commands, Selection, Snapping, Coordinates and Creation.
+     */
 
-    public SnapKind EnabledSnaps { get; set; }
+    public CommandHistory CommandHistory => Commands.History;
 
-    public double SnapTolerance { get; set; }
+    public SnapService SnapService => Snapping.Service;
 
-    public double SelectionTolerance { get; set; }
+    public SelectionSet SelectionSet => Selection.Set;
 
-    public double SelectionDragThreshold { get; set; }
+    public SelectionService SelectionService => Selection.Service;
 
-    public CoordinateSystem2D CurrentUcs { get; set; }
+    public GridSettings GridSettings => Snapping.GridSettings;
 
-    public GeometryTolerance GeometryTolerance { get; set; }
+    public LayerId CurrentLayerId
+    {
+        get => Creation.CurrentLayerId;
+        set => Creation.CurrentLayerId = value;
+    }
+
+    public SnapKind EnabledSnaps
+    {
+        get => Snapping.EnabledSnaps;
+        set => Snapping.EnabledSnaps = value;
+    }
+
+    public double SnapTolerance
+    {
+        get => Snapping.Tolerance;
+        set => Snapping.Tolerance = value;
+    }
+
+    public double SelectionTolerance
+    {
+        get => Selection.Tolerance;
+        set => Selection.Tolerance = value;
+    }
+
+    public double SelectionDragThreshold
+    {
+        get => Selection.DragThreshold;
+        set => Selection.DragThreshold = value;
+    }
+
+    public CoordinateSystem2D CurrentUcs
+    {
+        get => Coordinates.CurrentUcs;
+        set => Coordinates.CurrentUcs = value;
+    }
+
+    public GeometryTolerance GeometryTolerance
+    {
+        get => Coordinates.GeometryTolerance;
+        set => Coordinates.GeometryTolerance = value;
+    }
 }

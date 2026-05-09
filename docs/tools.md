@@ -52,6 +52,31 @@ This keeps all tools working on the same drawing state.
 
 ---
 
+## ToolContext boundary
+
+`ToolContext` provides only model-side services required by CAD tools.
+
+It may contain:
+- the active document;
+- undoable command execution;
+- selection state and selection services;
+- snapping services and snapping settings;
+- current entity creation defaults;
+- current coordinate system and geometry tolerance.
+
+It must not contain:
+- UI controls;
+- viewport or screen-to-model conversion logic;
+- dialogs, message boxes or status bar services;
+- file system, persistence or export services;
+- rendering services;
+- application-level configuration unrelated to tool execution.
+
+Pointer coordinates must be converted before entering tools.
+Tools receive model/user coordinates through `PointerInfo`.
+
+--- 
+
 ## ICadTool
 
 `ICadTool` is the common interface implemented by all tools.
