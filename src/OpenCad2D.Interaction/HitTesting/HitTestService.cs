@@ -5,7 +5,7 @@ using OpenCad2D.Geometry.Primitives;
 namespace OpenCad2D.Interaction.HitTesting;
 
 /// <summary>
-/// Provides hit testing against CAD entities.
+/// Provides hit testing against selectable CAD entities.
 /// </summary>
 public sealed class HitTestService
 {
@@ -25,7 +25,7 @@ public sealed class HitTestService
 
         BoundingBox2D searchArea = CreateSearchArea(point, tolerance);
 
-        return document.GetVisibleEntities(searchArea)
+        return document.GetSelectableEntities(searchArea)
             .Select(entity => CreateResult(entity, point))
             .Where(result => result.Distance <= tolerance)
             .OrderBy(result => result.Distance)
@@ -49,7 +49,7 @@ public sealed class HitTestService
 
         BoundingBox2D searchArea = CreateSearchArea(point, tolerance);
 
-        return document.GetVisibleEntities(searchArea)
+        return document.GetSelectableEntities(searchArea)
             .Select(entity => CreateResult(entity, point))
             .Where(result => result.Distance <= tolerance)
             .OrderBy(result => result.Distance)
@@ -71,8 +71,8 @@ public sealed class HitTestService
     }
 
     private static BoundingBox2D CreateSearchArea(
-    Point2D point,
-    double tolerance)
+        Point2D point,
+        double tolerance)
     {
         return new BoundingBox2D(
             point.X - tolerance,

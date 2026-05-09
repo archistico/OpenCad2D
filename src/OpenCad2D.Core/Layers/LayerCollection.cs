@@ -73,4 +73,11 @@ public sealed class LayerCollection
 
         Replace(layer.WithVisibility(isVisible));
     }
+
+    public void SetLocked(LayerId id, bool isLocked)
+    {
+        Layer layer = GetRequired(id);
+
+        Replace(layer.WithLocked(isLocked));
+    }
 }

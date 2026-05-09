@@ -54,6 +54,17 @@ public sealed class Layer
             IsLocked);
     }
 
+    public Layer WithLocked(bool isLocked)
+    {
+        return new Layer(
+            Id,
+            Name,
+            Color,
+            LineWeight,
+            IsVisible,
+            isLocked);
+    }
+
     public static Layer Default => new(
         LayerId.Default,
         "0",
