@@ -28,6 +28,9 @@ public sealed class CadCanvas : Control
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
     private readonly ViewportTransform _viewport = new();
 
+    private Point? _pointerScreenPoint;
+    private bool _isPointerInside;
+
     private readonly Dictionary<PenCacheKey, Pen> _penCache = new();
 
     private readonly record struct PenCacheKey(
@@ -41,7 +44,18 @@ public sealed class CadCanvas : Control
     private bool _isPanning;
     private Point _lastPanScreenPoint;
 
-    private readonly Pen _snapMarkerPen = new(Brushes.Yellow, 1.5);
+    private readonly Pen _crosshairPen = new(
+    new SolidColorBrush(Color.FromArgb(160, 220, 220, 220)),
+    1);
+
+    private readonly Pen _crosshairCenterPen = new(
+        new SolidColorBrush(Color.FromRgb(255, 255, 255)),
+        1.5);
+
+    private readonly Pen _snapMarkerPen = new(
+        new SolidColorBrush(Color.FromRgb(255, 230, 80)),
+        2);
+
     private SnapCandidate? _currentSnapCandidate;
 
     private readonly Pen _gridMinorPen = new(
@@ -77,12 +91,35 @@ public sealed class CadCanvas : Control
     public CadCanvas()
     {
         Focusable = true;
+        Cursor = new Cursor(StandardCursorType.None);
 
         PointerPressed += OnPointerPressed;
         PointerMoved += OnPointerMoved;
         PointerReleased += OnPointerReleased;
         PointerWheelChanged += OnPointerWheelChanged;
+        PointerEntered += OnPointerEntered;
+        PointerExited += OnPointerExited;
         KeyDown += OnKeyDown;
+    }
+
+    private void OnPointerEntered(
+    object? sender,
+    PointerEventArgs e)
+    {
+        _isPointerInside = true;
+        _pointerScreenPoint = e.GetPosition(this);
+
+        InvalidateVisual();
+    }
+
+    private void OnPointerExited(
+        object? sender,
+        PointerEventArgs e)
+    {
+        _isPointerInside = false;
+        _pointerScreenPoint = null;
+
+        InvalidateVisual();
     }
 
     public override void Render(DrawingContext context)
@@ -114,6 +151,7 @@ public sealed class CadCanvas : Control
         }
 
         DrawActiveToolPreview(context);
+        DrawCrosshair(context);
         DrawSnapMarker(context);
     }
 
@@ -217,13 +255,143 @@ public sealed class CadCanvas : Control
             return;
         }
 
-        Point screenPoint = ToScreenPoint(_currentSnapCandidate.Point);
+        Point point = ToScreenPoint(_currentSnapCandidate.Point);
 
-        const double size = 5;
+        switch (_currentSnapCandidate.Kind)
+        {
+            case SnapKind.Endpoint:
+                DrawEndpointSnapMarker(context, point);
+                break;
+
+            case SnapKind.Midpoint:
+                DrawMidpointSnapMarker(context, point);
+                break;
+
+            case SnapKind.Center:
+                DrawCenterSnapMarker(context, point);
+                break;
+
+            case SnapKind.Quadrant:
+                DrawQuadrantSnapMarker(context, point);
+                break;
+
+            case SnapKind.Intersection:
+                DrawIntersectionSnapMarker(context, point);
+                break;
+
+            case SnapKind.Nearest:
+                DrawNearestSnapMarker(context, point);
+                break;
+
+            case SnapKind.Perpendicular:
+                DrawPerpendicularSnapMarker(context, point);
+                break;
+
+            case SnapKind.Tangent:
+                DrawTangentSnapMarker(context, point);
+                break;
+
+            case SnapKind.Grid:
+                DrawGridSnapMarker(context, point);
+                break;
+
+            default:
+                DrawDefaultSnapMarker(context, point);
+                break;
+        }
+    }
+
+    private void DrawEndpointSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double size = 8;
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - size, point.Y + size),
+            new Point(point.X - size, point.Y - size));
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - size, point.Y + size),
+            new Point(point.X + size, point.Y + size));
+    }
+
+    private void DrawMidpointSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double size = 7;
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - size, point.Y - size),
+            new Point(point.X + size, point.Y + size));
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - size, point.Y + size),
+            new Point(point.X + size, point.Y - size));
+    }
+
+    private void DrawCenterSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double radius = 7;
+
+        context.DrawEllipse(
+            null,
+            _snapMarkerPen,
+            point,
+            radius,
+            radius);
+    }
+
+    private void DrawQuadrantSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double size = 8;
+
+        Point top = new(point.X, point.Y - size);
+        Point right = new(point.X + size, point.Y);
+        Point bottom = new(point.X, point.Y + size);
+        Point left = new(point.X - size, point.Y);
+
+        context.DrawLine(_snapMarkerPen, top, right);
+        context.DrawLine(_snapMarkerPen, right, bottom);
+        context.DrawLine(_snapMarkerPen, bottom, left);
+        context.DrawLine(_snapMarkerPen, left, top);
+    }
+
+    private void DrawIntersectionSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double size = 8;
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - size, point.Y),
+            new Point(point.X + size, point.Y));
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X, point.Y - size),
+            new Point(point.X, point.Y + size));
+    }
+
+    private void DrawNearestSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double size = 6;
 
         var rect = new Rect(
-            screenPoint.X - size,
-            screenPoint.Y - size,
+            point.X - size,
+            point.Y - size,
             size * 2,
             size * 2);
 
@@ -231,16 +399,89 @@ public sealed class CadCanvas : Control
             null,
             _snapMarkerPen,
             rect);
+    }
+
+    private void DrawPerpendicularSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double size = 8;
 
         context.DrawLine(
             _snapMarkerPen,
-            new Point(screenPoint.X - size - 3, screenPoint.Y),
-            new Point(screenPoint.X + size + 3, screenPoint.Y));
+            new Point(point.X - size, point.Y - size),
+            new Point(point.X + size, point.Y - size));
 
         context.DrawLine(
             _snapMarkerPen,
-            new Point(screenPoint.X, screenPoint.Y - size - 3),
-            new Point(screenPoint.X, screenPoint.Y + size + 3));
+            new Point(point.X, point.Y - size),
+            new Point(point.X, point.Y + size));
+    }
+
+    private void DrawTangentSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double radius = 6;
+        const double line = 10;
+
+        context.DrawEllipse(
+            null,
+            _snapMarkerPen,
+            point,
+            radius,
+            radius);
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - line, point.Y + radius + 3),
+            new Point(point.X + line, point.Y + radius + 3));
+    }
+
+    private void DrawGridSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double size = 7;
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - size, point.Y),
+            new Point(point.X + size, point.Y));
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X, point.Y - size),
+            new Point(point.X, point.Y + size));
+
+        var rect = new Rect(
+            point.X - 3,
+            point.Y - 3,
+            6,
+            6);
+
+        context.DrawRectangle(
+            null,
+            _snapMarkerPen,
+            rect);
+    }
+
+    private void DrawDefaultSnapMarker(
+    DrawingContext context,
+    Point point)
+    {
+        const double size = 5;
+
+        var rect = new Rect(
+            point.X - size,
+            point.Y - size,
+            size * 2,
+            size * 2);
+
+        context.DrawRectangle(
+            null,
+            _snapMarkerPen,
+            rect);
     }
 
     private void UpdateCurrentSnapCandidate(Point2D modelPoint)
@@ -637,6 +878,9 @@ public sealed class CadCanvas : Control
 
         Point position = e.GetPosition(this);
 
+        _isPointerInside = true;
+        _pointerScreenPoint = position;
+
         if (e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed)
         {
             _isPanning = true;
@@ -671,6 +915,9 @@ public sealed class CadCanvas : Control
         }
 
         Point position = e.GetPosition(this);
+
+        _isPointerInside = true;
+        _pointerScreenPoint = position;
 
         if (_isPanning)
         {
@@ -717,6 +964,9 @@ public sealed class CadCanvas : Control
         }
 
         Point position = e.GetPosition(this);
+
+        _isPointerInside = true;
+        _pointerScreenPoint = position;
 
         Point2D modelPoint = ToModelPoint(position);
 
@@ -827,6 +1077,9 @@ public sealed class CadCanvas : Control
     {
         Point screenPoint = e.GetPosition(this);
 
+        _isPointerInside = true;
+        _pointerScreenPoint = screenPoint;
+
         double zoomFactor = e.Delta.Y > 0
             ? 1.15
             : 1.0 / 1.15;
@@ -842,6 +1095,42 @@ public sealed class CadCanvas : Control
             modelPoint);
 
         InvalidateVisual();
+    }
+
+    private void DrawCrosshair(DrawingContext context)
+    {
+        if (!_isPointerInside || _pointerScreenPoint is null)
+        {
+            return;
+        }
+
+        Point point = _pointerScreenPoint.Value;
+
+        double width = Bounds.Width;
+        double height = Bounds.Height;
+
+        context.DrawLine(
+            _crosshairPen,
+            new Point(0, point.Y),
+            new Point(width, point.Y));
+
+        context.DrawLine(
+            _crosshairPen,
+            new Point(point.X, 0),
+            new Point(point.X, height));
+
+        const double boxHalfSize = 5;
+
+        var centerBox = new Rect(
+            point.X - boxHalfSize,
+            point.Y - boxHalfSize,
+            boxHalfSize * 2,
+            boxHalfSize * 2);
+
+        context.DrawRectangle(
+            null,
+            _crosshairCenterPen,
+            centerBox);
     }
 
     private Point ToScreenPoint(Point2D point)
