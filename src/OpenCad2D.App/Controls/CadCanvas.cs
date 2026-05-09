@@ -1010,7 +1010,11 @@ public sealed class CadCanvas : Control
 
         if (e.Key == Key.Escape)
         {
-            result = Workspace.ActionController.CancelActiveTool();
+            result = Workspace.Escape();
+
+            ClearSnapMarker();
+
+            e.Handled = true;
         }
         else if (e.Key == Key.Delete)
         {
@@ -1025,7 +1029,7 @@ public sealed class CadCanvas : Control
                  e.KeyModifiers.HasFlag(KeyModifiers.Control))
         {
             result = Workspace.ActionController.Redo();
-        } 
+        }
         else if (e.Key == Key.Home)
         {
             _viewport.Reset();

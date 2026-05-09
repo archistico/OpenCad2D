@@ -39,4 +39,7 @@ public sealed class ToolResult
     {
         return new ToolResult(ToolResultKind.Cancelled, message);
     }
+
+    public bool Changed =>
+        Kind != ToolResultKind.None;
 }

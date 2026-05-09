@@ -113,4 +113,23 @@ public sealed class CadWorkspace
         get => Context.GeometryTolerance;
         set => Context.GeometryTolerance = value;
     }
+
+    public ToolResult Escape()
+    {
+        ToolResult cancelResult = ActionController.CancelActiveTool();
+
+        if (cancelResult.Changed)
+        {
+            return cancelResult;
+        }
+
+        if (!SelectionSet.IsEmpty)
+        {
+            SelectionSet.Clear();
+
+            return ToolResult.Updated("Selection cleared.");
+        }
+
+        return ToolResult.None("Nothing to cancel.");
+    }
 }

@@ -216,6 +216,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+    public ToolResult Escape()
+    {
+        ToolResult result = Workspace.Escape();
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     public bool IsSnapEnabled(SnapKind snapKind)
     {
         return Workspace.Context.EnabledSnaps.HasFlag(snapKind);
