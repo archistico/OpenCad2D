@@ -21,6 +21,7 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
 
         InitializeLayerComboBox();
+        RefreshLayerVisibleCheckBox();
 
         RefreshStatus();
     }
@@ -33,6 +34,7 @@ public partial class MainWindow : Window
         RefreshLayerVisibleCheckBox();
     }
 
+
     private void RefreshLayerVisibleCheckBox()
     {
         LayerVisibleCheckBox.IsChecked = _viewModel.CurrentLayer.IsVisible;
@@ -44,9 +46,7 @@ public partial class MainWindow : Window
     {
         bool isVisible = LayerVisibleCheckBox.IsChecked == true;
 
-        _viewModel.Workspace.Document.Layers.SetVisibility(
-            _viewModel.CurrentLayer.Id,
-            isVisible);
+        _viewModel.SetCurrentLayerVisibility(isVisible);
 
         RefreshLayerVisibleCheckBox();
         RefreshStatus();
@@ -151,16 +151,14 @@ public partial class MainWindow : Window
         _viewModel.SetMousePosition(e.MousePosition);
         _viewModel.SetLastResult(e.Result);
         _viewModel.SetCurrentSnapCandidate(e.SnapCandidate);
+        _viewModel.NotifyDocumentStateChanged();
 
         RefreshStatus();
     }
 
     private void RefreshStatus()
     {
-        StatusTextBlock.Text = _viewModel.StatusText;
         Title = $"OpenCad2D - {_viewModel.ActiveToolName}";
-
-        RefreshActiveToolUi();
     }
 
     private void SnapEndpoint_Changed(

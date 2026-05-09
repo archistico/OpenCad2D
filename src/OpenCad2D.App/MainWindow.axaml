@@ -191,11 +191,11 @@
                 MinHeight="28">
 
 			<TextBlock x:Name="StatusTextBlock"
-                       Text="Ready."
-                       Foreground="#E0E0E0"
-                       FontFamily="Consolas"
-                       FontSize="12"
-                       VerticalAlignment="Center" />
+				Text="{Binding StatusText}"
+				Foreground="#E0E0E0"
+				FontFamily="Consolas"
+				FontSize="12"
+				VerticalAlignment="Center" />
 		</Border>
 
 	</Grid>

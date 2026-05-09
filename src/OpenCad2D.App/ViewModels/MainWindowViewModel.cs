@@ -8,10 +8,12 @@ using OpenCad2D.Tools.Common;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace OpenCad2D.App.ViewModels;
 
-public sealed class MainWindowViewModel
+public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
@@ -93,11 +95,19 @@ public sealed class MainWindowViewModel
     public void SetMousePosition(Point2D point)
     {
         _mousePosition = point;
+
+        OnPropertiesChanged(
+            nameof(MousePositionText),
+            nameof(StatusText));
     }
 
     public void SetCurrentSnapCandidate(SnapCandidate? candidate)
     {
         _currentSnapCandidate = candidate;
+
+        OnPropertiesChanged(
+            nameof(SnapText),
+            nameof(StatusText));
     }
 
     public void SetLastResult(ToolResult result)
@@ -105,6 +115,10 @@ public sealed class MainWindowViewModel
         if (!string.IsNullOrWhiteSpace(result.Message))
         {
             _lastMessage = result.Message;
+
+            OnPropertiesChanged(
+                nameof(LastMessage),
+                nameof(StatusText));
         }
     }
 
@@ -113,6 +127,10 @@ public sealed class MainWindowViewModel
         if (!string.IsNullOrWhiteSpace(message))
         {
             _lastMessage = message;
+
+            OnPropertiesChanged(
+                nameof(LastMessage),
+                nameof(StatusText));
         }
     }
 
@@ -123,6 +141,25 @@ public sealed class MainWindowViewModel
         Workspace.CurrentLayerId = layer.Id;
 
         SetMessage($"Current layer changed to '{layer.Name}'.");
+
+        NotifyLayerStateChanged();
+    }
+
+    public void SetCurrentLayerVisibility(bool isVisible)
+    {
+        Layer currentLayer = CurrentLayer;
+
+        Workspace.Document.Layers.SetVisibility(
+            currentLayer.Id,
+            isVisible);
+
+        SetMessage(
+            isVisible
+                ? $"Layer '{currentLayer.Name}' visible."
+                : $"Layer '{currentLayer.Name}' hidden.");
+
+        NotifyLayerStateChanged();
+        NotifyDocumentStateChanged();
     }
 
     public ToolResult SetTool(ToolId toolId)
@@ -132,6 +169,10 @@ public sealed class MainWindowViewModel
         SetLastResult(result);
         SetMessage($"Tool changed to {Workspace.ToolController.ActiveToolName}.");
 
+        OnPropertiesChanged(
+            nameof(ActiveToolName),
+            nameof(StatusText));
+
         return result;
     }
 
@@ -140,6 +181,7 @@ public sealed class MainWindowViewModel
         ToolResult result = Workspace.ActionController.Undo();
 
         SetLastResult(result);
+        NotifyDocumentStateChanged();
 
         return result;
     }
@@ -149,6 +191,7 @@ public sealed class MainWindowViewModel
         ToolResult result = Workspace.ActionController.Redo();
 
         SetLastResult(result);
+        NotifyDocumentStateChanged();
 
         return result;
     }
@@ -158,6 +201,7 @@ public sealed class MainWindowViewModel
         ToolResult result = Workspace.ActionController.DeleteSelection();
 
         SetLastResult(result);
+        NotifyDocumentStateChanged();
 
         return result;
     }
@@ -167,6 +211,7 @@ public sealed class MainWindowViewModel
         ToolResult result = Workspace.ActionController.CancelActiveTool();
 
         SetLastResult(result);
+        NotifyDocumentStateChanged();
 
         return result;
     }
@@ -177,8 +222,8 @@ public sealed class MainWindowViewModel
     }
 
     public void SetSnapEnabled(
-        SnapKind snapKind,
-        bool isEnabled)
+    SnapKind snapKind,
+    bool isEnabled)
     {
         if (isEnabled)
         {
@@ -190,6 +235,10 @@ public sealed class MainWindowViewModel
         }
 
         SetMessage($"Snap settings updated: {Workspace.Context.EnabledSnaps}");
+
+        OnPropertiesChanged(
+            nameof(SnapText),
+            nameof(StatusText));
     }
 
     private void EnsureDemoLayers()
@@ -268,5 +317,62 @@ public sealed class MainWindowViewModel
                     new Point2D(80, 360)
                 },
                 isClosed: true));
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged(
+        [CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(
+            this,
+            new PropertyChangedEventArgs(propertyName));
+    }
+
+    private void OnPropertiesChanged(params string[] propertyNames)
+    {
+        foreach (string propertyName in propertyNames)
+        {
+            OnPropertyChanged(propertyName);
+        }
+    }
+
+    public void NotifyDocumentStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(StatusText),
+            nameof(EntityCount),
+            nameof(SelectedCount),
+            nameof(ActiveToolName),
+            nameof(LayerNames),
+            nameof(Layers),
+            nameof(CurrentLayer),
+            nameof(CurrentLayerText),
+            nameof(MousePositionText),
+            nameof(SnapText),
+            nameof(LastMessage));
+    }
+
+    private void NotifyStatusChanged()
+    {
+        OnPropertiesChanged(
+            nameof(StatusText),
+            nameof(LastMessage),
+            nameof(MousePositionText),
+            nameof(SnapText),
+            nameof(CurrentLayerText),
+            nameof(EntityCount),
+            nameof(SelectedCount),
+            nameof(ActiveToolName));
+    }
+
+    private void NotifyLayerStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(LayerNames),
+            nameof(Layers),
+            nameof(CurrentLayer),
+            nameof(CurrentLayerText),
+            nameof(StatusText));
     }
 }
