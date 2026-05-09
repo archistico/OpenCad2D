@@ -62,6 +62,12 @@
 							  Width="150"
 							  SelectionChanged="LayerComboBox_SelectionChanged" />
 
+					<CheckBox x:Name="LayerVisibleCheckBox"
+							  Content="Visible"
+							  Foreground="#CCCCCC"
+							  IsChecked="True"
+							  Click="LayerVisibleCheckBox_Click" />
+
 					<Separator Margin="8,0" />
 
 					<!-- Qui tieni le tue CheckBox degli snap -->

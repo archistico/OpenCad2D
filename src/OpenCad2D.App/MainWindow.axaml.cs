@@ -28,6 +28,30 @@ public partial class MainWindow : Window
     {
         LayerComboBox.ItemsSource = _viewModel.LayerNames;
         LayerComboBox.SelectedItem = _viewModel.CurrentLayer.Name;
+
+        RefreshLayerVisibleCheckBox();
+    }
+
+    private void RefreshLayerVisibleCheckBox()
+    {
+        LayerVisibleCheckBox.IsChecked = _viewModel.CurrentLayer.IsVisible;
+    }
+
+    private void LayerVisibleCheckBox_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        bool isVisible = LayerVisibleCheckBox.IsChecked == true;
+
+        _viewModel.Workspace.Document.Layers.SetVisibility(
+            _viewModel.CurrentLayer.Id,
+            isVisible);
+
+        RefreshLayerVisibleCheckBox();
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
     }
 
     private void LayerComboBox_SelectionChanged(
@@ -41,7 +65,9 @@ public partial class MainWindow : Window
 
         _viewModel.SetCurrentLayerByName(selectedLayerName);
 
+        RefreshLayerVisibleCheckBox();
         RefreshStatus();
+
         CadCanvas.ClearSnapMarker();
     }
 

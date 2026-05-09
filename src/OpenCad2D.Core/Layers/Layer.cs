@@ -43,12 +43,6 @@ public sealed class Layer
 
     public bool IsLocked { get; }
 
-    public static Layer Default => new(
-        LayerId.Default,
-        "0",
-        CadColor.FromRgb(255, 255, 255),
-        LineWeight.FromMillimeters(0.25));
-
     public Layer WithVisibility(bool isVisible)
     {
         return new Layer(
@@ -59,4 +53,10 @@ public sealed class Layer
             isVisible,
             IsLocked);
     }
+
+    public static Layer Default => new(
+        LayerId.Default,
+        "0",
+        CadColor.FromRgb(255, 255, 255),
+        LineWeight.FromMillimeters(0.25));
 }
