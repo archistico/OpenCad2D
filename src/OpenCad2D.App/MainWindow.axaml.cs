@@ -131,6 +131,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Circle_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Circle);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Move_Click(
         object? sender,
         RoutedEventArgs e)
@@ -460,6 +471,11 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             RectangleButton,
             activeToolName.Equals("Rectangle", StringComparison.OrdinalIgnoreCase));
+
+
+        SetActiveToolButton(
+            CircleButton,
+            activeToolName.Equals("Circle", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MoveButton,

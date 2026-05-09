@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Selection;
 
@@ -40,6 +40,14 @@ public sealed class ToolRegistry
                 "Rectangle",
                 "Draw"),
             () => new RectangleTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Circle,
+                "Circle",
+                "Circle",
+                "Draw"),
+            () => new CircleTool());
 
         Register(
             new ToolDescriptor(

@@ -27,7 +27,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(6, tools.Count);
+        Assert.Equal(7, tools.Count);
 
         Assert.Contains(
             tools,
@@ -52,6 +52,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Delete);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Circle);
     }
 
     [Fact]
@@ -74,9 +78,10 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
 
-        Assert.Equal(2, tools.Count);
-        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
-        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
+        Assert.Equal(3, tools.Count);
+        Assert.Contains(tools, tool => tool.Id == ToolId.Line);
+        Assert.Contains(tools, tool => tool.Id == ToolId.Rectangle);
+        Assert.Contains(tools, tool => tool.Id == ToolId.Circle);
     }
 
     [Fact]
@@ -179,9 +184,10 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
 
-        Assert.Equal(2, tools.Count);
+        Assert.Equal(3, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Circle);
     }
 
     [Fact]

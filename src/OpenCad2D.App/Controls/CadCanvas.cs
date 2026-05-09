@@ -666,6 +666,10 @@ public sealed class CadCanvas : Control
                 DrawRectanglePreview(context, rectangleTool);
                 break;
 
+            case CircleTool circleTool:
+                DrawCirclePreview(context, circleTool);
+                break;
+
             case MoveTool moveTool:
                 DrawEntitiesPreview(
                     context,
@@ -755,6 +759,21 @@ public sealed class CadCanvas : Control
         RectangleTool tool)
     {
         PolylineEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
+    private void DrawCirclePreview(
+        DrawingContext context,
+        CircleTool tool)
+    {
+        CircleEntity? preview = tool.GetPreviewEntity();
 
         if (preview is not null)
         {

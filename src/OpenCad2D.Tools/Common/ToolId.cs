@@ -1,4 +1,4 @@
-﻿namespace OpenCad2D.Tools.Common;
+namespace OpenCad2D.Tools.Common;
 
 /// <summary>
 /// Identifies a CAD tool available in the application.
@@ -8,6 +8,7 @@ public enum ToolId
     Selection,
     Line,
     Rectangle,
+    Circle,
     Move,
     Copy,
     Delete

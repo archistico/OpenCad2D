@@ -164,6 +164,11 @@
                                 Content="Rectangle"
                                 Click="Rectangle_Click" />
 
+                        <Button x:Name="CircleButton"
+                                Classes="tool-button"
+                                Content="Circle"
+                                Click="Circle_Click" />
+
                         <Separator Margin="0,8" />
 
                         <TextBlock Classes="panel-section-label"
