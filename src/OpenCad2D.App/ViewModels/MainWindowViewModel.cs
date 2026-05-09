@@ -103,6 +103,33 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+    public string MeasurementText
+    {
+        get
+        {
+            if (Workspace.Context.CurrentBasePoint is null)
+            {
+                return "Measure: -";
+            }
+
+            Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
+            Point2D targetPoint = _currentSnapCandidate?.Point ?? _mousePosition;
+
+            if (Workspace.GeometryTolerance.ArePointsEqual(basePoint, targetPoint))
+            {
+                return "Measure: L 0 | DX 0 | DY 0";
+            }
+
+            Point2D baseUserPoint = Workspace.CurrentUcs.WorldToUser(basePoint);
+            Point2D targetUserPoint = Workspace.CurrentUcs.WorldToUser(targetPoint);
+
+            Vector2D delta = baseUserPoint.VectorTo(targetUserPoint);
+            double length = delta.Length;
+
+            return $"Measure: L {length:0.###} | DX {delta.X:0.###} | DY {delta.Y:0.###}";
+        }
+    }
+
     public string CommandPromptText
     {
         get
@@ -119,6 +146,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         $"Entities: {EntityCount} | " +
         $"Selected: {SelectedCount} | " +
         $"{MousePositionText} | " +
+        $"{MeasurementText} | " +
         $"{SnapText} | " +
         $"{LastMessage}";
 
@@ -223,6 +251,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(MousePositionText),
+            nameof(MeasurementText),
             nameof(StatusText));
     }
 
@@ -232,6 +261,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(SnapText),
+            nameof(MeasurementText),
             nameof(StatusText));
     }
 
@@ -426,6 +456,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsLocked),
             nameof(CurrentLayerText),
             nameof(MousePositionText),
+            nameof(MeasurementText),
             nameof(SnapText),
             nameof(LastMessage),
             nameof(CommandPromptText));
@@ -435,6 +466,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         OnPropertiesChanged(
             nameof(CommandPromptText),
+            nameof(MeasurementText),
             nameof(StatusText),
             nameof(LastMessage));
     }
@@ -449,6 +481,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsLocked),
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
+            nameof(MeasurementText),
             nameof(StatusText));
     }
 

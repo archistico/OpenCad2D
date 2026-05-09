@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -23,62 +23,62 @@ public sealed class CadCanvas : Control
     private readonly Pen _entityPen = new(Brushes.White, 1);
     private readonly Pen _selectedPen = new(Brushes.DeepSkyBlue, 2);
     private readonly Pen _previewPen = new(Brushes.Orange, 1);
+    private readonly Pen _measurementVectorPen = new(
+        new SolidColorBrush(Color.FromRgb(255, 190, 70)),
+        1.5);
+    private readonly Pen _basePointMarkerPen = new(
+        new SolidColorBrush(Color.FromRgb(255, 220, 120)),
+        1.5);
+    private readonly IBrush _basePointMarkerFill = new SolidColorBrush(
+        Color.FromArgb(80, 255, 190, 70));
     private readonly Pen _selectionWindowPen = new(Brushes.LightGreen, 1);
     private readonly IBrush _backgroundBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30));
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
     private readonly ViewportTransform _viewport = new();
-
     private Point? _pointerScreenPoint;
     private bool _isPointerInside;
-
     private readonly Dictionary<PenCacheKey, Pen> _penCache = new();
-
     private readonly record struct PenCacheKey(
         byte R,
         byte G,
         byte B,
         double Thickness);
-
     private const double GridLineDetectionTolerance = 1e-6;
-
     private bool _isPanning;
     private Point _lastPanScreenPoint;
-
     private readonly Pen _crosshairPen = new(
-    new SolidColorBrush(Color.FromArgb(160, 220, 220, 220)),
-    1);
-
+        new SolidColorBrush(Color.FromArgb(160, 220, 220, 220)),
+        1);
     private readonly Pen _crosshairCenterPen = new(
         new SolidColorBrush(Color.FromRgb(255, 255, 255)),
         1.5);
-
     private readonly Pen _snapMarkerPen = new(
         new SolidColorBrush(Color.FromRgb(255, 230, 80)),
         2);
-
     private SnapCandidate? _currentSnapCandidate;
-
     private readonly Pen _gridMinorPen = new(
         new SolidColorBrush(Color.FromRgb(45, 45, 45)),
         1);
-
     private readonly Pen _gridMajorPen = new(
         new SolidColorBrush(Color.FromRgb(60, 60, 60)),
         1);
-
     private readonly Pen _axisXPen = new(
         new SolidColorBrush(Color.FromRgb(120, 70, 70)),
         1.5);
-
     private readonly Pen _axisYPen = new(
         new SolidColorBrush(Color.FromRgb(70, 120, 70)),
         1.5);
+    private readonly Pen _ucsAxisXPen = new(
+        new SolidColorBrush(Color.FromRgb(255, 120, 120)),
+        2);
+    private readonly Pen _ucsAxisYPen = new(
+        new SolidColorBrush(Color.FromRgb(120, 255, 120)),
+        2);
 
     public ViewportTransform Viewport => _viewport;
 
     public static readonly StyledProperty<CadWorkspace?> WorkspaceProperty =
-        AvaloniaProperty.Register<CadCanvas, CadWorkspace?>(
-            nameof(Workspace));
+        AvaloniaProperty.Register<CadCanvas, CadWorkspace?>(nameof(Workspace));
 
     public CadWorkspace? Workspace
     {
@@ -103,12 +103,11 @@ public sealed class CadCanvas : Control
     }
 
     private void OnPointerEntered(
-    object? sender,
-    PointerEventArgs e)
+        object? sender,
+        PointerEventArgs e)
     {
         _isPointerInside = true;
         _pointerScreenPoint = e.GetPosition(this);
-
         InvalidateVisual();
     }
 
@@ -118,7 +117,6 @@ public sealed class CadCanvas : Control
     {
         _isPointerInside = false;
         _pointerScreenPoint = null;
-
         InvalidateVisual();
     }
 
@@ -163,7 +161,6 @@ public sealed class CadCanvas : Control
         }
 
         double axisLength = _viewport.ScreenLengthToModel(55);
-
         Point2D origin = Workspace.CurrentUcs.Origin;
         Point2D xEnd = origin + Workspace.CurrentUcs.XAxis * axisLength;
         Point2D yEnd = origin + Workspace.CurrentUcs.YAxis * axisLength;
@@ -191,7 +188,7 @@ public sealed class CadCanvas : Control
     private Pen GetOrCreateEntityPen(CadEntity entity)
     {
         CadColor color = ResolveEntityColor(entity);
-        double thickness = 1;
+        const double thickness = 1;
 
         var key = new PenCacheKey(
             color.R,
@@ -218,14 +215,6 @@ public sealed class CadCanvas : Control
 
         return pen;
     }
-
-    private readonly Pen _ucsAxisXPen = new(
-    new SolidColorBrush(Color.FromRgb(255, 120, 120)),
-    2);
-
-    private readonly Pen _ucsAxisYPen = new(
-        new SolidColorBrush(Color.FromRgb(120, 255, 120)),
-        2);
 
     private CadColor ResolveEntityColor(CadEntity entity)
     {
@@ -302,8 +291,8 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawEndpointSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double size = 8;
 
@@ -319,8 +308,8 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawMidpointSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double size = 7;
 
@@ -336,8 +325,8 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawCenterSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double radius = 7;
 
@@ -350,11 +339,10 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawQuadrantSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double size = 8;
-
         Point top = new(point.X, point.Y - size);
         Point right = new(point.X + size, point.Y);
         Point bottom = new(point.X, point.Y + size);
@@ -367,8 +355,8 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawIntersectionSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double size = 8;
 
@@ -384,11 +372,10 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawNearestSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double size = 6;
-
         var rect = new Rect(
             point.X - size,
             point.Y - size,
@@ -402,8 +389,8 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawPerpendicularSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double size = 8;
 
@@ -419,8 +406,8 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawTangentSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double radius = 6;
         const double line = 10;
@@ -439,8 +426,8 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawGridSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double size = 7;
 
@@ -467,11 +454,10 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawDefaultSnapMarker(
-    DrawingContext context,
-    Point point)
+        DrawingContext context,
+        Point point)
     {
         const double size = 5;
-
         var rect = new Rect(
             point.X - size,
             point.Y - size,
@@ -533,7 +519,6 @@ public sealed class CadCanvas : Control
 
         double startX = Math.Floor(minX / minorStep) * minorStep;
         double endX = Math.Ceiling(maxX / minorStep) * minorStep;
-
         double startY = Math.Floor(minY / minorStep) * minorStep;
         double endY = Math.Ceiling(maxY / minorStep) * minorStep;
 
@@ -602,7 +587,6 @@ public sealed class CadCanvas : Control
     private double GetNiceGridStep()
     {
         const double targetScreenSpacing = 40.0;
-
         double rawModelStep = _viewport.ScreenLengthToModel(targetScreenSpacing);
 
         if (rawModelStep <= 0)
@@ -654,8 +638,8 @@ public sealed class CadCanvas : Control
     }
 
     private void NotifyWorkspaceChanged(
-    ToolResult result,
-    Point2D mousePosition)
+        ToolResult result,
+        Point2D mousePosition)
     {
         WorkspaceChanged?.Invoke(
             this,
@@ -698,6 +682,57 @@ public sealed class CadCanvas : Control
                 DrawSelectionPreview(context, selectionTool);
                 break;
         }
+
+        if (Workspace.ToolController.ActiveTool is TwoPointToolBase twoPointTool)
+        {
+            DrawTwoPointToolMeasurementPreview(
+                context,
+                twoPointTool);
+        }
+    }
+
+    private void DrawTwoPointToolMeasurementPreview(
+        DrawingContext context,
+        TwoPointToolBase tool)
+    {
+        if (tool.FirstPoint is null)
+        {
+            return;
+        }
+
+        Point start = ToScreenPoint(tool.FirstPoint.Value);
+        Point end = tool.CurrentPoint is null
+            ? start
+            : ToScreenPoint(tool.CurrentPoint.Value);
+
+        const double markerRadius = 4;
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            start,
+            markerRadius,
+            markerRadius);
+
+        if (tool.CurrentPoint is null ||
+            Workspace?.GeometryTolerance.ArePointsEqual(
+                tool.FirstPoint.Value,
+                tool.CurrentPoint.Value) == true)
+        {
+            return;
+        }
+
+        context.DrawLine(
+            _measurementVectorPen,
+            start,
+            end);
+
+        context.DrawEllipse(
+            null,
+            _measurementVectorPen,
+            end,
+            markerRadius,
+            markerRadius);
     }
 
     private void DrawLinePreview(
@@ -763,9 +798,9 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawEntity(
-    DrawingContext context,
-    CadEntity entity,
-    Pen pen)
+        DrawingContext context,
+        CadEntity entity,
+        Pen pen)
     {
         switch (entity)
         {
@@ -802,9 +837,9 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawPolyline(
-    DrawingContext context,
-    PolylineEntity polyline,
-    Pen pen)
+        DrawingContext context,
+        PolylineEntity polyline,
+        Pen pen)
     {
         IReadOnlyList<Point2D> vertices = polyline.Vertices;
 
@@ -826,14 +861,13 @@ public sealed class CadCanvas : Control
     }
 
     private void DrawArc(
-    DrawingContext context,
-    ArcEntity arc,
-    Pen pen)
+        DrawingContext context,
+        ArcEntity arc,
+        Pen pen)
     {
         const int segments = 48;
 
         Point2D previous = arc.Geometry.StartPoint;
-
         double start = arc.StartAngle.NormalizePositive().Radians;
         double end = arc.EndAngle.NormalizePositive().Radians;
 
@@ -866,8 +900,8 @@ public sealed class CadCanvas : Control
     }
 
     private void OnPointerPressed(
-    object? sender,
-    PointerPressedEventArgs e)
+        object? sender,
+        PointerPressedEventArgs e)
     {
         if (Workspace is null)
         {
@@ -877,7 +911,6 @@ public sealed class CadCanvas : Control
         Focus();
 
         Point position = e.GetPosition(this);
-
         _isPointerInside = true;
         _pointerScreenPoint = position;
 
@@ -890,7 +923,6 @@ public sealed class CadCanvas : Control
         }
 
         Point2D modelPoint = ToModelPoint(position);
-
         UpdateCurrentSnapCandidate(modelPoint);
 
         ToolResult result = Workspace.ToolController.OnPointerPressed(
@@ -906,8 +938,8 @@ public sealed class CadCanvas : Control
     }
 
     private void OnPointerMoved(
-    object? sender,
-    PointerEventArgs e)
+        object? sender,
+        PointerEventArgs e)
     {
         if (Workspace is null)
         {
@@ -915,19 +947,16 @@ public sealed class CadCanvas : Control
         }
 
         Point position = e.GetPosition(this);
-
         _isPointerInside = true;
         _pointerScreenPoint = position;
 
         if (_isPanning)
         {
             Vector delta = position - _lastPanScreenPoint;
-
             _viewport.Pan(delta);
             _lastPanScreenPoint = position;
 
             Point2D modelPoint = ToModelPoint(position);
-
             _currentSnapCandidate = null;
 
             NotifyWorkspaceChanged(
@@ -939,7 +968,6 @@ public sealed class CadCanvas : Control
         }
 
         Point2D point = ToModelPoint(position);
-
         UpdateCurrentSnapCandidate(point);
 
         ToolResult result = Workspace.ToolController.OnPointerMoved(
@@ -955,8 +983,8 @@ public sealed class CadCanvas : Control
     }
 
     private void OnPointerReleased(
-    object? sender,
-    PointerReleasedEventArgs e)
+        object? sender,
+        PointerReleasedEventArgs e)
     {
         if (Workspace is null)
         {
@@ -964,12 +992,10 @@ public sealed class CadCanvas : Control
         }
 
         Point position = e.GetPosition(this);
-
         _isPointerInside = true;
         _pointerScreenPoint = position;
 
         Point2D modelPoint = ToModelPoint(position);
-
         UpdateCurrentSnapCandidate(modelPoint);
 
         if (_isPanning)
@@ -998,8 +1024,8 @@ public sealed class CadCanvas : Control
     }
 
     private void OnKeyDown(
-    object? sender,
-    KeyEventArgs e)
+        object? sender,
+        KeyEventArgs e)
     {
         if (Workspace is null)
         {
@@ -1052,8 +1078,7 @@ public sealed class CadCanvas : Control
         }
     }
 
-    private static PointerModifiers GetModifiers(
-        KeyModifiers modifiers)
+    private static PointerModifiers GetModifiers(KeyModifiers modifiers)
     {
         PointerModifiers result = PointerModifiers.None;
 
@@ -1076,11 +1101,10 @@ public sealed class CadCanvas : Control
     }
 
     private void OnPointerWheelChanged(
-    object? sender,
-    PointerWheelEventArgs e)
+        object? sender,
+        PointerWheelEventArgs e)
     {
         Point screenPoint = e.GetPosition(this);
-
         _isPointerInside = true;
         _pointerScreenPoint = screenPoint;
 
@@ -1103,13 +1127,13 @@ public sealed class CadCanvas : Control
 
     private void DrawCrosshair(DrawingContext context)
     {
-        if (!_isPointerInside || _pointerScreenPoint is null)
+        if (!_isPointerInside ||
+            _pointerScreenPoint is null)
         {
             return;
         }
 
         Point point = _pointerScreenPoint.Value;
-
         double width = Bounds.Width;
         double height = Bounds.Height;
 
@@ -1124,7 +1148,6 @@ public sealed class CadCanvas : Control
             new Point(point.X, height));
 
         const double boxHalfSize = 5;
-
         var centerBox = new Rect(
             point.X - boxHalfSize,
             point.Y - boxHalfSize,
@@ -1172,11 +1195,10 @@ public sealed class CadCanvas : Control
     }
 
     private PointerInfo CreatePointerInfo(
-    Point screenPoint,
-    KeyModifiers keyModifiers)
+        Point screenPoint,
+        KeyModifiers keyModifiers)
     {
         Point2D modelPoint = ToModelPoint(screenPoint);
-
         Point2D userPoint = Workspace is null
             ? modelPoint
             : Workspace.CurrentUcs.WorldToUser(modelPoint);
