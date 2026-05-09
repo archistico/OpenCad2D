@@ -9,6 +9,32 @@
         Height="760"
         Background="#1E1E1E">
 
+	<Window.Styles>
+		<Style Selector="Button.tool-button">
+			<Setter Property="Background" Value="#333333" />
+			<Setter Property="Foreground" Value="#DDDDDD" />
+			<Setter Property="BorderBrush" Value="#555555" />
+			<Setter Property="BorderThickness" Value="1" />
+			<Setter Property="Padding" Value="10,5" />
+		</Style>
+
+		<Style Selector="Button.tool-button.active-tool">
+			<Setter Property="Background" Value="#0E639C" />
+			<Setter Property="Foreground" Value="White" />
+			<Setter Property="BorderBrush" Value="#33A9FF" />
+			<Setter Property="BorderThickness" Value="2" />
+			<Setter Property="FontWeight" Value="Bold" />
+		</Style>
+
+		<Style Selector="TextBlock.active-command-label">
+			<Setter Property="Foreground" Value="#FFFFFF" />
+			<Setter Property="Background" Value="#0E639C" />
+			<Setter Property="Padding" Value="10,4" />
+			<Setter Property="FontWeight" Value="Bold" />
+			<Setter Property="VerticalAlignment" Value="Center" />
+		</Style>
+	</Window.Styles>
+
 	<Design.DataContext>
 		<vm:MainWindowViewModel />
 	</Design.DataContext>
@@ -28,19 +54,29 @@
             Spacing="6"
             Margin="8">
 
-					<Button Content="Select"
-							Click="Select_Click" />
+					<Button x:Name="SelectButton"
+						Classes="tool-button"
+						Content="Select"
+						Click="Select_Click" />
 
-					<Button Content="Line"
+					<Button x:Name="LineButton"
+							Classes="tool-button"
+							Content="Line"
 							Click="Line_Click" />
 
-					<Button Content="Rectangle"
+					<Button x:Name="RectangleButton"
+							Classes="tool-button"
+							Content="Rectangle"
 							Click="Rectangle_Click" />
 
-					<Button Content="Move"
+					<Button x:Name="MoveButton"
+							Classes="tool-button"
+							Content="Move"
 							Click="Move_Click" />
 
-					<Button Content="Copy"
+					<Button x:Name="CopyButton"
+							Classes="tool-button"
+							Content="Copy"
 							Click="Copy_Click" />
 
 					<Button Content="Delete"
@@ -51,6 +87,12 @@
 
 					<Button Content="Redo"
 							Click="Redo_Click" />
+
+					<Separator Margin="8,0" />
+
+					<TextBlock x:Name="ActiveCommandTextBlock"
+							   Classes="active-command-label"
+							   Text="Comando attivo: Select" />
 
 					<Separator Margin="8,0" />
 

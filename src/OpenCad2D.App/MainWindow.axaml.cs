@@ -2,9 +2,10 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
+using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
-using OpenCad2D.Core.Layers;
+using System;
 
 namespace OpenCad2D.App;
 
@@ -158,6 +159,8 @@ public partial class MainWindow : Window
     {
         StatusTextBlock.Text = _viewModel.StatusText;
         Title = $"OpenCad2D - {_viewModel.ActiveToolName}";
+
+        RefreshActiveToolUi();
     }
 
     private void SnapEndpoint_Changed(
@@ -242,5 +245,53 @@ public partial class MainWindow : Window
         SetSnapFromCheckBox(
             SnapKind.Tangent,
             SnapTangentCheckBox.IsChecked == true);
+    }
+
+    private void RefreshActiveToolUi()
+    {
+        string activeToolName = _viewModel.ActiveToolName;
+
+        SetActiveToolButton(
+            SelectButton,
+            activeToolName.Equals("Select", StringComparison.OrdinalIgnoreCase)
+            || activeToolName.Equals("Selection", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            LineButton,
+            activeToolName.Equals("Line", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            RectangleButton,
+            activeToolName.Equals("Rectangle", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            MoveButton,
+            activeToolName.Equals("Move", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            CopyButton,
+            activeToolName.Equals("Copy", StringComparison.OrdinalIgnoreCase));
+
+        ActiveCommandTextBlock.Text =
+            $"Comando attivo: {activeToolName}";
+    }
+
+    private static void SetActiveToolButton(
+        Button button,
+        bool isActive)
+    {
+        const string activeClassName = "active-tool";
+
+        if (isActive)
+        {
+            if (!button.Classes.Contains(activeClassName))
+            {
+                button.Classes.Add(activeClassName);
+            }
+
+            return;
+        }
+
+        button.Classes.Remove(activeClassName);
     }
 }
