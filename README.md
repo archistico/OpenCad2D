@@ -12,13 +12,15 @@ The long-term goal is not only to create a usable CAD application, but also to k
 
 ## Project status
 
-OpenCad2D is currently an early prototype.
+OpenCad2D is currently an early prototype. It is **not** intended to replace mature CAD software yet.
 
-It is **not** intended to replace mature CAD software yet. The current focus is to build strong foundations: geometry, entities, layers, commands, undo/redo, snapping, selection, tools, coordinate systems, spatial queries and a first cross-platform UI.
+The current focus is to build strong foundations: geometry, entities, layers, commands, undo/redo, snapping, selection, tools, coordinate systems, spatial queries, CAD-style numeric input and a first cross-platform UI.
 
 The application already supports a basic but functional CAD workflow:
 
-- drawing lines and rectangles;
+- drawing lines;
+- drawing rectangles;
+- drawing circles;
 - selecting entities by point, window and crossing selection;
 - moving, copying and deleting selected entities;
 - undo and redo;
@@ -26,9 +28,12 @@ The application already supports a basic but functional CAD workflow:
 - grid display and grid snapping;
 - layer visibility;
 - locked layer behavior;
-- zoom, pan and view reset;
+- command line coordinate input;
+- direct distance entry;
+- Ortho mode;
+- zoom, pan, view reset and Zoom Extents;
 - CAD-style crosshair cursor;
-- visual feedback for the active command, current layer and snap type.
+- visual feedback for the active command, current layer, snap type and temporary measurements.
 
 ---
 
@@ -66,21 +71,92 @@ The desktop application is built with **Avalonia UI**.
 
 The UI currently includes:
 
-- a tool toolbar;
-- snap mode toggles;
-- layer selector;
-- layer visibility toggle;
-- layer locked toggle;
-- drawing canvas;
-- grid;
+- a lightweight top bar;
+- a vertical left tool panel grouped by tool category;
+- a layer selector;
+- layer visibility and locked toggles;
+- undo and redo buttons;
+- an active command indicator;
+- a drawing canvas;
+- grid display;
 - CAD-style full-canvas crosshair cursor;
-- active command indicator;
-- status bar;
-- zoom and pan support.
+- a bottom snap bar;
+- a fixed command line input box;
+- a status bar with coordinates and temporary measurements;
+- zoom, pan, view reset and Zoom Extents support.
 
 The standard mouse cursor is hidden over the canvas and replaced by a large crosshair. A small rectangle around the intersection identifies the exact picking point.
 
-The status bar and ViewModel use property-change notifications, so UI state such as mouse position, snap state, current tool, entity count and selected count can update through bindings instead of being manually refreshed everywhere.
+While a two-point tool is active, the UI can show temporary construction feedback:
+
+- the accepted base point;
+- the vector line from the base point to the cursor or snap point;
+- temporary preview geometry;
+- `L`, `DX` and `DY` measurement values in the status bar.
+
+---
+
+## Command line input
+
+OpenCad2D supports a first CAD-style command line input workflow.
+
+While a tool is waiting for a point, the user can type directly without first focusing the command input box.
+
+Supported formats are:
+
+| Input | Meaning |
+|---|---|
+| `100,50` | absolute UCS coordinates |
+| `@50,0` | relative UCS offset from the current base point |
+| `5` | direct distance entry from the current base point along the cursor direction |
+
+The command line does not create entities directly. It resolves typed input to a CAD point and forwards it to the active tool exactly like a mouse click. This keeps mouse input, coordinate input and direct distance input on the same tool pipeline.
+
+Examples:
+
+```text
+Line -> 100,50 -> 200,50
+creates a line from UCS point 100,50 to UCS point 200,50.
+```
+
+```text
+Line -> 100,50 -> @50,0
+creates a line from UCS point 100,50 to UCS point 150,50.
+```
+
+```text
+Line -> click first point -> move cursor right -> 5
+creates a line with length 5 in the indicated direction.
+```
+
+The command line works with tools that accept point input, such as Line, Rectangle, Circle, Move and Copy.
+
+---
+
+## Ortho mode
+
+Ortho mode constrains two-point input to the closest horizontal or vertical direction from the current base point.
+
+```text
+if |DX| >= |DY| -> horizontal constraint
+if |DY| >  |DX| -> vertical constraint
+```
+
+Ortho mode affects preview, measurement feedback and direct distance entry.
+
+Explicit coordinate input remains exact:
+
+```text
+100,50 -> exact point
+@50,0  -> exact relative offset
+```
+
+Direct distance input uses the constrained direction when Ortho is enabled:
+
+```text
+click base point -> move cursor roughly right -> type 50
+creates or moves along an exact horizontal distance of 50.
+```
 
 ---
 
@@ -95,31 +171,31 @@ The status bar and ViewModel use property-change notifications, so UI state such
 | Clear selection after cancelling tool | second `Esc` |
 | Zoom | mouse wheel |
 | Pan | middle mouse button |
-| Reset view | `Home` |
+| Zoom Extents | `Home` |
 
 `Esc` has CAD-like behavior: the first press cancels the active operation, while a second press clears the current selection if no operation is in progress.
 
 ---
 
-## Command line input
+## Basic usage
 
-OpenCad2D supports a first CAD-style command line input workflow.
+To draw a line, select the `Line` tool, click the first point and then click the second point. You can also enter coordinates or a direct distance through the command line.
 
-While a tool is waiting for a point, the user can type directly without first focusing the command input box. Supported formats are:
+To draw a rectangle, select the `Rectangle` tool, click the first corner and then click the opposite corner.
 
-| Input | Meaning |
-|---|---|
-| `100,50` | absolute UCS coordinates |
-| `@50,0` | relative UCS offset from the current base point |
-| `5` | direct distance entry from the current base point along the cursor direction |
+To draw a circle, select the `Circle` tool, choose the center point, then choose a point on the radius or type a radius as a direct distance.
 
-The command line does not create entities directly. It resolves the typed input to a CAD point and forwards it to the active tool, exactly like a mouse click. This keeps mouse input, coordinate input and direct distance input on the same tool pipeline.
+To select entities, choose the `Select` tool and click an entity. Use `Shift + click` to toggle selection. Drag from left to right for window selection or from right to left for crossing selection.
 
-The UI also shows temporary measurement feedback while a two-point tool is active:
+To move or copy entities, select them first, choose `Move` or `Copy`, click a base point and then click a destination point. The destination point can come from the mouse, a snap, coordinates or direct distance entry.
 
-- base-point marker;
-- vector line from base point to cursor/snap point;
-- `L`, `DX` and `DY` values in the status bar.
+To delete entities, select them and press `Delete` or use the delete command.
+
+To hide a layer, choose it from the layer selector and disable its visibility checkbox. Entities on hidden layers are not drawn, selected or used by snapping.
+
+To lock a layer, choose it from the layer selector and enable its locked checkbox. Entities on locked layers remain visible and can still be used for snapping, but they cannot be selected, moved, deleted or transformed.
+
+To fit the visible drawing in the canvas, use `Zoom Extents` or press `Home`. Zoom Extents considers visible entities only. Hidden layers are ignored; locked layers are included because they remain visible.
 
 ---
 
@@ -146,11 +222,7 @@ tests/
 The dependency direction is intentional:
 
 ```text
-App
-  -> Tools
-    -> Interaction
-    -> Core
-      -> Geometry
+App -> Tools -> Interaction -> Core -> Geometry
 ```
 
 `OpenCad2D.Geometry` contains low-level geometric primitives, operations, transformations, tolerance handling and coordinate system support.
@@ -169,8 +241,6 @@ The main architectural rule is that CAD behavior should remain outside the UI. A
 
 ## Important design foundations
 
-OpenCad2D already includes several architectural foundations that are important for future CAD features.
-
 ### User coordinate system
 
 The project distinguishes between:
@@ -181,7 +251,7 @@ World / model coordinates
 User coordinates
 ```
 
-Entities are stored in world/model coordinates. The current user coordinate system can convert between user coordinates and world coordinates. This prepares the project for relative coordinates, custom origins and future CAD-style coordinate input.
+Entities are stored in world/model coordinates. The current user coordinate system can convert between user coordinates and world coordinates. Typed coordinate input is interpreted as UCS input and converted before it reaches the active tool.
 
 ### Geometry tolerance
 
@@ -189,7 +259,9 @@ The geometry layer includes `GeometryTolerance`, which separates distance, angle
 
 ### Spatial indexing
 
-The document entity collection is backed by an `ISpatialIndex` abstraction. The current implementation is a simple linear index, but hit testing, selection and snapping can query spatial candidates through the document API. This prepares the project for a future quadtree, R-tree or grid-based index without rewriting interaction algorithms.
+The document entity collection is backed by an `ISpatialIndex` abstraction. The current implementation is a simple linear index, but hit testing, selection and snapping can query spatial candidates through the document API.
+
+This prepares the project for a future quadtree, R-tree or grid-based index without rewriting interaction algorithms.
 
 ### Document mutation boundary
 
@@ -203,7 +275,9 @@ This is important for validation, spatial index updates and locked-layer rules. 
 
 ### ToolContext organization
 
-`ToolContext` is organized into focused sub-contexts for commands, selection, snapping, coordinates and entity creation defaults. This prevents it from becoming an unstructured God Object as more tools are added.
+`ToolContext` is organized into focused sub-contexts for commands, selection, snapping, coordinates and entity creation defaults.
+
+It also stores tool-level runtime state such as the current base point and Ortho mode. This prevents the UI from needing to inspect internal tool fields.
 
 ---
 
@@ -213,12 +287,13 @@ Technical documentation lives in the [`docs`](docs/) folder.
 
 Recommended reading:
 
-- [Architecture](docs/architecture.md) — project structure, dependency rules, coordinate systems, document model and UI boundaries.
+- [Architecture](docs/architecture.md) — project structure, dependency rules, coordinate systems, document model, command line input and UI boundaries.
 - [Commands](docs/commands.md) — undo/redo, command design, `CompositeCommand` and document mutation rules.
-- [Tools](docs/tools.md) — tool lifecycle, `ToolContext`, pointer input, cancellation and tool behavior.
+- [Tools](docs/tools.md) — tool lifecycle, `ToolContext`, pointer input, command line input, Ortho mode and tool behavior.
 - [Snapping](docs/snapping.md) — snap kinds, snap providers, search areas, priorities and visual markers.
 - [Roadmap](docs/roadmap.md) — current status, next development phases and long-term direction.
-- [AI Handoff Document](docs/ai-handoff.md) — for AI-assisted development and project handoff, see .
+- [AI Handoff Document](docs/ai-handoff.md) — for AI-assisted development and project handoff.
+
 ---
 
 ## Requirements
@@ -267,24 +342,6 @@ The test suite covers geometry primitives, coordinate systems, tolerance behavio
 
 ---
 
-## Basic usage
-
-To draw a line, select the `Line` tool, click the first point and then click the second point.
-
-To draw a rectangle, select the `Rectangle` tool, click the first corner and then click the opposite corner.
-
-To select entities, choose the `Select` tool and click an entity. Use `Shift + click` to toggle selection. Drag from left to right for window selection or from right to left for crossing selection.
-
-To move or copy entities, select them first, choose `Move` or `Copy`, click a base point and then click a destination point.
-
-To delete entities, select them and press `Delete` or use the delete command.
-
-To hide a layer, choose it from the layer selector and disable its visibility checkbox. Entities on hidden layers are not drawn, selected or used by snapping.
-
-To lock a layer, choose it from the layer selector and enable its locked checkbox. Entities on locked layers remain visible and can still be used for snapping, but they cannot be selected, moved, deleted or transformed.
-
----
-
 ## Development principles
 
 OpenCad2D follows a few practical rules:
@@ -295,6 +352,7 @@ OpenCad2D follows a few practical rules:
 - Commands should modify the document through the `CadDocument` API.
 - Tools should work in model/user coordinates, not screen pixels.
 - The UI should convert input and render output, not own CAD behavior.
+- The command line should resolve input to points and forward them to the active tool, not create entities directly.
 - Snapping should query visible spatial candidates.
 - Selection should query selectable entities, which means visible entities that are not on locked layers.
 - Numeric comparisons in geometry should use `GeometryTolerance`.
@@ -310,19 +368,25 @@ Recently completed:
 2. locked layer behavior;
 3. selection filtering for locked layers;
 4. snap support on locked layers;
-5. UI toggle for locking and unlocking the current layer.
+5. UI toggle for locking and unlocking the current layer;
+6. vertical tool panel and lighter CAD UI layout;
+7. command line input;
+8. direct distance entry;
+9. temporary vector and measurement feedback;
+10. Ortho mode;
+11. CircleTool;
+12. Zoom Extents.
 
 The next planned areas are:
 
-1. zoom extents;
-2. circle and arc tools;
-3. polyline tool;
-4. property panel;
-5. internal JSON save/load;
-6. richer layer management;
-7. more modify tools such as offset, trim, extend, fillet and chamfer;
-8. dimensions;
-9. SVG, PDF and DXF import/export.
+1. property panel;
+2. polyline tool;
+3. arc tool;
+4. internal JSON save/load;
+5. richer layer management;
+6. more modify tools such as offset, trim, extend, fillet and chamfer;
+7. dimensions;
+8. SVG, PDF and DXF import/export.
 
 See the [roadmap](docs/roadmap.md) for more detail.
 

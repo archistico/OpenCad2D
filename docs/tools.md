@@ -2,7 +2,7 @@
 
 The tool system is the layer that turns user intent into CAD operations.
 
-A tool represents something the user can do in the drawing area: select entities, draw a line, draw a rectangle, move selected entities, copy them or delete them.
+A tool represents something the user can do in the drawing area: select entities, draw a line, draw a rectangle, draw a circle, move selected entities, copy them or delete them.
 
 Tools are not part of the UI. They do not depend on Avalonia and do not handle Avalonia events directly. They work with model/user coordinates and with the CAD runtime context.
 
@@ -16,9 +16,11 @@ The UI receives mouse and keyboard input. The canvas converts screen coordinates
 
 The tool decides what to do.
 
-For example, when `LineTool` receives the first pointer press, it stores the first point. When it receives the second pointer press, it creates a `LineEntity` and executes an `AddEntityCommand`.
+For example, when `LineTool` receives the first point, it stores the first point. When it receives the second point, it creates a `LineEntity` and executes an `AddEntityCommand`.
 
 The UI does not create the line directly. It only forwards input and renders the result.
+
+The same rule applies to command line input: the UI resolves typed input to a CAD point and forwards that point to the active tool. It does not create entities directly.
 
 ---
 
@@ -38,429 +40,403 @@ This is important because tools should not know about the viewport or Avalonia c
 
 The canvas owns screen-to-model conversion. The current UCS owns model-to-user conversion.
 
-Existing tools may continue to use `ModelPoint`. Future tools can use `UserPoint` for UCS-aware input and coordinate display.
+---
+
+## Tool lifecycle
+
+A typical tool supports some or all of these operations:
+
+```text
+Activate
+PointerPressed
+PointerMoved
+Cancel
+Deactivate
+```
+
+Tools return `ToolResult` values to communicate what happened.
+
+A result may say that:
+
+- nothing changed;
+- the document changed;
+- the preview changed;
+- the active operation completed;
+- a user-facing message should be displayed.
 
 ---
 
 ## ToolContext
 
-`ToolContext` is the shared runtime context used by tools.
+`ToolContext` gives tools access to the CAD runtime state.
 
-It used to expose many unrelated properties directly. To avoid becoming a God Object, it is now organized into focused sub-contexts.
+It contains access to:
 
-Current structure:
+- document;
+- command history;
+- selection;
+- snapping;
+- current layer;
+- current UCS;
+- geometry tolerance;
+- grid settings;
+- input-related runtime state.
 
-```text
-ToolContext
-  Document
-  Commands
-  Selection
-  Snapping
-  Coordinates
-  Creation
-```
+The important rule is that `ToolContext` must stay UI-independent.
 
-New tool code should prefer these grouped contexts.
+It must not contain Avalonia controls, windows, dialogs, message boxes or viewport objects.
 
----
+### CurrentBasePoint
 
-## ToolCommandContext
+`CurrentBasePoint` is a nullable model point representing the first accepted point of a two-point operation.
 
-`ToolCommandContext` provides command execution services.
+It is used by:
 
-It wraps the command history and exposes operations such as:
+- command line relative input;
+- direct distance entry;
+- contextual snaps;
+- temporary base-point marker;
+- temporary vector feedback;
+- temporary `L`, `DX`, `DY` measurements.
 
-```text
-Execute
-Undo
-Redo
-CanUndo
-CanRedo
-```
+A two-point tool should set `CurrentBasePoint` after accepting its first point and clear it after completing or cancelling the operation.
 
-Typical usage:
+### IsOrthoEnabled
 
-```csharp
-context.Commands.Execute(
-    context.Document,
-    new AddEntityCommand(entity));
-```
+`IsOrthoEnabled` stores whether Ortho mode is active.
 
-Tools should use this instead of directly working with `CommandHistory`.
-
----
-
-## ToolSelectionContext
-
-`ToolSelectionContext` provides selection state, selection services and selection settings.
-
-It contains:
-
-```text
-Set            SelectionSet
-Service        SelectionService
-Tolerance      point selection tolerance
-DragThreshold  threshold before window selection starts
-HasSelection
-SelectedIds
-```
-
-Typical usage:
-
-```csharp
-if (!context.Selection.HasSelection)
-{
-    return ToolResult.None("No entities selected.");
-}
-
-IReadOnlyList<EntityId> ids = context.Selection.SelectedIds.ToList();
-```
-
-Selection must be based on selectable entities, not merely visible entities.
-
-```text
-Hidden layer entity       -> not selectable
-Locked layer entity       -> not selectable
-Visible unlocked entity   -> selectable
-```
-
----
-
-## ToolSnapContext
-
-`ToolSnapContext` provides snapping services and settings.
-
-It contains:
-
-```text
-Service       SnapService
-EnabledSnaps  enabled snap flags
-Tolerance     snap tolerance
-GridSettings  grid snapping configuration
-```
-
-Two-point tools use snapping through their shared base class.
-
-Snapping uses visible entities. This intentionally includes entities on locked layers, because locked geometry may still be used as a reference.
-
----
-
-## ToolCoordinateContext
-
-`ToolCoordinateContext` provides coordinate and precision settings.
-
-It contains:
-
-```text
-CurrentUcs
-GeometryTolerance
-```
-
-New geometric decisions inside tools should use `context.Coordinates.GeometryTolerance` rather than raw magic numbers.
-
----
-
-## ToolCreationContext
-
-`ToolCreationContext` contains defaults used when tools create new entities.
-
-Currently it contains:
-
-```text
-CurrentLayerId
-```
-
-In the future it can grow to include:
-
-```text
-current color mode
-current line weight
-current line type
-current text style
-current dimension style
-```
-
-This avoids adding many unrelated `Current...` properties directly to `ToolContext`.
-
----
-
-## ToolContext boundary
-
-`ToolContext` provides only model-side services required by CAD tools.
-
-It may contain:
-
-```text
-active document
-undoable command execution
-selection state and selection services
-snapping services and snapping settings
-entity creation defaults
-current coordinate system
-geometry tolerance
-```
-
-It must not contain:
-
-```text
-Avalonia controls
-viewport or screen-to-model conversion logic
-dialogs, message boxes or status bar services
-file system, persistence or export services
-rendering services
-application-level configuration unrelated to tool execution
-```
-
-Pointer coordinates must be converted before entering tools.
-
----
-
-## ICadTool
-
-`ICadTool` is the common interface implemented by all tools.
-
-It exposes the basic lifecycle:
-
-```text
-OnPointerPressed
-OnPointerMoved
-OnPointerReleased
-Cancel
-Deactivate
-```
-
-`OnPointerPressed`, `OnPointerMoved` and `OnPointerReleased` receive `PointerInfo`.
-
-`Cancel` is used when the user explicitly cancels the current operation, usually with `Esc`.
-
-`Deactivate` is used when the current tool is replaced by another tool.
-
-The distinction between `Cancel` and `Deactivate` is important.
-
----
-
-## Cancel, Deactivate and Escape
-
-`Cancel` and `Deactivate` are intentionally different.
-
-Cancel means that the user wants to cancel the current operation.
-
-Deactivate means that the application is switching from one tool to another.
-
-For example, changing from `SelectionTool` to `MoveTool` must not clear the current selection. Otherwise the move operation would have nothing to work on.
-
-`Esc` behavior is layered:
-
-```text
-first Esc cancels the active tool operation if one is in progress
-second Esc clears selection if no tool operation is active
-```
-
-This behavior belongs to `CadWorkspace.Escape()` or equivalent workspace-level logic, not to Avalonia event handlers.
-
----
-
-## ToolResult
-
-Tools return a `ToolResult`.
-
-A result describes what happened after an input event.
-
-Common result kinds include:
-
-```text
-None
-Started
-Updated
-Completed
-Cancelled
-```
-
-The result can contain a message. The UI can use this message in the status bar. This gives feedback without coupling tools to the UI.
+When enabled, second-point workflows are constrained to the closest horizontal or vertical direction from `CurrentBasePoint`.
 
 ---
 
 ## TwoPointToolBase
 
-Many CAD tools follow the same pattern:
+`TwoPointToolBase` is the common base for tools that need two points.
+
+The pattern is:
 
 ```text
-first point
-preview while moving
-second point
-execute operation
+first point  -> store base point
+second point -> complete operation
 ```
 
-Examples:
+Current tools using or following this model include:
 
-```text
-LineTool
-RectangleTool
-MoveTool
-CopyTool
-```
+- `LineTool`;
+- `RectangleTool`;
+- `CircleTool`;
+- `MoveTool`;
+- `CopyTool`.
 
-`TwoPointToolBase` implements this shared behavior. It stores the first point, updates `ToolContext.CurrentBasePoint`, updates the current point while the pointer moves, applies snapping and resets the tool after completion.
+The base class should centralize common behavior:
 
-`TwoPointToolBase` should not know the specific operation. Derived classes decide what happens when the second point is chosen.
+- first point handling;
+- second point handling;
+- snapping;
+- base point state;
+- Ortho constraint application;
+- preview point calculation;
+- cancellation;
+- cleanup of `CurrentBasePoint`.
 
-Because it maintains `CurrentBasePoint`, all derived tools can benefit from command line relative input, direct distance entry and temporary measurement feedback.
+This is important because command line input, direct distance entry and measurement feedback should not be reimplemented separately in every tool.
 
 ---
 
-## Command line input for tools
+## Command line input
 
-Command line input is a tool input mechanism, not a separate entity creation system.
+The command line supports the first CAD-style numeric input workflow.
 
 Supported formats:
 
-```text
-100,50   absolute UCS point
-@50,0    relative UCS offset from CurrentBasePoint
-5        direct distance from CurrentBasePoint along the current cursor direction
-```
+| Input | Meaning |
+|---|---|
+| `100,50` | absolute UCS point |
+| `@50,0` | relative UCS offset from `CurrentBasePoint` |
+| `5` | direct distance from `CurrentBasePoint` along the cursor direction |
 
-The parser produces a structured result. The ViewModel resolves that result into a WCS `Point2D`, then calls `CadWorkspace.SubmitPointFromCommandLine(...)`.
+The parser lives in `OpenCad2D.Tools.Input`.
 
-The active tool should receive that point exactly like a mouse click. This is important because the same workflow must work for:
+Important types:
 
-```text
-LineTool
-RectangleTool
-MoveTool
-CopyTool
-future CircleTool
-future ArcTool
-future PolylineTool
-```
+- `CommandInputParser`;
+- `CommandInputParseResult`;
+- `CommandInputKind`.
 
-Important rule:
+The command line should only resolve typed input to point input.
+
+Correct flow:
 
 ```text
-The command line supplies points.
-The active tool decides what those points mean.
-Commands still perform document mutation.
+parse text
+resolve point or distance
+convert UCS to WCS when needed
+submit point to CadWorkspace
+active tool receives point as normal input
 ```
 
-Direct distance entry requires a base point and a direction. The base point comes from `ToolContext.CurrentBasePoint`; the direction comes from the current mouse/snap position.
+Wrong flow:
+
+```text
+parse text
+create entity directly in UI
+```
+
+### Absolute point input
+
+Input:
+
+```text
+100,50
+```
+
+Meaning:
+
+```text
+UCS point X=100, Y=50
+```
+
+The point is converted to WCS before it is sent to the active tool.
+
+### Relative point input
+
+Input:
+
+```text
+@50,0
+```
+
+Meaning:
+
+```text
+CurrentBasePoint + UCS offset 50,0
+```
+
+This requires a current base point.
+
+### Direct distance entry
+
+Input:
+
+```text
+5
+```
+
+Meaning:
+
+```text
+from CurrentBasePoint, move 5 units along the current cursor/snap direction
+```
+
+This requires:
+
+- a current base point;
+- a current cursor or snap point;
+- a valid non-zero direction.
+
+When Ortho mode is active, the direction is constrained before the final point is calculated.
+
+---
+
+## Ortho mode
+
+Ortho mode is an input constraint.
+
+It is not a rendering-only feature.
+
+Rule:
+
+```text
+if |DX| >= |DY| -> horizontal
+if |DY| >  |DX| -> vertical
+```
+
+It affects:
+
+- interactive preview;
+- final second-point input;
+- direct distance entry;
+- vector feedback;
+- status bar measurements.
+
+It should not alter explicit coordinate input such as:
+
+```text
+100,50
+@50,0
+```
+
+Ortho is coordinated through `ToolContext.IsOrthoEnabled` and the input constraint service.
 
 ---
 
 ## SelectionTool
 
-`SelectionTool` handles point, window and crossing selection.
-
-Selection is stored as entity ids in `SelectionSet`.
+`SelectionTool` handles entity selection.
 
 Supported behavior:
 
-```text
-click                select by point
-Shift + click        toggle selection
-left-to-right drag   window selection
-right-to-left drag   crossing selection
-```
+- click selection;
+- Shift-click toggle;
+- window selection;
+- crossing selection.
 
 Hidden layer entities are ignored by selection through document visibility rules.
 
 Locked layer entities are also ignored by selection. This is handled through selectable-entity queries, not by checking Avalonia UI state.
 
 ```text
-Hidden layer entity       -> not selectable
-Locked layer entity       -> not selectable
-Visible unlocked entity   -> selectable
+Hidden layer entity     -> not selectable
+Locked layer entity     -> not selectable
+Visible unlocked entity -> selectable
 ```
-
-The selection tool must not modify or delete selected entities. It only manages `SelectionSet`.
 
 ---
 
 ## LineTool
 
-`LineTool` creates a `LineEntity` using two points.
+`LineTool` creates a `LineEntity`.
 
-Expected flow:
+Workflow:
 
 ```text
-first click   stores start point
-mouse move    updates preview and measurement
-second click  creates LineEntity and executes AddEntityCommand
+choose first point
+choose second point
+create line
+execute AddEntityCommand
 ```
 
-The new entity should use the current creation context, especially `CurrentLayerId`.
+Supported input:
+
+- mouse click;
+- snap point;
+- absolute command line point;
+- relative command line point;
+- direct distance entry.
+
+When the first point is accepted, it becomes `CurrentBasePoint`.
+
+While waiting for the second point, the UI can show:
+
+- preview line;
+- base point marker;
+- vector feedback;
+- length and delta values.
+
+Ortho mode constrains the second point when active.
 
 ---
 
 ## RectangleTool
 
-`RectangleTool` creates a rectangular closed polyline or equivalent rectangle entity, depending on the current implementation.
+`RectangleTool` creates a rectangle from two opposite corners.
 
-Expected flow:
+Rectangles are represented as closed `PolylineEntity` instances.
+
+Workflow:
 
 ```text
-first click   stores first corner
-mouse move    updates preview and measurement
-second click  creates rectangle geometry and executes AddEntityCommand
+choose first corner
+choose opposite corner
+create closed polyline
+execute AddEntityCommand
 ```
 
-The tool should create geometry in model coordinates and should not depend on screen-space values.
+It benefits from the same two-point infrastructure as `LineTool`.
+
+---
+
+## CircleTool
+
+`CircleTool` creates a `CircleEntity`.
+
+Workflow:
+
+```text
+choose center point
+choose radius point
+radius = distance(center, radius point)
+create circle
+execute AddEntityCommand
+```
+
+Supported input:
+
+- center from mouse click;
+- center from absolute command line coordinates;
+- radius point from mouse click or snap;
+- radius from direct distance entry.
+
+Examples:
+
+```text
+Circle -> click center -> click radius point
+Circle -> click center -> type 25
+Circle -> 100,50 -> 25
+```
+
+The preview should show the temporary circle while the user moves the pointer after choosing the center.
+
+Ortho mode can constrain the radius point direction, but the radius is still calculated as the distance from the center.
 
 ---
 
 ## MoveTool
 
-`MoveTool` transforms selected entities by displacement.
+`MoveTool` moves the current selection.
 
-Expected flow:
+Workflow:
 
 ```text
-requires selection
-first click   base point
-mouse move    preview displacement and vector measurement
-second click  execute MoveEntitiesCommand
+select entities
+activate Move
+choose base point
+choose destination point
+vector = destination - base
+execute MoveEntitiesCommand
 ```
 
-The command must replace entities through `CadDocument`, not mutate geometry in place.
+Move uses the same two-point model as drawing tools.
 
-Entities on locked layers should normally never reach this workflow because they are not selectable. `CadDocument` still blocks replacement if a future workflow accidentally attempts it.
+This means it supports:
+
+- snap-based base and destination points;
+- command line destination points;
+- direct distance entry;
+- Ortho mode;
+- vector preview;
+- `L`, `DX`, `DY` measurement feedback.
 
 ---
 
 ## CopyTool
 
-`CopyTool` creates copied entities by displacement.
+`CopyTool` copies the current selection.
 
-Expected flow:
+Workflow:
 
 ```text
-requires selection
-first click   base point
-mouse move    preview displacement and vector measurement
-second click  execute CopyEntitiesCommand
+select entities
+activate Copy
+choose base point
+choose destination point
+vector = destination - base
+execute CopyEntitiesCommand
 ```
 
-Copying does not modify the source entities. However, locked-layer entities are not selectable, so the normal UI workflow cannot copy them through selection.
+The source entities are not modified. New copied entities receive new ids.
 
-A future explicit copy-from-reference workflow would need a clear rule for whether locked-layer source entities are allowed.
+Like Move, Copy supports command line input, direct distance entry, Ortho mode, vector preview and measurement feedback.
 
 ---
 
 ## DeleteTool
 
-`DeleteTool` or delete actions remove selected entities through `DeleteEntitiesCommand`.
+`DeleteTool` deletes the current selection.
 
-Expected behavior:
+It should use `CadDocument.RemoveEntities(...)` through a command, not mutate the entity collection directly.
 
-```text
-read selected ids
-create DeleteEntitiesCommand
-execute through command context
-clear or update selection as needed
-```
-
-The command must remove entities through `CadDocument.RemoveEntities(...)`.
-
-Locked-layer entities are not selectable, so normal deletion should not target them. `CadDocument` still protects itself and rejects removal of locked-layer entities.
+Locked-layer entities normally cannot be selected, so they should not appear in the selection set. `CadDocument` still protects itself if a command tries to remove a locked-layer entity.
 
 ---
 
@@ -478,8 +454,6 @@ LayerCollection.SetLocked(...)
 CadWorkspace.ClearSelectionOfNonSelectableEntities()
 ```
 
-This ensures that any selected entity that has become non-selectable is immediately removed from `SelectionSet`.
-
 Important rule:
 
 ```text
@@ -492,43 +466,86 @@ Tools should not assume that selection is always valid forever. If layer state c
 
 ---
 
-## Preview behavior
+## ToolRegistry
 
-Tools may expose preview geometry so that the UI can render it. Two-point tools also expose enough state through `CurrentBasePoint` and current pointer/snap position for the UI to draw temporary measurement feedback.
+`ToolRegistry` maps tool identifiers to tool descriptors and tool creation logic.
 
-The preview belongs conceptually to the tool state, but rendering belongs to `OpenCad2D.App`.
+Current registered tools:
 
-A tool may say “this is the preview entity” or “this is the current rectangle preview”, but it should not draw it directly. Temporary base-point markers and vector lines are also rendered by the App layer, not by the tool.
+```text
+Selection
+Line
+Rectangle
+Circle
+Move
+Copy
+Delete
+```
+
+Current drawing tools:
+
+```text
+Line
+Rectangle
+Circle
+```
+
+When a new tool is added, update:
+
+- `ToolId`;
+- `ToolRegistry`;
+- UI tool button;
+- tool registry tests;
+- docs.
+
+---
+
+## Preview and measurement feedback
+
+Tools should expose enough state for the UI to render preview feedback without moving CAD logic into Avalonia.
+
+Current temporary feedback includes:
+
+- preview entities;
+- base-point marker;
+- vector line from base point to current point;
+- length `L`;
+- delta X `DX`;
+- delta Y `DY`.
+
+The measurement values should be calculated consistently with the active UCS and the constrained preview point.
+
+If Ortho mode is active, measurements should reflect the Ortho-constrained point, not the unconstrained raw mouse position.
+
+---
+
+## Cancellation
+
+A tool operation should be cancellable.
+
+For two-point tools:
+
+```text
+before first point -> no active operation
+first point accepted -> operation in progress
+ESC -> clear first point and CurrentBasePoint
+```
+
+After cancelling a tool operation, the current selection should remain. A second ESC can clear the selection at workspace level.
 
 ---
 
 ## Adding a new tool
 
-When adding a new tool, follow this checklist:
+When adding a new tool:
 
-1. Add the tool class in `OpenCad2D.Tools`.
-2. Keep it independent from Avalonia.
-3. Use `PointerInfo` for input.
-4. Use `ToolContext` sub-contexts.
-5. Use snapping when appropriate.
-6. Create commands for document modifications.
-7. Add focused tests in `OpenCad2D.Tools.Tests`.
-8. Register the tool in `ToolRegistry`.
-9. Add UI buttons or shortcuts in `OpenCad2D.App` only after the model-side tool works.
+1. Add or reuse an entity type in `OpenCad2D.Core`.
+2. Add the tool in `OpenCad2D.Tools`.
+3. Use commands for document changes.
+4. Derive from `TwoPointToolBase` if the tool is naturally point-based.
+5. Register the tool in `ToolRegistry`.
+6. Add UI button and handler in `OpenCad2D.App`.
+7. Add tests.
+8. Update docs.
 
----
-
-## Tool design rules
-
-Preserve these rules:
-
-```text
-Tools do not depend on Avalonia.
-Tools do not render.
-Tools do not open dialogs.
-Tools receive model/user coordinates.
-Tools use commands for undoable mutations.
-Tools do not mutate EntityCollection directly.
-Tools should preserve selection on Deactivate.
-Tools should cancel in-progress operations on Cancel.
-```
+Prefer reusing command line, Ortho and preview infrastructure instead of adding custom UI-specific logic.

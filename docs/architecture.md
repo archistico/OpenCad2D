@@ -31,180 +31,366 @@ Each project has a specific responsibility.
 
 `OpenCad2D.Interaction` contains UI-independent interaction services such as hit testing, selection and object snapping.
 
-`OpenCad2D.Tools` contains UI-independent CAD tools, controllers, tool contexts and the runtime workspace.
+`OpenCad2D.Tools` contains UI-independent CAD tools, controllers, tool contexts, command line parsing and the runtime workspace.
 
 `OpenCad2D.App` is the Avalonia desktop application.
 
 The direction of dependencies should remain clear.
 
 ```text
-App -> Tools -> Interaction -> Core -> Geometry
+OpenCad2D.App
+  -> OpenCad2D.Tools
+      -> OpenCad2D.Interaction
+          -> OpenCad2D.Core
+              -> OpenCad2D.Geometry
 ```
 
-The reverse direction should be avoided.
-
-- `Geometry` must not know anything about CAD entities, tools or Avalonia.
-- `Core` must not depend on the UI.
-- `Interaction` works with model data and must not know about Avalonia.
-- `Tools` can coordinate CAD behavior, but should still remain UI-independent.
+No project should depend on a project above it.
 
 ---
 
-## OpenCad2D.Geometry
+## Main architectural rule
 
-`OpenCad2D.Geometry` is the lowest-level project.
+The UI must not own CAD behavior.
 
-It contains mathematical and geometric building blocks such as points, vectors, line segments, lines, circles, arcs, polylines, bounding boxes, angles and transformation matrices.
+Avalonia may:
 
-It also contains geometric operations such as distance calculations and intersections.
+- draw the document;
+- draw previews;
+- draw snap markers;
+- draw the crosshair;
+- host tool buttons;
+- host layer controls;
+- host the command line;
+- convert screen coordinates to model coordinates;
+- forward input to the workspace/tool system;
+- manage viewport operations such as pan, zoom and Zoom Extents.
 
-Geometry is intentionally independent from the CAD document model. A `Circle2D` does not know whether it belongs to a layer, whether it is selected, whether it is visible or whether it is drawn by Avalonia.
+Avalonia should not:
 
-Examples of responsibilities that belong here are:
-
-```text
-distance from a point to a segment
-segment intersections
-transformation matrices
-bounding box calculations
-coordinate system conversion
-numeric tolerance checks
-```
-
-Examples of responsibilities that do not belong here are:
-
-```text
-entity selection
-layer visibility
-undo/redo
-mouse input
-rendering
-file persistence
-```
+- create CAD entities directly;
+- decide document mutation rules;
+- implement geometric algorithms;
+- implement selection rules;
+- implement locked-layer rules;
+- implement command undo/redo behavior.
 
 ---
 
-## Coordinate systems
+## Geometry layer
 
-OpenCad2D separates screen coordinates, world/model coordinates and user coordinates.
+`OpenCad2D.Geometry` is the lowest layer.
 
-```text
-Screen coordinates = Avalonia coordinates, measured in pixels in the canvas
-WCS / model        = absolute drawing coordinates stored in the document
-UCS                = user coordinate system used for input and display
-```
+It contains pure geometric concepts such as:
 
-The document stores entities in WCS/model coordinates. The canvas converts screen coordinates to model coordinates using the viewport transform. The current UCS converts between WCS and user coordinates.
+- `Point2D`;
+- `Vector2D`;
+- `LineSegment2D`;
+- `Circle2D`;
+- `Arc2D`;
+- `Polyline2D`;
+- `BoundingBox2D`;
+- transformations;
+- coordinate systems;
+- geometric tolerance.
 
-```text
-Screen -> WCS -> UCS
-```
+This project should not know what a CAD entity, layer, command, tool or UI is.
 
-Tools receive both model and user coordinates through `PointerInfo`. Existing tools may continue to use model coordinates, while future tools can support coordinate input relative to the active UCS.
-
-`CoordinateSystem2D` defines the current user coordinate system through an origin and axes. This prepares the application for future features such as user-defined origins, rotated coordinate systems, relative input and view-dependent workflows.
-
-Zoom and pan belong to the viewport. They must not modify document geometry.
-
----
-
-## Numeric precision
-
-OpenCad2D uses an explicit numeric tolerance strategy. Floating-point geometry cannot rely on direct equality checks.
-
-In a CAD application, whether two values are considered equal depends on context: point distance, angle comparison, vector length and normalized parameters do not necessarily use the same tolerance.
-
-`GeometryTolerance` defines separate values for:
-
-```text
-Distance      point and distance comparison
-Angle         angular comparison in radians
-Parameter     normalized values such as segment parameter t in [0, 1]
-VectorLength  zero-length vector detection
-```
-
-New geometric algorithms should prefer `GeometryTolerance` instead of raw magic numbers or direct `double` equality.
-
-`Tolerance` remains as a compatibility helper for simple legacy checks, but new code should be explicit about the kind of tolerance it uses.
+Geometry should remain reusable and independent.
 
 ---
 
-## OpenCad2D.Core
+## Core layer
 
-`OpenCad2D.Core` contains the main CAD model. This is where geometric primitives become CAD entities.
+`OpenCad2D.Core` owns the CAD document model.
 
-For example, a segment can become a `LineEntity`, a circle can become a `CircleEntity`, and a polyline can become a `PolylineEntity`.
+It contains:
 
-Entities have CAD-specific properties such as:
+- CAD entities;
+- entity identifiers;
+- layers;
+- styles;
+- `CadDocument`;
+- entity collections;
+- spatial indexing;
+- commands;
+- command history.
 
-```text
-identifier
-layer
-style/color behavior
-visibility
-draw order
+### CadDocument mutation boundary
+
+`CadDocument` is the public boundary for modifying the drawing.
+
+Commands and tools should not mutate `EntityCollection` directly.
+
+Preferred:
+
+```csharp
+document.AddEntity(entity);
+document.ReplaceEntity(entity);
+document.RemoveEntity(id);
 ```
 
-The document model is also defined here. `CadDocument` owns layers and entities and is the central object representing the current drawing.
+Avoid:
 
----
-
-## CadDocument mutation boundary
-
-`CadDocument` is the public mutation boundary for document entities.
-
-Commands and tools should not mutate `EntityCollection` directly. They should use document methods such as:
-
-```text
-AddEntity
-AddEntities
-ReplaceEntity
-ReplaceEntities
-RemoveEntity
-RemoveEntities
+```csharp
+document.Entities.RemoveMany(ids);
 ```
 
-This is important because the document is where cross-cutting validation belongs.
+This rule exists because document-level validation belongs to `CadDocument`.
 
 For example, locked layer behavior is enforced by `CadDocument`: replacement and removal of entities that belong to locked layers are rejected at the document mutation boundary.
 
-If commands bypass the document and mutate `document.Entities` directly, those rules would be skipped.
+---
 
-`EntityCollection` can still be used for queries such as reading entities by id, enumerating entities and spatial lookup. Mutations should go through `CadDocument`.
+## Interaction layer
+
+`OpenCad2D.Interaction` contains UI-independent interaction services.
+
+Current responsibilities:
+
+- hit testing;
+- click selection;
+- window selection;
+- crossing selection;
+- object snapping;
+- grid snapping;
+- snap prioritization.
+
+Interaction services work in model coordinates. They should not know about Avalonia, screen controls or drawing styles.
+
+### Selection and snapping are different
+
+Selection and snapping intentionally use different document queries.
+
+```text
+Selection -> selectable entities
+Snapping  -> visible entities
+```
+
+This matters for locked layers:
+
+```text
+locked layer entity -> visible
+locked layer entity -> not selectable
+locked layer entity -> snappable
+```
 
 ---
 
-## Spatial indexing
+## Tools layer
 
-The entity collection owns a spatial index abstraction.
+`OpenCad2D.Tools` turns user intent into document operations.
 
-The current implementation uses `ISpatialIndex` with a `LinearSpatialIndex`. The linear implementation still scans stored bounding boxes, but the important design decision is that hit testing, selection and snapping can query by area instead of always scanning the entire document.
+It contains:
 
-The current structure is:
+- `ICadTool`;
+- `ToolController`;
+- `ToolRegistry`;
+- `ToolContext`;
+- `CadWorkspace`;
+- `CadActionController`;
+- drawing tools;
+- modify tools;
+- command line input parser;
+- input constraint services such as Ortho.
+
+Tools receive `PointerInfo`, not Avalonia events.
+
+`PointerInfo` contains:
 
 ```text
-CadDocument -> EntityCollection -> ISpatialIndex -> LinearSpatialIndex
+ModelPoint  WCS/model point
+UserPoint   UCS/user point
+Modifiers   keyboard modifiers
 ```
 
-This prepares the project for future implementations such as:
+Tools should create commands and execute them through `CommandHistory`.
+
+---
+
+## ToolContext and tool runtime state
+
+`ToolContext` gives tools access to the services and state they need.
+
+It is organized into focused sub-contexts:
+
+- commands;
+- selection;
+- snapping;
+- coordinates;
+- creation defaults.
+
+It also contains shared tool runtime state needed by the command line and input constraints:
+
+- `CurrentBasePoint`;
+- `IsOrthoEnabled`.
+
+`CurrentBasePoint` is set by tools that have accepted a first point and are waiting for a second point.
+
+This is used for:
+
+- direct distance entry;
+- relative command line input;
+- contextual snaps;
+- temporary measurement feedback;
+- vector preview.
+
+`IsOrthoEnabled` is used to constrain second-point workflows to horizontal or vertical movement.
+
+---
+
+## Command line input architecture
+
+The command line is hosted by `OpenCad2D.App`, but the parsing model lives in `OpenCad2D.Tools.Input`.
+
+Supported input formats:
 
 ```text
-QuadtreeSpatialIndex
-RTreeSpatialIndex
-UniformGridSpatialIndex
+100,50  absolute UCS point
+@50,0   UCS offset from CurrentBasePoint
+5       direct distance along cursor direction
 ```
 
-The spatial index should answer: which entities have bounds intersecting this search area? It should not decide visibility, selection or editability. Those rules belong to `CadDocument`, layers and interaction services.
+The command line does not create entities directly.
 
-For this reason, spatial queries are usually followed by document-level filters such as visible-entity or selectable-entity filtering.
+The correct flow is:
+
+```text
+TextBox input
+parse input
+resolve final point
+convert UCS to WCS when needed
+submit synthetic point input to CadWorkspace
+tool receives point as normal input
+```
+
+This keeps mouse clicks, typed coordinates and direct distance entry on the same tool pipeline.
+
+### Direct distance entry
+
+Direct distance entry uses:
+
+- the current base point;
+- the current cursor/snap point;
+- a numeric distance.
+
+Conceptually:
+
+```text
+direction = normalize(currentPoint - basePoint)
+result = basePoint + direction * distance
+```
+
+When Ortho mode is enabled, the current point is first constrained to the closest horizontal or vertical direction before the distance direction is computed.
+
+---
+
+## Ortho mode architecture
+
+Ortho mode is a tool/input constraint, not a rendering trick.
+
+The rule is:
+
+```text
+if |DX| >= |DY| -> constrain horizontally
+if |DY| >  |DX| -> constrain vertically
+```
+
+The constraint should be applied before:
+
+- preview geometry is produced;
+- measurement feedback is calculated;
+- direct distance entry calculates the final point;
+- the final second point is accepted by a two-point tool.
+
+This ensures that what the user sees is what the tool will create or modify.
+
+Explicit typed coordinates remain exact and should not be altered by Ortho.
+
+---
+
+## Two-point tool pattern
+
+Many CAD tools are based on two points:
+
+```text
+first point  -> base/anchor point
+second point -> final point or vector destination
+```
+
+Current tools that follow this model include:
+
+- `LineTool`;
+- `RectangleTool`;
+- `CircleTool`;
+- `MoveTool`;
+- `CopyTool`.
+
+`TwoPointToolBase` centralizes common behavior:
+
+- first point acquisition;
+- second point acquisition;
+- current base point state;
+- snap context;
+- Ortho constraint application;
+- preview support;
+- cancellation behavior.
+
+This avoids duplicating command line and Ortho logic in every tool.
+
+---
+
+## App layer
+
+`OpenCad2D.App` is the Avalonia application.
+
+Current responsibilities:
+
+- render visible entities;
+- render selected entities;
+- render preview entities;
+- render CircleTool preview;
+- render temporary base-point/vector feedback;
+- render the grid;
+- render snap markers;
+- render the crosshair;
+- host the top bar;
+- host the left tool panel;
+- host the snap/Ortho bar;
+- host the command line;
+- host the status bar;
+- forward pointer input to the workspace;
+- forward typed command-line input to the workspace;
+- manage pan, zoom and Zoom Extents.
+
+### Viewport
+
+Viewport logic converts between:
+
+```text
+screen coordinates <-> WCS/model coordinates
+```
+
+This belongs to the UI layer because it depends on the visible canvas area.
+
+### Zoom Extents
+
+Zoom Extents fits visible entities inside the canvas.
+
+Rules:
+
+```text
+visible entities are included
+hidden layer entities are ignored
+locked layer entities are included
+empty documents should not crash
+```
+
+Zoom Extents does not modify the document. It only changes the viewport transform.
 
 ---
 
 ## Layers
-
-The core supports layers through `Layer`, `LayerId` and `LayerCollection`.
-
-New entities created by drawing tools use the current layer from the tool creation context.
 
 Layer visibility and locked state are part of document-level rules.
 
@@ -235,7 +421,7 @@ Selectable entities = visible entities that are not on locked layers
 Snappable entities  = visible entities, including locked-layer entities
 ```
 
-Rendering and snapping use visible entities.
+Rendering, snapping and Zoom Extents use visible entities.
 
 Selection and hit testing use selectable entities.
 
@@ -243,294 +429,77 @@ Locked-layer enforcement is implemented at the `CadDocument` mutation boundary, 
 
 ---
 
-## Commands and undo/redo
+## Spatial indexing
 
-Commands are the foundation of undo and redo. Each command must know how to execute an operation and how to undo it.
+The spatial index is an implementation detail of entity lookup.
 
-A user-facing operation that changes the document should generally be represented by a command. This includes drawing, deleting, moving, copying, rotating, scaling, mirroring and future editing operations.
-
-Complex operations can be represented by `CompositeCommand`. This allows several child commands to be executed as a single undoable user action.
-
-For example, a future fillet operation may:
+It should answer:
 
 ```text
-replace the first line
-replace the second line
-add a fillet arc
+which entities have bounds intersecting this search area?
 ```
 
-The user should undo that as one operation, not three separate steps.
+It should not decide visibility, selection, snapping or editability.
+
+For this reason, spatial queries are usually followed by document-level filters such as visible-entity or selectable-entity filtering.
 
 ---
 
-## OpenCad2D.Interaction
+## Command architecture
 
-`OpenCad2D.Interaction` contains interaction logic without depending on Avalonia.
+User-facing document changes should go through commands.
 
-It includes:
+Examples:
 
 ```text
-HitTestService
-SelectionService
-SnapService
-snap providers
-selection models
+LineTool      -> AddEntityCommand
+RectangleTool -> AddEntityCommand
+CircleTool    -> AddEntityCommand
+MoveTool      -> MoveEntitiesCommand / TransformEntitiesCommand
+CopyTool      -> CopyEntitiesCommand
+DeleteTool    -> DeleteEntitiesCommand
 ```
 
-Hit testing answers: which entity is under this model-space point?
-
-Selection answers: which entities are selected by point or window?
-
-Snapping answers: what is the best snap candidate near the cursor?
-
-Interaction services work in model coordinates. They do not know about screen pixels, Avalonia controls or mouse events.
-
-Where possible, interaction services query a spatial search area instead of scanning every entity.
-
-Visibility, selectability and locked-layer rules are still applied through the document.
+This gives consistent undo/redo behavior.
 
 ---
 
-## OpenCad2D.Tools
+## Current UI layout
 
-`OpenCad2D.Tools` contains the CAD tool system. A tool represents an operation the user can perform, such as selecting, drawing a line, drawing a rectangle, moving entities or copying entities.
+The current UI layout is designed to scale better than a flat toolbar.
 
-Tools are not Avalonia controls. They do not draw buttons, do not handle Avalonia events directly and do not know about the visual canvas.
+It uses:
 
-They receive `PointerInfo` and a `ToolContext`.
+- top bar for session/global controls;
+- left vertical tool panel grouped by SELECT, DRAW and EDIT;
+- central canvas;
+- bottom snap/Ortho bar;
+- fixed command line input;
+- status bar.
 
-The main types are:
-
-```text
-ICadTool
-ToolContext
-ToolCommandContext
-ToolSelectionContext
-ToolSnapContext
-ToolCoordinateContext
-ToolCreationContext
-ToolController
-ToolRegistry
-CadActionController
-CadWorkspace
-```
-
-`ToolContext` is intentionally split into focused sub-contexts to avoid becoming a God Object.
-
-New code should prefer:
-
-```text
-context.Commands
-context.Selection
-context.Snapping
-context.Coordinates
-context.Creation
-```
-
-rather than adding unrelated properties directly to `ToolContext`.
+This keeps tools, layer controls, snap modes and status feedback visually separate.
 
 ---
 
-## ToolContext boundary
+## Design implications for future work
 
-`ToolContext` may contain model-side services required by tools:
+When adding new tools:
 
-```text
-active document
-undoable command execution
-selection state and selection services
-snapping services and snapping settings
-current entity creation defaults
-current UCS and geometry tolerance
-```
+- keep the tool in `OpenCad2D.Tools`;
+- use commands for document edits;
+- derive from `TwoPointToolBase` when appropriate;
+- reuse command line point input automatically where possible;
+- reuse Ortho constraints where appropriate;
+- expose preview data without coupling to Avalonia;
+- render previews in `CadCanvas`.
 
-It must not contain:
+When adding new viewport features:
 
-```text
-Avalonia controls
-viewport or screen-to-model conversion logic
-dialogs or message boxes
-status bar services
-file system or persistence services
-rendering services
-application-level configuration unrelated to tool execution
-```
+- keep document geometry unchanged;
+- operate on `ViewportTransform`;
+- use visible document entities when fitting or deriving view bounds.
 
-Pointer coordinates must be converted before entering tools.
+When adding persistence:
 
----
-
-## OpenCad2D.App
-
-`OpenCad2D.App` is the Avalonia desktop application.
-
-Its responsibilities are:
-
-```text
-render the drawing
-show toolbar, command line and status bar
-handle mouse and keyboard input
-manage viewport navigation
-show active command feedback
-show crosshair and snap markers
-forward user input to the workspace
-```
-
-The custom `CadCanvas` renders entities, previews, the grid, the selection window, the UCS marker, the CAD crosshair, snap markers, the base-point marker and the temporary vector/measurement line used by two-point tools.
-
-The standard mouse cursor is hidden inside the canvas. A CAD-style crosshair is drawn instead. The crosshair spans the drawing area and includes a small center box to indicate the exact click position.
-
-Snap markers are visually different for different snap kinds. For example, endpoint, midpoint, center, perpendicular and tangent snaps can be drawn with distinct symbols.
-
-Rendering should avoid unnecessary allocations. Entity pens are cached by color and thickness instead of recreated for every entity on every frame.
-
----
-
-## Command line input
-
-The command line is part of the UI, but the CAD operation remains owned by the active tool. The command line should never create entities directly.
-
-Supported first-phase input formats are:
-
-```text
-100,50   absolute UCS point
-@50,0    relative UCS offset from CurrentBasePoint
-5        direct distance entry along the current cursor direction
-```
-
-Architectural flow:
-
-```text
-MainWindow / TextBox
-MainWindowViewModel.SubmitCommandInput(...)
-CommandInputParser
-resolved WCS Point2D
-CadWorkspace.SubmitPointFromCommandLine(...)
-ToolController forwards to the active tool
-normal tool/command execution
-```
-
-This design keeps the command line generic. `LineTool`, `RectangleTool`, `MoveTool`, `CopyTool` and future tools receive points through the same tool pipeline used by mouse input.
-
-Coordinate rule:
-
-```text
-Typed coordinates = UCS/user coordinates
-Stored entity geometry = WCS/model coordinates
-```
-
-`ToolContext.CurrentBasePoint` is the model-space point used for relative input, direct distance entry, contextual snaps and temporary measurements. Tools that accept two points update it after accepting the first point and clear it after completion or cancellation.
-
----
-
-## Temporary measurement feedback
-
-When a two-point tool has a base point, the UI displays temporary measurement feedback.
-
-The status bar reports:
-
-```text
-L   distance from base point to current cursor/snap point
-DX  UCS X delta
-DY  UCS Y delta
-```
-
-The canvas also renders a temporary base-point marker and a vector line from the base point to the current cursor or snap point.
-
-This feedback is presentation logic. It must not mutate document geometry and must not replace the normal tool preview.
-
----
-
-## ViewModel notifications
-
-`MainWindowViewModel` implements property change notification so that UI bindings can update automatically.
-
-The UI should not need to manually rewrite every text block after every action.
-
-Properties such as status text, command prompt text, measurement text, active tool name, entity count, selected count, current layer, current layer visibility, current layer locked state and snap text should notify the UI when they change.
-
-Manual refresh calls can still exist while the UI is being migrated gradually, but new UI state should prefer binding to the view model.
-
----
-
-## Runtime flow
-
-A typical drawing operation follows this flow.
-
-The user can provide a point either by clicking on the canvas or by typing in the command line.
-
-For mouse input, Avalonia receives a pointer event. `CadCanvas` converts the screen point into model coordinates and user coordinates. It creates a `PointerInfo` and sends it to `ToolController`.
-
-For command line input, the UI parses the text, resolves it to a WCS `Point2D`, creates equivalent tool input through `CadWorkspace.SubmitPointFromCommandLine(...)` and sends it to the active tool.
-
-`ToolController` forwards the event to the active tool. If the active tool is `LineTool`, the first click stores the first point. The second click creates a `LineEntity`, wraps it in an `AddEntityCommand` and executes it through the command context.
-
-The command modifies the document through the `CadDocument` API. The canvas is invalidated and renders the updated document.
-
-Avalonia does not directly create or edit entities. It forwards input and renders the resulting state.
-
----
-
-## Selection and cancel behavior
-
-Selection state is stored in `SelectionSet` and contains entity identifiers, not entity references.
-
-The selection remains available when switching tools. This enables workflows such as:
-
-```text
-select entity
-switch to Move
-move selected entity
-```
-
-`Esc` has layered behavior:
-
-```text
-first Esc cancels the current tool operation if one is in progress
-second Esc clears the current selection if no tool operation is active
-```
-
-This keeps command cancellation and selection clearing separate.
-
-If a layer state change makes some selected entities no longer selectable, the workspace should clean the selection through document-level selectability checks.
-
----
-
-## Testing strategy
-
-The project is designed to be testable without launching the UI.
-
-```text
-Geometry tests      primitives, transformations, intersections, tolerances, UCS
-Core tests          entities, document behavior, layers, commands, spatial index
-Interaction tests   hit testing, selection, snapping, hidden and locked layer behavior
-Tools tests         tool behavior, command execution, workspace integration
-App tests           should remain minimal because UI logic should be thin
-```
-
-The Avalonia UI is intentionally thin, so most important behavior can be tested in non-UI projects.
-
----
-
-## Architectural rules
-
-The project should follow these rules as it evolves.
-
-```text
-UI code should not contain CAD business logic.
-Geometry should not depend on Core, Interaction, Tools or App.
-Core should not depend on Interaction, Tools or App.
-Interaction should not depend on App.
-Tools should remain UI-independent.
-Document mutations should go through CadDocument.
-Undoable user operations should go through commands.
-Composite operations should use CompositeCommand.
-Snapping and selection should work in model coordinates.
-PointerInfo should carry WCS and UCS coordinates.
-Viewport operations should not modify document geometry.
-ToolContext should remain grouped into focused sub-contexts.
-Spatial lookup should go through the spatial index abstraction.
-New geometric algorithms should use GeometryTolerance.
-```
-
-These rules are not meant to make the architecture rigid. They exist to keep the project understandable and maintainable as it grows.
+- serialize document model concepts, not Avalonia UI state;
+- avoid serializing transient tool state such as `CurrentBasePoint`.
