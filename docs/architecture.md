@@ -368,7 +368,7 @@ Its responsibilities are:
 
 ```text
 render the drawing
-show toolbar and status bar
+show toolbar, command line and status bar
 handle mouse and keyboard input
 manage viewport navigation
 show active command feedback
@@ -376,7 +376,7 @@ show crosshair and snap markers
 forward user input to the workspace
 ```
 
-The custom `CadCanvas` renders entities, previews, the grid, the selection window, the UCS marker, the CAD crosshair and snap markers.
+The custom `CadCanvas` renders entities, previews, the grid, the selection window, the UCS marker, the CAD crosshair, snap markers, the base-point marker and the temporary vector/measurement line used by two-point tools.
 
 The standard mouse cursor is hidden inside the canvas. A CAD-style crosshair is drawn instead. The crosshair spans the drawing area and includes a small center box to indicate the exact click position.
 
@@ -386,13 +386,68 @@ Rendering should avoid unnecessary allocations. Entity pens are cached by color 
 
 ---
 
+## Command line input
+
+The command line is part of the UI, but the CAD operation remains owned by the active tool. The command line should never create entities directly.
+
+Supported first-phase input formats are:
+
+```text
+100,50   absolute UCS point
+@50,0    relative UCS offset from CurrentBasePoint
+5        direct distance entry along the current cursor direction
+```
+
+Architectural flow:
+
+```text
+MainWindow / TextBox
+MainWindowViewModel.SubmitCommandInput(...)
+CommandInputParser
+resolved WCS Point2D
+CadWorkspace.SubmitPointFromCommandLine(...)
+ToolController forwards to the active tool
+normal tool/command execution
+```
+
+This design keeps the command line generic. `LineTool`, `RectangleTool`, `MoveTool`, `CopyTool` and future tools receive points through the same tool pipeline used by mouse input.
+
+Coordinate rule:
+
+```text
+Typed coordinates = UCS/user coordinates
+Stored entity geometry = WCS/model coordinates
+```
+
+`ToolContext.CurrentBasePoint` is the model-space point used for relative input, direct distance entry, contextual snaps and temporary measurements. Tools that accept two points update it after accepting the first point and clear it after completion or cancellation.
+
+---
+
+## Temporary measurement feedback
+
+When a two-point tool has a base point, the UI displays temporary measurement feedback.
+
+The status bar reports:
+
+```text
+L   distance from base point to current cursor/snap point
+DX  UCS X delta
+DY  UCS Y delta
+```
+
+The canvas also renders a temporary base-point marker and a vector line from the base point to the current cursor or snap point.
+
+This feedback is presentation logic. It must not mutate document geometry and must not replace the normal tool preview.
+
+---
+
 ## ViewModel notifications
 
 `MainWindowViewModel` implements property change notification so that UI bindings can update automatically.
 
 The UI should not need to manually rewrite every text block after every action.
 
-Properties such as status text, active tool name, entity count, selected count, current layer, current layer visibility, current layer locked state and snap text should notify the UI when they change.
+Properties such as status text, command prompt text, measurement text, active tool name, entity count, selected count, current layer, current layer visibility, current layer locked state and snap text should notify the UI when they change.
 
 Manual refresh calls can still exist while the UI is being migrated gradually, but new UI state should prefer binding to the view model.
 
@@ -402,7 +457,11 @@ Manual refresh calls can still exist while the UI is being migrated gradually, b
 
 A typical drawing operation follows this flow.
 
-The user clicks on the canvas. Avalonia receives a pointer event. `CadCanvas` converts the screen point into model coordinates and user coordinates. It creates a `PointerInfo` and sends it to `ToolController`.
+The user can provide a point either by clicking on the canvas or by typing in the command line.
+
+For mouse input, Avalonia receives a pointer event. `CadCanvas` converts the screen point into model coordinates and user coordinates. It creates a `PointerInfo` and sends it to `ToolController`.
+
+For command line input, the UI parses the text, resolves it to a WCS `Point2D`, creates equivalent tool input through `CadWorkspace.SubmitPointFromCommandLine(...)` and sends it to the active tool.
 
 `ToolController` forwards the event to the active tool. If the active tool is `LineTool`, the first click stores the first point. The second click creates a `LineEntity`, wraps it in an `AddEntityCommand` and executes it through the command context.
 

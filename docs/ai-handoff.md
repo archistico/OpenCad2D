@@ -39,6 +39,10 @@ The project currently supports:
 - locked layer behavior;
 - object snapping;
 - grid snapping;
+- command line numeric input;
+- absolute coordinate input;
+- relative coordinate input;
+- direct distance entry;
 - snap markers;
 - CAD-like crosshair cursor;
 - viewport zoom and pan;
@@ -47,9 +51,9 @@ The project currently supports:
 - spatial index abstraction;
 - document mutation through `CadDocument`;
 - ViewModel property notifications through `INotifyPropertyChanged`;
-- UI feedback for the active command/tool, current layer and snap type.
+- UI feedback for the active command/tool, current layer, snap type and temporary measurements.
 
-The locked layer behavior has been implemented. The next major areas are zoom extents, richer layer management, additional drawing tools and persistence.
+The locked layer behavior and the first command line input workflow have been implemented. The next major areas are Ortho mode, zoom extents, richer layer management, additional drawing tools and persistence.
 
 ---
 
@@ -111,6 +115,7 @@ The following rules are important and should be preserved.
 - Locked layer entities must not be modified, removed or transformed.
 - Spatial queries should be preferred over full document scans when interaction is cursor-area based.
 - Floating-point comparisons should use `GeometryTolerance`.
+- Command line input must not create entities directly. It should resolve numeric text to model points and forward them to the active tool.
 
 ---
 
@@ -445,7 +450,9 @@ Important types:
 - `CadWorkspace`;
 - `PointerInfo`;
 - `ToolResult`;
-- `TwoPointToolBase`.
+- `TwoPointToolBase`;
+- `CommandInputParser`;
+- `CommandInputParseResult`.
 
 A tool should:
 
@@ -466,8 +473,45 @@ A tool should not:
 - modify the document without a command, unless there is a very specific reason.
 
 ---
+## 12. Command line input
 
-## 12. ToolContext boundary
+The application supports a first version of CAD-style command line input.
+
+The command line accepts point and distance input while the active tool is waiting for a point. It does not create CAD entities directly. Instead, it resolves the typed value to a model point and forwards that point to the active tool as synthetic pointer input.
+
+Supported input formats:
+
+```text
+100,50   absolute UCS coordinates
+@50,0    relative UCS offset from CurrentBasePoint
+5        direct distance from CurrentBasePoint along the current cursor direction
+```
+
+Important rules:
+
+- typed coordinates are interpreted in UCS/user coordinates;
+- entities are still stored in WCS/model coordinates;
+- absolute and relative coordinate input is converted to WCS before reaching the tool;
+- direct distance entry uses `CurrentBasePoint` and the current cursor or snap point as the direction reference;
+- if no base point exists, distance and relative input are invalid;
+- if the cursor is on the base point, direct distance cannot determine a direction.
+
+The command line flow is:
+
+```text
+TextBox input
+CommandInputParser
+resolved Point2D in WCS
+CadWorkspace.SubmitPointFromCommandLine(...)
+ToolController / active tool
+normal command execution
+```
+
+This keeps command input compatible with `LineTool`, `RectangleTool`, `MoveTool`, `CopyTool` and future tools that consume point input.
+
+---
+
+## 13. ToolContext boundary
 
 `ToolContext` is intentionally split into sub-contexts to avoid becoming a God Object.
 
@@ -509,7 +553,14 @@ context.Creation.CurrentLayerId
 context.Coordinates.GeometryTolerance
 ```
 
-`ToolContext` may contain model-side services required by tools.
+`ToolContext` may contain model-side services required by tools. It also exposes `CurrentBasePoint`, which represents the last accepted model point for tools that are waiting for a second point.
+
+`CurrentBasePoint` is used by:
+
+- contextual snaps;
+- command line relative input such as `@50,0`;
+- direct distance entry such as `5`;
+- temporary measurement feedback.
 
 It must not contain:
 
@@ -525,7 +576,7 @@ It must not contain:
 
 ---
 
-## 13. Selection system
+## 14. Selection system
 
 Selection state is stored in `SelectionSet`. It stores entity ids, not entity references. This avoids stale references when commands replace entities.
 
@@ -565,7 +616,7 @@ Tool switching should use `Deactivate`, not `Cancel`.
 
 ---
 
-## 14. ESC behavior
+## 15. ESC behavior
 
 ESC has a two-step behavior.
 
@@ -593,7 +644,7 @@ Important rule: a tool should return `ToolResult.None()` when there is nothing t
 
 ---
 
-## 15. Snapping system
+## 16. Snapping system
 
 Snapping lives in `OpenCad2D.Interaction`.
 
@@ -642,7 +693,7 @@ Current contextual snaps:
 
 ---
 
-## 16. Snap visualization
+## 17. Snap visualization
 
 The Avalonia UI draws snap markers. Different snap kinds should have different marker shapes.
 
@@ -664,7 +715,7 @@ This is UI feedback only. Snap logic remains in `OpenCad2D.Interaction`.
 
 ---
 
-## 17. Spatial indexing
+## 18. Spatial indexing
 
 The project has a spatial index abstraction.
 
@@ -707,7 +758,7 @@ Important rule: the spatial index answers “which entities may be in this area?
 
 ---
 
-## 18. Rendering and UI
+## 19. Rendering and UI
 
 `OpenCad2D.App` is the Avalonia application.
 
@@ -717,6 +768,8 @@ Important rule: the spatial index answers “which entities may be in this area?
 - entities;
 - selection;
 - previews;
+- temporary base-point marker;
+- temporary vector/measurement line for two-point tools;
 - crosshair cursor;
 - snap markers;
 - UCS indicator.
@@ -729,7 +782,7 @@ Rendering should not contain CAD business logic. If rendering code starts decidi
 
 ---
 
-## 19. ViewModel and UI state
+## 20. ViewModel and UI state
 
 `MainWindowViewModel` implements `INotifyPropertyChanged`.
 
@@ -749,7 +802,9 @@ Important calculated properties include:
 - `CurrentLayerText`;
 - `MousePositionText`;
 - `SnapText`;
-- `LastMessage`.
+- `LastMessage`;
+- `CommandPromptText`;
+- `MeasurementText`.
 
 The code-behind may still manage UI-specific behavior, such as:
 
@@ -762,7 +817,7 @@ Do not move CAD business logic into the code-behind just because it is convenien
 
 ---
 
-## 20. Keyboard and mouse behavior
+## 21. Keyboard and mouse behavior
 
 Keyboard shortcuts:
 
@@ -793,7 +848,7 @@ The UI should show:
 
 ---
 
-## 21. Important invariants
+## 22. Important invariants
 
 The following invariants should be preserved.
 
@@ -814,10 +869,12 @@ The following invariants should be preserved.
 - Viewport operations must not modify document geometry.
 - Rendering should not mutate document state.
 - Tools should not depend on Avalonia.
+- Command line input must go through the active tool and the normal command system.
+- `CurrentBasePoint` must be cleared when a two-point operation completes or is cancelled.
 
 ---
 
-## 22. Current limitations
+## 23. Current limitations
 
 Known limitations:
 
@@ -830,26 +887,29 @@ Known limitations:
 - no property panel yet;
 - spatial index is still linear;
 - no model space / paper space separation yet;
-- no command line input yet;
+- no angular/polar command line input yet;
+- no command history/autocomplete yet;
+- no Ortho mode yet;
 - no DXF/SVG/PDF export yet.
 
 ---
 
-## 23. Recommended next steps
+## 24. Recommended next steps
 
 Recommended next implementation steps:
 
 ```text
-1. Add Zoom Extents.
-2. Add CircleTool.
-3. Add ArcTool.
-4. Add PolylineTool.
-5. Add a richer Layer Manager.
-6. Add JSON save/load.
-7. Add property panel.
-8. Add text entity and TextTool.
-9. Replace LinearSpatialIndex with a real spatial structure when needed.
-10. Add GitHub Actions.
+1. Add Ortho mode.
+2. Add Zoom Extents.
+3. Add CircleTool.
+4. Add ArcTool.
+5. Add PolylineTool.
+6. Add a richer Layer Manager.
+7. Add JSON save/load.
+8. Add property panel.
+9. Add text entity and TextTool.
+10. Replace LinearSpatialIndex with a real spatial structure when needed.
+11. Add GitHub Actions.
 ```
 
 The preferred development style is:
@@ -1204,6 +1264,7 @@ Provides runtime model-side services required by tools.
 - Expose snapping context.
 - Expose coordinate/tolerance context.
 - Expose entity creation defaults.
+- Expose `CurrentBasePoint` for active two-point workflows.
 
 ### Must not do
 
@@ -1242,6 +1303,7 @@ Aggregates the runtime CAD objects used by the application.
 - Provide workspace-level actions such as ESC behavior.
 - Lock or unlock the current layer.
 - Clear selections that are no longer valid after layer state changes.
+- Submit command line points to the active tool.
 
 ### Must not do
 
@@ -1306,6 +1368,8 @@ Base class for tools that use a first point and a second point.
 - Apply snapping.
 - Call derived behavior when the second point is selected.
 - Reset state after completion or cancellation.
+- Update `ToolContext.CurrentBasePoint` after the first point is accepted.
+- Clear `ToolContext.CurrentBasePoint` after completion or cancellation.
 
 ### Must not do
 
@@ -1497,6 +1561,7 @@ Avalonia canvas responsible for rendering and input forwarding.
 - Render selection visuals.
 - Render crosshair.
 - Render snap markers.
+- Render base-point and vector feedback for two-point tools.
 - Convert screen coordinates to model coordinates.
 - Forward pointer and keyboard input to the workspace.
 
@@ -1534,6 +1599,9 @@ Exposes UI state derived from the CAD workspace.
 - Expose mouse coordinate text.
 - Expose snap text.
 - Expose layer-related state.
+- Expose command prompt text.
+- Expose temporary measurement text.
+- Resolve command line input into tool points.
 - Notify UI changes with `INotifyPropertyChanged`.
 
 ### Must not do
@@ -1549,6 +1617,38 @@ Exposes UI state derived from the CAD workspace.
 - `ToolResult`;
 - `SnapCandidate`;
 - `Layer`.
+
+---
+
+## CommandInputParser
+
+**Project:** `OpenCad2D.Tools`
+**Path:** `src/OpenCad2D.Tools/Input/CommandInputParser.cs`
+
+### Purpose
+
+Parses command line numeric input into a structured input kind.
+
+### Responsibilities
+
+- Parse absolute point input such as `100,50`.
+- Parse relative point input such as `@50,0`.
+- Parse direct distance input such as `5`.
+- Return invalid results with user-facing error messages when input cannot be parsed.
+
+### Must not do
+
+- Create CAD entities.
+- Execute commands.
+- Know about Avalonia.
+- Convert screen coordinates.
+
+### Important collaborators
+
+- `CommandInputParseResult`;
+- `CommandInputKind`;
+- `Point2D`;
+- `Vector2D`.
 
 ---
 

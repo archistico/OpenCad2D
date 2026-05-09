@@ -92,6 +92,8 @@ ReplaceEntities
 
 If commands bypass the document and mutate `EntityCollection` directly, locked-layer protection is skipped. This must not happen.
 
+Command line input does not change this rule. Typed coordinates and distances are resolved to points and forwarded to the active tool; the tool still creates or executes the same commands used by mouse input.
+
 ---
 
 ## AddEntityCommand
@@ -305,6 +307,36 @@ If a child command fails during execution, already executed child commands shoul
 - A composite command should represent one user-facing action.
 - Do not hide unrelated operations inside the same composite command.
 - Preserve predictable undo behavior.
+
+---
+
+## Command line input and commands
+
+Command line input is not a command execution shortcut. It only provides precise point input to the active tool.
+
+Example with `LineTool`:
+
+```text
+user types 100,50
+command line resolves a WCS point
+active LineTool receives the point
+user types 200,50
+active LineTool receives the second point
+LineTool creates AddEntityCommand
+CommandHistory executes the command
+```
+
+Example with direct distance entry:
+
+```text
+user chooses a base point
+user moves cursor to indicate direction
+user types 5
+command line resolves the second point
+active tool executes the normal command workflow
+```
+
+Therefore undo/redo behavior is unchanged.
 
 ---
 

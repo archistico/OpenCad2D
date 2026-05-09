@@ -101,6 +101,28 @@ The status bar and ViewModel use property-change notifications, so UI state such
 
 ---
 
+## Command line input
+
+OpenCad2D supports a first CAD-style command line input workflow.
+
+While a tool is waiting for a point, the user can type directly without first focusing the command input box. Supported formats are:
+
+| Input | Meaning |
+|---|---|
+| `100,50` | absolute UCS coordinates |
+| `@50,0` | relative UCS offset from the current base point |
+| `5` | direct distance entry from the current base point along the cursor direction |
+
+The command line does not create entities directly. It resolves the typed input to a CAD point and forwards it to the active tool, exactly like a mouse click. This keeps mouse input, coordinate input and direct distance input on the same tool pipeline.
+
+The UI also shows temporary measurement feedback while a two-point tool is active:
+
+- base-point marker;
+- vector line from base point to cursor/snap point;
+- `L`, `DX` and `DY` values in the status bar.
+
+---
+
 ## Architecture
 
 OpenCad2D is split into focused projects:

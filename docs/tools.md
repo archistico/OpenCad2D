@@ -300,9 +300,49 @@ MoveTool
 CopyTool
 ```
 
-`TwoPointToolBase` implements this shared behavior. It stores the first point, updates the current point while the pointer moves, applies snapping and resets the tool after completion.
+`TwoPointToolBase` implements this shared behavior. It stores the first point, updates `ToolContext.CurrentBasePoint`, updates the current point while the pointer moves, applies snapping and resets the tool after completion.
 
 `TwoPointToolBase` should not know the specific operation. Derived classes decide what happens when the second point is chosen.
+
+Because it maintains `CurrentBasePoint`, all derived tools can benefit from command line relative input, direct distance entry and temporary measurement feedback.
+
+---
+
+## Command line input for tools
+
+Command line input is a tool input mechanism, not a separate entity creation system.
+
+Supported formats:
+
+```text
+100,50   absolute UCS point
+@50,0    relative UCS offset from CurrentBasePoint
+5        direct distance from CurrentBasePoint along the current cursor direction
+```
+
+The parser produces a structured result. The ViewModel resolves that result into a WCS `Point2D`, then calls `CadWorkspace.SubmitPointFromCommandLine(...)`.
+
+The active tool should receive that point exactly like a mouse click. This is important because the same workflow must work for:
+
+```text
+LineTool
+RectangleTool
+MoveTool
+CopyTool
+future CircleTool
+future ArcTool
+future PolylineTool
+```
+
+Important rule:
+
+```text
+The command line supplies points.
+The active tool decides what those points mean.
+Commands still perform document mutation.
+```
+
+Direct distance entry requires a base point and a direction. The base point comes from `ToolContext.CurrentBasePoint`; the direction comes from the current mouse/snap position.
 
 ---
 
@@ -343,7 +383,7 @@ Expected flow:
 
 ```text
 first click   stores start point
-mouse move    updates preview
+mouse move    updates preview and measurement
 second click  creates LineEntity and executes AddEntityCommand
 ```
 
@@ -359,7 +399,7 @@ Expected flow:
 
 ```text
 first click   stores first corner
-mouse move    updates preview
+mouse move    updates preview and measurement
 second click  creates rectangle geometry and executes AddEntityCommand
 ```
 
@@ -376,7 +416,7 @@ Expected flow:
 ```text
 requires selection
 first click   base point
-mouse move    preview displacement
+mouse move    preview displacement and vector measurement
 second click  execute MoveEntitiesCommand
 ```
 
@@ -395,7 +435,7 @@ Expected flow:
 ```text
 requires selection
 first click   base point
-mouse move    preview displacement
+mouse move    preview displacement and vector measurement
 second click  execute CopyEntitiesCommand
 ```
 
@@ -454,11 +494,11 @@ Tools should not assume that selection is always valid forever. If layer state c
 
 ## Preview behavior
 
-Tools may expose preview geometry so that the UI can render it.
+Tools may expose preview geometry so that the UI can render it. Two-point tools also expose enough state through `CurrentBasePoint` and current pointer/snap position for the UI to draw temporary measurement feedback.
 
 The preview belongs conceptually to the tool state, but rendering belongs to `OpenCad2D.App`.
 
-A tool may say “this is the preview entity” or “this is the current rectangle preview”, but it should not draw it directly.
+A tool may say “this is the preview entity” or “this is the current rectangle preview”, but it should not draw it directly. Temporary base-point markers and vector lines are also rendered by the App layer, not by the tool.
 
 ---
 
