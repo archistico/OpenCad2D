@@ -71,13 +71,14 @@ public sealed class CopyEntitiesCommand : ICadCommand
 
     public void Undo(CadDocument document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         if (_createdEntities is null)
         {
-            throw new InvalidOperationException(
-                "Cannot undo copy before execute.");
+            return;
         }
 
-        document.Entities.RemoveMany(
+        document.RemoveEntities(
             _createdEntities.Select(entity => entity.Id));
     }
 }

@@ -38,6 +38,9 @@ public sealed class AddEntityCommand : ICadCommand
 
     public void Undo(CadDocument document)
     {
-        document.Entities.RemoveMany(_entities.Select(entity => entity.Id));
+        ArgumentNullException.ThrowIfNull(document);
+
+        document.RemoveEntities(
+            _entities.Select(entity => entity.Id));
     }
 }

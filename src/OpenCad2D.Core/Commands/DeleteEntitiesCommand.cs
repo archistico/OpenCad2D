@@ -32,15 +32,16 @@ public sealed class DeleteEntitiesCommand : ICadCommand
     {
         _deletedEntities = document.Entities.GetByIds(_entityIds).ToList();
 
-        document.Entities.RemoveMany(_entityIds);
+        document.RemoveEntities(_entityIds);
     }
 
     public void Undo(CadDocument document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         if (_deletedEntities is null)
         {
-            throw new InvalidOperationException(
-                "Cannot undo delete before execute.");
+            return;
         }
 
         document.AddEntities(_deletedEntities);

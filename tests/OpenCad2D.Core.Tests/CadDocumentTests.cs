@@ -110,4 +110,63 @@ public sealed class CadDocumentTests
         Assert.Throws<InvalidOperationException>(() =>
             document.ReplaceEntity(moved));
     }
+
+    [Fact]
+    public void RemoveEntity_ShouldRemoveEntity()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+
+        document.RemoveEntity(line.Id);
+
+        Assert.False(document.Entities.Contains(line.Id));
+    }
+
+    [Fact]
+    public void RemoveEntities_ShouldRemoveAllSpecifiedEntities()
+    {
+        var document = new CadDocument();
+
+        var first = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        var second = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1));
+
+        document.AddEntity(first);
+        document.AddEntity(second);
+
+        document.RemoveEntities(new[] { first.Id, second.Id });
+
+        Assert.False(document.Entities.Contains(first.Id));
+        Assert.False(document.Entities.Contains(second.Id));
+    }
+
+    [Fact]
+    public void ReplaceEntities_ShouldThrow_WhenEntityLayerDoesNotExist()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+
+        var invalidLayerLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(20, 0),
+            id: line.Id,
+            layerId: new LayerId("Missing"));
+
+        Assert.Throws<InvalidOperationException>(() =>
+            document.ReplaceEntities(new[] { invalidLayerLine }));
+    }
 }

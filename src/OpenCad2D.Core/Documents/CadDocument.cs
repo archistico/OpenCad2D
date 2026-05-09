@@ -1,5 +1,6 @@
 ﻿using OpenCad2D.Core.Collections;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Geometry.Primitives;
 
@@ -78,5 +79,30 @@ public sealed class CadDocument
     public IEnumerable<CadEntity> GetVisibleEntities(BoundingBox2D area)
     {
         return Entities.Query(area).Where(IsEntityVisible);
+    }
+
+    public void ReplaceEntities(IEnumerable<CadEntity> entities)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        foreach (CadEntity entity in entities)
+        {
+            ReplaceEntity(entity);
+        }
+    }
+
+    public void RemoveEntity(EntityId id)
+    {
+        Entities.RemoveRequired(id);
+    }
+
+    public void RemoveEntities(IEnumerable<EntityId> ids)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+
+        foreach (EntityId id in ids.ToList())
+        {
+            RemoveEntity(id);
+        }
     }
 }

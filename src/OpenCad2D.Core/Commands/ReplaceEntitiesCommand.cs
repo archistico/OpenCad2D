@@ -34,27 +34,25 @@ public sealed class ReplaceEntitiesCommand : ICadCommand
 
     public void Execute(CadDocument document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         _oldEntities = document.Entities
             .GetByIds(_newEntities.Select(entity => entity.Id))
             .ToList();
 
-        foreach (CadEntity entity in _newEntities)
-        {
-            document.ReplaceEntity(entity);
-        }
+        document.ReplaceEntities(_newEntities);
     }
 
     public void Undo(CadDocument document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         if (_oldEntities is null)
         {
             throw new InvalidOperationException(
                 "Cannot undo replace before execute.");
         }
 
-        foreach (CadEntity entity in _oldEntities)
-        {
-            document.ReplaceEntity(entity);
-        }
+        document.ReplaceEntities(_oldEntities);
     }
 }

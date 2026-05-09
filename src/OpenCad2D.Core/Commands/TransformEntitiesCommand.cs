@@ -38,29 +38,29 @@ public class TransformEntitiesCommand : ICadCommand
 
     public void Execute(CadDocument document)
     {
-        _oldEntities = document.Entities.GetByIds(_entityIds).ToList();
+        ArgumentNullException.ThrowIfNull(document);
+
+        _oldEntities = document.Entities
+            .GetByIds(_entityIds)
+            .ToList();
 
         _newEntities = _oldEntities
             .Select(entity => entity.Transform(_matrix))
             .ToList();
 
-        foreach (CadEntity entity in _newEntities)
-        {
-            document.ReplaceEntity(entity);
-        }
+        document.ReplaceEntities(_newEntities);
     }
 
     public void Undo(CadDocument document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
         if (_oldEntities is null)
         {
             throw new InvalidOperationException(
                 "Cannot undo transform before execute.");
         }
 
-        foreach (CadEntity entity in _oldEntities)
-        {
-            document.ReplaceEntity(entity);
-        }
+        document.ReplaceEntities(_oldEntities);
     }
 }
