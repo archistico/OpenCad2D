@@ -61,8 +61,17 @@ public sealed class MainWindowViewModel
 
     public string LastMessage => _lastMessage;
 
-    public string MousePositionText =>
-        $"X: {_mousePosition.X:0.###} Y: {_mousePosition.Y:0.###}";
+    public string MousePositionText
+    {
+        get
+        {
+            Point2D userPoint = Workspace.CurrentUcs.WorldToUser(_mousePosition);
+
+            return
+                $"WCS X: {_mousePosition.X:0.###} Y: {_mousePosition.Y:0.###} | " +
+                $"UCS X: {userPoint.X:0.###} Y: {userPoint.Y:0.###}";
+        }
+    }
 
     public string SnapText =>
         _currentSnapCandidate is null

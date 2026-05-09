@@ -73,3 +73,6 @@ out/
 *.temp
 *.bak
 *.swp
+
+# Backup
+backup/

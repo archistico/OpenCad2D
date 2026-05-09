@@ -83,6 +83,7 @@ public sealed class CadCanvas : Control
             Bounds);
 
         DrawGrid(context);
+        DrawCurrentUcs(context);
 
         if (Workspace is null)
         {
@@ -105,6 +106,39 @@ public sealed class CadCanvas : Control
         DrawSnapMarker(context);
     }
 
+    private void DrawCurrentUcs(DrawingContext context)
+    {
+        if (Workspace is null)
+        {
+            return;
+        }
+
+        double axisLength = _viewport.ScreenLengthToModel(55);
+
+        Point2D origin = Workspace.CurrentUcs.Origin;
+        Point2D xEnd = origin + Workspace.CurrentUcs.XAxis * axisLength;
+        Point2D yEnd = origin + Workspace.CurrentUcs.YAxis * axisLength;
+
+        Point screenOrigin = ToScreenPoint(origin);
+
+        context.DrawEllipse(
+            Brushes.White,
+            null,
+            screenOrigin,
+            3,
+            3);
+
+        context.DrawLine(
+            _ucsAxisXPen,
+            screenOrigin,
+            ToScreenPoint(xEnd));
+
+        context.DrawLine(
+            _ucsAxisYPen,
+            screenOrigin,
+            ToScreenPoint(yEnd));
+    }
+
     private Pen CreateEntityPen(CadEntity entity)
     {
         CadColor color = ResolveEntityColor(entity);
@@ -117,6 +151,14 @@ public sealed class CadCanvas : Control
 
         return new Pen(brush, 1);
     }
+
+    private readonly Pen _ucsAxisXPen = new(
+    new SolidColorBrush(Color.FromRgb(255, 120, 120)),
+    2);
+
+    private readonly Pen _ucsAxisYPen = new(
+        new SolidColorBrush(Color.FromRgb(120, 255, 120)),
+        2);
 
     private CadColor ResolveEntityColor(CadEntity entity)
     {
@@ -576,9 +618,9 @@ public sealed class CadCanvas : Control
         UpdateCurrentSnapCandidate(modelPoint);
 
         ToolResult result = Workspace.ToolController.OnPointerPressed(
-            new PointerInfo(
-                modelPoint,
-                GetModifiers(e.KeyModifiers)));
+            CreatePointerInfo(
+                position,
+                e.KeyModifiers));
 
         NotifyWorkspaceChanged(
             result,
@@ -622,9 +664,9 @@ public sealed class CadCanvas : Control
         UpdateCurrentSnapCandidate(point);
 
         ToolResult result = Workspace.ToolController.OnPointerMoved(
-            new PointerInfo(
-                point,
-                GetModifiers(e.KeyModifiers)));
+            CreatePointerInfo(
+                position,
+                e.KeyModifiers));
 
         NotifyWorkspaceChanged(
             result,
@@ -662,9 +704,9 @@ public sealed class CadCanvas : Control
         }
 
         ToolResult result = Workspace.ToolController.OnPointerReleased(
-            new PointerInfo(
-                modelPoint,
-                GetModifiers(e.KeyModifiers)));
+            CreatePointerInfo(
+                position,
+                e.KeyModifiers));
 
         NotifyWorkspaceChanged(
             result,
@@ -802,5 +844,21 @@ public sealed class CadCanvas : Control
             Point2D.Origin);
 
         InvalidateVisual();
+    }
+
+    private PointerInfo CreatePointerInfo(
+    Point screenPoint,
+    KeyModifiers keyModifiers)
+    {
+        Point2D modelPoint = ToModelPoint(screenPoint);
+
+        Point2D userPoint = Workspace is null
+            ? modelPoint
+            : Workspace.CurrentUcs.WorldToUser(modelPoint);
+
+        return new PointerInfo(
+            modelPoint,
+            userPoint,
+            GetModifiers(keyModifiers));
     }
 }
