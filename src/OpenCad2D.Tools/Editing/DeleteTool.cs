@@ -15,19 +15,19 @@ public sealed class DeleteTool : ICadTool
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (context.SelectionSet.IsEmpty)
+        if (!context.Selection.HasSelection)
         {
             return ToolResult.None("No entities selected.");
         }
 
         IReadOnlyList<EntityId> selectedIds =
-            context.SelectionSet.SelectedIds.ToList();
+            context.Selection.SelectedIds.ToList();
 
-        context.CommandHistory.Execute(
+        context.Commands.Execute(
             context.Document,
             new DeleteEntitiesCommand(selectedIds));
 
-        context.SelectionSet.Clear();
+        context.Selection.Set.Clear();
 
         return ToolResult.Completed("Selected entities deleted.");
     }

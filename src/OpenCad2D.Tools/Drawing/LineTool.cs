@@ -47,9 +47,9 @@ public sealed class LineTool : TwoPointToolBase
         var line = new LineEntity(
             firstPoint,
             secondPoint,
-            layerId: context.CurrentLayerId);
+            layerId: context.Creation.CurrentLayerId);
 
-        context.CommandHistory.Execute(
+        context.Commands.Execute(
             context.Document,
             new AddEntityCommand(line));
 

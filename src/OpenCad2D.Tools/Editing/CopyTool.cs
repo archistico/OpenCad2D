@@ -30,16 +30,16 @@ public sealed class CopyTool : TwoPointToolBase
             displacement.Y);
 
         return context.Document.Entities
-            .GetByIds(context.SelectionSet.SelectedIds)
+            .GetByIds(context.Selection.SelectedIds)
             .Select(entity => entity.Transform(matrix).WithId(EntityId.New()))
             .ToList();
     }
 
     protected override ToolResult OnFirstPointSelected(
-        ToolContext context,
-        Point2D firstPoint)
+    ToolContext context,
+    Point2D firstPoint)
     {
-        if (context.SelectionSet.IsEmpty)
+        if (!context.Selection.HasSelection)
         {
             Reset();
 
@@ -58,11 +58,11 @@ public sealed class CopyTool : TwoPointToolBase
     }
 
     protected override ToolResult OnSecondPointSelected(
-        ToolContext context,
-        Point2D firstPoint,
-        Point2D secondPoint)
+    ToolContext context,
+    Point2D firstPoint,
+    Point2D secondPoint)
     {
-        if (context.SelectionSet.IsEmpty)
+        if (!context.Selection.HasSelection)
         {
             return ToolResult.None("No entities selected.");
         }
@@ -70,9 +70,9 @@ public sealed class CopyTool : TwoPointToolBase
         Vector2D displacement = firstPoint.VectorTo(secondPoint);
 
         IReadOnlyList<EntityId> selectedIds =
-            context.SelectionSet.SelectedIds.ToList();
+            context.Selection.SelectedIds.ToList();
 
-        context.CommandHistory.Execute(
+        context.Commands.Execute(
             context.Document,
             new CopyEntitiesCommand(
                 selectedIds,

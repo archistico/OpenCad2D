@@ -60,9 +60,9 @@ public sealed class RectangleTool : TwoPointToolBase
     }
 
     protected override ToolResult OnSecondPointSelected(
-    ToolContext context,
-    Point2D firstPoint,
-    Point2D secondPoint)
+        ToolContext context,
+        Point2D firstPoint,
+        Point2D secondPoint)
     {
         if (!CanCreateRectangle(firstPoint, secondPoint, context))
         {
@@ -72,9 +72,9 @@ public sealed class RectangleTool : TwoPointToolBase
         PolylineEntity rectangle = CreateRectangleEntity(
             firstPoint,
             secondPoint,
-            context.CurrentLayerId);
+            context.Creation.CurrentLayerId);
 
-        context.CommandHistory.Execute(
+        context.Commands.Execute(
             context.Document,
             new AddEntityCommand(rectangle));
 
@@ -94,7 +94,7 @@ public sealed class RectangleTool : TwoPointToolBase
         return CanCreateRectangle(
             firstCorner,
             oppositeCorner,
-            context.GeometryTolerance);
+            context.Coordinates.GeometryTolerance);
     }
 
     private static bool CanCreateRectangle(

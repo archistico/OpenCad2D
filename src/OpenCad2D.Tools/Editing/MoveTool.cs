@@ -25,7 +25,7 @@ public sealed class MoveTool : TwoPointToolBase
         Vector2D displacement = FirstPoint.Value.VectorTo(CurrentPoint.Value);
 
         return context.Document.Entities
-            .GetByIds(context.SelectionSet.SelectedIds)
+            .GetByIds(context.Selection.SelectedIds)
             .Select(entity => entity.Transform(
                 OpenCad2D.Geometry.Transformations.Matrix2D.Translation(
                     displacement.X,
@@ -34,10 +34,10 @@ public sealed class MoveTool : TwoPointToolBase
     }
 
     protected override ToolResult OnFirstPointSelected(
-        ToolContext context,
-        Point2D firstPoint)
+    ToolContext context,
+    Point2D firstPoint)
     {
-        if (context.SelectionSet.IsEmpty)
+        if (!context.Selection.HasSelection)
         {
             Reset();
 
@@ -60,7 +60,7 @@ public sealed class MoveTool : TwoPointToolBase
         Point2D firstPoint,
         Point2D secondPoint)
     {
-        if (context.SelectionSet.IsEmpty)
+        if (!context.Selection.HasSelection)
         {
             return ToolResult.None("No entities selected.");
         }
@@ -68,9 +68,9 @@ public sealed class MoveTool : TwoPointToolBase
         Vector2D displacement = firstPoint.VectorTo(secondPoint);
 
         IReadOnlyList<EntityId> selectedIds =
-            context.SelectionSet.SelectedIds.ToList();
+            context.Selection.SelectedIds.ToList();
 
-        context.CommandHistory.Execute(
+        context.Commands.Execute(
             context.Document,
             new MoveEntitiesCommand(
                 selectedIds,

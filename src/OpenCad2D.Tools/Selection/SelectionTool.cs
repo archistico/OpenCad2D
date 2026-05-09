@@ -90,7 +90,7 @@ public sealed class SelectionTool : ICadTool
             ShouldStartWindowSelection(
                 _dragStartPoint.Value,
                 pointer.ModelPoint,
-                context.SelectionDragThreshold))
+                context.Selection.DragThreshold))
         {
             _isDraggingWindow = true;
         }
@@ -126,7 +126,7 @@ public sealed class SelectionTool : ICadTool
         ArgumentNullException.ThrowIfNull(context);
 
         ResetDragState();
-        context.SelectionSet.Clear();
+        context.Selection.Set.Clear();
 
         return ToolResult.Cancelled("Selection cleared.");
     }
@@ -141,13 +141,13 @@ public sealed class SelectionTool : ICadTool
     }
 
     private ToolResult SelectByPoint(
-        ToolContext context,
-        PointerInfo pointer)
+    ToolContext context,
+    PointerInfo pointer)
     {
-        EntityId? selectedId = context.SelectionService.SelectByPoint(
+        EntityId? selectedId = context.Selection.Service.SelectByPoint(
             context.Document,
             pointer.ModelPoint,
-            context.SelectionTolerance);
+            context.Selection.Tolerance);
 
         bool shiftPressed = HasShift(pointer);
 
@@ -155,7 +155,7 @@ public sealed class SelectionTool : ICadTool
         {
             if (!shiftPressed)
             {
-                context.SelectionSet.Clear();
+                context.Selection.Set.Clear();
 
                 return ToolResult.Updated("Selection cleared.");
             }
@@ -165,19 +165,19 @@ public sealed class SelectionTool : ICadTool
 
         if (shiftPressed)
         {
-            context.SelectionSet.Toggle(selectedId.Value);
+            context.Selection.Set.Toggle(selectedId.Value);
 
             return ToolResult.Updated("Selection toggled.");
         }
 
-        context.SelectionSet.ReplaceWith(selectedId.Value);
+        context.Selection.Set.ReplaceWith(selectedId.Value);
 
         return ToolResult.Updated("Entity selected.");
     }
 
     private ToolResult SelectByWindow(
-        ToolContext context,
-        PointerInfo pointer)
+    ToolContext context,
+    PointerInfo pointer)
     {
         if (_dragStartPoint is null)
         {
@@ -196,7 +196,7 @@ public sealed class SelectionTool : ICadTool
             secondPoint);
 
         IReadOnlyList<EntityId> selectedIds =
-            context.SelectionService.SelectByWindow(
+            context.Selection.Service.SelectByWindow(
                 context.Document,
                 window,
                 mode);
@@ -207,12 +207,12 @@ public sealed class SelectionTool : ICadTool
         {
             foreach (EntityId id in selectedIds)
             {
-                context.SelectionSet.Toggle(id);
+                context.Selection.Set.Toggle(id);
             }
         }
         else
         {
-            context.SelectionSet.ReplaceWith(selectedIds);
+            context.Selection.Set.ReplaceWith(selectedIds);
         }
 
         return ToolResult.Updated(
