@@ -159,6 +159,8 @@ public partial class MainWindow : Window
     private void RefreshStatus()
     {
         Title = $"OpenCad2D - {_viewModel.ActiveToolName}";
+
+        RefreshActiveToolUi();
     }
 
     private void SnapEndpoint_Changed(
@@ -275,8 +277,8 @@ public partial class MainWindow : Window
     }
 
     private static void SetActiveToolButton(
-        Button button,
-        bool isActive)
+    Button button,
+    bool isActive)
     {
         const string activeClassName = "active-tool";
 
