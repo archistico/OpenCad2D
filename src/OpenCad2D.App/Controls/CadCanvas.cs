@@ -36,10 +36,21 @@ public sealed class CadCanvas : Control
     private readonly Pen _gripColdPen = new(
         new SolidColorBrush(Color.FromRgb(80, 210, 255)),
         1.5);
+    private readonly IBrush _gripColdFill = new SolidColorBrush(
+        Color.FromArgb(35, 80, 210, 255));
     private readonly IBrush _gripHotFill = new SolidColorBrush(Color.FromRgb(70, 210, 120));
+    private readonly Pen _gripHotPen = new(
+        new SolidColorBrush(Color.FromRgb(150, 255, 190)),
+        2);
+    private readonly Pen _gripHotHaloPen = new(
+        new SolidColorBrush(Color.FromArgb(150, 70, 210, 120)),
+        1.5);
     private readonly IBrush _gripWarmFill = new SolidColorBrush(Color.FromRgb(255, 90, 90));
     private readonly Pen _gripWarmPen = new(
-        new SolidColorBrush(Color.FromRgb(255, 150, 150)),
+        new SolidColorBrush(Color.FromRgb(255, 210, 210)),
+        2);
+    private readonly Pen _gripWarmHaloPen = new(
+        new SolidColorBrush(Color.FromArgb(180, 255, 90, 90)),
         1.5);
     private readonly IBrush _backgroundBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30));
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
@@ -781,14 +792,15 @@ public sealed class CadCanvas : Control
 
         Point start = ToScreenPoint(Workspace.Context.CurrentBasePoint.Value);
         Point end = ToScreenPoint(tool.CurrentDestination.Value);
-        const double markerRadius = 4;
+        const double baseMarkerRadius = 4;
+        const double destinationMarkerRadius = 5;
 
         context.DrawEllipse(
             _basePointMarkerFill,
             _basePointMarkerPen,
             start,
-            markerRadius,
-            markerRadius);
+            baseMarkerRadius,
+            baseMarkerRadius);
 
         context.DrawLine(
             _measurementVectorPen,
@@ -796,11 +808,11 @@ public sealed class CadCanvas : Control
             end);
 
         context.DrawEllipse(
-            null,
+            _basePointMarkerFill,
             _measurementVectorPen,
             end,
-            markerRadius,
-            markerRadius);
+            destinationMarkerRadius,
+            destinationMarkerRadius);
     }
 
     private void DrawGripMarkers(
@@ -830,7 +842,12 @@ public sealed class CadCanvas : Control
         bool isHot,
         bool isWarm)
     {
-        const double size = 8;
+        double size = isWarm
+            ? 13
+            : isHot
+                ? 11
+                : 9;
+
         double half = size / 2.0;
 
         var rect = new Rect(
@@ -839,17 +856,32 @@ public sealed class CadCanvas : Control
             size,
             size);
 
-        IBrush? fill = null;
+        IBrush? fill = _gripColdFill;
         Pen pen = _gripColdPen;
 
         if (isWarm)
         {
+            context.DrawEllipse(
+                null,
+                _gripWarmHaloPen,
+                center,
+                10,
+                10);
+
             fill = _gripWarmFill;
             pen = _gripWarmPen;
         }
         else if (isHot)
         {
+            context.DrawEllipse(
+                null,
+                _gripHotHaloPen,
+                center,
+                9,
+                9);
+
             fill = _gripHotFill;
+            pen = _gripHotPen;
         }
 
         context.DrawRectangle(

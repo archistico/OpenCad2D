@@ -150,21 +150,106 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         get
         {
+            if (Workspace.ToolController.ActiveTool is GripEditTool gripEditTool)
+            {
+                if (gripEditTool.WarmGripIndex is not null)
+                {
+                    string gripName = GetGripDescription(
+                        gripEditTool,
+                        gripEditTool.WarmGripIndex.Value);
+
+                    return $"Grip active ({gripName}). Specify destination, coordinates, relative coordinates, or distance:";
+                }
+
+                if (gripEditTool.HotGripIndex is not null)
+                {
+                    string gripName = GetGripDescription(
+                        gripEditTool,
+                        gripEditTool.HotGripIndex.Value);
+
+                    return $"Grip Edit: click highlighted grip ({gripName}) or press ESC to exit:";
+                }
+
+                return "Grip Edit: click a grip, or press ESC to exit:";
+            }
+
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";
         }
     }
 
-    public string StatusText =>
-        $"Tool: {ActiveToolName} | " +
-        $"{CurrentLayerText} | " +
-        $"Entities: {EntityCount} | " +
-        $"Selected: {SelectedCount} | " +
-        $"{MousePositionText} | " +
-        $"{MeasurementText} | " +
-        $"{SnapText} | " +
-        $"{LastMessage}";
+    public string GripStatusText
+    {
+        get
+        {
+            if (Workspace.ToolController.ActiveTool is not GripEditTool gripEditTool)
+            {
+                return string.Empty;
+            }
+
+            if (gripEditTool.WarmGripIndex is not null)
+            {
+                string gripName = GetGripDescription(
+                    gripEditTool,
+                    gripEditTool.WarmGripIndex.Value);
+
+                return $"Grip: active {gripName}";
+            }
+
+            if (gripEditTool.HotGripIndex is not null)
+            {
+                string gripName = GetGripDescription(
+                    gripEditTool,
+                    gripEditTool.HotGripIndex.Value);
+
+                return $"Grip: hot {gripName}";
+            }
+
+            return "Grip: select grip";
+        }
+    }
+
+    public string StatusText
+    {
+        get
+        {
+            string gripStatus = string.IsNullOrWhiteSpace(GripStatusText)
+                ? string.Empty
+                : $"{GripStatusText} | ";
+
+            return $"Tool: {ActiveToolName} | " +
+                   gripStatus +
+                   $"{CurrentLayerText} | " +
+                   $"Entities: {EntityCount} | " +
+                   $"Selected: {SelectedCount} | " +
+                   $"{MousePositionText} | " +
+                   $"{MeasurementText} | " +
+                   $"{SnapText} | " +
+                   $"{LastMessage}";
+        }
+    }
+
+
+    private static string GetGripDescription(
+        GripEditTool gripEditTool,
+        int gripListIndex)
+    {
+        if (gripListIndex < 0 || gripListIndex >= gripEditTool.CurrentGrips.Count)
+        {
+            return "unknown";
+        }
+
+        GripPoint grip = gripEditTool.CurrentGrips[gripListIndex];
+
+        return grip.Kind switch
+        {
+            GripKind.MoveVertex => $"vertex {grip.GripIndex}",
+            GripKind.MoveEntity => "move",
+            GripKind.ResizeRadius => "radius",
+            _ => grip.Kind.ToString()
+        };
+    }
 
 
     public ToolResult SubmitCommandInput(string? input)
@@ -282,6 +367,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(MousePositionText),
             nameof(MeasurementText),
+            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -292,6 +378,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(SnapText),
             nameof(MeasurementText),
+            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -306,6 +393,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(LastMessage),
+            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -320,6 +408,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(LastMessage),
+            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -403,6 +492,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(ActiveToolName),
+            nameof(GripStatusText),
             nameof(StatusText));
 
         return result;
@@ -480,6 +570,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(SnapText),
+            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -494,6 +585,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(IsOrthoEnabled),
             nameof(MeasurementText),
+            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -501,6 +593,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         OnPropertiesChanged(
             nameof(StatusText),
+            nameof(GripStatusText),
             nameof(EntityCount),
             nameof(SelectedCount),
             nameof(ActiveToolName),
@@ -523,6 +616,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(CommandPromptText),
             nameof(MeasurementText),
+            nameof(GripStatusText),
             nameof(StatusText),
             nameof(LastMessage));
     }
@@ -539,6 +633,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
             nameof(MeasurementText),
+            nameof(GripStatusText),
             nameof(StatusText));
     }
 
