@@ -90,4 +90,33 @@ public sealed class CopyEntitiesCommandTests
                 Array.Empty<OpenCad2D.Core.Identifiers.EntityId>(),
                 new Vector2D(1, 0)));
     }
+
+    [Fact]
+    public void Redo_ShouldReuseSameCreatedEntityIds()
+    {
+        var document = new CadDocument();
+        var history = new CommandHistory();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+
+        var command = new CopyEntitiesCommand(
+            new[] { line.Id },
+            new Vector2D(5, 0));
+
+        history.Execute(document, command);
+
+        var firstCreatedId = command.CreatedEntities.Single().Id;
+
+        history.Undo(document);
+        history.Redo(document);
+
+        var secondCreatedId = command.CreatedEntities.Single().Id;
+
+        Assert.Equal(firstCreatedId, secondCreatedId);
+        Assert.True(document.Entities.Contains(firstCreatedId));
+    }
 }

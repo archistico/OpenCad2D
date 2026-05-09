@@ -106,15 +106,6 @@ public sealed class RectangleTool : TwoPointToolBase
             && !tolerance.AreDistancesEqual(firstCorner.Y, oppositeCorner.Y);
     }
 
-    private static bool IsValidRectangle(
-        Point2D firstCorner,
-        Point2D oppositeCorner,
-        ToolContext context)
-    {
-        return !context.GeometryTolerance.AreDistancesEqual(firstCorner.X, oppositeCorner.X)
-            && !context.GeometryTolerance.AreDistancesEqual(firstCorner.Y, oppositeCorner.Y);
-    }
-
     private static PolylineEntity CreateRectangleEntity(
         Point2D firstCorner,
         Point2D oppositeCorner,

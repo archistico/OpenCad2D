@@ -50,18 +50,21 @@ public sealed class CopyEntitiesCommand : ICadCommand
 
     public void Execute(CadDocument document)
     {
-        Matrix2D matrix = Matrix2D.Translation(
-            _displacement.X,
-            _displacement.Y);
+        if (_createdEntities is null)
+        {
+            Matrix2D matrix = Matrix2D.Translation(
+                _displacement.X,
+                _displacement.Y);
 
-        IReadOnlyList<CadEntity> sourceEntities =
-            document.Entities.GetByIds(_sourceEntityIds);
+            IReadOnlyList<CadEntity> sourceEntities =
+                document.Entities.GetByIds(_sourceEntityIds);
 
-        _createdEntities = sourceEntities
-            .Select(entity => entity
-                .Transform(matrix)
-                .WithId(EntityId.New()))
-            .ToList();
+            _createdEntities = sourceEntities
+                .Select(entity => entity
+                    .Transform(matrix)
+                    .WithId(EntityId.New()))
+                .ToList();
+        }
 
         document.AddEntities(_createdEntities);
     }
