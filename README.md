@@ -191,7 +191,7 @@ Recommended reading:
 - [Tools](docs/tools.md) — tool lifecycle, `ToolContext`, pointer input, cancellation and tool behavior.
 - [Snapping](docs/snapping.md) — snap kinds, snap providers, search areas, priorities and visual markers.
 - [Roadmap](docs/roadmap.md) — current status, next development phases and long-term direction.
-
+- [AI Handoff Document](docs/ai-handoff.md) — for AI-assisted development and project handoff, see .
 ---
 
 ## Requirements
