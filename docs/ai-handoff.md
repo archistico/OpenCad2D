@@ -1,8 +1,6 @@
 # OpenCad2D - AI Handoff Document
 
-This document explains the current architecture, implementation rules and development status of OpenCad2D.
-
-Its purpose is to help future AI sessions, contributors and maintainers understand the project quickly and continue development without re-discovering architectural decisions from scratch.
+This document explains the current architecture, implementation rules and development status of OpenCad2D. Its purpose is to help future AI sessions, contributors and maintainers understand the project quickly and continue development without re-discovering architectural decisions from scratch.
 
 This file should be updated after every important development phase.
 
@@ -38,6 +36,7 @@ The project currently supports:
 - composite commands;
 - current layer selection;
 - hidden layer behavior;
+- locked layer behavior;
 - object snapping;
 - grid snapping;
 - snap markers;
@@ -48,9 +47,9 @@ The project currently supports:
 - spatial index abstraction;
 - document mutation through `CadDocument`;
 - ViewModel property notifications through `INotifyPropertyChanged`;
-- UI feedback for the active command/tool.
+- UI feedback for the active command/tool, current layer and snap type.
 
-The next major area is locked layer behavior.
+The locked layer behavior has been implemented. The next major areas are zoom extents, richer layer management, additional drawing tools and persistence.
 
 ---
 
@@ -74,11 +73,7 @@ tests/
 Dependency direction:
 
 ```text
-OpenCad2D.App
-  -> OpenCad2D.Tools
-    -> OpenCad2D.Interaction
-    -> OpenCad2D.Core
-      -> OpenCad2D.Geometry
+OpenCad2D.App -> OpenCad2D.Tools -> OpenCad2D.Interaction -> OpenCad2D.Core -> OpenCad2D.Geometry
 ```
 
 Reverse dependencies should be avoided.
@@ -110,7 +105,10 @@ The following rules are important and should be preserved.
 - Tools receive model/user coordinates through `PointerInfo`.
 - Snapping and selection work in model coordinates.
 - Hidden layer entities must not be drawn, selected or snapped to.
-- Locked layer entities should remain visible but must not be modified.
+- Locked layer entities must remain visible.
+- Locked layer entities must not be selectable.
+- Locked layer entities may still be used for snapping.
+- Locked layer entities must not be modified, removed or transformed.
 - Spatial queries should be preferred over full document scans when interaction is cursor-area based.
 - Floating-point comparisons should use `GeometryTolerance`.
 
@@ -128,23 +126,15 @@ UCS / user coordinates
 
 ### Screen coordinates
 
-Screen coordinates are Avalonia coordinates measured relative to the canvas.
-
-They are used only by the UI layer.
+Screen coordinates are Avalonia coordinates measured relative to the canvas. They are used only by the UI layer.
 
 ### WCS / model coordinates
 
-WCS is the internal world/model coordinate system.
-
-Entities are stored in WCS.
-
-Rendering, hit testing, selection and snapping ultimately operate on WCS geometry.
+WCS is the internal world/model coordinate system. Entities are stored in WCS. Rendering, hit testing, selection and snapping ultimately operate on WCS geometry.
 
 ### UCS / user coordinates
 
-UCS is the current user coordinate system.
-
-It is represented by `CoordinateSystem2D`.
+UCS is the current user coordinate system. It is represented by `CoordinateSystem2D`.
 
 `PointerInfo` contains both:
 
@@ -241,7 +231,9 @@ Allowed external usage of `document.Entities` should be mostly query-oriented:
 This rule is important because `CadDocument` is the correct place for:
 
 - layer validation;
-- future locked layer validation;
+- locked layer validation;
+- selectable entity queries;
+- visible entity queries;
 - spatial index consistency;
 - future document events;
 - future dirty-state tracking.
@@ -262,30 +254,16 @@ document.RemoveEntities(ids);
 
 ## 8. Entity model
 
-CAD entities are immutable or treated as immutable.
+CAD entities are immutable or treated as immutable. Transforming an entity returns a new entity instance. Commands replace old entities with new versions instead of mutating geometry in place.
 
-Transforming an entity returns a new entity instance.
-
-Commands replace old entities with new versions instead of mutating geometry in place.
-
-Entity identifiers must remain stable when an operation modifies an existing entity.
-
-Copy operations create new identifiers.
+Entity identifiers must remain stable when an operation modifies an existing entity. Copy operations create new identifiers.
 
 Examples:
 
 ```text
-Move
-  same entity id
-  replaced geometry
-
-Rotate
-  same entity id
-  replaced geometry
-
-Copy
-  new entity id
-  original entity unchanged
+Move    same entity id, replaced geometry
+Rotate  same entity id, replaced geometry
+Copy    new entity id, original entity unchanged
 ```
 
 This rule is important for undo/redo, selection and spatial index updates.
@@ -312,10 +290,9 @@ A layer has:
 ### Hidden layer behavior
 
 ```text
-hidden layer
-  entities are not drawn
-  entities are not selected
-  entities are not used by snapping
+hidden layer entities are not drawn
+hidden layer entities are not selected
+hidden layer entities are not used by snapping
 ```
 
 Hidden layer filtering should be performed through document-level visibility methods, such as:
@@ -328,19 +305,38 @@ document.GetVisibleEntities(searchArea)
 
 ### Locked layer behavior
 
-Locked layer behavior is planned next.
-
-Expected behavior:
+Locked layer behavior is implemented.
 
 ```text
-locked layer
-  entities are drawn
-  entities can be used by snaps
-  entities may be selectable, depending on final UX decision
-  entities must not be modified, deleted or transformed
+locked layer entities are drawn
+locked layer entities are not selectable
+locked layer entities can still be used by snaps
+locked layer entities cannot be modified, deleted or transformed
 ```
 
-Locked layer validation should be enforced in `CadDocument` mutation methods, not only in UI code.
+The distinction between selection and snapping is intentional:
+
+```text
+Selectable entities = visible entities that are not on locked layers
+Snappable entities  = visible entities, including entities on locked layers
+Editable entities   = entities that are not on locked layers
+```
+
+Locked layer validation is enforced in `CadDocument` mutation methods, not only in UI code.
+
+Important methods:
+
+```csharp
+document.IsEntitySelectable(entity)
+document.GetSelectableEntities()
+document.GetSelectableEntities(searchArea)
+document.RemoveEntity(id)
+document.RemoveEntities(ids)
+document.ReplaceEntity(entity)
+document.ReplaceEntities(entities)
+```
+
+When a layer is locked from the workspace/UI, the current selection is cleaned so that entities that are no longer selectable are removed from `SelectionSet`.
 
 ---
 
@@ -437,9 +433,7 @@ The user should undo this as one operation.
 
 ## 11. Tool system
 
-Tools live in `OpenCad2D.Tools`.
-
-They are UI-independent.
+Tools live in `OpenCad2D.Tools`. They are UI-independent.
 
 Important types:
 
@@ -533,11 +527,7 @@ It must not contain:
 
 ## 13. Selection system
 
-Selection state is stored in `SelectionSet`.
-
-It stores entity ids, not entity references.
-
-This avoids stale references when commands replace entities.
+Selection state is stored in `SelectionSet`. It stores entity ids, not entity references. This avoids stale references when commands replace entities.
 
 Selection behavior is implemented through:
 
@@ -552,9 +542,17 @@ Supported behavior:
 - window selection;
 - crossing selection.
 
-Selection should persist when switching from Select to Move or Copy.
+Selection uses selectable entities, not merely visible entities.
 
-This enables a common CAD workflow:
+```text
+Hidden layer entity      -> not selectable
+Locked layer entity      -> not selectable
+Visible unlocked entity  -> selectable
+```
+
+Point selection and window/crossing selection must both respect locked layer filtering.
+
+Selection should persist when switching from Select to Move or Copy. This enables a common CAD workflow:
 
 ```text
 select entities
@@ -572,11 +570,8 @@ Tool switching should use `Deactivate`, not `Cancel`.
 ESC has a two-step behavior.
 
 ```text
-first ESC
-  cancels the active tool operation if one is in progress
-
-second ESC
-  clears selection if no tool operation is active
+first ESC cancels the active tool operation if one is in progress
+second ESC clears selection if no tool operation is active
 ```
 
 Example:
@@ -586,20 +581,15 @@ select two entities
 activate Move
 click base point
 press ESC
-  Move operation is cancelled
-  selection remains
-
+Move operation is cancelled
+selection remains
 press ESC again
-  selection is cleared
+selection is cleared
 ```
 
 This behavior is implemented at workspace/action level, not hardcoded in the UI alone.
 
-Important rule:
-
-A tool should return `ToolResult.None()` when there is nothing to cancel.
-
-This allows the workspace to decide whether ESC should continue and clear the selection.
+Important rule: a tool should return `ToolResult.None()` when there is nothing to cancel. This allows the workspace to decide whether ESC should continue and clear the selection.
 
 ---
 
@@ -634,6 +624,7 @@ Snap providers should:
 - not modify the document;
 - respect hidden layer behavior;
 - use visible entities only;
+- keep snapping available on locked layers;
 - return candidates within tolerance;
 - return no candidates when contextual input is missing;
 - have focused tests.
@@ -653,27 +644,23 @@ Current contextual snaps:
 
 ## 16. Snap visualization
 
-The Avalonia UI draws snap markers.
-
-Different snap kinds should have different marker shapes.
+The Avalonia UI draws snap markers. Different snap kinds should have different marker shapes.
 
 Current intended marker semantics:
 
 ```text
-Endpoint        L shape
-Midpoint        X shape
-Center          circle
-Quadrant        diamond
-Intersection    plus
-Nearest         square
-Perpendicular   T shape
-Tangent         circle with line
-Grid            small grid/cross
+Endpoint       L shape
+Midpoint       X shape
+Center         circle
+Quadrant       diamond
+Intersection   plus
+Nearest        square
+Perpendicular  T shape
+Tangent        circle with line
+Grid           small grid/cross
 ```
 
-This is UI feedback only.
-
-Snap logic remains in `OpenCad2D.Interaction`.
+This is UI feedback only. Snap logic remains in `OpenCad2D.Interaction`.
 
 ---
 
@@ -693,9 +680,7 @@ Important types:
 - replaced;
 - cleared.
 
-Current implementation is linear.
-
-This is intentional: the abstraction exists so that `LinearSpatialIndex` can later be replaced by:
+Current implementation is linear. This is intentional: the abstraction exists so that `LinearSpatialIndex` can later be replaced by:
 
 - Quadtree;
 - R-Tree;
@@ -711,14 +696,14 @@ document.GetVisibleEntities(searchArea)
 ```
 
 ```csharp
+document.GetSelectableEntities(searchArea)
+```
+
+```csharp
 document.Entities.Query(area)
 ```
 
-Important rule:
-
-The spatial index answers “which entities may be in this area?”
-
-Visibility and locked-layer rules are still document/domain concerns.
+Important rule: the spatial index answers “which entities may be in this area?” Visibility, selectability and locked-layer rules are still document/domain concerns.
 
 ---
 
@@ -736,17 +721,11 @@ Visibility and locked-layer rules are still document/domain concerns.
 - snap markers;
 - UCS indicator.
 
-The standard OS cursor is hidden over the CAD canvas.
-
-A CAD-like crosshair is drawn across the full canvas.
-
-A small central rectangle indicates the exact pick point.
+The standard OS cursor is hidden over the CAD canvas. A CAD-like crosshair is drawn across the full canvas. A small central rectangle indicates the exact pick point.
 
 Entity pens are cached to avoid allocating brushes and pens for every visible entity on every frame.
 
-Rendering should not contain CAD business logic.
-
-If rendering code starts deciding document rules, the logic probably belongs in Core, Interaction or Tools.
+Rendering should not contain CAD business logic. If rendering code starts deciding document rules, the logic probably belongs in Core, Interaction or Tools.
 
 ---
 
@@ -765,6 +744,8 @@ Important calculated properties include:
 - `LayerNames`;
 - `Layers`;
 - `CurrentLayer`;
+- `CurrentLayerIsVisible`;
+- `CurrentLayerIsLocked`;
 - `CurrentLayerText`;
 - `MousePositionText`;
 - `SnapText`;
@@ -786,20 +767,20 @@ Do not move CAD business logic into the code-behind just because it is convenien
 Keyboard shortcuts:
 
 ```text
-Ctrl+Z   undo
-Ctrl+Y   redo
-Delete   delete selection
-Esc      cancel active operation, then clear selection
-Home     reset viewport
+Ctrl+Z  undo
+Ctrl+Y  redo
+Delete  delete selection
+Esc     cancel active operation, then clear selection
+Home    reset viewport
 ```
 
 Mouse behavior:
 
 ```text
-left click             tool input
-mouse move             preview, snapping, crosshair
-middle mouse button    pan
-mouse wheel            zoom
+left click           tool input
+mouse move           preview, snapping, crosshair
+middle mouse button  pan
+mouse wheel          zoom
 ```
 
 The active command/tool should always be visible to the user.
@@ -821,7 +802,10 @@ The following invariants should be preserved.
 - Commands are UI-independent.
 - Document mutations go through `CadDocument`.
 - Hidden layer entities are ignored by rendering, selection and snapping.
-- Locked layer entities must not be modified once locked-layer behavior is implemented.
+- Locked layer entities are rendered.
+- Locked layer entities are ignored by selection.
+- Locked layer entities remain available for snapping.
+- Locked layer entities must not be removed, replaced, moved, transformed or deleted.
 - The spatial index must stay synchronized with entity add/remove/replace.
 - Copy commands must reuse created entity ids on redo.
 - Composite commands undo child commands in reverse order.
@@ -837,17 +821,17 @@ The following invariants should be preserved.
 
 Known limitations:
 
-- locked layer behavior is not fully implemented yet;
+- no full layer manager yet;
 - no persistent file format yet;
 - no circle drawing tool yet;
+- no arc drawing tool yet;
 - no polyline drawing tool yet;
 - no text tool yet;
 - no property panel yet;
 - spatial index is still linear;
 - no model space / paper space separation yet;
 - no command line input yet;
-- no DXF/SVG/PDF export yet;
-- no full layer manager yet.
+- no DXF/SVG/PDF export yet.
 
 ---
 
@@ -856,11 +840,11 @@ Known limitations:
 Recommended next implementation steps:
 
 ```text
-1. Implement locked layer behavior.
-2. Add UI checkbox for locked layers.
-3. Add Zoom Extents.
-4. Add CircleTool.
-5. Add PolylineTool.
+1. Add Zoom Extents.
+2. Add CircleTool.
+3. Add ArcTool.
+4. Add PolylineTool.
+5. Add a richer Layer Manager.
 6. Add JSON save/load.
 7. Add property panel.
 8. Add text entity and TextTool.
@@ -881,14 +865,12 @@ one UI improvement when needed
 
 # 24. Class reference
 
-This section should be expanded as the project grows.
-
-Each important class should be documented using the following format:
+This section should be expanded as the project grows. Each important class should be documented using the following format:
 
 ```markdown
 ## ClassName
 
-**Project:** `ProjectName`  
+**Project:** `ProjectName`
 **Path:** `relative/path/ClassName.cs`
 
 ### Purpose
@@ -919,7 +901,7 @@ Important rules, edge cases or invariants.
 
 ## CadDocument
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Documents/CadDocument.cs`
 
 ### Purpose
@@ -933,6 +915,8 @@ Represents the current CAD drawing.
 - Validate entity layer references.
 - Provide document-level add, replace and remove methods.
 - Provide visible-entity queries.
+- Provide selectable-entity queries.
+- Enforce locked-layer mutation rules.
 - Act as the mutation boundary for the document.
 
 ### Must not do
@@ -952,13 +936,13 @@ Represents the current CAD drawing.
 
 ### Notes for future changes
 
-Locked layer validation should be implemented here, not only in UI tools.
+Locked layer validation is implemented here and must remain here. UI and tools may prevent invalid operations earlier, but `CadDocument` is the final protection boundary.
 
 ---
 
 ## EntityCollection
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Collections/EntityCollection.cs`
 
 ### Purpose
@@ -994,7 +978,7 @@ External code should avoid direct mutation through this collection. Mutations sh
 
 ## Layer
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Layers/Layer.cs`
 
 ### Purpose
@@ -1006,7 +990,7 @@ Represents a CAD layer.
 - Store layer identity and name.
 - Store default color and line weight.
 - Store visibility and locked state.
-- Provide immutable-style update helpers such as visibility changes.
+- Provide immutable-style update helpers such as visibility and locked-state changes.
 
 ### Must not do
 
@@ -1022,13 +1006,13 @@ Represents a CAD layer.
 
 ### Notes for future changes
 
-Locked layer support should preserve the distinction between visibility and editability.
+Locked layer support must preserve the distinction between visibility, selectability, snapping and editability.
 
 ---
 
 ## LayerCollection
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Layers/LayerCollection.cs`
 
 ### Purpose
@@ -1041,7 +1025,7 @@ Stores all layers in the document.
 - Retrieve layers by id.
 - Replace layer definitions.
 - Set layer visibility.
-- Eventually set layer locked state.
+- Set layer locked state.
 
 ### Must not do
 
@@ -1058,7 +1042,7 @@ Stores all layers in the document.
 
 ## ICadCommand
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Commands/ICadCommand.cs`
 
 ### Purpose
@@ -1086,7 +1070,7 @@ Defines an undoable document operation.
 
 ## CommandHistory
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Commands/CommandHistory.cs`
 
 ### Purpose
@@ -1115,7 +1099,7 @@ Coordinates undo and redo.
 
 ## CompositeCommand
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Commands/CompositeCommand.cs`
 
 ### Purpose
@@ -1146,7 +1130,7 @@ Use this for trim, extend, fillet, chamfer and offset when they require multiple
 
 ## GeometryTolerance
 
-**Project:** `OpenCad2D.Geometry`  
+**Project:** `OpenCad2D.Geometry`
 **Path:** `src/OpenCad2D.Geometry/GeometryTolerance.cs`
 
 ### Purpose
@@ -1176,7 +1160,7 @@ Defines the numeric tolerance strategy for geometric algorithms.
 
 ## CoordinateSystem2D
 
-**Project:** `OpenCad2D.Geometry`  
+**Project:** `OpenCad2D.Geometry`
 **Path:** `src/OpenCad2D.Geometry/Coordinates/CoordinateSystem2D.cs`
 
 ### Purpose
@@ -1205,7 +1189,7 @@ Represents a 2D user coordinate system mapped to world coordinates.
 
 ## ToolContext
 
-**Project:** `OpenCad2D.Tools`  
+**Project:** `OpenCad2D.Tools`
 **Path:** `src/OpenCad2D.Tools/Common/ToolContext.cs`
 
 ### Purpose
@@ -1241,7 +1225,7 @@ Provides runtime model-side services required by tools.
 
 ## CadWorkspace
 
-**Project:** `OpenCad2D.Tools`  
+**Project:** `OpenCad2D.Tools`
 **Path:** `src/OpenCad2D.Tools/Common/CadWorkspace.cs`
 
 ### Purpose
@@ -1256,6 +1240,8 @@ Aggregates the runtime CAD objects used by the application.
 - Own tool controller.
 - Own action controller.
 - Provide workspace-level actions such as ESC behavior.
+- Lock or unlock the current layer.
+- Clear selections that are no longer valid after layer state changes.
 
 ### Must not do
 
@@ -1276,7 +1262,7 @@ Aggregates the runtime CAD objects used by the application.
 
 ## ToolController
 
-**Project:** `OpenCad2D.Tools`  
+**Project:** `OpenCad2D.Tools`
 **Path:** `src/OpenCad2D.Tools/Common/ToolController.cs`
 
 ### Purpose
@@ -1306,7 +1292,7 @@ Owns and coordinates the active tool.
 
 ## TwoPointToolBase
 
-**Project:** `OpenCad2D.Tools`  
+**Project:** `OpenCad2D.Tools`
 **Path:** `src/OpenCad2D.Tools/Common/TwoPointToolBase.cs`
 
 ### Purpose
@@ -1338,7 +1324,7 @@ Base class for tools that use a first point and a second point.
 
 ## SelectionTool
 
-**Project:** `OpenCad2D.Tools`  
+**Project:** `OpenCad2D.Tools`
 **Path:** `src/OpenCad2D.Tools/Selection/SelectionTool.cs`
 
 ### Purpose
@@ -1368,7 +1354,7 @@ Handles point, window and crossing selection.
 
 ## SnapService
 
-**Project:** `OpenCad2D.Interaction`  
+**Project:** `OpenCad2D.Interaction`
 **Path:** `src/OpenCad2D.Interaction/Snapping/SnapService.cs`
 
 ### Purpose
@@ -1399,7 +1385,7 @@ Coordinates snap providers and chooses the best snap candidate.
 
 ## SnapRequest
 
-**Project:** `OpenCad2D.Interaction`  
+**Project:** `OpenCad2D.Interaction`
 **Path:** `src/OpenCad2D.Interaction/Snapping/SnapRequest.cs`
 
 ### Purpose
@@ -1433,7 +1419,7 @@ Describes a snap query.
 
 ## ISpatialIndex
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Spatial/ISpatialIndex.cs`
 
 ### Purpose
@@ -1452,6 +1438,7 @@ Defines a spatial lookup abstraction for entities.
 
 - Decide visibility.
 - Decide locked layer behavior.
+- Decide selectability.
 - Execute commands.
 
 ### Important collaborators
@@ -1464,7 +1451,7 @@ Defines a spatial lookup abstraction for entities.
 
 ## LinearSpatialIndex
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Spatial/LinearSpatialIndex.cs`
 
 ### Purpose
@@ -1495,7 +1482,7 @@ Can later be replaced by Quadtree, R-Tree or uniform grid without changing inter
 
 ## CadCanvas
 
-**Project:** `OpenCad2D.App`  
+**Project:** `OpenCad2D.App`
 **Path:** `src/OpenCad2D.App/Controls/CadCanvas.cs`
 
 ### Purpose
@@ -1532,7 +1519,7 @@ Avalonia canvas responsible for rendering and input forwarding.
 
 ## MainWindowViewModel
 
-**Project:** `OpenCad2D.App`  
+**Project:** `OpenCad2D.App`
 **Path:** `src/OpenCad2D.App/ViewModels/MainWindowViewModel.cs`
 
 ### Purpose
@@ -1567,7 +1554,7 @@ Exposes UI state derived from the CAD workspace.
 
 ## AddEntityCommand
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Commands/AddEntityCommand.cs`
 
 ### Purpose
@@ -1594,7 +1581,7 @@ Adds one or more entities to the document.
 
 ## DeleteEntitiesCommand
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Commands/DeleteEntitiesCommand.cs`
 
 ### Purpose
@@ -1622,7 +1609,7 @@ Deletes existing entities and restores them on undo.
 
 ## TransformEntitiesCommand
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Commands/TransformEntitiesCommand.cs`
 
 ### Purpose
@@ -1652,7 +1639,7 @@ Transforms existing entities using a transformation matrix.
 
 ## CopyEntitiesCommand
 
-**Project:** `OpenCad2D.Core`  
+**Project:** `OpenCad2D.Core`
 **Path:** `src/OpenCad2D.Core/Commands/CopyEntitiesCommand.cs`
 
 ### Purpose

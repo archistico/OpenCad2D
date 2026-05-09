@@ -12,11 +12,7 @@ This keeps tools testable and keeps the UI thin.
 
 ## Main idea
 
-The UI receives mouse and keyboard input.
-
-The canvas converts screen coordinates into model coordinates and user coordinates.
-
-Then the input is forwarded to the active CAD tool.
+The UI receives mouse and keyboard input. The canvas converts screen coordinates into model coordinates and user coordinates. Then the input is forwarded to the active CAD tool.
 
 The tool decides what to do.
 
@@ -33,9 +29,9 @@ The UI does not create the line directly. It only forwards input and renders the
 It contains:
 
 ```text
-ModelPoint   point in WCS/model coordinates
-UserPoint    point in the current UCS
-Modifiers    Shift, Control, Alt
+ModelPoint  point in WCS/model coordinates
+UserPoint   point in the current UCS
+Modifiers   Shift, Control, Alt
 ```
 
 This is important because tools should not know about the viewport or Avalonia coordinates.
@@ -101,10 +97,10 @@ Tools should use this instead of directly working with `CommandHistory`.
 It contains:
 
 ```text
-Set             SelectionSet
-Service         SelectionService
-Tolerance       point selection tolerance
-DragThreshold   threshold before window selection starts
+Set            SelectionSet
+Service        SelectionService
+Tolerance      point selection tolerance
+DragThreshold  threshold before window selection starts
 HasSelection
 SelectedIds
 ```
@@ -120,6 +116,14 @@ if (!context.Selection.HasSelection)
 IReadOnlyList<EntityId> ids = context.Selection.SelectedIds.ToList();
 ```
 
+Selection must be based on selectable entities, not merely visible entities.
+
+```text
+Hidden layer entity       -> not selectable
+Locked layer entity       -> not selectable
+Visible unlocked entity   -> selectable
+```
+
 ---
 
 ## ToolSnapContext
@@ -129,13 +133,15 @@ IReadOnlyList<EntityId> ids = context.Selection.SelectedIds.ToList();
 It contains:
 
 ```text
-Service        SnapService
-EnabledSnaps   enabled snap flags
-Tolerance      snap tolerance
-GridSettings   grid snapping configuration
+Service       SnapService
+EnabledSnaps  enabled snap flags
+Tolerance     snap tolerance
+GridSettings  grid snapping configuration
 ```
 
 Two-point tools use snapping through their shared base class.
+
+Snapping uses visible entities. This intentionally includes entities on locked layers, because locked geometry may still be used as a reference.
 
 ---
 
@@ -246,8 +252,8 @@ For example, changing from `SelectionTool` to `MoveTool` must not clear the curr
 `Esc` behavior is layered:
 
 ```text
-first Esc   cancels the active tool operation if one is in progress
-second Esc  clears selection if no tool operation is active
+first Esc cancels the active tool operation if one is in progress
+second Esc clears selection if no tool operation is active
 ```
 
 This behavior belongs to `CadWorkspace.Escape()` or equivalent workspace-level logic, not to Avalonia event handlers.
@@ -270,9 +276,7 @@ Completed
 Cancelled
 ```
 
-The result can contain a message.
-
-The UI can use this message in the status bar. This gives feedback without coupling tools to the UI.
+The result can contain a message. The UI can use this message in the status bar. This gives feedback without coupling tools to the UI.
 
 ---
 
@@ -296,286 +300,195 @@ MoveTool
 CopyTool
 ```
 
-`TwoPointToolBase` implements this shared behavior.
+`TwoPointToolBase` implements this shared behavior. It stores the first point, updates the current point while the pointer moves, applies snapping and resets the tool after completion.
 
-It stores the first point, updates the current point while the pointer moves, applies snapping and resets the tool after completion.
-
-Derived tools only define what happens when the two points are known.
-
-`Cancel` should return `ToolResult.None()` if there is no active first point/current operation. This allows `Esc` to move on to selection clearing only when there is nothing left to cancel.
-
----
-
-## LineTool
-
-`LineTool` creates a `LineEntity`.
-
-The first point is stored after the first click.
-
-The second point creates a line from the first point to the second point.
-
-The created line uses `context.Creation.CurrentLayerId`.
-
-The operation is executed through `AddEntityCommand`, so it is undoable.
-
----
-
-## RectangleTool
-
-`RectangleTool` creates a closed `PolylineEntity`.
-
-The first point is one corner of the rectangle.
-
-The second point is the opposite corner.
-
-The rectangle is represented by four vertices and `IsClosed = true`.
-
-Rectangle validity should use `context.Coordinates.GeometryTolerance` so that nearly-zero width or height is rejected consistently.
-
-Like `LineTool`, it creates the entity through `AddEntityCommand`.
+`TwoPointToolBase` should not know the specific operation. Derived classes decide what happens when the second point is chosen.
 
 ---
 
 ## SelectionTool
 
-`SelectionTool` modifies the `SelectionSet` through the tool selection context.
+`SelectionTool` handles point, window and crossing selection.
 
-It supports:
+Selection is stored as entity ids in `SelectionSet`.
+
+Supported behavior:
 
 ```text
-point selection
-shift-click toggle
-window selection
-crossing selection
+click                select by point
+Shift + click        toggle selection
+left-to-right drag   window selection
+right-to-left drag   crossing selection
 ```
 
-Point selection is applied on pointer release, not pointer press. This avoids accidentally selecting by click before a drag window is completed.
-
-When the user drags from left to right, the selection mode is window selection. Entities must be fully inside the selection rectangle.
-
-When the user drags from right to left, the selection mode is crossing selection. Entities only need to intersect the selection rectangle.
-
 Hidden layer entities are ignored by selection through document visibility rules.
+
+Locked layer entities are also ignored by selection. This is handled through selectable-entity queries, not by checking Avalonia UI state.
+
+```text
+Hidden layer entity       -> not selectable
+Locked layer entity       -> not selectable
+Visible unlocked entity   -> selectable
+```
+
+The selection tool must not modify or delete selected entities. It only manages `SelectionSet`.
+
+---
+
+## LineTool
+
+`LineTool` creates a `LineEntity` using two points.
+
+Expected flow:
+
+```text
+first click   stores start point
+mouse move    updates preview
+second click  creates LineEntity and executes AddEntityCommand
+```
+
+The new entity should use the current creation context, especially `CurrentLayerId`.
+
+---
+
+## RectangleTool
+
+`RectangleTool` creates a rectangular closed polyline or equivalent rectangle entity, depending on the current implementation.
+
+Expected flow:
+
+```text
+first click   stores first corner
+mouse move    updates preview
+second click  creates rectangle geometry and executes AddEntityCommand
+```
+
+The tool should create geometry in model coordinates and should not depend on screen-space values.
 
 ---
 
 ## MoveTool
 
-`MoveTool` moves selected entities.
+`MoveTool` transforms selected entities by displacement.
 
-It uses the first point as the base point and the second point as the destination point.
-
-The displacement is:
+Expected flow:
 
 ```text
-secondPoint - firstPoint
+requires selection
+first click   base point
+mouse move    preview displacement
+second click  execute MoveEntitiesCommand
 ```
 
-Then the tool executes `MoveEntitiesCommand` through `context.Commands`.
+The command must replace entities through `CadDocument`, not mutate geometry in place.
 
-The selected entities keep their identifiers, but their geometry is transformed.
-
-Because the operation is command-based, it can be undone and redone.
+Entities on locked layers should normally never reach this workflow because they are not selectable. `CadDocument` still blocks replacement if a future workflow accidentally attempts it.
 
 ---
 
 ## CopyTool
 
-`CopyTool` copies selected entities.
+`CopyTool` creates copied entities by displacement.
 
-It uses the same two-point displacement logic as `MoveTool`.
+Expected flow:
 
-The difference is that copied entities receive new identifiers.
+```text
+requires selection
+first click   base point
+mouse move    preview displacement
+second click  execute CopyEntitiesCommand
+```
 
-The original entities remain unchanged.
+Copying does not modify the source entities. However, locked-layer entities are not selectable, so the normal UI workflow cannot copy them through selection.
 
-The operation is executed through `CopyEntitiesCommand`, so it can be undone.
-
-Preview copies may use temporary ids because they are not inserted into the document.
+A future explicit copy-from-reference workflow would need a clear rule for whether locked-layer source entities are allowed.
 
 ---
 
 ## DeleteTool
 
-`DeleteTool` deletes the current selection.
+`DeleteTool` or delete actions remove selected entities through `DeleteEntitiesCommand`.
 
-Unlike line, rectangle, move and copy, delete is not a two-point operation.
-
-After deleting selected entities, it clears the selection.
-
-The operation is executed through `DeleteEntitiesCommand`, so undo restores the deleted entities.
-
----
-
-## ToolController
-
-`ToolController` owns the active tool.
-
-The UI should not call concrete tools directly in most cases. It should call the controller:
+Expected behavior:
 
 ```text
-OnPointerPressed
-OnPointerMoved
-OnPointerReleased
-CancelActiveTool
-SetActiveTool
+read selected ids
+create DeleteEntitiesCommand
+execute through command context
+clear or update selection as needed
 ```
 
-When the active tool changes, the controller deactivates the previous tool.
+The command must remove entities through `CadDocument.RemoveEntities(...)`.
 
-This keeps tool switching behavior consistent.
+Locked-layer entities are not selectable, so normal deletion should not target them. `CadDocument` still protects itself and rejects removal of locked-layer entities.
 
 ---
 
-## ToolRegistry
+## Layer locking from the workspace
 
-`ToolRegistry` is a small factory and catalog for tools.
+Layer locking is coordinated by `CadWorkspace`.
 
-It maps a `ToolId` to a concrete tool instance.
+The UI can request that the current layer is locked or unlocked, but the UI should not decide which selected entities remain valid. That logic belongs to the workspace and document model.
 
-Example:
+When the current layer is locked:
 
 ```text
-ToolId.Selection   -> SelectionTool
-ToolId.Line        -> LineTool
-ToolId.Rectangle   -> RectangleTool
-ToolId.Move        -> MoveTool
-ToolId.Copy        -> CopyTool
+CadWorkspace.SetCurrentLayerLocked(true)
+LayerCollection.SetLocked(...)
+CadWorkspace.ClearSelectionOfNonSelectableEntities()
 ```
 
-This avoids creating tools directly from the UI.
+This ensures that any selected entity that has become non-selectable is immediately removed from `SelectionSet`.
 
----
-
-## CadActionController
-
-`CadActionController` centralizes global actions.
-
-It handles operations such as:
+Important rule:
 
 ```text
-Undo
-Redo
-DeleteSelection
-CancelActiveTool
+The UI toggles layer state.
+The workspace cleans selection state.
+The document enforces mutation rules.
 ```
 
-These actions can be triggered from toolbar buttons, menu items or keyboard shortcuts.
-
----
-
-## CadWorkspace
-
-`CadWorkspace` aggregates runtime objects needed by the application.
-
-It owns or exposes:
-
-```text
-CadDocument
-CommandHistory
-SelectionSet
-SnapService
-SelectionService
-ToolRegistry
-ToolContext
-ToolController
-CadActionController
-current UCS
-geometry tolerance
-current layer
-```
-
-The Avalonia application can create one workspace and use it as the central runtime object.
-
-Workspace-level behavior such as `Escape()` is useful when the behavior spans multiple concepts, such as tool cancellation followed by selection clearing.
-
----
-
-## Snapping inside tools
-
-Tools do not manually calculate every snap.
-
-`TwoPointToolBase` applies snapping through `SnapService`.
-
-When a tool already has a first point, that point is passed as `BasePoint` in the snap request.
-
-This is important for contextual snaps such as perpendicular and tangent.
+Tools should not assume that selection is always valid forever. If layer state changes, selection must be revalidated against `CadDocument.IsEntitySelectable(...)`.
 
 ---
 
 ## Preview behavior
 
-Some tools expose preview entities.
+Tools may expose preview geometry so that the UI can render it.
 
-Examples:
+The preview belongs conceptually to the tool state, but rendering belongs to `OpenCad2D.App`.
 
-```text
-LineTool       preview line
-RectangleTool  preview rectangle
-MoveTool       transformed selected entities
-CopyTool       copied selected entities
-```
-
-The UI is responsible for rendering previews. Tools only provide temporary geometry.
-
-This keeps rendering separate from tool behavior.
+A tool may say “this is the preview entity” or “this is the current rectangle preview”, but it should not draw it directly.
 
 ---
 
-## Active command feedback
+## Adding a new tool
 
-The UI should always show which command/tool is active.
+When adding a new tool, follow this checklist:
 
-This is not part of the tool logic itself, but tools provide enough state through `ToolController` and `MainWindowViewModel` for the UI to display:
-
-```text
-active toolbar button
-active command label
-window title/status text
-```
-
-For modal tools such as line, rectangle, move and copy, this feedback is important because the next click depends on the active tool.
-
----
-
-## Testing tools
-
-Tools are designed to be tested without running Avalonia.
-
-A test can create a document, command history, selection set and tool context.
-
-Then it can send pointer events to a tool and verify document state.
-
-Examples:
-
-```text
-LineTool creates a LineEntity after two clicks
-RectangleTool rejects zero-size rectangles
-MoveTool moves selected entities
-CopyTool creates new entities
-SelectionTool selects visible entities only
-Esc cancels an active two-point operation
-```
+1. Add the tool class in `OpenCad2D.Tools`.
+2. Keep it independent from Avalonia.
+3. Use `PointerInfo` for input.
+4. Use `ToolContext` sub-contexts.
+5. Use snapping when appropriate.
+6. Create commands for document modifications.
+7. Add focused tests in `OpenCad2D.Tools.Tests`.
+8. Register the tool in `ToolRegistry`.
+9. Add UI buttons or shortcuts in `OpenCad2D.App` only after the model-side tool works.
 
 ---
 
-## Guidelines for new tools
+## Tool design rules
 
-A new tool should:
+Preserve these rules:
 
 ```text
-stay UI-independent
-work in model/user coordinates
-use ToolContext sub-contexts
-execute commands for document changes
-use CadDocument mutation through commands
-use GeometryTolerance for geometric validity checks
-use snapping through the existing snapping flow
-preserve selection unless explicitly cancelling selection
-return meaningful ToolResult messages
-have focused tests
+Tools do not depend on Avalonia.
+Tools do not render.
+Tools do not open dialogs.
+Tools receive model/user coordinates.
+Tools use commands for undoable mutations.
+Tools do not mutate EntityCollection directly.
+Tools should preserve selection on Deactivate.
+Tools should cancel in-progress operations on Cancel.
 ```
-
-If it follows the first-point / second-point pattern, it should probably derive from `TwoPointToolBase`.
-
-If it performs a complex multi-entity operation, it should create a `CompositeCommand` or a focused command that internally uses document-level mutation APIs.

@@ -2,7 +2,9 @@
 
 OpenCad2D is organized around a simple principle: CAD logic must remain independent from the graphical user interface.
 
-The Avalonia application is the presentation layer. It draws the document, receives mouse and keyboard input, converts screen coordinates into CAD coordinates and forwards input to the tool system. Geometry, entities, snapping, selection, commands, layers and editing behavior live in dedicated libraries and can be tested without launching the desktop application.
+The Avalonia application is the presentation layer. It draws the document, receives mouse and keyboard input, converts screen coordinates into CAD coordinates and forwards input to the tool system.
+
+Geometry, entities, snapping, selection, commands, layers and editing behavior live in dedicated libraries and can be tested without launching the desktop application.
 
 This separation is the most important design rule in the project.
 
@@ -36,14 +38,15 @@ Each project has a specific responsibility.
 The direction of dependencies should remain clear.
 
 ```text
-App
-  -> Tools
-    -> Interaction
-    -> Core
-      -> Geometry
+App -> Tools -> Interaction -> Core -> Geometry
 ```
 
-The reverse direction should be avoided. `Geometry` must not know anything about CAD entities, tools or Avalonia. `Core` must not depend on the UI. `Interaction` works with model data and must not know about Avalonia. `Tools` can coordinate CAD behavior, but should still remain UI-independent.
+The reverse direction should be avoided.
+
+- `Geometry` must not know anything about CAD entities, tools or Avalonia.
+- `Core` must not depend on the UI.
+- `Interaction` works with model data and must not know about Avalonia.
+- `Tools` can coordinate CAD behavior, but should still remain UI-independent.
 
 ---
 
@@ -86,14 +89,12 @@ file persistence
 OpenCad2D separates screen coordinates, world/model coordinates and user coordinates.
 
 ```text
-Screen coordinates  = Avalonia coordinates, measured in pixels in the canvas
-WCS / model         = absolute drawing coordinates stored in the document
-UCS                 = user coordinate system used for input and display
+Screen coordinates = Avalonia coordinates, measured in pixels in the canvas
+WCS / model        = absolute drawing coordinates stored in the document
+UCS                = user coordinate system used for input and display
 ```
 
-The document stores entities in WCS/model coordinates.
-
-The canvas converts screen coordinates to model coordinates using the viewport transform. The current UCS converts between WCS and user coordinates.
+The document stores entities in WCS/model coordinates. The canvas converts screen coordinates to model coordinates using the viewport transform. The current UCS converts between WCS and user coordinates.
 
 ```text
 Screen -> WCS -> UCS
@@ -109,9 +110,9 @@ Zoom and pan belong to the viewport. They must not modify document geometry.
 
 ## Numeric precision
 
-OpenCad2D uses an explicit numeric tolerance strategy.
+OpenCad2D uses an explicit numeric tolerance strategy. Floating-point geometry cannot rely on direct equality checks.
 
-Floating-point geometry cannot rely on direct equality checks. In a CAD application, whether two values are considered equal depends on context: point distance, angle comparison, vector length and normalized parameters do not necessarily use the same tolerance.
+In a CAD application, whether two values are considered equal depends on context: point distance, angle comparison, vector length and normalized parameters do not necessarily use the same tolerance.
 
 `GeometryTolerance` defines separate values for:
 
@@ -130,9 +131,9 @@ New geometric algorithms should prefer `GeometryTolerance` instead of raw magic 
 
 ## OpenCad2D.Core
 
-`OpenCad2D.Core` contains the main CAD model.
+`OpenCad2D.Core` contains the main CAD model. This is where geometric primitives become CAD entities.
 
-This is where geometric primitives become CAD entities. For example, a segment can become a `LineEntity`, a circle can become a `CircleEntity`, and a polyline can become a `PolylineEntity`.
+For example, a segment can become a `LineEntity`, a circle can become a `CircleEntity`, and a polyline can become a `PolylineEntity`.
 
 Entities have CAD-specific properties such as:
 
@@ -165,7 +166,9 @@ RemoveEntities
 
 This is important because the document is where cross-cutting validation belongs.
 
-For example, when locked layers are implemented, `CadDocument` can reject replacement or removal of entities that belong to locked layers. If commands bypass the document and mutate `document.Entities` directly, those rules would be skipped.
+For example, locked layer behavior is enforced by `CadDocument`: replacement and removal of entities that belong to locked layers are rejected at the document mutation boundary.
+
+If commands bypass the document and mutate `document.Entities` directly, those rules would be skipped.
 
 `EntityCollection` can still be used for queries such as reading entities by id, enumerating entities and spatial lookup. Mutations should go through `CadDocument`.
 
@@ -180,10 +183,7 @@ The current implementation uses `ISpatialIndex` with a `LinearSpatialIndex`. The
 The current structure is:
 
 ```text
-CadDocument
-  -> EntityCollection
-    -> ISpatialIndex
-      -> LinearSpatialIndex
+CadDocument -> EntityCollection -> ISpatialIndex -> LinearSpatialIndex
 ```
 
 This prepares the project for future implementations such as:
@@ -194,9 +194,9 @@ RTreeSpatialIndex
 UniformGridSpatialIndex
 ```
 
-The spatial index should answer: which entities have bounds intersecting this search area?
+The spatial index should answer: which entities have bounds intersecting this search area? It should not decide visibility, selection or editability. Those rules belong to `CadDocument`, layers and interaction services.
 
-It should not decide visibility, selection or editability. Those rules belong to `CadDocument`, layers and interaction services.
+For this reason, spatial queries are usually followed by document-level filters such as visible-entity or selectable-entity filtering.
 
 ---
 
@@ -206,38 +206,46 @@ The core supports layers through `Layer`, `LayerId` and `LayerCollection`.
 
 New entities created by drawing tools use the current layer from the tool creation context.
 
-Layer visibility is already part of document-level visibility rules:
+Layer visibility and locked state are part of document-level rules.
+
+Hidden layer behavior:
 
 ```text
-visible layer
-  entities can be drawn, selected and used by snapping
-
-hidden layer
-  entities are not drawn
-  entities are not selected
-  entities are not used by snapping
+hidden layer entities are not drawn
+hidden layer entities are not selected
+hidden layer entities are not used by snapping
 ```
 
-The UI exposes the current layer and a visibility toggle. Hidden layer behavior is enforced consistently by rendering, hit testing, selection and snapping through `CadDocument.GetVisibleEntities(...)`.
-
-Locked layers are the next layer-related step. The intended rule is:
+Locked layer behavior:
 
 ```text
-locked layer
-  entities are drawn
-  entities can be used as references for snapping
-  entities cannot be modified, removed or transformed
+locked layer entities are drawn
+locked layer entities are not selectable
+locked layer entities can still be used as references for snapping
+locked layer entities cannot be modified, removed or transformed
 ```
 
-Locked-layer enforcement should be implemented at the `CadDocument` mutation boundary.
+The UI exposes the current layer, a visibility toggle and a locked toggle.
+
+The distinction between visible, selectable and snappable entities is important:
+
+```text
+Visible entities    = entities whose own visibility is true and whose layer is visible
+Selectable entities = visible entities that are not on locked layers
+Snappable entities  = visible entities, including locked-layer entities
+```
+
+Rendering and snapping use visible entities.
+
+Selection and hit testing use selectable entities.
+
+Locked-layer enforcement is implemented at the `CadDocument` mutation boundary, so invalid replacement/removal is blocked even if a future tool accidentally tries to modify an entity directly.
 
 ---
 
 ## Commands and undo/redo
 
-Commands are the foundation of undo and redo.
-
-Each command must know how to execute an operation and how to undo it.
+Commands are the foundation of undo and redo. Each command must know how to execute an operation and how to undo it.
 
 A user-facing operation that changes the document should generally be represented by a command. This includes drawing, deleting, moving, copying, rotating, scaling, mirroring and future editing operations.
 
@@ -277,15 +285,15 @@ Snapping answers: what is the best snap candidate near the cursor?
 
 Interaction services work in model coordinates. They do not know about screen pixels, Avalonia controls or mouse events.
 
-Where possible, interaction services query a spatial search area instead of scanning every entity. Visibility rules are still applied through the document.
+Where possible, interaction services query a spatial search area instead of scanning every entity.
+
+Visibility, selectability and locked-layer rules are still applied through the document.
 
 ---
 
 ## OpenCad2D.Tools
 
-`OpenCad2D.Tools` contains the CAD tool system.
-
-A tool represents an operation the user can perform, such as selecting, drawing a line, drawing a rectangle, moving entities or copying entities.
+`OpenCad2D.Tools` contains the CAD tool system. A tool represents an operation the user can perform, such as selecting, drawing a line, drawing a rectangle, moving entities or copying entities.
 
 Tools are not Avalonia controls. They do not draw buttons, do not handle Avalonia events directly and do not know about the visual canvas.
 
@@ -382,7 +390,9 @@ Rendering should avoid unnecessary allocations. Entity pens are cached by color 
 
 `MainWindowViewModel` implements property change notification so that UI bindings can update automatically.
 
-The UI should not need to manually rewrite every text block after every action. Properties such as status text, active tool name, entity count, selected count, current layer and snap text should notify the UI when they change.
+The UI should not need to manually rewrite every text block after every action.
+
+Properties such as status text, active tool name, entity count, selected count, current layer, current layer visibility, current layer locked state and snap text should notify the UI when they change.
 
 Manual refresh calls can still exist while the UI is being migrated gradually, but new UI state should prefer binding to the view model.
 
@@ -394,13 +404,9 @@ A typical drawing operation follows this flow.
 
 The user clicks on the canvas. Avalonia receives a pointer event. `CadCanvas` converts the screen point into model coordinates and user coordinates. It creates a `PointerInfo` and sends it to `ToolController`.
 
-`ToolController` forwards the event to the active tool.
+`ToolController` forwards the event to the active tool. If the active tool is `LineTool`, the first click stores the first point. The second click creates a `LineEntity`, wraps it in an `AddEntityCommand` and executes it through the command context.
 
-If the active tool is `LineTool`, the first click stores the first point. The second click creates a `LineEntity`, wraps it in an `AddEntityCommand` and executes it through the command context.
-
-The command modifies the document through the `CadDocument` API.
-
-The canvas is invalidated and renders the updated document.
+The command modifies the document through the `CadDocument` API. The canvas is invalidated and renders the updated document.
 
 Avalonia does not directly create or edit entities. It forwards input and renders the resulting state.
 
@@ -421,11 +427,13 @@ move selected entity
 `Esc` has layered behavior:
 
 ```text
-first Esc   cancels the current tool operation if one is in progress
-second Esc  clears the current selection if no tool operation is active
+first Esc cancels the current tool operation if one is in progress
+second Esc clears the current selection if no tool operation is active
 ```
 
 This keeps command cancellation and selection clearing separate.
+
+If a layer state change makes some selected entities no longer selectable, the workspace should clean the selection through document-level selectability checks.
 
 ---
 
@@ -436,7 +444,7 @@ The project is designed to be testable without launching the UI.
 ```text
 Geometry tests      primitives, transformations, intersections, tolerances, UCS
 Core tests          entities, document behavior, layers, commands, spatial index
-Interaction tests   hit testing, selection, snapping, hidden layer behavior
+Interaction tests   hit testing, selection, snapping, hidden and locked layer behavior
 Tools tests         tool behavior, command execution, workspace integration
 App tests           should remain minimal because UI logic should be thin
 ```

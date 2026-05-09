@@ -25,9 +25,10 @@ The application already supports a basic but functional CAD workflow:
 - object snapping;
 - grid display and grid snapping;
 - layer visibility;
+- locked layer behavior;
 - zoom, pan and view reset;
 - CAD-style crosshair cursor;
-- visual feedback for the active command and snap type.
+- visual feedback for the active command, current layer and snap type.
 
 ---
 
@@ -67,7 +68,9 @@ The UI currently includes:
 
 - a tool toolbar;
 - snap mode toggles;
-- layer selector and layer visibility toggle;
+- layer selector;
+- layer visibility toggle;
+- layer locked toggle;
 - drawing canvas;
 - grid;
 - CAD-style full-canvas crosshair cursor;
@@ -168,7 +171,9 @@ The document entity collection is backed by an `ISpatialIndex` abstraction. The 
 
 ### Document mutation boundary
 
-`CadDocument` is the public boundary for modifying entities. Commands should call document methods such as `AddEntity`, `RemoveEntities` and `ReplaceEntities` instead of directly mutating the entity collection. This is important for validation, spatial index updates and future locked-layer rules.
+`CadDocument` is the public boundary for modifying entities. Commands should call document methods such as `AddEntity`, `RemoveEntities` and `ReplaceEntities` instead of directly mutating the entity collection.
+
+This is important for validation, spatial index updates and locked-layer rules. Entities on locked layers cannot be removed or replaced through the document mutation API.
 
 ### Composite commands
 
@@ -254,6 +259,8 @@ To delete entities, select them and press `Delete` or use the delete command.
 
 To hide a layer, choose it from the layer selector and disable its visibility checkbox. Entities on hidden layers are not drawn, selected or used by snapping.
 
+To lock a layer, choose it from the layer selector and enable its locked checkbox. Entities on locked layers remain visible and can still be used for snapping, but they cannot be selected, moved, deleted or transformed.
+
 ---
 
 ## Development principles
@@ -266,7 +273,8 @@ OpenCad2D follows a few practical rules:
 - Commands should modify the document through the `CadDocument` API.
 - Tools should work in model/user coordinates, not screen pixels.
 - The UI should convert input and render output, not own CAD behavior.
-- Snapping and selection should query visible spatial candidates instead of scanning the whole document when possible.
+- Snapping should query visible spatial candidates.
+- Selection should query selectable entities, which means visible entities that are not on locked layers.
 - Numeric comparisons in geometry should use `GeometryTolerance`.
 - New tools should be testable without launching the desktop application.
 
@@ -274,18 +282,25 @@ OpenCad2D follows a few practical rules:
 
 ## Roadmap summary
 
+Recently completed:
+
+1. hidden layer behavior;
+2. locked layer behavior;
+3. selection filtering for locked layers;
+4. snap support on locked layers;
+5. UI toggle for locking and unlocking the current layer.
+
 The next planned areas are:
 
-1. locked layer behavior;
-2. zoom extents;
-3. circle and arc tools;
-4. polyline tool;
-5. property panel;
-6. internal JSON save/load;
-7. richer layer management;
-8. more modify tools such as offset, trim, extend, fillet and chamfer;
-9. dimensions;
-10. SVG, PDF and DXF import/export.
+1. zoom extents;
+2. circle and arc tools;
+3. polyline tool;
+4. property panel;
+5. internal JSON save/load;
+6. richer layer management;
+7. more modify tools such as offset, trim, extend, fillet and chamfer;
+8. dimensions;
+9. SVG, PDF and DXF import/export.
 
 See the [roadmap](docs/roadmap.md) for more detail.
 

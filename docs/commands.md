@@ -12,9 +12,7 @@ A command knows how to execute an operation and how to undo it.
 
 When the user performs an operation, such as drawing a line, moving entities or deleting selected objects, the active tool creates a command.
 
-The command is executed through `CommandHistory`.
-
-`CommandHistory` executes the command and stores it on the undo stack.
+The command is executed through `CommandHistory`. `CommandHistory` executes the command and stores it on the undo stack.
 
 If the user runs undo, `CommandHistory` calls the command's `Undo` method.
 
@@ -46,9 +44,7 @@ The command receives the document as a parameter instead of owning it. This keep
 
 ## CommandHistory
 
-`CommandHistory` coordinates undo and redo.
-
-It stores executed commands on an undo stack.
+`CommandHistory` coordinates undo and redo. It stores executed commands on an undo stack.
 
 When undo is requested, the latest command is removed from the undo stack, its `Undo` method is called, and the command is pushed onto the redo stack.
 
@@ -83,7 +79,18 @@ document.Entities.RemoveMany(ids);
 
 `EntityCollection` may be queried by commands, but mutation should go through `CadDocument`.
 
-This rule is important because document-level validation belongs in `CadDocument`. For example, locked layer rules should be enforced in `RemoveEntity`, `RemoveEntities`, `ReplaceEntity` and `ReplaceEntities`. If commands bypass the document, those future rules would be skipped.
+This rule is important because document-level validation belongs in `CadDocument`.
+
+Locked layer rules are enforced in:
+
+```text
+RemoveEntity
+RemoveEntities
+ReplaceEntity
+ReplaceEntities
+```
+
+If commands bypass the document and mutate `EntityCollection` directly, locked-layer protection is skipped. This must not happen.
 
 ---
 
@@ -99,21 +106,35 @@ When undone, it removes the same entities by id through the document API.
 
 This command is simple but fundamental, because every drawing operation starts from adding new entities.
 
+### Important rules
+
+- Added entities must reference an existing layer.
+- Undo must remove the same entity ids.
+- Redo must re-add the same entity instances or equivalent entities with the same ids.
+- The command must not mutate `EntityCollection` directly.
+
 ---
 
 ## DeleteEntitiesCommand
 
 `DeleteEntitiesCommand` deletes existing entities from the document.
 
-Before deleting, it stores the entities that will be removed.
-
-This is necessary because undo must restore the exact original entities.
+Before deleting, it stores the entities that will be removed. This is necessary because undo must restore the exact original entities.
 
 When executed, the command removes the selected entities through `CadDocument.RemoveEntities(...)`.
+
+If one of the target entities belongs to a locked layer, `CadDocument` rejects the removal. Selection should normally prevent this case earlier, because locked-layer entities are not selectable, but the document still protects itself.
 
 When undone, it adds the previously deleted entities back through `CadDocument.AddEntities(...)`.
 
 This command is used by `DeleteTool` and by keyboard delete actions.
+
+### Important rules
+
+- Store deleted entities before removing them.
+- Remove through `CadDocument.RemoveEntities(...)`.
+- Undo through `CadDocument.AddEntities(...)`.
+- Never clear UI selection directly from the command.
 
 ---
 
@@ -127,9 +148,19 @@ Before replacing, it stores the original entities.
 
 When executed, it calls `CadDocument.ReplaceEntities(...)`.
 
+If one of the target entities belongs to a locked layer, `CadDocument` rejects the replacement. This protects move, rotate, scale, mirror and future modify commands.
+
 When undone, it restores the original entities through the same document API.
 
 This command is useful as a general mechanism for entity modification and for future operations such as trim, extend, fillet, chamfer and property edits.
+
+### Important rules
+
+- Preserve entity ids.
+- Store originals before replacement.
+- Replace through `CadDocument.ReplaceEntities(...)`.
+- Undo through `CadDocument.ReplaceEntities(...)`.
+- Do not mutate entity geometry in place.
 
 ---
 
@@ -141,9 +172,19 @@ It is the base command for operations such as move, rotate, scale and mirror.
 
 When executed, it stores the original entities, creates transformed versions and replaces them through `CadDocument.ReplaceEntities(...)`.
 
+Because replacement goes through `CadDocument`, transformations are blocked for entities on locked layers.
+
 When undone, it restores the original entities.
 
 The command itself does not decide what transformation means. It simply applies the provided `Matrix2D`.
+
+### Important rules
+
+- Use a transformation matrix.
+- Preserve entity ids.
+- Create transformed entity instances.
+- Replace through the document API.
+- Do not modify geometry in place.
 
 ---
 
@@ -153,11 +194,11 @@ The command itself does not decide what transformation means. It simply applies 
 
 Internally, it uses a translation matrix and inherits undo behavior from `TransformEntitiesCommand`.
 
-The selected entities keep their identifiers.
-
-Undo restores the original positions.
+The selected entities keep their identifiers. Undo restores the original positions.
 
 This command is used by `MoveTool`.
+
+Locked-layer entities are not selectable, so normal move workflows should not target them. If they are passed anyway, `CadDocument.ReplaceEntities(...)` rejects the replacement.
 
 ---
 
@@ -167,13 +208,20 @@ This command is used by `MoveTool`.
 
 Unlike move, copy does not modify the original entities.
 
-When first executed, it creates copied entities with new identifiers.
-
-Undo removes the copied entities through the document API.
+When first executed, it creates copied entities with new identifiers. Undo removes the copied entities through the document API.
 
 Redo should re-add the same copied entities with the same generated identifiers, rather than generating new identifiers every time. This keeps redo deterministic and avoids unstable command behavior.
 
-Copying from a locked layer may be allowed in the future because it does not modify the source entities. The copied entities should normally be created on the appropriate target/current layer according to the tool's creation rules.
+Copying does not modify the source entities. However, locked-layer entities are not selectable, so the normal UI workflow cannot copy them through selection.
+
+A future explicit copy-from-reference workflow would need a clear rule for whether locked-layer source entities are allowed.
+
+### Important rules
+
+- Do not modify the source entities.
+- Generate copied entity ids once.
+- Reuse copied entity ids on redo.
+- Remove copied entities through `CadDocument.RemoveEntities(...)` on undo.
 
 ---
 
@@ -187,6 +235,8 @@ The command keeps the same entity identifiers and replaces entities with rotated
 
 Undo restores the original entities.
 
+Because it ultimately replaces entities through `CadDocument`, locked-layer protection applies.
+
 ---
 
 ## ScaleEntitiesCommand
@@ -198,6 +248,8 @@ It validates that the scale factor is greater than zero.
 The current transformation model supports uniform scale. Non-uniform scaling is not represented as a separate high-level command yet.
 
 Undo restores the original entities.
+
+Because it ultimately replaces entities through `CadDocument`, locked-layer protection applies.
 
 ---
 
@@ -211,211 +263,124 @@ The operation replaces selected entities with mirrored versions while keeping th
 
 Undo restores the original entities.
 
+Because it ultimately replaces entities through `CadDocument`, locked-layer protection applies.
+
 ---
 
 ## CompositeCommand
 
-`CompositeCommand` represents a single undoable command composed of several child commands.
+`CompositeCommand` groups multiple commands into one undoable operation.
 
-It is needed because many real CAD operations are not single simple mutations.
-
-For example, a future fillet operation may need to:
-
-```text
-shorten the first entity
-shorten the second entity
-add a fillet arc
-```
-
-The user should undo that as one operation.
-
-`CompositeCommand.Execute` executes child commands in order.
-
-`CompositeCommand.Undo` undoes child commands in reverse order.
-
-If execution fails after some child commands have already run, the composite command should undo the executed children to roll the document back to its previous state.
-
-This is not a full document transaction system, but it provides the first necessary layer for atomic multi-step CAD operations.
-
----
-
-## Commands and tools
-
-Tools should not modify the document directly.
-
-A tool interprets user input and creates the appropriate command.
+This is useful when a user action requires multiple document changes.
 
 Examples:
 
 ```text
-LineTool       -> AddEntityCommand
-RectangleTool  -> AddEntityCommand
-MoveTool       -> MoveEntitiesCommand
-CopyTool       -> CopyEntitiesCommand
-DeleteTool     -> DeleteEntitiesCommand
-future Fillet  -> CompositeCommand
-future Trim    -> ReplaceEntitiesCommand or CompositeCommand
+trim + add extension geometry
+fillet two lines and add arc
+explode polyline into line segments
+offset and create multiple entities
 ```
 
-This keeps tool logic focused on interaction and document mutation inside commands.
-
----
-
-## Commands and selection
-
-Commands operate on entities in the document.
-
-Selection is stored separately in `SelectionSet`.
-
-For example, `MoveTool` reads selected ids from the tool selection context and passes those ids to `MoveEntitiesCommand`.
-
-The command itself does not own the selection.
-
-This separation is useful because undoing a command should restore document geometry, but not necessarily restore UI selection state unless that is explicitly supported later.
-
-Currently, commands focus on document state, not selection state.
-
----
-
-## Commands and entity immutability
-
-Entities are treated as immutable objects in most operations.
-
-Instead of modifying a line in place, a transform command creates a transformed line entity and replaces the old one in the document.
-
-This makes undo easier because the command can store the original entity and restore it later.
-
-It also avoids accidental partial updates.
-
----
-
-## Commands and identifiers
-
-Entity identifiers are important.
-
-Move, rotate, scale and mirror keep the same entity identifiers because they modify existing entities.
-
-Copy creates new identifiers because it creates new entities.
-
-Delete removes existing identifiers from the document, and undo restores the original entities with their original identifiers.
-
-Redo should be deterministic. A command that generated new entities during first execution should normally reuse the same generated entities during redo.
-
----
-
-## Direct document modification
-
-Direct modification of `CadDocument` is acceptable in limited cases:
+Execution order:
 
 ```text
-tests
-initialization
-demo seed data
-low-level setup
+child 1
+child 2
+child 3
 ```
 
-For user-facing editing operations, direct modification should be avoided.
-
-A good rule is:
+Undo order:
 
 ```text
-If the user may expect undo, use a command.
+child 3
+child 2
+child 1
+```
+
+If a child command fails during execution, already executed child commands should be rolled back where possible.
+
+### Important rules
+
+- A composite command should represent one user-facing action.
+- Do not hide unrelated operations inside the same composite command.
+- Preserve predictable undo behavior.
+
+---
+
+## Command and selection interaction
+
+Commands should not directly own UI selection behavior.
+
+Selection is stored in `SelectionSet`, outside the command system.
+
+A tool or workspace action may update selection after a command executes, but commands should focus on document changes only.
+
+This separation keeps commands reusable and testable.
+
+Example:
+
+```text
+Delete key pressed
+ActionController reads SelectionSet
+ActionController creates DeleteEntitiesCommand
+Command removes entities through CadDocument
+Workspace/UI refreshes selection/status
 ```
 
 ---
 
-## Undo and redo behavior
+## Locked layer behavior and commands
 
-Undo should restore the document to the state before the command was executed.
+Locked layer protection must not rely only on the UI.
 
-Redo should reapply the same operation.
+The UI and interaction services prevent locked-layer entities from being selected, but `CadDocument` is the final protection boundary.
 
-A command should not rely on UI state when undoing or redoing.
+This matters because future code may create commands programmatically, bypassing normal point or window selection.
 
-For example, `DeleteEntitiesCommand.Undo` should restore deleted entities even if the current selection has changed.
+Rules:
 
-Commands should be self-contained enough to undo their own effects.
+```text
+AddEntity          allowed if the target layer exists
+RemoveEntity       rejected if the entity is on a locked layer
+RemoveEntities     rejected if a target entity is on a locked layer
+ReplaceEntity      rejected if the existing entity is on a locked layer
+ReplaceEntities    rejected if a target entity is on a locked layer
+```
+
+Transform-based commands are protected because they use replace operations.
+
+Delete-based commands are protected because they use remove operations.
 
 ---
 
-## Error handling
+## Adding a new command
 
-Commands should validate invalid input early.
+When adding a new command, follow this checklist:
 
-Commands receiving entity ids should reject empty lists when an empty operation would be meaningless.
-
-Commands should fail clearly when required entities are not found.
-
-Commands should fail through document-level validation when the operation violates document rules, such as future locked-layer restrictions.
-
----
-
-## Testing commands
-
-Commands are easy to test because they do not depend on the UI.
-
-A command test usually follows this pattern:
-
-```text
-create document
-add initial entities
-execute command
-assert document state
-undo command
-assert original state
-redo command if needed
-assert modified state again
-```
-
-Command tests should verify normal behavior and edge cases.
-
-Important cases include:
-
-```text
-deleted entities are restored by undo
-copied entities have different ids from originals
-copy redo reuses the same generated ids
-transform undo restores original geometry
-composite command is one undo step
-commands mutate through CadDocument
-```
+1. Implement `ICadCommand`.
+2. Give the command a clear `Name`.
+3. Use `CadDocument` mutation methods.
+4. Store enough state to undo exactly.
+5. Preserve entity ids when modifying existing entities.
+6. Generate new ids only for new entities.
+7. Make redo deterministic.
+8. Add tests for execute, undo and redo.
+9. Add tests for locked-layer behavior if the command removes or replaces entities.
 
 ---
 
-## Guidelines for new commands
+## Command design rules
 
-A new command should:
-
-```text
-implement ICadCommand
-have a clear name
-validate constructor parameters
-store enough information to undo itself
-avoid Avalonia and UI concepts
-avoid mouse or keyboard state
-modify entities only through CadDocument
-preserve identifiers when modifying existing entities
-create new identifiers when creating new entities
-store deleted entities for undo
-have focused tests for execute, undo and redo
-```
-
-For multi-step operations, prefer `CompositeCommand` over manually performing multiple unrelated document mutations.
-
----
-
-## Future improvements
-
-The command system can be extended in several useful ways.
-
-Possible future improvements:
+Preserve these rules:
 
 ```text
-command descriptions for UI/history panels
-document dirty-state tracking
-selection-state undo, if explicitly needed
-full document transaction or ChangeSetCommand
-command serialization for macros or scripting
+Commands do not depend on Avalonia.
+Commands do not read mouse input.
+Commands do not render.
+Commands do not show dialogs.
+Commands mutate documents only through CadDocument.
+Commands must support reliable undo.
+Commands must support deterministic redo.
+Commands should not directly manage UI selection.
 ```
-
-A full document transaction system is not required yet. `CompositeCommand` is the current lightweight solution for grouping operations atomically.
