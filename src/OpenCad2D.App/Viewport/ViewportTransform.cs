@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using OpenCad2D.Geometry.Primitives;
 using System;
 
@@ -68,6 +68,59 @@ public sealed class ViewportTransform
         Point screenPointAfterZoom = ModelToScreen(modelPointBeforeZoom);
 
         Offset += screenPoint - screenPointAfterZoom;
+    }
+
+    public void ZoomToFit(
+        BoundingBox2D modelBounds,
+        Size viewportSize,
+        double screenPadding = 40)
+    {
+        if (viewportSize.Width <= 0 || viewportSize.Height <= 0)
+        {
+            return;
+        }
+
+        if (screenPadding < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(screenPadding),
+                "Screen padding cannot be negative.");
+        }
+
+        const double minimumModelSize = 1e-9;
+
+        double availableWidth = Math.Max(
+            1,
+            viewportSize.Width - screenPadding * 2);
+
+        double availableHeight = Math.Max(
+            1,
+            viewportSize.Height - screenPadding * 2);
+
+        double boundsWidth = modelBounds.Width;
+        double boundsHeight = modelBounds.Height;
+
+        double scaleX = boundsWidth <= minimumModelSize
+            ? MaxScale
+            : availableWidth / boundsWidth;
+
+        double scaleY = boundsHeight <= minimumModelSize
+            ? MaxScale
+            : availableHeight / boundsHeight;
+
+        Scale = Math.Clamp(
+            Math.Min(scaleX, scaleY),
+            MinScale,
+            MaxScale);
+
+        Point2D modelCenter = modelBounds.Center;
+        var screenCenter = new Point(
+            viewportSize.Width / 2.0,
+            viewportSize.Height / 2.0);
+
+        Offset = new Vector(
+            screenCenter.X - modelCenter.X * Scale,
+            screenCenter.Y - modelCenter.Y * Scale);
     }
 
     public void Reset()

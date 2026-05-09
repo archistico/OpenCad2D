@@ -1077,14 +1077,7 @@ public sealed class CadCanvas : Control
         }
         else if (e.Key == Key.Home)
         {
-            _viewport.Reset();
-
-            NotifyWorkspaceChanged(
-                ToolResult.Updated("View reset."),
-                Point2D.Origin);
-
-            InvalidateVisual();
-            return;
+            result = ZoomExtents();
         }
 
         if (result is not null)
@@ -1200,6 +1193,70 @@ public sealed class CadCanvas : Control
         return new Rect(
             topLeft,
             bottomRight);
+    }
+
+    public ToolResult ZoomExtents()
+    {
+        if (Workspace is null)
+        {
+            return ToolResult.None("No workspace available.");
+        }
+
+        if (Bounds.Width <= 0 || Bounds.Height <= 0)
+        {
+            return ToolResult.None("Cannot zoom extents because the canvas has no size yet.");
+        }
+
+        BoundingBox2D? visibleBounds = GetVisibleEntityBounds();
+
+        if (visibleBounds is null)
+        {
+            _viewport.Reset();
+            InvalidateVisual();
+
+            return ToolResult.Updated("View reset. No visible entities for zoom extents.");
+        }
+
+        _viewport.ZoomToFit(
+            visibleBounds.Value,
+            new Size(Bounds.Width, Bounds.Height),
+            screenPadding: 48);
+
+        InvalidateVisual();
+
+        return ToolResult.Updated("Zoom extents applied.");
+    }
+
+    private BoundingBox2D? GetVisibleEntityBounds()
+    {
+        if (Workspace is null)
+        {
+            return null;
+        }
+
+        BoundingBox2D? result = null;
+
+        foreach (CadEntity entity in Workspace.Document.GetVisibleEntities())
+        {
+            BoundingBox2D entityBounds = entity.GetBoundingBox();
+
+            result = result is null
+                ? entityBounds
+                : Union(result.Value, entityBounds);
+        }
+
+        return result;
+    }
+
+    private static BoundingBox2D Union(
+        BoundingBox2D first,
+        BoundingBox2D second)
+    {
+        return new BoundingBox2D(
+            Math.Min(first.MinX, second.MinX),
+            Math.Min(first.MinY, second.MinY),
+            Math.Max(first.MaxX, second.MaxX),
+            Math.Max(first.MaxY, second.MaxY));
     }
 
     public void ClearSnapMarker()

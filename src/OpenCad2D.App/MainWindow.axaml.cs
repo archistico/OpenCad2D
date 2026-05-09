@@ -197,6 +197,20 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void ZoomExtents_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ToolResult result = CadCanvas.ZoomExtents();
+
+        _viewModel.SetLastResult(result);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.Focus();
+    }
+
 
     private void CommandInputTextBox_KeyDown(
         object? sender,

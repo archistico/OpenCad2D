@@ -115,6 +115,10 @@
                             Content="Redo"
                             Click="Redo_Click" />
 
+                    <Button Classes="global-button"
+                            Content="Extents"
+                            Click="ZoomExtents_Click" />
+
                     <Separator Margin="8,0" />
 
                     <TextBlock x:Name="ActiveCommandTextBlock"
