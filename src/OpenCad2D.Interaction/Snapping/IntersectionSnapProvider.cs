@@ -13,7 +13,7 @@ public sealed class IntersectionSnapProvider : ISnapProvider
 
     public IEnumerable<SnapCandidate> GetCandidates(SnapRequest request)
     {
-        var entities = request.Document.GetVisibleEntities()
+        var entities = request.Document.GetVisibleEntities(request.SearchArea)
             .ToList();
 
         for (int firstIndex = 0; firstIndex < entities.Count; firstIndex++)

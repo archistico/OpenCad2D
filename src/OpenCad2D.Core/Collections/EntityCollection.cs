@@ -1,5 +1,7 @@
 ﻿using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Spatial;
+using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Core.Collections;
 
@@ -9,6 +11,19 @@ namespace OpenCad2D.Core.Collections;
 public sealed class EntityCollection
 {
     private readonly Dictionary<EntityId, CadEntity> _entities = new();
+    private readonly ISpatialIndex _spatialIndex;
+
+    public EntityCollection()
+        : this(new LinearSpatialIndex())
+    {
+    }
+
+    public EntityCollection(ISpatialIndex spatialIndex)
+    {
+        ArgumentNullException.ThrowIfNull(spatialIndex);
+
+        _spatialIndex = spatialIndex;
+    }
 
     public IReadOnlyCollection<CadEntity> All => _entities.Values;
 
@@ -25,6 +40,7 @@ public sealed class EntityCollection
         }
 
         _entities.Add(entity.Id, entity);
+        _spatialIndex.Add(entity);
     }
 
     public void AddRange(IEnumerable<CadEntity> entities)
@@ -74,7 +90,14 @@ public sealed class EntityCollection
 
     public bool Remove(EntityId id)
     {
-        return _entities.Remove(id);
+        bool removed = _entities.Remove(id);
+
+        if (removed)
+        {
+            _spatialIndex.Remove(id);
+        }
+
+        return removed;
     }
 
     public void RemoveRequired(EntityId id)
@@ -84,6 +107,8 @@ public sealed class EntityCollection
             throw new KeyNotFoundException(
                 $"Entity '{id}' was not found.");
         }
+
+        _spatialIndex.Remove(id);
     }
 
     public void RemoveMany(IEnumerable<EntityId> ids)
@@ -107,6 +132,7 @@ public sealed class EntityCollection
         }
 
         _entities[entity.Id] = entity;
+        _spatialIndex.Replace(entity);
     }
 
     public void ReplaceMany(IEnumerable<CadEntity> entities)
@@ -122,5 +148,11 @@ public sealed class EntityCollection
     public void Clear()
     {
         _entities.Clear();
+        _spatialIndex.Clear();
+    }
+
+    public IReadOnlyList<CadEntity> Query(BoundingBox2D area)
+    {
+        return _spatialIndex.Query(area);
     }
 }

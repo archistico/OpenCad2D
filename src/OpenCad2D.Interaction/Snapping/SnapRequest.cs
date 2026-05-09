@@ -49,4 +49,10 @@ public sealed class SnapRequest
     {
         return EnabledSnaps.HasFlag(kind);
     }
+
+    public BoundingBox2D SearchArea => new(
+        CursorPoint.X - Tolerance,
+        CursorPoint.Y - Tolerance,
+        CursorPoint.X + Tolerance,
+        CursorPoint.Y + Tolerance);
 }

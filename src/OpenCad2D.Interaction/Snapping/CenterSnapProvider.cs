@@ -12,7 +12,7 @@ public sealed class CenterSnapProvider : ISnapProvider
 
     public IEnumerable<SnapCandidate> GetCandidates(SnapRequest request)
     {
-        foreach (CadEntity entity in request.Document.GetVisibleEntities())
+        foreach (CadEntity entity in request.Document.GetVisibleEntities(request.SearchArea))
         {
             Point2D? center = entity switch
             {

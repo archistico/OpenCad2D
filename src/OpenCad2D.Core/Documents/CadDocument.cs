@@ -1,6 +1,7 @@
 ﻿using OpenCad2D.Core.Collections;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Layers;
+using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Core.Documents;
 
@@ -72,5 +73,10 @@ public sealed class CadDocument
     public IEnumerable<CadEntity> GetVisibleEntities()
     {
         return Entities.All.Where(IsEntityVisible);
+    }
+
+    public IEnumerable<CadEntity> GetVisibleEntities(BoundingBox2D area)
+    {
+        return Entities.Query(area).Where(IsEntityVisible);
     }
 }

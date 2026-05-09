@@ -23,7 +23,9 @@ public sealed class HitTestService
                 "Hit test tolerance cannot be negative.");
         }
 
-        return document.GetVisibleEntities()
+        BoundingBox2D searchArea = CreateSearchArea(point, tolerance);
+
+        return document.GetVisibleEntities(searchArea)
             .Select(entity => CreateResult(entity, point))
             .Where(result => result.Distance <= tolerance)
             .OrderBy(result => result.Distance)
@@ -45,7 +47,9 @@ public sealed class HitTestService
                 "Hit test tolerance cannot be negative.");
         }
 
-        return document.GetVisibleEntities()
+        BoundingBox2D searchArea = CreateSearchArea(point, tolerance);
+
+        return document.GetVisibleEntities(searchArea)
             .Select(entity => CreateResult(entity, point))
             .Where(result => result.Distance <= tolerance)
             .OrderBy(result => result.Distance)
@@ -64,5 +68,16 @@ public sealed class HitTestService
             entity,
             closestPoint,
             distance);
+    }
+
+    private static BoundingBox2D CreateSearchArea(
+    Point2D point,
+    double tolerance)
+    {
+        return new BoundingBox2D(
+            point.X - tolerance,
+            point.Y - tolerance,
+            point.X + tolerance,
+            point.Y + tolerance);
     }
 }
