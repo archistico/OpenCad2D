@@ -54,4 +54,23 @@ public sealed class CadDocument
 
         Entities.Replace(entity);
     }
+
+    public bool IsEntityVisible(CadEntity entity)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+
+        if (!entity.IsVisible)
+        {
+            return false;
+        }
+
+        Layer layer = Layers.GetRequired(entity.LayerId);
+
+        return layer.IsVisible;
+    }
+
+    public IEnumerable<CadEntity> GetVisibleEntities()
+    {
+        return Entities.All.Where(IsEntityVisible);
+    }
 }

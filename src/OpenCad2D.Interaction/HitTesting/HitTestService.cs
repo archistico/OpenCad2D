@@ -23,8 +23,7 @@ public sealed class HitTestService
                 "Hit test tolerance cannot be negative.");
         }
 
-        return document.Entities.All
-            .Where(entity => entity.IsVisible)
+        return document.GetVisibleEntities()
             .Select(entity => CreateResult(entity, point))
             .Where(result => result.Distance <= tolerance)
             .OrderBy(result => result.Distance)
@@ -46,8 +45,7 @@ public sealed class HitTestService
                 "Hit test tolerance cannot be negative.");
         }
 
-        return document.Entities.All
-            .Where(entity => entity.IsVisible)
+        return document.GetVisibleEntities()
             .Select(entity => CreateResult(entity, point))
             .Where(result => result.Distance <= tolerance)
             .OrderBy(result => result.Distance)

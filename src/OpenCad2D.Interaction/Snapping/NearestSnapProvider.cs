@@ -12,7 +12,7 @@ public sealed class NearestSnapProvider : ISnapProvider
 
     public IEnumerable<SnapCandidate> GetCandidates(SnapRequest request)
     {
-        foreach (CadEntity entity in request.Document.Entities.All.Where(entity => entity.IsVisible))
+        foreach (CadEntity entity in request.Document.GetVisibleEntities())
         {
             Point2D closestPoint = entity.GetClosestPoint(request.CursorPoint);
             double distance = request.CursorPoint.DistanceTo(closestPoint);

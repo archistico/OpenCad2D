@@ -1,5 +1,7 @@
 ﻿using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 
@@ -396,6 +398,38 @@ public sealed class SnapServiceTests
             cursorPoint: new Point2D(10.1, 0.1),
             tolerance: 1,
             enabledSnaps: SnapKind.Center);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Snap_ShouldIgnoreEntity_WhenLayerIsHidden()
+    {
+        var document = new CadDocument();
+
+        var hiddenLayer = new Layer(
+            new LayerId("Hidden"),
+            "Hidden",
+            isVisible: false);
+
+        document.Layers.Add(hiddenLayer);
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: hiddenLayer.Id);
+
+        document.AddEntity(line);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            new Point2D(0, 0),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Endpoint | SnapKind.Nearest);
 
         SnapCandidate? result = service.Snap(request);
 

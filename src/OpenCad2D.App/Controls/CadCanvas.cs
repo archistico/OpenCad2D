@@ -89,7 +89,7 @@ public sealed class CadCanvas : Control
             return;
         }
 
-        foreach (CadEntity entity in Workspace.Document.Entities.All)
+        foreach (CadEntity entity in Workspace.Document.GetVisibleEntities())
         {
             Pen pen = Workspace.SelectionSet.Contains(entity.Id)
                 ? _selectedPen

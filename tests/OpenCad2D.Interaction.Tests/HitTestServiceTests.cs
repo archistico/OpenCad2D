@@ -1,5 +1,7 @@
 ﻿using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.HitTesting;
 
@@ -152,5 +154,34 @@ public sealed class HitTestServiceTests
             tolerance: 1);
 
         Assert.Equal(2, results.Count);
+    }
+
+    [Fact]
+    public void HitTest_ShouldIgnoreEntity_WhenLayerIsHidden()
+    {
+        var document = new CadDocument();
+
+        var hiddenLayer = new Layer(
+            new LayerId("Hidden"),
+            "Hidden",
+            isVisible: false);
+
+        document.Layers.Add(hiddenLayer);
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: hiddenLayer.Id);
+
+        document.AddEntity(line);
+
+        var service = new HitTestService();
+
+        HitTestResult? result = service.HitTest(
+            document,
+            new Point2D(5, 0),
+            tolerance: 1);
+
+        Assert.Null(result);
     }
 }

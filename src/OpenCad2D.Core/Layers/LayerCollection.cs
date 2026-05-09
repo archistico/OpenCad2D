@@ -53,4 +53,24 @@ public sealed class LayerCollection
     {
         return _layers.TryGetValue(id, out layer);
     }
+
+    public void Replace(Layer layer)
+    {
+        ArgumentNullException.ThrowIfNull(layer);
+
+        if (!_layers.ContainsKey(layer.Id))
+        {
+            throw new KeyNotFoundException(
+                $"Layer '{layer.Id}' was not found.");
+        }
+
+        _layers[layer.Id] = layer;
+    }
+
+    public void SetVisibility(LayerId id, bool isVisible)
+    {
+        Layer layer = GetRequired(id);
+
+        Replace(layer.WithVisibility(isVisible));
+    }
 }

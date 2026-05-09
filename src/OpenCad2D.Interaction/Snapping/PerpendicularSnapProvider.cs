@@ -22,7 +22,7 @@ public sealed class PerpendicularSnapProvider : ISnapProvider
 
         Point2D basePoint = request.BasePoint.Value;
 
-        foreach (CadEntity entity in request.Document.Entities.All.Where(entity => entity.IsVisible))
+        foreach (CadEntity entity in request.Document.GetVisibleEntities())
         {
             foreach (Point2D candidatePoint in GetPerpendicularCandidates(entity, basePoint))
             {

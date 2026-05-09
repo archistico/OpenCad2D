@@ -20,7 +20,7 @@ public sealed class TangentSnapProvider : ISnapProvider
 
         Point2D basePoint = request.BasePoint.Value;
 
-        foreach (CadEntity entity in request.Document.Entities.All.Where(entity => entity.IsVisible))
+        foreach (CadEntity entity in request.Document.GetVisibleEntities())
         {
             foreach (Point2D tangentPoint in GetTangentPoints(entity, basePoint))
             {

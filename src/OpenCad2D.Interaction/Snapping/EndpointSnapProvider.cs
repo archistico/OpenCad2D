@@ -12,7 +12,7 @@ public sealed class EndpointSnapProvider : ISnapProvider
 
     public IEnumerable<SnapCandidate> GetCandidates(SnapRequest request)
     {
-        foreach (CadEntity entity in request.Document.Entities.All.Where(entity => entity.IsVisible))
+        foreach (CadEntity entity in request.Document.GetVisibleEntities())
         {
             foreach (Point2D point in GetEntityEndpoints(entity))
             {

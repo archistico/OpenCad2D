@@ -44,8 +44,7 @@ public sealed class SelectionService
     {
         ArgumentNullException.ThrowIfNull(document);
 
-        return document.Entities.All
-            .Where(entity => entity.IsVisible)
+        return document.GetVisibleEntities()
             .Where(entity => MatchesWindow(entity, window, mode))
             .OrderBy(entity => entity.DrawOrder)
             .Select(entity => entity.Id)
