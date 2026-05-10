@@ -83,6 +83,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Align,
+                "Align",
+                "Align",
+                "Modify"),
+            () => new AlignTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",

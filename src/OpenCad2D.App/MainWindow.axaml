@@ -245,6 +245,11 @@
                                 Content="Scale"
                                 Click="Scale_Click" />
 
+                        <Button x:Name="AlignButton"
+                                Classes="tool-button"
+                                Content="Align"
+                                Click="Align_Click" />
+
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />

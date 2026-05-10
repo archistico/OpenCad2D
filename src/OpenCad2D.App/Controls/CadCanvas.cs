@@ -802,6 +802,12 @@ public sealed class CadCanvas : Control
                     scaleTool.GetPreviewEntities(Workspace.Context));
                 break;
 
+            case AlignTool alignTool:
+                DrawEntitiesPreview(
+                    context,
+                    alignTool.GetPreviewEntities(Workspace.Context));
+                break;
+
             case SelectionTool selectionTool:
                 DrawSelectionPreview(context, selectionTool);
                 break;
@@ -1315,6 +1321,22 @@ public sealed class CadCanvas : Control
 
             ClearSnapMarker();
 
+            e.Handled = true;
+        }
+        else if (Workspace.ToolController.ActiveTool is AlignTool alignTool &&
+                 alignTool.State == AlignToolState.WaitingForScaleConfirmation &&
+                 e.Key == Key.Enter)
+        {
+            result = alignTool.ConfirmWithoutScale(Workspace.Context);
+            ClearSnapMarker();
+            e.Handled = true;
+        }
+        else if (Workspace.ToolController.ActiveTool is AlignTool alignToolWithScale &&
+                 alignToolWithScale.State == AlignToolState.WaitingForScaleConfirmation &&
+                 e.Key == Key.S)
+        {
+            result = alignToolWithScale.ConfirmWithScale(Workspace.Context);
+            ClearSnapMarker();
             e.Handled = true;
         }
         else if (e.Key == Key.Delete)

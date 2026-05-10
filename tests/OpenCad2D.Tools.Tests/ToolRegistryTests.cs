@@ -19,6 +19,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Copy));
         Assert.True(registry.Contains(ToolId.Rotate));
         Assert.True(registry.Contains(ToolId.Scale));
+        Assert.True(registry.Contains(ToolId.Align));
         Assert.True(registry.Contains(ToolId.Delete));
     }
 
@@ -29,7 +30,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(9, tools.Count);
+        Assert.Equal(10, tools.Count);
 
         Assert.Contains(
             tools,
@@ -58,6 +59,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Scale);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Align);
 
         Assert.Contains(
             tools,
@@ -101,12 +106,13 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Modify");
 
-        Assert.Equal(6, tools.Count);
+        Assert.Equal(7, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Selection);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Move);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Copy);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rotate);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Scale);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Align);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Delete);
     }
 
@@ -186,6 +192,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<ScaleTool>(tool);
         Assert.Equal("Scale", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Align_ShouldReturnAlignTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Align);
+
+        Assert.IsType<AlignTool>(tool);
+        Assert.Equal("Align", tool.Name);
     }
 
     [Fact]

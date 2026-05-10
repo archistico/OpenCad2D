@@ -5,6 +5,7 @@ using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Input;
 using OpenCad2D.App.ViewModels.Properties;
 using System;
@@ -152,6 +153,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         get
         {
+            if (Workspace.ToolController.ActiveTool is AlignTool alignTool &&
+                alignTool.State == AlignToolState.WaitingForScaleConfirmation)
+            {
+                return "Apply scale? Press Y for Yes, or N/Enter for No:";
+            }
+
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";

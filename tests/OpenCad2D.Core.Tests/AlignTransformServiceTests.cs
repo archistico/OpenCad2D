@@ -7,180 +7,147 @@ namespace OpenCad2D.Core.Tests;
 public sealed class AlignTransformServiceTests
 {
     [Fact]
-    public void CreateTransform_WithParallelVectorsAndNoScale_ShouldTranslateOnly()
+    public void Calculate_WhenDirectionsAreEqual_ShouldTranslateSource1ToDestination1()
     {
         var service = new AlignTransformService();
 
-        AlignTransformResult result = service.CreateTransform(
+        AlignTransformResult result = service.Calculate(
             new Point2D(0, 0),
-            new Point2D(5, 5),
+            new Point2D(10, 5),
             new Point2D(10, 0),
-            new Point2D(15, 5),
+            new Point2D(20, 5),
             applyScale: false);
 
-        Point2D transformedFirst = result.Transform(new Point2D(0, 0));
-        Point2D transformedSecond = result.Transform(new Point2D(10, 0));
-
-        AssertPoint(new Point2D(5, 5), transformedFirst);
-        AssertPoint(new Point2D(15, 5), transformedSecond);
-        Assert.Equal(0, result.RotationAngle.Degrees, precision: 10);
-        Assert.Equal(1, result.ScaleFactor, precision: 10);
+        Assert.Equal(new Point2D(10, 5), result.Matrix.Transform(new Point2D(0, 0)));
+        Assert.Equal(new Point2D(20, 5), result.Matrix.Transform(new Point2D(10, 0)));
         Assert.False(result.ScaleApplied);
         Assert.False(result.IsDegenerate);
     }
 
     [Fact]
-    public void CreateTransform_WithPerpendicularVectorsAndNoScale_ShouldTranslateAndRotate()
+    public void Calculate_WhenDirectionsDiffer_ShouldTranslateAndRotate()
     {
         var service = new AlignTransformService();
 
-        AlignTransformResult result = service.CreateTransform(
+        AlignTransformResult result = service.Calculate(
             new Point2D(0, 0),
-            new Point2D(5, 5),
+            new Point2D(0, 0),
             new Point2D(10, 0),
-            new Point2D(5, 15),
+            new Point2D(0, 10),
             applyScale: false);
 
-        Point2D transformedFirst = result.Transform(new Point2D(0, 0));
-        Point2D transformedSecond = result.Transform(new Point2D(10, 0));
-        Point2D transformedOffsetPoint = result.Transform(new Point2D(0, 2));
+        Point2D transformed = result.Matrix.Transform(new Point2D(10, 0));
 
-        AssertPoint(new Point2D(5, 5), transformedFirst);
-        AssertPoint(new Point2D(5, 15), transformedSecond);
-        AssertPoint(new Point2D(3, 5), transformedOffsetPoint);
-        Assert.Equal(90, result.RotationAngle.Degrees, precision: 10);
-        Assert.Equal(1, result.ScaleFactor, precision: 10);
-        Assert.False(result.ScaleApplied);
+        Assert.Equal(0, transformed.X, precision: 6);
+        Assert.Equal(10, transformed.Y, precision: 6);
+        Assert.Equal(90, result.RotationDegrees, precision: 6);
     }
 
     [Fact]
-    public void CreateTransform_WithScale_ShouldMapSecondSourcePointToSecondDestinationPoint()
+    public void Calculate_WithScale_ShouldTranslateRotateAndScale()
     {
         var service = new AlignTransformService();
 
-        AlignTransformResult result = service.CreateTransform(
+        AlignTransformResult result = service.Calculate(
             new Point2D(0, 0),
-            new Point2D(5, 5),
+            new Point2D(0, 0),
             new Point2D(10, 0),
-            new Point2D(25, 5),
+            new Point2D(0, 20),
             applyScale: true);
 
-        Point2D transformedFirst = result.Transform(new Point2D(0, 0));
-        Point2D transformedSecond = result.Transform(new Point2D(10, 0));
-        Point2D transformedOffsetPoint = result.Transform(new Point2D(0, 5));
+        Point2D transformed = result.Matrix.Transform(new Point2D(10, 0));
 
-        AssertPoint(new Point2D(5, 5), transformedFirst);
-        AssertPoint(new Point2D(25, 5), transformedSecond);
-        AssertPoint(new Point2D(5, 15), transformedOffsetPoint);
-        Assert.Equal(0, result.RotationAngle.Degrees, precision: 10);
-        Assert.Equal(2, result.ScaleFactor, precision: 10);
+        Assert.Equal(0, transformed.X, precision: 6);
+        Assert.Equal(20, transformed.Y, precision: 6);
+        Assert.Equal(2, result.ScaleFactor, precision: 6);
         Assert.True(result.ScaleApplied);
     }
 
     [Fact]
-    public void CreateTransform_WithDifferentLengthsAndNoScale_ShouldPreserveSourceLength()
+    public void Calculate_WithoutScale_ShouldKeepSourceLength()
     {
         var service = new AlignTransformService();
 
-        AlignTransformResult result = service.CreateTransform(
+        AlignTransformResult result = service.Calculate(
             new Point2D(0, 0),
-            new Point2D(5, 5),
+            new Point2D(0, 0),
             new Point2D(10, 0),
-            new Point2D(25, 5),
+            new Point2D(0, 20),
             applyScale: false);
 
-        Point2D transformedSecond = result.Transform(new Point2D(10, 0));
+        Point2D transformed = result.Matrix.Transform(new Point2D(10, 0));
 
-        AssertPoint(new Point2D(15, 5), transformedSecond);
-        Assert.Equal(1, result.ScaleFactor, precision: 10);
+        Assert.Equal(0, transformed.X, precision: 6);
+        Assert.Equal(10, transformed.Y, precision: 6);
+        Assert.Equal(1, result.ScaleFactor, precision: 6);
         Assert.False(result.ScaleApplied);
     }
 
     [Fact]
-    public void CreateTransform_WithZeroLengthSourceDirection_ShouldFallbackToTranslationOnly()
+    public void Calculate_WhenSourceDirectionIsDegenerate_ShouldOnlyTranslate()
     {
         var service = new AlignTransformService();
 
-        AlignTransformResult result = service.CreateTransform(
+        AlignTransformResult result = service.Calculate(
             new Point2D(1, 1),
-            new Point2D(10, 20),
+            new Point2D(5, 5),
             new Point2D(1, 1),
-            new Point2D(30, 20),
+            new Point2D(10, 5),
             applyScale: true);
 
-        Point2D transformed = result.Transform(new Point2D(2, 3));
-
-        AssertPoint(new Point2D(11, 22), transformed);
-        Assert.Equal(0, result.RotationAngle.Degrees, precision: 10);
-        Assert.Equal(1, result.ScaleFactor, precision: 10);
-        Assert.False(result.ScaleApplied);
         Assert.True(result.IsDegenerate);
+        Assert.Equal(new Point2D(5, 5), result.Matrix.Transform(new Point2D(1, 1)));
+        Assert.Equal(new Point2D(9, 5), result.Matrix.Transform(new Point2D(5, 1)));
     }
 
     [Fact]
-    public void CreateTransform_WithZeroLengthDestinationDirection_ShouldFallbackToTranslationOnly()
-    {
-        var service = new AlignTransformService();
-
-        AlignTransformResult result = service.CreateTransform(
-            new Point2D(1, 1),
-            new Point2D(10, 20),
-            new Point2D(5, 1),
-            new Point2D(10, 20),
-            applyScale: true);
-
-        Point2D transformed = result.Transform(new Point2D(2, 3));
-
-        AssertPoint(new Point2D(11, 22), transformed);
-        Assert.True(result.IsDegenerate);
-    }
-
-    [Fact]
-    public void TransformEntity_WithLine_ShouldPreserveEntityIdAndTransformGeometry()
+    public void Matrix_ShouldTransformLineEntityAndPreserveId()
     {
         var service = new AlignTransformService();
         var line = new LineEntity(
             new Point2D(0, 0),
             new Point2D(10, 0));
 
-        AlignTransformResult transform = service.CreateTransform(
+        AlignTransformResult result = service.Calculate(
             new Point2D(0, 0),
-            new Point2D(5, 5),
+            new Point2D(0, 0),
             new Point2D(10, 0),
-            new Point2D(5, 15),
+            new Point2D(0, 10),
             applyScale: false);
 
-        var result = (LineEntity)service.TransformEntity(line, transform);
+        var transformed = (LineEntity)line.Transform(result.Matrix);
 
-        Assert.Equal(line.Id, result.Id);
-        AssertPoint(new Point2D(5, 5), result.Start);
-        AssertPoint(new Point2D(5, 15), result.End);
+        Assert.Equal(line.Id, transformed.Id);
+        Assert.Equal(new Point2D(0, 0), transformed.Start);
+        Assert.Equal(0, transformed.End.X, precision: 6);
+        Assert.Equal(10, transformed.End.Y, precision: 6);
     }
 
     [Fact]
-    public void TransformEntity_WithCircle_ShouldTransformCenterAndScaleRadius()
+    public void Matrix_ShouldTransformCircleCenterAndScaleRadiusWhenScaleIsApplied()
     {
         var service = new AlignTransformService();
         var circle = new CircleEntity(
             new Point2D(10, 0),
-            3);
+            5);
 
-        AlignTransformResult transform = service.CreateTransform(
+        AlignTransformResult result = service.Calculate(
             new Point2D(0, 0),
-            new Point2D(5, 5),
+            new Point2D(0, 0),
             new Point2D(10, 0),
-            new Point2D(25, 5),
+            new Point2D(0, 20),
             applyScale: true);
 
-        var result = (CircleEntity)service.TransformEntity(circle, transform);
+        var transformed = (CircleEntity)circle.Transform(result.Matrix);
 
-        Assert.Equal(circle.Id, result.Id);
-        AssertPoint(new Point2D(25, 5), result.Center);
-        Assert.Equal(6, result.Radius, precision: 10);
+        Assert.Equal(circle.Id, transformed.Id);
+        Assert.Equal(0, transformed.Center.X, precision: 6);
+        Assert.Equal(20, transformed.Center.Y, precision: 6);
+        Assert.Equal(10, transformed.Radius, precision: 6);
     }
 
     [Fact]
-    public void TransformEntity_WithPolyline_ShouldTransformAllVertices()
+    public void Matrix_ShouldTransformPolylineVertices()
     {
         var service = new AlignTransformService();
         var polyline = new PolylineEntity(
@@ -190,29 +157,22 @@ public sealed class AlignTransformServiceTests
                 new Point2D(10, 0),
                 new Point2D(10, 10)
             },
-            isClosed: true);
+            isClosed: false);
 
-        AlignTransformResult transform = service.CreateTransform(
+        AlignTransformResult result = service.Calculate(
             new Point2D(0, 0),
-            new Point2D(5, 5),
+            new Point2D(0, 0),
             new Point2D(10, 0),
-            new Point2D(5, 15),
+            new Point2D(0, 10),
             applyScale: false);
 
-        var result = (PolylineEntity)service.TransformEntity(polyline, transform);
+        var transformed = (PolylineEntity)polyline.Transform(result.Matrix);
 
-        Assert.Equal(polyline.Id, result.Id);
-        Assert.True(result.IsClosed);
-        AssertPoint(new Point2D(5, 5), result.Vertices[0]);
-        AssertPoint(new Point2D(5, 15), result.Vertices[1]);
-        AssertPoint(new Point2D(-5, 15), result.Vertices[2]);
-    }
-
-    private static void AssertPoint(
-        Point2D expected,
-        Point2D actual)
-    {
-        Assert.Equal(expected.X, actual.X, precision: 10);
-        Assert.Equal(expected.Y, actual.Y, precision: 10);
+        Assert.Equal(polyline.Id, transformed.Id);
+        Assert.Equal(new Point2D(0, 0), transformed.Vertices[0]);
+        Assert.Equal(0, transformed.Vertices[1].X, precision: 6);
+        Assert.Equal(10, transformed.Vertices[1].Y, precision: 6);
+        Assert.Equal(-10, transformed.Vertices[2].X, precision: 6);
+        Assert.Equal(10, transformed.Vertices[2].Y, precision: 6);
     }
 }

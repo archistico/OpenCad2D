@@ -13,5 +13,6 @@ public enum ToolId
     Copy,
     Rotate,
     Scale,
+    Align,
     Delete
 }

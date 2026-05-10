@@ -4,7 +4,7 @@ using OpenCad2D.Geometry.Transformations;
 namespace OpenCad2D.Core.Transformations;
 
 /// <summary>
-/// Describes the affine transformation computed for an Align operation.
+/// Result of an align transformation calculation.
 /// </summary>
 public sealed class AlignTransformResult
 {
@@ -14,80 +14,39 @@ public sealed class AlignTransformResult
         Point2D destinationPoint1,
         Point2D sourcePoint2,
         Point2D destinationPoint2,
-        Angle rotationAngle,
+        double rotationRadians,
         double scaleFactor,
         bool scaleApplied,
         bool isDegenerate)
     {
-        if (scaleFactor <= 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(scaleFactor),
-                "Scale factor must be greater than zero.");
-        }
-
         Matrix = matrix;
         SourcePoint1 = sourcePoint1;
         DestinationPoint1 = destinationPoint1;
         SourcePoint2 = sourcePoint2;
         DestinationPoint2 = destinationPoint2;
-        RotationAngle = rotationAngle;
+        RotationRadians = rotationRadians;
         ScaleFactor = scaleFactor;
         ScaleApplied = scaleApplied;
         IsDegenerate = isDegenerate;
     }
 
-    /// <summary>
-    /// Gets the final transformation matrix.
-    /// </summary>
     public Matrix2D Matrix { get; }
 
-    /// <summary>
-    /// Gets the first source point.
-    /// </summary>
     public Point2D SourcePoint1 { get; }
 
-    /// <summary>
-    /// Gets the first destination point.
-    /// </summary>
     public Point2D DestinationPoint1 { get; }
 
-    /// <summary>
-    /// Gets the second source point.
-    /// </summary>
     public Point2D SourcePoint2 { get; }
 
-    /// <summary>
-    /// Gets the second destination point.
-    /// </summary>
     public Point2D DestinationPoint2 { get; }
 
-    /// <summary>
-    /// Gets the rotation angle applied by the align operation.
-    /// </summary>
-    public Angle RotationAngle { get; }
+    public double RotationRadians { get; }
 
-    /// <summary>
-    /// Gets the uniform scale factor applied by the align operation.
-    /// </summary>
+    public double RotationDegrees => RotationRadians * 180.0 / Math.PI;
+
     public double ScaleFactor { get; }
 
-    /// <summary>
-    /// Gets a value indicating whether scale was requested and applied.
-    /// </summary>
     public bool ScaleApplied { get; }
 
-    /// <summary>
-    /// Gets a value indicating whether the operation fell back to translation only
-    /// because one of the defining directions has zero length.
-    /// </summary>
     public bool IsDegenerate { get; }
-
-    /// <summary>
-    /// Transforms a point using the computed matrix.
-    /// </summary>
-    public Point2D Transform(Point2D point)
-    {
-        return Matrix.Transform(point);
-    }
 }

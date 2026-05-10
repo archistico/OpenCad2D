@@ -7,6 +7,7 @@ using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Editing;
 using System;
 
 namespace OpenCad2D.App;
@@ -187,6 +188,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Align_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Align);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -293,6 +305,11 @@ public partial class MainWindow : Window
         object? sender,
         KeyEventArgs e)
     {
+        if (TryHandleAlignScaleConfirmationKey(e))
+        {
+            return;
+        }
+
         if (e.Key == Key.Enter)
         {
             SubmitCommandInputText();
@@ -342,6 +359,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (TryHandleAlignScaleConfirmationKey(e))
+        {
+            return;
+        }
+
         if (e.Key == Key.Enter && !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
         {
             SubmitCommandInputText();
@@ -375,7 +397,71 @@ public partial class MainWindow : Window
 
         CadCanvas.ClearSnapMarker();
         CadCanvas.InvalidateVisual();
+
+        if (!FocusCommandInputIfAlignScaleConfirmation())
+        {
+            CadCanvas.Focus();
+        }
+    }
+
+    private bool TryHandleAlignScaleConfirmationKey(KeyEventArgs e)
+    {
+        if (_viewModel.Workspace.ToolController.ActiveTool is not AlignTool alignTool ||
+            alignTool.State != AlignToolState.WaitingForScaleConfirmation ||
+            !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
+        {
+            return false;
+        }
+
+        if (e.Key == Key.Enter || e.Key == Key.N)
+        {
+            ConfirmAlignScale(applyScale: false);
+            e.Handled = true;
+            return true;
+        }
+
+        if (e.Key == Key.Y)
+        {
+            ConfirmAlignScale(applyScale: true);
+            e.Handled = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void ConfirmAlignScale(bool applyScale)
+    {
+        if (_viewModel.Workspace.ToolController.ActiveTool is not AlignTool alignTool)
+        {
+            return;
+        }
+
+        ToolResult result = applyScale
+            ? alignTool.ConfirmWithScale(_viewModel.Workspace.Context)
+            : alignTool.ConfirmWithoutScale(_viewModel.Workspace.Context);
+
+        ClearCommandInputText();
+
+        _viewModel.SetLastResult(result);
+        _viewModel.NotifyDocumentStateChanged();
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
         CadCanvas.Focus();
+    }
+
+    private bool FocusCommandInputIfAlignScaleConfirmation()
+    {
+        if (_viewModel.Workspace.ToolController.ActiveTool is not AlignTool alignTool ||
+            alignTool.State != AlignToolState.WaitingForScaleConfirmation)
+        {
+            return false;
+        }
+
+        ClearCommandInputText();
+        CommandInputTextBox.Focus();
+        return true;
     }
 
     private void AppendTextToCommandInput(string text)
@@ -440,6 +526,7 @@ public partial class MainWindow : Window
         _viewModel.NotifyDocumentStateChanged();
 
         RefreshStatus();
+        FocusCommandInputIfAlignScaleConfirmation();
     }
 
     private void RefreshStatus()
@@ -587,6 +674,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             ScaleButton,
             activeToolName.Equals("Scale", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            AlignButton,
+            activeToolName.Equals("Align", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }
