@@ -16,12 +16,6 @@ public sealed class ViewportTransform
 
     public Vector Offset { get; private set; } = new(0, 0);
 
-    public double PanX => Offset.X;
-
-    public double PanY => Offset.Y;
-
-    public double Zoom => Scale;
-
     public Point ModelToScreen(Point2D modelPoint)
     {
         return new Point(
@@ -44,6 +38,23 @@ public sealed class ViewportTransform
     public double ScreenLengthToModel(double screenLength)
     {
         return screenLength / Scale;
+    }
+
+    public BoundingBox2D GetVisibleWorldBounds(Size viewportSize)
+    {
+        if (viewportSize.Width <= 0 || viewportSize.Height <= 0)
+        {
+            return new BoundingBox2D(0, 0, 0, 0);
+        }
+
+        Point2D topLeft = ScreenToModel(new Point(0, 0));
+        Point2D bottomRight = ScreenToModel(new Point(
+            viewportSize.Width,
+            viewportSize.Height));
+
+        return BoundingBox2D.FromPoints(
+            topLeft,
+            bottomRight);
     }
 
     public void Pan(Vector screenDelta)
@@ -130,22 +141,20 @@ public sealed class ViewportTransform
     }
 
     public void SetState(
-        double panX,
-        double panY,
-        double zoom)
+        double scale,
+        Vector offset)
     {
         Scale = Math.Clamp(
-            zoom,
+            scale,
             MinScale,
             MaxScale);
 
-        Offset = new Vector(
-            panX,
-            panY);
+        Offset = offset;
     }
 
     public void Reset()
     {
-        SetState(0, 0, 1.0);
+        Scale = 1.0;
+        Offset = new Vector(0, 0);
     }
 }

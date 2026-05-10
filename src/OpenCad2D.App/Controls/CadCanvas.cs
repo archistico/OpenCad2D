@@ -9,6 +9,7 @@ using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
+using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
@@ -16,6 +17,7 @@ using OpenCad2D.Tools.Grips;
 using OpenCad2D.Tools.Selection;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace OpenCad2D.App.Controls;
 
@@ -97,6 +99,11 @@ public sealed class CadCanvas : Control
 
     public ViewportTransform Viewport => _viewport;
 
+    public int RenderedEntityCount { get; private set; }
+
+    public BoundingBox2D LastVisibleWorldBounds { get; private set; } =
+        new(0, 0, 0, 0);
+
     public static readonly StyledProperty<CadWorkspace?> WorkspaceProperty =
         AvaloniaProperty.Register<CadCanvas, CadWorkspace?>(nameof(Workspace));
 
@@ -153,10 +160,15 @@ public sealed class CadCanvas : Control
 
         if (Workspace is null)
         {
+            RenderedEntityCount = 0;
+            LastVisibleWorldBounds = new BoundingBox2D(0, 0, 0, 0);
             return;
         }
 
-        foreach (CadEntity entity in Workspace.Document.GetVisibleEntities())
+        IReadOnlyList<CadEntity> renderableEntities = GetRenderableEntities();
+        RenderedEntityCount = renderableEntities.Count;
+
+        foreach (CadEntity entity in renderableEntities)
         {
             Pen pen = Workspace.SelectionSet.Contains(entity.Id)
                 ? _selectedPen
@@ -171,6 +183,27 @@ public sealed class CadCanvas : Control
         DrawActiveToolPreview(context);
         DrawCrosshair(context);
         DrawSnapMarker(context);
+    }
+
+    private IReadOnlyList<CadEntity> GetRenderableEntities()
+    {
+        if (Workspace is null || Bounds.Width <= 0 || Bounds.Height <= 0)
+        {
+            LastVisibleWorldBounds = new BoundingBox2D(0, 0, 0, 0);
+            return Array.Empty<CadEntity>();
+        }
+
+        const double screenMargin = 24;
+
+        BoundingBox2D visibleWorldBounds = _viewport
+            .GetVisibleWorldBounds(new Size(Bounds.Width, Bounds.Height))
+            .Expand(_viewport.ScreenLengthToModel(screenMargin));
+
+        LastVisibleWorldBounds = visibleWorldBounds;
+
+        return Workspace.Document
+            .GetVisibleEntities(visibleWorldBounds)
+            .ToList();
     }
 
     private void DrawCurrentUcs(DrawingContext context)
@@ -1473,6 +1506,39 @@ public sealed class CadCanvas : Control
             Math.Min(first.MinY, second.MinY),
             Math.Max(first.MaxX, second.MaxX),
             Math.Max(first.MaxY, second.MaxY));
+    }
+
+    public ViewportStateDto GetViewportState()
+    {
+        return new ViewportStateDto
+        {
+            PanX = _viewport.Offset.X,
+            PanY = _viewport.Offset.Y,
+            Zoom = _viewport.Scale
+        };
+    }
+
+    public void ApplyViewportState(ViewportStateDto? viewportState)
+    {
+        if (viewportState is null)
+        {
+            ResetViewport();
+            return;
+        }
+
+        _viewport.SetState(
+            viewportState.Zoom,
+            new Vector(
+                viewportState.PanX,
+                viewportState.PanY));
+
+        InvalidateVisual();
+    }
+
+    public void ResetViewport()
+    {
+        _viewport.Reset();
+        InvalidateVisual();
     }
 
     public void ClearSnapMarker()

@@ -17,6 +17,8 @@ namespace OpenCad2D.Tools.Common;
 /// </summary>
 public sealed class CadWorkspace
 {
+    private int _savedGeneration;
+
     public CadWorkspace(
         CadDocument? document = null,
         CommandHistory? commandHistory = null,
@@ -65,9 +67,11 @@ public sealed class CadWorkspace
         ActionController = new CadActionController(
             Context,
             ToolController);
+
+        MarkSaved();
     }
 
-    public CadDocument Document { get; }
+    public CadDocument Document { get; private set; }
 
     public CommandHistory CommandHistory { get; }
 
@@ -89,6 +93,8 @@ public sealed class CadWorkspace
 
     public CadActionController ActionController { get; }
 
+    public bool IsDirty => CommandHistory.CurrentGeneration != _savedGeneration;
+
     public LayerId CurrentLayerId
     {
         get => Context.CurrentLayerId;
@@ -107,6 +113,46 @@ public sealed class CadWorkspace
         set => Context.GeometryTolerance = value;
     }
 
+
+    public void MarkSaved()
+    {
+        _savedGeneration = CommandHistory.CurrentGeneration;
+    }
+
+    public void MarkDocumentChanged()
+    {
+        CommandHistory.RegisterExternalChange();
+    }
+
+    public void LoadDocument(
+        CadDocument document,
+        LayerId currentLayerId)
+    {
+        ArgumentNullException.ThrowIfNull(document);
+
+        Document = document;
+        Context.Document = document;
+
+        CommandHistory.Clear();
+        SelectionSet.Clear();
+        Context.CurrentBasePoint = null;
+
+        CurrentLayerId = document.Layers.Contains(currentLayerId)
+            ? currentLayerId
+            : LayerId.Default;
+
+        ToolController.SetActiveToolWithoutDeactivating(
+            new SelectionTool());
+
+        MarkSaved();
+    }
+
+    public void NewDocument()
+    {
+        LoadDocument(
+            new CadDocument(),
+            LayerId.Default);
+    }
 
     public ToolResult SetGridSettings(GridSettings gridSettings)
     {
