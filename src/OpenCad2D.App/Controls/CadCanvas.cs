@@ -9,7 +9,6 @@ using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
-using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
@@ -516,14 +515,27 @@ public sealed class CadCanvas : Control
 
     private void DrawGrid(DrawingContext context)
     {
-        double minorStep = GetNiceGridStep();
-
-        if (minorStep <= 0)
+        if (Workspace is null)
         {
             return;
         }
 
-        double majorStep = minorStep * 5;
+        GridSettings grid = Workspace.Context.GridSettings;
+
+        if (!grid.IsVisible)
+        {
+            return;
+        }
+
+        double minorScreenSpacing = _viewport.ModelLengthToScreen(grid.MinorStep);
+        double majorScreenSpacing = _viewport.ModelLengthToScreen(grid.MajorStep);
+        bool drawMinor = grid.ShouldRenderScreenSpacing(minorScreenSpacing);
+        bool drawMajor = grid.ShouldRenderScreenSpacing(majorScreenSpacing);
+
+        if (!drawMinor && !drawMajor)
+        {
+            return;
+        }
 
         Point2D topLeftModel = ToModelPoint(new Point(0, 0));
         Point2D bottomRightModel = ToModelPoint(new Point(Bounds.Width, Bounds.Height));
@@ -533,39 +545,32 @@ public sealed class CadCanvas : Control
         double minY = Math.Min(topLeftModel.Y, bottomRightModel.Y);
         double maxY = Math.Max(topLeftModel.Y, bottomRightModel.Y);
 
-        double startX = Math.Floor(minX / minorStep) * minorStep;
-        double endX = Math.Ceiling(maxX / minorStep) * minorStep;
-        double startY = Math.Floor(minY / minorStep) * minorStep;
-        double endY = Math.Ceiling(maxY / minorStep) * minorStep;
-
-        for (double x = startX; x <= endX; x += minorStep)
+        if (drawMinor)
         {
-            Pen pen = IsMultipleOf(x, majorStep)
-                ? _gridMajorPen
-                : _gridMinorPen;
-
-            Point p1 = ToScreenPoint(new Point2D(x, startY));
-            Point p2 = ToScreenPoint(new Point2D(x, endY));
-
-            context.DrawLine(
-                pen,
-                p1,
-                p2);
+            DrawGridLines(
+                context,
+                grid,
+                grid.MinorStep,
+                _gridMinorPen,
+                minX,
+                maxX,
+                minY,
+                maxY,
+                skipMajorLines: drawMajor);
         }
 
-        for (double y = startY; y <= endY; y += minorStep)
+        if (drawMajor)
         {
-            Pen pen = IsMultipleOf(y, majorStep)
-                ? _gridMajorPen
-                : _gridMinorPen;
-
-            Point p1 = ToScreenPoint(new Point2D(startX, y));
-            Point p2 = ToScreenPoint(new Point2D(endX, y));
-
-            context.DrawLine(
-                pen,
-                p1,
-                p2);
+            DrawGridLines(
+                context,
+                grid,
+                grid.MajorStep,
+                _gridMajorPen,
+                minX,
+                maxX,
+                minY,
+                maxY,
+                skipMajorLines: false);
         }
 
         DrawAxes(
@@ -574,6 +579,49 @@ public sealed class CadCanvas : Control
             maxX,
             minY,
             maxY);
+    }
+
+    private void DrawGridLines(
+        DrawingContext context,
+        GridSettings grid,
+        double step,
+        Pen pen,
+        double minX,
+        double maxX,
+        double minY,
+        double maxY,
+        bool skipMajorLines)
+    {
+        double startX = grid.OriginX + Math.Floor((minX - grid.OriginX) / step) * step;
+        double endX = grid.OriginX + Math.Ceiling((maxX - grid.OriginX) / step) * step;
+        double startY = grid.OriginY + Math.Floor((minY - grid.OriginY) / step) * step;
+        double endY = grid.OriginY + Math.Ceiling((maxY - grid.OriginY) / step) * step;
+
+        for (double x = startX; x <= endX; x += step)
+        {
+            if (skipMajorLines && IsGridCoordinateMultipleOf(x, grid.OriginX, grid.MajorStep))
+            {
+                continue;
+            }
+
+            context.DrawLine(
+                pen,
+                ToScreenPoint(new Point2D(x, minY)),
+                ToScreenPoint(new Point2D(x, maxY)));
+        }
+
+        for (double y = startY; y <= endY; y += step)
+        {
+            if (skipMajorLines && IsGridCoordinateMultipleOf(y, grid.OriginY, grid.MajorStep))
+            {
+                continue;
+            }
+
+            context.DrawLine(
+                pen,
+                ToScreenPoint(new Point2D(minX, y)),
+                ToScreenPoint(new Point2D(maxX, y)));
+        }
     }
 
     private void DrawAxes(
@@ -640,12 +688,23 @@ public sealed class CadCanvas : Control
         double value,
         double step)
     {
+        return IsGridCoordinateMultipleOf(
+            value,
+            origin: 0,
+            step);
+    }
+
+    private static bool IsGridCoordinateMultipleOf(
+        double value,
+        double origin,
+        double step)
+    {
         if (step <= 0)
         {
             return false;
         }
 
-        double quotient = value / step;
+        double quotient = (value - origin) / step;
 
         return Tolerance.AreEqual(
             quotient,
@@ -1350,35 +1409,6 @@ public sealed class CadCanvas : Control
         return new Rect(
             topLeft,
             bottomRight);
-    }
-
-
-    public ViewportStateDto GetViewportState()
-    {
-        return new ViewportStateDto
-        {
-            PanX = _viewport.PanX,
-            PanY = _viewport.PanY,
-            Zoom = _viewport.Zoom
-        };
-    }
-
-    public void ApplyViewportState(ViewportStateDto viewportState)
-    {
-        ArgumentNullException.ThrowIfNull(viewportState);
-
-        _viewport.SetState(
-            viewportState.PanX,
-            viewportState.PanY,
-            viewportState.Zoom <= 0 ? 1.0 : viewportState.Zoom);
-
-        InvalidateVisual();
-    }
-
-    public void ResetViewport()
-    {
-        _viewport.Reset();
-        InvalidateVisual();
     }
 
     public ToolResult ZoomExtents()

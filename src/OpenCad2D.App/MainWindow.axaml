@@ -84,24 +84,6 @@
                             Orientation="Horizontal"
                             Spacing="8">
 
-                    <Button Classes="global-button"
-                            Content="New"
-                            Click="New_Click" />
-
-                    <Button Classes="global-button"
-                            Content="Open"
-                            Click="Open_Click" />
-
-                    <Button Classes="global-button"
-                            Content="Save"
-                            Click="Save_Click" />
-
-                    <Button Classes="global-button"
-                            Content="Save As"
-                            Click="SaveAs_Click" />
-
-                    <Separator Margin="8,0" />
-
                     <TextBlock Text="Layer:"
                                Foreground="#CCCCCC"
                                VerticalAlignment="Center"
@@ -238,8 +220,10 @@
                 BorderThickness="0,1,0,0"
                 Padding="8,6">
 
-            <StackPanel Orientation="Horizontal"
-                        Spacing="10">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal"
+                            Spacing="10">
 
                 <TextBlock Text="Snap:"
                            Foreground="#CCCCCC"
@@ -305,7 +289,81 @@
                           Content="Ortho"
                           IsChecked="False"
                           Click="Ortho_Changed" />
-            </StackPanel>
+
+                <Separator Margin="4,0" />
+
+                <TextBlock Text="Grid:"
+                           Foreground="#CCCCCC"
+                           VerticalAlignment="Center"
+                           FontWeight="Bold" />
+
+                <CheckBox x:Name="GridVisibleCheckBox"
+                          Classes="snap-check"
+                          Content="Show"
+                          IsChecked="True"
+                          Click="GridVisible_Changed" />
+
+                <TextBlock Text="Minor"
+                           Foreground="#AAAAAA"
+                           VerticalAlignment="Center" />
+
+                <TextBox x:Name="GridMinorStepTextBox"
+                         Width="56"
+                         Text="10"
+                         Background="#111111"
+                         Foreground="#FFFFFF"
+                         BorderBrush="#555555"
+                         BorderThickness="1"
+                         Padding="4,2"
+                         KeyDown="GridSettingsTextBox_KeyDown"
+                         LostFocus="GridSettingsTextBox_LostFocus" />
+
+                <TextBlock Text="Major"
+                           Foreground="#AAAAAA"
+                           VerticalAlignment="Center" />
+
+                <TextBox x:Name="GridMajorStepTextBox"
+                         Width="56"
+                         Text="50"
+                         Background="#111111"
+                         Foreground="#FFFFFF"
+                         BorderBrush="#555555"
+                         BorderThickness="1"
+                         Padding="4,2"
+                         KeyDown="GridSettingsTextBox_KeyDown"
+                         LostFocus="GridSettingsTextBox_LostFocus" />
+
+                <TextBlock Text="Px"
+                           Foreground="#AAAAAA"
+                           VerticalAlignment="Center" />
+
+                <TextBox x:Name="GridMinScreenSpacingTextBox"
+                         Width="44"
+                         Text="8"
+                         Background="#111111"
+                         Foreground="#FFFFFF"
+                         BorderBrush="#555555"
+                         BorderThickness="1"
+                         Padding="4,2"
+                         KeyDown="GridSettingsTextBox_KeyDown"
+                         LostFocus="GridSettingsTextBox_LostFocus" />
+
+                <TextBlock Text="-"
+                           Foreground="#AAAAAA"
+                           VerticalAlignment="Center" />
+
+                <TextBox x:Name="GridMaxScreenSpacingTextBox"
+                         Width="48"
+                         Text="220"
+                         Background="#111111"
+                         Foreground="#FFFFFF"
+                         BorderBrush="#555555"
+                         BorderThickness="1"
+                         Padding="4,2"
+                         KeyDown="GridSettingsTextBox_KeyDown"
+                         LostFocus="GridSettingsTextBox_LostFocus" />
+                </StackPanel>
+            </ScrollViewer>
         </Border>
 
         <!-- Command line -->

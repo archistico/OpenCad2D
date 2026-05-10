@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Interaction.Snapping;
+using OpenCad2D.Interaction.Snapping;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -35,5 +35,5 @@ public sealed class ToolSnapContext
 
     public double Tolerance { get; set; }
 
-    public GridSettings GridSettings { get; }
+    public GridSettings GridSettings { get; set; }
 }

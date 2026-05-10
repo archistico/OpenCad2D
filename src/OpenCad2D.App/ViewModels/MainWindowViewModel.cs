@@ -1,4 +1,3 @@
-using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -8,10 +7,7 @@ using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
 using OpenCad2D.Tools.Grips;
-using OpenCad2D.Persistence;
-using OpenCad2D.Persistence.Dto;
 using System;
-using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -24,9 +20,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
-    private string? _currentFilePath;
     private readonly CommandInputParser _commandInputParser = new();
-    private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
 
     public MainWindowViewModel()
     {
@@ -49,18 +43,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public CadWorkspace Workspace { get; }
 
-    public string? CurrentFilePath => _currentFilePath;
-
-    public string CurrentFileName => string.IsNullOrWhiteSpace(_currentFilePath)
-        ? "Untitled"
-        : Path.GetFileName(_currentFilePath);
-
-    public bool IsDirty => Workspace.IsDirty;
-
-    public string WindowTitle => IsDirty
-        ? $"OpenCad2D - {CurrentFileName} *"
-        : $"OpenCad2D - {CurrentFileName}";
-
     public IReadOnlyList<string> LayerNames => Workspace.Document.Layers.All
         .OrderBy(layer => layer.Name)
         .Select(layer => layer.Name)
@@ -78,6 +60,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool CurrentLayerIsLocked => CurrentLayer.IsLocked;
 
     public bool IsOrthoEnabled => Workspace.Context.IsOrthoEnabled;
+
+    public bool IsGridVisible => Workspace.GridSettings.IsVisible;
+
+    public double GridMinorStep => Workspace.GridSettings.MinorStep;
+
+    public double GridMajorStep => Workspace.GridSettings.MajorStep;
+
+    public double GridMinimumScreenSpacing => Workspace.GridSettings.MinimumScreenSpacing;
+
+    public double GridMaximumScreenSpacing => Workspace.GridSettings.MaximumScreenSpacing;
 
     public string ActiveToolName =>
         Workspace.ToolController.ActiveToolName;
@@ -228,6 +220,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+    public string GridStatusText
+    {
+        get
+        {
+            string state = IsGridVisible
+                ? "on"
+                : "off";
+
+            return $"Grid: {state} | minor {GridMinorStep:0.###} | major {GridMajorStep:0.###}";
+        }
+    }
+
     public string StatusText
     {
         get
@@ -239,6 +243,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return $"Tool: {ActiveToolName} | " +
                    gripStatus +
                    $"{CurrentLayerText} | " +
+                   $"{GridStatusText} | " +
                    $"Entities: {EntityCount} | " +
                    $"Selected: {SelectedCount} | " +
                    $"{MousePositionText} | " +
@@ -267,78 +272,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             GripKind.ResizeRadius => "radius",
             _ => grip.Kind.ToString()
         };
-    }
-
-
-    public void NewDocument()
-    {
-        Workspace.NewDocument();
-        EnsureDemoLayers();
-        Workspace.MarkSaved();
-        _currentFilePath = null;
-
-        SetMessage("New document created.");
-        NotifyDocumentStateChanged();
-        NotifyFileStateChanged();
-    }
-
-    public void SaveToFile(
-        string filePath,
-        ViewportStateDto viewportState)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            throw new ArgumentException(
-                "File path cannot be empty.",
-                nameof(filePath));
-        }
-
-        ArgumentNullException.ThrowIfNull(viewportState);
-
-        DocumentDto dto = _documentSerializer.Serialize(
-            Workspace.Document,
-            Workspace.CurrentLayerId.Value,
-            viewportState);
-
-        _documentSerializer.SaveToFile(
-            dto,
-            filePath);
-
-        _currentFilePath = filePath;
-        Workspace.MarkSaved();
-
-        SetMessage($"Saved '{CurrentFileName}'.");
-        NotifyDocumentStateChanged();
-        NotifyFileStateChanged();
-    }
-
-    public ViewportStateDto OpenFromFile(string filePath)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            throw new ArgumentException(
-                "File path cannot be empty.",
-                nameof(filePath));
-        }
-
-        DocumentDto dto = _documentSerializer.LoadFromFile(filePath);
-
-        CadDocument document = _documentSerializer.Deserialize(
-            dto,
-            out string currentLayerId,
-            out ViewportStateDto viewportState);
-
-        Workspace.LoadDocument(
-            document,
-            new LayerId(currentLayerId));
-
-        _currentFilePath = filePath;
-
-        SetMessage($"Opened '{CurrentFileName}'.");
-        NotifyDocumentStateChanged();
-        NotifyFileStateChanged();
-
-        return viewportState;
     }
 
 
@@ -534,8 +467,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             currentLayer.Id,
             isVisible);
 
-        Workspace.MarkDocumentChanged();
-
         SetMessage(
             isVisible
                 ? $"Layer '{currentLayer.Name}' visible."
@@ -550,8 +481,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         string layerName = CurrentLayer.Name;
 
         ToolResult result = Workspace.SetCurrentLayerLocked(isLocked);
-
-        Workspace.MarkDocumentChanged();
 
         SetLastResult(result);
 
@@ -683,14 +612,72 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(StatusText));
     }
 
+    public void SetGridVisible(bool isVisible)
+    {
+        ToolResult result = Workspace.SetGridVisible(isVisible);
+
+        SetLastResult(result);
+        SetMessage(isVisible
+            ? "Grid display enabled."
+            : "Grid display disabled.");
+
+        NotifyGridStateChanged();
+    }
+
+    public bool TrySetGridSettings(
+        double minorStep,
+        double majorStep,
+        double minimumScreenSpacing,
+        double maximumScreenSpacing,
+        out string errorMessage)
+    {
+        errorMessage = string.Empty;
+
+        try
+        {
+            GridSettings gridSettings = Workspace.GridSettings
+                .WithSpacing(
+                    minorStep,
+                    majorStep)
+                .WithScreenSpacingRange(
+                    minimumScreenSpacing,
+                    maximumScreenSpacing);
+
+            ToolResult result = Workspace.SetGridSettings(gridSettings);
+
+            SetLastResult(result);
+            SetMessage("Grid settings updated.");
+
+            NotifyGridStateChanged();
+
+            return true;
+        }
+        catch (ArgumentOutOfRangeException ex)
+        {
+            errorMessage = ex.Message;
+            SetMessage(errorMessage);
+            NotifyGridStateChanged();
+            return false;
+        }
+    }
+
+    private void NotifyGridStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(IsGridVisible),
+            nameof(GridMinorStep),
+            nameof(GridMajorStep),
+            nameof(GridMinimumScreenSpacing),
+            nameof(GridMaximumScreenSpacing),
+            nameof(GridStatusText),
+            nameof(StatusText),
+            nameof(LastMessage));
+    }
+
     public void NotifyDocumentStateChanged()
     {
         OnPropertiesChanged(
             nameof(StatusText),
-            nameof(WindowTitle),
-            nameof(CurrentFilePath),
-            nameof(CurrentFileName),
-            nameof(IsDirty),
             nameof(GripStatusText),
             nameof(EntityCount),
             nameof(SelectedCount),
@@ -701,6 +688,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
             nameof(IsOrthoEnabled),
+            nameof(IsGridVisible),
+            nameof(GridMinorStep),
+            nameof(GridMajorStep),
+            nameof(GridMinimumScreenSpacing),
+            nameof(GridMaximumScreenSpacing),
+            nameof(GridStatusText),
             nameof(CurrentLayerText),
             nameof(MousePositionText),
             nameof(MeasurementText),
@@ -719,16 +712,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(LastMessage));
     }
 
-    private void NotifyFileStateChanged()
-    {
-        OnPropertiesChanged(
-            nameof(CurrentFilePath),
-            nameof(CurrentFileName),
-            nameof(IsDirty),
-            nameof(WindowTitle),
-            nameof(StatusText));
-    }
-
     private void NotifyLayerStateChanged()
     {
         OnPropertiesChanged(
@@ -738,6 +721,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
             nameof(IsOrthoEnabled),
+            nameof(IsGridVisible),
+            nameof(GridMinorStep),
+            nameof(GridMajorStep),
+            nameof(GridMinimumScreenSpacing),
+            nameof(GridMaximumScreenSpacing),
+            nameof(GridStatusText),
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
             nameof(MeasurementText),

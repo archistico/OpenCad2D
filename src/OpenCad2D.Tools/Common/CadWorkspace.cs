@@ -17,8 +17,6 @@ namespace OpenCad2D.Tools.Common;
 /// </summary>
 public sealed class CadWorkspace
 {
-    private int _savedGeneration;
-
     public CadWorkspace(
         CadDocument? document = null,
         CommandHistory? commandHistory = null,
@@ -67,11 +65,9 @@ public sealed class CadWorkspace
         ActionController = new CadActionController(
             Context,
             ToolController);
-
-        MarkSaved();
     }
 
-    public CadDocument Document { get; private set; }
+    public CadDocument Document { get; }
 
     public CommandHistory CommandHistory { get; }
 
@@ -83,7 +79,7 @@ public sealed class CadWorkspace
 
     public ToolRegistry ToolRegistry { get; }
 
-    public GridSettings GridSettings { get; }
+    public GridSettings GridSettings { get; private set; }
 
     public GripProviderRegistry GripProviders { get; }
 
@@ -92,8 +88,6 @@ public sealed class CadWorkspace
     public ToolController ToolController { get; }
 
     public CadActionController ActionController { get; }
-
-    public bool IsDirty => CommandHistory.CurrentGeneration != _savedGeneration;
 
     public LayerId CurrentLayerId
     {
@@ -113,44 +107,20 @@ public sealed class CadWorkspace
         set => Context.GeometryTolerance = value;
     }
 
-    public void MarkSaved()
+
+    public ToolResult SetGridSettings(GridSettings gridSettings)
     {
-        _savedGeneration = CommandHistory.CurrentGeneration;
+        ArgumentNullException.ThrowIfNull(gridSettings);
+
+        GridSettings = gridSettings;
+        Context.Snapping.GridSettings = gridSettings;
+
+        return ToolResult.Updated("Grid settings updated.");
     }
 
-    public void MarkDocumentChanged()
+    public ToolResult SetGridVisible(bool isVisible)
     {
-        CommandHistory.RegisterExternalChange();
-    }
-
-    public void LoadDocument(
-        CadDocument document,
-        LayerId currentLayerId)
-    {
-        ArgumentNullException.ThrowIfNull(document);
-
-        Document = document;
-        Context.Document = document;
-
-        CommandHistory.Clear();
-        SelectionSet.Clear();
-        Context.CurrentBasePoint = null;
-
-        CurrentLayerId = document.Layers.Contains(currentLayerId)
-            ? currentLayerId
-            : LayerId.Default;
-
-        ToolController.SetActiveToolWithoutDeactivating(
-            new SelectionTool());
-
-        MarkSaved();
-    }
-
-    public void NewDocument()
-    {
-        LoadDocument(
-            new CadDocument(),
-            LayerId.Default);
+        return SetGridSettings(GridSettings.WithVisibility(isVisible));
     }
 
     public ToolResult SetActiveTool(ToolId toolId)
@@ -189,6 +159,7 @@ public sealed class CadWorkspace
             Context.IsOrthoEnabled = originalOrthoState;
         }
     }
+
 
     public ToolResult EnterGripEditModeForSelection()
     {
