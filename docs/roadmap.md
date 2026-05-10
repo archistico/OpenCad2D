@@ -26,12 +26,14 @@ commands
 composite commands
 undo/redo
 persistence
+SVG export
 hit testing
 selection
 snapping
 grid configuration
 drawing tools
 editing/transform tools
+line-based modify tools
 grip editing
 custom Avalonia canvas
 CAD-style crosshair
@@ -93,6 +95,32 @@ Implemented:
 - Scale;
 - Align with optional scale confirmation.
 
+### Modify tools v1
+
+Implemented:
+
+- Break Point for `LineEntity`;
+- Break Segment for `LineEntity`;
+- Extend `LineEntity` to `LineEntity` boundary;
+- Trim `LineEntity` by `LineEntity` cutting edge;
+- shared Core services for line parameter/intersection/break/extend/trim;
+- `ModifyEntitiesCommand`.
+
+### SVG export
+
+Implemented:
+
+- `OpenCad2D.Export` project;
+- SVG string/file export;
+- UI integration through Export SVG in the file command bar;
+- visible entities only;
+- hidden layers ignored;
+- locked visible layers exported;
+- layer color and line weight used for stroke;
+- automatic viewBox;
+- dark background rectangle;
+- same visual Y orientation as the canvas.
+
 ### PolylineTool v1
 
 Implemented:
@@ -104,67 +132,31 @@ Implemented:
 
 ---
 
-## Next recommended phase: modify tools
+## Next recommended phase: broaden modify tools
 
-The next serious CAD editing area is:
-
-```text
-Break
-Trim
-Extend
-```
+The first line-based modify tools are implemented. The next step is to broaden their geometry support.
 
 Recommended order:
 
-1. **BreakTool** — lowest complexity because it splits one entity.
-2. **ExtendTool** — extends one entity to a boundary.
-3. **TrimTool** — trims one entity against boundaries and may produce more cases.
-
-### BreakTool v1 scope
-
-Recommended first scope:
-
-```text
-LineEntity only
-pick entity
-pick break point
-split line into two line entities
-undoable operation
-```
-
-Then extend to:
-
-```text
-CircleEntity
-PolylineEntity
-ArcEntity when mature
-```
-
-### ExtendTool v1 scope
-
-Recommended first scope:
-
-```text
-LineEntity to LineEntity boundary
-select/pick entity to extend
-pick boundary
-replace extended entity
-```
-
-### TrimTool v1 scope
-
-Recommended first scope:
-
-```text
-LineEntity trimmed by LineEntity boundary
-pick cutting edge
-pick side/part to remove
-replace or remove resulting geometry
-```
+1. add Break/Trim/Extend support for open `PolylineEntity` segments;
+2. add preview refinements and clearer status messages;
+3. evaluate arc/circle support once arc editing/rendering is mature;
+4. add tests for multi-segment cases and degenerate cases.
 
 ---
 
 ## Follow-up phases
+
+### SVG export improvements
+
+Future SVG export improvements:
+
+- optional export settings dialog;
+- export selected entities only;
+- preserve layer grouping with SVG `<g>` elements;
+- optional transparent background;
+- richer fill support when layer fill color is implemented;
+- physical units / print-oriented export options.
 
 ### Polyline grip editing
 

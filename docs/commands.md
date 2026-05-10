@@ -161,6 +161,37 @@ After execution or undo, selection should be revalidated because hidden or locke
 
 ---
 
+## ModifyEntitiesCommand
+
+Replaces one or more existing entities with zero, one or more new entities.
+
+This command is used by line-based modify tools where the number of resulting entities may differ from the number of original entities.
+
+Used by:
+
+- Break Point;
+- Break Segment;
+- Extend;
+- Trim.
+
+Execute:
+
+```text
+remove original entities
+add resulting entities
+```
+
+Undo:
+
+```text
+remove resulting entities
+restore original entities
+```
+
+All removals/additions go through `CadDocument`, preserving locked-layer validation and spatial index consistency.
+
+---
+
 ## CompositeCommand
 
 Groups several commands into one user-facing undo step.
@@ -180,11 +211,11 @@ For example, a future trim operation may replace one entity and remove another, 
 
 ---
 
-## Future Break/Trim/Extend commands
+## Break/Trim/Extend commands
 
-The next modify tools should not mutate entities directly.
+The implemented line-based modify tools do not mutate entities directly.
 
-Recommended command approach:
+Current command approach:
 
 ### Break
 
@@ -197,18 +228,18 @@ Remove original entity
 Add resulting entity pieces
 ```
 
-or a dedicated command storing original and resulting pieces.
+or the implemented `ModifyEntitiesCommand`, which stores original and resulting pieces.
 
 ### Trim
 
 Replace or remove parts of an entity based on cutting boundaries.
 
-Should likely use `CompositeCommand` because a trim can remove a segment, replace an entity, or in some cases produce multiple resulting pieces.
+Currently uses `ModifyEntitiesCommand` for line-based trimming. Future multi-entity trim workflows may use `CompositeCommand` if several operations must be grouped into one undo step.
 
 ### Extend
 
 Replace an entity with an extended version that reaches a boundary.
 
-Can usually be a `ReplaceEntitiesCommand` or dedicated extension command.
+Currently uses `ModifyEntitiesCommand` for consistency with the other modify tools.
 
 All three must respect locked-layer protection by using `CadDocument` mutation APIs.

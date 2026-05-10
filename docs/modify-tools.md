@@ -1,176 +1,145 @@
-# Modify Tools: Break, Trim, Extend
+# Modify Tools
 
-This document defines the planned direction for the next modification tools.
+Modify tools change existing geometry by splitting, shortening or extending entities.
 
-These tools are not implemented yet. They are the next planned CAD editing area after Rotate, Scale, Align and PolylineTool.
-
----
-
-## Shared design rules
-
-Break, Trim and Extend must:
-
-- be UI-independent tools in `OpenCad2D.Tools`;
-- use geometry services for calculations;
-- use hit testing and snapping where appropriate;
-- provide preview when useful;
-- commit through undoable commands;
-- mutate the document only through `CadDocument`;
-- respect hidden and locked layer behavior;
-- preserve entity ids when replacing entities;
-- use `CompositeCommand` when a single user operation creates multiple low-level document changes.
+The first implemented scope is intentionally limited to `LineEntity`. This keeps behavior predictable and heavily testable before extending the same concepts to polylines, arcs and circles.
 
 ---
 
-## BreakTool
+## Implemented infrastructure
 
-Break splits an entity at one or two points.
+Core services:
 
-### Recommended v1
+```text
+LineParameterService
+LineIntersectionService
+LineBreakService
+LineExtendService
+LineTrimService
+```
 
-Start with `LineEntity` only.
+Command:
+
+```text
+ModifyEntitiesCommand
+```
+
+`ModifyEntitiesCommand` can replace one or more original entities with zero, one or more resulting entities. This is necessary because modify operations may split one entity into two pieces or remove a piece entirely.
+
+---
+
+## Break Point
+
+Scope:
+
+```text
+LineEntity only
+```
 
 Workflow:
 
 ```text
-activate Break
-pick line entity
+activate Break Point
+pick target line
 pick break point
-split line into two line entities
-commit as one undoable operation
+project point onto line
+replace original line with two line segments
 ```
 
-For a line from A to B and break point P:
-
-```text
-result 1: A -> P
-result 2: P -> B
-```
-
-Validation:
-
-- break point must lie on or near the entity;
-- break point must not be too close to the start or end;
-- locked-layer entity cannot be broken.
-
-Potential command structure:
-
-```text
-remove original line
-add two resulting lines
-```
-
-wrapped in a `CompositeCommand`, or a dedicated `BreakEntityCommand` that stores original and pieces.
-
-### Future improvements
-
-- two-point break;
-- break circle into arc(s);
-- break polyline segment;
-- break at intersections.
+The tool rejects break points too close to the line endpoints to avoid degenerate segments.
 
 ---
 
-## ExtendTool
+## Break Segment
 
-Extend lengthens an entity until it reaches a boundary.
+Scope:
 
-### Recommended v1
+```text
+LineEntity only
+```
 
-Start with line-to-line extension.
+Workflow:
+
+```text
+activate Break Segment
+pick target line
+pick first break point
+pick second break point
+project both points onto line
+remove segment between the two projected points
+```
+
+The two break points are ordered along the line internally, so click order does not matter. The result may be zero, one or two valid line segments.
+
+---
+
+## Extend
+
+Scope:
+
+```text
+Boundary: LineEntity
+Target:   LineEntity
+```
 
 Workflow:
 
 ```text
 activate Extend
-pick boundary entity
-pick line entity near the end to extend
-extend that end until intersection with boundary
-commit replacement
+pick boundary line
+pick target line near the endpoint to extend
+extend that endpoint until it reaches the boundary
 ```
 
-Rules:
+The tool remains active with the same boundary until `Esc`.
 
-- use pick location to decide which endpoint extends;
-- compute intersection with boundary;
-- replace the original line with the extended line;
-- if no valid intersection exists, do nothing and report a message.
-
-### Future improvements
-
-- multiple boundaries;
-- extend to circle/arc/polyline;
-- fence/window selection;
-- continuous extend mode.
+The operation is ignored if there is no valid extension intersection or if the intersection is already inside the original target segment.
 
 ---
 
-## TrimTool
+## Trim
 
-Trim cuts an entity using one or more boundaries.
+Scope:
 
-### Recommended v1
-
-Start with line trimmed by line boundary.
+```text
+Cutting edge: LineEntity
+Target:       LineEntity
+```
 
 Workflow:
 
 ```text
 activate Trim
-pick cutting boundary
-pick line segment side to remove
-replace original line with remaining part
+pick cutting edge
+pick target line on the side to remove
+trim target line to the cutting edge
 ```
 
-Rules:
+The tool remains active with the same cutting edge until `Esc`.
 
-- use pick location to decide which side is removed;
-- compute intersection with boundary;
-- if the picked portion can be removed, replace with the remaining portion;
-- if trimming produces no valid geometry, remove the entity;
-- if trimming creates multiple parts in future, use composite command.
-
-### Future improvements
-
-- multiple cutting boundaries;
-- circle/arc trim;
-- polyline trim;
-- trim by window/fence;
-- preview highlighted part to remove.
+The operation is ignored if the cutting edge does not intersect the target internally.
 
 ---
 
-## Geometry services
-
-The first step should be testable geometry services, for example:
+## Design rules
 
 ```text
-BreakGeometryService
-ExtendGeometryService
-TrimGeometryService
+Geometry calculation belongs in Core services.
+Tools own interaction state only.
+Document mutations go through ModifyEntitiesCommand.
+CadDocument remains the final mutation boundary.
+Locked-layer rules must not be bypassed.
+Preview must not modify the document.
 ```
-
-These services should operate on geometry primitives/entities and return result objects describing:
-
-```text
-success/failure
-new entity or entities
-message/reason when no operation is possible
-```
-
-Only after services are tested should UI tool integration be added.
 
 ---
 
-## Suggested implementation order
+## Future work
 
-```text
-Phase 1: Break line at point service + tests
-Phase 2: BreakTool for LineEntity + UI + tests
-Phase 3: Extend line to line service + tests
-Phase 4: ExtendTool v1
-Phase 5: Trim line by line service + tests
-Phase 6: TrimTool v1
-```
+Next improvements:
 
-This keeps each step small and recoverable.
+- support open `PolylineEntity` segments;
+- support multi-boundary trim/extend;
+- add clearer status messages for ignored operations;
+- evaluate arc/circle support when arc editing becomes mature;
+- add richer previews for removed/remaining segments.

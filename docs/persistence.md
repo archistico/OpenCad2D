@@ -115,3 +115,23 @@ Cancel     -> abort operation
 Viewport pan and zoom are saved with the drawing and restored after loading.
 
 Viewport state is consumed by the App layer. It is not CAD entity geometry.
+
+---
+
+## Persistence vs export
+
+Persistence and export are intentionally separate.
+
+```text
+Save / Save As  -> writes .opencad2d.json and marks the document clean
+Export SVG      -> writes .svg and leaves the document state unchanged
+```
+
+SVG export does not:
+
+- change `CurrentFilePath`;
+- call `MarkSaved()`;
+- clear the dirty marker;
+- participate in native document loading.
+
+SVG export belongs to `OpenCad2D.Export`, while native document save/load belongs to `OpenCad2D.Persistence`.

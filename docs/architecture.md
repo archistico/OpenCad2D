@@ -12,6 +12,7 @@ OpenCad2D.Core
 OpenCad2D.Interaction
 OpenCad2D.Tools
 OpenCad2D.Persistence
+OpenCad2D.Export
 OpenCad2D.App
 ```
 
@@ -77,6 +78,14 @@ Document serialization and deserialization.
 
 It depends on `Core` and `Geometry`, not on `Tools`, `Interaction` or `App`.
 
+### OpenCad2D.Export
+
+Export services for non-native output formats such as SVG.
+
+It depends on `Core` and `Geometry`, not on `App`, `Tools`, `Interaction` or `Persistence`.
+
+The exporter reads the document and produces external output. It must not mutate the document and must not affect dirty state.
+
 ### OpenCad2D.App
 
 Avalonia application:
@@ -99,10 +108,11 @@ Allowed graph:
 
 ```text
 App -> Persistence -> Core -> Geometry
+App -> Export -> Core -> Geometry
 App -> Tools -> Interaction -> Core -> Geometry
 ```
 
-The App may depend on both `Tools` and `Persistence`. `Persistence` must remain independent of the App.
+The App may depend on `Tools`, `Persistence` and `Export`. `Persistence` and `Export` must remain independent of the App.
 
 ---
 
@@ -205,6 +215,27 @@ It includes:
 The file does not store user-local application settings such as window position or user shortcuts.
 
 ---
+
+
+## Export architecture
+
+Export is separate from persistence.
+
+```text
+Persistence -> native OpenCad2D document save/reopen
+Export      -> external derived output such as SVG
+```
+
+SVG export currently lives in `OpenCad2D.Export` and is intentionally UI-independent. The App owns only file dialogs and user-facing error messages.
+
+Export must not:
+
+- change `CurrentFilePath`;
+- call `MarkSaved()`;
+- clear the dirty marker;
+- mutate the document.
+
+SVG export uses visible document bounds to build the `viewBox`, writes a background rectangle matching the dark canvas and keeps the same visual Y orientation as the OpenCad2D canvas.
 
 ## Coordinate systems and command line
 

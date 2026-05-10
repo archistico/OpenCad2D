@@ -226,6 +226,71 @@ Align owns a multi-step state machine and does not derive from `TwoPointToolBase
 
 ---
 
+
+## Modify tools
+
+Modify tools change existing geometry topologically or by extending/trimming parts.
+
+Current v1 scope is line-based.
+
+### BreakAtPointTool
+
+Workflow:
+
+```text
+activate Break Point
+pick target LineEntity
+pick break point
+project break point onto line
+replace original line with two line entities
+```
+
+Uses `LineBreakService` and commits through `ModifyEntitiesCommand`.
+
+### BreakBetweenPointsTool
+
+Workflow:
+
+```text
+activate Break Segment
+pick target LineEntity
+pick first break point
+pick second break point
+remove the segment between the projected break points
+```
+
+The two break points are ordered along the line. The result may be zero, one or two remaining line segments depending on where the break points fall.
+
+### ExtendTool
+
+Workflow:
+
+```text
+activate Extend
+pick LineEntity boundary
+pick LineEntity target near the endpoint to extend
+extend that endpoint until the target reaches the boundary
+```
+
+The tool stays active with the same boundary until `Esc`.
+
+### TrimTool
+
+Workflow:
+
+```text
+activate Trim
+pick LineEntity cutting edge
+pick LineEntity target on the side to remove
+trim target line to the cutting edge
+```
+
+The tool stays active with the same cutting edge until `Esc`.
+
+All modify tools create undoable changes and use Core geometry services.
+
+---
+
 ## GripEditTool
 
 Grip editing modifies an existing selected entity through grip points.
@@ -287,3 +352,11 @@ They should follow these rules:
 - commit through undoable commands;
 - modify documents only through `CadDocument` APIs;
 - respect locked-layer protection.
+
+---
+
+## Export is not a tool
+
+SVG export is triggered from the file command bar and lives in `OpenCad2D.Export`, not in `OpenCad2D.Tools`.
+
+Export does not participate in the tool pipeline and does not modify the document.

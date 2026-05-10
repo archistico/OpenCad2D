@@ -46,6 +46,7 @@ The project currently supports:
 - rotate;
 - scale;
 - align with optional scaling confirmation;
+- line-based Break Point, Break Segment, Extend and Trim;
 - grip editing for supported entities;
 - undo and redo.
 
@@ -73,7 +74,7 @@ The project currently supports:
 - viewport culling;
 - rendered entity count.
 
-### Persistence
+### Persistence and export
 
 - internal JSON format `.opencad2d.json`;
 - `OpenCad2D.Persistence` project;
@@ -81,7 +82,12 @@ The project currently supports:
 - current file path;
 - dirty state with `*` marker;
 - “Save changes?” dialog before New/Open/Close;
-- viewport state save/restore.
+- viewport state save/restore;
+- `OpenCad2D.Export` project;
+- SVG export from the file command bar;
+- SVG background rectangle matching the canvas;
+- SVG export preserves the same visual Y orientation as the canvas;
+- SVG export does not save the drawing and does not clear dirty state.
 
 ---
 
@@ -108,6 +114,11 @@ OpenCad2D.App
           -> OpenCad2D.Geometry
 
 OpenCad2D.App
+  -> OpenCad2D.Export
+      -> OpenCad2D.Core
+          -> OpenCad2D.Geometry
+
+OpenCad2D.App
   -> OpenCad2D.Tools
       -> OpenCad2D.Interaction
           -> OpenCad2D.Core
@@ -121,6 +132,7 @@ Forbidden dependencies:
 - `Interaction` must not depend on `Tools` or `App`.
 - `Tools` must not depend on `App` or Avalonia.
 - `Persistence` must not depend on `Tools`, `Interaction` or `App`.
+- `Export` must not depend on `Tools`, `Interaction`, `Persistence` or `App`.
 
 ---
 
@@ -323,25 +335,49 @@ The App handles:
 
 ---
 
-## Recommended next development area
+## Modify tools status
 
-The next planned tools are modify tools:
+Implemented line-based modify tools:
 
 ```text
-Break
-Trim
-Extend
+Break Point    LineEntity only
+Break Segment  LineEntity only
+Extend         LineEntity to LineEntity boundary
+Trim           LineEntity by LineEntity cutting edge
 ```
 
-Design rule: these tools should use geometry services, produce preview when useful and commit changes through undoable commands that mutate the document through `CadDocument`.
+Design rule: modify tools use geometry services, produce preview when useful and commit changes through undoable commands that mutate the document through `CadDocument`.
 
-Recommended order:
+Core services currently include line parameter, intersection, break, extend and trim services. `ModifyEntitiesCommand` supports replacing one entity with zero, one or more entities.
 
-1. Break — simpler because it splits one entity.
-2. Extend — requires target boundary selection and projection/intersection logic.
-3. Trim — requires cutting boundary and choosing which side to remove.
+Recommended follow-up: extend these tools to `PolylineEntity` and eventually to arcs/circles when those edit semantics are mature.
 
 ---
+
+
+## SVG export status
+
+SVG export is implemented in `OpenCad2D.Export`.
+
+Current behavior:
+
+```text
+LineEntity      -> <line>
+CircleEntity    -> <circle>
+Polyline open   -> <polyline>
+Polyline closed -> <polygon>
+ArcEntity       -> <path>
+```
+
+Export rules:
+
+- hidden layers are ignored;
+- locked but visible layers are exported;
+- stroke color and stroke width come from layer properties;
+- the SVG `viewBox` is computed from visible drawing bounds;
+- a dark background rectangle is exported by default;
+- Y orientation matches the OpenCad2D canvas;
+- export does not change current file path, does not mark the document saved and does not clear dirty state.
 
 ## Development practice
 

@@ -24,10 +24,12 @@ The application already supports a functional CAD workflow:
 - drawing open and closed polylines;
 - selecting entities by point, window and crossing selection;
 - moving, copying, rotating, scaling, aligning and deleting selected entities;
+- break point, break segment, extend and trim for line entities;
 - grip editing for supported entities;
 - undo and redo;
 - internal JSON save/load using `.opencad2d.json`;
 - New, Open, Save and Save As file commands;
+- SVG export using `.svg`;
 - dirty-state tracking and “Save changes?” confirmation;
 - object snapping;
 - configurable grid display and grid snapping;
@@ -94,6 +96,7 @@ The UI supports:
 | Open | `Ctrl+O` |
 | Save | `Ctrl+S` |
 | Save As | `Ctrl+Shift+S` |
+| Export SVG | button in file bar |
 
 The application tracks dirty state using command history generation. When the drawing has unsaved changes, the title/file bar shows `*`.
 
@@ -106,6 +109,34 @@ Cancel     -> abort the operation
 ```
 
 Viewport state is saved and restored with the drawing. This includes pan and zoom.
+
+---
+
+
+## SVG export
+
+OpenCad2D can export the current visible drawing to SVG.
+
+Current SVG export behavior:
+
+- exports visible `LineEntity`, `CircleEntity`, `PolylineEntity` and `ArcEntity`;
+- ignores entities on hidden layers;
+- includes entities on locked layers when their layer is visible;
+- uses stroke color and line weight from the entity layer;
+- computes an automatic `viewBox` from visible drawing bounds;
+- exports a dark background rectangle matching the OpenCad2D canvas;
+- preserves the same visual Y orientation as the canvas;
+- writes standard `.svg` files that can be opened in a browser or vector editor.
+
+Exporting SVG is not the same as saving the drawing:
+
+```text
+Export SVG does not change CurrentFilePath.
+Export SVG does not call MarkSaved().
+Export SVG does not clear the dirty marker.
+```
+
+The SVG exporter lives in `OpenCad2D.Export` and does not depend on Avalonia, App or Tools.
 
 ---
 
@@ -169,6 +200,17 @@ Y          -> align with uniform scale
 ```
 
 All edit and transform tools create undoable commands and modify the document through `CadDocument`.
+
+### Modify tools
+
+Implemented line-based modify tools:
+
+- `Break Point` — splits a `LineEntity` into two lines at one picked point;
+- `Break Segment` — removes the segment between two picked break points on a `LineEntity`;
+- `Extend` — extends a `LineEntity` to a picked `LineEntity` boundary;
+- `Trim` — trims a `LineEntity` against a picked `LineEntity` cutting edge.
+
+These tools currently target `LineEntity` only. They use geometric services in Core and commit through `ModifyEntitiesCommand`, so undo/redo and locked-layer protection remain consistent.
 
 ---
 
@@ -317,6 +359,7 @@ src/
   OpenCad2D.Interaction/
   OpenCad2D.Tools/
   OpenCad2D.Persistence/
+  OpenCad2D.Export/
   OpenCad2D.App/
 
 tests/
@@ -331,6 +374,7 @@ The dependency direction is intentional:
 
 ```text
 App -> Persistence -> Core -> Geometry
+App -> Export -> Core -> Geometry
 App -> Tools -> Interaction -> Core -> Geometry
 ```
 
@@ -343,6 +387,8 @@ App -> Tools -> Interaction -> Core -> Geometry
 `OpenCad2D.Tools` contains UI-independent CAD tools, controllers and workspace logic.
 
 `OpenCad2D.Persistence` contains the internal document serializer.
+
+`OpenCad2D.Export` contains export services such as SVG export. It is independent from Avalonia and Tools.
 
 `OpenCad2D.App` is the Avalonia desktop application. It handles presentation, input, file dialogs, viewport navigation and rendering.
 
@@ -363,6 +409,7 @@ Recommended reading:
 - [Roadmap](docs/roadmap.md)
 - [Transform Tools](docs/transform-tools.md)
 - [Modify Tools](docs/modify-tools.md)
+- [Export](docs/export.md)
 - [Layer Appearance](docs/layer-appearance.md)
 - [AI Handoff Document](docs/ai-handoff.md)
 
@@ -432,17 +479,19 @@ Recently completed:
 4. property panel v1;
 5. layer manager v1;
 6. rotate, scale and align tools;
-7. polyline tool v1.
+7. polyline tool v1;
+8. line-based Break, Extend and Trim tools;
+9. SVG export.
 
 Next planned areas:
 
 1. update grip editing for polyline vertices;
-2. modify tools: break, trim and extend;
+2. extend modify tools beyond LineEntity;
 3. distance and area measure tools;
 4. text and dimensions;
 5. application/session settings;
 6. richer layer appearance: fill color and draw order;
-7. DXF/SVG/PDF import/export experiments.
+7. DXF/PDF import/export experiments and richer SVG options.
 
 ---
 
