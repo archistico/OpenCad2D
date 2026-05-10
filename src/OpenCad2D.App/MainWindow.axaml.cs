@@ -7,6 +7,7 @@ using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using System;
 
@@ -138,6 +139,17 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.SetTool(ToolId.Circle);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void Polyline_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Polyline);
 
         RefreshStatus();
 
@@ -310,6 +322,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (TryHandlePolylineCompletionKey(e))
+        {
+            return;
+        }
+
         if (e.Key == Key.Enter)
         {
             SubmitCommandInputText();
@@ -364,6 +381,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (TryHandlePolylineCompletionKey(e))
+        {
+            return;
+        }
+
         if (e.Key == Key.Enter && !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
         {
             SubmitCommandInputText();
@@ -402,6 +424,53 @@ public partial class MainWindow : Window
         {
             CadCanvas.Focus();
         }
+    }
+
+    private bool TryHandlePolylineCompletionKey(KeyEventArgs e)
+    {
+        if (_viewModel.Workspace.ToolController.ActiveTool is not PolylineTool polylineTool ||
+            polylineTool.State != PolylineToolState.CollectingVertices ||
+            !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
+        {
+            return false;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            CompletePolyline(isClosed: false);
+            e.Handled = true;
+            return true;
+        }
+
+        if (e.Key == Key.C)
+        {
+            CompletePolyline(isClosed: true);
+            e.Handled = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void CompletePolyline(bool isClosed)
+    {
+        if (_viewModel.Workspace.ToolController.ActiveTool is not PolylineTool polylineTool)
+        {
+            return;
+        }
+
+        ToolResult result = isClosed
+            ? polylineTool.CompleteClosed(_viewModel.Workspace.Context)
+            : polylineTool.CompleteOpen(_viewModel.Workspace.Context);
+
+        ClearCommandInputText();
+
+        _viewModel.SetLastResult(result);
+        _viewModel.NotifyDocumentStateChanged();
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
     }
 
     private bool TryHandleAlignScaleConfirmationKey(KeyEventArgs e)
@@ -658,6 +727,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             CircleButton,
             activeToolName.Equals("Circle", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            PolylineButton,
+            activeToolName.Equals("Polyline", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MoveButton,

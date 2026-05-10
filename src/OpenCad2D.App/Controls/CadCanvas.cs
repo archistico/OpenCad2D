@@ -778,6 +778,10 @@ public sealed class CadCanvas : Control
                 DrawCirclePreview(context, circleTool);
                 break;
 
+            case PolylineTool polylineTool:
+                DrawPolylinePreview(context, polylineTool);
+                break;
+
             case MoveTool moveTool:
                 DrawEntitiesPreview(
                     context,
@@ -1036,6 +1040,21 @@ public sealed class CadCanvas : Control
         CircleTool tool)
     {
         CircleEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
+    private void DrawPolylinePreview(
+        DrawingContext context,
+        PolylineTool tool)
+    {
+        PolylineEntity? preview = tool.GetPreviewEntity();
 
         if (preview is not null)
         {
@@ -1336,6 +1355,22 @@ public sealed class CadCanvas : Control
                  e.Key == Key.S)
         {
             result = alignToolWithScale.ConfirmWithScale(Workspace.Context);
+            ClearSnapMarker();
+            e.Handled = true;
+        }
+        else if (Workspace.ToolController.ActiveTool is PolylineTool polylineTool &&
+                 polylineTool.State == PolylineToolState.CollectingVertices &&
+                 e.Key == Key.Enter)
+        {
+            result = polylineTool.CompleteOpen(Workspace.Context);
+            ClearSnapMarker();
+            e.Handled = true;
+        }
+        else if (Workspace.ToolController.ActiveTool is PolylineTool closingPolylineTool &&
+                 closingPolylineTool.State == PolylineToolState.CollectingVertices &&
+                 e.Key == Key.C)
+        {
+            result = closingPolylineTool.CompleteClosed(Workspace.Context);
             ClearSnapMarker();
             e.Handled = true;
         }

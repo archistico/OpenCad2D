@@ -51,6 +51,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Polyline,
+                "Polyline",
+                "Polyline",
+                "Draw"),
+            () => new PolylineTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Move,
                 "Move",
                 "Move",

@@ -9,6 +9,7 @@ public enum ToolId
     Line,
     Rectangle,
     Circle,
+    Polyline,
     Move,
     Copy,
     Rotate,
