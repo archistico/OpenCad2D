@@ -601,3 +601,16 @@ When adding a new tool:
 8. Update docs.
 
 Prefer reusing command line, Ortho and preview infrastructure instead of adding custom UI-specific logic.
+
+---
+
+## Future tool families
+
+The following tool families are specified in dedicated design documents and should be implemented incrementally with tests:
+
+- Measure tools (`DistanceTool`, `AreaTool`) query geometry only. They must not execute commands or mutate the document.
+- Transform tools (`RotateTool`, `ScaleTool`, `AlignTool`) transform selected entities through undoable commands and `CadDocument.ReplaceEntities(...)`.
+- Utility tools such as `MatchPropertiesTool` should copy layer assignment rather than per-entity appearance, because appearance is intended to be layer-owned.
+- Annotation tools (`TextTool`, dimension tools) will introduce semantic entities rather than decomposing annotations into unrelated lines and text.
+
+These tools should reuse the existing input pipeline where possible: snapping, command line point input, direct distance entry, Ortho where appropriate, preview rendering and command history.

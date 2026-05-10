@@ -26,18 +26,18 @@ The application already supports a basic but functional CAD workflow:
 - moving, copying and deleting selected entities;
 - undo and redo;
 - object snapping;
-- grid display and grid snapping;
+- configurable major/minor grid display and grid snapping;
 - layer visibility;
 - locked layer behavior;
 - command line coordinate input;
 - direct distance entry;
 - Ortho mode;
-- zoom, pan, view reset and Zoom Extents;
+- zoom, pan, view reset, Zoom Extents and viewport rendering culling;
 - internal JSON save/load through `.opencad2d.json` files;
 - New, Open, Save and Save As file commands;
 - dirty-state tracking and save-confirmation dialogs;
 - CAD-style crosshair cursor;
-- visual feedback for the active command, current layer, snap type and temporary measurements.
+- visual feedback for the active command, current layer, snap type, temporary measurements and rendered entity count.
 
 ---
 
@@ -85,11 +85,11 @@ The UI currently includes:
 - undo and redo buttons;
 - an active command indicator;
 - a drawing canvas;
-- grid display;
+- configurable grid display with major/minor spacing;
 - CAD-style full-canvas crosshair cursor;
 - a bottom snap bar;
 - a fixed command line input box;
-- a status bar with coordinates and temporary measurements;
+- a status bar with coordinates, temporary measurements and rendered entity count;
 - zoom, pan, view reset and Zoom Extents support.
 
 File commands use Avalonia dialogs and the `OpenCad2D.Persistence` serializer. The window title shows the current file name and an asterisk when the drawing has unsaved changes.
@@ -168,6 +168,14 @@ creates or moves along an exact horizontal distance of 50.
 ```
 
 ---
+## Grid display and viewport culling
+
+The visual grid is configurable and separate from grid snapping. The user can show or hide the grid without disabling grid snap. The grid supports secondary and primary spacing, with zoom-based visibility thresholds so it does not become visually noisy when zoomed out.
+
+Viewport culling is used during rendering: the canvas draws only visible entities whose bounding boxes intersect the current visible world area. Hidden layers are ignored; locked layers are included when visible. The status bar shows a rendered entity count such as `Rendered: 184/2678`, which is useful when testing large drawings.
+
+---
+
 
 ## Keyboard and mouse shortcuts
 
@@ -313,8 +321,15 @@ Recommended reading:
 - [Architecture](docs/architecture.md) — project structure, dependency rules, coordinate systems, document model, command line input and UI boundaries.
 - [Commands](docs/commands.md) — undo/redo, command design, `CompositeCommand`, dirty-state generation and document mutation rules.
 - [Tools](docs/tools.md) — tool lifecycle, `ToolContext`, pointer input, command line input, Ortho mode, grip editing and tool behavior.
-- [Persistence](docs/persistence.md) — internal JSON format, serializer architecture, file commands, viewport persistence and dirty-state tracking.
 - [Snapping](docs/snapping.md) — snap kinds, snap providers, search areas, priorities and visual markers.
+- [Persistence](docs/persistence.md) — internal JSON format, serializer architecture, file commands, viewport persistence and dirty-state tracking.
+- [Grip Editing](docs/grip-editing.md) — grip model, providers, interaction flow and rendering rules.
+- [Layer Appearance](docs/layer-appearance.md) — layer-owned color, line weight, fill color and draw order rules.
+- [Application Settings](docs/application-settings.md) — shortcuts, session settings, grid configuration and drawing settings.
+- [Measure Tools](docs/measure-tools.md) — future distance and area measurement tools.
+- [Transform Tools](docs/transform-tools.md) — future rotate, scale, align, match properties and polygon tools.
+- [Text and Dimensions](docs/text-and-dimensions.md) — future text and dimension entity design.
+- [Development Options](docs/development-options.md) — prioritized future development alternatives.
 - [Roadmap](docs/roadmap.md) — current status, next development phases and long-term direction.
 - [AI Handoff Document](docs/ai-handoff.md) — for AI-assisted development and project handoff.
 
@@ -412,6 +427,9 @@ OpenCad2D follows a few practical rules:
 - Selection should query selectable entities, which means visible entities that are not on locked layers.
 - Numeric comparisons in geometry should use `GeometryTolerance`.
 - New tools should be testable without launching the desktop application.
+- Entity appearance should remain layer-owned: no per-entity color, line weight or fill color.
+- Session settings and document settings should remain separate.
+- Measure tools should query geometry only and must not modify the document.
 
 ---
 
@@ -431,20 +449,23 @@ Recently completed:
 10. Ortho mode;
 11. CircleTool;
 12. Zoom Extents;
-13. Grip editing for Line and Circle entities;
+13. grip editing for lines and circles;
 14. internal JSON persistence;
 15. New/Open/Save/Save As;
-16. dirty-state tracking and save-confirmation dialogs.
+16. dirty-state tracking and save-confirmation dialogs;
+17. configurable grid display;
+18. viewport rendering culling.
 
 The next planned areas are:
 
 1. property panel;
-2. polyline tool;
-3. arc tool;
-4. richer layer management;
-5. more modify tools such as offset, trim, extend, fillet and chamfer;
-6. dimensions;
-7. SVG, PDF and DXF import/export.
+2. layer appearance and layer manager;
+3. polyline tool;
+4. measure tools;
+5. rotate, scale, align, match properties and polygon tools;
+6. text and dimensions;
+7. more modify tools such as offset, trim, extend, fillet and chamfer;
+8. SVG, PDF and DXF import/export.
 
 See the [roadmap](docs/roadmap.md) for more detail.
 

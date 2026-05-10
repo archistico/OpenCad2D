@@ -444,3 +444,19 @@ Command tests should verify:
 - document mutation goes through `CadDocument`.
 
 Tool tests should verify that tools create the correct commands, but command behavior itself should be tested separately where possible.
+
+---
+
+## Future command guidelines
+
+Upcoming features should continue to use commands for all user-facing document changes.
+
+Expected future commands include:
+
+- `UpdateDrawingSettingsCommand` for document units, precision, grid defaults and text/dimension defaults;
+- layer appearance commands for color, line weight, fill color and draw order;
+- `RotateEntitiesCommand`, `ScaleEntitiesCommand` and `AlignCommand` for transform tools;
+- `MatchLayerCommand` for match-properties behavior;
+- add commands for text, dimension and polygon entities.
+
+Measure tools are the exception: they query geometry and display results, but they must not create commands because they do not modify the drawing.

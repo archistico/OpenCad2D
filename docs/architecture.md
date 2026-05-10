@@ -42,15 +42,13 @@ The direction of dependencies should remain clear.
 
 ```text
 OpenCad2D.App
+  -> OpenCad2D.Persistence
+      -> OpenCad2D.Core
+          -> OpenCad2D.Geometry
   -> OpenCad2D.Tools
       -> OpenCad2D.Interaction
           -> OpenCad2D.Core
               -> OpenCad2D.Geometry
-
-OpenCad2D.App
-  -> OpenCad2D.Persistence
-      -> OpenCad2D.Core
-          -> OpenCad2D.Geometry
 ```
 
 No project should depend on a project above it.
@@ -616,3 +614,53 @@ When adding persistence:
 
 - serialize document model concepts, not Avalonia UI state;
 - avoid serializing transient tool state such as `CurrentBasePoint`.
+
+---
+
+## Rendering and viewport culling
+
+Rendering is an App-layer concern. `CadCanvas` may use the viewport transform to compute the visible world bounds and draw only entities whose bounding boxes intersect that area.
+
+This optimization must remain purely visual:
+
+- it must not remove entities from the document;
+- it must not clear selection;
+- it must not change snap state;
+- it must not bypass layer visibility rules.
+
+The rendering order should remain:
+
+```text
+background
+grid and axes
+visible entities culled by viewport
+selection overlay
+preview entities
+grip markers
+snap marker
+crosshair
+```
+
+The status bar may expose a rendered/total count to help profile large drawings.
+
+---
+
+## Future layer appearance rule
+
+The project direction is that entity appearance should be owned by layers. Future appearance work should avoid adding per-entity color, line weight or fill color. Entities should carry geometry and a layer reference; layers should own stroke color, line weight, optional fill color and draw order.
+
+Layer appearance changes should go through commands so they are undoable and mark the document dirty. Persistence should serialize appearance on layers, not on entities.
+
+---
+
+## Settings separation
+
+The project distinguishes three kinds of state:
+
+```text
+document content        -> saved in .opencad2d.json
+document drawing setup  -> future DrawingSettings in the document file
+user/session settings   -> future settings.json outside the document
+```
+
+Session settings such as window position, shortcut preferences and last opened file must not be stored in drawing files. Drawing settings such as units, precision and default text/dimension values should be stored in the document and changed through commands.

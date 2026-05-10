@@ -40,6 +40,7 @@ The project currently supports:
 - hidden layer behavior;
 - locked layer behavior;
 - object snapping;
+- configurable major/minor grid display;
 - grid snapping;
 - snap markers;
 - CAD-like crosshair cursor;
@@ -52,6 +53,7 @@ The project currently supports:
 - Ortho mode;
 - viewport zoom and pan;
 - Zoom Extents;
+- viewport rendering culling;
 - internal JSON persistence through `.opencad2d.json`;
 - New, Open, Save and Save As file commands;
 - dirty-state tracking through command history generation;
@@ -60,6 +62,8 @@ The project currently supports:
 - UCS/WCS coordinate distinction;
 - geometry tolerance strategy;
 - spatial index abstraction;
+- internal JSON persistence;
+- grip editing for line and circle entities;
 - document mutation through `CadDocument`;
 - ViewModel property notifications through `INotifyPropertyChanged`;
 - UI feedback for the active command/tool, current layer, snap type and measurement state.
@@ -1152,3 +1156,21 @@ Responsibilities:
 - skip unknown entity types where possible.
 
 It must not depend on Avalonia, Tools or Interaction.
+
+---
+
+## Viewport culling and grid notes
+
+The canvas may skip rendering entities outside the current visible world bounds. This is a rendering optimization only. It must not change the document, selection set, command history or snapping state.
+
+Rendering culling must still respect document visibility rules:
+
+```text
+hidden layer entity  -> not rendered
+locked layer entity  -> rendered if visible and inside viewport
+out-of-viewport entity -> not rendered in that frame
+```
+
+The visual grid is separate from grid snapping. Hiding the grid does not disable grid snap, and disabling grid snap does not hide the grid.
+
+---
