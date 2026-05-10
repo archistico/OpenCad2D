@@ -17,6 +17,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Rectangle));
         Assert.True(registry.Contains(ToolId.Move));
         Assert.True(registry.Contains(ToolId.Copy));
+        Assert.True(registry.Contains(ToolId.Rotate));
         Assert.True(registry.Contains(ToolId.Delete));
     }
 
@@ -27,7 +28,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(7, tools.Count);
+        Assert.Equal(8, tools.Count);
 
         Assert.Contains(
             tools,
@@ -48,6 +49,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Copy);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Rotate);
 
         Assert.Contains(
             tools,
@@ -91,10 +96,11 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Modify");
 
-        Assert.Equal(4, tools.Count);
+        Assert.Equal(5, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Selection);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Move);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Copy);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rotate);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Delete);
     }
 
@@ -151,6 +157,18 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<MoveTool>(tool);
         Assert.Equal("Move", tool.Name);
+    }
+
+
+    [Fact]
+    public void Create_Rotate_ShouldReturnRotateTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Rotate);
+
+        Assert.IsType<RotateTool>(tool);
+        Assert.Equal("Rotate", tool.Name);
     }
 
     [Fact]

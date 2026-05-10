@@ -235,6 +235,11 @@
                                 Content="Copy"
                                 Click="Copy_Click" />
 
+                        <Button x:Name="RotateButton"
+                                Classes="tool-button"
+                                Content="Rotate"
+                                Click="Rotate_Click" />
+
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />

@@ -11,5 +11,6 @@ public enum ToolId
     Circle,
     Move,
     Copy,
+    Rotate,
     Delete
 }

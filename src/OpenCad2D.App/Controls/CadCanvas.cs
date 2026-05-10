@@ -790,6 +790,12 @@ public sealed class CadCanvas : Control
                     copyTool.GetPreviewEntities(Workspace.Context));
                 break;
 
+            case RotateTool rotateTool:
+                DrawEntitiesPreview(
+                    context,
+                    rotateTool.GetPreviewEntities(Workspace.Context));
+                break;
+
             case SelectionTool selectionTool:
                 DrawSelectionPreview(context, selectionTool);
                 break;

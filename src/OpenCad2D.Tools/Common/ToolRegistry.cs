@@ -67,6 +67,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Rotate,
+                "Rotate",
+                "Rotate",
+                "Modify"),
+            () => new RotateTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",

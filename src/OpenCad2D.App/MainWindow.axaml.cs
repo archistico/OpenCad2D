@@ -165,6 +165,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Rotate_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Rotate);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -557,6 +568,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             CopyButton,
             activeToolName.Equals("Copy", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            RotateButton,
+            activeToolName.Equals("Rotate", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }
