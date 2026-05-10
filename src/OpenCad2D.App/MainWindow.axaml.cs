@@ -561,6 +561,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Trim_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Trim);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1146,6 +1157,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             ExtendButton,
             activeToolName.Equals("Extend", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            TrimButton,
+            activeToolName.Equals("Trim", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }

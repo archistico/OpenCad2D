@@ -217,6 +217,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     : "Extend: select a line to extend to the boundary:";
             }
 
+            if (Workspace.ToolController.ActiveTool is TrimTool trimTool)
+            {
+                return trimTool.State == TrimToolState.WaitingForBoundaryEntity
+                    ? "Trim: select a cutting edge line:"
+                    : "Trim: select the side of a line to remove:";
+            }
+
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";

@@ -123,6 +123,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Trim,
+                "Trim",
+                "Trim",
+                "Modify"),
+            () => new TrimTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",

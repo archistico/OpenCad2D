@@ -830,6 +830,12 @@ public sealed class CadCanvas : Control
                     extendTool.GetPreviewEntities());
                 break;
 
+            case TrimTool trimTool:
+                DrawEntitiesPreview(
+                    context,
+                    trimTool.GetPreviewEntities());
+                break;
+
             case SelectionTool selectionTool:
                 DrawSelectionPreview(context, selectionTool);
                 break;

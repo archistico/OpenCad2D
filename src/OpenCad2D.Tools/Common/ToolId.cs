@@ -18,5 +18,6 @@ public enum ToolId
     BreakAtPoint,
     BreakBetweenPoints,
     Extend,
+    Trim,
     Delete
 }

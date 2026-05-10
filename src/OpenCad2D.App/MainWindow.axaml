@@ -313,6 +313,11 @@
                                 Content="Extend"
                                 Click="Extend_Click" />
 
+                        <Button x:Name="TrimButton"
+                                Classes="tool-button"
+                                Content="Trim"
+                                Click="Trim_Click" />
+
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />
