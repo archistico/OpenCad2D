@@ -6,6 +6,8 @@ The project explores how to build a small but serious 2D CAD system from the gro
 
 The long-term goal is not only to create a usable CAD application, but also to keep the codebase understandable, testable and extensible.
 
+![OpenCad2D screenshot](screenshot/screenshot_UI_1.png)
+
 ---
 
 ## Project status
