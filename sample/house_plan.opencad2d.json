@@ -1,0 +1,1073 @@
+{
+  "version": 1,
+  "savedAt": "2026-05-10T10:00:00.0000000+00:00",
+  "settings": {
+    "currentLayerId": "Walls"
+  },
+  "viewport": {
+    "panX": -80,
+    "panY": -80,
+    "zoom": 0.72
+  },
+  "layers": [
+    {
+      "id": "0",
+      "name": "0",
+      "color": "#FFFFFF",
+      "lineWeight": 0.25,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "color": "#D4B896",
+      "lineWeight": 0.5,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Doors",
+      "name": "Doors",
+      "color": "#78AAF0",
+      "lineWeight": 0.25,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Windows",
+      "name": "Windows",
+      "color": "#A8D8EA",
+      "lineWeight": 0.25,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Furniture",
+      "name": "Furniture",
+      "color": "#78C878",
+      "lineWeight": 0.18,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "color": "#AAAAAA",
+      "lineWeight": 0.18,
+      "isVisible": true,
+      "isLocked": false
+    }
+  ],
+  "entities": [
+    {
+      "type": "Line",
+      "id": "296b2c6a-f951-4658-9865-e893996481e3",
+      "layerId": "Walls",
+      "startX": 100,
+      "startY": 100,
+      "endX": 200,
+      "endY": 100
+    },
+    {
+      "type": "Line",
+      "id": "2e8552bd-a4f7-4d84-9253-6456df03b6a7",
+      "layerId": "Walls",
+      "startX": 340,
+      "startY": 100,
+      "endX": 750,
+      "endY": 100
+    },
+    {
+      "type": "Line",
+      "id": "1fa75154-0340-4a9c-80f1-87e02fee181c",
+      "layerId": "Walls",
+      "startX": 880,
+      "startY": 100,
+      "endX": 1110,
+      "endY": 100
+    },
+    {
+      "type": "Line",
+      "id": "278e8aa6-28b2-4480-bc10-c658d7414fcc",
+      "layerId": "Walls",
+      "startX": 1220,
+      "startY": 100,
+      "endX": 1300,
+      "endY": 100
+    },
+    {
+      "type": "Line",
+      "id": "9f74fd90-c370-453b-9932-8a9cd83fe835",
+      "layerId": "Walls",
+      "startX": 100,
+      "startY": 100,
+      "endX": 100,
+      "endY": 210
+    },
+    {
+      "type": "Line",
+      "id": "695ded0f-d2af-4ad1-8d81-f792398432f3",
+      "layerId": "Walls",
+      "startX": 100,
+      "startY": 350,
+      "endX": 100,
+      "endY": 1000
+    },
+    {
+      "type": "Line",
+      "id": "c871e517-7077-4245-b120-2dd3ee108278",
+      "layerId": "Walls",
+      "startX": 1300,
+      "startY": 100,
+      "endX": 1300,
+      "endY": 710
+    },
+    {
+      "type": "Line",
+      "id": "c9d4f361-4a65-4f91-83ab-c26bbbd62f01",
+      "layerId": "Walls",
+      "startX": 1300,
+      "startY": 820,
+      "endX": 1300,
+      "endY": 1000
+    },
+    {
+      "type": "Line",
+      "id": "3f8fa038-be0b-45b5-9b93-701740944667",
+      "layerId": "Walls",
+      "startX": 100,
+      "startY": 1000,
+      "endX": 230,
+      "endY": 1000
+    },
+    {
+      "type": "Line",
+      "id": "ecc556ab-dbb9-4f1a-871c-904a4d9497fa",
+      "layerId": "Walls",
+      "startX": 310,
+      "startY": 1000,
+      "endX": 450,
+      "endY": 1000
+    },
+    {
+      "type": "Line",
+      "id": "afccd5d4-37e0-4fcc-ac18-2abdfade219c",
+      "layerId": "Walls",
+      "startX": 580,
+      "startY": 1000,
+      "endX": 800,
+      "endY": 1000
+    },
+    {
+      "type": "Line",
+      "id": "578f8859-1526-4f61-86d6-96c8cd6a20ce",
+      "layerId": "Walls",
+      "startX": 930,
+      "startY": 1000,
+      "endX": 1300,
+      "endY": 1000
+    },
+    {
+      "type": "Line",
+      "id": "c2ad1561-71b8-4e53-bba1-34b827c56578",
+      "layerId": "Walls",
+      "startX": 100,
+      "startY": 550,
+      "endX": 290,
+      "endY": 550
+    },
+    {
+      "type": "Line",
+      "id": "be07d3d8-5ff1-4faa-9364-adb6ca822dfc",
+      "layerId": "Walls",
+      "startX": 370,
+      "startY": 550,
+      "endX": 650,
+      "endY": 550
+    },
+    {
+      "type": "Line",
+      "id": "31f1d383-9870-47b7-98c5-7f15096aa99f",
+      "layerId": "Walls",
+      "startX": 650,
+      "startY": 550,
+      "endX": 740,
+      "endY": 550
+    },
+    {
+      "type": "Line",
+      "id": "36cceb85-cab1-4f4f-aeb6-cca2c05232e8",
+      "layerId": "Walls",
+      "startX": 820,
+      "startY": 550,
+      "endX": 1050,
+      "endY": 550
+    },
+    {
+      "type": "Line",
+      "id": "569684b5-e868-49fe-b477-aa23d2afb08f",
+      "layerId": "Walls",
+      "startX": 1050,
+      "startY": 550,
+      "endX": 1300,
+      "endY": 550
+    },
+    {
+      "type": "Line",
+      "id": "9fb0b555-62e8-4473-a0bc-178319865e74",
+      "layerId": "Walls",
+      "startX": 650,
+      "startY": 100,
+      "endX": 650,
+      "endY": 1000
+    },
+    {
+      "type": "Line",
+      "id": "ed0ae706-2024-44a2-b3ea-2367d1eeef13",
+      "layerId": "Walls",
+      "startX": 1050,
+      "startY": 100,
+      "endX": 1050,
+      "endY": 190
+    },
+    {
+      "type": "Line",
+      "id": "0d669633-905c-4cd2-85a0-1aba89c3e257",
+      "layerId": "Walls",
+      "startX": 1050,
+      "startY": 270,
+      "endX": 1050,
+      "endY": 650
+    },
+    {
+      "type": "Line",
+      "id": "dfcdf6a2-78b9-4b35-b412-1385765ae3f3",
+      "layerId": "Walls",
+      "startX": 1050,
+      "startY": 730,
+      "endX": 1050,
+      "endY": 1000
+    },
+    {
+      "type": "Polyline",
+      "id": "d867d422-5da7-44be-ae8c-f5bcb5295949",
+      "layerId": "Windows",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 200,
+          "y": 88
+        },
+        {
+          "x": 340,
+          "y": 88
+        },
+        {
+          "x": 340,
+          "y": 112
+        },
+        {
+          "x": 200,
+          "y": 112
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "2b9354be-59e3-48eb-8f28-248a8bbd6887",
+      "layerId": "Windows",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 88,
+          "y": 210
+        },
+        {
+          "x": 112,
+          "y": 210
+        },
+        {
+          "x": 112,
+          "y": 350
+        },
+        {
+          "x": 88,
+          "y": 350
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "e84745f1-7320-4d22-949a-7a9144f868ee",
+      "layerId": "Windows",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 750,
+          "y": 88
+        },
+        {
+          "x": 880,
+          "y": 88
+        },
+        {
+          "x": 880,
+          "y": 112
+        },
+        {
+          "x": 750,
+          "y": 112
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "c2c92488-6c9c-40c0-b8dd-51efc60aab1f",
+      "layerId": "Windows",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 1110,
+          "y": 88
+        },
+        {
+          "x": 1220,
+          "y": 88
+        },
+        {
+          "x": 1220,
+          "y": 112
+        },
+        {
+          "x": 1110,
+          "y": 112
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "d68eb5dd-4397-4207-87ce-c4fd9042c639",
+      "layerId": "Windows",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 450,
+          "y": 988
+        },
+        {
+          "x": 580,
+          "y": 988
+        },
+        {
+          "x": 580,
+          "y": 1012
+        },
+        {
+          "x": 450,
+          "y": 1012
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "992a0f9b-95cb-4d78-9890-80a8c6bac1dd",
+      "layerId": "Windows",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 800,
+          "y": 988
+        },
+        {
+          "x": 930,
+          "y": 988
+        },
+        {
+          "x": 930,
+          "y": 1012
+        },
+        {
+          "x": 800,
+          "y": 1012
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "9003df66-8ebe-417a-a4fa-6064ec1abc9a",
+      "layerId": "Windows",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 1288,
+          "y": 710
+        },
+        {
+          "x": 1312,
+          "y": 710
+        },
+        {
+          "x": 1312,
+          "y": 820
+        },
+        {
+          "x": 1288,
+          "y": 820
+        }
+      ]
+    },
+    {
+      "type": "Line",
+      "id": "4b78768b-4fb7-4ab8-9e6e-8e052cd0ce65",
+      "layerId": "Doors",
+      "startX": 230,
+      "startY": 1000,
+      "endX": 230,
+      "endY": 920
+    },
+    {
+      "type": "Arc",
+      "id": "7693b2a0-71ce-40b0-9b30-2dc96b174006",
+      "layerId": "Doors",
+      "centerX": 230,
+      "centerY": 1000,
+      "radius": 80,
+      "startAngleDegrees": 270,
+      "endAngleDegrees": 0,
+      "isCounterClockwise": true
+    },
+    {
+      "type": "Line",
+      "id": "f64e21ab-8d10-4fa2-b69f-6ecad5d9a58e",
+      "layerId": "Doors",
+      "startX": 370,
+      "startY": 550,
+      "endX": 370,
+      "endY": 470
+    },
+    {
+      "type": "Arc",
+      "id": "397ee763-ed47-413e-a424-635d5d28b8d5",
+      "layerId": "Doors",
+      "centerX": 370,
+      "centerY": 550,
+      "radius": 80,
+      "startAngleDegrees": 180,
+      "endAngleDegrees": 270,
+      "isCounterClockwise": true
+    },
+    {
+      "type": "Line",
+      "id": "bbe8b6e4-34d4-4489-ae61-0147a7fd2edf",
+      "layerId": "Doors",
+      "startX": 820,
+      "startY": 550,
+      "endX": 820,
+      "endY": 630
+    },
+    {
+      "type": "Arc",
+      "id": "d76cd411-e176-4e36-89f3-e3eca0a0466e",
+      "layerId": "Doors",
+      "centerX": 820,
+      "centerY": 550,
+      "radius": 80,
+      "startAngleDegrees": 90,
+      "endAngleDegrees": 180,
+      "isCounterClockwise": true
+    },
+    {
+      "type": "Line",
+      "id": "a495ae86-9bc5-41cf-85ff-fc599b138ae1",
+      "layerId": "Doors",
+      "startX": 1050,
+      "startY": 190,
+      "endX": 1130,
+      "endY": 190
+    },
+    {
+      "type": "Arc",
+      "id": "be739917-0836-4985-aace-28b161ea2e96",
+      "layerId": "Doors",
+      "centerX": 1050,
+      "centerY": 190,
+      "radius": 80,
+      "startAngleDegrees": 0,
+      "endAngleDegrees": 90,
+      "isCounterClockwise": true
+    },
+    {
+      "type": "Line",
+      "id": "d4c0bf70-3fcf-4f6a-af99-a2354cf4c1e0",
+      "layerId": "Doors",
+      "startX": 1050,
+      "startY": 650,
+      "endX": 1130,
+      "endY": 650
+    },
+    {
+      "type": "Arc",
+      "id": "03899a96-33b4-4857-8189-d9c327dfa8a1",
+      "layerId": "Doors",
+      "centerX": 1050,
+      "centerY": 650,
+      "radius": 80,
+      "startAngleDegrees": 0,
+      "endAngleDegrees": 90,
+      "isCounterClockwise": true
+    },
+    {
+      "type": "Polyline",
+      "id": "74036974-e2cb-4fea-a6fa-488778b37282",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 150,
+          "y": 150
+        },
+        {
+          "x": 500,
+          "y": 150
+        },
+        {
+          "x": 500,
+          "y": 250
+        },
+        {
+          "x": 150,
+          "y": 250
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "3fae82ef-b0ca-462e-8064-e4d4facd095f",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 150,
+          "y": 270
+        },
+        {
+          "x": 250,
+          "y": 270
+        },
+        {
+          "x": 250,
+          "y": 380
+        },
+        {
+          "x": 150,
+          "y": 380
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "0328641c-7262-49b0-b512-9bddbbf8d334",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 290,
+          "y": 300
+        },
+        {
+          "x": 460,
+          "y": 300
+        },
+        {
+          "x": 460,
+          "y": 400
+        },
+        {
+          "x": 290,
+          "y": 400
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "af21a706-2c76-4117-b675-e1062fb2f56c",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 160,
+          "y": 500
+        },
+        {
+          "x": 560,
+          "y": 500
+        },
+        {
+          "x": 560,
+          "y": 540
+        },
+        {
+          "x": 160,
+          "y": 540
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "b12063ac-a5cd-4c5d-8a2c-80d27879d929",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 680,
+          "y": 120
+        },
+        {
+          "x": 1020,
+          "y": 120
+        },
+        {
+          "x": 1020,
+          "y": 165
+        },
+        {
+          "x": 680,
+          "y": 165
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "ee4817a1-ab25-4c5a-a241-460ca3650e5a",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 680,
+          "y": 120
+        },
+        {
+          "x": 725,
+          "y": 120
+        },
+        {
+          "x": 725,
+          "y": 310
+        },
+        {
+          "x": 680,
+          "y": 310
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "a6c4aaf8-b503-4f8b-accb-0e9cf343b232",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 760,
+          "y": 340
+        },
+        {
+          "x": 980,
+          "y": 340
+        },
+        {
+          "x": 980,
+          "y": 460
+        },
+        {
+          "x": 760,
+          "y": 460
+        }
+      ]
+    },
+    {
+      "type": "Circle",
+      "id": "43d11554-9f8f-4282-b6cd-d90ffacbef6b",
+      "layerId": "Furniture",
+      "centerX": 850,
+      "centerY": 142,
+      "radius": 28
+    },
+    {
+      "type": "Circle",
+      "id": "e7c05393-22ab-4909-b8f7-3754e5c479f5",
+      "layerId": "Furniture",
+      "centerX": 710,
+      "centerY": 142,
+      "radius": 18
+    },
+    {
+      "type": "Polyline",
+      "id": "bce1005a-3e2e-411b-9ef4-2968ea7bb7ae",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 1065,
+          "y": 120
+        },
+        {
+          "x": 1275,
+          "y": 120
+        },
+        {
+          "x": 1275,
+          "y": 290
+        },
+        {
+          "x": 1065,
+          "y": 290
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "80599bbc-6400-4c68-acce-3ccffa234f44",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 1078,
+          "y": 133
+        },
+        {
+          "x": 1262,
+          "y": 133
+        },
+        {
+          "x": 1262,
+          "y": 277
+        },
+        {
+          "x": 1078,
+          "y": 277
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "aad66fcd-5547-4e62-a6ae-6fc9a7951f6b",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 1165,
+          "y": 330
+        },
+        {
+          "x": 1265,
+          "y": 330
+        },
+        {
+          "x": 1265,
+          "y": 460
+        },
+        {
+          "x": 1165,
+          "y": 460
+        }
+      ]
+    },
+    {
+      "type": "Circle",
+      "id": "b3f70c34-711c-4a02-b1e9-fc8c9f20a696",
+      "layerId": "Furniture",
+      "centerX": 1215,
+      "centerY": 405,
+      "radius": 38
+    },
+    {
+      "type": "Circle",
+      "id": "73cd4da2-45d4-4312-8da2-f53876750e03",
+      "layerId": "Furniture",
+      "centerX": 1115,
+      "centerY": 330,
+      "radius": 28
+    },
+    {
+      "type": "Polyline",
+      "id": "5be03af9-4e72-4174-86b5-1c8bca0f1343",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 180,
+          "y": 640
+        },
+        {
+          "x": 520,
+          "y": 640
+        },
+        {
+          "x": 520,
+          "y": 810
+        },
+        {
+          "x": 180,
+          "y": 810
+        }
+      ]
+    },
+    {
+      "type": "Circle",
+      "id": "a23764ee-91ac-484d-aefd-038c6f49f743",
+      "layerId": "Furniture",
+      "centerX": 240,
+      "centerY": 618,
+      "radius": 22
+    },
+    {
+      "type": "Circle",
+      "id": "875a4c43-18fb-4a1e-bf85-6ee224fde32d",
+      "layerId": "Furniture",
+      "centerX": 350,
+      "centerY": 618,
+      "radius": 22
+    },
+    {
+      "type": "Circle",
+      "id": "cb1e0a68-1aa4-4a3d-891b-99d0dbba1e3d",
+      "layerId": "Furniture",
+      "centerX": 460,
+      "centerY": 618,
+      "radius": 22
+    },
+    {
+      "type": "Circle",
+      "id": "447cab96-5082-4e28-b1af-ef7d91b52226",
+      "layerId": "Furniture",
+      "centerX": 240,
+      "centerY": 832,
+      "radius": 22
+    },
+    {
+      "type": "Circle",
+      "id": "c1c70094-cb3c-4181-b686-2250114ebfb2",
+      "layerId": "Furniture",
+      "centerX": 350,
+      "centerY": 832,
+      "radius": 22
+    },
+    {
+      "type": "Circle",
+      "id": "0efd18eb-2c79-4ed0-af36-2f3d01596e05",
+      "layerId": "Furniture",
+      "centerX": 460,
+      "centerY": 832,
+      "radius": 22
+    },
+    {
+      "type": "Circle",
+      "id": "2ac1d76a-b240-4ed9-b8ba-77190fa75c26",
+      "layerId": "Furniture",
+      "centerX": 158,
+      "centerY": 700,
+      "radius": 22
+    },
+    {
+      "type": "Circle",
+      "id": "9e11355e-0e6b-4669-8bd6-85c560a31add",
+      "layerId": "Furniture",
+      "centerX": 158,
+      "centerY": 750,
+      "radius": 22
+    },
+    {
+      "type": "Polyline",
+      "id": "4ef0d9ea-e8a7-4693-bdd2-3a49cc724e27",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 670,
+          "y": 590
+        },
+        {
+          "x": 1030,
+          "y": 590
+        },
+        {
+          "x": 1030,
+          "y": 870
+        },
+        {
+          "x": 670,
+          "y": 870
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "f9891d4b-9ee8-4508-a4ec-e7b9436192a4",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 670,
+          "y": 590
+        },
+        {
+          "x": 1030,
+          "y": 590
+        },
+        {
+          "x": 1030,
+          "y": 625
+        },
+        {
+          "x": 670,
+          "y": 625
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "12af7da6-38da-44f5-b12f-003304babc52",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 670,
+          "y": 590
+        },
+        {
+          "x": 720,
+          "y": 590
+        },
+        {
+          "x": 720,
+          "y": 660
+        },
+        {
+          "x": 670,
+          "y": 660
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "bc9d8f3f-1183-47a6-95e1-f62628d2415f",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 980,
+          "y": 590
+        },
+        {
+          "x": 1030,
+          "y": 590
+        },
+        {
+          "x": 1030,
+          "y": 660
+        },
+        {
+          "x": 980,
+          "y": 660
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "811c2eb6-7085-43bd-9396-123035f5fad5",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 670,
+          "y": 890
+        },
+        {
+          "x": 1030,
+          "y": 890
+        },
+        {
+          "x": 1030,
+          "y": 970
+        },
+        {
+          "x": 670,
+          "y": 970
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "c2d77f71-8721-45cf-9c3a-12361a82231b",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 1070,
+          "y": 580
+        },
+        {
+          "x": 1270,
+          "y": 580
+        },
+        {
+          "x": 1270,
+          "y": 790
+        },
+        {
+          "x": 1070,
+          "y": 790
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "81a7af71-97ed-458b-97d3-ccaa000569da",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 1070,
+          "y": 580
+        },
+        {
+          "x": 1270,
+          "y": 580
+        },
+        {
+          "x": 1270,
+          "y": 615
+        },
+        {
+          "x": 1070,
+          "y": 615
+        }
+      ]
+    },
+    {
+      "type": "Polyline",
+      "id": "8e9d997b-455e-4031-a3a4-75b470fdf50d",
+      "layerId": "Furniture",
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 1070,
+          "y": 820
+        },
+        {
+          "x": 1270,
+          "y": 820
+        },
+        {
+          "x": 1270,
+          "y": 970
+        },
+        {
+          "x": 1070,
+          "y": 970
+        }
+      ]
+    }
+  ]
+}
