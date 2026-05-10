@@ -14,7 +14,7 @@ The long-term goal is not only to create a usable CAD application, but also to k
 
 OpenCad2D is currently an early prototype. It is **not** intended to replace mature CAD software yet.
 
-The current focus is to build strong foundations: geometry, entities, layers, commands, undo/redo, snapping, selection, tools, coordinate systems, spatial queries, CAD-style numeric input and a first cross-platform UI.
+The current focus is to build strong foundations: geometry, entities, layers, commands, undo/redo, snapping, selection, tools, coordinate systems, spatial queries, CAD-style numeric input, persistence and a first cross-platform UI.
 
 The application already supports a basic but functional CAD workflow:
 
@@ -29,6 +29,8 @@ The application already supports a basic but functional CAD workflow:
 - configurable major/minor grid display and grid snapping;
 - layer visibility;
 - locked layer behavior;
+- a Layer Manager window for creating, renaming, deleting and configuring layers;
+- layer color and line weight editing;
 - command line coordinate input;
 - direct distance entry;
 - Ortho mode;
@@ -36,6 +38,7 @@ The application already supports a basic but functional CAD workflow:
 - internal JSON save/load through `.opencad2d.json` files;
 - New, Open, Save and Save As file commands;
 - dirty-state tracking and save-confirmation dialogs;
+- a read-only property panel for selected entities;
 - CAD-style crosshair cursor;
 - visual feedback for the active command, current layer, snap type, temporary measurements and rendered entity count.
 
@@ -54,6 +57,10 @@ Document edits are represented through commands. Adding, deleting, moving, copyi
 Interaction logic is kept outside the UI. Hit testing, selection and object snapping live in dedicated libraries and work in model coordinates. This keeps the Avalonia layer thin and makes the interaction behavior testable.
 
 Grip editing is available for selected line and circle entities. Press `Tab` to enter grip edit mode; when multiple entities are selected, the last selected entity is edited. Grip edits are committed through replace commands, so undo/redo remains consistent.
+
+The right-side property panel is available in read-only mode. It shows document status when nothing is selected, geometry details for a single selected line, circle or polyline, and aggregate information for multiple selected entities.
+
+Layer management is available through a dedicated `Layers...` dialog. The manager can create layers, rename non-default layers, change visibility and lock state, edit layer color and line weight, choose the current layer and delete empty non-current layers. Changes are applied as a single undoable layer update.
 
 The current snapping system supports:
 
@@ -82,9 +89,11 @@ The UI currently includes:
 - a vertical left tool panel grouped by tool category;
 - a layer selector;
 - layer visibility and locked toggles;
+- a `Layers...` button that opens the Layer Manager window;
 - undo and redo buttons;
 - an active command indicator;
 - a drawing canvas;
+- a right-side read-only property panel that can be shown or hidden;
 - configurable grid display with major/minor spacing;
 - CAD-style full-canvas crosshair cursor;
 - a bottom snap bar;
@@ -176,6 +185,42 @@ Viewport culling is used during rendering: the canvas draws only visible entitie
 
 ---
 
+## Property panel and Layer Manager
+
+The property panel is a right-side, read-only panel. It does not modify the document and does not create commands. Its current purpose is to inspect the drawing state and selected entities.
+
+It supports:
+
+- no selection: document, entity and layer summary;
+- single line: start point, end point, length, `DX`, `DY`, angle and bounds;
+- single circle: center, radius, diameter, area, circumference and bounds;
+- single polyline: vertex count, closed state, length, area when closed and bounds;
+- multiple selection: count, entity type summary, layer summary and aggregate bounds.
+
+The Layer Manager is a separate dialog opened from `Layers...` in the top bar. It keeps the main CAD workspace clean and avoids filling the canvas area with configuration controls.
+
+Layer Manager v1 supports:
+
+- creating new layers;
+- deleting empty non-current layers;
+- renaming non-default layers;
+- changing visibility and lock state;
+- changing layer color and line weight;
+- choosing the current layer;
+- applying changes only when `OK` is pressed;
+- cancelling without modifying the document.
+
+Important rules:
+
+- layer `0` is protected and cannot be deleted or renamed;
+- a layer that contains entities cannot be deleted;
+- the current layer cannot be deleted;
+- layer names are required and must be unique;
+- the current layer must always be visible and unlocked;
+- Layer Manager changes are committed through `UpdateLayersCommand`, so undo/redo and dirty-state tracking remain consistent.
+
+---
+
 
 ## Keyboard and mouse shortcuts
 
@@ -217,7 +262,11 @@ To delete entities, select them and press `Delete` or use the delete command.
 
 To hide a layer, choose it from the layer selector and disable its visibility checkbox. Entities on hidden layers are not drawn, selected or used by snapping.
 
-To lock a layer, choose it from the layer selector and enable its locked checkbox. Entities on locked layers remain visible and can still be used for snapping, but they cannot be selected, moved, deleted or transformed.
+To lock a layer, choose it from the layer selector and enable its locked checkbox. Entities on locked layers remain visible and can still be used for snapping, but they cannot be selected, moved, deleted or transformed. The current layer must remain visible and unlocked.
+
+To manage layers, click `Layers...`. The Layer Manager opens in a separate window and lets you create, rename, delete empty layers, edit visibility/lock state, color and line weight, and choose the current layer. Changes are applied only with `OK` and can be undone as one operation.
+
+To inspect selected entities, show the `Props` panel. The property panel is currently read-only and updates after selection and document changes.
 
 To fit the visible drawing in the canvas, use `Zoom Extents` or press `Home`. Zoom Extents considers visible entities only. Hidden layers are ignored; locked layers are included because they remain visible.
 
@@ -324,7 +373,7 @@ Recommended reading:
 - [Snapping](docs/snapping.md) — snap kinds, snap providers, search areas, priorities and visual markers.
 - [Persistence](docs/persistence.md) — internal JSON format, serializer architecture, file commands, viewport persistence and dirty-state tracking.
 - [Grip Editing](docs/grip-editing.md) — grip model, providers, interaction flow and rendering rules.
-- [Layer Appearance](docs/layer-appearance.md) — layer-owned color, line weight, fill color and draw order rules.
+- [Layer Appearance](docs/layer-appearance.md) — implemented layer color and line weight, plus future fill color and draw order rules.
 - [Application Settings](docs/application-settings.md) — shortcuts, session settings, grid configuration and drawing settings.
 - [Measure Tools](docs/measure-tools.md) — future distance and area measurement tools.
 - [Transform Tools](docs/transform-tools.md) — future rotate, scale, align, match properties and polygon tools.

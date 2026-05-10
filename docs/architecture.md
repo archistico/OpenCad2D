@@ -522,7 +522,7 @@ locked layer entities can still be used as references for snapping
 locked layer entities cannot be modified, removed or transformed
 ```
 
-The UI exposes the current layer, a visibility toggle and a locked toggle.
+The UI exposes the current layer, a visibility toggle, a locked toggle and a `Layers...` button that opens the Layer Manager window.
 
 The distinction between visible, selectable and snappable entities is important:
 
@@ -537,6 +537,8 @@ Rendering, snapping and Zoom Extents use visible entities.
 Selection and hit testing use selectable entities.
 
 Locked-layer enforcement is implemented at the `CadDocument` mutation boundary, so invalid replacement/removal is blocked even if a future tool accidentally tries to modify an entity directly.
+
+Layer Manager v1 applies layer changes through `UpdateLayersCommand`. The dialog edits a copy of the layer list and only commits on `OK`. The current layer must remain visible and unlocked. Layer `0` is protected; layers with entities and the current layer cannot be deleted.
 
 ---
 
@@ -581,16 +583,35 @@ The current UI layout is designed to scale better than a flat toolbar.
 
 It uses:
 
-- top bar for session/global controls;
+- top bar for session/global controls, file commands, layer quick controls and Layer Manager access;
 - left vertical tool panel grouped by SELECT, DRAW and EDIT;
 - central canvas;
-- bottom snap/Ortho bar;
+- optional right-side read-only property panel;
+- bottom snap/Ortho/grid bar;
 - fixed command line input;
 - status bar.
 
-This keeps tools, layer controls, snap modes and status feedback visually separate.
+This keeps tools, layer controls, snap modes, property inspection and status feedback visually separate.
+
+Configuration-heavy workflows such as the Layer Manager should use dedicated dialogs instead of filling the main drawing surface.
 
 ---
+
+## Property panel
+
+Property Panel v1 is an App-layer read-only view over the current workspace state.
+
+It should remain free of CAD mutation logic:
+
+```text
+read workspace state
+format properties for display
+update when selection or document state changes
+never mutate CadDocument directly
+never execute commands in v1
+```
+
+Future editable property fields must use commands, so undo/redo and dirty-state tracking remain consistent.
 
 ## Design implications for future work
 
@@ -649,7 +670,7 @@ The status bar may expose a rendered/total count to help profile large drawings.
 
 The project direction is that entity appearance should be owned by layers. Future appearance work should avoid adding per-entity color, line weight or fill color. Entities should carry geometry and a layer reference; layers should own stroke color, line weight, optional fill color and draw order.
 
-Layer appearance changes should go through commands so they are undoable and mark the document dirty. Persistence should serialize appearance on layers, not on entities.
+Current implemented layer appearance is color and line weight. These are owned by layers and can be edited in Layer Manager v1. Future fill color and draw order should also remain layer-owned. Layer appearance changes should go through commands so they are undoable and mark the document dirty. Persistence should serialize appearance on layers, not on entities.
 
 ---
 

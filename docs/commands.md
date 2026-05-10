@@ -457,6 +457,57 @@ Expected future commands include:
 - layer appearance commands for color, line weight, fill color and draw order;
 - `RotateEntitiesCommand`, `ScaleEntitiesCommand` and `AlignCommand` for transform tools;
 - `MatchLayerCommand` for match-properties behavior;
+- `UpdateLayersCommand` for Layer Manager batch updates;
 - add commands for text, dimension and polygon entities.
 
 Measure tools are the exception: they query geometry and display results, but they must not create commands because they do not modify the drawing.
+
+
+---
+
+## UpdateLayersCommand
+
+`UpdateLayersCommand` applies a complete layer collection update as one undoable operation.
+
+It is currently used by Layer Manager v1.
+
+The command stores:
+
+```text
+oldLayers
+newLayers
+```
+
+Execute:
+
+```text
+validate that every entity still references an available layer
+replace the document layer collection with newLayers
+```
+
+Undo:
+
+```text
+validate that every entity still references an available layer
+restore oldLayers
+```
+
+The command must not allow deletion of layers that are still referenced by entities. The Layer Manager prevents invalid deletion earlier, but the command also validates the referenced layer set before replacing the collection.
+
+Layer Manager updates go through this command so that:
+
+```text
+undo/redo works
+dirty-state generation changes
+layer appearance updates happen as one user-facing operation
+```
+
+Current Layer Manager v1 rules enforced before creating the command:
+
+```text
+layer 0 cannot be deleted or renamed
+current layer cannot be deleted
+current layer must be visible and unlocked
+layer names are required and unique
+layers with entities cannot be deleted
+```

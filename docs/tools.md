@@ -614,3 +614,58 @@ The following tool families are specified in dedicated design documents and shou
 - Annotation tools (`TextTool`, dimension tools) will introduce semantic entities rather than decomposing annotations into unrelated lines and text.
 
 These tools should reuse the existing input pipeline where possible: snapping, command line point input, direct distance entry, Ortho where appropriate, preview rendering and command history.
+
+---
+
+## Layer Manager
+
+The Layer Manager is an App-layer dialog, not a CAD tool. It is opened from the `Layers...` button in the top bar.
+
+The dialog edits a copy of the document layer list. Pressing `Cancel` discards the copy. Pressing `OK` validates the copy and applies it to the workspace.
+
+Layer Manager v1 supports:
+
+```text
+create layer
+rename non-default layer
+delete empty non-current layer
+set current layer
+set visibility
+set locked state
+set color hex
+set line weight
+```
+
+Validation rules:
+
+```text
+layer 0 cannot be deleted
+layer 0 cannot be renamed
+current layer cannot be deleted
+layers containing entities cannot be deleted
+layer names are required
+layer names must be unique
+current layer must be visible and unlocked
+```
+
+Applying Layer Manager changes must go through `UpdateLayersCommand`, so the operation is undoable and marks the document dirty.
+
+The Layer Manager is intentionally separate from the main canvas. The main window keeps only quick layer controls and the current-layer selector.
+
+---
+
+## Property panel
+
+The Property Panel is an App-layer read-only inspection panel. It is not a tool and does not modify the document.
+
+It is updated from the current selection and document state. It can show:
+
+```text
+no selection -> document summary
+single line -> start, end, length, DX, DY, angle, bounds
+single circle -> center, radius, diameter, area, circumference, bounds
+single polyline -> vertices, closed state, length, area when closed, bounds
+multiple selection -> count, type summary, layer summary, aggregate bounds
+```
+
+Future editable properties must use commands. Do not add direct `CadDocument` mutations from the property panel.

@@ -140,3 +140,42 @@ draw order
 ```
 
 Entities do not serialize any appearance data. Their visual representation is fully reconstructed from the layer at load time.
+
+---
+
+## Current implementation status
+
+Layer Manager v1 currently implements the practical subset of this design:
+
+```text
+Name
+Color
+LineWeight
+IsVisible
+IsLocked
+Current layer selection
+```
+
+Layer appearance is already layer-owned for color and line weight. Entities do not carry per-entity color or per-entity line weight.
+
+The following design goals are not implemented yet and remain future work:
+
+```text
+FillColor
+DrawOrder
+layer reorder UI
+filled rendering for closed entities
+serializer versioning for new layer appearance fields
+```
+
+Layer Manager v1 applies confirmed changes through `UpdateLayersCommand`, making layer updates undoable and dirty-state aware.
+
+Current Layer Manager rules:
+
+```text
+layer 0 cannot be deleted or renamed
+current layer cannot be deleted
+layers containing entities cannot be deleted
+layer names must be unique and non-empty
+current layer must be visible and unlocked
+```

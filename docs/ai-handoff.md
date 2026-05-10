@@ -59,6 +59,7 @@ The project currently supports:
 - dirty-state tracking through command history generation;
 - save-confirmation dialogs before New, Open and window close;
 - viewport persistence;
+- read-only property panel;
 - UCS/WCS coordinate distinction;
 - geometry tolerance strategy;
 - spatial index abstraction;
@@ -66,11 +67,11 @@ The project currently supports:
 - grip editing for line and circle entities;
 - document mutation through `CadDocument`;
 - ViewModel property notifications through `INotifyPropertyChanged`;
-- UI feedback for the active command/tool, current layer, snap type and measurement state.
+- UI feedback for the active command/tool, current layer, snap type, measurement state, rendered entity count and selected-entity properties.
 
-Recently completed areas include command line input, Ortho mode, `CircleTool`, Zoom Extents, grip editing and persistence.
+Recently completed areas include command line input, Ortho mode, `CircleTool`, Zoom Extents, grip editing, persistence, configurable grid, viewport culling, Property Panel v1 and Layer Manager v1.
 
-The next major areas are property panel, richer layer management, additional drawing tools and more advanced modify commands.
+The next major areas are property editing, layer appearance v2, additional drawing tools and more advanced modify commands.
 
 ---
 
@@ -124,6 +125,7 @@ The following rules are important and should be preserved.
 - App renders and forwards input.
 - Document mutations must go through `CadDocument`.
 - User-facing document changes should go through commands.
+- Layer manager changes should be applied as a single undoable command.
 - Dirty state should be tracked from command history generation.
 - Tools should not know about Avalonia.
 - Persistence must not depend on App, Tools or Interaction.
@@ -309,6 +311,19 @@ A layer has:
 - line weight;
 - visibility;
 - locked state.
+
+Layer Manager v1 can create, rename and delete eligible layers, edit visibility, lock state, color and line weight, and choose the current layer. Changes are applied only when the dialog is confirmed and are committed through `UpdateLayersCommand`.
+
+Layer Manager v1 rules:
+
+```text
+layer 0 cannot be deleted
+layer 0 cannot be renamed
+current layer cannot be deleted
+layers containing entities cannot be deleted
+layer names are required and unique
+current layer must be visible and unlocked
+```
 
 ### Hidden layer behavior
 
@@ -1037,6 +1052,74 @@ Suggested next development order:
 
 ---
 
+## 24. Property Panel and Layer Manager
+
+### Property Panel v1
+
+The Property Panel is implemented in `OpenCad2D.App` as a right-side read-only panel.
+
+It is presentation-only:
+
+```text
+it does not mutate the document
+it does not execute commands
+it does not participate in persistence
+it is regenerated from the current workspace state
+```
+
+The panel shows:
+
+- document summary when nothing is selected;
+- line geometry for a single selected `LineEntity`;
+- circle geometry for a single selected `CircleEntity`;
+- polyline geometry for a single selected `PolylineEntity`;
+- aggregate selection information for multiple selected entities.
+
+The builder lives in:
+
+```text
+OpenCad2D.App/ViewModels/Properties/SelectionPropertyPanelBuilder.cs
+```
+
+Future numeric editing should not be added directly to the panel without commands. Any property edit must become an undoable document operation.
+
+### Layer Manager v1
+
+The Layer Manager is a separate Avalonia window opened from the `Layers...` button.
+
+The dialog edits a copy of the layer list. Pressing `Cancel` discards the copy. Pressing `OK` validates the result and applies it to the workspace.
+
+Layer Manager changes are committed through:
+
+```text
+UpdateLayersCommand
+```
+
+This keeps undo/redo and dirty-state tracking consistent.
+
+Current supported fields:
+
+```text
+Name
+IsCurrent
+IsVisible
+IsLocked
+Color
+LineWeight
+```
+
+Current rules:
+
+```text
+layer 0 cannot be deleted or renamed
+current layer cannot be deleted
+layers containing entities cannot be deleted
+names are required and unique
+current layer must be visible and unlocked
+```
+
+Fill color and layer draw order are design goals for a future layer appearance phase. They are not implemented in the current layer model.
+
 ## 25. Class handoff notes
 
 ### CadDocument
@@ -1060,7 +1143,7 @@ Responsibilities:
 
 - represent a CAD layer;
 - store id, name, color, line weight, visibility and locked state;
-- provide immutable-style update helpers such as visibility and locked-state changes.
+- provide immutable-style update helpers for name, appearance, visibility and locked-state changes.
 
 ### LayerCollection
 
@@ -1069,7 +1152,8 @@ Responsibilities:
 - store all layers;
 - provide lookup by `LayerId`;
 - set layer visibility;
-- set layer locked state.
+- set layer locked state;
+- replace the complete layer collection for undoable Layer Manager updates.
 
 ### CadWorkspace
 
@@ -1081,7 +1165,8 @@ Responsibilities:
 - lock or unlock the current layer;
 - clear selections that are no longer valid after layer state changes;
 - submit command-line points to the active tool;
-- coordinate Ortho mode state.
+- coordinate Ortho mode state;
+- apply Layer Manager results through `UpdateLayersCommand`.
 
 ### TwoPointToolBase
 

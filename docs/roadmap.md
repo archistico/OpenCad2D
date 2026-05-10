@@ -8,7 +8,7 @@ The goal is to grow the project step by step, without turning the codebase into 
 
 ## Current status
 
-OpenCad2D has moved beyond the initial prototype stage. The current application includes a tested CAD core, an Avalonia UI, command line point input, direct distance entry, Ortho mode, grip editing, JSON persistence, configurable grid display and viewport rendering culling.
+OpenCad2D has moved beyond the initial prototype stage. The current application includes a tested CAD core, an Avalonia UI, command line point input, direct distance entry, Ortho mode, grip editing, JSON persistence, configurable grid display, viewport rendering culling, a read-only property panel and a first Layer Manager.
 
 Implemented foundations include:
 
@@ -32,6 +32,8 @@ grip editing for lines and circles
 internal JSON persistence
 configurable grid
 viewport culling
+read-only property panel
+Layer Manager v1
 custom Avalonia canvas
 CAD-style crosshair
 snap markers by snap type
@@ -58,28 +60,39 @@ status feedback with measurements and rendered count
 14. Dirty state and save confirmation dialogs.
 15. Configurable grid display.
 16. Viewport rendering culling.
+17. Property Panel v1 in read-only mode.
+18. Layer Manager v1 with undoable batch updates.
 
 ---
 
 ## Recommended next phases
 
-### Phase 1 — Property panel
+### Phase 1 — Property panel editing
 
-Add a right-side property panel in read-only mode first.
+Property Panel v1 is implemented in read-only mode. The next property-panel step is controlled numeric editing through commands.
 
-Initial display:
+Potential editable fields:
 
 ```text
-Line: type, layer, start, end, length, DX, DY
-Circle: type, layer, center, radius, diameter
-Multiple selection: count, common/different layers, bounding box
+Line: start, end
+Circle: center, radius
+Polyline: selected vertex data in a later phase
+Layer: optional layer reassignment
 ```
 
-After the read-only version is stable, add numeric editing through commands.
+Editing must be undoable and must go through commands.
 
-### Phase 2 — Layer manager and layer appearance
+### Phase 2 — Layer appearance v2
 
-Add a proper layer manager with create, rename, visible, locked, color, line weight, fill color and draw order.
+Layer Manager v1 is implemented with create, rename, visible, locked, color, line weight and current-layer selection. The next layer step is extending the layer model and UI with:
+
+```text
+FillColor
+DrawOrder
+layer reorder commands
+filled rendering for closed polylines and circles
+serializer versioning for new layer fields
+```
 
 Design rule: appearance belongs to layers, not entities.
 
