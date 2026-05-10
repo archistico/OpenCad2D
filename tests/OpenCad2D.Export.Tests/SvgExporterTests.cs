@@ -237,4 +237,61 @@ public sealed class SvgExporterTests
             }
         }
     }
+    [Fact]
+    public void Export_ShouldPreserveCanvasYOrientation()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 10),
+            new Point2D(100, 10)));
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 90),
+            new Point2D(100, 90)));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.Contains("y1=\"20\"", result.Content);
+        Assert.Contains("y2=\"20\"", result.Content);
+        Assert.Contains("y1=\"100\"", result.Content);
+        Assert.Contains("y2=\"100\"", result.Content);
+    }
+
+    [Fact]
+    public void Export_ShouldWriteBackgroundRectangleByDefault()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0)));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.Contains("<rect x=\"0\" y=\"0\"", result.Content);
+        Assert.Contains("fill=\"#1E1E1E\"", result.Content);
+    }
+
+    [Fact]
+    public void Export_WhenBackgroundIsDisabled_ShouldNotWriteBackgroundRectangle()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0)));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(
+            document,
+            new SvgExportOptions
+            {
+                IncludeBackground = false
+            });
+
+        Assert.DoesNotContain("<rect ", result.Content);
+    }
+
 }

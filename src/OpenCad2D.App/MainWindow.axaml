@@ -107,12 +107,13 @@
 
     <Grid RowDefinitions="Auto,Auto,*,Auto,Auto,Auto">
 
+
         <!-- File command bar: keep document commands isolated from tool layout. -->
         <Border Grid.Row="0"
                 Background="#1B1B1B"
                 BorderBrush="#3A3A3A"
                 BorderThickness="0,0,0,1"
-                Padding="8,5">
+                Padding="8,6">
 
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Left"
@@ -122,7 +123,7 @@
                     <TextBlock Text="File:"
                                Foreground="#CCCCCC"
                                VerticalAlignment="Center"
-                               FontWeight="Bold" />
+                               Margin="0,0,2,0" />
 
                     <Button Classes="global-button"
                             Content="New"
@@ -142,8 +143,14 @@
 
                     <Separator Margin="8,0" />
 
+                    <Button Classes="global-button"
+                            Content="Export SVG"
+                            Click="ExportSvg_Click" />
+
+                    <Separator Margin="8,0" />
+
                     <TextBlock Text="{Binding FileStatusText}"
-                               Foreground="#CCCCCC"
+                               Foreground="#DCDCAA"
                                VerticalAlignment="Center"
                                FontFamily="Consolas" />
                 </StackPanel>
@@ -297,26 +304,6 @@
                                 Classes="tool-button"
                                 Content="Align"
                                 Click="Align_Click" />
-
-                        <Button x:Name="BreakAtPointButton"
-                                Classes="tool-button"
-                                Content="Break Pt"
-                                Click="BreakAtPoint_Click" />
-
-                        <Button x:Name="BreakBetweenPointsButton"
-                                Classes="tool-button"
-                                Content="Break Seg"
-                                Click="BreakBetweenPoints_Click" />
-
-                        <Button x:Name="ExtendButton"
-                                Classes="tool-button"
-                                Content="Extend"
-                                Click="Extend_Click" />
-
-                        <Button x:Name="TrimButton"
-                                Classes="tool-button"
-                                Content="Trim"
-                                Click="Trim_Click" />
 
                         <Button Classes="tool-button"
                                 Content="Delete"

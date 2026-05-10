@@ -10,11 +10,12 @@ using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Input;
 using OpenCad2D.App.ViewModels.Properties;
-using OpenCad2D.Persistence;
+using System.IO;
 using OpenCad2D.Persistence.Dto;
+using OpenCad2D.Persistence;
+using OpenCad2D.Export.Svg;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -26,10 +27,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
-    private string? _currentFilePath;
     private readonly CommandInputParser _commandInputParser = new();
-    private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
     private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
+    private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
+    private readonly ISvgExporter _svgExporter = new SvgExporter();
+    private string? _currentFilePath;
     private PropertyPanelViewModel _propertyPanel = new("Properties", Array.Empty<PropertySectionViewModel>());
     private bool _isPropertyPanelVisible = true;
 
@@ -63,7 +65,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public bool IsDirty => Workspace.IsDirty;
 
-    public string WindowTitle => IsDirty
+    public string TitleText => IsDirty
         ? $"OpenCad2D - {CurrentFileName} *"
         : $"OpenCad2D - {CurrentFileName}";
 
@@ -189,41 +191,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     : "Polyline: specify next point, type distance, press Enter to finish, or C to close:";
             }
 
-            if (Workspace.ToolController.ActiveTool is BreakAtPointTool breakAtPointTool)
-            {
-                return breakAtPointTool.State == BreakAtPointToolState.WaitingForTargetEntity
-                    ? "Break Point: select a line to break:"
-                    : "Break Point: specify break point on selected line:";
-            }
-
-            if (Workspace.ToolController.ActiveTool is BreakBetweenPointsTool breakBetweenPointsTool)
-            {
-                return breakBetweenPointsTool.State switch
-                {
-                    BreakBetweenPointsToolState.WaitingForTargetEntity =>
-                        "Break Segment: select a line to break:",
-                    BreakBetweenPointsToolState.WaitingForFirstBreakPoint =>
-                        "Break Segment: specify first break point:",
-                    BreakBetweenPointsToolState.WaitingForSecondBreakPoint =>
-                        "Break Segment: specify second break point:",
-                    _ => "Break Segment:"
-                };
-            }
-
-            if (Workspace.ToolController.ActiveTool is ExtendTool extendTool)
-            {
-                return extendTool.State == ExtendToolState.WaitingForBoundaryEntity
-                    ? "Extend: select a boundary line:"
-                    : "Extend: select a line to extend to the boundary:";
-            }
-
-            if (Workspace.ToolController.ActiveTool is TrimTool trimTool)
-            {
-                return trimTool.State == TrimToolState.WaitingForBoundaryEntity
-                    ? "Trim: select a cutting edge line:"
-                    : "Trim: select the side of a line to remove:";
-            }
-
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";
@@ -241,13 +208,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         $"{LastMessage}";
 
 
+
     public void NewDocument()
     {
         Workspace.NewDocument();
-        EnsureDemoLayers();
-        Workspace.MarkSaved();
         _currentFilePath = null;
-
         SetMessage("New document created.");
         NotifyDocumentStateChanged();
         NotifyFileStateChanged();
@@ -263,8 +228,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 "File path cannot be empty.",
                 nameof(filePath));
         }
-
-        ArgumentNullException.ThrowIfNull(viewportState);
 
         DocumentDto dto = _documentSerializer.Serialize(
             Workspace.Document,
@@ -310,6 +273,39 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         NotifyFileStateChanged();
 
         return viewportState;
+    }
+
+    public SvgExportResult ExportSvgToFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "SVG export file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        var options = new SvgExportOptions
+        {
+            Title = CurrentFileName == "Untitled"
+                ? "OpenCad2D export"
+                : CurrentFileName
+        };
+
+        SvgExportResult result = _svgExporter.Export(
+            Workspace.Document,
+            options);
+
+        _svgExporter.ExportToFile(
+            Workspace.Document,
+            filePath,
+            options);
+
+        SetMessage($"Exported SVG '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities)." );
+        OnPropertiesChanged(
+            nameof(LastMessage),
+            nameof(StatusText));
+
+        return result;
     }
 
     public ToolResult SubmitCommandInput(string? input)
@@ -694,11 +690,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(StatusText),
-            nameof(WindowTitle),
-            nameof(FileStatusText),
-            nameof(CurrentFilePath),
-            nameof(CurrentFileName),
-            nameof(IsDirty),
             nameof(EntityCount),
             nameof(SelectedCount),
             nameof(ActiveToolName),
@@ -715,7 +706,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(LastMessage),
             nameof(CommandPromptText),
             nameof(IsPropertyPanelVisible),
-            nameof(PropertyPanel));
+            nameof(PropertyPanel),
+            nameof(IsDirty),
+            nameof(TitleText),
+            nameof(FileStatusText),
+            nameof(CurrentFilePath),
+            nameof(CurrentFileName));
     }
 
     private void NotifyCommandInputStateChanged()
@@ -725,17 +721,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(MeasurementText),
             nameof(StatusText),
             nameof(LastMessage));
-    }
-
-    private void NotifyFileStateChanged()
-    {
-        OnPropertiesChanged(
-            nameof(CurrentFilePath),
-            nameof(CurrentFileName),
-            nameof(IsDirty),
-            nameof(WindowTitle),
-            nameof(FileStatusText),
-            nameof(StatusText));
     }
 
     private void NotifyLayerStateChanged()
@@ -752,6 +737,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
             nameof(MeasurementText),
+            nameof(StatusText));
+    }
+
+
+    private void NotifyFileStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(CurrentFilePath),
+            nameof(CurrentFileName),
+            nameof(IsDirty),
+            nameof(TitleText),
+            nameof(FileStatusText),
             nameof(StatusText));
     }
 

@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OpenCad2D.Export\OpenCad2D.Export.csproj" />
     <ProjectReference Include="..\OpenCad2D.Core\OpenCad2D.Core.csproj" />
     <ProjectReference Include="..\OpenCad2D.Geometry\OpenCad2D.Geometry.csproj" />
     <ProjectReference Include="..\OpenCad2D.Interaction\OpenCad2D.Interaction.csproj" />

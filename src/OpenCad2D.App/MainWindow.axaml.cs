@@ -1,20 +1,20 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
-using Avalonia.Layout;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using OpenCad2D.Persistence;
 using Avalonia.Platform.Storage;
+using Avalonia.Layout;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.Core.Layers;
-using OpenCad2D.Persistence;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace OpenCad2D.App;
 
@@ -24,6 +24,12 @@ public partial class MainWindow : Window
     {
         Patterns = new[] { "*.opencad2d.json" },
         MimeTypes = new[] { "application/json" }
+    };
+
+    private static readonly FilePickerFileType SvgFileType = new("SVG image")
+    {
+        Patterns = new[] { "*.svg" },
+        MimeTypes = new[] { "image/svg+xml" }
     };
 
     private readonly MainWindowViewModel _viewModel;
@@ -44,29 +50,6 @@ public partial class MainWindow : Window
         Closing += Window_Closing;
     }
 
-    private void InitializeLayerComboBox()
-    {
-        LayerComboBox.ItemsSource = _viewModel.LayerNames;
-        LayerComboBox.SelectedItem = _viewModel.CurrentLayer.Name;
-
-        RefreshLayerControls();
-    }
-
-    private void RefreshLayerControls()
-    {
-        RefreshLayerVisibleCheckBox();
-        RefreshLayerLockedCheckBox();
-    }
-
-    private void RefreshLayerVisibleCheckBox()
-    {
-        LayerVisibleCheckBox.IsChecked = _viewModel.CurrentLayer.IsVisible;
-    }
-
-    private void RefreshLayerLockedCheckBox()
-    {
-        LayerLockedCheckBox.IsChecked = _viewModel.CurrentLayer.IsLocked;
-    }
 
     private async void New_Click(
         object? sender,
@@ -158,6 +141,51 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         await SaveAsync(forceSaveAs: true);
+    }
+
+    private async void ExportSvg_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            IStorageFile? file = await StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = "Export SVG",
+                    SuggestedFileName = _viewModel.CurrentFileName == "Untitled"
+                        ? "drawing.svg"
+                        : System.IO.Path.ChangeExtension(_viewModel.CurrentFileName, ".svg"),
+                    DefaultExtension = "svg",
+                    FileTypeChoices = new[] { SvgFileType }
+                });
+
+            if (file is null)
+            {
+                return;
+            }
+
+            string? filePath = file.TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Export SVG",
+                    "Only local files are supported in this version.");
+                return;
+            }
+
+            _viewModel.ExportSvgToFile(filePath);
+
+            RefreshStatus();
+            CadCanvas.Focus();
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Export SVG failed",
+                exception.Message);
+        }
     }
 
     private async Task<bool> SaveAsync(bool forceSaveAs)
@@ -371,6 +399,30 @@ public partial class MainWindow : Window
         await dialog.ShowDialog(this);
     }
 
+    private void InitializeLayerComboBox()
+    {
+        LayerComboBox.ItemsSource = _viewModel.LayerNames;
+        LayerComboBox.SelectedItem = _viewModel.CurrentLayer.Name;
+
+        RefreshLayerControls();
+    }
+
+    private void RefreshLayerControls()
+    {
+        RefreshLayerVisibleCheckBox();
+        RefreshLayerLockedCheckBox();
+    }
+
+    private void RefreshLayerVisibleCheckBox()
+    {
+        LayerVisibleCheckBox.IsChecked = _viewModel.CurrentLayer.IsVisible;
+    }
+
+    private void RefreshLayerLockedCheckBox()
+    {
+        LayerLockedCheckBox.IsChecked = _viewModel.CurrentLayer.IsLocked;
+    }
+
     private void LayerVisibleCheckBox_Click(
         object? sender,
         RoutedEventArgs e)
@@ -528,50 +580,6 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
-    private void BreakAtPoint_Click(
-        object? sender,
-        RoutedEventArgs e)
-    {
-        _viewModel.SetTool(ToolId.BreakAtPoint);
-
-        RefreshStatus();
-
-        CadCanvas.ClearSnapMarker();
-    }
-
-    private void BreakBetweenPoints_Click(
-        object? sender,
-        RoutedEventArgs e)
-    {
-        _viewModel.SetTool(ToolId.BreakBetweenPoints);
-
-        RefreshStatus();
-
-        CadCanvas.ClearSnapMarker();
-    }
-
-    private void Extend_Click(
-        object? sender,
-        RoutedEventArgs e)
-    {
-        _viewModel.SetTool(ToolId.Extend);
-
-        RefreshStatus();
-
-        CadCanvas.ClearSnapMarker();
-    }
-
-    private void Trim_Click(
-        object? sender,
-        RoutedEventArgs e)
-    {
-        _viewModel.SetTool(ToolId.Trim);
-
-        RefreshStatus();
-
-        CadCanvas.ClearSnapMarker();
-    }
-
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -723,10 +731,15 @@ public partial class MainWindow : Window
         e.Handled = true;
     }
 
-    private async void Window_KeyDown(
+    private void Window_KeyDown(
         object? sender,
         KeyEventArgs e)
     {
+        if (TryHandleFileShortcut(e))
+        {
+            return;
+        }
+
         if (ReferenceEquals(e.Source, CommandInputTextBox))
         {
             return;
@@ -734,39 +747,6 @@ public partial class MainWindow : Window
 
         if (e.Source is TextBox)
         {
-            return;
-        }
-
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
-            e.Key == Key.N)
-        {
-            New_Click(sender, e);
-            e.Handled = true;
-            return;
-        }
-
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
-            e.Key == Key.O)
-        {
-            Open_Click(sender, e);
-            e.Handled = true;
-            return;
-        }
-
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
-            e.KeyModifiers.HasFlag(KeyModifiers.Shift) &&
-            e.Key == Key.S)
-        {
-            await SaveAsync(forceSaveAs: true);
-            e.Handled = true;
-            return;
-        }
-
-        if (e.KeyModifiers.HasFlag(KeyModifiers.Control) &&
-            e.Key == Key.S)
-        {
-            await SaveAsync(forceSaveAs: false);
-            e.Handled = true;
             return;
         }
 
@@ -799,6 +779,45 @@ public partial class MainWindow : Window
             ClearCommandInputText();
             e.Handled = true;
         }
+    }
+
+
+    private bool TryHandleFileShortcut(KeyEventArgs e)
+    {
+        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        {
+            return false;
+        }
+
+        if (e.Key == Key.N)
+        {
+            New_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+            return true;
+        }
+
+        if (e.Key == Key.O)
+        {
+            Open_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+            return true;
+        }
+
+        if (e.Key == Key.S && e.KeyModifiers.HasFlag(KeyModifiers.Shift))
+        {
+            SaveAs_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+            return true;
+        }
+
+        if (e.Key == Key.S)
+        {
+            Save_Click(this, new RoutedEventArgs());
+            e.Handled = true;
+            return true;
+        }
+
+        return false;
     }
 
     private void SubmitCommandInputText()
@@ -994,7 +1013,7 @@ public partial class MainWindow : Window
 
     private void RefreshStatus()
     {
-        Title = _viewModel.WindowTitle;
+        Title = _viewModel.TitleText;
 
         PropertiesButton.Content = _viewModel.IsPropertyPanelVisible
             ? "Props ✓"
@@ -1145,22 +1164,6 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             AlignButton,
             activeToolName.Equals("Align", StringComparison.OrdinalIgnoreCase));
-
-        SetActiveToolButton(
-            BreakAtPointButton,
-            activeToolName.Equals("Break Point", StringComparison.OrdinalIgnoreCase));
-
-        SetActiveToolButton(
-            BreakBetweenPointsButton,
-            activeToolName.Equals("Break Segment", StringComparison.OrdinalIgnoreCase));
-
-        SetActiveToolButton(
-            ExtendButton,
-            activeToolName.Equals("Extend", StringComparison.OrdinalIgnoreCase));
-
-        SetActiveToolButton(
-            TrimButton,
-            activeToolName.Equals("Trim", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }
