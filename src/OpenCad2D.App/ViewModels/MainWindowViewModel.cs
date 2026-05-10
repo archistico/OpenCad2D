@@ -1,4 +1,3 @@
-using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -7,12 +6,9 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
-using OpenCad2D.Tools.Grips;
-using OpenCad2D.Persistence;
-using OpenCad2D.Persistence.Dto;
+using OpenCad2D.App.ViewModels.Properties;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -24,10 +20,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
-    private string? _currentFilePath;
-    private int _renderedEntityCount;
     private readonly CommandInputParser _commandInputParser = new();
-    private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
+    private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
+    private PropertyPanelViewModel _propertyPanel = new("Properties", Array.Empty<PropertySectionViewModel>());
+    private bool _isPropertyPanelVisible = true;
 
     public MainWindowViewModel()
     {
@@ -46,21 +42,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         EnsureDemoLayers();
         SeedDemoDrawing();
+        RefreshPropertyPanel();
     }
 
     public CadWorkspace Workspace { get; }
-
-    public string? CurrentFilePath => _currentFilePath;
-
-    public string CurrentFileName => string.IsNullOrWhiteSpace(_currentFilePath)
-        ? "Untitled"
-        : Path.GetFileName(_currentFilePath);
-
-    public bool IsDirty => Workspace.IsDirty;
-
-    public string WindowTitle => IsDirty
-        ? $"OpenCad2D - {CurrentFileName} *"
-        : $"OpenCad2D - {CurrentFileName}";
 
     public IReadOnlyList<string> LayerNames => Workspace.Document.Layers.All
         .OrderBy(layer => layer.Name)
@@ -80,29 +65,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public bool IsOrthoEnabled => Workspace.Context.IsOrthoEnabled;
 
-    public bool IsGridVisible => Workspace.GridSettings.IsVisible;
-
-    public double GridMinorStep => Workspace.GridSettings.MinorStep;
-
-    public double GridMajorStep => Workspace.GridSettings.MajorStep;
-
-    public double GridMinimumScreenSpacing => Workspace.GridSettings.MinimumScreenSpacing;
-
-    public double GridMaximumScreenSpacing => Workspace.GridSettings.MaximumScreenSpacing;
-
     public string ActiveToolName =>
         Workspace.ToolController.ActiveToolName;
 
     public int EntityCount =>
         Workspace.Document.Entities.Count;
 
-    public int RenderedEntityCount => _renderedEntityCount;
-
-    public string RenderedEntityText =>
-        $"Rendered: {RenderedEntityCount}/{EntityCount}";
-
     public int SelectedCount =>
         Workspace.SelectionSet.Count;
+
+    public bool IsPropertyPanelVisible =>
+        _isPropertyPanelVisible;
+
+    public PropertyPanelViewModel PropertyPanel =>
+        _propertyPanel;
 
     public string LastMessage =>
         _lastMessage;
@@ -152,16 +128,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
             Point2D targetPoint = _currentSnapCandidate?.Point ?? _mousePosition;
 
-            bool shouldApplyOrtho = true;
-
-            if (Workspace.ToolController.ActiveTool is GripEditTool gripEditTool &&
-                gripEditTool.ActiveGripKind == GripKind.ResizeRadius)
-            {
-                shouldApplyOrtho = false;
-            }
-
             targetPoint = ToolInputConstraintService.ApplyOrtho(
-                Workspace.Context.IsOrthoEnabled && shouldApplyOrtho,
+                Workspace.Context.IsOrthoEnabled,
                 basePoint,
                 targetPoint);
 
@@ -184,194 +152,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         get
         {
-            if (Workspace.ToolController.ActiveTool is GripEditTool gripEditTool)
-            {
-                if (gripEditTool.WarmGripIndex is not null)
-                {
-                    string gripName = GetGripDescription(
-                        gripEditTool,
-                        gripEditTool.WarmGripIndex.Value);
-
-                    return $"Grip active ({gripName}). Specify destination, coordinates, relative coordinates, or distance:";
-                }
-
-                if (gripEditTool.HotGripIndex is not null)
-                {
-                    string gripName = GetGripDescription(
-                        gripEditTool,
-                        gripEditTool.HotGripIndex.Value);
-
-                    return $"Grip Edit: click highlighted grip ({gripName}) or press ESC to exit:";
-                }
-
-                return "Grip Edit: click a grip, or press ESC to exit:";
-            }
-
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";
         }
     }
 
-    public string GripStatusText
-    {
-        get
-        {
-            if (Workspace.ToolController.ActiveTool is not GripEditTool gripEditTool)
-            {
-                return string.Empty;
-            }
-
-            if (gripEditTool.WarmGripIndex is not null)
-            {
-                string gripName = GetGripDescription(
-                    gripEditTool,
-                    gripEditTool.WarmGripIndex.Value);
-
-                return $"Grip: active {gripName}";
-            }
-
-            if (gripEditTool.HotGripIndex is not null)
-            {
-                string gripName = GetGripDescription(
-                    gripEditTool,
-                    gripEditTool.HotGripIndex.Value);
-
-                return $"Grip: hot {gripName}";
-            }
-
-            return "Grip: select grip";
-        }
-    }
-
-    public string GridStatusText
-    {
-        get
-        {
-            string state = IsGridVisible
-                ? "on"
-                : "off";
-
-            return $"Grid: {state} | minor {GridMinorStep:0.###} | major {GridMajorStep:0.###}";
-        }
-    }
-
-    public string StatusText
-    {
-        get
-        {
-            string gripStatus = string.IsNullOrWhiteSpace(GripStatusText)
-                ? string.Empty
-                : $"{GripStatusText} | ";
-
-            return $"Tool: {ActiveToolName} | " +
-                   gripStatus +
-                   $"{CurrentLayerText} | " +
-                   $"{GridStatusText} | " +
-                   $"Entities: {EntityCount} | " +
-                   $"{RenderedEntityText} | " +
-                   $"Selected: {SelectedCount} | " +
-                   $"{MousePositionText} | " +
-                   $"{MeasurementText} | " +
-                   $"{SnapText} | " +
-                   $"{LastMessage}";
-        }
-    }
-
-
-    private static string GetGripDescription(
-        GripEditTool gripEditTool,
-        int gripListIndex)
-    {
-        if (gripListIndex < 0 || gripListIndex >= gripEditTool.CurrentGrips.Count)
-        {
-            return "unknown";
-        }
-
-        GripPoint grip = gripEditTool.CurrentGrips[gripListIndex];
-
-        return grip.Kind switch
-        {
-            GripKind.MoveVertex => $"vertex {grip.GripIndex}",
-            GripKind.MoveEntity => "move",
-            GripKind.ResizeRadius => "radius",
-            _ => grip.Kind.ToString()
-        };
-    }
-
-
-    public void NewDocument()
-    {
-        Workspace.NewDocument();
-        EnsureDemoLayers();
-        Workspace.MarkSaved();
-        _currentFilePath = null;
-        _renderedEntityCount = 0;
-
-        SetMessage("New document created.");
-        NotifyDocumentStateChanged();
-        NotifyFileStateChanged();
-    }
-
-    public void SaveToFile(
-        string filePath,
-        ViewportStateDto viewportState)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            throw new ArgumentException(
-                "File path cannot be empty.",
-                nameof(filePath));
-        }
-
-        ArgumentNullException.ThrowIfNull(viewportState);
-
-        DocumentDto dto = _documentSerializer.Serialize(
-            Workspace.Document,
-            Workspace.CurrentLayerId.Value,
-            viewportState);
-
-        _documentSerializer.SaveToFile(
-            dto,
-            filePath);
-
-        _currentFilePath = filePath;
-        Workspace.MarkSaved();
-
-        SetMessage($"Saved '{CurrentFileName}'.");
-        NotifyDocumentStateChanged();
-        NotifyFileStateChanged();
-    }
-
-    public ViewportStateDto OpenFromFile(string filePath)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-        {
-            throw new ArgumentException(
-                "File path cannot be empty.",
-                nameof(filePath));
-        }
-
-        DocumentDto dto = _documentSerializer.LoadFromFile(filePath);
-
-        CadDocument document = _documentSerializer.Deserialize(
-            dto,
-            out string currentLayerId,
-            out ViewportStateDto viewportState);
-
-        Workspace.LoadDocument(
-            document,
-            new LayerId(currentLayerId));
-
-        _currentFilePath = filePath;
-        _renderedEntityCount = 0;
-
-        SetMessage($"Opened '{CurrentFileName}'.");
-        NotifyDocumentStateChanged();
-        NotifyFileStateChanged();
-
-        return viewportState;
-    }
+    public string StatusText =>
+        $"Tool: {ActiveToolName} | " +
+        $"{CurrentLayerText} | " +
+        $"Entities: {EntityCount} | " +
+        $"Selected: {SelectedCount} | " +
+        $"{MousePositionText} | " +
+        $"{MeasurementText} | " +
+        $"{SnapText} | " +
+        $"{LastMessage}";
 
 
     public ToolResult SubmitCommandInput(string? input)
@@ -457,16 +252,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
         Point2D directionPoint = _currentSnapCandidate?.Point ?? _mousePosition;
 
-        bool shouldApplyOrtho = true;
-
-        if (Workspace.ToolController.ActiveTool is GripEditTool gripEditTool &&
-            gripEditTool.ActiveGripKind == GripKind.ResizeRadius)
-        {
-            shouldApplyOrtho = false;
-        }
-
         directionPoint = ToolInputConstraintService.ApplyOrtho(
-            Workspace.Context.IsOrthoEnabled && shouldApplyOrtho,
+            Workspace.Context.IsOrthoEnabled,
             basePoint,
             directionPoint);
 
@@ -482,19 +269,34 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
-    public void SetRenderedEntityCount(int renderedEntityCount)
+    public void TogglePropertyPanel()
     {
-        if (_renderedEntityCount == renderedEntityCount)
+        _isPropertyPanelVisible = !_isPropertyPanelVisible;
+
+        OnPropertiesChanged(
+            nameof(IsPropertyPanelVisible),
+            nameof(StatusText));
+    }
+
+    public void SetPropertyPanelVisible(bool isVisible)
+    {
+        if (_isPropertyPanelVisible == isVisible)
         {
             return;
         }
 
-        _renderedEntityCount = renderedEntityCount;
+        _isPropertyPanelVisible = isVisible;
 
         OnPropertiesChanged(
-            nameof(RenderedEntityCount),
-            nameof(RenderedEntityText),
+            nameof(IsPropertyPanelVisible),
             nameof(StatusText));
+    }
+
+    public void RefreshPropertyPanel()
+    {
+        _propertyPanel = _propertyPanelBuilder.Build(Workspace);
+
+        OnPropertiesChanged(nameof(PropertyPanel));
     }
 
     public void SetMousePosition(Point2D point)
@@ -504,7 +306,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(MousePositionText),
             nameof(MeasurementText),
-            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -515,7 +316,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(SnapText),
             nameof(MeasurementText),
-            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -530,7 +330,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(LastMessage),
-            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -545,7 +344,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(LastMessage),
-            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -581,8 +379,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             currentLayer.Id,
             isVisible);
 
-        Workspace.MarkDocumentChanged();
-
         SetMessage(
             isVisible
                 ? $"Layer '{currentLayer.Name}' visible."
@@ -598,8 +394,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         ToolResult result = Workspace.SetCurrentLayerLocked(isLocked);
 
-        Workspace.MarkDocumentChanged();
-
         SetLastResult(result);
 
         SetMessage(
@@ -608,17 +402,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 : $"Layer '{layerName}' unlocked.");
 
         NotifyLayerStateChanged();
-        NotifyDocumentStateChanged();
-
-        return result;
-    }
-
-
-    public ToolResult EnterGripEditModeForSelection()
-    {
-        ToolResult result = Workspace.EnterGripEditModeForSelection();
-
-        SetLastResult(result);
         NotifyDocumentStateChanged();
 
         return result;
@@ -633,7 +416,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(ActiveToolName),
-            nameof(GripStatusText),
             nameof(StatusText));
 
         return result;
@@ -711,7 +493,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(SnapText),
-            nameof(GripStatusText),
             nameof(StatusText));
     }
 
@@ -726,84 +507,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(IsOrthoEnabled),
             nameof(MeasurementText),
-            nameof(GripStatusText),
             nameof(StatusText));
-    }
-
-    public void SetGridVisible(bool isVisible)
-    {
-        ToolResult result = Workspace.SetGridVisible(isVisible);
-
-        SetLastResult(result);
-        SetMessage(isVisible
-            ? "Grid display enabled."
-            : "Grid display disabled.");
-
-        NotifyGridStateChanged();
-    }
-
-    public bool TrySetGridSettings(
-        double minorStep,
-        double majorStep,
-        double minimumScreenSpacing,
-        double maximumScreenSpacing,
-        out string errorMessage)
-    {
-        errorMessage = string.Empty;
-
-        try
-        {
-            GridSettings gridSettings = Workspace.GridSettings
-                .WithSpacing(
-                    minorStep,
-                    majorStep)
-                .WithScreenSpacingRange(
-                    minimumScreenSpacing,
-                    maximumScreenSpacing);
-
-            ToolResult result = Workspace.SetGridSettings(gridSettings);
-
-            SetLastResult(result);
-            SetMessage("Grid settings updated.");
-
-            NotifyGridStateChanged();
-
-            return true;
-        }
-        catch (ArgumentOutOfRangeException ex)
-        {
-            errorMessage = ex.Message;
-            SetMessage(errorMessage);
-            NotifyGridStateChanged();
-            return false;
-        }
-    }
-
-    private void NotifyGridStateChanged()
-    {
-        OnPropertiesChanged(
-            nameof(IsGridVisible),
-            nameof(GridMinorStep),
-            nameof(GridMajorStep),
-            nameof(GridMinimumScreenSpacing),
-            nameof(GridMaximumScreenSpacing),
-            nameof(GridStatusText),
-            nameof(StatusText),
-            nameof(LastMessage));
     }
 
     public void NotifyDocumentStateChanged()
     {
+        RefreshPropertyPanel();
+
         OnPropertiesChanged(
             nameof(StatusText),
-            nameof(WindowTitle),
-            nameof(CurrentFilePath),
-            nameof(CurrentFileName),
-            nameof(IsDirty),
-            nameof(GripStatusText),
             nameof(EntityCount),
-            nameof(RenderedEntityCount),
-            nameof(RenderedEntityText),
             nameof(SelectedCount),
             nameof(ActiveToolName),
             nameof(LayerNames),
@@ -812,18 +525,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
             nameof(IsOrthoEnabled),
-            nameof(IsGridVisible),
-            nameof(GridMinorStep),
-            nameof(GridMajorStep),
-            nameof(GridMinimumScreenSpacing),
-            nameof(GridMaximumScreenSpacing),
-            nameof(GridStatusText),
             nameof(CurrentLayerText),
             nameof(MousePositionText),
             nameof(MeasurementText),
             nameof(SnapText),
             nameof(LastMessage),
-            nameof(CommandPromptText));
+            nameof(CommandPromptText),
+            nameof(IsPropertyPanelVisible),
+            nameof(PropertyPanel));
     }
 
     private void NotifyCommandInputStateChanged()
@@ -831,23 +540,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(CommandPromptText),
             nameof(MeasurementText),
-            nameof(GripStatusText),
             nameof(StatusText),
             nameof(LastMessage));
     }
 
-    private void NotifyFileStateChanged()
-    {
-        OnPropertiesChanged(
-            nameof(CurrentFilePath),
-            nameof(CurrentFileName),
-            nameof(IsDirty),
-            nameof(WindowTitle),
-            nameof(StatusText));
-    }
-
     private void NotifyLayerStateChanged()
     {
+        RefreshPropertyPanel();
+
         OnPropertiesChanged(
             nameof(LayerNames),
             nameof(Layers),
@@ -855,16 +555,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
             nameof(IsOrthoEnabled),
-            nameof(IsGridVisible),
-            nameof(GridMinorStep),
-            nameof(GridMajorStep),
-            nameof(GridMinimumScreenSpacing),
-            nameof(GridMaximumScreenSpacing),
-            nameof(GridStatusText),
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
             nameof(MeasurementText),
-            nameof(GripStatusText),
             nameof(StatusText));
     }
 

@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:OpenCad2D.App.Controls"
         xmlns:vm="clr-namespace:OpenCad2D.App.ViewModels"
+        xmlns:props="clr-namespace:OpenCad2D.App.ViewModels.Properties"
         x:Class="OpenCad2D.App.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="OpenCad2D"
@@ -63,6 +64,41 @@
             <Setter Property="Foreground" Value="#CCCCCC" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+
+
+        <Style Selector="Border.property-panel">
+            <Setter Property="Background" Value="#232323" />
+            <Setter Property="BorderBrush" Value="#3A3A3A" />
+            <Setter Property="BorderThickness" Value="1,0,0,0" />
+        </Style>
+
+        <Style Selector="TextBlock.property-panel-title">
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.property-section-title">
+            <Setter Property="Foreground" Value="#9CDCFE" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Margin" Value="0,10,0,4" />
+        </Style>
+
+        <Style Selector="TextBlock.property-name">
+            <Setter Property="Foreground" Value="#AFAFAF" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <Style Selector="TextBlock.property-value">
+            <Setter Property="Foreground" Value="#F0F0F0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="Consolas" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
     </Window.Styles>
 
     <Design.DataContext>
@@ -83,24 +119,6 @@
                 <StackPanel DockPanel.Dock="Left"
                             Orientation="Horizontal"
                             Spacing="8">
-
-                    <Button Classes="global-button"
-                            Content="New"
-                            Click="New_Click" />
-
-                    <Button Classes="global-button"
-                            Content="Open"
-                            Click="Open_Click" />
-
-                    <Button Classes="global-button"
-                            Content="Save"
-                            Click="Save_Click" />
-
-                    <Button Classes="global-button"
-                            Content="Save As"
-                            Click="SaveAs_Click" />
-
-                    <Separator Margin="8,0" />
 
                     <TextBlock Text="Layer:"
                                Foreground="#CCCCCC"
@@ -137,6 +155,11 @@
                             Content="Extents"
                             Click="ZoomExtents_Click" />
 
+                    <Button x:Name="PropertiesButton"
+                            Classes="global-button"
+                            Content="Props"
+                            Click="Properties_Click" />
+
                     <Separator Margin="8,0" />
 
                     <TextBlock x:Name="ActiveCommandTextBlock"
@@ -148,7 +171,7 @@
 
         <!-- Main work area -->
         <Grid Grid.Row="1"
-              ColumnDefinitions="Auto,*,0"
+              ColumnDefinitions="Auto,*,Auto"
               ClipToBounds="True">
 
             <!-- Left tool panel -->
@@ -224,11 +247,71 @@
                                     WorkspaceChanged="CadCanvas_WorkspaceChanged" />
             </Border>
 
-            <!-- Future property panel placeholder. Width is currently 0 in the parent Grid. -->
+            <!-- Right property panel -->
             <Border Grid.Column="2"
-                    Background="#232323"
-                    BorderBrush="#3A3A3A"
-                    BorderThickness="1,0,0,0" />
+                    Classes="property-panel"
+                    Width="300"
+                    IsVisible="{Binding IsPropertyPanelVisible}">
+
+                <Grid RowDefinitions="Auto,*">
+
+                    <Border Grid.Row="0"
+                            Background="#2D2D30"
+                            BorderBrush="#3A3A3A"
+                            BorderThickness="0,0,0,1"
+                            Padding="10,8">
+
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Grid.Column="0"
+                                       Classes="property-panel-title"
+                                       Text="{Binding PropertyPanel.Title}" />
+
+                            <Button Grid.Column="1"
+                                    Classes="global-button"
+                                    Content="×"
+                                    MinWidth="34"
+                                    Padding="6,2"
+                                    Click="PropertyPanelClose_Click" />
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+
+                        <Border Padding="12,4,12,12">
+                            <ItemsControl ItemsSource="{Binding PropertyPanel.Sections}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="props:PropertySectionViewModel">
+                                    <StackPanel>
+                                        <TextBlock Classes="property-section-title"
+                                                   Text="{Binding Title}" />
+
+                                        <ItemsControl ItemsSource="{Binding Rows}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="props:PropertyRowViewModel">
+                                                    <Grid ColumnDefinitions="105,*"
+                                                          ColumnSpacing="8"
+                                                          Margin="0,2">
+                                                        <TextBlock Grid.Column="0"
+                                                                   Classes="property-name"
+                                                                   Text="{Binding Name}" />
+
+                                                        <TextBlock Grid.Column="1"
+                                                                   Classes="property-value"
+                                                                   Text="{Binding Value}" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </Border>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
         </Grid>
 
         <!-- Snap bar -->
@@ -238,10 +321,8 @@
                 BorderThickness="0,1,0,0"
                 Padding="8,6">
 
-            <ScrollViewer HorizontalScrollBarVisibility="Auto"
-                          VerticalScrollBarVisibility="Disabled">
-                <StackPanel Orientation="Horizontal"
-                            Spacing="10">
+            <StackPanel Orientation="Horizontal"
+                        Spacing="10">
 
                 <TextBlock Text="Snap:"
                            Foreground="#CCCCCC"
@@ -307,81 +388,7 @@
                           Content="Ortho"
                           IsChecked="False"
                           Click="Ortho_Changed" />
-
-                <Separator Margin="4,0" />
-
-                <TextBlock Text="Grid:"
-                           Foreground="#CCCCCC"
-                           VerticalAlignment="Center"
-                           FontWeight="Bold" />
-
-                <CheckBox x:Name="GridVisibleCheckBox"
-                          Classes="snap-check"
-                          Content="Show"
-                          IsChecked="True"
-                          Click="GridVisible_Changed" />
-
-                <TextBlock Text="Minor"
-                           Foreground="#AAAAAA"
-                           VerticalAlignment="Center" />
-
-                <TextBox x:Name="GridMinorStepTextBox"
-                         Width="56"
-                         Text="10"
-                         Background="#111111"
-                         Foreground="#FFFFFF"
-                         BorderBrush="#555555"
-                         BorderThickness="1"
-                         Padding="4,2"
-                         KeyDown="GridSettingsTextBox_KeyDown"
-                         LostFocus="GridSettingsTextBox_LostFocus" />
-
-                <TextBlock Text="Major"
-                           Foreground="#AAAAAA"
-                           VerticalAlignment="Center" />
-
-                <TextBox x:Name="GridMajorStepTextBox"
-                         Width="56"
-                         Text="50"
-                         Background="#111111"
-                         Foreground="#FFFFFF"
-                         BorderBrush="#555555"
-                         BorderThickness="1"
-                         Padding="4,2"
-                         KeyDown="GridSettingsTextBox_KeyDown"
-                         LostFocus="GridSettingsTextBox_LostFocus" />
-
-                <TextBlock Text="Px"
-                           Foreground="#AAAAAA"
-                           VerticalAlignment="Center" />
-
-                <TextBox x:Name="GridMinScreenSpacingTextBox"
-                         Width="44"
-                         Text="8"
-                         Background="#111111"
-                         Foreground="#FFFFFF"
-                         BorderBrush="#555555"
-                         BorderThickness="1"
-                         Padding="4,2"
-                         KeyDown="GridSettingsTextBox_KeyDown"
-                         LostFocus="GridSettingsTextBox_LostFocus" />
-
-                <TextBlock Text="-"
-                           Foreground="#AAAAAA"
-                           VerticalAlignment="Center" />
-
-                <TextBox x:Name="GridMaxScreenSpacingTextBox"
-                         Width="48"
-                         Text="220"
-                         Background="#111111"
-                         Foreground="#FFFFFF"
-                         BorderBrush="#555555"
-                         BorderThickness="1"
-                         Padding="4,2"
-                         KeyDown="GridSettingsTextBox_KeyDown"
-                         LostFocus="GridSettingsTextBox_LostFocus" />
-                </StackPanel>
-            </ScrollViewer>
+            </StackPanel>
         </Border>
 
         <!-- Command line -->
