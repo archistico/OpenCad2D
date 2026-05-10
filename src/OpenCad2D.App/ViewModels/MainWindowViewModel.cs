@@ -210,6 +210,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 };
             }
 
+            if (Workspace.ToolController.ActiveTool is ExtendTool extendTool)
+            {
+                return extendTool.State == ExtendToolState.WaitingForBoundaryEntity
+                    ? "Extend: select a boundary line:"
+                    : "Extend: select a line to extend to the boundary:";
+            }
+
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";

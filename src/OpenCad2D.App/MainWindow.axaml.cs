@@ -550,6 +550,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Extend_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Extend);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1131,6 +1142,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             BreakBetweenPointsButton,
             activeToolName.Equals("Break Segment", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            ExtendButton,
+            activeToolName.Equals("Extend", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }

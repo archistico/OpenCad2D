@@ -115,6 +115,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Extend,
+                "Extend",
+                "Extend",
+                "Modify"),
+            () => new ExtendTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",

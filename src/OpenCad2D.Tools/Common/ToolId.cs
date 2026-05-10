@@ -17,5 +17,6 @@ public enum ToolId
     Align,
     BreakAtPoint,
     BreakBetweenPoints,
+    Extend,
     Delete
 }

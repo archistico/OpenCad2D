@@ -308,6 +308,11 @@
                                 Content="Break Seg"
                                 Click="BreakBetweenPoints_Click" />
 
+                        <Button x:Name="ExtendButton"
+                                Classes="tool-button"
+                                Content="Extend"
+                                Click="Extend_Click" />
+
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />
