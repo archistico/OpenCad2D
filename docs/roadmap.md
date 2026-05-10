@@ -2,168 +2,223 @@
 
 This roadmap describes the planned development direction for OpenCad2D.
 
-The goal is to grow the project step by step, without turning the codebase into an over-engineered system too early. OpenCad2D should become a usable 2D CAD application, but the first priority is to keep the architecture clean, testable and understandable.
+The project grows in small testable steps. Each phase should compile, pass tests and update documentation before the next feature begins.
 
 ---
 
-## Current status
+## Current implemented foundations
 
-OpenCad2D has moved beyond the initial prototype stage. The current application includes a tested CAD core, an Avalonia UI, command line point input, direct distance entry, Ortho mode, grip editing, JSON persistence, configurable grid display, viewport rendering culling, a read-only property panel and a first Layer Manager.
-
-Implemented foundations include:
+OpenCad2D currently includes:
 
 ```text
 geometry primitives
 coordinate systems / UCS foundation
 numeric tolerance strategy
-CAD entities: line, circle, arc, polyline
-document collections
-layers with visibility and lock state
+CAD entities
+layers
+Layer Manager v1
+Property Panel v1
+hidden layer behavior
+locked layer behavior
 spatial index abstraction
-commands and command history
+viewport culling
+commands
+composite commands
 undo/redo
+persistence
 hit testing
 selection
 snapping
-command line input
-direct distance entry
-Ortho mode
-grip editing for lines and circles
-internal JSON persistence
-configurable grid
-viewport culling
-read-only property panel
-Layer Manager v1
+grid configuration
+drawing tools
+editing/transform tools
+grip editing
 custom Avalonia canvas
 CAD-style crosshair
-snap markers by snap type
-status feedback with measurements and rendered count
+command line input
+Ortho mode
 ```
 
 ---
 
-## Recently completed
+## Recently completed phases
 
-1. Hidden layer behavior.
-2. Locked layer behavior.
-3. Selection filtering for locked layers.
-4. Snap support on locked layers.
-5. Vertical CAD UI layout.
-6. Command line coordinate input.
-7. Direct distance entry.
-8. Temporary vector and measurement feedback.
-9. Ortho mode.
-10. CircleTool.
-11. Zoom Extents.
-12. Grip editing for line and circle entities.
-13. Internal JSON persistence with New/Open/Save/Save As.
-14. Dirty state and save confirmation dialogs.
-15. Configurable grid display.
-16. Viewport rendering culling.
-17. Property Panel v1 in read-only mode.
-18. Layer Manager v1 with undoable batch updates.
+### Persistence and file bar
 
----
+Implemented:
 
-## Recommended next phases
+- `.opencad2d.json` serializer;
+- file commands;
+- stable top file command bar;
+- dirty state;
+- Save changes dialog;
+- viewport save/restore.
 
-### Phase 1 — Property panel editing
+### Grid and viewport performance
 
-Property Panel v1 is implemented in read-only mode. The next property-panel step is controlled numeric editing through commands.
+Implemented:
 
-Potential editable fields:
+- configurable grid visibility;
+- major/minor grid spacing;
+- grid display separated from grid snap;
+- viewport culling;
+- rendered entity count.
 
-```text
-Line: start, end
-Circle: center, radius
-Polyline: selected vertex data in a later phase
-Layer: optional layer reassignment
-```
+### Property Panel v1
 
-Editing must be undoable and must go through commands.
+Implemented:
 
-### Phase 2 — Layer appearance v2
+- right-side read-only panel;
+- no-selection state;
+- single entity details;
+- multiple selection summary.
 
-Layer Manager v1 is implemented with create, rename, visible, locked, color, line weight and current-layer selection. The next layer step is extending the layer model and UI with:
+### Layer Manager v1
 
-```text
-FillColor
-DrawOrder
-layer reorder commands
-filled rendering for closed polylines and circles
-serializer versioning for new layer fields
-```
+Implemented:
 
-Design rule: appearance belongs to layers, not entities.
+- separate manager window;
+- create/delete/rename layer;
+- visible/locked;
+- color/lineweight;
+- current layer;
+- batch undoable update command;
+- current layer must be visible and unlocked.
 
-### Phase 3 — PolylineTool
+### Transform tools
 
-Implement a multi-point drawing tool with:
+Implemented:
 
-```text
-click input
-absolute coordinates
-relative coordinates
-direct distance entry
-Ortho
-snapping
-preview of current segment
-ESC to finish
-C to close
-```
+- Rotate;
+- Scale;
+- Align with optional scale confirmation.
 
-### Phase 4 — Measure tools
+### PolylineTool v1
 
-Add non-mutating tools:
+Implemented:
 
-```text
-DistanceTool
-AreaTool
-```
-
-Measure tools must not execute commands or modify the document.
-
-### Phase 5 — Transform tools
-
-Add advanced modify tools:
-
-```text
-Rotate
-Scale
-Align
-Match Properties
-Polygon
-```
-
-All document changes must go through commands.
-
-### Phase 6 — Text and dimensions
-
-Add semantic annotation entities:
-
-```text
-TextEntity
-LinearDimensionEntity
-RadiusDimensionEntity
-DiameterDimensionEntity
-DimensionStyle
-```
-
-Dimensions should store definition points and compute display geometry at render time.
-
-### Phase 7 — Performance and spatial index
-
-After viewport culling, profile large drawings and decide whether to replace the linear spatial index with a quadtree, R-tree or uniform grid.
+- multi-point polyline creation;
+- Enter to finish open;
+- C to close;
+- command line, snap and Ortho support.
 
 ---
 
-## Design documents
+## Next recommended phase: modify tools
 
-The following documents define future implementation rules:
+The next serious CAD editing area is:
 
-- [Layer Appearance](layer-appearance.md)
-- [Application Settings](application-settings.md)
-- [Measure Tools](measure-tools.md)
-- [Transform Tools](transform-tools.md)
-- [Text and Dimensions](text-and-dimensions.md)
-- [Development Options](development-options.md)
+```text
+Break
+Trim
+Extend
+```
+
+Recommended order:
+
+1. **BreakTool** — lowest complexity because it splits one entity.
+2. **ExtendTool** — extends one entity to a boundary.
+3. **TrimTool** — trims one entity against boundaries and may produce more cases.
+
+### BreakTool v1 scope
+
+Recommended first scope:
+
+```text
+LineEntity only
+pick entity
+pick break point
+split line into two line entities
+undoable operation
+```
+
+Then extend to:
+
+```text
+CircleEntity
+PolylineEntity
+ArcEntity when mature
+```
+
+### ExtendTool v1 scope
+
+Recommended first scope:
+
+```text
+LineEntity to LineEntity boundary
+select/pick entity to extend
+pick boundary
+replace extended entity
+```
+
+### TrimTool v1 scope
+
+Recommended first scope:
+
+```text
+LineEntity trimmed by LineEntity boundary
+pick cutting edge
+pick side/part to remove
+replace or remove resulting geometry
+```
+
+---
+
+## Follow-up phases
+
+### Polyline grip editing
+
+Add grip provider for `PolylineEntity`:
+
+- vertex grips;
+- optional midpoint insertion grips later;
+- undoable vertex edits.
+
+### Measure tools
+
+Implement non-mutating tools:
+
+- Distance;
+- Area.
+
+These tools should not create commands and should not change the document.
+
+### Text and dimensions
+
+Future annotation features:
+
+- `TextEntity`;
+- dimension entities;
+- dimension styles;
+- semantic dimensions, not groups of primitive lines/text.
+
+### Layer appearance v2
+
+Future layer model expansions:
+
+- fill color;
+- draw order;
+- layer reorder command;
+- fill rendering for closed entities.
+
+### Application settings
+
+Future user-local settings:
+
+- window state;
+- shortcuts;
+- last opened file;
+- grid visibility defaults.
+
+These are user-local and must stay separate from drawing persistence.
+
+---
+
+## Development rules
+
+- Keep phases small.
+- Prefer testable services before UI integration.
+- Avoid direct document mutation.
+- Use commands for user-facing changes.
+- Keep CAD logic out of Avalonia.
+- Update docs after each milestone.

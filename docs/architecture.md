@@ -1,687 +1,293 @@
 # Architecture
 
-OpenCad2D is organized around a simple principle: CAD logic must remain independent from the graphical user interface.
-
-The Avalonia application is the presentation layer. It draws the document, receives mouse and keyboard input, converts screen coordinates into CAD coordinates and forwards input to the tool system.
-
-Geometry, entities, snapping, selection, commands, layers and editing behavior live in dedicated libraries and can be tested without launching the desktop application.
-
-This separation is the most important design rule in the project.
+OpenCad2D is organized around a strict separation of concerns.
 
 ---
 
-## Solution structure
-
-The solution is divided into six main projects.
+## Projects
 
 ```text
-src/
-  OpenCad2D.Geometry/
-  OpenCad2D.Core/
-  OpenCad2D.Interaction/
-  OpenCad2D.Tools/
-  OpenCad2D.Persistence/
-  OpenCad2D.App/
-```
-
-Each project has a specific responsibility.
-
-`OpenCad2D.Geometry` contains low-level geometric primitives, coordinate systems, geometric operations, transformations and numeric tolerance rules.
-
-`OpenCad2D.Core` contains the CAD document model, entities, layers, styles, spatial indexing, commands and undo/redo infrastructure.
-
-`OpenCad2D.Interaction` contains UI-independent interaction services such as hit testing, selection and object snapping.
-
-`OpenCad2D.Tools` contains UI-independent CAD tools, controllers, tool contexts, command line parsing, grip editing and the runtime workspace.
-
-`OpenCad2D.Persistence` contains the internal JSON persistence format, DTOs, serializer, file I/O helpers and persistence-specific exceptions.
-
-`OpenCad2D.App` is the Avalonia desktop application.
-
-The direction of dependencies should remain clear.
-
-```text
+OpenCad2D.Geometry
+OpenCad2D.Core
+OpenCad2D.Interaction
+OpenCad2D.Tools
+OpenCad2D.Persistence
 OpenCad2D.App
-  -> OpenCad2D.Persistence
-      -> OpenCad2D.Core
-          -> OpenCad2D.Geometry
-  -> OpenCad2D.Tools
-      -> OpenCad2D.Interaction
-          -> OpenCad2D.Core
-              -> OpenCad2D.Geometry
 ```
 
-No project should depend on a project above it.
+### OpenCad2D.Geometry
 
----
+Pure geometry:
 
-## Main architectural rule
+- points;
+- vectors;
+- lines;
+- segments;
+- circles;
+- arcs;
+- polylines;
+- bounding boxes;
+- matrices and transformations;
+- intersections;
+- distances;
+- tolerance handling;
+- coordinate systems.
 
-The UI must not own CAD behavior.
+No CAD document concepts and no UI dependencies belong here.
 
-Avalonia may:
+### OpenCad2D.Core
 
-- draw the document;
-- draw previews;
-- draw snap markers;
-- draw the crosshair;
-- host tool buttons;
-- host layer controls;
-- host the command line;
-- host file dialogs and save-confirmation dialogs;
-- convert screen coordinates to model coordinates;
-- forward input to the workspace/tool system;
-- manage viewport operations such as pan, zoom and Zoom Extents.
+CAD model and document logic:
 
-Avalonia should not:
-
-- create CAD entities directly;
-- decide document mutation rules;
-- implement geometric algorithms;
-- implement selection rules;
-- implement locked-layer rules;
-- implement command undo/redo behavior;
-- contain JSON serialization details.
-
----
-
-## Geometry layer
-
-`OpenCad2D.Geometry` is the lowest layer.
-
-It contains pure geometric concepts such as:
-
-- `Point2D`;
-- `Vector2D`;
-- `LineSegment2D`;
-- `Circle2D`;
-- `Arc2D`;
-- `Polyline2D`;
-- `BoundingBox2D`;
-- transformations;
-- coordinate systems;
-- geometric tolerance.
-
-This project should not know what a CAD entity, layer, command, tool or UI is.
-
-Geometry should remain reusable and independent.
-
----
-
-## Core layer
-
-`OpenCad2D.Core` owns the CAD document model.
-
-It contains:
-
-- CAD entities;
-- entity identifiers;
+- entities;
 - layers;
 - styles;
-- `CadDocument`;
-- entity collections;
-- spatial indexing;
+- document;
+- spatial index abstraction;
 - commands;
 - command history;
-- command history generation for dirty-state tracking.
+- document mutation validation.
 
-### CadDocument mutation boundary
+### OpenCad2D.Interaction
 
-`CadDocument` is the public boundary for modifying the drawing.
-
-Commands and tools should not mutate `EntityCollection` directly.
-
-Preferred:
-
-```csharp
-document.AddEntity(entity);
-document.ReplaceEntity(entity);
-document.RemoveEntity(id);
-```
-
-Avoid:
-
-```csharp
-document.Entities.RemoveMany(ids);
-```
-
-This rule exists because document-level validation belongs to `CadDocument`.
-
-For example, locked layer behavior is enforced by `CadDocument`: replacement and removal of entities that belong to locked layers are rejected at the document mutation boundary.
-
----
-
-## Interaction layer
-
-`OpenCad2D.Interaction` contains UI-independent interaction services.
-
-Current responsibilities:
+UI-independent user interaction services:
 
 - hit testing;
-- click selection;
-- window selection;
-- crossing selection;
-- object snapping;
-- grid snapping;
-- snap prioritization.
-
-Interaction services work in model coordinates. They should not know about Avalonia, screen controls or drawing styles.
-
-### Selection and snapping are different
-
-Selection and snapping intentionally use different document queries.
-
-```text
-Selection -> selectable entities
-Snapping  -> visible entities
-```
-
-This matters for locked layers:
-
-```text
-locked layer entity -> visible
-locked layer entity -> not selectable
-locked layer entity -> snappable
-```
-
----
-
-## Tools layer
-
-`OpenCad2D.Tools` turns user intent into document operations.
-
-It contains:
-
-- `ICadTool`;
-- `ToolController`;
-- `ToolRegistry`;
-- `ToolContext`;
-- `CadWorkspace`;
-- `CadActionController`;
-- drawing tools;
-- modify tools;
-- command line input parser;
-- input constraint services such as Ortho;
-- grip providers and `GripEditTool`.
-
-Tools receive `PointerInfo`, not Avalonia events.
-
-`PointerInfo` contains:
-
-```text
-ModelPoint  WCS/model point
-UserPoint   UCS/user point
-Modifiers   keyboard modifiers
-```
-
-Tools should create commands and execute them through `CommandHistory`.
-
----
-
-## ToolContext and tool runtime state
-
-`ToolContext` gives tools access to the services and state they need.
-
-It is organized into focused sub-contexts:
-
-- commands;
 - selection;
 - snapping;
-- coordinates;
-- creation defaults.
+- grid settings and grid snapping.
 
-It also contains shared tool runtime state needed by the command line and input constraints:
+### OpenCad2D.Tools
 
-- `CurrentBasePoint`;
-- `IsOrthoEnabled`.
+UI-independent CAD tools:
 
-`CurrentBasePoint` is set by tools that have accepted a first point and are waiting for a second point.
+- drawing tools;
+- edit tools;
+- transform tools;
+- grip editing;
+- tool controller;
+- workspace;
+- command line point submission.
 
-This is used for:
+Tools receive points and contextual state. They must not depend on Avalonia.
 
-- direct distance entry;
-- relative command line input;
-- contextual snaps;
-- temporary measurement feedback;
-- vector preview.
+### OpenCad2D.Persistence
 
-`IsOrthoEnabled` is used to constrain second-point workflows to horizontal or vertical movement.
+Document serialization and deserialization.
 
----
+It depends on `Core` and `Geometry`, not on `Tools`, `Interaction` or `App`.
 
-## Command line input architecture
+### OpenCad2D.App
 
-The command line is hosted by `OpenCad2D.App`, but the parsing model lives in `OpenCad2D.Tools.Input`.
+Avalonia application:
 
-Supported input formats:
-
-```text
-100,50  absolute UCS point
-@50,0   UCS offset from CurrentBasePoint
-5       direct distance along cursor direction
-```
-
-The command line does not create entities directly.
-
-The correct flow is:
-
-```text
-TextBox input
-parse input
-resolve final point
-convert UCS to WCS when needed
-submit synthetic point input to CadWorkspace
-tool receives point as normal input
-```
-
-This keeps mouse clicks, typed coordinates and direct distance entry on the same tool pipeline.
-
-### Direct distance entry
-
-Direct distance entry uses:
-
-- the current base point;
-- the current cursor/snap point;
-- a numeric distance.
-
-Conceptually:
-
-```text
-direction = normalize(currentPoint - basePoint)
-result = basePoint + direction * distance
-```
-
-When Ortho mode is enabled, the current point is first constrained to the closest horizontal or vertical direction before the distance direction is computed.
+- windows;
+- file dialogs;
+- XAML layout;
+- rendering;
+- viewport;
+- keyboard/mouse forwarding;
+- ViewModels;
+- property panel;
+- layer manager window.
 
 ---
 
-## Ortho mode architecture
+## Dependency direction
 
-Ortho mode is a tool/input constraint, not a rendering trick.
-
-The rule is:
+Allowed graph:
 
 ```text
-if |DX| >= |DY| -> constrain horizontally
-if |DY| >  |DX| -> constrain vertically
+App -> Persistence -> Core -> Geometry
+App -> Tools -> Interaction -> Core -> Geometry
 ```
 
-The constraint should be applied before:
-
-- preview geometry is produced;
-- measurement feedback is calculated;
-- direct distance entry calculates the final point;
-- the final second point is accepted by a two-point tool.
-
-This ensures that what the user sees is what the tool will create or modify.
-
-Explicit typed coordinates remain exact and should not be altered by Ortho.
+The App may depend on both `Tools` and `Persistence`. `Persistence` must remain independent of the App.
 
 ---
 
-## Two-point tool pattern
+## Stable UI zones
 
-Many CAD tools are based on two points:
+The main window is intentionally split into stable zones:
 
 ```text
-first point  -> base/anchor point
-second point -> final point or vector destination
+File command bar
+CAD/session top bar
+Left tool panel
+Canvas
+Right property panel
+Snap/grid/Ortho bar
+Command line
+Status bar
 ```
 
-Current tools that follow this model include:
-
-- `LineTool`;
-- `RectangleTool`;
-- `CircleTool`;
-- `MoveTool`;
-- `CopyTool`.
-
-`TwoPointToolBase` centralizes common behavior:
-
-- first point acquisition;
-- second point acquisition;
-- current base point state;
-- snap context;
-- Ortho constraint application;
-- preview support;
-- cancellation behavior.
-
-This avoids duplicating command line and Ortho logic in every tool.
+The file command bar is a protected region and contains New/Open/Save/Save As. It should not be mixed with drawing/editing toolbars.
 
 ---
 
+## Document mutation boundary
 
-## Grip editing architecture
+`CadDocument` is the public boundary for document mutation.
 
-Grip editing belongs to `OpenCad2D.Tools`, not to Avalonia.
+Commands and tools must use:
 
-The App renders grip markers and forwards pointer input. The actual grip state machine, provider lookup, preview entity and final replacement command live in the tool layer.
-
-Current grip model:
-
-```text
-LineEntity   -> start, midpoint, end
-CircleEntity -> center, four quadrant grips
+```csharp
+AddEntity(...)
+RemoveEntity(...)
+RemoveEntities(...)
+ReplaceEntity(...)
+ReplaceEntities(...)
 ```
 
-Activation rule:
+Direct mutation of `EntityCollection` should be avoided outside document internals.
 
-```text
-TAB with exactly one selected entity -> edit that entity
-TAB with multiple selected entities  -> edit the last selected entity
-TAB with no selection                -> do nothing
-```
+This ensures:
 
-The grip tool uses `ReplaceEntitiesCommand` for committed edits. This preserves entity ids and keeps undo/redo behavior consistent. Preview does not modify the document.
-
-`CadCanvas` may render cold, hot and warm grips, but it must not decide how a grip modifies an entity.
+- locked-layer protection;
+- layer validation;
+- spatial index updates;
+- consistent future document events.
 
 ---
 
-## Persistence layer
+## Commands
 
-`OpenCad2D.Persistence` is responsible for saving and loading drawings.
+User-facing document changes should go through commands.
 
-It depends only on:
+Implemented command families include:
 
-- `OpenCad2D.Core`;
-- `OpenCad2D.Geometry`.
+- add;
+- delete;
+- replace;
+- move;
+- copy;
+- rotate;
+- scale;
+- transform;
+- update layers;
+- composite operations.
 
-It must not depend on:
+`CommandHistory` tracks undo/redo and command generation used by dirty-state tracking.
 
-- `OpenCad2D.App`;
-- `OpenCad2D.Tools`;
-- `OpenCad2D.Interaction`;
-- Avalonia.
+---
 
-The internal file format is JSON with the extension:
+## Dirty state
+
+Dirty state is based on command history generation.
+
+Concept:
+
+```text
+CurrentGeneration != SavedGeneration -> dirty
+CurrentGeneration == SavedGeneration -> clean
+```
+
+The App uses this to show `*` in the title/file bar and to trigger “Save changes?” before destructive file operations.
+
+---
+
+## Persistence architecture
+
+The document file stores drawing content:
 
 ```text
 .opencad2d.json
 ```
 
-Version 1 serializes:
+It includes:
 
 - format version;
-- save timestamp;
-- current layer id;
-- viewport pan and zoom;
-- layers, including color, line weight, visibility and locked state;
-- line entities;
-- circle entities;
-- arc entities;
-- polyline entities.
+- layers;
+- entities;
+- current layer;
+- viewport state.
 
-The serializer maps between domain objects and DTOs. Domain entities must not contain persistence attributes or JSON-specific logic.
-
-Unknown entity types are skipped where possible so that older builds can partially load files created by newer builds. Unsupported document versions throw a specific exception.
+The file does not store user-local application settings such as window position or user shortcuts.
 
 ---
 
-## App layer
+## Coordinate systems and command line
 
-`OpenCad2D.App` is the Avalonia application.
+Entities are stored in WCS/model coordinates.
 
-Current responsibilities:
+Typed command input is interpreted as UCS input and converted before reaching the active tool.
 
-- render visible entities;
-- render selected entities;
-- render preview entities;
-- render CircleTool preview;
-- render grip markers and grip-edit preview;
-- render temporary base-point/vector feedback;
-- render the grid;
-- render snap markers;
-- render the crosshair;
-- host the top bar;
-- host the left tool panel;
-- host the snap/Ortho bar;
-- host the command line;
-- host file command UI;
-- host save/open dialogs;
-- host save-confirmation dialogs;
-- host the status bar;
-- forward pointer input to the workspace;
-- forward typed command-line input to the workspace;
-- call `OpenCad2D.Persistence` for New/Open/Save/Save As;
-- apply loaded viewport state;
-- manage pan, zoom and Zoom Extents.
-
-### Viewport
-
-Viewport logic converts between:
+Supported command line point input:
 
 ```text
-screen coordinates <-> WCS/model coordinates
+absolute point
+relative point
+direct distance
 ```
 
-This belongs to the UI layer because it depends on the visible canvas area.
-
-### Zoom Extents
-
-Zoom Extents fits visible entities inside the canvas.
-
-Rules:
-
-```text
-visible entities are included
-hidden layer entities are ignored
-locked layer entities are included
-empty documents should not crash
-```
-
-Zoom Extents does not modify the document. It only changes the viewport transform.
+The command line is an input mechanism. It does not own CAD behavior and does not create entities directly.
 
 ---
-
-
-### File commands and dirty state
-
-The App owns document-level file commands:
-
-```text
-New
-Open
-Save
-Save As
-```
-
-These commands use Avalonia storage dialogs and the persistence serializer. The serializer knows the file format; the App knows the user workflow.
-
-Dirty state is exposed by `CadWorkspace.IsDirty`, which compares the current `CommandHistory.CurrentGeneration` with the last saved generation. After saving or loading, the workspace calls `MarkSaved()`.
-
-Before New, Open or window close, the App shows a save-confirmation dialog when the document is dirty.
-
-```text
-Save       -> save and continue
-Don't Save -> discard and continue
-Cancel     -> abort
-```
-
----
-
 
 ## Layers
 
-Layer visibility and locked state are part of document-level rules.
+Layer responsibilities:
 
-Hidden layer behavior:
+- identity;
+- name;
+- color;
+- line weight;
+- visibility;
+- locked state;
+- future fill color;
+- future draw order.
 
-```text
-hidden layer entities are not drawn
-hidden layer entities are not selected
-hidden layer entities are not used by snapping
-```
-
-Locked layer behavior:
-
-```text
-locked layer entities are drawn
-locked layer entities are not selectable
-locked layer entities can still be used as references for snapping
-locked layer entities cannot be modified, removed or transformed
-```
-
-The UI exposes the current layer, a visibility toggle, a locked toggle and a `Layers...` button that opens the Layer Manager window.
-
-The distinction between visible, selectable and snappable entities is important:
+Current layer rule:
 
 ```text
-Visible entities    = entities whose own visibility is true and whose layer is visible
-Selectable entities = visible entities that are not on locked layers
-Snappable entities  = visible entities, including locked-layer entities
+current layer must be visible and unlocked
 ```
 
-Rendering, snapping and Zoom Extents use visible entities.
-
-Selection and hit testing use selectable entities.
-
-Locked-layer enforcement is implemented at the `CadDocument` mutation boundary, so invalid replacement/removal is blocked even if a future tool accidentally tries to modify an entity directly.
-
-Layer Manager v1 applies layer changes through `UpdateLayersCommand`. The dialog edits a copy of the layer list and only commits on `OK`. The current layer must remain visible and unlocked. Layer `0` is protected; layers with entities and the current layer cannot be deleted.
+Layer Manager applies batch changes through an undoable command.
 
 ---
 
-## Spatial indexing
+## Selection, snapping and rendering queries
 
-The spatial index is an implementation detail of entity lookup.
-
-It should answer:
+Different systems intentionally use different document queries:
 
 ```text
-which entities have bounds intersecting this search area?
+Rendering  -> visible entities intersecting viewport
+Selection  -> selectable entities
+Snapping   -> visible/snappable candidates near cursor
+Editing    -> selected entities, then CadDocument mutation checks
 ```
 
-It should not decide visibility, selection, snapping or editability.
-
-For this reason, spatial queries are usually followed by document-level filters such as visible-entity or selectable-entity filtering.
+Do not reuse rendering filters as mutation rules.
 
 ---
 
-## Command architecture
+## Viewport culling
 
-User-facing document changes should go through commands.
+Viewport culling is a rendering optimization only.
 
-Examples:
+It must not:
+
+- remove entities;
+- deselect entities;
+- affect snapping globally;
+- modify the document.
+
+It should only reduce the set of entities drawn in the current frame.
+
+---
+
+## Managers
+
+Manager windows, such as Layer Manager, should be separate windows/dialogs instead of filling the main CAD screen.
+
+General manager pattern:
 
 ```text
-LineTool      -> AddEntityCommand
-RectangleTool -> AddEntityCommand
-CircleTool    -> AddEntityCommand
-MoveTool      -> MoveEntitiesCommand / TransformEntitiesCommand
-CopyTool      -> CopyEntitiesCommand
-DeleteTool    -> DeleteEntitiesCommand
+open dialog
+edit copy of data
+Cancel -> discard
+OK -> apply through command/service
 ```
 
-This gives consistent undo/redo behavior.
-
----
-
-## Current UI layout
-
-The current UI layout is designed to scale better than a flat toolbar.
-
-It uses:
-
-- top bar for session/global controls, file commands, layer quick controls and Layer Manager access;
-- left vertical tool panel grouped by SELECT, DRAW and EDIT;
-- central canvas;
-- optional right-side read-only property panel;
-- bottom snap/Ortho/grid bar;
-- fixed command line input;
-- status bar.
-
-This keeps tools, layer controls, snap modes, property inspection and status feedback visually separate.
-
-Configuration-heavy workflows such as the Layer Manager should use dedicated dialogs instead of filling the main drawing surface.
-
----
-
-## Property panel
-
-Property Panel v1 is an App-layer read-only view over the current workspace state.
-
-It should remain free of CAD mutation logic:
-
-```text
-read workspace state
-format properties for display
-update when selection or document state changes
-never mutate CadDocument directly
-never execute commands in v1
-```
-
-Future editable property fields must use commands, so undo/redo and dirty-state tracking remain consistent.
-
-## Design implications for future work
-
-When adding new tools:
-
-- keep the tool in `OpenCad2D.Tools`;
-- use commands for document edits;
-- derive from `TwoPointToolBase` when appropriate;
-- reuse command line point input automatically where possible;
-- reuse Ortho constraints where appropriate;
-- expose preview data without coupling to Avalonia;
-- render previews in `CadCanvas`.
-
-When adding new viewport features:
-
-- keep document geometry unchanged;
-- operate on `ViewportTransform`;
-- use visible document entities when fitting or deriving view bounds.
-
-When adding persistence:
-
-- serialize document model concepts, not Avalonia UI state;
-- avoid serializing transient tool state such as `CurrentBasePoint`.
-
----
-
-## Rendering and viewport culling
-
-Rendering is an App-layer concern. `CadCanvas` may use the viewport transform to compute the visible world bounds and draw only entities whose bounding boxes intersect that area.
-
-This optimization must remain purely visual:
-
-- it must not remove entities from the document;
-- it must not clear selection;
-- it must not change snap state;
-- it must not bypass layer visibility rules.
-
-The rendering order should remain:
-
-```text
-background
-grid and axes
-visible entities culled by viewport
-selection overlay
-preview entities
-grip markers
-snap marker
-crosshair
-```
-
-The status bar may expose a rendered/total count to help profile large drawings.
-
----
-
-## Future layer appearance rule
-
-The project direction is that entity appearance should be owned by layers. Future appearance work should avoid adding per-entity color, line weight or fill color. Entities should carry geometry and a layer reference; layers should own stroke color, line weight, optional fill color and draw order.
-
-Current implemented layer appearance is color and line weight. These are owned by layers and can be edited in Layer Manager v1. Future fill color and draw order should also remain layer-owned. Layer appearance changes should go through commands so they are undoable and mark the document dirty. Persistence should serialize appearance on layers, not on entities.
-
----
-
-## Settings separation
-
-The project distinguishes three kinds of state:
-
-```text
-document content        -> saved in .opencad2d.json
-document drawing setup  -> future DrawingSettings in the document file
-user/session settings   -> future settings.json outside the document
-```
-
-Session settings such as window position, shortcut preferences and last opened file must not be stored in drawing files. Drawing settings such as units, precision and default text/dimension values should be stored in the document and changed through commands.
+This keeps the main screen operational and prevents accidental document mutation while the user experiments in a manager window.
