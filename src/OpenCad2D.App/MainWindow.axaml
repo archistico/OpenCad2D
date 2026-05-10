@@ -303,6 +303,11 @@
                                 Content="Break Pt"
                                 Click="BreakAtPoint_Click" />
 
+                        <Button x:Name="BreakBetweenPointsButton"
+                                Classes="tool-button"
+                                Content="Break Seg"
+                                Click="BreakBetweenPoints_Click" />
+
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />

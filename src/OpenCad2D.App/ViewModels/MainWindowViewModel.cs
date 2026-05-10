@@ -196,6 +196,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     : "Break Point: specify break point on selected line:";
             }
 
+            if (Workspace.ToolController.ActiveTool is BreakBetweenPointsTool breakBetweenPointsTool)
+            {
+                return breakBetweenPointsTool.State switch
+                {
+                    BreakBetweenPointsToolState.WaitingForTargetEntity =>
+                        "Break Segment: select a line to break:",
+                    BreakBetweenPointsToolState.WaitingForFirstBreakPoint =>
+                        "Break Segment: specify first break point:",
+                    BreakBetweenPointsToolState.WaitingForSecondBreakPoint =>
+                        "Break Segment: specify second break point:",
+                    _ => "Break Segment:"
+                };
+            }
+
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";

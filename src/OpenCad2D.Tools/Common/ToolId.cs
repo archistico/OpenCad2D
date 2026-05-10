@@ -16,5 +16,6 @@ public enum ToolId
     Scale,
     Align,
     BreakAtPoint,
+    BreakBetweenPoints,
     Delete
 }

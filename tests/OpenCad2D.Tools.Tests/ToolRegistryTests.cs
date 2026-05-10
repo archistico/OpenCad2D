@@ -23,6 +23,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Scale));
         Assert.True(registry.Contains(ToolId.Align));
         Assert.True(registry.Contains(ToolId.BreakAtPoint));
+        Assert.True(registry.Contains(ToolId.BreakBetweenPoints));
         Assert.True(registry.Contains(ToolId.Delete));
     }
 
@@ -33,7 +34,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(12, tools.Count);
+        Assert.Equal(13, tools.Count);
 
         Assert.Contains(
             tools,
@@ -70,6 +71,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.BreakAtPoint);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.BreakBetweenPoints);
 
         Assert.Contains(
             tools,
@@ -118,7 +123,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Modify");
 
-        Assert.Equal(8, tools.Count);
+        Assert.Equal(9, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Selection);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Move);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Copy);
@@ -126,6 +131,7 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Scale);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Align);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.BreakAtPoint);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.BreakBetweenPoints);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Delete);
     }
 
@@ -238,6 +244,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<BreakAtPointTool>(tool);
         Assert.Equal("Break Point", tool.Name);
+    }
+
+    [Fact]
+    public void Create_BreakBetweenPoints_ShouldReturnBreakBetweenPointsTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.BreakBetweenPoints);
+
+        Assert.IsType<BreakBetweenPointsTool>(tool);
+        Assert.Equal("Break Segment", tool.Name);
     }
 
     [Fact]

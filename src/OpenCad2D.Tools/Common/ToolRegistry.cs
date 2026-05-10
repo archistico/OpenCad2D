@@ -107,6 +107,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.BreakBetweenPoints,
+                "BreakBetweenPoints",
+                "Break Segment",
+                "Modify"),
+            () => new BreakBetweenPointsTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",
