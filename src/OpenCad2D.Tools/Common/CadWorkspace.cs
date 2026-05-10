@@ -9,6 +9,7 @@ using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Grips;
 using OpenCad2D.Tools.Selection;
+using OpenCad2D.Core.Layers;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -259,6 +260,75 @@ public sealed class CadWorkspace
     {
         return ToolController.SetActiveToolWithoutDeactivating(
             new SelectionTool());
+    }
+
+
+    public ToolResult ApplyLayerChanges(
+        IEnumerable<Layer> layers,
+        LayerId currentLayerId)
+    {
+        ArgumentNullException.ThrowIfNull(layers);
+
+        List<Layer> layerList = layers.ToList();
+
+        if (layerList.Count == 0)
+        {
+            return ToolResult.None("Layer manager requires at least one layer.");
+        }
+
+        Layer? currentLayer = layerList.FirstOrDefault(layer => layer.Id == currentLayerId);
+
+        if (currentLayer is null)
+        {
+            return ToolResult.None("The current layer does not exist.");
+        }
+
+        if (!currentLayer.IsVisible || currentLayer.IsLocked)
+        {
+            return ToolResult.None("The current layer must be visible and unlocked.");
+        }
+
+        var command = new UpdateLayersCommand(
+            Document.Layers.All.ToList(),
+            layerList);
+
+        CommandHistory.Execute(
+            Document,
+            command);
+
+        CurrentLayerId = currentLayerId;
+
+        int removedSelections = ClearSelectionOfNonSelectableEntities();
+
+        string message = "Layers updated.";
+
+        if (removedSelections > 0)
+        {
+            message += $" {removedSelections} selected entity/entities removed from selection.";
+        }
+
+        return ToolResult.Completed(message);
+    }
+
+    public void EnsureCurrentLayerIsUsable()
+    {
+        if (!Document.Layers.Contains(CurrentLayerId))
+        {
+            CurrentLayerId = LayerId.Default;
+        }
+
+        Layer currentLayer = Document.Layers.GetRequired(CurrentLayerId);
+
+        if (currentLayer.IsVisible && !currentLayer.IsLocked)
+        {
+            return;
+        }
+
+        Layer? firstUsableLayer = Document.Layers.All
+            .OrderBy(layer => layer.Name)
+            .FirstOrDefault(layer => layer.IsVisible && !layer.IsLocked);
+
+        CurrentLayerId = firstUsableLayer?.Id ?? LayerId.Default;
     }
 
     public ToolResult SetCurrentLayerLocked(bool isLocked)

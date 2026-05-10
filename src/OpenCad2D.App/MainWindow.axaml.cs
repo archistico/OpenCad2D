@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using Avalonia.Input;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
+using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -233,6 +234,38 @@ public partial class MainWindow : Window
         CadCanvas.Focus();
     }
 
+
+
+    private async void Layers_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        var dialogViewModel = new LayerManagerWindowViewModel(
+            _viewModel.Workspace.Document,
+            _viewModel.Workspace.CurrentLayerId);
+
+        var dialog = new LayerManagerWindow(dialogViewModel);
+
+        LayerManagerResult? result = await dialog.ShowDialog<LayerManagerResult?>(this);
+
+        if (result is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        ToolResult toolResult = _viewModel.ApplyLayerChanges(
+            result.Layers,
+            result.CurrentLayerId);
+
+        InitializeLayerComboBox();
+        RefreshLayerControls();
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
 
     private void CommandInputTextBox_KeyDown(
         object? sender,

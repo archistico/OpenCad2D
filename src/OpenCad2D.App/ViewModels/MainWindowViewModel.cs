@@ -351,6 +351,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         ArgumentNullException.ThrowIfNull(layer);
 
+        if (!layer.IsVisible || layer.IsLocked)
+        {
+            SetMessage("The current layer must be visible and unlocked.");
+            NotifyLayerStateChanged();
+            return;
+        }
+
         Workspace.CurrentLayerId = layer.Id;
 
         SetMessage($"Current layer changed to '{layer.Name}'.");
@@ -371,18 +378,38 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         SetCurrentLayer(layer);
     }
 
+
+    public ToolResult ApplyLayerChanges(
+        IEnumerable<Layer> layers,
+        LayerId currentLayerId)
+    {
+        ToolResult result = Workspace.ApplyLayerChanges(
+            layers,
+            currentLayerId);
+
+        SetLastResult(result);
+        NotifyLayerStateChanged();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     public void SetCurrentLayerVisibility(bool isVisible)
     {
         Layer currentLayer = CurrentLayer;
+
+        if (!isVisible)
+        {
+            SetMessage("The current layer must remain visible.");
+            NotifyLayerStateChanged();
+            return;
+        }
 
         Workspace.Document.Layers.SetVisibility(
             currentLayer.Id,
             isVisible);
 
-        SetMessage(
-            isVisible
-                ? $"Layer '{currentLayer.Name}' visible."
-                : $"Layer '{currentLayer.Name}' hidden.");
+        SetMessage($"Layer '{currentLayer.Name}' visible.");
 
         NotifyLayerStateChanged();
         NotifyDocumentStateChanged();
@@ -392,14 +419,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         string layerName = CurrentLayer.Name;
 
-        ToolResult result = Workspace.SetCurrentLayerLocked(isLocked);
+        if (isLocked)
+        {
+            ToolResult rejected = ToolResult.None("The current layer must remain unlocked.");
+
+            SetLastResult(rejected);
+            NotifyLayerStateChanged();
+
+            return rejected;
+        }
+
+        ToolResult result = Workspace.SetCurrentLayerLocked(false);
 
         SetLastResult(result);
-
-        SetMessage(
-            isLocked
-                ? $"Layer '{layerName}' locked."
-                : $"Layer '{layerName}' unlocked.");
+        SetMessage($"Layer '{layerName}' unlocked.");
 
         NotifyLayerStateChanged();
         NotifyDocumentStateChanged();
@@ -425,6 +458,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         ToolResult result = Workspace.ActionController.Undo();
 
+        Workspace.EnsureCurrentLayerIsUsable();
         SetLastResult(result);
         NotifyDocumentStateChanged();
 
@@ -435,6 +469,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         ToolResult result = Workspace.ActionController.Redo();
 
+        Workspace.EnsureCurrentLayerIsUsable();
         SetLastResult(result);
         NotifyDocumentStateChanged();
 

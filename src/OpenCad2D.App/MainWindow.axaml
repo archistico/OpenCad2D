@@ -133,13 +133,19 @@
                               Classes="layer-check"
                               Content="Visible"
                               IsChecked="True"
+                              IsEnabled="False"
                               Click="LayerVisibleCheckBox_Click" />
 
                     <CheckBox x:Name="LayerLockedCheckBox"
                               Classes="layer-check"
                               Content="Locked"
                               IsChecked="False"
+                              IsEnabled="False"
                               Click="LayerLockedCheckBox_Click" />
+
+                    <Button Classes="global-button"
+                            Content="Layers..."
+                            Click="Layers_Click" />
 
                     <Separator Margin="8,0" />
 

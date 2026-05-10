@@ -43,6 +43,31 @@ public sealed class Layer
 
     public bool IsLocked { get; }
 
+
+    public Layer WithName(string name)
+    {
+        return new Layer(
+            Id,
+            name,
+            Color,
+            LineWeight,
+            IsVisible,
+            IsLocked);
+    }
+
+    public Layer WithAppearance(
+        CadColor color,
+        LineWeight lineWeight)
+    {
+        return new Layer(
+            Id,
+            Name,
+            color,
+            lineWeight,
+            IsVisible,
+            IsLocked);
+    }
+
     public Layer WithVisibility(bool isVisible)
     {
         return new Layer(
