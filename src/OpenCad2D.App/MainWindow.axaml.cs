@@ -580,6 +580,50 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void BreakAtPoint_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.BreakAtPoint);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void BreakBetweenPoints_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.BreakBetweenPoints);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void Extend_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Extend);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void Trim_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Trim);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1164,6 +1208,24 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             AlignButton,
             activeToolName.Equals("Align", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            BreakAtPointButton,
+            activeToolName.Equals("BreakAtPoint", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("Break Point", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            BreakBetweenPointsButton,
+            activeToolName.Equals("BreakBetweenPoints", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("Break Segment", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            ExtendButton,
+            activeToolName.Equals("Extend", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            TrimButton,
+            activeToolName.Equals("Trim", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }

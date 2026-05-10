@@ -305,6 +305,28 @@
                                 Content="Align"
                                 Click="Align_Click" />
 
+                        <Separator Margin="0,8" />
+
+                        <Button x:Name="BreakAtPointButton"
+                                Classes="tool-button"
+                                Content="Break Pt"
+                                Click="BreakAtPoint_Click" />
+
+                        <Button x:Name="BreakBetweenPointsButton"
+                                Classes="tool-button"
+                                Content="Break Seg"
+                                Click="BreakBetweenPoints_Click" />
+
+                        <Button x:Name="ExtendButton"
+                                Classes="tool-button"
+                                Content="Extend"
+                                Click="Extend_Click" />
+
+                        <Button x:Name="TrimButton"
+                                Classes="tool-button"
+                                Content="Trim"
+                                Click="Trim_Click" />
+
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />
