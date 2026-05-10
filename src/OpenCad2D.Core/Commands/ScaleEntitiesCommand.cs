@@ -5,7 +5,7 @@ using OpenCad2D.Geometry.Transformations;
 namespace OpenCad2D.Core.Commands;
 
 /// <summary>
-/// Scales entities uniformly around a base point.
+/// Uniformly scales entities around a base point.
 /// </summary>
 public sealed class ScaleEntitiesCommand : TransformEntitiesCommand
 {

@@ -240,6 +240,11 @@
                                 Content="Rotate"
                                 Click="Rotate_Click" />
 
+                        <Button x:Name="ScaleButton"
+                                Classes="tool-button"
+                                Content="Scale"
+                                Click="Scale_Click" />
+
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />

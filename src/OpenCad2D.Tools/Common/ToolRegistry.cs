@@ -75,6 +75,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Scale,
+                "Scale",
+                "Scale",
+                "Modify"),
+            () => new ScaleTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",

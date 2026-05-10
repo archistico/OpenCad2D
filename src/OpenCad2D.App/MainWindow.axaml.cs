@@ -176,6 +176,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Scale_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Scale);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -572,6 +583,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             RotateButton,
             activeToolName.Equals("Rotate", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            ScaleButton,
+            activeToolName.Equals("Scale", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }
