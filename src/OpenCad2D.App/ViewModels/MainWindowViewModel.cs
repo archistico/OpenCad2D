@@ -1,3 +1,4 @@
+using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -9,8 +10,11 @@ using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Input;
 using OpenCad2D.App.ViewModels.Properties;
+using OpenCad2D.Persistence;
+using OpenCad2D.Persistence.Dto;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -22,7 +26,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
+    private string? _currentFilePath;
     private readonly CommandInputParser _commandInputParser = new();
+    private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
     private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
     private PropertyPanelViewModel _propertyPanel = new("Properties", Array.Empty<PropertySectionViewModel>());
     private bool _isPropertyPanelVisible = true;
@@ -48,6 +54,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
     public CadWorkspace Workspace { get; }
+
+    public string? CurrentFilePath => _currentFilePath;
+
+    public string CurrentFileName => string.IsNullOrWhiteSpace(_currentFilePath)
+        ? "Untitled"
+        : Path.GetFileName(_currentFilePath);
+
+    public bool IsDirty => Workspace.IsDirty;
+
+    public string WindowTitle => IsDirty
+        ? $"OpenCad2D - {CurrentFileName} *"
+        : $"OpenCad2D - {CurrentFileName}";
+
+    public string FileStatusText => IsDirty
+        ? $"{CurrentFileName} *"
+        : CurrentFileName;
 
     public IReadOnlyList<string> LayerNames => Workspace.Document.Layers.All
         .OrderBy(layer => layer.Name)
@@ -183,6 +205,77 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         $"{SnapText} | " +
         $"{LastMessage}";
 
+
+    public void NewDocument()
+    {
+        Workspace.NewDocument();
+        EnsureDemoLayers();
+        Workspace.MarkSaved();
+        _currentFilePath = null;
+
+        SetMessage("New document created.");
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+    }
+
+    public void SaveToFile(
+        string filePath,
+        ViewportStateDto viewportState)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "File path cannot be empty.",
+                nameof(filePath));
+        }
+
+        ArgumentNullException.ThrowIfNull(viewportState);
+
+        DocumentDto dto = _documentSerializer.Serialize(
+            Workspace.Document,
+            Workspace.CurrentLayerId.Value,
+            viewportState);
+
+        _documentSerializer.SaveToFile(
+            dto,
+            filePath);
+
+        _currentFilePath = filePath;
+        Workspace.MarkSaved();
+
+        SetMessage($"Saved '{CurrentFileName}'.");
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+    }
+
+    public ViewportStateDto OpenFromFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "File path cannot be empty.",
+                nameof(filePath));
+        }
+
+        DocumentDto dto = _documentSerializer.LoadFromFile(filePath);
+
+        CadDocument document = _documentSerializer.Deserialize(
+            dto,
+            out string currentLayerId,
+            out ViewportStateDto viewportState);
+
+        Workspace.LoadDocument(
+            document,
+            new LayerId(currentLayerId));
+
+        _currentFilePath = filePath;
+
+        SetMessage($"Opened '{CurrentFileName}'.");
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+
+        return viewportState;
+    }
 
     public ToolResult SubmitCommandInput(string? input)
     {
@@ -566,6 +659,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(StatusText),
+            nameof(WindowTitle),
+            nameof(FileStatusText),
+            nameof(CurrentFilePath),
+            nameof(CurrentFileName),
+            nameof(IsDirty),
             nameof(EntityCount),
             nameof(SelectedCount),
             nameof(ActiveToolName),
@@ -592,6 +690,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(MeasurementText),
             nameof(StatusText),
             nameof(LastMessage));
+    }
+
+    private void NotifyFileStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(CurrentFilePath),
+            nameof(CurrentFileName),
+            nameof(IsDirty),
+            nameof(WindowTitle),
+            nameof(FileStatusText),
+            nameof(StatusText));
     }
 
     private void NotifyLayerStateChanged()
