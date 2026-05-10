@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Selection;
@@ -22,6 +22,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Rotate));
         Assert.True(registry.Contains(ToolId.Scale));
         Assert.True(registry.Contains(ToolId.Align));
+        Assert.True(registry.Contains(ToolId.BreakAtPoint));
         Assert.True(registry.Contains(ToolId.Delete));
     }
 
@@ -32,7 +33,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(11, tools.Count);
+        Assert.Equal(12, tools.Count);
 
         Assert.Contains(
             tools,
@@ -65,6 +66,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Align);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.BreakAtPoint);
 
         Assert.Contains(
             tools,
@@ -113,13 +118,14 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Modify");
 
-        Assert.Equal(7, tools.Count);
+        Assert.Equal(8, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Selection);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Move);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Copy);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rotate);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Scale);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Align);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.BreakAtPoint);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Delete);
     }
 
@@ -221,6 +227,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<AlignTool>(tool);
         Assert.Equal("Align", tool.Name);
+    }
+
+    [Fact]
+    public void Create_BreakAtPoint_ShouldReturnBreakAtPointTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.BreakAtPoint);
+
+        Assert.IsType<BreakAtPointTool>(tool);
+        Assert.Equal("Break Point", tool.Name);
     }
 
     [Fact]

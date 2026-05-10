@@ -528,6 +528,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void BreakAtPoint_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.BreakAtPoint);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1101,6 +1112,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             AlignButton,
             activeToolName.Equals("Align", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            BreakAtPointButton,
+            activeToolName.Equals("Break Point", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }

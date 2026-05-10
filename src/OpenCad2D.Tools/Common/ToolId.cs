@@ -15,5 +15,6 @@ public enum ToolId
     Rotate,
     Scale,
     Align,
+    BreakAtPoint,
     Delete
 }

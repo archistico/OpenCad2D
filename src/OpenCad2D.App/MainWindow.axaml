@@ -298,6 +298,11 @@
                                 Content="Align"
                                 Click="Align_Click" />
 
+                        <Button x:Name="BreakAtPointButton"
+                                Classes="tool-button"
+                                Content="Break Pt"
+                                Click="BreakAtPoint_Click" />
+
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />

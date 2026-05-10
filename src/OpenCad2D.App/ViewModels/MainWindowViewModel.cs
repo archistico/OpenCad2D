@@ -189,6 +189,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     : "Polyline: specify next point, type distance, press Enter to finish, or C to close:";
             }
 
+            if (Workspace.ToolController.ActiveTool is BreakAtPointTool breakAtPointTool)
+            {
+                return breakAtPointTool.State == BreakAtPointToolState.WaitingForTargetEntity
+                    ? "Break Point: select a line to break:"
+                    : "Break Point: specify break point on selected line:";
+            }
+
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";

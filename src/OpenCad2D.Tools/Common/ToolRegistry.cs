@@ -99,6 +99,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.BreakAtPoint,
+                "BreakAtPoint",
+                "Break Point",
+                "Modify"),
+            () => new BreakAtPointTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",

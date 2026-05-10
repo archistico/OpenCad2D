@@ -812,6 +812,12 @@ public sealed class CadCanvas : Control
                     alignTool.GetPreviewEntities(Workspace.Context));
                 break;
 
+            case BreakAtPointTool breakAtPointTool:
+                DrawEntitiesPreview(
+                    context,
+                    breakAtPointTool.GetPreviewEntities());
+                break;
+
             case SelectionTool selectionTool:
                 DrawSelectionPreview(context, selectionTool);
                 break;
