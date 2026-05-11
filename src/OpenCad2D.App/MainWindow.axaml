@@ -386,6 +386,31 @@
                         <Button Classes="tool-button"
                                 Content="Delete"
                                 Click="Delete_Click" />
+
+                        <Separator Margin="0,5" />
+
+                        <TextBlock Classes="panel-section-label"
+                                   Text="MEASURE" />
+
+                        <Button x:Name="MeasureDistanceButton"
+                                Classes="tool-button"
+                                Content="Distance"
+                                Click="MeasureDistance_Click" />
+
+                        <Button x:Name="MeasureEntityButton"
+                                Classes="tool-button"
+                                Content="Entity"
+                                Click="MeasureEntity_Click" />
+
+                        <Button x:Name="MeasureAngleButton"
+                                Classes="tool-button"
+                                Content="Angle"
+                                Click="MeasureAngle_Click" />
+
+                        <Button x:Name="MeasureAreaButton"
+                                Classes="tool-button"
+                                Content="Area"
+                                Click="MeasureArea_Click" />
                     </StackPanel>
                 </ScrollViewer>
             </Border>

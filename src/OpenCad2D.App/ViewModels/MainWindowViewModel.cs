@@ -9,6 +9,7 @@ using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Input;
+using OpenCad2D.Tools.Measurements;
 using OpenCad2D.App.ViewModels.Properties;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using System.IO;
@@ -237,6 +238,34 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     ArcThreePointsToolState.WaitingForPointOnArc => "Arc 3P: specify point on arc or type coordinates:",
                     ArcThreePointsToolState.WaitingForEndPoint => "Arc 3P: specify end point or type coordinates:",
                     _ => "Arc 3P: specify point:"
+                };
+            }
+
+            if (Workspace.ToolController.ActiveTool is MeasureDistanceTool measureDistanceTool)
+            {
+                return measureDistanceTool.State == TwoPointToolState.WaitingForFirstPoint
+                    ? "Measure distance: specify first point or type coordinates:"
+                    : "Measure distance: specify second point, type coordinates, relative coordinates, or distance:";
+            }
+
+            if (Workspace.ToolController.ActiveTool is MeasureEntityTool)
+            {
+                return "Measure entity: click an entity. Use Ctrl+click to cycle overlapping entities:";
+            }
+
+            if (Workspace.ToolController.ActiveTool is MeasureAreaTool)
+            {
+                return "Measure area: click a closed polyline. Use Ctrl+click to cycle overlapping entities:";
+            }
+
+            if (Workspace.ToolController.ActiveTool is MeasureAngleTool measureAngleTool)
+            {
+                return measureAngleTool.State switch
+                {
+                    MeasureAngleToolState.WaitingForFirstRayPoint => "Measure angle: specify first point or type coordinates:",
+                    MeasureAngleToolState.WaitingForVertex => "Measure angle: specify vertex point, type coordinates, relative coordinates, or distance:",
+                    MeasureAngleToolState.WaitingForSecondRayPoint => "Measure angle: specify second point, type coordinates, relative coordinates, or distance:",
+                    _ => "Measure angle: specify point:"
                 };
             }
 

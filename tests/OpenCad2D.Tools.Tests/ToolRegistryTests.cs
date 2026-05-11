@@ -1,6 +1,7 @@
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Selection;
 
 namespace OpenCad2D.Tools.Tests;
@@ -30,6 +31,10 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Extend));
         Assert.True(registry.Contains(ToolId.Trim));
         Assert.True(registry.Contains(ToolId.Delete));
+        Assert.True(registry.Contains(ToolId.MeasureDistance));
+        Assert.True(registry.Contains(ToolId.MeasureEntity));
+        Assert.True(registry.Contains(ToolId.MeasureAngle));
+        Assert.True(registry.Contains(ToolId.MeasureArea));
     }
 
     [Fact]
@@ -39,7 +44,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(18, tools.Count);
+        Assert.Equal(22, tools.Count);
 
         Assert.Contains(
             tools,
@@ -112,6 +117,22 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Polyline);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.MeasureDistance);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.MeasureEntity);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.MeasureAngle);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.MeasureArea);
     }
 
     [Fact]
@@ -163,6 +184,22 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Extend);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Trim);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Delete);
+    }
+
+
+
+    [Fact]
+    public void GetByCategory_Measure_ShouldReturnMeasureTools()
+    {
+        var registry = new ToolRegistry();
+
+        IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Measure");
+
+        Assert.Equal(4, tools.Count);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.MeasureDistance);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.MeasureEntity);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.MeasureAngle);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.MeasureArea);
     }
 
     [Fact]
@@ -351,6 +388,52 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<CopyTool>(tool);
         Assert.Equal("Copy", tool.Name);
+    }
+
+
+
+    [Fact]
+    public void Create_MeasureDistance_ShouldReturnMeasureDistanceTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.MeasureDistance);
+
+        Assert.IsType<MeasureDistanceTool>(tool);
+        Assert.Equal("Measure Distance", tool.Name);
+    }
+
+    [Fact]
+    public void Create_MeasureEntity_ShouldReturnMeasureEntityTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.MeasureEntity);
+
+        Assert.IsType<MeasureEntityTool>(tool);
+        Assert.Equal("Measure Entity", tool.Name);
+    }
+
+    [Fact]
+    public void Create_MeasureAngle_ShouldReturnMeasureAngleTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.MeasureAngle);
+
+        Assert.IsType<MeasureAngleTool>(tool);
+        Assert.Equal("Measure Angle", tool.Name);
+    }
+
+    [Fact]
+    public void Create_MeasureArea_ShouldReturnMeasureAreaTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.MeasureArea);
+
+        Assert.IsType<MeasureAreaTool>(tool);
+        Assert.Equal("Measure Area", tool.Name);
     }
 
     [Fact]

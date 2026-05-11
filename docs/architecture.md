@@ -48,7 +48,8 @@ CAD model and document logic:
 - spatial index abstraction;
 - commands;
 - command history;
-- document mutation validation.
+- document mutation validation;
+- pure measurement services in `OpenCad2D.Core.Measurements`.
 
 ### OpenCad2D.Interaction
 
@@ -67,6 +68,7 @@ UI-independent CAD tools:
 - edit tools;
 - transform tools;
 - grip editing;
+- non-mutating measure tools;
 - tool controller;
 - workspace;
 - command line point submission;

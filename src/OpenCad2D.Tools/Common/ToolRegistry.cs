@@ -1,5 +1,6 @@
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Selection;
 
 namespace OpenCad2D.Tools.Common;
@@ -160,6 +161,38 @@ public sealed class ToolRegistry
                 "Delete",
                 "Modify"),
             () => new DeleteTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.MeasureDistance,
+                "MeasureDistance",
+                "Distance",
+                "Measure"),
+            () => new MeasureDistanceTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.MeasureEntity,
+                "MeasureEntity",
+                "Entity",
+                "Measure"),
+            () => new MeasureEntityTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.MeasureAngle,
+                "MeasureAngle",
+                "Angle",
+                "Measure"),
+            () => new MeasureAngleTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.MeasureArea,
+                "MeasureArea",
+                "Area",
+                "Measure"),
+            () => new MeasureAreaTool());
     }
 
     public IReadOnlyList<ToolDescriptor> Tools =>

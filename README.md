@@ -47,6 +47,7 @@ The application already supports a functional CAD workflow:
 - read-only Property Panel v1;
 - command line coordinate input;
 - direct distance entry;
+- non-mutating measure tools for distance, entity properties, angles and closed-polyline areas;
 - Ortho mode and Polar Tracking with selectable angle steps (`Off`, `90°`, `45°`, `30°`, `15°`);
 - zoom, pan, view reset and Zoom Extents;
 - viewport culling for rendering only visible entities;
@@ -206,6 +207,20 @@ C
 ```
 
 This creates a closed rectangular polyline.
+
+---
+
+
+## Measure tools
+
+Implemented non-mutating measure tools:
+
+- `MeasureDistanceTool` / `Distance` — two points; reports distance, ΔX, ΔY and angle;
+- `MeasureEntityTool` / `Entity` — click an entity; reports length, radius, diameter, circumference, sweep, area or vertex information depending on entity type;
+- `MeasureAngleTool` / `Angle` — three points; reports angle and supplementary angle;
+- `MeasureAreaTool` / `Area` — click a closed polyline; reports area, perimeter/length and vertex count.
+
+Measure tools do not create geometry, do not execute undoable commands and do not mark the drawing dirty. They use snap and Polar Tracking where appropriate. Entity-based measure tools use entity snap and support `Ctrl+click` cycling through overlapping entities.
 
 ---
 

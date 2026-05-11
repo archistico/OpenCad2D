@@ -285,6 +285,30 @@ command-line direct distance direction
 status text through MainWindowViewModel.PolarTrackingText
 ```
 
+## Measure tools status
+
+Baseline measure tools are implemented in `OpenCad2D.Tools.Measurements` and use pure measurement logic from `OpenCad2D.Core.Measurements`.
+
+Implemented tools:
+
+```text
+MeasureDistanceTool  two points -> distance, DX, DY, angle
+MeasureEntityTool    click entity -> entity-specific measurements
+MeasureAngleTool     three points -> angle and supplementary angle
+MeasureAreaTool      closed polyline -> area/perimeter/vertices
+```
+
+Important behavior:
+
+- measure tools do not create geometry;
+- measure tools do not execute undoable commands;
+- measure tools do not mark the document dirty;
+- point-based measure tools use snap plus Polar Tracking / Ortho through the normal point input pipeline;
+- entity-based measure tools use `SnapKind.EntityOnly` and support `Ctrl+click` cycling through overlapping entities;
+- formatted output intentionally has no physical unit suffix because model space has no fixed unit.
+
+Future measure follow-ups: point coordinates, area by picked points, copy result to clipboard and configurable precision.
+
 ## Entity snap and overlapping selection status
 
 Selection-oriented tools use `SnapKind.Entity` instead of geometric snaps. `SnapKind.Entity` is intentionally excluded from `SnapKind.All`; use `SnapKind.EntityOnly` when a tool phase is selecting objects.
@@ -349,7 +373,7 @@ Esc                  -> cancel
 
 The tool supports command line input, snap, Ortho, Polar Tracking and direct distance entry.
 
-Polyline grip editing is not yet implemented and is a good follow-up.
+Polyline and rectangle grip editing is implemented; midpoint insertion grips remain a possible follow-up.
 
 ---
 

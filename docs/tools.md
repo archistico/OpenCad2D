@@ -407,6 +407,92 @@ Grip edits commit through replacement commands and remain undoable.
 
 ---
 
+## Measure tools
+
+Measure tools are non-mutating tools. They report information about existing geometry or picked points without changing the document.
+
+Implemented tools:
+
+```text
+MeasureDistanceTool
+MeasureEntityTool
+MeasureAngleTool
+MeasureAreaTool
+```
+
+### MeasureDistanceTool
+
+Workflow:
+
+```text
+activate Distance
+pick first point
+pick second point
+report distance, DX, DY and angle
+```
+
+The tool derives from the shared two-point workflow, shows a temporary preview line and supports snap, typed coordinates, relative coordinates, direct distance and Polar Tracking / Ortho. It creates no entity and executes no command.
+
+### MeasureEntityTool
+
+Workflow:
+
+```text
+activate Entity
+click entity
+report entity-specific measurements
+```
+
+The tool uses `SnapKind.EntityOnly`, does not modify selection, and supports `Ctrl+click` to cycle overlapping entities.
+
+Reported values depend on entity type:
+
+```text
+LineEntity      length, angle
+CircleEntity    radius, diameter, circumference, area
+ArcEntity       radius, diameter, sweep, arc length
+PolylineEntity  length/perimeter, area when closed, vertex count, closed flag
+```
+
+### MeasureAngleTool
+
+Workflow:
+
+```text
+activate Angle
+pick first ray point
+pick vertex point
+pick second ray point
+report angle and supplementary angle
+```
+
+The tool shows temporary ray previews and supports the same point input constraints as other point tools.
+
+### MeasureAreaTool
+
+Workflow:
+
+```text
+activate Area
+click closed polyline
+report area, length/perimeter and vertex count
+```
+
+The tool currently accepts only closed `PolylineEntity` instances. It uses entity snap and supports `Ctrl+click` cycling.
+
+### Measurement rules
+
+All measure tools follow these rules:
+
+- do not create entities;
+- do not call `CommandHistory.Execute`;
+- do not mark the document dirty;
+- do not change undo/redo history;
+- use `MeasurementService` and `MeasurementFormatter` from `OpenCad2D.Core.Measurements`;
+- display values in model units without physical unit suffixes.
+
+---
+
 ## Ortho and Polar Tracking
 
 Ortho is the legacy horizontal/vertical point constraint. Polar Tracking generalizes the same idea with a configurable angular step.

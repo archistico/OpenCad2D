@@ -22,5 +22,9 @@ public enum ToolId
     BreakBetweenPoints,
     Extend,
     Trim,
-    Delete
+    Delete,
+    MeasureDistance,
+    MeasureEntity,
+    MeasureAngle,
+    MeasureArea
 }

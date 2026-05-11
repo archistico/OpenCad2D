@@ -16,6 +16,7 @@ using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Grips;
+using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Selection;
 using System;
 using System.Collections.Generic;
@@ -1109,6 +1110,14 @@ public sealed class CadCanvas : Control
                     trimTool.GetPreviewEntities());
                 break;
 
+            case MeasureDistanceTool measureDistanceTool:
+                DrawMeasureDistancePreview(context, measureDistanceTool);
+                break;
+
+            case MeasureAngleTool measureAngleTool:
+                DrawMeasureAnglePreview(context, measureAngleTool);
+                break;
+
             case SelectionTool selectionTool:
                 DrawSelectionPreview(context, selectionTool);
                 break;
@@ -1572,6 +1581,57 @@ public sealed class CadCanvas : Control
                 context,
                 entity,
                 _previewPen);
+        }
+    }
+
+    private void DrawMeasureDistancePreview(
+        DrawingContext context,
+        MeasureDistanceTool tool)
+    {
+        LineEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
+
+    private void DrawMeasureAnglePreview(
+        DrawingContext context,
+        MeasureAngleTool tool)
+    {
+        foreach (LineEntity preview in tool.GetPreviewEntities())
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+
+        const double markerRadius = 4;
+
+        if (tool.FirstRayPoint is not null)
+        {
+            context.DrawEllipse(
+                _basePointMarkerFill,
+                _basePointMarkerPen,
+                ToScreenPoint(tool.FirstRayPoint.Value),
+                markerRadius,
+                markerRadius);
+        }
+
+        if (tool.Vertex is not null)
+        {
+            context.DrawEllipse(
+                _basePointMarkerFill,
+                _basePointMarkerPen,
+                ToScreenPoint(tool.Vertex.Value),
+                markerRadius,
+                markerRadius);
         }
     }
 

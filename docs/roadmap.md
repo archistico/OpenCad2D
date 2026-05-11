@@ -195,19 +195,20 @@ Implemented:
 
 ---
 
-## Next recommended phase: DXF validation and editing polish
+## Next recommended phase: annotation and editing polish
 
-DXF export is now implemented enough to be useful. The next step should be practical compatibility validation, followed by editing UX refinement.
+DXF export and baseline measure tools are now implemented enough to be useful. The next step should be practical annotation support and editing UX refinement.
 
 Recommended order:
 
-1. open exported DXF files in LibreCAD, QCAD, AutoCAD/DWG TrueView and at least one online viewer;
+1. validate exported DXF files in LibreCAD, QCAD, AutoCAD/DWG TrueView and at least one online viewer;
 2. create a small compatibility checklist for layer colors, linetypes, lineweights, arcs and Y orientation;
-3. add an export options dialog only after the default behavior is stable;
-4. improve Trim/Extend previews so the exact removed/extended portion is highlighted;
-5. add clearer status messages when an operation is ignored;
-6. broaden Break Point and Break Segment beyond `LineEntity`;
-7. add more tests for tangent, near-tangent, overlapping and multi-segment cases.
+3. add `TextEntity` and a simple `TextTool`;
+4. use the measurement services as groundwork for basic dimension entities;
+5. improve Trim/Extend previews so the exact removed/extended portion is highlighted;
+6. add clearer status messages when an operation is ignored;
+7. broaden Break Point and Break Segment beyond `LineEntity`;
+8. add more tests for tangent, near-tangent, overlapping and multi-segment cases.
 
 ---
 
@@ -235,12 +236,20 @@ Add grip provider for `PolylineEntity`:
 
 ### Measure tools
 
-Implement non-mutating tools:
+Implemented baseline non-mutating tools:
 
 - Distance;
-- Area.
+- Entity;
+- Angle;
+- Area for closed polylines.
 
-These tools should not create commands and should not change the document.
+Follow-up improvements:
+
+- Measure Point / Coordinates;
+- Area by picked points;
+- measurement history panel;
+- copy result to clipboard;
+- configurable display precision and optional unit labels when drawing settings are introduced.
 
 ### Text and dimensions
 

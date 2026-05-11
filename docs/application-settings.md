@@ -53,8 +53,10 @@ Multi-character shortcuts are only active when no command line input is in progr
 | `CO` | Copy tool |
 | `DE` or `Delete` | Delete selected |
 | `MA` | Match Properties tool |
-| `DI` | Distance measure tool |
-| `AR` | Area measure tool |
+| button | Distance measure tool |
+| button | Entity measure tool |
+| button | Angle measure tool |
+| button | Area measure tool |
 | `Tab` | Activate grip editing |
 | `Ctrl+Z` | Undo |
 | `Ctrl+Y` | Redo |
@@ -259,7 +261,7 @@ For isometric grids, the closest candidate is an isometric vertex generated from
 
 ## Drawing Configuration
 
-Drawing configuration is the planned document-level area for parameters that govern measurement units, display precision, dimension appearance and default tool behavior.
+Drawing configuration is the planned document-level area for parameters that govern optional measurement unit labels, display precision, dimension appearance and default tool behavior. Current model-space measurements are unitless numeric values.
 
 This is distinct from application settings, which are user-local and session-specific.
 

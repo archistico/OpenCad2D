@@ -17,6 +17,7 @@ using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Measurements;
 using System;
 
 namespace OpenCad2D.App;
@@ -764,6 +765,50 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void MeasureDistance_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.MeasureDistance);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void MeasureEntity_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.MeasureEntity);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void MeasureAngle_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.MeasureAngle);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void MeasureArea_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.MeasureArea);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Undo_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1420,6 +1465,22 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             TrimButton,
             activeToolName.Equals("Trim", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            MeasureDistanceButton,
+            activeToolName.Equals("Measure Distance", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            MeasureEntityButton,
+            activeToolName.Equals("Measure Entity", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            MeasureAngleButton,
+            activeToolName.Equals("Measure Angle", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            MeasureAreaButton,
+            activeToolName.Equals("Measure Area", StringComparison.OrdinalIgnoreCase));
 
         ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }
