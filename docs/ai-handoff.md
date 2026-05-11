@@ -57,10 +57,11 @@ The project currently supports:
 - current layer selection;
 - hidden layer behavior;
 - locked layer behavior;
-- Layer Manager v1;
+- Layer Manager with line format selection;
+- Line Format Manager;
 - current layer must remain visible and unlocked;
 - layer `0` protected;
-- color and line weight at layer level.
+- reusable line formats control layer stroke color, weight and style.
 
 ### UI
 
@@ -73,6 +74,7 @@ The project currently supports:
 - fixed command line input;
 - status bar;
 - grid configuration with rectangular/isometric layouts;
+- line format management from the top CAD bar;
 - viewport culling;
 - rendered entity count.
 
@@ -303,7 +305,7 @@ Do not add editing fields to the property panel until modifications can be route
 
 ## Layer Manager status
 
-Layer Manager v1 is implemented as a separate window.
+Layer Manager is implemented as a separate window.
 
 It supports:
 
@@ -312,13 +314,40 @@ It supports:
 - Rename;
 - Visible;
 - Locked;
-- Color hex;
-- LineWeight;
+- Line format selection;
 - Current layer selection;
 - OK/Cancel workflow;
 - one undoable update command.
 
-Layer `0` is protected. Current layer cannot be hidden, locked or deleted.
+Layer `0` is protected. Current layer cannot be hidden, locked or deleted. Layer stroke appearance is chosen by assigning a `LineFormatId`, not by editing color/weight directly in the Layer Manager.
+
+---
+
+## Line Format Manager status
+
+Line Format Manager is implemented as a separate window opened from `Line formats...`.
+
+It supports:
+
+- built-in formats that are editable but not deletable;
+- user-defined format creation;
+- deletion of user-defined formats when allowed;
+- format name editing;
+- color editing;
+- line weight editing;
+- line style selection;
+- OK/Cancel workflow;
+- undoable application through `UpdateLineFormatsCommand`.
+
+Default formats:
+
+```text
+Continua           white       1     Continuous
+Asse               red         0.5   DashDot
+Tratteggiata       yellow      1     Dashed
+Tratto due punti   light blue  0.5   DashDotDot
+Tratto e punto     green       0.75  DashDot
+```
 
 ---
 
@@ -342,6 +371,7 @@ The serializer handles:
 - layers;
 - entities;
 - current layer id;
+- line formats and layer line format references;
 - viewport state;
 - unknown entity type tolerance.
 
@@ -392,7 +422,7 @@ Export rules:
 
 - hidden layers are ignored;
 - locked but visible layers are exported;
-- stroke color and stroke width come from layer properties;
+- stroke color, stroke width and dash array come from the line format referenced by each entity layer;
 - the SVG `viewBox` is computed from visible drawing bounds;
 - a dark background rectangle is exported by default;
 - Y orientation matches the OpenCad2D canvas;

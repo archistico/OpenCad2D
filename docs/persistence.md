@@ -46,6 +46,8 @@ The serializer handles:
 
 - document version;
 - layers;
+- line formats;
+- layer line format references;
 - entities;
 - current layer id;
 - viewport state;
@@ -60,6 +62,46 @@ The App handles:
 - dirty state;
 - Save changes confirmation;
 - applying viewport state after load.
+
+---
+
+## Line format persistence
+
+The native JSON format stores reusable line formats at document level and stores only the selected format id on each layer.
+
+Conceptual DTO shape:
+
+```text
+DocumentDto
+  LineFormats[]
+  Layers[]
+
+LineFormatDto
+  Id
+  Name
+  Color
+  LineWeight
+  LineStyle
+
+LayerDto
+  Id
+  Name
+  LineFormatId
+  IsVisible
+  IsLocked
+```
+
+Loading rules:
+
+- if `LineFormats` is missing or empty, use the default line format collection;
+- if a layer references an unknown `LineFormatId`, fall back to `Continuous`;
+- legacy layer color and line weight fields are compatibility data only and are not the active source of appearance.
+
+Saving rules:
+
+- save `Document.LineFormats`;
+- save each layer's `LineFormatId`;
+- do not write active layer color/weight fields as the current appearance model.
 
 ---
 

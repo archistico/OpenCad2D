@@ -671,6 +671,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+
+    public ToolResult ApplyLineFormatChanges(IEnumerable<LineFormat> lineFormats)
+    {
+        ToolResult result = Workspace.ApplyLineFormatChanges(lineFormats);
+
+        SetLastResult(result);
+        NotifyLayerStateChanged();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     public ToolResult ApplyGridSettings(GridSettings gridSettings)
     {
         ToolResult result = Workspace.SetGridSettings(gridSettings);

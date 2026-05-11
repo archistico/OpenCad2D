@@ -112,31 +112,31 @@ public sealed class LineFormatCollection
             LineStyle.Continuous);
 
         yield return new LineFormat(
+            LineFormatId.Axis,
+            "Asse",
+            CadColor.FromRgb(255, 0, 0),
+            LineWeight.FromMillimeters(0.5),
+            LineStyle.DashDot);
+
+        yield return new LineFormat(
             LineFormatId.Dashed,
             "Tratteggiata",
             CadColor.FromRgb(255, 255, 0),
-            LineWeight.FromMillimeters(0.18),
+            LineWeight.FromMillimeters(1.0),
             LineStyle.Dashed);
-
-        yield return new LineFormat(
-            LineFormatId.DashDot,
-            "Tratto e punto",
-            CadColor.FromRgb(0, 255, 255),
-            LineWeight.FromMillimeters(0.18),
-            LineStyle.DashDot);
 
         yield return new LineFormat(
             LineFormatId.DashDotDot,
             "Tratto due punti",
             CadColor.FromRgb(0, 200, 255),
-            LineWeight.FromMillimeters(0.18),
+            LineWeight.FromMillimeters(0.5),
             LineStyle.DashDotDot);
 
         yield return new LineFormat(
-            LineFormatId.Axis,
-            "Asse",
-            CadColor.FromRgb(255, 0, 0),
-            LineWeight.FromMillimeters(0.13),
+            LineFormatId.DashDot,
+            "Tratto e punto",
+            CadColor.FromRgb(0, 255, 0),
+            LineWeight.FromMillimeters(0.75),
             LineStyle.DashDot);
     }
 }

@@ -43,6 +43,7 @@ CAD model and document logic:
 - entities;
 - layers;
 - styles;
+- reusable line formats;
 - document;
 - spatial index abstraction;
 - commands;
@@ -98,7 +99,8 @@ Avalonia application:
 - keyboard/mouse forwarding;
 - ViewModels;
 - property panel;
-- layer manager window.
+- layer manager window;
+- line format manager window.
 
 ---
 
@@ -277,12 +279,13 @@ Layer responsibilities:
 
 - identity;
 - name;
-- color;
-- line weight;
+- `LineFormatId`;
 - visibility;
 - locked state;
 - future fill color;
 - future draw order.
+
+Stroke appearance is resolved through `Document.LineFormats`, not directly from layer color/weight fields.
 
 Current layer rule:
 
@@ -290,7 +293,33 @@ Current layer rule:
 current layer must be visible and unlocked
 ```
 
-Layer Manager applies batch changes through an undoable command.
+Layer Manager applies batch layer changes through an undoable command. Line Format Manager applies reusable stroke-format changes through `UpdateLineFormatsCommand`.
+
+---
+
+## Line formats
+
+Line formats are reusable stroke definitions stored in `CadDocument.LineFormats`.
+
+Resolution path:
+
+```text
+Entity -> LayerId -> Layer -> LineFormatId -> LineFormat
+```
+
+A line format contains:
+
+```text
+Id
+Name
+Color
+LineWeight
+LineStyle
+```
+
+Rendering and SVG export must resolve appearance through this path. They must not use per-entity style overrides for the current layer-based appearance model.
+
+Dash patterns are defined by `LineStyleDashPattern` in model units and are scaled by the viewport when rendered on screen.
 
 ---
 
@@ -326,7 +355,7 @@ It should only reduce the set of entities drawn in the current frame.
 
 ## Managers
 
-Manager windows, such as Layer Manager, should be separate windows/dialogs instead of filling the main CAD screen.
+Manager windows, such as Layer Manager and Line Format Manager, should be separate windows/dialogs instead of filling the main CAD screen.
 
 General manager pattern:
 

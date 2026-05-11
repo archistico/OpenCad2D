@@ -146,7 +146,7 @@ Useful for composed transformations such as Align.
 
 Applies batch layer changes from the Layer Manager.
 
-It should store:
+It stores:
 
 ```text
 old layer collection snapshot
@@ -157,7 +157,28 @@ new current layer
 
 Execute applies the new layer state. Undo restores the old state.
 
+Layer Manager changes include the `LineFormatId` assigned to each layer. Color, line weight and line style are not edited directly on the layer.
+
 After execution or undo, selection should be revalidated because hidden or locked layers can make selected entities invalid.
+
+---
+
+## UpdateLineFormatsCommand
+
+Applies batch line format changes from the Line Format Manager.
+
+It stores:
+
+```text
+old line format collection snapshot
+new line format collection snapshot
+```
+
+Execute applies the new line format collection. Undo restores the old collection.
+
+Line format changes affect rendering and SVG export for every layer that references the edited format. This is intentional: line formats are reusable stroke definitions.
+
+Built-in line formats are editable but not deletable. User-defined line formats can be deleted only when allowed by the manager validation rules.
 
 ---
 

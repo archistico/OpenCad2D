@@ -16,7 +16,8 @@ coordinate systems / UCS foundation
 numeric tolerance strategy
 CAD entities
 layers
-Layer Manager v1
+Layer Manager with line format selection
+Line Format Manager
 Property Panel v1
 hidden layer behavior
 locked layer behavior
@@ -69,6 +70,21 @@ Implemented:
 - viewport culling;
 - rendered entity count.
 
+
+### Line format system
+
+Implemented:
+
+- reusable `LineFormat` model;
+- built-in formats: Continua, Asse, Tratteggiata, Tratto due punti, Tratto e punto;
+- `Layer.LineFormatId`;
+- canvas rendering from line formats;
+- SVG export from line formats, including dash arrays;
+- JSON persistence for line formats;
+- Layer Manager combo box for selecting a line format;
+- Line Format Manager for editing formats;
+- undoable updates through `UpdateLineFormatsCommand`.
+
 ### Property Panel v1
 
 Implemented:
@@ -78,7 +94,7 @@ Implemented:
 - single entity details;
 - multiple selection summary.
 
-### Layer Manager v1
+### Layer Manager
 
 Implemented:
 
@@ -119,7 +135,7 @@ Implemented:
 - visible entities only;
 - hidden layers ignored;
 - locked visible layers exported;
-- layer color and line weight used for stroke;
+- line formats used for stroke color, stroke width and dash style;
 - automatic viewBox;
 - dark background rectangle;
 - same visual Y orientation as the canvas.

@@ -35,7 +35,9 @@ The application already supports a functional CAD workflow:
 - configurable rectangular and isometric grid display and grid snapping;
 - Grid Settings dialog for visibility, spacing, origin, screen spacing thresholds and isometric angle;
 - layer visibility and locked layer behavior;
-- Layer Manager v1;
+- reusable line formats for layer stroke color, weight and style;
+- Line Format Manager;
+- Layer Manager with line format selection;
 - read-only Property Panel v1;
 - command line coordinate input;
 - direct distance entry;
@@ -55,7 +57,7 @@ The current UI layout is intentionally divided into stable areas:
 
 ```text
 File command bar     New / Open / Save / Save As / current file name / dirty marker
-Top CAD bar          layer selector, layer state, Layers..., Grid..., Undo/Redo, Extents, Props, active command
+Top CAD bar          layer selector, layer state, Layers..., Line formats..., Grid..., Undo/Redo, Extents, Props, active command
 Left tool panel      Select / Draw / Edit tool groups
 Center canvas        drawing area
 Right panel          optional read-only Property Panel
@@ -123,7 +125,7 @@ Current SVG export behavior:
 - exports visible `LineEntity`, `CircleEntity`, `PolylineEntity` and `ArcEntity`;
 - ignores entities on hidden layers;
 - includes entities on locked layers when their layer is visible;
-- uses stroke color and line weight from the entity layer;
+- uses stroke color, line weight and dash style from the line format assigned to the entity layer;
 - computes an automatic `viewBox` from visible drawing bounds;
 - exports a dark background rectangle matching the OpenCad2D canvas;
 - preserves the same visual Y orientation as the canvas;
@@ -256,7 +258,7 @@ unlocked
 
 This avoids ambiguous drawing behavior when creating new entities.
 
-### Layer Manager v1
+### Layer Manager
 
 The Layer Manager is a dedicated window opened from the `Layers...` button. It avoids cluttering the main CAD screen.
 
@@ -267,8 +269,7 @@ Current Layer Manager features:
 - rename layer;
 - set current layer;
 - toggle visible/locked for non-current layers;
-- edit color hex;
-- edit line weight;
+- choose the line format used by each layer;
 - apply changes only with OK;
 - discard changes with Cancel;
 - apply layer changes through one undoable command.
@@ -280,6 +281,22 @@ Rules:
 - the current layer cannot be hidden or locked;
 - layer names must be non-empty and unique;
 - layers with entities cannot be deleted.
+
+### Line Format Manager
+
+The Line Format Manager is opened from `Line formats...`.
+
+It manages reusable stroke definitions used by layers:
+
+- format name;
+- color;
+- line weight;
+- line style;
+- built-in formats, editable but not deletable;
+- user-defined formats;
+- undoable application through `UpdateLineFormatsCommand`.
+
+Default formats are `Continua`, `Asse`, `Tratteggiata`, `Tratto due punti` and `Tratto e punto`.
 
 ---
 
@@ -418,6 +435,7 @@ Recommended reading:
 - [Modify Tools](docs/modify-tools.md)
 - [Export](docs/export.md)
 - [Layer Appearance](docs/layer-appearance.md)
+- [Line Formats](docs/line-formats.md)
 - [AI Handoff Document](docs/ai-handoff.md)
 
 ---

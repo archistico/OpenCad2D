@@ -42,7 +42,7 @@ Unsupported Markdown constructs (lists, tables, code blocks, links, images) are 
 
 ```text
 Id              entity identifier
-LayerId         controls text color (from layer Color)
+LayerId         controls text appearance through the layer line format
 InsertionPoint  WCS anchor point
 RawText         the raw Markdown-formatted string
 TextHeight      base character height in model units
@@ -53,7 +53,7 @@ VerticalAlign   bottom, middle, top (relative to InsertionPoint)
 
 The text entity does not store pre-parsed formatting tokens. Parsing happens at render time. This keeps the entity model stable even if the parser is extended later.
 
-`TextHeight` and `Rotation` are per-entity because they are geometric properties. Text color comes from the layer.
+`TextHeight` and `Rotation` are per-entity because they are geometric properties. Text stroke/fill color should resolve through the layer line format unless a later text-format system overrides this rule.
 
 ---
 
@@ -100,7 +100,7 @@ The renderer parses `RawText` at render time and produces a sequence of styled r
 
 For each line, the heading level determines the character height. Within a line, inline styles determine bold, italic and underline attributes.
 
-Text is rendered in the layer color. Text fill and background are not supported at this stage.
+Text is rendered using the color resolved from the layer line format. Text fill/background formats are not supported at this stage.
 
 Text entities are selectable and can be moved, copied, deleted and grip-edited. Grip editing can expose the insertion point as a grip.
 

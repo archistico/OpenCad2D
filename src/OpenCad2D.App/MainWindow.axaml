@@ -6,8 +6,8 @@
         x:Class="OpenCad2D.App.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="OpenCad2D"
-        Width="1200"
-        Height="760"
+        Width="1600"
+        Height="960"
         Background="#1E1E1E"
         KeyDown="Window_KeyDown"
         TextInput="Window_TextInput">
@@ -198,6 +198,10 @@
                             Click="Layers_Click" />
 
                     <Button Classes="global-button"
+                            Content="Line formats..."
+                            Click="LineFormats_Click" />
+
+                    <Button Classes="global-button"
                             Content="Grid..."
                             Click="Grid_Click" />
 
@@ -236,7 +240,7 @@
 
             <!-- Left tool panel -->
             <Border Grid.Column="0"
-                    Width="118"
+                    Width="130"
                     Background="#202020"
                     BorderBrush="#3A3A3A"
                     BorderThickness="0,0,1,0"

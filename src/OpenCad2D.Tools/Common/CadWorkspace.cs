@@ -10,6 +10,7 @@ using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Grips;
 using OpenCad2D.Tools.Selection;
 using OpenCad2D.Core.Layers;
+using OpenCad2D.Core.Styling;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -308,6 +309,37 @@ public sealed class CadWorkspace
         }
 
         return ToolResult.Completed(message);
+    }
+
+
+    public ToolResult ApplyLineFormatChanges(IEnumerable<LineFormat> lineFormats)
+    {
+        ArgumentNullException.ThrowIfNull(lineFormats);
+
+        List<LineFormat> lineFormatList = lineFormats.ToList();
+
+        if (lineFormatList.Count == 0)
+        {
+            return ToolResult.None("Line format manager requires at least one format.");
+        }
+
+        if (!lineFormatList.Any(format => format.Id == LineFormatId.Continuous))
+        {
+            return ToolResult.None("The Continuous line format is required.");
+        }
+
+        var command = new UpdateLineFormatsCommand(
+            Document.LineFormats.All.ToList(),
+            lineFormatList);
+
+        CommandHistory.Execute(
+            Document,
+            command);
+
+        EnsureCurrentLayerIsUsable();
+        ClearSelectionOfNonSelectableEntities();
+
+        return ToolResult.Completed("Line formats updated.");
     }
 
     public void EnsureCurrentLayerIsUsable()

@@ -10,6 +10,7 @@ using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.App.ViewModels.Grid;
+using OpenCad2D.App.ViewModels.LineFormats;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -726,6 +727,33 @@ public partial class MainWindow : Window
         CadCanvas.InvalidateVisual();
         CadCanvas.Focus();
     }
+
+    private async void LineFormats_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        var dialogViewModel = new LineFormatManagerWindowViewModel(
+            _viewModel.Workspace.Document);
+
+        var dialog = new LineFormatManagerWindow(dialogViewModel);
+
+        LineFormatManagerResult? result = await dialog.ShowDialog<LineFormatManagerResult?>(this);
+
+        if (result is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        ToolResult toolResult = _viewModel.ApplyLineFormatChanges(result.LineFormats);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
 
 
     private async void Grid_Click(

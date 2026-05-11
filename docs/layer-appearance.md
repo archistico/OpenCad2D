@@ -1,91 +1,201 @@
 # Layer Appearance
 
-This document records the project direction for layer-based appearance.
-
-Some parts are implemented today, while others are future design rules.
+This document records the current design for layer-based appearance in OpenCad2D.
 
 ---
 
-## Current implemented layer appearance
+## Current implemented model
 
-Currently layers control:
+Layers now reference reusable line formats instead of directly storing their active stroke appearance.
+
+Current layer responsibilities:
 
 ```text
 Id
 Name
-Color
-LineWeight
+LineFormatId
 IsVisible
 IsLocked
 ```
 
-The Layer Manager v1 allows editing:
+The visual stroke is resolved through the document's `LineFormatCollection`:
 
-- name;
-- visibility;
-- locked state;
-- color hex;
-- line weight;
-- current layer.
+```text
+Entity -> LayerId -> Layer -> LineFormatId -> LineFormat
+```
 
-The current layer must remain visible and unlocked.
+A `LineFormat` provides:
+
+```text
+Name
+Color
+LineWeight
+LineStyle
+```
+
+This means several layers can share the same visual format, and a single edit to the format can update all layers that use it.
 
 ---
 
-## Design rule: appearance belongs to layers
+## Design rule: entities stay ByLayer
 
-Long-term rule:
+The current rule is:
 
 ```text
 entities store geometry + layer reference
-layers store visual appearance
+layers reference reusable appearance formats
+line formats store visual stroke information
 ```
 
-Individual entities should not carry their own color, line weight or fill color fields.
+Individual entities should not carry their own active color, line weight or line style in this phase.
 
-This keeps the entity model simpler and avoids ambiguity between ByLayer and explicit per-entity overrides.
+This avoids ambiguity between per-entity overrides and layer-based appearance. It also keeps rendering, SVG export and persistence simpler.
 
 ---
 
-## Future layer model
+## Built-in line formats
 
-The intended complete layer model is:
+Every new document starts with these line formats:
+
+| Name | Color | Weight | Style |
+|---|---|---:|---|
+| Continua | white | 1 | Continuous |
+| Asse | red | 0.5 | DashDot |
+| Tratteggiata | yellow | 1 | Dashed |
+| Tratto due punti | light blue | 0.5 | DashDotDot |
+| Tratto e punto | green | 0.75 | DashDot |
+
+Built-in formats cannot be deleted, but they can be renamed and edited.
+
+---
+
+## Layer Manager
+
+The Layer Manager is a dedicated window opened from the `Layers...` button.
+
+It allows editing:
+
+- layer name;
+- visibility;
+- locked state;
+- current layer;
+- selected line format.
+
+It no longer edits color and line weight directly. Those values belong to line formats and are edited in the Line Format Manager.
+
+Rules:
+
+- layer `0` is protected;
+- layer `0` cannot be deleted or renamed;
+- the current layer cannot be hidden or locked;
+- layer names must be non-empty and unique;
+- layers with entities cannot be deleted;
+- every layer must reference an existing line format.
+
+---
+
+## Line Format Manager
+
+The Line Format Manager is opened from `Line formats...`.
+
+It allows editing:
+
+- format name;
+- color;
+- line weight;
+- line style;
+- user-defined format creation;
+- user-defined format deletion when allowed.
+
+Line format changes are applied through an undoable command:
 
 ```text
-Id           unique identifier
-Name         display name
-Color        stroke color
-LineWeight   stroke thickness
-FillColor    fill color, nullable
-DrawOrder    integer z-order
-IsVisible    visibility toggle
-IsLocked     lock toggle
+Line Format Manager -> UpdateLineFormatsCommand -> undo/redo
 ```
 
-`FillColor` and `DrawOrder` are not part of the current v1 Layer Manager implementation yet.
-
----
-
-## Draw order
-
-Future rule:
+Layer changes remain separate:
 
 ```text
-lower DrawOrder  -> drawn first / background
-higher DrawOrder -> drawn last / foreground
+Layer Manager -> UpdateLayersCommand -> undo/redo
 ```
-
-Within the same layer, entities should render in document insertion order.
-
-There should be no per-entity z-order unless a future design decision explicitly changes this rule.
 
 ---
 
-## Fill
+## Rendering
 
-Future fill behavior:
+Canvas rendering resolves the stroke at render time.
 
-Only closed entities can be filled:
+For each visible entity:
+
+```text
+layer = document.Layers.GetById(entity.LayerId)
+format = document.LineFormats.GetById(layer.LineFormatId)
+```
+
+Then the renderer uses:
+
+```text
+format.Color
+format.LineWeight
+format.LineStyle
+```
+
+Selected entities keep the same line weight and line style. Selection changes only the highlight color.
+
+---
+
+## SVG export
+
+SVG export uses the same resolution rule as the canvas:
+
+```text
+Entity -> Layer -> LineFormat
+```
+
+SVG attributes are generated from the resolved format:
+
+```text
+stroke           -> LineFormat.Color
+stroke-width     -> LineFormat.LineWeight
+stroke-dasharray -> LineStyleDashPattern, omitted for Continuous
+```
+
+Hidden layers are ignored. Locked visible layers are exported normally.
+
+---
+
+## Persistence
+
+Native persistence stores line formats in the document and stores only `LineFormatId` on layers.
+
+Conceptually:
+
+```text
+DocumentDto.LineFormats
+LayerDto.LineFormatId
+```
+
+If a document has no line formats, the loader falls back to the default line format collection. If a layer references an unknown format, the loader falls back to `Continuous`.
+
+Old color and line weight layer fields are legacy compatibility data only. They are not the active source of appearance.
+
+---
+
+## Future appearance features
+
+Future layer/model appearance work may add:
+
+```text
+FillColor
+DrawOrder
+per-layer fill behavior
+text formats
+dimension formats
+```
+
+Draw order should still be layer-based unless a future design decision explicitly introduces per-entity ordering.
+
+Fill should apply only to fillable closed entities:
 
 ```text
 CircleEntity
@@ -93,27 +203,3 @@ PolylineEntity with IsClosed = true
 ```
 
 Open polylines and lines are never filled.
-
-Fill is a layer attribute. Setting a layer fill color fills all fillable entities on that layer.
-
----
-
-## Commands and undo
-
-Layer appearance changes should go through commands.
-
-Current implemented pattern:
-
-```text
-Layer Manager -> UpdateLayersCommand -> undoable layer update
-```
-
-Future fill color and draw order changes should reuse the same command-oriented approach.
-
----
-
-## Persistence
-
-Current persistence saves implemented layer fields.
-
-When `FillColor` and `DrawOrder` are implemented, the serializer must be updated and the document format versioning strategy must be considered.

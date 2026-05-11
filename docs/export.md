@@ -59,12 +59,30 @@ visible normal layers -> exported
 Appearance rules:
 
 ```text
-stroke color -> layer color
-stroke width -> layer line weight
-fill         -> none for now
+stroke           -> LineFormat.Color referenced by the entity layer
+stroke-width     -> LineFormat.LineWeight referenced by the entity layer
+stroke-dasharray -> LineStyleDashPattern for non-continuous formats
+fill             -> none for now
 ```
 
-This matches the project rule that entity appearance comes from layers, not from per-entity overrides.
+This matches the project rule that entity appearance comes from the layer's reusable line format, not from per-entity overrides.
+
+---
+
+## Line formats in SVG
+
+For each exported entity, the exporter resolves appearance through the document model:
+
+```text
+entity.LayerId
+-> document.Layers.GetById(...)
+-> layer.LineFormatId
+-> document.LineFormats.GetById(...)
+```
+
+Continuous lines do not write `stroke-dasharray`. Dashed, dash-dot and dash-dot-dot formats write a `stroke-dasharray` attribute using the same model-space pattern used by the canvas renderer.
+
+The SVG exporter must not use legacy layer color/weight fields or per-entity style overrides as the active stroke source.
 
 ---
 
@@ -118,6 +136,7 @@ Possible improvements:
 - SVG layer groups using `<g>`;
 - transparent background option in the UI;
 - fill export once layer fill color is implemented;
+- SVG layer groups using line format metadata where useful;
 - export settings dialog;
 - PDF export;
 - DXF export.

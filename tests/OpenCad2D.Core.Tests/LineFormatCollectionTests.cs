@@ -18,6 +18,27 @@ public sealed class LineFormatCollectionTests
         Assert.Equal(
             1.0,
             formats.GetById(LineFormatId.Continuous).LineWeight.Millimeters);
+        Assert.Equal(
+            0.5,
+            formats.GetById(LineFormatId.Axis).LineWeight.Millimeters);
+        Assert.Equal(
+            1.0,
+            formats.GetById(LineFormatId.Dashed).LineWeight.Millimeters);
+        Assert.Equal(
+            0.5,
+            formats.GetById(LineFormatId.DashDotDot).LineWeight.Millimeters);
+        Assert.Equal(
+            0.75,
+            formats.GetById(LineFormatId.DashDot).LineWeight.Millimeters);
+        Assert.Equal(
+            LineStyle.DashDot,
+            formats.GetById(LineFormatId.Axis).LineStyle);
+        Assert.Equal(
+            CadColor.FromRgb(0, 255, 0),
+            formats.GetById(LineFormatId.DashDot).Color);
+        Assert.Equal(
+            "Tratto due punti",
+            formats.GetById(LineFormatId.DashDotDot).Name);
     }
 
     [Fact]
