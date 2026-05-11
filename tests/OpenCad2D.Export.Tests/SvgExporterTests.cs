@@ -163,16 +163,26 @@ public sealed class SvgExporterTests
     }
 
     [Fact]
-    public void Export_ShouldUseLayerColorAndLineWeight()
+    public void Export_ShouldUseLineFormatColorAndLineWeight()
     {
         var document = new CadDocument();
         var layerId = new LayerId("Walls");
+        var formatId = new LineFormatId("WallsFormat");
+
+        document.ReplaceLineFormats(new LineFormatCollection(new[]
+        {
+            new LineFormat(
+                formatId,
+                "Walls format",
+                CadColor.FromRgb(255, 170, 0),
+                LineWeight.FromMillimeters(0.5),
+                LineStyle.Continuous)
+        }));
 
         document.Layers.Add(new Layer(
             layerId,
             "Walls",
-            CadColor.FromRgb(255, 170, 0),
-            LineWeight.FromMillimeters(0.5)));
+            formatId));
 
         document.AddEntity(new LineEntity(
             new Point2D(0, 0),
@@ -187,18 +197,27 @@ public sealed class SvgExporterTests
         Assert.Contains("stroke-width=\"0.5\"", result.Content);
     }
 
-
     [Fact]
-    public void Export_ShouldIgnoreEntityLineWeightAndUseOnlyLayerLineWeight()
+    public void Export_ShouldIgnoreEntityStyleAndUseOnlyLayerLineFormat()
     {
         var document = new CadDocument();
         var layerId = new LayerId("LayerWeight");
+        var formatId = new LineFormatId("LayerWeightFormat");
+
+        document.ReplaceLineFormats(new LineFormatCollection(new[]
+        {
+            new LineFormat(
+                formatId,
+                "Layer weight format",
+                CadColor.FromRgb(10, 20, 30),
+                LineWeight.FromMillimeters(0.75),
+                LineStyle.Continuous)
+        }));
 
         document.Layers.Add(new Layer(
             layerId,
             "LayerWeight",
-            CadColor.FromRgb(10, 20, 30),
-            LineWeight.FromMillimeters(0.75)));
+            formatId));
 
         document.AddEntity(new LineEntity(
             new Point2D(0, 0),
@@ -206,6 +225,7 @@ public sealed class SvgExporterTests
             layerId: layerId,
             style: new EntityStyle
             {
+                Color = CadColor.FromRgb(200, 200, 200),
                 LineWeight = LineWeight.FromMillimeters(8)
             }));
 
@@ -213,8 +233,78 @@ public sealed class SvgExporterTests
 
         SvgExportResult result = exporter.Export(document);
 
+        Assert.Contains("stroke=\"#0A141E\"", result.Content);
         Assert.Contains("stroke-width=\"0.75\"", result.Content);
         Assert.DoesNotContain("stroke-width=\"8\"", result.Content);
+        Assert.DoesNotContain("stroke=\"#C8C8C8\"", result.Content);
+    }
+
+    [Fact]
+    public void Export_ShouldWriteStrokeDashArray_ForDashedLineFormat()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("DashedLayer");
+        var formatId = new LineFormatId("DashedFormat");
+
+        document.ReplaceLineFormats(new LineFormatCollection(new[]
+        {
+            new LineFormat(
+                formatId,
+                "Dashed format",
+                CadColor.FromRgb(255, 255, 255),
+                LineWeight.FromMillimeters(0.25),
+                LineStyle.Dashed)
+        }));
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "DashedLayer",
+            formatId));
+
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: layerId));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.Contains("stroke-dasharray=\"6 3\"", result.Content);
+    }
+
+    [Fact]
+    public void Export_ShouldNotWriteStrokeDashArray_ForContinuousLineFormat()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("ContinuousLayer");
+        var formatId = new LineFormatId("ContinuousFormat");
+
+        document.ReplaceLineFormats(new LineFormatCollection(new[]
+        {
+            new LineFormat(
+                formatId,
+                "Continuous format",
+                CadColor.FromRgb(255, 255, 255),
+                LineWeight.FromMillimeters(0.25),
+                LineStyle.Continuous)
+        }));
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "ContinuousLayer",
+            formatId));
+
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: layerId));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.DoesNotContain("stroke-dasharray", result.Content);
     }
 
     [Fact]

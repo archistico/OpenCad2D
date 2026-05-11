@@ -65,9 +65,13 @@ public sealed class SvgExporter : ISvgExporter
         foreach (CadEntity entity in entities)
         {
             Layer layer = document.Layers.GetRequired(entity.LayerId);
+            LineFormat lineFormat = ResolveLineFormat(
+                document,
+                layer);
+
             string? svgElement = ExportEntity(
                 entity,
-                layer,
+                lineFormat,
                 contentBounds,
                 width,
                 height,
@@ -167,7 +171,7 @@ public sealed class SvgExporter : ISvgExporter
 
     private static string? ExportEntity(
         CadEntity entity,
-        Layer layer,
+        LineFormat lineFormat,
         BoundingBox2D? contentBounds,
         double width,
         double height,
@@ -182,28 +186,28 @@ public sealed class SvgExporter : ISvgExporter
         {
             LineEntity line => ExportLine(
                 line,
-                layer,
+                lineFormat,
                 contentBounds.Value,
                 height,
                 margin),
 
             CircleEntity circle => ExportCircle(
                 circle,
-                layer,
+                lineFormat,
                 contentBounds.Value,
                 height,
                 margin),
 
             PolylineEntity polyline => ExportPolyline(
                 polyline,
-                layer,
+                lineFormat,
                 contentBounds.Value,
                 height,
                 margin),
 
             ArcEntity arc => ExportArc(
                 arc,
-                layer,
+                lineFormat,
                 contentBounds.Value,
                 height,
                 margin),
@@ -214,7 +218,7 @@ public sealed class SvgExporter : ISvgExporter
 
     private static string ExportLine(
         LineEntity line,
-        Layer layer,
+        LineFormat lineFormat,
         BoundingBox2D bounds,
         double svgHeight,
         double margin)
@@ -231,12 +235,12 @@ public sealed class SvgExporter : ISvgExporter
             svgHeight,
             margin);
 
-        return $"  <line x1=\"{Format(start.X)}\" y1=\"{Format(start.Y)}\" x2=\"{Format(end.X)}\" y2=\"{Format(end.Y)}\" {StrokeAttributes(layer)} />";
+        return $"  <line x1=\"{Format(start.X)}\" y1=\"{Format(start.Y)}\" x2=\"{Format(end.X)}\" y2=\"{Format(end.Y)}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static string ExportCircle(
         CircleEntity circle,
-        Layer layer,
+        LineFormat lineFormat,
         BoundingBox2D bounds,
         double svgHeight,
         double margin)
@@ -247,12 +251,12 @@ public sealed class SvgExporter : ISvgExporter
             svgHeight,
             margin);
 
-        return $"  <circle cx=\"{Format(center.X)}\" cy=\"{Format(center.Y)}\" r=\"{Format(circle.Radius)}\" {StrokeAttributes(layer)} />";
+        return $"  <circle cx=\"{Format(center.X)}\" cy=\"{Format(center.Y)}\" r=\"{Format(circle.Radius)}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static string ExportPolyline(
         PolylineEntity polyline,
-        Layer layer,
+        LineFormat lineFormat,
         BoundingBox2D bounds,
         double svgHeight,
         double margin)
@@ -274,12 +278,12 @@ public sealed class SvgExporter : ISvgExporter
             ? "polygon"
             : "polyline";
 
-        return $"  <{tagName} points=\"{points}\" {StrokeAttributes(layer)} />";
+        return $"  <{tagName} points=\"{points}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static string ExportArc(
         ArcEntity arc,
-        Layer layer,
+        LineFormat lineFormat,
         BoundingBox2D bounds,
         double svgHeight,
         double margin)
@@ -309,7 +313,7 @@ public sealed class SvgExporter : ISvgExporter
             ? 1
             : 0;
 
-        return $"  <path d=\"M {Format(start.X)} {Format(start.Y)} A {Format(arc.Radius)} {Format(arc.Radius)} 0 {largeArcFlag} {sweepFlag} {Format(end.X)} {Format(end.Y)}\" {StrokeAttributes(layer)} />";
+        return $"  <path d=\"M {Format(start.X)} {Format(start.Y)} A {Format(arc.Radius)} {Format(arc.Radius)} 0 {largeArcFlag} {sweepFlag} {Format(end.X)} {Format(end.Y)}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static double GetPositiveSweepRadians(
@@ -345,9 +349,44 @@ public sealed class SvgExporter : ISvgExporter
             y);
     }
 
-    private static string StrokeAttributes(Layer layer)
+    private static LineFormat ResolveLineFormat(
+        CadDocument document,
+        Layer layer)
     {
-        return $"stroke=\"{ToHex(layer.Color)}\" stroke-width=\"{Format(layer.LineWeight.Millimeters)}\" fill=\"none\" vector-effect=\"non-scaling-stroke\"";
+        if (document.LineFormats.TryGetById(
+            layer.LineFormatId,
+            out LineFormat? lineFormat) &&
+            lineFormat is not null)
+        {
+            return lineFormat;
+        }
+
+        return LineFormatCollection.Default.GetById(LineFormatCollection.Default.All[0].Id);
+    }
+
+    private static string StrokeAttributes(LineFormat lineFormat)
+    {
+        var attributes = new StringBuilder();
+
+        attributes.Append($"stroke=\"{ToHex(lineFormat.Color)}\" ");
+        attributes.Append($"stroke-width=\"{Format(lineFormat.LineWeight.Millimeters)}\" ");
+        attributes.Append("fill=\"none\" vector-effect=\"non-scaling-stroke\"");
+
+        double[]? dashPattern = LineStyleDashPattern.Get(lineFormat.LineStyle);
+
+        if (dashPattern is not null && dashPattern.Length > 0)
+        {
+            attributes.Append($" stroke-dasharray=\"{FormatDashArray(dashPattern)}\"");
+        }
+
+        return attributes.ToString();
+    }
+
+    private static string FormatDashArray(IEnumerable<double> values)
+    {
+        return string.Join(
+            " ",
+            values.Select(Format));
     }
 
     private static string ToHex(CadColor color)

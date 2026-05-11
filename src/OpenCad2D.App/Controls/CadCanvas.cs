@@ -5,6 +5,7 @@ using Avalonia.Media;
 using OpenCad2D.App.Rendering;
 using OpenCad2D.App.Viewport;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry;
@@ -63,7 +64,9 @@ public sealed class CadCanvas : Control
         byte R,
         byte G,
         byte B,
-        double Thickness);
+        double Thickness,
+        LineStyle LineStyle,
+        double Scale);
     private const double GridLineDetectionTolerance = 1e-6;
     private bool _isPanning;
     private Point _lastPanScreenPoint;
@@ -244,7 +247,7 @@ public sealed class CadCanvas : Control
     {
         if (Workspace is null)
         {
-            return new Pen(Brushes.White, Layer.Default.LineWeight.Millimeters);
+            return new Pen(Brushes.White, LineFormatCollection.Default.GetById(LineFormatId.Continuous).LineWeight.Millimeters);
         }
 
         EntityScreenStyle screenStyle = EntityScreenStyleResolver.Resolve(
@@ -259,7 +262,9 @@ public sealed class CadCanvas : Control
             color.R,
             color.G,
             color.B,
-            thickness);
+            thickness,
+            screenStyle.LineStyle,
+            _viewport.Scale);
 
         if (_penCache.TryGetValue(key, out Pen? cachedPen))
         {
@@ -272,13 +277,35 @@ public sealed class CadCanvas : Control
                 color.G,
                 color.B));
 
+        DashStyle? dashStyle = CreateDashStyle(screenStyle.LineStyle);
+
         var pen = new Pen(
             brush,
-            thickness);
+            thickness,
+            dashStyle);
 
         _penCache.Add(key, pen);
 
         return pen;
+    }
+
+    private DashStyle? CreateDashStyle(LineStyle lineStyle)
+    {
+        double[]? modelPattern = LineStyleDashPattern.Get(lineStyle);
+
+        if (modelPattern is null || modelPattern.Length == 0)
+        {
+            return null;
+        }
+
+        double[] screenPattern = modelPattern
+            .Select(_viewport.ModelLengthToScreen)
+            .Select(value => Math.Max(0.1, value))
+            .ToArray();
+
+        return new DashStyle(
+            screenPattern,
+            0);
     }
 
     private void DrawSnapMarker(DrawingContext context)

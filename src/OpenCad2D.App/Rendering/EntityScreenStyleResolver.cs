@@ -22,24 +22,33 @@ public static class EntityScreenStyleResolver
             document,
             entity);
 
+        LineFormat lineFormat = ResolveLineFormat(
+            document,
+            layer);
+
         CadColor color = isSelected
             ? SelectedColor
-            : ResolveColor(
-                entity,
-                layer);
+            : lineFormat.Color;
 
         return new EntityScreenStyle(
             color,
-            Math.Max(0, layer.LineWeight.Millimeters));
+            Math.Max(0, lineFormat.LineWeight.Millimeters),
+            lineFormat.LineStyle);
     }
 
-    private static CadColor ResolveColor(
-        CadEntity entity,
+    private static LineFormat ResolveLineFormat(
+        CadDocument document,
         Layer layer)
     {
-        return entity.Style.Color.IsByLayer
-            ? layer.Color
-            : entity.Style.Color;
+        if (document.LineFormats.TryGetById(
+            layer.LineFormatId,
+            out LineFormat? lineFormat) &&
+            lineFormat is not null)
+        {
+            return lineFormat;
+        }
+
+        return LineFormatCollection.Default.GetById(LineFormatCollection.Default.All[0].Id);
     }
 
     private static Layer ResolveLayer(

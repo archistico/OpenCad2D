@@ -4,4 +4,5 @@ namespace OpenCad2D.App.Rendering;
 
 public readonly record struct EntityScreenStyle(
     CadColor Color,
-    double LineWeight);
+    double LineWeight,
+    LineStyle LineStyle);
