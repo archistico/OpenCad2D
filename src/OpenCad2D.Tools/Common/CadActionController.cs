@@ -1,4 +1,6 @@
-﻿using OpenCad2D.Tools.Editing;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
+using OpenCad2D.Tools.Editing;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -35,6 +37,7 @@ public sealed class CadActionController
         }
 
         _context.CommandHistory.Undo(_context.Document);
+        EnsureCurrentLayerIsUsable();
 
         return ToolResult.Completed("Undo completed.");
     }
@@ -47,6 +50,7 @@ public sealed class CadActionController
         }
 
         _context.CommandHistory.Redo(_context.Document);
+        EnsureCurrentLayerIsUsable();
 
         return ToolResult.Completed("Redo completed.");
     }
@@ -56,6 +60,27 @@ public sealed class CadActionController
         var deleteTool = new DeleteTool();
 
         return deleteTool.Execute(_context);
+    }
+
+    private void EnsureCurrentLayerIsUsable()
+    {
+        if (!_context.Document.Layers.Contains(_context.CurrentLayerId))
+        {
+            _context.CurrentLayerId = LayerId.Default;
+        }
+
+        Layer currentLayer = _context.Document.Layers.GetRequired(_context.CurrentLayerId);
+
+        if (currentLayer.IsVisible && !currentLayer.IsLocked)
+        {
+            return;
+        }
+
+        Layer? firstUsableLayer = _context.Document.Layers.All
+            .OrderBy(layer => layer.Name)
+            .FirstOrDefault(layer => layer.IsVisible && !layer.IsLocked);
+
+        _context.CurrentLayerId = firstUsableLayer?.Id ?? _context.CurrentLayerId;
     }
 
     public ToolResult CancelActiveTool()

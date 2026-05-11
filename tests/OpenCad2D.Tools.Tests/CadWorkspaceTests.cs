@@ -361,4 +361,88 @@ public sealed class CadWorkspaceTests
         Assert.Equal(0, workspace.CommandHistory.UndoCount);
     }
 
+
+
+    [Fact]
+    public void ApplyLayerChanges_UndoAndRedo_ShouldRestoreCurrentLayer()
+    {
+        var wallsLayerId = new LayerId("Walls");
+        var doorsLayerId = new LayerId("Doors");
+        var workspace = new CadWorkspace();
+
+        workspace.Document.Layers.Add(new Layer(wallsLayerId, "Walls"));
+        workspace.Document.Layers.Add(new Layer(doorsLayerId, "Doors"));
+        workspace.CurrentLayerId = wallsLayerId;
+
+        List<Layer> nextLayers = workspace.Document.Layers.All.ToList();
+
+        ToolResult result = workspace.ApplyLayerChanges(
+            nextLayers,
+            doorsLayerId);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(doorsLayerId, workspace.CurrentLayerId);
+
+        workspace.ActionController.Undo();
+
+        Assert.Equal(wallsLayerId, workspace.CurrentLayerId);
+
+        workspace.ActionController.Redo();
+
+        Assert.Equal(doorsLayerId, workspace.CurrentLayerId);
+    }
+
+    [Fact]
+    public void SetCurrentLayerLocked_ShouldBeUndoableAndMarkDocumentDirty()
+    {
+        var workspace = new CadWorkspace();
+
+        Assert.False(workspace.IsDirty);
+
+        ToolResult result = workspace.SetCurrentLayerLocked(true);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.True(workspace.Document.Layers.GetRequired(LayerId.Default).IsLocked);
+        Assert.True(workspace.IsDirty);
+        Assert.True(workspace.CommandHistory.CanUndo);
+
+        workspace.ActionController.Undo();
+
+        Assert.False(workspace.Document.Layers.GetRequired(LayerId.Default).IsLocked);
+        Assert.False(workspace.IsDirty);
+
+        workspace.ActionController.Redo();
+
+        Assert.True(workspace.Document.Layers.GetRequired(LayerId.Default).IsLocked);
+        Assert.True(workspace.IsDirty);
+    }
+
+    [Fact]
+    public void SetCurrentLayerVisibility_ShouldBeUndoableAndMarkDocumentDirty()
+    {
+        var workspace = new CadWorkspace();
+
+        workspace.Document.Layers.SetVisibility(
+            LayerId.Default,
+            false);
+        workspace.MarkSaved();
+
+        ToolResult result = workspace.SetCurrentLayerVisibility(true);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.True(workspace.Document.Layers.GetRequired(LayerId.Default).IsVisible);
+        Assert.True(workspace.IsDirty);
+        Assert.True(workspace.CommandHistory.CanUndo);
+
+        workspace.ActionController.Undo();
+
+        Assert.False(workspace.Document.Layers.GetRequired(LayerId.Default).IsVisible);
+        Assert.False(workspace.IsDirty);
+
+        workspace.ActionController.Redo();
+
+        Assert.True(workspace.Document.Layers.GetRequired(LayerId.Default).IsVisible);
+        Assert.True(workspace.IsDirty);
+    }
+
 }

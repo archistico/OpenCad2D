@@ -300,15 +300,16 @@ public sealed class CadWorkspace
             return ToolResult.None("The current layer must be visible and unlocked.");
         }
 
-        var command = new UpdateLayersCommand(
+        var command = new UpdateLayersAndCurrentLayerCommand(
             Document.Layers.All.ToList(),
-            layerList);
+            layerList,
+            CurrentLayerId,
+            currentLayerId,
+            layerId => CurrentLayerId = layerId);
 
         CommandHistory.Execute(
             Document,
             command);
-
-        CurrentLayerId = currentLayerId;
 
         int removedSelections = ClearSelectionOfNonSelectableEntities();
 
@@ -426,11 +427,73 @@ public sealed class CadWorkspace
         CurrentLayerId = firstUsableLayer?.Id ?? LayerId.Default;
     }
 
+    public ToolResult SetCurrentLayerVisibility(bool isVisible)
+    {
+        Layer currentLayer = Document.Layers.GetRequired(CurrentLayerId);
+
+        if (!isVisible)
+        {
+            return ToolResult.None("The current layer must remain visible.");
+        }
+
+        if (currentLayer.IsVisible)
+        {
+            return ToolResult.None($"Layer '{currentLayer.Name}' is already visible.");
+        }
+
+        List<Layer> updatedLayers = Document.Layers.All
+            .Select(layer => layer.Id == CurrentLayerId
+                ? layer.WithVisibility(true)
+                : layer)
+            .ToList();
+
+        var command = new UpdateLayersAndCurrentLayerCommand(
+            Document.Layers.All.ToList(),
+            updatedLayers,
+            CurrentLayerId,
+            CurrentLayerId,
+            layerId => CurrentLayerId = layerId);
+
+        CommandHistory.Execute(
+            Document,
+            command);
+
+        return ToolResult.Completed($"Layer '{currentLayer.Name}' visible.");
+    }
+
     public ToolResult SetCurrentLayerLocked(bool isLocked)
     {
-        Document.Layers.SetLocked(
+        Layer currentLayer = Document.Layers.GetRequired(CurrentLayerId);
+
+        if (currentLayer.IsLocked == isLocked)
+        {
+            string alreadyMessage = isLocked
+                ? $"Layer '{currentLayer.Name}' is already locked."
+                : $"Layer '{currentLayer.Name}' is already unlocked.";
+
+            return ToolResult.None(alreadyMessage);
+        }
+
+        List<Layer> updatedLayers = Document.Layers.All
+            .Select(layer => layer.Id == CurrentLayerId
+                ? layer.WithLocked(isLocked)
+                : layer)
+            .ToList();
+
+        LayerId nextCurrentLayerId = ResolveUsableCurrentLayerId(
+            updatedLayers,
+            CurrentLayerId);
+
+        var command = new UpdateLayersAndCurrentLayerCommand(
+            Document.Layers.All.ToList(),
+            updatedLayers,
             CurrentLayerId,
-            isLocked);
+            nextCurrentLayerId,
+            layerId => CurrentLayerId = layerId);
+
+        CommandHistory.Execute(
+            Document,
+            command);
 
         int removedSelections = ClearSelectionOfNonSelectableEntities();
 
@@ -444,6 +507,26 @@ public sealed class CadWorkspace
         }
 
         return ToolResult.Completed(message);
+    }
+
+    private static LayerId ResolveUsableCurrentLayerId(
+        IReadOnlyList<Layer> layers,
+        LayerId preferredLayerId)
+    {
+        Layer? preferredLayer = layers.FirstOrDefault(layer => layer.Id == preferredLayerId);
+
+        if (preferredLayer is not null &&
+            preferredLayer.IsVisible &&
+            !preferredLayer.IsLocked)
+        {
+            return preferredLayer.Id;
+        }
+
+        Layer? firstUsableLayer = layers
+            .OrderBy(layer => layer.Name)
+            .FirstOrDefault(layer => layer.IsVisible && !layer.IsLocked);
+
+        return firstUsableLayer?.Id ?? preferredLayerId;
     }
 
     public int ClearSelectionOfNonSelectableEntities()

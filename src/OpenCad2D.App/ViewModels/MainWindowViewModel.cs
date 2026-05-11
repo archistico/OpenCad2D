@@ -620,25 +620,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
-    public void SetCurrentLayerVisibility(bool isVisible)
+    public ToolResult SetCurrentLayerVisibility(bool isVisible)
     {
-        Layer currentLayer = CurrentLayer;
+        ToolResult result = Workspace.SetCurrentLayerVisibility(isVisible);
 
-        if (!isVisible)
-        {
-            SetMessage("The current layer must remain visible.");
-            NotifyLayerStateChanged();
-            return;
-        }
-
-        Workspace.Document.Layers.SetVisibility(
-            currentLayer.Id,
-            isVisible);
-
-        SetMessage($"Layer '{currentLayer.Name}' visible.");
-
+        SetLastResult(result);
         NotifyLayerStateChanged();
         NotifyDocumentStateChanged();
+
+        return result;
     }
 
     public ToolResult SetCurrentLayerLocked(bool isLocked)
