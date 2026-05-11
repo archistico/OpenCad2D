@@ -437,20 +437,25 @@ public sealed class CadWorkspace
             return gripCancelResult;
         }
 
+        if (ToolController.ActiveTool is SelectionTool selectionTool)
+        {
+            if (!selectionTool.HasWindowPreview && SelectionSet.IsEmpty)
+            {
+                return ToolResult.None();
+            }
+
+            return ActionController.CancelActiveTool();
+        }
+
+        string activeToolName = ToolController.ActiveToolName;
+
         ToolResult cancelResult = ActionController.CancelActiveTool();
 
-        if (cancelResult.Changed)
-        {
-            return cancelResult;
-        }
+        ToolController.SetActiveToolWithoutDeactivating(
+            new SelectionTool());
 
-        if (!SelectionSet.IsEmpty)
-        {
-            SelectionSet.Clear();
-
-            return ToolResult.Updated("Selection cleared.");
-        }
-
-        return ToolResult.None("Nothing to cancel.");
+        return cancelResult.Changed
+            ? ToolResult.Cancelled($"{activeToolName} command cancelled. Selection tool active.")
+            : ToolResult.Cancelled("Selection tool active.");
     }
 }
