@@ -120,119 +120,149 @@ The document serializer must not read or write any application UI state. The ses
 
 ## Grid Improvements
 
-The visual grid supports two levels of resolution, zoom-based automatic visibility and a user toggle.
+Grid configuration is managed through the `Grid...` button in the top CAD bar, near `Layers...`. The older inline grid controls should not be reintroduced in the menu/toolbar unless they are only quick toggles. Full grid editing belongs in the dedicated dialog.
 
-### Two grid levels
+The visual grid supports rectangular and isometric layouts, two visual resolutions, configurable origin and zoom-based visibility thresholds.
 
-The grid has two independent levels:
+### Grid dialog
 
-**Primary grid:** major lines at a configurable step. These lines are bolder or more opaque. The primary step is typically a round number in document units (for example 100 mm or 1 m).
+The current `Grid Settings` dialog edits:
 
-**Secondary grid:** minor lines that subdivide primary cells into equal intervals. For example, if the primary step is 100 and there are 10 subdivisions, secondary lines appear every 10 units.
+```text
+Show grid
+Type: Rectangular / Isometric
+Minor step
+Major step
+Origin X
+Origin Y
+Minimum screen spacing
+Maximum screen spacing
+Isometric diagonal angle
+```
 
-Both steps are independently configurable. The secondary step must be a divisor of the primary step to produce aligned subdivisions.
+`Cancel` leaves the current settings unchanged. `OK` validates the values and applies the resulting `GridSettings` to the workspace.
+
+Grid snap is still controlled separately by `SnapKind.Grid` from the snap bar. Showing or hiding the grid does not automatically enable or disable grid snapping.
+
+### Rectangular grid
+
+The rectangular grid is the standard orthogonal layout:
+
+```text
+horizontal lines
+vertical lines
+minor spacing = MinorStep
+major spacing = MajorStep
+```
+
+Major lines are rendered more prominently than minor lines. `MajorStep` must be greater than or equal to `MinorStep`.
+
+### Isometric grid
+
+The isometric grid uses three line families:
+
+```text
+vertical lines
+diagonal lines at +IsometricAngleDegrees
+diagonal lines at -IsometricAngleDegrees
+```
+
+The default angle is `30°`. The vertical line spacing is derived from the diagonal spacing so that vertical lines pass through the vertices created by the intersections of the two diagonal families:
+
+```text
+verticalStep = diagonalSpacing / (2 * tan(angle))
+```
+
+For the default 30-degree grid, this creates the expected isometric vertex alignment instead of a visually independent set of vertical lines.
 
 ### Zoom-based visibility
 
-When the user zooms far out, grid lines become too dense to be readable or useful. Each grid level has a minimum pixel spacing threshold.
+When the user zooms far out, grid lines become too dense to be readable or useful. When the user zooms too far in, a given grid level may also become visually unhelpful. `GridSettings` therefore stores a screen spacing range.
 
 Rule:
 
 ```text
-if the screen distance between two adjacent grid lines falls below MinPixelSpacing
--> that grid level is suppressed automatically
+if the screen distance between adjacent grid lines is below MinimumScreenSpacing
+-> that grid level is suppressed
+
+if the screen distance between adjacent grid lines is above MaximumScreenSpacing
+-> that grid level is suppressed
 ```
 
-Typical values:
-
-```text
-MinPixelSpacing for secondary grid  around 8 pixels
-MinPixelSpacing for primary grid    around 4 pixels
-```
-
-These thresholds prevent the canvas from becoming cluttered at small zoom levels.
-
-When the user zooms back in, the suppressed level reappears automatically.
-
-### Grid toggle
-
-The grid is toggled by the `G` shortcut or by a button in the snap/Ortho bar.
-
-Grid visibility is a UI display setting. It is stored in the session settings file, not in the drawing document. Hiding the grid does not affect grid snapping.
+This keeps the canvas readable across zoom levels.
 
 ### GridSettings model
 
-`GridSettings` extends to include:
+Current `GridSettings` properties:
 
 ```text
-PrimaryStep          step of major grid lines (model units)
-SecondaryDivisions   number of subdivisions within each primary cell
-SnapStep             step used by grid snapping (may differ from visual grid)
-IsVisible            whether the visual grid is shown
-MinPixelSpacingPrimary     pixel threshold below which primary grid is hidden
-MinPixelSpacingSecondary   pixel threshold below which secondary grid is hidden
+MinorStep                 minor grid spacing in model units
+MajorStep                 major grid spacing in model units
+Step                      compatibility alias for MinorStep
+OriginX                   grid origin X
+OriginY                   grid origin Y
+IsVisible                 visual grid toggle
+Kind                      Rectangular or Isometric
+IsometricAngleDegrees     angle used by isometric diagonal families
+MinimumScreenSpacing      lower screen spacing threshold
+MaximumScreenSpacing      upper screen spacing threshold
 ```
+
+The helper `GetIsometricVerticalStep(diagonalSpacing)` calculates the required vertical-line spacing for the current isometric angle.
 
 ### Grid snapping alignment
 
-Grid snapping uses `SnapStep` from `GridSettings`. By default `SnapStep` equals `SecondaryStep` (primary step divided by secondary divisions). This can be configured separately.
+Grid snapping uses `GridSettings` and `SnapKind.Grid`.
 
-The visual grid and the snap grid remain conceptually aligned. Showing the grid gives the user a clear reference for where snap points will be.
+For rectangular grids, the closest grid candidate is the nearest rectangular grid point.
+
+For isometric grids, the closest candidate is an isometric vertex generated from the same layout used by the renderer. This keeps the visible grid and grid snap behavior aligned.
 
 ---
 
 ## Drawing Configuration
 
-Drawing configuration stores document-level parameters that govern measurement units, display precision, dimension appearance and default tool behavior.
+Drawing configuration is the planned document-level area for parameters that govern measurement units, display precision, dimension appearance and default tool behavior.
 
 This is distinct from application settings, which are user-local and session-specific.
 
-### DrawingSettings
+### Planned DrawingSettings
 
-`DrawingSettings` lives inside `CadDocument` and is serialized as part of the `.opencad2d.json` document format.
+`DrawingSettings` is planned as document data inside `CadDocument`, serialized as part of the `.opencad2d.json` document format.
 
-It contains:
+It should contain:
 
 ```text
 Units               measurement unit system (mm, cm, m, inch, feet)
 LinearPrecision     decimal places for length display and dimension values
 AngularPrecision    decimal places for angle display
 DefaultDimensionStyleId   id of the style used for new dimensions
-GridSettings        primary step, secondary divisions, snap step, visibility
+GridSettings        minor/major step, origin, visibility, kind, isometric angle, screen thresholds
 DefaultSnapTolerance   model-unit tolerance for snapping
 DefaultTextHeight   default height for new text entities
 ```
 
-When a document is opened, `DrawingSettings` is loaded and applied. All tools, the status bar and dimension entities use these settings for formatting and defaults.
+When this is implemented, opening a document should load `DrawingSettings` and apply them to tools, the status bar and dimension entities.
 
-### Changes through commands
+### Current grid settings behavior
 
-Changes to `DrawingSettings` go through `UpdateDrawingSettingsCommand`.
+At the current implementation stage, grid settings are applied to the active `CadWorkspace` through `SetGridSettings(...)`. They affect rendering and grid snap behavior immediately.
 
-```text
-Execute   apply new settings to the document
-Undo      restore previous settings
-```
-
-This ensures that settings changes are undoable and that the command history generation counter updates, marking the document as dirty.
+A later document-level `DrawingSettings` command can make these settings undoable and persist them as part of the drawing file. Until that exists, keep grid-setting behavior concentrated in the workspace/app layer and avoid duplicating it inside individual tools.
 
 ### Configuration UI
 
-A settings dialog or panel exposes `DrawingSettings` for the current document.
-
-The dialog is hosted by `OpenCad2D.App`. It reads `DrawingSettings` from the workspace, presents editable fields and submits `UpdateDrawingSettingsCommand` on confirmation.
-
-Cancelling the dialog does not submit any command and leaves the document unchanged.
+The current configuration UI is `GridSettingsWindow`, hosted by `OpenCad2D.App`. It reads the current `GridSettings`, validates user input in `GridSettingsWindowViewModel`, and returns a `GridSettingsResult` only when the user confirms with `OK`.
 
 ### Separation from session settings
 
 Document settings and session settings serve different purposes and are stored separately:
 
 ```text
-DrawingSettings (document)
+DrawingSettings (planned document settings)
   -> saved in .opencad2d.json
   -> shared with anyone who opens the file
-  -> changing them marks the document dirty
+  -> changing them should mark the document dirty
 
 Session settings (application)
   -> saved in settings.json
@@ -240,4 +270,4 @@ Session settings (application)
   -> do not affect the drawing content
 ```
 
-A document opened on a different machine uses the same `DrawingSettings`. A different machine uses its own session settings (window position, shortcuts and so on).
+When document-level settings are implemented, a document opened on a different machine should use the same `DrawingSettings`. Each machine still uses its own session settings, such as window position and shortcuts.

@@ -40,7 +40,9 @@ The project currently supports:
 ### Editing and transforms
 
 - select by point/window/crossing;
-- move;
+- entity snap during selection;
+- Ctrl-click cycling for overlapping entities;
+- move, including select-first workflow when no entities were preselected;
 - copy;
 - delete;
 - rotate;
@@ -67,10 +69,10 @@ The project currently supports:
 - vertical left tool panel;
 - canvas with crosshair;
 - optional right Property Panel v1;
-- bottom snap/grid/Ortho bar;
+- bottom snap/Ortho bar;
 - fixed command line input;
 - status bar;
-- grid configuration;
+- grid configuration with rectangular/isometric layouts;
 - viewport culling;
 - rendered entity count.
 
@@ -218,6 +220,7 @@ Explicit coordinates are not modified by Ortho. Direct distance uses Ortho-const
 - current layer;
 - snap settings;
 - grid settings;
+- active tool snap-mode override through `ISnapModeProvider`;
 - current UCS;
 - current base point;
 - Ortho mode;
@@ -227,6 +230,22 @@ Explicit coordinates are not modified by Ortho. Direct distance uses Ortho-const
 The UI should not inspect private fields of tools. Shared information should be exposed through `ToolContext`, `CadWorkspace` or tool public properties.
 
 ---
+
+## Entity snap and overlapping selection status
+
+Selection-oriented tools use `SnapKind.Entity` instead of geometric snaps. `SnapKind.Entity` is intentionally excluded from `SnapKind.All`; use `SnapKind.EntityOnly` when a tool phase is selecting objects.
+
+Implemented behavior:
+
+```text
+SelectionTool -> entity snap only
+MoveTool with no initial selection -> entity-selection phase, then base/destination phase
+Ctrl+click -> cycle through overlapping selectable entities
+Shift+click -> toggle selection
+Ctrl+Shift+click -> cycle and toggle
+```
+
+The entity snap marker is a simple rectangle.
 
 ## Transform tools status
 
@@ -305,7 +324,7 @@ Layer `0` is protected. Current layer cannot be hidden, locked or deleted.
 
 ## Grid and viewport culling status
 
-Grid display is configurable separately from grid snapping.
+Grid display is configurable separately from grid snapping. The top CAD bar exposes `Grid...`, which opens the grid settings dialog. Rectangular and isometric grids are supported.
 
 Viewport culling is implemented at rendering time. Only normal entities whose bounding boxes intersect the visible world area are rendered.
 

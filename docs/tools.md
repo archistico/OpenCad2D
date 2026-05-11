@@ -60,6 +60,7 @@ Special command keys may be interpreted by active tools. Examples:
 ```text
 PolylineTool: Enter finishes, C closes
 AlignTool:    Enter/N confirms without scale, Y confirms with scale
+MoveTool:     Enter confirms the entity-selection phase and asks for base point
 ```
 
 ---
@@ -126,6 +127,8 @@ Selection supports:
 
 - click selection;
 - Shift-click toggle;
+- Ctrl-click cycle through overlapping entities;
+- Ctrl+Shift-click cycle and toggle;
 - window selection;
 - crossing selection.
 
@@ -137,13 +140,39 @@ visible and unlocked entities
 
 Hidden entities and locked-layer entities are not selectable.
 
+While `SelectionTool` is active, only `SnapKind.Entity` is enabled. This keeps the snap marker focused on selectable entities and avoids showing endpoint/midpoint/grid snaps while the user is trying to pick objects.
+
 ---
 
 ## Basic edit tools
 
 ### MoveTool
 
-Moves selected entities by base point and destination point.
+Moves entities by base point and destination point.
+
+If the selection set is already populated when Move starts, the workflow is the classic two-point flow:
+
+```text
+activate Move
+pick base point
+pick destination point
+commit move
+```
+
+If no entity is selected when Move starts, the tool first enters an entity-selection phase:
+
+```text
+activate Move with no selection
+click entity to move
+optionally Shift-click to toggle more entities
+optionally Ctrl-click to cycle overlapping entities
+Enter -> confirm selected entities
+pick base point
+pick destination point
+commit move
+```
+
+During the first phase only entity snap is active. During the base/destination phase the tool uses the ordinary geometric snaps from `ToolContext.EnabledSnaps`.
 
 ### CopyTool
 
@@ -154,6 +183,22 @@ Copies selected entities by base point and destination point.
 Deletes selected entities.
 
 All edit tools use document commands and remain protected by locked-layer rules.
+
+---
+
+## Snap mode per tool phase
+
+Tools may implement `ISnapModeProvider` to control which snap kinds are active in the current interaction phase.
+
+Examples:
+
+```text
+SelectionTool -> EntityOnly
+MoveTool waiting for entity selection -> EntityOnly
+MoveTool waiting for base/destination -> enabled geometric snaps
+```
+
+This avoids changing the user's global snap settings just because a specific tool temporarily needs entity picking.
 
 ---
 

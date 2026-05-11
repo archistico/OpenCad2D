@@ -126,12 +126,28 @@ CAD/session top bar
 Left tool panel
 Canvas
 Right property panel
-Snap/grid/Ortho bar
+Snap/Ortho bar
 Command line
 Status bar
 ```
 
 The file command bar is a protected region and contains New/Open/Save/Save As. It should not be mixed with drawing/editing toolbars.
+
+---
+
+## Tool-specific snap modes
+
+The tool layer may expose phase-specific snap behavior through `ISnapModeProvider`. This keeps global snap settings stable while allowing a tool phase to request a narrower snap set.
+
+Current examples:
+
+```text
+SelectionTool -> SnapKind.EntityOnly
+MoveTool waiting for entity selection -> SnapKind.EntityOnly
+MoveTool waiting for base/destination point -> ToolContext.EnabledSnaps
+```
+
+`SnapKind.Entity` is selection-oriented and is not included in `SnapKind.All`, which remains the set of geometric point snaps.
 
 ---
 

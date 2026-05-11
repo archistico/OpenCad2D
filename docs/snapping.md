@@ -2,7 +2,7 @@
 
 Snapping helps the user place points precisely.
 
-Instead of relying only on the raw cursor position, a tool can ask the snapping system for a better point near the cursor. This can be an endpoint, midpoint, center, intersection, perpendicular point, tangent point or grid point.
+Instead of relying only on the raw cursor position, a tool can ask the snapping system for a better point near the cursor. This can be an endpoint, midpoint, center, intersection, perpendicular point, tangent point, grid point or, when a tool is selecting objects, an entity pick candidate.
 
 Snapping is implemented in `OpenCad2D.Interaction`, not in the UI. This means the same logic can be tested without Avalonia and can be reused by any future user interface.
 
@@ -33,6 +33,7 @@ SnapCandidate
 ISnapProvider
 SnapService
 GridSettings
+EntitySnapProvider
 ```
 
 `SnapKind` identifies the available snap modes.
@@ -45,7 +46,9 @@ GridSettings
 
 `SnapService` coordinates all providers and chooses the best candidate.
 
-`GridSettings` describes the grid used by grid snapping.
+`GridSettings` describes the grid used by grid rendering and grid snapping.
+
+`EntitySnapProvider` is the selection-oriented snap provider. It does not represent a geometric construction point; it represents the selectable entity under the cursor.
 
 ---
 
@@ -67,9 +70,12 @@ Nearest
 Perpendicular
 Tangent
 Grid
+Entity
 ```
 
-The UI exposes most of these modes through snap checkboxes in the toolbar.
+`Entity` is intentionally separate from the geometric snap set. `SnapKind.All` means all geometric snaps and does not include `Entity`. `SnapKind.EntityOnly` is used by tools that are currently picking objects instead of points.
+
+The UI exposes geometric modes through snap controls. Entity snap is not a normal user toggle; it is activated by tools such as `SelectionTool` or by phases such as the first phase of `MoveTool` when no entity was selected before activating Move.
 
 ---
 
@@ -133,7 +139,7 @@ distance from cursor
 
 The distance is used by `SnapService` to choose the best candidate among results with the same priority.
 
-The UI uses the candidate to draw a snap marker and display the current snap kind in the status bar.
+The UI uses the candidate to draw a snap marker and display the current snap kind in the status bar. For `SnapKind.Entity`, the candidate also carries the hit entity id so selection-oriented tools can know which entity is being targeted.
 
 ---
 
@@ -151,7 +157,7 @@ The current priority favors precise geometric snaps over generic snaps.
 
 For example, endpoint and intersection have higher priority than nearest and grid.
 
-This prevents the grid from stealing the cursor when a more meaningful entity snap is available nearby.
+This prevents the grid from stealing the cursor when a more meaningful geometric snap is available nearby. Entity snap is normally enabled alone during entity-picking phases, so it does not compete with ordinary geometric snaps.
 
 ---
 
@@ -171,6 +177,7 @@ Quadrant
 Intersection
 Nearest
 Grid
+Entity   selection-oriented only
 ```
 
 They can work even before a tool has a first point.
@@ -262,6 +269,56 @@ Nearest snapping is useful, but it can be noisy if enabled together with many pr
 
 ---
 
+## Entity snapping
+
+Entity snapping is used when the active tool needs to pick an object rather than a geometric point.
+
+Current uses:
+
+```text
+SelectionTool                         -> entity snap only
+MoveTool, no pre-existing selection    -> entity snap only until entities are selected
+MoveTool, base/destination phase       -> geometric snaps from ToolContext.EnabledSnaps
+```
+
+`EntitySnapProvider` uses hit testing and returns selectable entities under the cursor. The returned `SnapCandidate` contains:
+
+```text
+SnapKind.Entity
+closest point on the hit entity
+entity id
+distance from cursor
+```
+
+The visual marker for entity snap is a simple rectangle. This keeps it visually distinct from endpoint, midpoint, center, grid and other geometric point markers.
+
+Entity snapping follows selection rules, not geometric reference rules:
+
+```text
+hidden layer entity -> not entity-snappable
+locked layer entity -> not entity-snappable
+visible unlocked entity -> entity-snappable
+```
+
+This differs from ordinary geometric snapping, where visible locked-layer entities may still be used as references.
+
+### Overlapping entity cycling
+
+When several selectable entities overlap at the cursor, `SelectionService.SelectNextByPoint(...)` can cycle through the hit-test results.
+
+Current interaction:
+
+```text
+click         -> select first hit entity
+Shift+click   -> toggle first hit entity
+Ctrl+click    -> cycle to next hit entity under the cursor
+Ctrl+Shift+click -> cycle and toggle
+```
+
+`Ctrl` is used for cycling because `Shift` is already assigned to selection toggling and `Alt` may interfere with menu/focus behavior on Windows.
+
+---
+
 ## Perpendicular snapping
 
 Perpendicular snapping is contextual.
@@ -294,13 +351,28 @@ If the base point is inside the circle or exactly on the circle, no tangent cand
 
 Grid snapping snaps the cursor to the nearest grid point.
 
-The grid is described by `GridSettings`, which contains the step and origin.
+The grid is described by `GridSettings`, which contains layout type, minor step, major step, origin, visibility, screen spacing thresholds and isometric angle.
 
-For example, with a step of 10, the point `(23.2, 46.8)` snaps to `(20, 50)` if it is within tolerance.
+Supported layouts:
+
+```text
+Rectangular  horizontal + vertical grid
+Isometric    vertical grid + diagonal families at +angle and -angle
+```
+
+For a rectangular grid with a step of 10, the point `(23.2, 46.8)` snaps to `(20, 50)` if it is within tolerance.
+
+For an isometric grid, snap candidates come from the isometric grid vertices. With the default 30-degree layout, the vertical spacing is derived from the diagonal spacing using:
+
+```text
+verticalStep = diagonalSpacing / (2 * tan(angle))
+```
+
+This makes the vertical grid lines pass through the vertices created by the intersections of the two diagonal families.
 
 Grid snapping works independently from visible entities.
 
-The visual grid in the Avalonia canvas and the snapping grid should remain conceptually aligned, although they are separate concerns.
+The visual grid in the Avalonia canvas and the snapping grid should remain conceptually aligned, although they are separate concerns. Grid visibility does not enable or disable `SnapKind.Grid`.
 
 ---
 
@@ -365,6 +437,8 @@ Locked layers are different: entities on locked layers should still be usable as
 
 ## Snapping in tools
 
+`ISnapModeProvider` lets a tool override the snap modes that are active for its current phase. This is how the application separates geometric snapping from entity picking.
+
 Most two-point tools use snapping through `TwoPointToolBase`.
 
 When the tool is waiting for the first point, snapping is evaluated without a base point.
@@ -374,6 +448,8 @@ When the tool is waiting for the second point, the first point is passed as `Bas
 This makes contextual snaps work naturally.
 
 For example, `LineTool` can use tangent snapping only after the first click, because before that there is no base point.
+
+`SelectionTool` implements `ISnapModeProvider` and always returns `SnapKind.EntityOnly`. `MoveTool` implements the same interface and returns `SnapKind.EntityOnly` only while it is waiting for entities to move; after that it returns the normal enabled geometric snap set.
 
 ---
 
@@ -401,6 +477,7 @@ Nearest        square marker
 Perpendicular  T marker
 Tangent        circle plus tangent line
 Grid           grid-like marker
+Entity         simple rectangle marker
 ```
 
 This gives immediate visual feedback and makes the cursor behavior more CAD-like.

@@ -29,6 +29,7 @@ persistence
 SVG export
 hit testing
 selection
+entity snap and overlapping selection cycling
 snapping
 grid configuration
 drawing tools
@@ -60,8 +61,10 @@ Implemented:
 
 Implemented:
 
-- configurable grid visibility;
+- configurable grid visibility through `Grid...`;
+- rectangular and isometric grid layouts;
 - major/minor grid spacing;
+- grid origin and screen spacing thresholds;
 - grid display separated from grid snap;
 - viewport culling;
 - rendered entity count.

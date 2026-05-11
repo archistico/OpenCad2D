@@ -31,8 +31,9 @@ The application already supports a functional CAD workflow:
 - New, Open, Save and Save As file commands;
 - SVG export using `.svg`;
 - dirty-state tracking and “Save changes?” confirmation;
-- object snapping;
-- configurable grid display and grid snapping;
+- object snapping, including geometric snaps and entity snap for selection-oriented tools;
+- configurable rectangular and isometric grid display and grid snapping;
+- Grid Settings dialog for visibility, spacing, origin, screen spacing thresholds and isometric angle;
 - layer visibility and locked layer behavior;
 - Layer Manager v1;
 - read-only Property Panel v1;
@@ -54,18 +55,18 @@ The current UI layout is intentionally divided into stable areas:
 
 ```text
 File command bar     New / Open / Save / Save As / current file name / dirty marker
-Top CAD bar          layer selector, layer state, Layers..., Undo/Redo, Extents, Props, active command
+Top CAD bar          layer selector, layer state, Layers..., Grid..., Undo/Redo, Extents, Props, active command
 Left tool panel      Select / Draw / Edit tool groups
 Center canvas        drawing area
 Right panel          optional read-only Property Panel
-Bottom snap bar      snapping, Ortho and grid controls
+Bottom snap bar      object snapping and Ortho controls
 Command line         typed point, distance and command input
 Status bar           coordinates, snap state, measurements, rendered count and messages
 ```
 
 The file command bar is deliberately kept in the highest, separate row so it is not accidentally removed when toolbars or CAD controls evolve.
 
-The standard mouse cursor is hidden over the canvas and replaced by a large crosshair. A small rectangle around the intersection identifies the exact picking point.
+The standard mouse cursor is hidden over the canvas and replaced by a large crosshair. A small rectangle around the intersection identifies the exact picking point. Entity snapping uses a simple rectangular marker so selection-oriented snapping remains visually distinct from geometric point snapping.
 
 While tools are active, the UI can show temporary construction feedback:
 
@@ -201,6 +202,8 @@ Y          -> align with uniform scale
 
 All edit and transform tools create undoable commands and modify the document through `CadDocument`.
 
+`MoveTool` can now start even when no entity is selected. In that case it first enters an entity-selection phase, then moves to the usual base-point/destination-point workflow. During this first phase only entity snap is active; after confirmation, the tool returns to the normal geometric snaps.
+
 ### Modify tools
 
 Implemented line-based modify tools:
@@ -332,9 +335,13 @@ Explicit coordinate input remains exact. Direct distance input uses the constrai
 The grid supports:
 
 - separate visual grid display and grid snapping;
+- rectangular and isometric layouts;
 - major and minor grid spacing;
-- zoom-based visibility thresholds;
-- a user toggle for grid display.
+- configurable origin;
+- zoom-based minimum/maximum screen spacing thresholds;
+- a `Grid...` settings window in the top CAD bar.
+
+The isometric grid is rendered with vertical lines plus two diagonal families at `+angle` and `-angle`. With the default `30°` angle, vertical lines are spaced so that major/minor verticals pass through the vertices created by diagonal intersections.
 
 Viewport culling is applied during rendering. The canvas renders only visible entities whose bounding boxes intersect the visible world area, with a small safety margin.
 
@@ -460,7 +467,8 @@ OpenCad2D follows a few practical rules:
 - Tools should work in model/user coordinates, not screen pixels.
 - The UI should convert input and render output, not own CAD behavior.
 - The command line should resolve input to points and forward them to the active tool, not create entities directly.
-- Snapping should query visible spatial candidates.
+- Geometric snapping should query visible spatial candidates.
+- Entity snapping should query selectable candidates, meaning visible entities that are not on locked layers.
 - Selection should query selectable entities, meaning visible entities that are not on locked layers.
 - Rendering should use viewport culling for normal entities.
 - Numeric comparisons in geometry should use `GeometryTolerance`.
@@ -474,14 +482,15 @@ OpenCad2D follows a few practical rules:
 Recently completed:
 
 1. persistence and stable file command bar;
-2. grid configuration;
+2. grid configuration with `Grid...` dialog and rectangular/isometric layouts;
 3. viewport culling;
 4. property panel v1;
 5. layer manager v1;
 6. rotate, scale and align tools;
 7. polyline tool v1;
 8. line-based Break, Extend and Trim tools;
-9. SVG export.
+9. SVG export;
+10. entity snap for selection-oriented tools and Ctrl-click cycling for overlapping entities.
 
 Next planned areas:
 
