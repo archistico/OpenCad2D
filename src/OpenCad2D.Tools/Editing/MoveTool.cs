@@ -1,28 +1,70 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Interactive tool used to move selected entities.
+/// If no entity is selected when the tool starts, the first phase lets the user select entities to move.
 /// </summary>
-public sealed class MoveTool : TwoPointToolBase
+public sealed class MoveTool : ICadTool, ISnapModeProvider
 {
-    public override string Name => "Move";
+    private Point2D? _basePoint;
+    private Point2D? _currentPoint;
+    private MoveToolState _state;
+
+    public MoveTool()
+    {
+        _state = MoveToolState.WaitingForBasePoint;
+    }
+
+    public string Name => "Move";
+
+    public MoveToolState MoveState => _state;
+
+    /// <summary>
+    /// Compatibility state for existing UI/tests that only need to know whether the tool is waiting
+    /// for the first or second movement point.
+    /// </summary>
+    public TwoPointToolState State => _state == MoveToolState.WaitingForDestinationPoint
+        ? TwoPointToolState.WaitingForSecondPoint
+        : TwoPointToolState.WaitingForFirstPoint;
+
+    public Point2D? FirstPoint => _basePoint;
+
+    public Point2D? CurrentPoint => _currentPoint;
+
+    public bool HasPreview =>
+        _basePoint.HasValue &&
+        _currentPoint.HasValue &&
+        _state == MoveToolState.WaitingForDestinationPoint;
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        return _state == MoveToolState.WaitingForEntitySelection
+            ? SnapKind.EntityOnly
+            : context.EnabledSnaps;
+    }
 
     public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!HasPreview || FirstPoint is null || CurrentPoint is null)
+        if (!HasPreview || _basePoint is null || _currentPoint is null)
         {
             return Array.Empty<CadEntity>();
         }
 
-        Vector2D displacement = FirstPoint.Value.VectorTo(CurrentPoint.Value);
+        Vector2D displacement = _basePoint.Value.VectorTo(_currentPoint.Value);
 
         return context.Document.Entities
             .GetByIds(context.Selection.SelectedIds)
@@ -33,39 +75,159 @@ public sealed class MoveTool : TwoPointToolBase
             .ToList();
     }
 
-    protected override ToolResult OnFirstPointSelected(
-    ToolContext context,
-    Point2D firstPoint)
+    public ToolResult OnPointerPressed(
+        ToolContext context,
+        PointerInfo pointer)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(pointer);
+
+        EnsureInitialState(context);
+
+        return _state switch
+        {
+            MoveToolState.WaitingForEntitySelection => SelectEntityToMove(context, pointer),
+            MoveToolState.WaitingForBasePoint => SelectBasePoint(context, pointer),
+            MoveToolState.WaitingForDestinationPoint => SelectDestinationPoint(context, pointer),
+            _ => ToolResult.None()
+        };
+    }
+
+    public ToolResult OnPointerMoved(
+        ToolContext context,
+        PointerInfo pointer)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(pointer);
+
+        EnsureInitialState(context);
+
+        if (_state != MoveToolState.WaitingForDestinationPoint || _basePoint is null)
+        {
+            return ToolResult.None();
+        }
+
+        Point2D point = ApplyGeometricSnap(
+            context,
+            pointer.ModelPoint,
+            _basePoint);
+
+        _currentPoint = ToolInputConstraintService.ApplyOrtho(
+            context.IsOrthoEnabled,
+            _basePoint.Value,
+            point);
+
+        return ToolResult.Updated();
+    }
+
+    public ToolResult Cancel(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        Reset(context);
+
+        return ToolResult.Cancelled("Move command cancelled.");
+    }
+
+    public ToolResult Deactivate(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        Reset(context);
+
+        return ToolResult.None("Move tool deactivated.");
+    }
+
+    private ToolResult SelectEntityToMove(
+        ToolContext context,
+        PointerInfo pointer)
+    {
+        EntityId? selectedId = context.Selection.Service.SelectByPoint(
+            context.Document,
+            pointer.ModelPoint,
+            context.Selection.Tolerance);
+
+        if (selectedId is null)
+        {
+            return ToolResult.None("Select entities to move.");
+        }
+
+        if (pointer.IsShiftPressed)
+        {
+            context.Selection.Set.Toggle(selectedId.Value);
+        }
+        else
+        {
+            context.Selection.Set.ReplaceWith(selectedId.Value);
+        }
+
+        if (!context.Selection.HasSelection)
+        {
+            return ToolResult.None("Select entities to move.");
+        }
+
+        _state = MoveToolState.WaitingForBasePoint;
+
+        return ToolResult.Started("Entity selected. Specify base point.");
+    }
+
+    private ToolResult SelectBasePoint(
+        ToolContext context,
+        PointerInfo pointer)
     {
         if (!context.Selection.HasSelection)
         {
-            Reset();
+            _state = MoveToolState.WaitingForEntitySelection;
 
-            return ToolResult.None("No entities selected.");
+            return ToolResult.Started("Select entities to move.");
         }
+
+        Point2D point = ApplyGeometricSnap(
+            context,
+            pointer.ModelPoint,
+            null);
+
+        _basePoint = point;
+        _currentPoint = point;
+        context.CurrentBasePoint = point;
+        _state = MoveToolState.WaitingForDestinationPoint;
 
         return ToolResult.Started("Specify destination point.");
     }
 
-    protected override ToolResult OnPreviewUpdated(
+    private ToolResult SelectDestinationPoint(
         ToolContext context,
-        Point2D firstPoint,
-        Point2D currentPoint)
-    {
-        return ToolResult.Updated();
-    }
-
-    protected override ToolResult OnSecondPointSelected(
-        ToolContext context,
-        Point2D firstPoint,
-        Point2D secondPoint)
+        PointerInfo pointer)
     {
         if (!context.Selection.HasSelection)
         {
+            Reset(context);
+
             return ToolResult.None("No entities selected.");
         }
 
-        Vector2D displacement = firstPoint.VectorTo(secondPoint);
+        if (_basePoint is null)
+        {
+            throw new InvalidOperationException(
+                "Move tool is waiting for destination point but base point is missing.");
+        }
+
+        Point2D point = ApplyGeometricSnap(
+            context,
+            pointer.ModelPoint,
+            _basePoint);
+
+        point = ToolInputConstraintService.ApplyOrtho(
+            context.IsOrthoEnabled,
+            _basePoint.Value,
+            point);
+
+        if (context.GeometryTolerance.ArePointsEqual(_basePoint.Value, point))
+        {
+            return ToolResult.None("Destination point must be different from base point.");
+        }
+
+        Vector2D displacement = _basePoint.Value.VectorTo(point);
 
         IReadOnlyList<EntityId> selectedIds =
             context.Selection.SelectedIds.ToList();
@@ -76,6 +238,57 @@ public sealed class MoveTool : TwoPointToolBase
                 selectedIds,
                 displacement));
 
+        Reset(context);
+
         return ToolResult.Completed("Entities moved.");
+    }
+
+    private Point2D ApplyGeometricSnap(
+        ToolContext context,
+        Point2D cursorPoint,
+        Point2D? basePoint)
+    {
+        SnapKind enabledSnaps = context.EnabledSnaps & ~SnapKind.Entity;
+
+        if (enabledSnaps == SnapKind.None ||
+            Tolerance.IsZero(context.SnapTolerance))
+        {
+            return cursorPoint;
+        }
+
+        var request = new SnapRequest(
+            context.Document,
+            cursorPoint,
+            context.SnapTolerance,
+            enabledSnaps,
+            basePoint,
+            context.GridSettings);
+
+        SnapCandidate? candidate = context.SnapService.Snap(request);
+
+        return candidate?.Point ?? cursorPoint;
+    }
+
+    private void EnsureInitialState(ToolContext context)
+    {
+        if (_basePoint is not null)
+        {
+            return;
+        }
+
+        _state = context.Selection.HasSelection
+            ? MoveToolState.WaitingForBasePoint
+            : MoveToolState.WaitingForEntitySelection;
+    }
+
+    private void Reset(ToolContext context)
+    {
+        _basePoint = null;
+        _currentPoint = null;
+        context.CurrentBasePoint = null;
+
+        _state = context.Selection.HasSelection
+            ? MoveToolState.WaitingForBasePoint
+            : MoveToolState.WaitingForEntitySelection;
     }
 }

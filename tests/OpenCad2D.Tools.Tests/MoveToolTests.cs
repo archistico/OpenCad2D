@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
@@ -12,28 +12,93 @@ namespace OpenCad2D.Tools.Tests;
 public sealed class MoveToolTests
 {
     [Fact]
-    public void Constructor_ShouldStartWaitingForFirstPoint()
+    public void Constructor_ShouldStartWaitingForBasePoint()
     {
         var tool = new MoveTool();
 
         Assert.Equal("Move", tool.Name);
+        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
         Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
         Assert.Null(tool.FirstPoint);
         Assert.Null(tool.CurrentPoint);
     }
 
     [Fact]
-    public void FirstPointerPress_WithNoSelection_ShouldReturnNoneAndReset()
+    public void ActiveSnapKind_WithNoSelection_ShouldUseEntitySnapOnly()
+    {
+        var context = CreateContext(enabledSnaps: SnapKind.Endpoint | SnapKind.Midpoint);
+        var tool = new MoveTool();
+
+        SnapKind result = tool.GetActiveSnapKind(context);
+
+        Assert.Equal(SnapKind.EntityOnly, result);
+        Assert.Equal(MoveToolState.WaitingForEntitySelection, tool.MoveState);
+    }
+
+    [Fact]
+    public void ActiveSnapKind_WithSelection_ShouldUseGeometricSnaps()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+        selection.Select(line.Id);
+
+        var context = CreateContext(
+            document,
+            selection,
+            enabledSnaps: SnapKind.Endpoint | SnapKind.Midpoint);
+
+        var tool = new MoveTool();
+
+        SnapKind result = tool.GetActiveSnapKind(context);
+
+        Assert.Equal(SnapKind.Endpoint | SnapKind.Midpoint, result);
+        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
+    }
+
+    [Fact]
+    public void FirstPointerPress_WithNoSelection_ShouldSelectEntityToMove()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+
+        var context = CreateContext(document, selection);
+        var tool = new MoveTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
+        Assert.True(selection.Contains(line.Id));
+        Assert.Null(tool.FirstPoint);
+        Assert.Null(tool.CurrentPoint);
+    }
+
+    [Fact]
+    public void FirstPointerPress_WithNoSelectionAndNoEntity_ShouldKeepSelectionPhase()
     {
         var context = CreateContext();
         var tool = new MoveTool();
 
         ToolResult result = tool.OnPointerPressed(
             context,
-            new PointerInfo(new Point2D(0, 0)));
+            new PointerInfo(new Point2D(100, 100)));
 
         Assert.Equal(ToolResultKind.None, result.Kind);
-        Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
+        Assert.Equal(MoveToolState.WaitingForEntitySelection, tool.MoveState);
         Assert.Null(tool.FirstPoint);
         Assert.Null(tool.CurrentPoint);
     }
@@ -59,6 +124,7 @@ public sealed class MoveToolTests
             new PointerInfo(new Point2D(1, 2)));
 
         Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(MoveToolState.WaitingForDestinationPoint, tool.MoveState);
         Assert.Equal(TwoPointToolState.WaitingForSecondPoint, tool.State);
         Assert.Equal(new Point2D(1, 2), tool.FirstPoint);
         Assert.Equal(new Point2D(1, 2), tool.CurrentPoint);
@@ -101,11 +167,46 @@ public sealed class MoveToolTests
         Assert.Equal(new Point2D(5, 2), previewLine.Start);
         Assert.Equal(new Point2D(15, 2), previewLine.End);
 
-        // Preview must not modify the real document.
         var originalLine = (LineEntity)document.Entities.GetRequired(line.Id);
 
         Assert.Equal(new Point2D(0, 0), originalLine.Start);
         Assert.Equal(new Point2D(10, 0), originalLine.End);
+    }
+
+    [Fact]
+    public void MoveWithoutInitialSelection_ShouldSelectEntityThenMoveIt()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+
+        var context = CreateContext(document, selection);
+        var tool = new MoveTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
+
+        var moved = (LineEntity)document.Entities.GetRequired(line.Id);
+
+        Assert.Equal(new Point2D(5, 2), moved.Start);
+        Assert.Equal(new Point2D(15, 2), moved.End);
     }
 
     [Fact]
@@ -133,7 +234,7 @@ public sealed class MoveToolTests
             new PointerInfo(new Point2D(5, 2)));
 
         Assert.Equal(ToolResultKind.Completed, result.Kind);
-        Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
+        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
 
         var moved = (LineEntity)document.Entities.GetRequired(line.Id);
 
@@ -307,7 +408,7 @@ public sealed class MoveToolTests
         ToolResult result = tool.Cancel(context);
 
         Assert.Equal(ToolResultKind.Cancelled, result.Kind);
-        Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
+        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
 
         var unchanged = (LineEntity)document.Entities.GetRequired(line.Id);
 

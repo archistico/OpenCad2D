@@ -337,6 +337,10 @@ public sealed class CadCanvas : Control
                 DrawGridSnapMarker(context, point);
                 break;
 
+            case SnapKind.Entity:
+                DrawEntitySnapMarker(context, point);
+                break;
+
             default:
                 DrawDefaultSnapMarker(context, point);
                 break;
@@ -506,6 +510,33 @@ public sealed class CadCanvas : Control
             rect);
     }
 
+    private void DrawEntitySnapMarker(
+        DrawingContext context,
+        Point point)
+    {
+        const double size = 8;
+
+        Point top = new(point.X, point.Y - size);
+        Point right = new(point.X + size, point.Y);
+        Point bottom = new(point.X, point.Y + size);
+        Point left = new(point.X - size, point.Y);
+
+        context.DrawLine(_snapMarkerPen, top, right);
+        context.DrawLine(_snapMarkerPen, right, bottom);
+        context.DrawLine(_snapMarkerPen, bottom, left);
+        context.DrawLine(_snapMarkerPen, left, top);
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - size - 3, point.Y),
+            new Point(point.X + size + 3, point.Y));
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X, point.Y - size - 3),
+            new Point(point.X, point.Y + size + 3));
+    }
+
     private void DrawDefaultSnapMarker(
         DrawingContext context,
         Point point)
@@ -526,8 +557,15 @@ public sealed class CadCanvas : Control
     private void UpdateCurrentSnapCandidate(Point2D modelPoint)
     {
         if (Workspace is null ||
-            Workspace.Context.EnabledSnaps == SnapKind.None ||
             Workspace.Context.SnapTolerance <= 0)
+        {
+            _currentSnapCandidate = null;
+            return;
+        }
+
+        SnapKind enabledSnaps = GetEffectiveEnabledSnaps();
+
+        if (enabledSnaps == SnapKind.None)
         {
             _currentSnapCandidate = null;
             return;
@@ -539,11 +577,26 @@ public sealed class CadCanvas : Control
             Workspace.Document,
             modelPoint,
             Workspace.Context.SnapTolerance,
-            Workspace.Context.EnabledSnaps,
+            enabledSnaps,
             basePoint,
             Workspace.Context.GridSettings);
 
         _currentSnapCandidate = Workspace.SnapService.Snap(request);
+    }
+
+    private SnapKind GetEffectiveEnabledSnaps()
+    {
+        if (Workspace is null)
+        {
+            return SnapKind.None;
+        }
+
+        if (Workspace.ToolController.ActiveTool is ISnapModeProvider provider)
+        {
+            return provider.GetActiveSnapKind(Workspace.Context);
+        }
+
+        return Workspace.Context.EnabledSnaps;
     }
 
     private void DrawGrid(DrawingContext context)
@@ -851,6 +904,46 @@ public sealed class CadCanvas : Control
                 context,
                 twoPointTool);
         }
+        else if (Workspace.ToolController.ActiveTool is MoveTool moveTool)
+        {
+            DrawMoveToolMeasurementPreview(
+                context,
+                moveTool);
+        }
+    }
+
+    private void DrawMoveToolMeasurementPreview(
+        DrawingContext context,
+        MoveTool tool)
+    {
+        if (tool.FirstPoint is null)
+        {
+            return;
+        }
+
+        Point start = ToScreenPoint(tool.FirstPoint.Value);
+        Point end = tool.CurrentPoint is null
+            ? start
+            : ToScreenPoint(tool.CurrentPoint.Value);
+
+        const double markerRadius = 4;
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            start,
+            markerRadius,
+            markerRadius);
+
+        if (tool.CurrentPoint is null)
+        {
+            return;
+        }
+
+        context.DrawLine(
+            _measurementVectorPen,
+            start,
+            end);
     }
 
     private void DrawTwoPointToolMeasurementPreview(

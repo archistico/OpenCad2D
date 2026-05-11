@@ -1,4 +1,4 @@
-﻿namespace OpenCad2D.Interaction.Snapping;
+namespace OpenCad2D.Interaction.Snapping;
 
 /// <summary>
 /// Coordinates snap providers and returns the best snap candidate.
@@ -18,7 +18,8 @@ public sealed class SnapService
         new PerpendicularSnapProvider(),
         new TangentSnapProvider(),
         new NearestSnapProvider(),
-        new GridSnapProvider()
+        new GridSnapProvider(),
+        new EntitySnapProvider()
     })
     {
     }
@@ -63,6 +64,7 @@ public sealed class SnapService
     {
         return kind switch
         {
+            SnapKind.Entity => -100,
             SnapKind.Endpoint => 0,
             SnapKind.Intersection => 1,
             SnapKind.Center => 2,

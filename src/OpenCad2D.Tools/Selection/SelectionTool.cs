@@ -1,6 +1,7 @@
-﻿using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Selection;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 
 namespace OpenCad2D.Tools.Selection;
@@ -8,7 +9,7 @@ namespace OpenCad2D.Tools.Selection;
 /// <summary>
 /// Interactive tool used to select entities by point or by window.
 /// </summary>
-public sealed class SelectionTool : ICadTool
+public sealed class SelectionTool : ICadTool, ISnapModeProvider
 {
     private Point2D? _dragStartPoint;
     private Point2D? _dragCurrentPoint;
@@ -55,6 +56,14 @@ public sealed class SelectionTool : ICadTool
         return BoundingBox2D.FromPoints(
             _dragStartPoint.Value,
             _dragCurrentPoint.Value);
+    }
+
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return SnapKind.EntityOnly;
     }
 
     public ToolResult OnPointerPressed(

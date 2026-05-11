@@ -1,4 +1,4 @@
-﻿namespace OpenCad2D.Interaction.Snapping;
+namespace OpenCad2D.Interaction.Snapping;
 
 /// <summary>
 /// Defines the available object snap modes.
@@ -26,6 +26,12 @@ public enum SnapKind
 
     Grid = 256,
 
+    /// <summary>
+    /// Entity snap used by selection-oriented tools.
+    /// It is intentionally excluded from All because All represents geometric snaps.
+    /// </summary>
+    Entity = 512,
+
     All = Endpoint
         | Midpoint
         | Center
@@ -34,5 +40,10 @@ public enum SnapKind
         | Nearest
         | Perpendicular
         | Tangent
-        | Grid
+        | Grid,
+
+    /// <summary>
+    /// Snap set used when the active command needs to pick entities rather than points.
+    /// </summary>
+    EntityOnly = Entity
 }
