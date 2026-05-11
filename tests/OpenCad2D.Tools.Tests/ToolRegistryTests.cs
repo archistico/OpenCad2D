@@ -16,6 +16,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Line));
         Assert.True(registry.Contains(ToolId.Rectangle));
         Assert.True(registry.Contains(ToolId.Circle));
+        Assert.True(registry.Contains(ToolId.Arc));
         Assert.True(registry.Contains(ToolId.Polyline));
         Assert.True(registry.Contains(ToolId.Move));
         Assert.True(registry.Contains(ToolId.Copy));
@@ -36,7 +37,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(15, tools.Count);
+        Assert.Equal(16, tools.Count);
 
         Assert.Contains(
             tools,
@@ -96,6 +97,10 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.Arc);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.Polyline);
     }
 
@@ -119,10 +124,11 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
 
-        Assert.Equal(4, tools.Count);
+        Assert.Equal(5, tools.Count);
         Assert.Contains(tools, tool => tool.Id == ToolId.Line);
         Assert.Contains(tools, tool => tool.Id == ToolId.Rectangle);
         Assert.Contains(tools, tool => tool.Id == ToolId.Circle);
+        Assert.Contains(tools, tool => tool.Id == ToolId.Arc);
         Assert.Contains(tools, tool => tool.Id == ToolId.Polyline);
     }
 
@@ -189,6 +195,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<RectangleTool>(tool);
         Assert.Equal("Rectangle", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Arc_ShouldReturnArcTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Arc);
+
+        Assert.IsType<ArcTool>(tool);
+        Assert.Equal("Arc", tool.Name);
     }
 
     [Fact]
@@ -322,10 +339,11 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
 
-        Assert.Equal(4, tools.Count);
+        Assert.Equal(5, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Circle);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Arc);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Polyline);
     }
 

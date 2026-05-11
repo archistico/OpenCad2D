@@ -216,6 +216,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     : "Polyline: specify next point, type distance, press Enter to finish, or C to close:";
             }
 
+            if (Workspace.ToolController.ActiveTool is ArcTool arcTool)
+            {
+                return arcTool.State switch
+                {
+                    ArcToolState.WaitingForCenterPoint => "Arc: specify center point or type coordinates:",
+                    ArcToolState.WaitingForStartPoint => "Arc: specify start point/radius or type coordinates:",
+                    ArcToolState.WaitingForEndPoint => "Arc: specify end point/direction or type coordinates:",
+                    _ => "Arc: specify point:"
+                };
+            }
+
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";

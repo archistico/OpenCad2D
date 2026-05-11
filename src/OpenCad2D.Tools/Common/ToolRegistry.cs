@@ -51,6 +51,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Arc,
+                "Arc",
+                "Arc",
+                "Draw"),
+            () => new ArcTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Polyline,
                 "Polyline",
                 "Polyline",

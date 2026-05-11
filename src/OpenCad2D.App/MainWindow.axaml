@@ -18,9 +18,10 @@
             <Setter Property="Foreground" Value="#DDDDDD" />
             <Setter Property="BorderBrush" Value="#555555" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Padding" Value="7,4" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="MinWidth" Value="92" />
+            <Setter Property="MinWidth" Value="82" />
         </Style>
 
         <Style Selector="Button.tool-button.active-tool">
@@ -36,33 +37,43 @@
             <Setter Property="Foreground" Value="#DDDDDD" />
             <Setter Property="BorderBrush" Value="#555555" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="10,5" />
-            <Setter Property="MinWidth" Value="72" />
+            <Setter Property="Padding" Value="7,3" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="58" />
         </Style>
 
         <Style Selector="TextBlock.active-command-label">
             <Setter Property="Foreground" Value="#FFFFFF" />
             <Setter Property="Background" Value="#0E639C" />
-            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Padding" Value="8,3" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="FontWeight" Value="Bold" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
         <Style Selector="TextBlock.panel-section-label">
             <Setter Property="Foreground" Value="#9CDCFE" />
-            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontSize" Value="10" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Margin" Value="0,6,0,4" />
+            <Setter Property="Margin" Value="0,5,0,3" />
         </Style>
 
         <Style Selector="CheckBox.snap-check">
             <Setter Property="Foreground" Value="#CCCCCC" />
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="11" />
         </Style>
 
         <Style Selector="CheckBox.layer-check">
             <Setter Property="Foreground" Value="#CCCCCC" />
             <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
+        <Style Selector="ComboBox.compact-combo">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Padding" Value="6,2" />
+            <Setter Property="MinHeight" Value="26" />
         </Style>
 
 
@@ -113,12 +124,12 @@
                 Background="#1B1B1B"
                 BorderBrush="#3A3A3A"
                 BorderThickness="0,0,0,1"
-                Padding="8,6">
+                Padding="7,5">
 
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Left"
                             Orientation="Horizontal"
-                            Spacing="8">
+                            Spacing="6">
 
                     <TextBlock Text="File:"
                                Foreground="#CCCCCC"
@@ -141,13 +152,13 @@
                             Content="Save As"
                             Click="SaveAs_Click" />
 
-                    <Separator Margin="8,0" />
+                    <Separator Margin="5,0" />
 
                     <Button Classes="global-button"
                             Content="Export SVG"
                             Click="ExportSvg_Click" />
 
-                    <Separator Margin="8,0" />
+                    <Separator Margin="5,0" />
 
                     <TextBlock Text="{Binding FileStatusText}"
                                Foreground="#DCDCAA"
@@ -162,13 +173,13 @@
                 Background="#252526"
                 BorderBrush="#3A3A3A"
                 BorderThickness="0,0,0,1"
-                Padding="8">
+                Padding="7,5">
 
             <DockPanel LastChildFill="True">
 
                 <StackPanel DockPanel.Dock="Left"
                             Orientation="Horizontal"
-                            Spacing="8">
+                            Spacing="6">
 
                     <TextBlock Text="Layer:"
                                Foreground="#CCCCCC"
@@ -176,7 +187,8 @@
                                Margin="0,0,2,0" />
 
                     <ComboBox x:Name="LayerComboBox"
-                              Width="150"
+                              Classes="compact-combo"
+                              Width="142"
                               SelectionChanged="LayerComboBox_SelectionChanged" />
 
                     <CheckBox x:Name="LayerVisibleCheckBox"
@@ -205,7 +217,7 @@
                             Content="Grid..."
                             Click="Grid_Click" />
 
-                    <Separator Margin="8,0" />
+                    <Separator Margin="5,0" />
 
                     <TextBlock Text="Polar:"
                                Foreground="#CCCCCC"
@@ -213,10 +225,11 @@
                                Margin="0,0,2,0" />
 
                     <ComboBox x:Name="PolarTrackingComboBox"
-                              Width="88"
+                              Classes="compact-combo"
+                              Width="80"
                               SelectionChanged="PolarTrackingComboBox_SelectionChanged" />
 
-                    <Separator Margin="8,0" />
+                    <Separator Margin="5,0" />
 
                     <Button Classes="global-button"
                             Content="Undo"
@@ -235,7 +248,7 @@
                             Content="Props"
                             Click="Properties_Click" />
 
-                    <Separator Margin="8,0" />
+                    <Separator Margin="5,0" />
 
                     <TextBlock x:Name="ActiveCommandTextBlock"
                                Classes="active-command-label"
@@ -251,15 +264,15 @@
 
             <!-- Left tool panel -->
             <Border Grid.Column="0"
-                    Width="130"
+                    Width="118"
                     Background="#202020"
                     BorderBrush="#3A3A3A"
                     BorderThickness="0,0,1,0"
-                    Padding="10,8">
+                    Padding="8,6">
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Spacing="6">
+                    <StackPanel Spacing="4">
 
                         <TextBlock Classes="panel-section-label"
                                    Text="SELECT" />
@@ -269,7 +282,7 @@
                                 Content="Select"
                                 Click="Select_Click" />
 
-                        <Separator Margin="0,8" />
+                        <Separator Margin="0,5" />
 
                         <TextBlock Classes="panel-section-label"
                                    Text="DRAW" />
@@ -289,12 +302,17 @@
                                 Content="Circle"
                                 Click="Circle_Click" />
 
+                        <Button x:Name="ArcButton"
+                                Classes="tool-button"
+                                Content="Arc"
+                                Click="Arc_Click" />
+
                         <Button x:Name="PolylineButton"
                                 Classes="tool-button"
                                 Content="Polyline"
                                 Click="Polyline_Click" />
 
-                        <Separator Margin="0,8" />
+                        <Separator Margin="0,5" />
 
                         <TextBlock Classes="panel-section-label"
                                    Text="EDIT" />
@@ -324,7 +342,7 @@
                                 Content="Align"
                                 Click="Align_Click" />
 
-                        <Separator Margin="0,8" />
+                        <Separator Margin="0,5" />
 
                         <Button x:Name="BreakAtPointButton"
                                 Classes="tool-button"
@@ -376,7 +394,7 @@
                             Background="#2D2D30"
                             BorderBrush="#3A3A3A"
                             BorderThickness="0,0,0,1"
-                            Padding="10,8">
+                            Padding="8,6">
 
                         <Grid ColumnDefinitions="*,Auto">
                             <TextBlock Grid.Column="0"
@@ -387,7 +405,7 @@
                                     Classes="global-button"
                                     Content="×"
                                     MinWidth="34"
-                                    Padding="6,2"
+                                    Padding="5,1"
                                     Click="PropertyPanelClose_Click" />
                         </Grid>
                     </Border>
@@ -436,7 +454,7 @@
                 Background="#252526"
                 BorderBrush="#3A3A3A"
                 BorderThickness="0,1,0,0"
-                Padding="8,6">
+                Padding="7,5">
 
             <StackPanel Orientation="Horizontal"
                         Spacing="10">
@@ -513,7 +531,7 @@
                 Background="#1B1B1B"
                 BorderBrush="#3A3A3A"
                 BorderThickness="0,1,0,0"
-                Padding="8,6">
+                Padding="7,5">
 
             <Grid ColumnDefinitions="Auto,*"
                   ColumnSpacing="8">

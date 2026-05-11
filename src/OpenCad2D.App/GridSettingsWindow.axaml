@@ -15,14 +15,15 @@
         <Style Selector="TextBlock.label">
             <Setter Property="Foreground" Value="#CCCCCC" />
             <Setter Property="VerticalAlignment" Value="Center" />
-            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Margin" Value="0,0,6,0" />
+            <Setter Property="FontSize" Value="11" />
         </Style>
 
         <Style Selector="TextBlock.section-title">
             <Setter Property="Foreground" Value="#9CDCFE" />
-            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="Bold" />
-            <Setter Property="Margin" Value="0,12,0,6" />
+            <Setter Property="Margin" Value="0,10,0,5" />
         </Style>
 
         <Style Selector="TextBox.input">
@@ -30,7 +31,8 @@
             <Setter Property="Foreground" Value="#FFFFFF" />
             <Setter Property="BorderBrush" Value="#555555" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="Padding" Value="5,2" />
+            <Setter Property="FontSize" Value="11" />
             <Setter Property="FontFamily" Value="Consolas" />
         </Style>
 
@@ -39,26 +41,30 @@
             <Setter Property="Foreground" Value="#FFFFFF" />
             <Setter Property="BorderBrush" Value="#555555" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Padding" Value="5,2" />
         </Style>
 
         <Style Selector="CheckBox.input-check">
             <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontSize" Value="11" />
         </Style>
 
         <Style Selector="Button.dialog-button">
-            <Setter Property="MinWidth" Value="90" />
-            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="MinWidth" Value="74" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Padding" Value="9,4" />
         </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,*,Auto,Auto"
-          Margin="16">
+          Margin="12">
 
         <StackPanel Grid.Row="0"
-                    Spacing="4">
+                    Spacing="3">
             <TextBlock Text="Grid"
                        Foreground="#FFFFFF"
-                       FontSize="18"
+                       FontSize="16"
                        FontWeight="Bold" />
             <TextBlock Text="Configure grid visibility, spacing, origin and layout type. Grid snap is still enabled or disabled from the Snap bar."
                        Foreground="#AAAAAA"
@@ -66,18 +72,18 @@
         </StackPanel>
 
         <ScrollViewer Grid.Row="1"
-                      Margin="0,12,0,0"
+                      Margin="0,10,0,0"
                       VerticalScrollBarVisibility="Auto">
-            <StackPanel Spacing="8">
+            <StackPanel Spacing="7">
                 <TextBlock Classes="section-title" Text="General" />
 
                 <CheckBox Classes="input-check"
                           Content="Show grid"
                           IsChecked="{Binding IsVisible}" />
 
-                <Grid ColumnDefinitions="150,*"
+                <Grid ColumnDefinitions="135,*"
                       RowDefinitions="Auto,Auto,Auto"
-                      RowSpacing="8">
+                      RowSpacing="7">
                     <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Type" />
                     <ComboBox Grid.Row="0" Grid.Column="1"
                               Classes="input"
@@ -97,9 +103,9 @@
 
                 <TextBlock Classes="section-title" Text="Origin" />
 
-                <Grid ColumnDefinitions="150,*"
+                <Grid ColumnDefinitions="135,*"
                       RowDefinitions="Auto,Auto"
-                      RowSpacing="8">
+                      RowSpacing="7">
                     <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Origin X" />
                     <TextBox Grid.Row="0" Grid.Column="1"
                              Classes="input"
@@ -113,9 +119,9 @@
 
                 <TextBlock Classes="section-title" Text="Rendering" />
 
-                <Grid ColumnDefinitions="150,*"
+                <Grid ColumnDefinitions="135,*"
                       RowDefinitions="Auto,Auto"
-                      RowSpacing="8">
+                      RowSpacing="7">
                     <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Min screen spacing" />
                     <TextBox Grid.Row="0" Grid.Column="1"
                              Classes="input"
@@ -129,9 +135,9 @@
 
                 <TextBlock Classes="section-title" Text="Isometric" />
 
-                <Grid ColumnDefinitions="150,*"
+                <Grid ColumnDefinitions="135,*"
                       RowDefinitions="Auto"
-                      RowSpacing="8">
+                      RowSpacing="7">
                     <TextBlock Grid.Row="0" Grid.Column="0" Classes="label" Text="Diagonal angle" />
                     <TextBox Grid.Row="0" Grid.Column="1"
                              Classes="input"
@@ -153,8 +159,8 @@
         <StackPanel Grid.Row="3"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
-                    Spacing="8"
-                    Margin="0,12,0,0">
+                    Spacing="7"
+                    Margin="0,10,0,0">
             <Button Classes="dialog-button"
                     Content="Cancel"
                     Click="Cancel_Click" />

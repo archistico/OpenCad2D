@@ -1039,6 +1039,10 @@ public sealed class CadCanvas : Control
                 DrawCirclePreview(context, circleTool);
                 break;
 
+            case ArcTool arcTool:
+                DrawArcPreview(context, arcTool);
+                break;
+
             case PolylineTool polylineTool:
                 DrawPolylinePreview(context, polylineTool);
                 break;
@@ -1118,6 +1122,53 @@ public sealed class CadCanvas : Control
                 context,
                 moveTool);
         }
+        else if (Workspace.ToolController.ActiveTool is ArcTool arcTool)
+        {
+            DrawArcToolMeasurementPreview(
+                context,
+                arcTool);
+        }
+    }
+
+    private void DrawArcToolMeasurementPreview(
+        DrawingContext context,
+        ArcTool tool)
+    {
+        if (tool.CenterPoint is null)
+        {
+            return;
+        }
+
+        const double markerRadius = 4;
+        Point center = ToScreenPoint(tool.CenterPoint.Value);
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            center,
+            markerRadius,
+            markerRadius);
+
+        if (tool.StartPoint is not null)
+        {
+            context.DrawLine(
+                _measurementVectorPen,
+                center,
+                ToScreenPoint(tool.StartPoint.Value));
+        }
+
+        if (tool.CurrentPoint is null ||
+            Workspace?.GeometryTolerance.ArePointsEqual(
+                tool.CenterPoint.Value,
+                tool.CurrentPoint.Value) == true)
+        {
+            return;
+        }
+
+        context.DrawLine(
+            _measurementVectorPen,
+            center,
+            ToScreenPoint(tool.CurrentPoint.Value));
     }
 
     private void DrawMoveToolMeasurementPreview(
@@ -1365,6 +1416,21 @@ public sealed class CadCanvas : Control
         CircleTool tool)
     {
         CircleEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
+    private void DrawArcPreview(
+        DrawingContext context,
+        ArcTool tool)
+    {
+        ArcEntity? preview = tool.GetPreviewEntity();
 
         if (preview is not null)
         {

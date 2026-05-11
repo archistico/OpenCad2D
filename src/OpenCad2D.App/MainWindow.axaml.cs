@@ -544,6 +544,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Arc_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Arc);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Polyline_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1268,6 +1279,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             CircleButton,
             activeToolName.Equals("Circle", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            ArcButton,
+            activeToolName.Equals("Arc", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             PolylineButton,
