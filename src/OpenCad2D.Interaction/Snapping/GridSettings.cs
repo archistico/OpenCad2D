@@ -1,4 +1,4 @@
-﻿namespace OpenCad2D.Interaction.Snapping;
+namespace OpenCad2D.Interaction.Snapping;
 
 /// <summary>
 /// Describes model-space grid snapping and grid rendering settings.
@@ -12,7 +12,9 @@ public sealed class GridSettings
         bool isVisible = true,
         double majorStep = 50,
         double minimumScreenSpacing = 8,
-        double maximumScreenSpacing = 220)
+        double maximumScreenSpacing = 220,
+        GridKind kind = GridKind.Rectangular,
+        double isometricAngleDegrees = 30)
     {
         if (step <= 0)
         {
@@ -49,6 +51,20 @@ public sealed class GridSettings
                 "Maximum screen spacing must be greater than minimum screen spacing.");
         }
 
+        if (!Enum.IsDefined(kind))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(kind),
+                "Unsupported grid kind.");
+        }
+
+        if (isometricAngleDegrees <= 0 || isometricAngleDegrees >= 90)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(isometricAngleDegrees),
+                "Isometric angle must be greater than 0 and less than 90 degrees.");
+        }
+
         MinorStep = step;
         MajorStep = majorStep;
         OriginX = originX;
@@ -56,6 +72,8 @@ public sealed class GridSettings
         IsVisible = isVisible;
         MinimumScreenSpacing = minimumScreenSpacing;
         MaximumScreenSpacing = maximumScreenSpacing;
+        Kind = kind;
+        IsometricAngleDegrees = isometricAngleDegrees;
     }
 
     /// <summary>
@@ -76,6 +94,37 @@ public sealed class GridSettings
     public double OriginX { get; }
 
     public double OriginY { get; }
+
+    /// <summary>
+    /// Layout used by grid rendering and grid snapping.
+    /// </summary>
+    public GridKind Kind { get; }
+
+    /// <summary>
+    /// Angle, in degrees, used by the two diagonal families of the isometric grid.
+    /// The default is 30 degrees.
+    /// </summary>
+    public double IsometricAngleDegrees { get; }
+
+    /// <summary>
+    /// Returns the horizontal distance between isometric vertical lines for the given
+    /// diagonal family spacing. This makes vertical lines pass through the vertices
+    /// created by the intersections of the two diagonal families.
+    /// </summary>
+    public double GetIsometricVerticalStep(double diagonalSpacing)
+    {
+        if (diagonalSpacing <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(diagonalSpacing),
+                "Isometric diagonal spacing must be greater than zero.");
+        }
+
+        double angleRadians = IsometricAngleDegrees * Math.PI / 180.0;
+        double tangent = Math.Tan(angleRadians);
+
+        return diagonalSpacing / (2.0 * tangent);
+    }
 
     /// <summary>
     /// Controls grid rendering only. Grid snapping is controlled separately by SnapKind.Grid.
@@ -101,7 +150,9 @@ public sealed class GridSettings
             isVisible,
             MajorStep,
             MinimumScreenSpacing,
-            MaximumScreenSpacing);
+            MaximumScreenSpacing,
+            Kind,
+            IsometricAngleDegrees);
     }
 
     public GridSettings WithSpacing(
@@ -115,7 +166,9 @@ public sealed class GridSettings
             IsVisible,
             majorStep,
             MinimumScreenSpacing,
-            MaximumScreenSpacing);
+            MaximumScreenSpacing,
+            Kind,
+            IsometricAngleDegrees);
     }
 
     public GridSettings WithScreenSpacingRange(
@@ -129,7 +182,43 @@ public sealed class GridSettings
             IsVisible,
             MajorStep,
             minimumScreenSpacing,
-            maximumScreenSpacing);
+            maximumScreenSpacing,
+            Kind,
+            IsometricAngleDegrees);
+    }
+
+
+
+    public GridSettings WithKind(
+        GridKind kind,
+        double isometricAngleDegrees)
+    {
+        return new GridSettings(
+            MinorStep,
+            OriginX,
+            OriginY,
+            IsVisible,
+            MajorStep,
+            MinimumScreenSpacing,
+            MaximumScreenSpacing,
+            kind,
+            isometricAngleDegrees);
+    }
+
+    public GridSettings WithOrigin(
+        double originX,
+        double originY)
+    {
+        return new GridSettings(
+            MinorStep,
+            originX,
+            originY,
+            IsVisible,
+            MajorStep,
+            MinimumScreenSpacing,
+            MaximumScreenSpacing,
+            Kind,
+            IsometricAngleDegrees);
     }
 
     public bool ShouldRenderScreenSpacing(double screenSpacing)

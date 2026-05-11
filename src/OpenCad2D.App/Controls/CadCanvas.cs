@@ -623,6 +623,49 @@ public sealed class CadCanvas : Control
         double minY = Math.Min(topLeftModel.Y, bottomRightModel.Y);
         double maxY = Math.Max(topLeftModel.Y, bottomRightModel.Y);
 
+        if (grid.Kind == GridKind.Isometric)
+        {
+            DrawIsometricGrid(
+                context,
+                grid,
+                minX,
+                maxX,
+                minY,
+                maxY,
+                drawMinor,
+                drawMajor);
+        }
+        else
+        {
+            DrawRectangularGrid(
+                context,
+                grid,
+                minX,
+                maxX,
+                minY,
+                maxY,
+                drawMinor,
+                drawMajor);
+        }
+
+        DrawAxes(
+            context,
+            minX,
+            maxX,
+            minY,
+            maxY);
+    }
+
+    private void DrawRectangularGrid(
+        DrawingContext context,
+        GridSettings grid,
+        double minX,
+        double maxX,
+        double minY,
+        double maxY,
+        bool drawMinor,
+        bool drawMajor)
+    {
         if (drawMinor)
         {
             DrawGridLines(
@@ -650,13 +693,168 @@ public sealed class CadCanvas : Control
                 maxY,
                 skipMajorLines: false);
         }
+    }
 
-        DrawAxes(
+    private void DrawIsometricGrid(
+        DrawingContext context,
+        GridSettings grid,
+        double minX,
+        double maxX,
+        double minY,
+        double maxY,
+        bool drawMinor,
+        bool drawMajor)
+    {
+        if (drawMinor)
+        {
+            DrawIsometricGridLines(
+                context,
+                grid,
+                grid.MinorStep,
+                _gridMinorPen,
+                minX,
+                maxX,
+                minY,
+                maxY,
+                skipMajorLines: drawMajor);
+        }
+
+        if (drawMajor)
+        {
+            DrawIsometricGridLines(
+                context,
+                grid,
+                grid.MajorStep,
+                _gridMajorPen,
+                minX,
+                maxX,
+                minY,
+                maxY,
+                skipMajorLines: false);
+        }
+    }
+
+    private void DrawIsometricGridLines(
+        DrawingContext context,
+        GridSettings grid,
+        double step,
+        Pen pen,
+        double minX,
+        double maxX,
+        double minY,
+        double maxY,
+        bool skipMajorLines)
+    {
+        double angleRadians = grid.IsometricAngleDegrees * Math.PI / 180.0;
+        double tangent = Math.Tan(angleRadians);
+        double extension = Math.Max(maxX - minX, maxY - minY) * 2 + grid.MajorStep * 4;
+        double drawMinX = minX - extension;
+        double drawMaxX = maxX + extension;
+        double drawMinY = minY - extension;
+        double drawMaxY = maxY + extension;
+
+        double verticalStep = grid.GetIsometricVerticalStep(step);
+        double majorVerticalStep = grid.GetIsometricVerticalStep(grid.MajorStep);
+        double startX = grid.OriginX + Math.Floor((drawMinX - grid.OriginX) / verticalStep) * verticalStep;
+        double endX = grid.OriginX + Math.Ceiling((drawMaxX - grid.OriginX) / verticalStep) * verticalStep;
+
+        for (double x = startX; x <= endX; x += verticalStep)
+        {
+            if (skipMajorLines && IsGridCoordinateMultipleOf(x, grid.OriginX, majorVerticalStep))
+            {
+                continue;
+            }
+
+            context.DrawLine(
+                pen,
+                ToScreenPoint(new Point2D(x, drawMinY)),
+                ToScreenPoint(new Point2D(x, drawMaxY)));
+        }
+
+        DrawIsometricDiagonalFamily(
             context,
-            minX,
-            maxX,
-            minY,
-            maxY);
+            grid,
+            step,
+            pen,
+            tangent,
+            drawMinX,
+            drawMaxX,
+            drawMinY,
+            drawMaxY,
+            positiveSlope: true,
+            skipMajorLines: skipMajorLines);
+
+        DrawIsometricDiagonalFamily(
+            context,
+            grid,
+            step,
+            pen,
+            tangent,
+            drawMinX,
+            drawMaxX,
+            drawMinY,
+            drawMaxY,
+            positiveSlope: false,
+            skipMajorLines: skipMajorLines);
+    }
+
+    private void DrawIsometricDiagonalFamily(
+        DrawingContext context,
+        GridSettings grid,
+        double step,
+        Pen pen,
+        double tangent,
+        double minX,
+        double maxX,
+        double minY,
+        double maxY,
+        bool positiveSlope,
+        bool skipMajorLines)
+    {
+        double minIntercept = double.PositiveInfinity;
+        double maxIntercept = double.NegativeInfinity;
+
+        Point2D[] corners =
+        {
+            new(minX, minY),
+            new(minX, maxY),
+            new(maxX, minY),
+            new(maxX, maxY)
+        };
+
+        foreach (Point2D corner in corners)
+        {
+            double intercept = positiveSlope
+                ? corner.Y - grid.OriginY - tangent * (corner.X - grid.OriginX)
+                : corner.Y - grid.OriginY + tangent * (corner.X - grid.OriginX);
+
+            minIntercept = Math.Min(minIntercept, intercept);
+            maxIntercept = Math.Max(maxIntercept, intercept);
+        }
+
+        double startIntercept = Math.Floor(minIntercept / step) * step;
+        double endIntercept = Math.Ceiling(maxIntercept / step) * step;
+
+        for (double intercept = startIntercept; intercept <= endIntercept; intercept += step)
+        {
+            if (skipMajorLines && IsGridCoordinateMultipleOf(intercept, 0, grid.MajorStep))
+            {
+                continue;
+            }
+
+            double startY = positiveSlope
+                ? grid.OriginY + tangent * (minX - grid.OriginX) + intercept
+                : grid.OriginY - tangent * (minX - grid.OriginX) + intercept;
+
+            double endY = positiveSlope
+                ? grid.OriginY + tangent * (maxX - grid.OriginX) + intercept
+                : grid.OriginY - tangent * (maxX - grid.OriginX) + intercept;
+
+            context.DrawLine(
+                pen,
+                ToScreenPoint(new Point2D(minX, startY)),
+                ToScreenPoint(new Point2D(maxX, endY)));
+        }
     }
 
     private void DrawGridLines(

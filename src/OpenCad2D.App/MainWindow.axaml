@@ -197,6 +197,10 @@
                             Content="Layers..."
                             Click="Layers_Click" />
 
+                    <Button Classes="global-button"
+                            Content="Grid..."
+                            Click="Grid_Click" />
+
                     <Separator Margin="8,0" />
 
                     <Button Classes="global-button"

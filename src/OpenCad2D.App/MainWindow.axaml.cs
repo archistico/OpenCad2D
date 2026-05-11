@@ -9,6 +9,7 @@ using Avalonia.Layout;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Layers;
+using OpenCad2D.App.ViewModels.Grid;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -719,6 +720,33 @@ public partial class MainWindow : Window
 
         InitializeLayerComboBox();
         RefreshLayerControls();
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+
+    private async void Grid_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        var dialogViewModel = new GridSettingsWindowViewModel(
+            _viewModel.Workspace.GridSettings);
+
+        var dialog = new GridSettingsWindow(dialogViewModel);
+
+        GridSettingsResult? result = await dialog.ShowDialog<GridSettingsResult?>(this);
+
+        if (result is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        ToolResult toolResult = _viewModel.ApplyGridSettings(result.GridSettings);
+
         RefreshStatus();
 
         CadCanvas.ClearSnapMarker();

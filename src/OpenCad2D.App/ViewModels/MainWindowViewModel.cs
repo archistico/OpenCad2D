@@ -670,6 +670,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(StatusText));
     }
 
+
+    public ToolResult ApplyGridSettings(GridSettings gridSettings)
+    {
+        ToolResult result = Workspace.SetGridSettings(gridSettings);
+
+        SetLastResult(result);
+        OnPropertiesChanged(
+            nameof(StatusText),
+            nameof(SnapText));
+
+        return result;
+    }
+
     public void SetOrthoEnabled(bool isEnabled)
     {
         Workspace.Context.IsOrthoEnabled = isEnabled;

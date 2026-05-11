@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Documents;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 
@@ -102,6 +102,29 @@ public sealed class GridSnapProviderTests
 
         Assert.NotNull(result);
         Assert.Equal(new Point2D(-20, -50), result.Point);
+    }
+
+    [Fact]
+    public void Snap_WithIsometricGrid_ShouldReturnNearestIsometricPoint()
+    {
+        var document = new CadDocument();
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(20.8, 11.2),
+            tolerance: 5,
+            enabledSnaps: SnapKind.Grid,
+            gridSettings: new GridSettings(
+                step: 10,
+                kind: GridKind.Isometric,
+                isometricAngleDegrees: 30));
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Grid, result.Kind);
+        Assert.True(result.Point.DistanceTo(new Point2D(17.320508075688775, 10)) < 0.001);
     }
 
     [Fact]
