@@ -8,13 +8,13 @@ using OpenCad2D.Tools.Common;
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
-/// Trims a line entity against a selected line boundary.
+/// Trims editable entities against a selected boundary entity.
 /// </summary>
 public sealed class TrimTool : ICadTool
 {
     private EntityId? _boundaryEntityId;
-    private LineEntity? _boundaryLine;
-    private IReadOnlyList<LineEntity> _previewLines = Array.Empty<LineEntity>();
+    private CadEntity? _boundaryEntity;
+    private IReadOnlyList<CadEntity> _previewEntities = Array.Empty<CadEntity>();
 
     public string Name => "Trim";
 
@@ -25,7 +25,7 @@ public sealed class TrimTool : ICadTool
 
     public bool HasPreview =>
         State == TrimToolState.WaitingForTargetEntity &&
-        _previewLines.Count > 0;
+        _previewEntities.Count > 0;
 
     public ToolResult OnPointerPressed(
         ToolContext context,
@@ -54,7 +54,7 @@ public sealed class TrimTool : ICadTool
         ArgumentNullException.ThrowIfNull(pointer);
 
         if (State != TrimToolState.WaitingForTargetEntity ||
-            _boundaryLine is null)
+            _boundaryEntity is null)
         {
             return ToolResult.None();
         }
@@ -63,7 +63,7 @@ public sealed class TrimTool : ICadTool
 
         return HasPreview
             ? ToolResult.Updated("Trim preview updated.")
-            : ToolResult.None("Select a line segment that can be trimmed by the boundary.");
+            : ToolResult.None("Select an entity part that can be trimmed by the boundary.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -86,9 +86,7 @@ public sealed class TrimTool : ICadTool
 
     public IReadOnlyList<CadEntity> GetPreviewEntities()
     {
-        return _previewLines
-            .Cast<CadEntity>()
-            .ToList();
+        return _previewEntities.ToList();
     }
 
     private ToolResult AcceptBoundaryEntity(
@@ -101,39 +99,39 @@ public sealed class TrimTool : ICadTool
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select a line boundary.");
+            return ToolResult.None("Select a boundary entity.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity line)
+        if (!IsSupportedEntity(entity))
         {
-            return ToolResult.None("Trim currently supports line boundaries only.");
+            return ToolResult.None("Trim supports lines, circles, arcs and polylines.");
         }
 
-        if (!context.Document.IsEntityVisible(line))
+        if (!context.Document.IsEntityVisible(entity))
         {
             return ToolResult.None("Boundary entity is not visible.");
         }
 
-        _boundaryEntityId = line.Id;
-        _boundaryLine = line;
-        _previewLines = Array.Empty<LineEntity>();
+        _boundaryEntityId = entity.Id;
+        _boundaryEntity = entity;
+        _previewEntities = Array.Empty<CadEntity>();
         State = TrimToolState.WaitingForTargetEntity;
-        context.CurrentBasePoint = line.GetClosestPoint(pointer.ModelPoint);
+        context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Started(
-            "Select a line side to trim by the boundary.");
+            "Select an entity side to trim by the boundary.");
     }
 
     private ToolResult AcceptTargetEntity(
         ToolContext context,
         PointerInfo pointer)
     {
-        if (_boundaryLine is null)
+        if (_boundaryEntity is null)
         {
             throw new InvalidOperationException(
-                "Cannot trim before selecting a boundary line.");
+                "Cannot trim before selecting a boundary entity.");
         }
 
         EntityId? selectedId = SelectEntityByPoint(
@@ -142,59 +140,59 @@ public sealed class TrimTool : ICadTool
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select a line to trim.");
+            return ToolResult.None("Select an entity to trim.");
         }
 
-        if (selectedId.Value.Equals(_boundaryLine.Id))
+        if (selectedId.Value.Equals(_boundaryEntity.Id))
         {
-            return ToolResult.None("Target line must be different from the boundary line.");
+            return ToolResult.None("Target entity must be different from the boundary entity.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity targetLine)
+        if (!IsSupportedEntity(entity))
         {
-            return ToolResult.None("Trim currently supports line targets only.");
+            return ToolResult.None("Trim supports lines, circles, arcs and polylines.");
         }
 
-        if (!context.Document.IsEntitySelectable(targetLine))
+        if (!context.Document.IsEntitySelectable(entity))
         {
             return ToolResult.None("Target entity is not editable.");
         }
 
-        IReadOnlyList<LineEntity> trimmedLines = LineTrimService.TrimByBoundary(
-            targetLine,
-            _boundaryLine,
+        IReadOnlyList<CadEntity> trimmedEntities = CadTrimService.TrimByBoundary(
+            entity,
+            _boundaryEntity,
             pointer.ModelPoint,
             context.GeometryTolerance);
 
-        if (trimmedLines.Count == 0)
+        if (trimmedEntities.Count == 0)
         {
             return ToolResult.None(
-                "The selected line cannot be trimmed by the boundary from the picked side.");
+                "The selected entity cannot be trimmed by the boundary from the picked side.");
         }
 
         context.Commands.Execute(
             context.Document,
             new ModifyEntitiesCommand(
-                new[] { targetLine },
-                trimmedLines,
-                "Trim line"));
+                new[] { entity },
+                trimmedEntities,
+                "Trim entity"));
 
-        _previewLines = Array.Empty<LineEntity>();
-        context.CurrentBasePoint = targetLine.GetClosestPoint(pointer.ModelPoint);
+        _previewEntities = Array.Empty<CadEntity>();
+        context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Completed(
-            "Line trimmed. Select another line to trim, or press Escape.");
+            "Entity trimmed. Select another entity to trim, or press Escape.");
     }
 
     private void UpdatePreview(
         ToolContext context,
         Point2D point)
     {
-        if (_boundaryLine is null)
+        if (_boundaryEntity is null)
         {
-            _previewLines = Array.Empty<LineEntity>();
+            _previewEntities = Array.Empty<CadEntity>();
             return;
         }
 
@@ -203,24 +201,24 @@ public sealed class TrimTool : ICadTool
             point);
 
         if (selectedId is null ||
-            selectedId.Value.Equals(_boundaryLine.Id))
+            selectedId.Value.Equals(_boundaryEntity.Id))
         {
-            _previewLines = Array.Empty<LineEntity>();
+            _previewEntities = Array.Empty<CadEntity>();
             return;
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity targetLine ||
-            !context.Document.IsEntitySelectable(targetLine))
+        if (!IsSupportedEntity(entity) ||
+            !context.Document.IsEntitySelectable(entity))
         {
-            _previewLines = Array.Empty<LineEntity>();
+            _previewEntities = Array.Empty<CadEntity>();
             return;
         }
 
-        _previewLines = LineTrimService.TrimByBoundary(
-            targetLine,
-            _boundaryLine,
+        _previewEntities = CadTrimService.TrimByBoundary(
+            entity,
+            _boundaryEntity,
             point,
             context.GeometryTolerance);
     }
@@ -235,11 +233,17 @@ public sealed class TrimTool : ICadTool
             context.Selection.Tolerance);
     }
 
+
+    private static bool IsSupportedEntity(CadEntity entity)
+    {
+        return entity is LineEntity or CircleEntity or ArcEntity or PolylineEntity;
+    }
+
     private void Reset(ToolContext? context = null)
     {
         _boundaryEntityId = null;
-        _boundaryLine = null;
-        _previewLines = Array.Empty<LineEntity>();
+        _boundaryEntity = null;
+        _previewEntities = Array.Empty<CadEntity>();
         State = TrimToolState.WaitingForBoundaryEntity;
 
         if (context is not null)

@@ -8,14 +8,14 @@ using OpenCad2D.Tools.Common;
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
-/// Extends a line entity until it reaches a selected line boundary.
+/// Extends editable entities until they reach a selected boundary entity.
 /// </summary>
 public sealed class ExtendTool : ICadTool
 {
     private EntityId? _boundaryEntityId;
-    private LineEntity? _boundaryLine;
+    private CadEntity? _boundaryEntity;
     private EntityId? _previewTargetEntityId;
-    private LineEntity? _previewLine;
+    private CadEntity? _previewEntity;
 
     public string Name => "Extend";
 
@@ -26,7 +26,7 @@ public sealed class ExtendTool : ICadTool
 
     public bool HasPreview =>
         State == ExtendToolState.WaitingForTargetEntity &&
-        _previewLine is not null;
+        _previewEntity is not null;
 
     public ToolResult OnPointerPressed(
         ToolContext context,
@@ -55,7 +55,7 @@ public sealed class ExtendTool : ICadTool
         ArgumentNullException.ThrowIfNull(pointer);
 
         if (State != ExtendToolState.WaitingForTargetEntity ||
-            _boundaryLine is null)
+            _boundaryEntity is null)
         {
             return ToolResult.None();
         }
@@ -64,7 +64,7 @@ public sealed class ExtendTool : ICadTool
 
         return HasPreview
             ? ToolResult.Updated("Extend preview updated.")
-            : ToolResult.None("Select a line endpoint that can be extended to the boundary.");
+            : ToolResult.None("Select an entity endpoint that can be extended to the boundary.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -87,9 +87,9 @@ public sealed class ExtendTool : ICadTool
 
     public IReadOnlyList<CadEntity> GetPreviewEntities()
     {
-        return _previewLine is null
+        return _previewEntity is null
             ? Array.Empty<CadEntity>()
-            : new CadEntity[] { _previewLine };
+            : new[] { _previewEntity };
     }
 
     private ToolResult AcceptBoundaryEntity(
@@ -102,40 +102,40 @@ public sealed class ExtendTool : ICadTool
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select a line boundary.");
+            return ToolResult.None("Select a boundary entity.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity line)
+        if (!IsSupportedBoundaryEntity(entity))
         {
-            return ToolResult.None("Extend currently supports line boundaries only.");
+            return ToolResult.None("Extend supports line, circle, arc and polyline boundaries.");
         }
 
-        if (!context.Document.IsEntityVisible(line))
+        if (!context.Document.IsEntityVisible(entity))
         {
             return ToolResult.None("Boundary entity is not visible.");
         }
 
-        _boundaryEntityId = line.Id;
-        _boundaryLine = line;
+        _boundaryEntityId = entity.Id;
+        _boundaryEntity = entity;
         _previewTargetEntityId = null;
-        _previewLine = null;
+        _previewEntity = null;
         State = ExtendToolState.WaitingForTargetEntity;
-        context.CurrentBasePoint = line.GetClosestPoint(pointer.ModelPoint);
+        context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Started(
-            "Select a line to extend to the boundary.");
+            "Select an entity to extend to the boundary.");
     }
 
     private ToolResult AcceptTargetEntity(
         ToolContext context,
         PointerInfo pointer)
     {
-        if (_boundaryLine is null)
+        if (_boundaryEntity is null)
         {
             throw new InvalidOperationException(
-                "Cannot extend before selecting a boundary line.");
+                "Cannot extend before selecting a boundary entity.");
         }
 
         EntityId? selectedId = SelectEntityByPoint(
@@ -144,61 +144,61 @@ public sealed class ExtendTool : ICadTool
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select a line to extend.");
+            return ToolResult.None("Select an entity to extend.");
         }
 
-        if (selectedId.Value.Equals(_boundaryLine.Id))
+        if (selectedId.Value.Equals(_boundaryEntity.Id))
         {
-            return ToolResult.None("Target line must be different from the boundary line.");
+            return ToolResult.None("Target entity must be different from the boundary entity.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity targetLine)
+        if (!IsSupportedTargetEntity(entity))
         {
-            return ToolResult.None("Extend currently supports line targets only.");
+            return ToolResult.None("Extend supports lines, arcs and open polylines as targets.");
         }
 
-        if (!context.Document.IsEntitySelectable(targetLine))
+        if (!context.Document.IsEntitySelectable(entity))
         {
             return ToolResult.None("Target entity is not editable.");
         }
 
-        LineEntity? extendedLine = LineExtendService.ExtendToBoundary(
-            targetLine,
-            _boundaryLine,
+        CadEntity? extendedEntity = CadExtendService.ExtendToBoundary(
+            entity,
+            _boundaryEntity,
             pointer.ModelPoint,
             context.GeometryTolerance);
 
-        if (extendedLine is null)
+        if (extendedEntity is null)
         {
             return ToolResult.None(
-                "The selected line cannot be extended to the boundary from the picked side.");
+                "The selected entity cannot be extended to the boundary from the picked side.");
         }
 
         context.Commands.Execute(
             context.Document,
             new ModifyEntitiesCommand(
-                new[] { targetLine },
-                new[] { extendedLine },
-                "Extend line"));
+                new[] { entity },
+                new[] { extendedEntity },
+                "Extend entity"));
 
         _previewTargetEntityId = null;
-        _previewLine = null;
-        context.CurrentBasePoint = targetLine.GetClosestPoint(pointer.ModelPoint);
+        _previewEntity = null;
+        context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Completed(
-            "Line extended. Select another line to extend, or press Escape.");
+            "Entity extended. Select another entity to extend, or press Escape.");
     }
 
     private void UpdatePreview(
         ToolContext context,
         Point2D point)
     {
-        if (_boundaryLine is null)
+        if (_boundaryEntity is null)
         {
             _previewTargetEntityId = null;
-            _previewLine = null;
+            _previewEntity = null;
             return;
         }
 
@@ -207,27 +207,27 @@ public sealed class ExtendTool : ICadTool
             point);
 
         if (selectedId is null ||
-            selectedId.Value.Equals(_boundaryLine.Id))
+            selectedId.Value.Equals(_boundaryEntity.Id))
         {
             _previewTargetEntityId = null;
-            _previewLine = null;
+            _previewEntity = null;
             return;
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity targetLine ||
-            !context.Document.IsEntitySelectable(targetLine))
+        if (!IsSupportedTargetEntity(entity) ||
+            !context.Document.IsEntitySelectable(entity))
         {
             _previewTargetEntityId = null;
-            _previewLine = null;
+            _previewEntity = null;
             return;
         }
 
-        _previewTargetEntityId = targetLine.Id;
-        _previewLine = LineExtendService.ExtendToBoundary(
-            targetLine,
-            _boundaryLine,
+        _previewTargetEntityId = entity.Id;
+        _previewEntity = CadExtendService.ExtendToBoundary(
+            entity,
+            _boundaryEntity,
             point,
             context.GeometryTolerance);
     }
@@ -242,12 +242,23 @@ public sealed class ExtendTool : ICadTool
             context.Selection.Tolerance);
     }
 
+
+    private static bool IsSupportedBoundaryEntity(CadEntity entity)
+    {
+        return entity is LineEntity or CircleEntity or ArcEntity or PolylineEntity;
+    }
+
+    private static bool IsSupportedTargetEntity(CadEntity entity)
+    {
+        return entity is LineEntity or ArcEntity or PolylineEntity { IsClosed: false };
+    }
+
     private void Reset(ToolContext? context = null)
     {
         _boundaryEntityId = null;
-        _boundaryLine = null;
+        _boundaryEntity = null;
         _previewTargetEntityId = null;
-        _previewLine = null;
+        _previewEntity = null;
         State = ExtendToolState.WaitingForBoundaryEntity;
 
         if (context is not null)
