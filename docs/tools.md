@@ -37,6 +37,7 @@ The App converts UI events into CAD input and forwards them. The tool owns comma
 - UCS/WCS conversion;
 - current base point;
 - Ortho state;
+- Polar Tracking settings;
 - tolerances.
 
 Tools should use `ToolContext` instead of reaching into UI code.
@@ -78,6 +79,7 @@ Supports:
 - direct distance;
 - snap;
 - Ortho;
+- Polar Tracking;
 - preview;
 - undo/redo through `AddEntityCommand`.
 
@@ -117,7 +119,7 @@ Esc         -> cancel
 
 The current base point is updated to the last accepted vertex so relative input and direct distance continue from the last segment.
 
-Ortho applies to the current segment only.
+Ortho or Polar Tracking applies to the current segment only.
 
 ---
 
@@ -172,7 +174,7 @@ pick destination point
 commit move
 ```
 
-During the first phase only entity snap is active. During the base/destination phase the tool uses the ordinary geometric snaps from `ToolContext.EnabledSnaps`.
+During the first phase only entity snap is active. During the base/destination phase the tool uses the ordinary geometric snaps from `ToolContext.EnabledSnaps`; the resulting point can then be constrained by Polar Tracking or Ortho.
 
 ### CopyTool
 
@@ -223,7 +225,7 @@ The angle is:
 angle(base -> destination) - angle(base -> reference)
 ```
 
-Ortho constrains interactive rotation to multiples of 90 degrees.
+Ortho constrains interactive rotation to multiples of 90 degrees. Polar Tracking is currently focused on point placement, so explicit rotate-angle behavior remains separate.
 
 ### ScaleTool
 
@@ -365,16 +367,29 @@ Grip edits commit through replacement commands and remain undoable.
 
 ---
 
-## Ortho
+## Ortho and Polar Tracking
 
-Ortho constrains point input from the current base point.
+Ortho is the legacy horizontal/vertical point constraint. Polar Tracking generalizes the same idea with a configurable angular step.
 
 ```text
-if |DX| >= |DY| -> horizontal
-if |DY| >  |DX| -> vertical
+Polar Off -> no polar constraint
+Polar 90° -> 0°, 90°, 180°, 270°
+Polar 45° -> 0°, 45°, 90°, 135°, ...
+Polar 30° -> 0°, 30°, 60°, 90°, ...
+Polar 15° -> 0°, 15°, 30°, 45°, ...
 ```
 
-Tools that use Ortho should apply it before preview, measurements and direct distance results so “what you see is what you get”.
+The shared implementation is `ToolInputConstraintService`.
+
+Resolution order:
+
+```text
+raw point -> snapping -> Polar Tracking / Ortho -> preview and commit
+```
+
+Tools that use point constraints should apply them before preview, measurements and direct distance results so “what you see is what you get”.
+
+Polar Tracking has priority when enabled. If Polar is `Off`, legacy Ortho can still constrain to horizontal/vertical directions.
 
 ---
 

@@ -112,8 +112,8 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
             pointer.ModelPoint,
             _basePoint);
 
-        _currentPoint = ToolInputConstraintService.ApplyOrtho(
-            context.IsOrthoEnabled,
+        _currentPoint = ToolInputConstraintService.ApplyAngleConstraint(
+            context,
             _basePoint.Value,
             point);
 
@@ -239,8 +239,8 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
             pointer.ModelPoint,
             _basePoint);
 
-        point = ToolInputConstraintService.ApplyOrtho(
-            context.IsOrthoEnabled,
+        point = ToolInputConstraintService.ApplyAngleConstraint(
+            context,
             _basePoint.Value,
             point);
 

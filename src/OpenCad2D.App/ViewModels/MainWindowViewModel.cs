@@ -10,6 +10,7 @@ using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Input;
 using OpenCad2D.App.ViewModels.Properties;
+using OpenCad2D.App.ViewModels.PolarTracking;
 using System.IO;
 using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Persistence;
@@ -34,9 +35,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string? _currentFilePath;
     private PropertyPanelViewModel _propertyPanel = new("Properties", Array.Empty<PropertySectionViewModel>());
     private bool _isPropertyPanelVisible = true;
+    private PolarTrackingOptionViewModel _selectedPolarTrackingOption;
 
     public MainWindowViewModel()
     {
+        PolarTrackingOptions = CreatePolarTrackingOptions();
+        _selectedPolarTrackingOption = PolarTrackingOptions[0];
+
         Workspace = new CadWorkspace(
             enabledSnaps: SnapKind.Endpoint |
                           SnapKind.Midpoint |
@@ -90,6 +95,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool CurrentLayerIsLocked => CurrentLayer.IsLocked;
 
     public bool IsOrthoEnabled => Workspace.Context.IsOrthoEnabled;
+
+    public IReadOnlyList<PolarTrackingOptionViewModel> PolarTrackingOptions { get; }
+
+    public PolarTrackingOptionViewModel SelectedPolarTrackingOption
+    {
+        get => _selectedPolarTrackingOption;
+        set
+        {
+            if (ReferenceEquals(_selectedPolarTrackingOption, value) || value is null)
+            {
+                return;
+            }
+
+            SetPolarTracking(value);
+        }
+    }
+
+    public string PolarTrackingText => _selectedPolarTrackingOption.IsOff
+        ? "Polar: Off"
+        : $"Polar: {_selectedPolarTrackingOption.StepDegrees:0.###}°";
 
     public string ActiveToolName =>
         Workspace.ToolController.ActiveToolName;
@@ -154,8 +179,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
             Point2D targetPoint = _currentSnapCandidate?.Point ?? _mousePosition;
 
-            targetPoint = ToolInputConstraintService.ApplyOrtho(
-                Workspace.Context.IsOrthoEnabled,
+            targetPoint = ToolInputConstraintService.ApplyAngleConstraint(
+                Workspace.Context,
                 basePoint,
                 targetPoint);
 
@@ -202,6 +227,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         $"{CurrentLayerText} | " +
         $"Entities: {EntityCount} | " +
         $"Selected: {SelectedCount} | " +
+        $"{PolarTrackingText} | " +
         $"{MousePositionText} | " +
         $"{MeasurementText} | " +
         $"{SnapText} | " +
@@ -391,8 +417,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
         Point2D directionPoint = _currentSnapCandidate?.Point ?? _mousePosition;
 
-        directionPoint = ToolInputConstraintService.ApplyOrtho(
-            Workspace.Context.IsOrthoEnabled,
+        directionPoint = ToolInputConstraintService.ApplyAngleConstraint(
+            Workspace.Context,
             basePoint,
             directionPoint);
 
@@ -699,12 +725,40 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         Workspace.Context.IsOrthoEnabled = isEnabled;
 
+        if (isEnabled)
+        {
+            Workspace.AngleConstraintSettings = AngleConstraintSettings.Off;
+            _selectedPolarTrackingOption = PolarTrackingOptions[0];
+        }
+
         SetMessage(isEnabled
             ? "Ortho mode enabled."
             : "Ortho mode disabled.");
 
         OnPropertiesChanged(
             nameof(IsOrthoEnabled),
+            nameof(SelectedPolarTrackingOption),
+            nameof(PolarTrackingText),
+            nameof(MeasurementText),
+            nameof(StatusText));
+    }
+
+    public void SetPolarTracking(PolarTrackingOptionViewModel option)
+    {
+        ArgumentNullException.ThrowIfNull(option);
+
+        _selectedPolarTrackingOption = option;
+        Workspace.Context.IsOrthoEnabled = false;
+        Workspace.AngleConstraintSettings = option.Settings;
+
+        SetMessage(option.IsOff
+            ? "Polar tracking disabled."
+            : $"Polar tracking set to {option.StepDegrees:0.###}°.");
+
+        OnPropertiesChanged(
+            nameof(IsOrthoEnabled),
+            nameof(SelectedPolarTrackingOption),
+            nameof(PolarTrackingText),
             nameof(MeasurementText),
             nameof(StatusText));
     }
@@ -724,6 +778,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
             nameof(IsOrthoEnabled),
+            nameof(SelectedPolarTrackingOption),
+            nameof(PolarTrackingText),
             nameof(CurrentLayerText),
             nameof(MousePositionText),
             nameof(MeasurementText),
@@ -759,6 +815,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerIsVisible),
             nameof(CurrentLayerIsLocked),
             nameof(IsOrthoEnabled),
+            nameof(SelectedPolarTrackingOption),
+            nameof(PolarTrackingText),
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
             nameof(MeasurementText),
@@ -775,6 +833,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(TitleText),
             nameof(FileStatusText),
             nameof(StatusText));
+    }
+
+    private static IReadOnlyList<PolarTrackingOptionViewModel> CreatePolarTrackingOptions()
+    {
+        return new[]
+        {
+            new PolarTrackingOptionViewModel("Off", AngleConstraintSettings.Off),
+            new PolarTrackingOptionViewModel("90°", AngleConstraintSettings.FromStep(90)),
+            new PolarTrackingOptionViewModel("45°", AngleConstraintSettings.FromStep(45)),
+            new PolarTrackingOptionViewModel("30°", AngleConstraintSettings.FromStep(30)),
+            new PolarTrackingOptionViewModel("15°", AngleConstraintSettings.FromStep(15))
+        };
     }
 
     private void EnsureDemoLayers()

@@ -207,6 +207,17 @@
 
                     <Separator Margin="8,0" />
 
+                    <TextBlock Text="Polar:"
+                               Foreground="#CCCCCC"
+                               VerticalAlignment="Center"
+                               Margin="0,0,2,0" />
+
+                    <ComboBox x:Name="PolarTrackingComboBox"
+                              Width="88"
+                              SelectionChanged="PolarTrackingComboBox_SelectionChanged" />
+
+                    <Separator Margin="8,0" />
+
                     <Button Classes="global-button"
                             Content="Undo"
                             Click="Undo_Click" />

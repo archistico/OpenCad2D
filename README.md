@@ -41,7 +41,7 @@ The application already supports a functional CAD workflow:
 - read-only Property Panel v1;
 - command line coordinate input;
 - direct distance entry;
-- Ortho mode;
+- Ortho mode and Polar Tracking with selectable angle steps (`Off`, `90°`, `45°`, `30°`, `15°`);
 - zoom, pan, view reset and Zoom Extents;
 - viewport culling for rendering only visible entities;
 - CAD-style crosshair cursor;
@@ -57,11 +57,11 @@ The current UI layout is intentionally divided into stable areas:
 
 ```text
 File command bar     New / Open / Save / Save As / current file name / dirty marker
-Top CAD bar          layer selector, layer state, Layers..., Line formats..., Grid..., Undo/Redo, Extents, Props, active command
+Top CAD bar          layer selector, layer state, Layers..., Line formats..., Grid..., Polar selector, Undo/Redo, Extents, Props, active command
 Left tool panel      Select / Draw / Edit tool groups
 Center canvas        drawing area
 Right panel          optional read-only Property Panel
-Bottom snap bar      object snapping and Ortho controls
+Bottom snap bar      object snapping and legacy Ortho controls
 Command line         typed point, distance and command input
 Status bar           coordinates, snap state, measurements, rendered count and messages
 ```
@@ -155,7 +155,7 @@ Implemented drawing tools:
 `PolylineTool` supports:
 
 ```text
-click / coordinates / relative coordinates / direct distance / snap / Ortho
+click / coordinates / relative coordinates / direct distance / snap / Ortho / Polar Tracking
 Enter -> finish open polyline
 C     -> close polyline
 Esc   -> cancel
@@ -187,7 +187,7 @@ Implemented editing tools:
 - `ScaleTool`;
 - `AlignTool`.
 
-`RotateTool` uses base point, reference point and destination point. With Ortho enabled, interactive rotation is constrained to multiples of 90 degrees.
+`RotateTool` uses base point, reference point and destination point. With Ortho enabled, interactive rotation is constrained to 90-degree directions. Polar Tracking is currently applied to point-placement tools such as line, polyline and move, not to explicit rotate-angle computation.
 
 `ScaleTool` uses base point, reference point and destination point. The scale factor is calculated as:
 
@@ -334,16 +334,24 @@ The command line does not create entities directly. It resolves typed input to a
 
 ---
 
-## Ortho mode
+## Ortho mode and Polar Tracking
 
-Ortho mode constrains point input to the closest horizontal or vertical direction from the current base point:
+OpenCad2D supports two related input constraints:
 
 ```text
-if |DX| >= |DY| -> horizontal constraint
-if |DY| >  |DX| -> vertical constraint
+Ortho            legacy horizontal/vertical constraint
+Polar Tracking   configurable angular step: Off, 90°, 45°, 30° or 15°
 ```
 
-Explicit coordinate input remains exact. Direct distance input uses the constrained direction when Ortho is enabled.
+Polar Tracking constrains interactive point input to the nearest multiple of the selected angle from the current base point. For example, `45°` allows directions at `0°`, `45°`, `90°`, `135°` and so on.
+
+Input resolution order is intentionally:
+
+```text
+raw cursor -> snap candidate -> Polar/Ortho angular constraint
+```
+
+This means a snapped point may then be projected onto the active polar direction. Explicit coordinate input remains exact. Direct distance input uses the effective constrained direction when Polar Tracking or Ortho is active.
 
 ---
 
@@ -430,6 +438,7 @@ Recommended reading:
 - [Commands](docs/commands.md)
 - [Tools](docs/tools.md)
 - [Snapping](docs/snapping.md)
+- [Polar Tracking](docs/polar-tracking.md)
 - [Roadmap](docs/roadmap.md)
 - [Transform Tools](docs/transform-tools.md)
 - [Modify Tools](docs/modify-tools.md)

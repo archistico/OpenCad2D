@@ -199,8 +199,8 @@ public sealed class PolylineTool : ICadTool
 
         if (basePoint is not null)
         {
-            point = ToolInputConstraintService.ApplyOrtho(
-                context.IsOrthoEnabled,
+            point = ToolInputConstraintService.ApplyAngleConstraint(
+                context,
                 basePoint.Value,
                 point);
         }

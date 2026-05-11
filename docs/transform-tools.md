@@ -27,7 +27,7 @@ The rotation angle is computed from the angular difference between the reference
 angle = angle(base -> destination) - angle(base -> reference)
 ```
 
-Ortho constrains interactive rotation to multiples of 90 degrees.
+Ortho constrains interactive rotation to multiples of 90 degrees. Polar Tracking is currently documented as a point-placement constraint and should not be confused with explicit typed rotation angles.
 
 The tool shows a preview and commits through an undoable command.
 

@@ -119,6 +119,7 @@ Dovrebbe supportare:
 - coordinate relative
 - distanza diretta
 - Ortho
+- Polar Tracking
 - snap
 - preview dell’ultimo segmento
 ```

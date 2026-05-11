@@ -27,6 +27,7 @@ public sealed class ToolContext
         double snapTolerance = 0,
         double selectionTolerance = 5,
         double selectionDragThreshold = 1,
+        AngleConstraintSettings? angleConstraintSettings = null,
         CoordinateSystem2D? currentUcs = null,
         GeometryTolerance? geometryTolerance = null)
     {
@@ -56,6 +57,8 @@ public sealed class ToolContext
 
         Creation = new ToolCreationContext(
             currentLayerId ?? LayerId.Default);
+
+        AngleConstraintSettings = angleConstraintSettings ?? AngleConstraintSettings.Off;
     }
 
     public CadDocument Document { get; internal set; }
@@ -81,6 +84,11 @@ public sealed class ToolContext
     /// closest horizontal or vertical direction from the current base point.
     /// </summary>
     public bool IsOrthoEnabled { get; set; }
+
+    /// <summary>
+    /// Gets or sets polar tracking settings. The constraint is applied after snap resolution.
+    /// </summary>
+    public AngleConstraintSettings AngleConstraintSettings { get; set; }
 
     /*
      * Compatibility properties.

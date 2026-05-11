@@ -14,7 +14,7 @@ The UI sends model-space coordinates to the active tool.
 
 The tool, through `ToolContext`, asks `SnapService` for a snap candidate.
 
-If a candidate is found within the configured tolerance, the tool uses the snapped point instead of the raw cursor point.
+If a candidate is found within the configured tolerance, the tool uses the snapped point instead of the raw cursor point. Tools that support Polar Tracking then apply the angular constraint after snapping.
 
 The UI can also ask the snapping system for the current snap candidate while the pointer moves, so it can draw a visual marker.
 
@@ -158,6 +158,21 @@ The current priority favors precise geometric snaps over generic snaps.
 For example, endpoint and intersection have higher priority than nearest and grid.
 
 This prevents the grid from stealing the cursor when a more meaningful geometric snap is available nearby. Entity snap is normally enabled alone during entity-picking phases, so it does not compete with ordinary geometric snaps.
+
+---
+
+
+## Snapping and Polar Tracking
+
+OpenCad2D intentionally applies Polar Tracking after snapping:
+
+```text
+raw cursor point -> snap candidate -> Polar Tracking / Ortho constraint
+```
+
+This matches the current design decision for point-placement tools. A snap can provide a precise candidate first, then the active angular constraint projects the final input point onto the nearest configured direction from the current base point.
+
+This order is implemented in the tool layer rather than in `SnapService`, because snapping itself should remain a pure candidate-selection service.
 
 ---
 

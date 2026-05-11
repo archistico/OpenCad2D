@@ -69,7 +69,8 @@ UI-independent CAD tools:
 - grip editing;
 - tool controller;
 - workspace;
-- command line point submission.
+- command line point submission;
+- shared point-input constraints such as Ortho and Polar Tracking.
 
 Tools receive points and contextual state. They must not depend on Avalonia.
 
@@ -128,12 +129,40 @@ CAD/session top bar
 Left tool panel
 Canvas
 Right property panel
-Snap/Ortho bar
+Snap/Ortho bar plus Polar selector in the CAD top bar
 Command line
 Status bar
 ```
 
 The file command bar is a protected region and contains New/Open/Save/Save As. It should not be mixed with drawing/editing toolbars.
+
+---
+
+
+## Point input constraints
+
+Interactive point input can be constrained after the raw cursor point has been resolved.
+
+The current cross-tool constraint layer lives in `OpenCad2D.Tools.Common`:
+
+```text
+AngleConstraintSettings      runtime Polar Tracking configuration
+AngleConstraintService       pure angular projection service
+ToolInputConstraintService   shared entry point used by tools
+```
+
+The input order is:
+
+```text
+raw pointer/model point
+-> snapping
+-> Polar Tracking or legacy Ortho
+-> preview and command commit
+```
+
+Polar Tracking has priority when enabled. Otherwise `ToolInputConstraintService` falls back to legacy Ortho when `ToolContext.IsOrthoEnabled` is true.
+
+This logic belongs to `Tools`, not `App`, so it can be tested without Avalonia and reused by drawing/edit tools.
 
 ---
 

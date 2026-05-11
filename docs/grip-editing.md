@@ -216,13 +216,13 @@ GripActive -> one grip is warm, waiting for destination point
 
 In `Idle` state: update which grip is hot based on cursor proximity.
 
-In `GripActive` state: apply snapping and Ortho to the cursor, compute a preview of the modified entity and expose it for rendering.
+In `GripActive` state: apply snapping and the effective point constraint to the cursor, compute a preview of the modified entity and expose it for rendering.
 
 ### PointerPressed
 
 In `Idle` state: check if cursor is within click tolerance of any grip. If yes, set that grip as warm and switch to `GripActive` state. Set `ToolContext.CurrentBasePoint` to the grip's position.
 
-In `GripActive` state: resolve the destination point (after snapping and Ortho), call `provider.ApplyGripMove(entity, warmGripIndex, destination)`, create and execute `ReplaceEntityCommand`, reload the entity from the document, refresh grips and return to `Idle` state.
+In `GripActive` state: resolve the destination point (after snapping and the effective point constraint), call `provider.ApplyGripMove(entity, warmGripIndex, destination)`, create and execute `ReplaceEntityCommand`, reload the entity from the document, refresh grips and return to `Idle` state.
 
 ### Cancel / ESC
 
@@ -234,11 +234,11 @@ Snapping applies during `GripActive` state in the same way as any two-point tool
 
 The warm grip's position becomes `ToolContext.CurrentBasePoint`. Contextual snaps such as perpendicular and tangent work from this base point.
 
-### Ortho in GripEditTool
+### Ortho and Polar Tracking in GripEditTool
 
-Ortho applies in `GripActive` state for `GripKind.MoveVertex` and `GripKind.MoveEntity`.
+Ortho/Polar-style point constraints apply in `GripActive` state for `GripKind.MoveVertex` and `GripKind.MoveEntity` when integrated through the shared input constraint service.
 
-For `GripKind.ResizeRadius`, the destination point is used as-is and only the distance to the center matters. Ortho constraint on a resize grip would prevent reaching off-axis radii, so it should not be applied to `ResizeRadius` grips.
+For `GripKind.ResizeRadius`, the destination point is used as-is and only the distance to the center matters. Angular constraint on a resize grip would prevent reaching off-axis radii, so it should not be applied to `ResizeRadius` grips.
 
 ---
 
@@ -463,8 +463,8 @@ Entity id is preserved after grip edit
 After grip commit, tool returns to idle and grips refresh
 ESC in GripActive state -> returns to idle, grip deactivated
 ESC in idle state -> tool signals exit, SelectionTool should resume
-Ortho applies for MoveVertex and MoveEntity grips
-Ortho does not apply for ResizeRadius grips
+Ortho/Polar constraints apply for MoveVertex and MoveEntity grips
+Angular constraints do not apply for ResizeRadius grips
 ```
 
 ### Undo behavior
@@ -486,7 +486,7 @@ ReplaceEntityCommand is used for all grip edits.
 Entity id is preserved.
 CadDocument rejects replacement of locked layer entities.
 Snapping applies during grip-active state.
-Ortho applies to vertex and move grips, not to resize grips.
+Angular constraints apply to vertex and move grips, not to resize grips.
 GripProviderRegistry decouples tool logic from entity types.
 Preview does not modify the document.
 ```

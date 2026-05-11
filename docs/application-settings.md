@@ -17,7 +17,7 @@ The shortcut map is a configuration that binds key combinations to actions. Acti
 ```text
 tool activation    activate a specific tool
 command execution  trigger a document or file command
-toggle             flip a boolean mode (Ortho, snap, grid)
+toggle             flip a boolean mode (Ortho, snap, grid) or change Polar Tracking option
 ```
 
 The shortcut system does not create entities directly. Activating a tool via shortcut is equivalent to clicking the tool button.
@@ -69,6 +69,38 @@ Multi-character shortcuts are only active when no command line input is in progr
 Shortcuts are stored in the user settings file, not in the document file. They are user-local and not shared with collaborators.
 
 A future settings panel can allow the user to reassign shortcuts. Until that panel exists, defaults apply and are not exposed in the UI.
+
+---
+
+## Polar Tracking UI
+
+Polar Tracking is currently a runtime/session drawing aid exposed in the top CAD bar as `Polar:`.
+
+Available options:
+
+```text
+Off
+90°
+45°
+30°
+15°
+```
+
+The selected option updates `CadWorkspace.AngleConstraintSettings` and `ToolContext.AngleConstraintSettings`.
+
+Behavior:
+
+```text
+Off  -> no polar angular constraint
+90°  -> directions at 0°, 90°, 180°, 270°
+45°  -> directions at 0°, 45°, 90°, 135°, ...
+30°  -> directions at 0°, 30°, 60°, 90°, ...
+15°  -> directions at 0°, 15°, 30°, 45°, ...
+```
+
+Polar Tracking is not stored in the drawing file. It is a user/session aid, like snap toggles and viewport interaction state.
+
+When Polar Tracking is enabled, it has priority over legacy Ortho. If Polar Tracking is `Off`, legacy Ortho can still provide horizontal/vertical constraint.
 
 ---
 

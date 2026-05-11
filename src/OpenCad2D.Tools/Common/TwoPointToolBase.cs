@@ -42,8 +42,8 @@ public abstract class TwoPointToolBase : ICadTool
         if (State == TwoPointToolState.WaitingForSecondPoint &&
             _firstPoint is not null)
         {
-            point = ToolInputConstraintService.ApplyOrtho(
-                context.IsOrthoEnabled,
+            point = ToolInputConstraintService.ApplyAngleConstraint(
+                context,
                 _firstPoint.Value,
                 point);
         }
@@ -108,8 +108,8 @@ public abstract class TwoPointToolBase : ICadTool
             pointer.ModelPoint,
             _firstPoint);
 
-        _currentPoint = ToolInputConstraintService.ApplyOrtho(
-            context.IsOrthoEnabled,
+        _currentPoint = ToolInputConstraintService.ApplyAngleConstraint(
+            context,
             _firstPoint!.Value,
             point);
 

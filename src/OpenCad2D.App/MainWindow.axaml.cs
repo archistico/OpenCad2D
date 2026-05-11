@@ -11,6 +11,7 @@ using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.App.ViewModels.Grid;
 using OpenCad2D.App.ViewModels.LineFormats;
+using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -46,6 +47,7 @@ public partial class MainWindow : Window
         DataContext = _viewModel;
 
         InitializeLayerComboBox();
+        InitializePolarTrackingComboBox();
         RefreshLayerControls();
         RefreshStatus();
 
@@ -66,6 +68,7 @@ public partial class MainWindow : Window
 
         CadCanvas.ResetViewport();
         InitializeLayerComboBox();
+        InitializePolarTrackingComboBox();
         RefreshLayerControls();
         RefreshStatus();
         CadCanvas.ClearSnapMarker();
@@ -111,6 +114,7 @@ public partial class MainWindow : Window
 
             CadCanvas.ApplyViewportState(viewportState);
             InitializeLayerComboBox();
+            InitializePolarTrackingComboBox();
             RefreshLayerControls();
             RefreshStatus();
             CadCanvas.ClearSnapMarker();
@@ -409,6 +413,12 @@ public partial class MainWindow : Window
         RefreshLayerControls();
     }
 
+    private void InitializePolarTrackingComboBox()
+    {
+        PolarTrackingComboBox.ItemsSource = _viewModel.PolarTrackingOptions;
+        PolarTrackingComboBox.SelectedItem = _viewModel.SelectedPolarTrackingOption;
+    }
+
     private void RefreshLayerControls()
     {
         RefreshLayerVisibleCheckBox();
@@ -470,6 +480,24 @@ public partial class MainWindow : Window
         RefreshStatus();
 
         CadCanvas.ClearSnapMarker();
+    }
+
+    private void PolarTrackingComboBox_SelectionChanged(
+        object? sender,
+        SelectionChangedEventArgs e)
+    {
+        if (PolarTrackingComboBox.SelectedItem is not PolarTrackingOptionViewModel option)
+        {
+            return;
+        }
+
+        _viewModel.SetPolarTracking(option);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
     }
 
     private void Select_Click(

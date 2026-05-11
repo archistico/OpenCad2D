@@ -41,6 +41,7 @@ custom Avalonia canvas
 CAD-style crosshair
 command line input
 Ortho mode
+Polar Tracking with Off/90°/45°/30°/15°
 ```
 
 ---
@@ -84,6 +85,19 @@ Implemented:
 - Layer Manager combo box for selecting a line format;
 - Line Format Manager for editing formats;
 - undoable updates through `UpdateLineFormatsCommand`.
+
+
+### Polar Tracking
+
+Implemented:
+
+- `AngleConstraintSettings`;
+- `AngleConstraintService`;
+- `ToolInputConstraintService`;
+- top-bar `Polar:` selector with `Off`, `90°`, `45°`, `30°`, `15°`;
+- integration in two-point-style tools, Move and Polyline;
+- preview and direct distance input using the constrained direction;
+- snap first, then angular constraint.
 
 ### Property Panel v1
 
@@ -147,7 +161,7 @@ Implemented:
 - multi-point polyline creation;
 - Enter to finish open;
 - C to close;
-- command line, snap and Ortho support.
+- command line, snap, Ortho and Polar Tracking support.
 
 ---
 

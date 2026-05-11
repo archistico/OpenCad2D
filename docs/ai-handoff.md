@@ -34,7 +34,7 @@ The project currently supports:
 - relative coordinate input;
 - direct distance entry;
 - snap support;
-- Ortho support;
+- Ortho and Polar Tracking support;
 - preview geometry.
 
 ### Editing and transforms
@@ -70,7 +70,7 @@ The project currently supports:
 - vertical left tool panel;
 - canvas with crosshair;
 - optional right Property Panel v1;
-- bottom snap/Ortho bar;
+- bottom snap/Ortho bar plus top-bar Polar Tracking selector;
 - fixed command line input;
 - status bar;
 - grid configuration with rectangular/isometric layouts;
@@ -211,7 +211,7 @@ Supported point input:
 5        direct distance from current base point along cursor direction
 ```
 
-Explicit coordinates are not modified by Ortho. Direct distance uses Ortho-constrained direction when Ortho is enabled.
+Explicit coordinates are not modified by Ortho or Polar Tracking. Direct distance uses the effective constrained direction when Polar Tracking or Ortho is enabled.
 
 ---
 
@@ -226,12 +226,55 @@ Explicit coordinates are not modified by Ortho. Direct distance uses Ortho-const
 - current UCS;
 - current base point;
 - Ortho mode;
+- Polar Tracking through `AngleConstraintSettings`, `AngleConstraintService` and `ToolInputConstraintService`;
 - selection set;
 - command history.
 
 The UI should not inspect private fields of tools. Shared information should be exposed through `ToolContext`, `CadWorkspace` or tool public properties.
 
 ---
+
+
+## Polar Tracking status
+
+Polar Tracking is implemented as a runtime input constraint in `OpenCad2D.Tools.Common`.
+
+Main types:
+
+```text
+AngleConstraintSettings
+AngleConstraintService
+ToolInputConstraintService
+PolarTrackingOptionViewModel
+```
+
+The App exposes a top-bar `Polar:` ComboBox with these values:
+
+```text
+Off
+90°
+45°
+30°
+15°
+```
+
+`AngleConstraintService` preserves the distance from the current base point and rounds the direction to the nearest multiple of the configured step. The current pipeline is:
+
+```text
+raw cursor point -> snapping -> Polar/Ortho angle constraint -> preview/command
+```
+
+Polar Tracking has priority over legacy Ortho when enabled. If Polar is `Off`, legacy Ortho can still constrain to horizontal/vertical directions.
+
+Implemented integration points:
+
+```text
+TwoPointToolBase
+MoveTool
+PolylineTool
+command-line direct distance direction
+status text through MainWindowViewModel.PolarTrackingText
+```
 
 ## Entity snap and overlapping selection status
 
@@ -281,7 +324,7 @@ C                    -> close polyline
 Esc                  -> cancel
 ```
 
-The tool supports command line input, snap, Ortho and direct distance entry.
+The tool supports command line input, snap, Ortho, Polar Tracking and direct distance entry.
 
 Polyline grip editing is not yet implemented and is a good follow-up.
 

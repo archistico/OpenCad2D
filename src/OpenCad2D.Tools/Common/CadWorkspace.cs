@@ -34,6 +34,7 @@ public sealed class CadWorkspace
         double snapTolerance = 0,
         double selectionTolerance = 5,
         double selectionDragThreshold = 1,
+        AngleConstraintSettings? angleConstraintSettings = null,
         ToolId initialToolId = ToolId.Selection,
         CoordinateSystem2D? currentUcs = null,
         GeometryTolerance? geometryTolerance = null)
@@ -59,6 +60,7 @@ public sealed class CadWorkspace
             snapTolerance: snapTolerance,
             selectionTolerance: selectionTolerance,
             selectionDragThreshold: selectionDragThreshold,
+            angleConstraintSettings: angleConstraintSettings,
             currentUcs: currentUcs,
             geometryTolerance: geometryTolerance);
 
@@ -113,6 +115,12 @@ public sealed class CadWorkspace
     {
         get => Context.GeometryTolerance;
         set => Context.GeometryTolerance = value;
+    }
+
+    public AngleConstraintSettings AngleConstraintSettings
+    {
+        get => Context.AngleConstraintSettings;
+        set => Context.AngleConstraintSettings = value ?? OpenCad2D.Tools.Common.AngleConstraintSettings.Off;
     }
 
 
@@ -192,19 +200,22 @@ public sealed class CadWorkspace
             CurrentUcs.WorldToUser(worldPoint));
 
         bool originalOrthoState = Context.IsOrthoEnabled;
+        AngleConstraintSettings originalAngleConstraintSettings = Context.AngleConstraintSettings;
 
         try
         {
             // Command-line points have already been resolved explicitly by the caller.
-            // In particular, direct distance entry applies Ortho while calculating
-            // the final point, while absolute and relative coordinates must remain exact.
+            // Absolute and relative coordinates must remain exact. Direct-distance entry
+            // calculates its own destination before submitting the final point.
             Context.IsOrthoEnabled = false;
+            Context.AngleConstraintSettings = AngleConstraintSettings.Off;
 
             return ToolController.OnPointerPressed(pointer);
         }
         finally
         {
             Context.IsOrthoEnabled = originalOrthoState;
+            Context.AngleConstraintSettings = originalAngleConstraintSettings;
         }
     }
 
