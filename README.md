@@ -19,12 +19,16 @@ The current focus is to build strong foundations: geometry, entities, layers, co
 The application already supports a functional CAD workflow:
 
 - drawing lines;
-- drawing rectangles;
+- drawing rectangles by opposite corners;
+- drawing rectangles by first side and second side (`Rect Sides`);
 - drawing circles;
+- drawing arcs by center/start/end;
+- drawing arcs through three points (`Arc 3P`);
 - drawing open and closed polylines;
 - selecting entities by point, window and crossing selection;
 - moving, copying, rotating, scaling, aligning and deleting selected entities;
-- break point, break segment, extend and trim for line entities;
+- break point and break segment for line entities;
+- trim and extend for lines, arcs, circles and polylines where supported by the current geometry services;
 - grip editing for supported entities;
 - undo and redo;
 - internal JSON save/load using `.opencad2d.json`;
@@ -35,6 +39,7 @@ The application already supports a functional CAD workflow:
 - configurable rectangular and isometric grid display and grid snapping;
 - Grid Settings dialog for visibility, spacing, origin, screen spacing thresholds and isometric angle;
 - layer visibility and locked layer behavior;
+- assigning selected entities to the current layer from the top CAD bar;
 - reusable line formats for layer stroke color, weight and style;
 - Line Format Manager;
 - Layer Manager with line format selection;
@@ -149,7 +154,10 @@ Implemented drawing tools:
 
 - `LineTool` — two points;
 - `RectangleTool` — opposite corners, stored as closed polyline;
+- `RectangleBySidesTool` / `Rect Sides` — first point, first side, second side;
 - `CircleTool` — center and radius point or direct distance radius;
+- `ArcTool` — center, start point, end direction;
+- `ArcThreePointsTool` / `Arc 3P` — start point, point on arc, end point;
 - `PolylineTool` — multi-point open or closed polyline.
 
 `PolylineTool` supports:
@@ -208,14 +216,14 @@ All edit and transform tools create undoable commands and modify the document th
 
 ### Modify tools
 
-Implemented line-based modify tools:
+Implemented modify tools:
 
 - `Break Point` — splits a `LineEntity` into two lines at one picked point;
 - `Break Segment` — removes the segment between two picked break points on a `LineEntity`;
-- `Extend` — extends a `LineEntity` to a picked `LineEntity` boundary;
-- `Trim` — trims a `LineEntity` against a picked `LineEntity` cutting edge.
+- `Extend` — extends supported open entities to a picked boundary;
+- `Trim` — trims supported entities against a picked cutting edge.
 
-These tools currently target `LineEntity` only. They use geometric services in Core and commit through `ModifyEntitiesCommand`, so undo/redo and locked-layer protection remain consistent.
+Current `Trim`/`Extend` geometry support includes lines, arcs, circles and polylines where the operation is well-defined. Circles can be trimmed into arcs, but they are not extended because they are closed entities. These tools use geometric services in Core and commit through `ModifyEntitiesCommand`, so undo/redo and locked-layer protection remain consistent.
 
 ---
 
@@ -239,7 +247,7 @@ Grip editing does not bypass locked-layer protection because final modifications
 
 ## Layers
 
-Layers control visibility, lock state and current appearance fields used by rendering.
+Layers control visibility, lock state and the line format used by rendering.
 
 Current behavior:
 
@@ -515,14 +523,15 @@ Recently completed:
 5. layer manager v1;
 6. rotate, scale and align tools;
 7. polyline tool v1;
-8. line-based Break, Extend and Trim tools;
+8. arc tools, rectangle by sides and broader Trim/Extend geometry support;
 9. SVG export;
-10. entity snap for selection-oriented tools and Ctrl-click cycling for overlapping entities.
+10. entity snap for selection-oriented tools and Ctrl-click cycling for overlapping entities;
+11. selected-entity assignment to the current layer.
 
 Next planned areas:
 
 1. update grip editing for polyline vertices;
-2. extend modify tools beyond LineEntity;
+2. refine Trim/Extend previews and edge cases for arcs/circles/polylines;
 3. distance and area measure tools;
 4. text and dimensions;
 5. application/session settings;

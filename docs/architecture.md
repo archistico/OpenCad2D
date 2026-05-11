@@ -63,7 +63,7 @@ UI-independent user interaction services:
 
 UI-independent CAD tools:
 
-- drawing tools;
+- drawing tools, including arc variants and rectangle variants;
 - edit tools;
 - transform tools;
 - grip editing;
@@ -396,3 +396,31 @@ OK -> apply through command/service
 ```
 
 This keeps the main screen operational and prevents accidental document mutation while the user experiments in a manager window.
+
+---
+
+## Entity style and line formats
+
+Rendering and SVG export resolve stroke appearance through this path:
+
+```text
+Entity -> LayerId -> Layer -> LineFormatId -> LineFormat
+```
+
+The layer is the only source of visual stroke appearance for entities in the current phase. Entity-level style overrides are intentionally out of scope.
+
+The `Assegna` top-bar action changes the `LayerId` of selected entities to the current layer through an undoable replacement command. It must preserve entity geometry and ids.
+
+---
+
+## Escape behavior
+
+The workspace owns the high-level `Esc` policy:
+
+```text
+non-selection tool -> return to Selection and keep selection
+Selection with selected entities -> clear selection
+Selection without selected entities -> no operation
+```
+
+Tool-specific cleanup remains inside the active tool, but the fallback policy belongs to `CadWorkspace`, not to Avalonia controls.

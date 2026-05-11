@@ -87,6 +87,18 @@ Supports:
 
 Creates a closed `PolylineEntity` from two opposite corners.
 
+### RectangleBySidesTool
+
+Creates a closed rectangular `PolylineEntity` from:
+
+```text
+first corner
+endpoint of first side
+point defining the second side
+```
+
+The third point is projected perpendicular to the first side so the result remains a true rectangle. Polar Tracking applies to the first side.
+
 ### CircleTool
 
 Creates a `CircleEntity` from center and radius point.
@@ -96,6 +108,30 @@ The radius can come from:
 - a second mouse point;
 - snap;
 - command line direct distance.
+
+### ArcTool
+
+Creates an `ArcEntity` from:
+
+```text
+center point
+start point / radius
+end point / direction
+```
+
+The tool shows construction feedback from the center and commits through `AddEntityCommand`.
+
+### ArcThreePointsTool
+
+Creates an `ArcEntity` through three points:
+
+```text
+start point
+point on arc
+end point
+```
+
+The geometric calculation is performed by `ArcCreationService`. Duplicate or collinear points are rejected. The preview appears after the second point.
 
 ### PolylineTool
 
@@ -278,7 +314,7 @@ Align owns a multi-step state machine and does not derive from `TwoPointToolBase
 
 Modify tools change existing geometry topologically or by extending/trimming parts.
 
-Current v1 scope is line-based.
+Break tools are currently line-based. Trim and Extend now support multiple entity types where the operation is geometrically meaningful.
 
 ### BreakAtPointTool
 
@@ -314,10 +350,12 @@ Workflow:
 
 ```text
 activate Extend
-pick LineEntity boundary
-pick LineEntity target near the endpoint to extend
-extend that endpoint until the target reaches the boundary
+pick boundary entity
+pick target entity near the endpoint to extend
+extend the nearest valid endpoint until it reaches the boundary
 ```
+
+Boundaries may be lines, circles, arcs or polylines. Targets currently include lines, arcs and open polylines. Circles are not extended because they are closed.
 
 The tool stays active with the same boundary until `Esc`.
 
@@ -327,10 +365,12 @@ Workflow:
 
 ```text
 activate Trim
-pick LineEntity cutting edge
-pick LineEntity target on the side to remove
-trim target line to the cutting edge
+pick cutting edge entity
+pick target entity on the portion to remove
+replace the target with the remaining geometry
 ```
+
+Cutting edges and targets may be lines, circles, arcs or polylines. A trimmed circle can become one or more arcs.
 
 The tool stays active with the same cutting edge until `Esc`.
 
@@ -420,3 +460,19 @@ They should follow these rules:
 SVG export is triggered from the file command bar and lives in `OpenCad2D.Export`, not in `OpenCad2D.Tools`.
 
 Export does not participate in the tool pipeline and does not modify the document.
+
+---
+
+## Escape behavior
+
+`Esc` follows a progressive CAD-style rule:
+
+```text
+inside a non-selection tool -> cancel the active command and return to Selection
+Selection with selected entities -> clear the selection
+Selection with no selected entities -> no operation
+```
+
+The first `Esc` inside a drawing or modify command keeps the current selection. A second `Esc`, now in `SelectionTool`, clears that selection.
+
+`Enter` is reserved for confirming or advancing multi-step command phases, such as finishing a polyline or confirming the entity-selection phase of Move.

@@ -2,20 +2,21 @@
 
 Modify tools change existing geometry by splitting, shortening or extending entities.
 
-The first implemented scope is intentionally limited to `LineEntity`. This keeps behavior predictable and heavily testable before extending the same concepts to polylines, arcs and circles.
+The current implementation keeps the interaction simple while moving the geometric logic into Core services. Tools own only the workflow state; Core owns the calculations; document mutations go through undoable commands.
 
 ---
 
 ## Implemented infrastructure
 
-Core services:
+Core services include:
 
 ```text
+CadEntityIntersectionService
+CadTrimService
+CadExtendService
 LineParameterService
 LineIntersectionService
 LineBreakService
-LineExtendService
-LineTrimService
 ```
 
 Command:
@@ -24,16 +25,16 @@ Command:
 ModifyEntitiesCommand
 ```
 
-`ModifyEntitiesCommand` can replace one or more original entities with zero, one or more resulting entities. This is necessary because modify operations may split one entity into two pieces or remove a piece entirely.
+`ModifyEntitiesCommand` can replace one or more original entities with zero, one or more resulting entities. This is necessary because modify operations may split one entity into pieces, remove a piece entirely or replace a closed entity with one or more open pieces.
 
 ---
 
 ## Break Point
 
-Scope:
+Current scope:
 
 ```text
-LineEntity only
+Target: LineEntity
 ```
 
 Workflow:
@@ -52,10 +53,10 @@ The tool rejects break points too close to the line endpoints to avoid degenerat
 
 ## Break Segment
 
-Scope:
+Current scope:
 
 ```text
-LineEntity only
+Target: LineEntity
 ```
 
 Workflow:
@@ -75,49 +76,79 @@ The two break points are ordered along the line internally, so click order does 
 
 ## Extend
 
-Scope:
+Current boundary support:
 
 ```text
-Boundary: LineEntity
-Target:   LineEntity
+LineEntity
+CircleEntity
+ArcEntity
+PolylineEntity
 ```
+
+Current target support:
+
+```text
+LineEntity
+ArcEntity
+open PolylineEntity
+```
+
+`CircleEntity` is intentionally not extended because it is already closed.
 
 Workflow:
 
 ```text
 activate Extend
-pick boundary line
-pick target line near the endpoint to extend
-extend that endpoint until it reaches the boundary
+pick boundary entity
+pick target entity near the endpoint to extend
+extend the nearest valid endpoint until it reaches the boundary
 ```
 
 The tool remains active with the same boundary until `Esc`.
 
-The operation is ignored if there is no valid extension intersection or if the intersection is already inside the original target segment.
+The operation is ignored if there is no valid extension intersection or if the target cannot be extended in a meaningful way.
 
 ---
 
 ## Trim
 
-Scope:
+Current cutting-edge support:
 
 ```text
-Cutting edge: LineEntity
-Target:       LineEntity
+LineEntity
+CircleEntity
+ArcEntity
+PolylineEntity
 ```
+
+Current target support:
+
+```text
+LineEntity
+CircleEntity
+ArcEntity
+PolylineEntity
+```
+
+Important behavior:
+
+- trimming a line may shorten it or split it depending on the picked side and intersections;
+- trimming a circle can replace it with one or more arcs;
+- trimming an arc keeps the remaining valid arc portion;
+- trimming a polyline works on its component segments where supported by the current service.
 
 Workflow:
 
 ```text
 activate Trim
 pick cutting edge
-pick target line on the side to remove
-trim target line to the cutting edge
+pick target entity on the side/portion to remove
+replace the target with the remaining geometry
 ```
 
 The tool remains active with the same cutting edge until `Esc`.
 
-The operation is ignored if the cutting edge does not intersect the target internally.
+The operation is ignored if the cutting edge does not produce a valid trim result.
 
 ---
 
@@ -130,16 +161,17 @@ Document mutations go through ModifyEntitiesCommand.
 CadDocument remains the final mutation boundary.
 Locked-layer rules must not be bypassed.
 Preview must not modify the document.
+Closed entities such as circles are trimmable but not extendable.
 ```
 
 ---
 
-## Future work
+## Current limitations and follow-up work
 
-Next improvements:
+Recommended next refinements:
 
-- support open `PolylineEntity` segments;
-- support multi-boundary trim/extend;
+- improve previews for the exact portion that will be removed or extended;
 - add clearer status messages for ignored operations;
-- evaluate arc/circle support when arc editing becomes mature;
-- add richer previews for removed/remaining segments.
+- broaden break operations beyond `LineEntity`;
+- add additional degenerate-case tests for tangent, near-tangent and overlapping geometry;
+- evaluate multi-boundary trim/extend workflows.

@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Commands;
+﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
@@ -244,8 +244,8 @@ public sealed class GripEditTool : ICadTool
 
         if (warmGrip.Kind != GripKind.ResizeRadius)
         {
-            destination = ToolInputConstraintService.ApplyOrtho(
-                context.IsOrthoEnabled,
+            destination = ToolInputConstraintService.ApplyAngleConstraint(
+                context,
                 warmGrip.Position,
                 destination);
         }

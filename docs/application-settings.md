@@ -36,11 +36,14 @@ Multi-character shortcuts are only active when no command line input is in progr
 
 | Shortcut | Action |
 |---|---|
-| `Esc` | Cancel active operation / deselect all (second press) |
+| `Esc` | Cancel active operation / return to Selection / clear selection on second press |
 | `S` | Selection tool |
 | `L` | Line tool |
 | `R` | Rectangle tool |
+| `RS` | Rectangle by sides tool |
 | `C` | Circle tool |
+| `A` | Arc tool |
+| `A3` | Arc 3 points tool |
 | `T` | Text tool |
 | `PO` | Polygon tool |
 | `RO` | Rotate tool |

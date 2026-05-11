@@ -28,7 +28,10 @@ The project currently supports:
 
 - `LineTool`;
 - `RectangleTool`;
+- `RectangleBySidesTool`;
 - `CircleTool`;
+- `ArcTool`;
+- `ArcThreePointsTool`;
 - `PolylineTool` v1;
 - command line coordinate input;
 - relative coordinate input;
@@ -48,7 +51,8 @@ The project currently supports:
 - rotate;
 - scale;
 - align with optional scaling confirmation;
-- line-based Break Point, Break Segment, Extend and Trim;
+- line-based Break Point and Break Segment;
+- Trim and Extend for lines, arcs, circles and polylines where supported;
 - grip editing for supported entities;
 - undo and redo.
 
@@ -61,7 +65,8 @@ The project currently supports:
 - Line Format Manager;
 - current layer must remain visible and unlocked;
 - layer `0` protected;
-- reusable line formats control layer stroke color, weight and style.
+- reusable line formats control layer stroke color, weight and style;
+- selected entities can be assigned to the current layer with the `Assegna` top-bar button.
 
 ### UI
 
@@ -311,6 +316,20 @@ Keyboard input is case-insensitive for confirmation keys at the tool level.
 
 ---
 
+## Arc and rectangle variants status
+
+Current additional drawing tools:
+
+```text
+RectangleBySidesTool  first corner -> first side endpoint -> second side point
+ArcTool               center -> start point -> end direction
+ArcThreePointsTool    start point -> point on arc -> end point
+```
+
+`RectangleBySidesTool` projects the third point perpendicular to the first side. `ArcThreePointsTool` uses `ArcCreationService` and rejects duplicate or collinear points.
+
+---
+
 ## PolylineTool status
 
 `PolylineTool` v1 is implemented.
@@ -404,6 +423,20 @@ Do not use viewport culling to modify selection state or document state. It is o
 
 ---
 
+## Escape behavior status
+
+`Esc` follows the current CAD policy:
+
+```text
+non-selection tool -> cancel command, return to Selection, keep selection
+Selection + selected entities -> clear selection
+Selection + empty selection -> no operation
+```
+
+This allows a common two-step flow: first `Esc` exits a command, second `Esc` clears the selection.
+
+---
+
 ## Persistence status
 
 Persistence is implemented in `OpenCad2D.Persistence`.
@@ -429,20 +462,20 @@ The App handles:
 
 ## Modify tools status
 
-Implemented line-based modify tools:
+Implemented modify tools:
 
 ```text
 Break Point    LineEntity only
 Break Segment  LineEntity only
-Extend         LineEntity to LineEntity boundary
-Trim           LineEntity by LineEntity cutting edge
+Extend         boundary: Line/Circle/Arc/Polyline; target: Line/Arc/open Polyline
+Trim           cutting edge: Line/Circle/Arc/Polyline; target: Line/Circle/Arc/Polyline
 ```
 
 Design rule: modify tools use geometry services, produce preview when useful and commit changes through undoable commands that mutate the document through `CadDocument`.
 
-Core services currently include line parameter, intersection, break, extend and trim services. `ModifyEntitiesCommand` supports replacing one entity with zero, one or more entities.
+Core services currently include entity intersection, trim and extend services plus line-specific break helpers. `ModifyEntitiesCommand` supports replacing one entity with zero, one or more entities.
 
-Recommended follow-up: extend these tools to `PolylineEntity` and eventually to arcs/circles when those edit semantics are mature.
+Recommended follow-up: improve trim/extend previews, add clearer ignored-operation messages and broaden break operations beyond `LineEntity`.
 
 ---
 

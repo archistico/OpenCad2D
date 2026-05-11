@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Entities;
+﻿using OpenCad2D.Core.Entities;
 
 namespace OpenCad2D.Tools.Grips;
 
@@ -13,6 +13,8 @@ public sealed class GripProviderRegistry
     {
         Register(new LineGripProvider());
         Register(new CircleGripProvider());
+        Register(new ArcGripProvider());
+        Register(new PolylineGripProvider());
     }
 
     public IReadOnlyList<IGripProvider> Providers => _providers;

@@ -74,9 +74,12 @@ Used by drawing tools:
 
 - Line;
 - Rectangle;
+- Rect Sides;
 - Circle;
+- Arc;
+- Arc 3P;
 - Polyline;
-- future Arc/Text/Dimension tools.
+- future Text/Dimension tools.
 
 Execute adds created entities. Undo removes them.
 
@@ -98,6 +101,7 @@ Used by:
 
 - grip editing;
 - geometry edits;
+- assigning selected entities to the current layer;
 - future property edits.
 
 ---
@@ -186,7 +190,7 @@ Built-in line formats are editable but not deletable. User-defined line formats 
 
 Replaces one or more existing entities with zero, one or more new entities.
 
-This command is used by line-based modify tools where the number of resulting entities may differ from the number of original entities.
+This command is used by modify tools where the number of resulting entities may differ from the number of original entities.
 
 Used by:
 
@@ -234,7 +238,7 @@ For example, a future trim operation may replace one entity and remove another, 
 
 ## Break/Trim/Extend commands
 
-The implemented line-based modify tools do not mutate entities directly.
+The implemented modify tools do not mutate entities directly.
 
 Current command approach:
 
@@ -255,12 +259,12 @@ or the implemented `ModifyEntitiesCommand`, which stores original and resulting 
 
 Replace or remove parts of an entity based on cutting boundaries.
 
-Currently uses `ModifyEntitiesCommand` for line-based trimming. Future multi-entity trim workflows may use `CompositeCommand` if several operations must be grouped into one undo step.
+Uses `ModifyEntitiesCommand` for trimming lines, arcs, circles and polylines where supported. Future multi-boundary workflows may use `CompositeCommand` if several operations must be grouped into one undo step.
 
 ### Extend
 
 Replace an entity with an extended version that reaches a boundary.
 
-Currently uses `ModifyEntitiesCommand` for consistency with the other modify tools.
+Uses `ModifyEntitiesCommand` for consistency with the other modify tools. Current targets include lines, arcs and open polylines; circles are not extended because they are closed.
 
 All three must respect locked-layer protection by using `CadDocument` mutation APIs.

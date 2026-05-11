@@ -203,3 +203,26 @@ PolylineEntity with IsClosed = true
 ```
 
 Open polylines and lines are never filled.
+
+---
+
+## Assign selected entities to current layer
+
+The top CAD bar exposes an `Assegna` button immediately before the current-layer ComboBox.
+
+Behavior:
+
+```text
+select one or more entities
+choose the target current layer
+click Assegna
+selected entities receive the current layer id
+```
+
+Rules:
+
+- entities already on the current layer are skipped;
+- no command is created when there is nothing to change;
+- the operation is undoable;
+- selection is preserved after assignment;
+- geometry and entity ids are preserved.

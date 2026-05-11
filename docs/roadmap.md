@@ -35,7 +35,7 @@ snapping
 grid configuration
 drawing tools
 editing/transform tools
-line-based modify tools
+modify tools for lines/arcs/circles/polylines where supported
 grip editing
 custom Avalonia canvas
 CAD-style crosshair
@@ -115,10 +115,11 @@ Implemented:
 - separate manager window;
 - create/delete/rename layer;
 - visible/locked;
-- color/lineweight;
+- line format assignment;
 - current layer;
 - batch undoable update command;
-- current layer must be visible and unlocked.
+- current layer must be visible and unlocked;
+- top-bar `Assegna` action to move selected entities to the current layer.
 
 ### Transform tools
 
@@ -128,15 +129,24 @@ Implemented:
 - Scale;
 - Align with optional scale confirmation.
 
-### Modify tools v1
+### Drawing tool expansion
+
+Implemented:
+
+- `ArcTool`;
+- `ArcThreePointsTool`;
+- `RectangleBySidesTool`;
+- preview and tests for these tools.
+
+### Modify tools expansion
 
 Implemented:
 
 - Break Point for `LineEntity`;
 - Break Segment for `LineEntity`;
-- Extend `LineEntity` to `LineEntity` boundary;
-- Trim `LineEntity` by `LineEntity` cutting edge;
-- shared Core services for line parameter/intersection/break/extend/trim;
+- Extend with line/circle/arc/polyline boundaries and line/arc/open-polyline targets;
+- Trim with line/circle/arc/polyline cutting edges and line/circle/arc/polyline targets;
+- shared Core services for entity intersections, trim and extend;
 - `ModifyEntitiesCommand`.
 
 ### SVG export
@@ -165,16 +175,16 @@ Implemented:
 
 ---
 
-## Next recommended phase: broaden modify tools
+## Next recommended phase: refine modify and editing UX
 
-The first line-based modify tools are implemented. The next step is to broaden their geometry support.
+Trim and Extend now cover the main entity types. The next step is to make the behavior more polished and easier to inspect while working.
 
 Recommended order:
 
-1. add Break/Trim/Extend support for open `PolylineEntity` segments;
-2. add preview refinements and clearer status messages;
-3. evaluate arc/circle support once arc editing/rendering is mature;
-4. add tests for multi-segment cases and degenerate cases.
+1. improve Trim/Extend previews so the exact removed/extended portion is highlighted;
+2. add clearer status messages when an operation is ignored;
+3. broaden Break Point and Break Segment beyond `LineEntity`;
+4. add more tests for tangent, near-tangent, overlapping and multi-segment cases.
 
 ---
 
