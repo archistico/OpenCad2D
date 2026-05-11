@@ -2,6 +2,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media;
+using OpenCad2D.App.Rendering;
 using OpenCad2D.App.Viewport;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Layers;
@@ -23,8 +24,6 @@ namespace OpenCad2D.App.Controls;
 
 public sealed class CadCanvas : Control
 {
-    private readonly Pen _entityPen = new(Brushes.White, 1);
-    private readonly Pen _selectedPen = new(Brushes.DeepSkyBlue, 2);
     private readonly Pen _previewPen = new(Brushes.Orange, 1);
     private readonly Pen _measurementVectorPen = new(
         new SolidColorBrush(Color.FromRgb(255, 190, 70)),
@@ -170,9 +169,10 @@ public sealed class CadCanvas : Control
 
         foreach (CadEntity entity in renderableEntities)
         {
-            Pen pen = Workspace.SelectionSet.Contains(entity.Id)
-                ? _selectedPen
-                : GetOrCreateEntityPen(entity);
+            bool isSelected = Workspace.SelectionSet.Contains(entity.Id);
+            Pen pen = GetOrCreateEntityPen(
+                entity,
+                isSelected);
 
             DrawEntity(
                 context,
@@ -238,10 +238,22 @@ public sealed class CadCanvas : Control
             ToScreenPoint(yEnd));
     }
 
-    private Pen GetOrCreateEntityPen(CadEntity entity)
+    private Pen GetOrCreateEntityPen(
+        CadEntity entity,
+        bool isSelected)
     {
-        CadColor color = ResolveEntityColor(entity);
-        const double thickness = 1;
+        if (Workspace is null)
+        {
+            return new Pen(Brushes.White, Layer.Default.LineWeight.Millimeters);
+        }
+
+        EntityScreenStyle screenStyle = EntityScreenStyleResolver.Resolve(
+            Workspace.Document,
+            entity,
+            isSelected);
+
+        CadColor color = screenStyle.Color;
+        double thickness = screenStyle.LineWeight;
 
         var key = new PenCacheKey(
             color.R,
@@ -267,27 +279,6 @@ public sealed class CadCanvas : Control
         _penCache.Add(key, pen);
 
         return pen;
-    }
-
-    private CadColor ResolveEntityColor(CadEntity entity)
-    {
-        if (!entity.Style.Color.IsByLayer)
-        {
-            return entity.Style.Color;
-        }
-
-        if (Workspace is null)
-        {
-            return CadColor.FromRgb(255, 255, 255);
-        }
-
-        if (!Workspace.Document.Layers.TryGet(entity.LayerId, out Layer? layer) ||
-            layer is null)
-        {
-            return CadColor.FromRgb(255, 255, 255);
-        }
-
-        return layer.Color;
     }
 
     private void DrawSnapMarker(DrawingContext context)

@@ -187,6 +187,36 @@ public sealed class SvgExporterTests
         Assert.Contains("stroke-width=\"0.5\"", result.Content);
     }
 
+
+    [Fact]
+    public void Export_ShouldIgnoreEntityLineWeightAndUseOnlyLayerLineWeight()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("LayerWeight");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "LayerWeight",
+            CadColor.FromRgb(10, 20, 30),
+            LineWeight.FromMillimeters(0.75)));
+
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: layerId,
+            style: new EntityStyle
+            {
+                LineWeight = LineWeight.FromMillimeters(8)
+            }));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.Contains("stroke-width=\"0.75\"", result.Content);
+        Assert.DoesNotContain("stroke-width=\"8\"", result.Content);
+    }
+
     [Fact]
     public void Export_ShouldGenerateViewBoxFromVisibleContentBounds()
     {
