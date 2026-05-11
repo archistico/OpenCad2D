@@ -22,6 +22,11 @@ public sealed class LayerManagerWindowViewModel : INotifyPropertyChanged
     {
         ArgumentNullException.ThrowIfNull(document);
 
+        LineFormats = document.LineFormats.All
+            .OrderBy(format => format.Name)
+            .Select(format => new LineFormatOptionViewModel(format))
+            .ToList();
+
         Layers = new ObservableCollection<EditableLayerViewModel>(
             document.Layers.All
                 .OrderBy(layer => layer.Name)
@@ -31,13 +36,15 @@ public sealed class LayerManagerWindowViewModel : INotifyPropertyChanged
                     layer.Id == currentLayerId,
                     layer.IsVisible,
                     layer.IsLocked,
-                    layer.Color,
-                    layer.LineWeight,
+                    layer.LineFormatId,
+                    LineFormats,
                     layer.Id == LayerId.Default,
                     document.Entities.All.Count(entity => entity.LayerId == layer.Id))));
 
         SelectedLayer = Layers.FirstOrDefault(layer => layer.IsCurrent) ?? Layers.FirstOrDefault();
     }
+
+    public IReadOnlyList<LineFormatOptionViewModel> LineFormats { get; }
 
     public ObservableCollection<EditableLayerViewModel> Layers { get; }
 
@@ -86,8 +93,8 @@ public sealed class LayerManagerWindowViewModel : INotifyPropertyChanged
             isCurrent: false,
             isVisible: true,
             isLocked: false,
-            CadColor.FromRgb(200, 200, 200),
-            LineWeight.FromMillimeters(0.25),
+            LineFormatId.Continuous,
+            LineFormats,
             isDefault: false,
             entityCount: 0);
 

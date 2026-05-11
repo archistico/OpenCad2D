@@ -2,8 +2,9 @@ using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Globalization;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace OpenCad2D.App.ViewModels.Layers;
@@ -14,8 +15,7 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
     private bool _isCurrent;
     private bool _isVisible;
     private bool _isLocked;
-    private string _colorHex;
-    private string _lineWeightText;
+    private LineFormatOptionViewModel _selectedLineFormat;
 
     public EditableLayerViewModel(
         LayerId id,
@@ -23,18 +23,29 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
         bool isCurrent,
         bool isVisible,
         bool isLocked,
-        CadColor color,
-        LineWeight lineWeight,
+        LineFormatId selectedLineFormatId,
+        IReadOnlyList<LineFormatOptionViewModel> availableLineFormats,
         bool isDefault,
         int entityCount)
     {
+        ArgumentNullException.ThrowIfNull(availableLineFormats);
+
+        if (availableLineFormats.Count == 0)
+        {
+            throw new ArgumentException(
+                "At least one line format is required.",
+                nameof(availableLineFormats));
+        }
+
         Id = id;
         _name = name;
         _isCurrent = isCurrent;
         _isVisible = isVisible;
         _isLocked = isLocked;
-        _colorHex = ToHex(color);
-        _lineWeightText = lineWeight.Millimeters.ToString("0.###", CultureInfo.InvariantCulture);
+        AvailableLineFormats = availableLineFormats;
+        _selectedLineFormat = availableLineFormats.FirstOrDefault(format => format.Id == selectedLineFormatId) ??
+                              availableLineFormats.FirstOrDefault(format => format.Id == LineFormatId.Continuous) ??
+                              availableLineFormats[0];
         IsDefault = isDefault;
         EntityCount = entityCount;
     }
@@ -48,6 +59,8 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
     public bool CanDelete => !IsDefault && EntityCount == 0 && !IsCurrent;
 
     public bool CanRename => !IsDefault;
+
+    public IReadOnlyList<LineFormatOptionViewModel> AvailableLineFormats { get; }
 
     public string Name
     {
@@ -110,46 +123,30 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
         }
     }
 
-    public string ColorHex
+    public LineFormatOptionViewModel SelectedLineFormat
     {
-        get => _colorHex;
+        get => _selectedLineFormat;
         set
         {
-            if (_colorHex == value)
+            ArgumentNullException.ThrowIfNull(value);
+
+            if (ReferenceEquals(_selectedLineFormat, value) ||
+                _selectedLineFormat.Id == value.Id)
             {
                 return;
             }
 
-            _colorHex = value;
-            OnPropertyChanged();
-        }
-    }
-
-    public string LineWeightText
-    {
-        get => _lineWeightText;
-        set
-        {
-            if (_lineWeightText == value)
-            {
-                return;
-            }
-
-            _lineWeightText = value;
+            _selectedLineFormat = value;
             OnPropertyChanged();
         }
     }
 
     public Layer ToLayer()
     {
-        CadColor color = ParseColor(ColorHex);
-        LineWeight lineWeight = LineWeight.FromMillimeters(ParseLineWeight(LineWeightText));
-
         return new Layer(
             Id,
             Name.Trim(),
-            color,
-            lineWeight,
+            SelectedLineFormat.Id,
             IsVisible,
             IsLocked);
     }
@@ -161,15 +158,14 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
             return "Layer name cannot be empty.";
         }
 
-        if (!TryParseColor(ColorHex, out _))
+        if (SelectedLineFormat is null)
         {
-            return $"Layer '{Name}' has an invalid color. Use #RRGGBB.";
+            return $"Layer '{Name}' must have a line format.";
         }
 
-        if (!double.TryParse(LineWeightText, NumberStyles.Float, CultureInfo.InvariantCulture, out double lineWeight) ||
-            lineWeight < 0)
+        if (AvailableLineFormats.All(format => format.Id != SelectedLineFormat.Id))
         {
-            return $"Layer '{Name}' has an invalid line weight.";
+            return $"Layer '{Name}' references an unknown line format.";
         }
 
         if (IsCurrent && !IsVisible)
@@ -183,61 +179,6 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
         }
 
         return null;
-    }
-
-    private static string ToHex(CadColor color)
-    {
-        return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
-    }
-
-    private static CadColor ParseColor(string text)
-    {
-        if (!TryParseColor(text, out CadColor color))
-        {
-            throw new FormatException("Invalid color.");
-        }
-
-        return color;
-    }
-
-    private static bool TryParseColor(string text, out CadColor color)
-    {
-        color = CadColor.FromRgb(255, 255, 255);
-
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return false;
-        }
-
-        string value = text.Trim();
-
-        if (value.StartsWith('#'))
-        {
-            value = value[1..];
-        }
-
-        if (value.Length != 6)
-        {
-            return false;
-        }
-
-        if (!byte.TryParse(value[0..2], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out byte r) ||
-            !byte.TryParse(value[2..4], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out byte g) ||
-            !byte.TryParse(value[4..6], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out byte b))
-        {
-            return false;
-        }
-
-        color = CadColor.FromRgb(r, g, b);
-        return true;
-    }
-
-    private static double ParseLineWeight(string text)
-    {
-        return double.Parse(
-            text,
-            NumberStyles.Float,
-            CultureInfo.InvariantCulture);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
