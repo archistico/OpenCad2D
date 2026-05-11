@@ -15,6 +15,9 @@ public sealed class LineFormatCollectionTests
         Assert.True(formats.Contains(LineFormatId.DashDot));
         Assert.True(formats.Contains(LineFormatId.DashDotDot));
         Assert.True(formats.Contains(LineFormatId.Axis));
+        Assert.Equal(
+            1.0,
+            formats.GetById(LineFormatId.Continuous).LineWeight.Millimeters);
     }
 
     [Fact]

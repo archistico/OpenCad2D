@@ -41,7 +41,7 @@ public sealed class SvgExporterTests
         Assert.Contains("x1=\"20\"", result.Content);
         Assert.Contains("x2=\"120\"", result.Content);
         Assert.Contains("stroke=\"#FFFFFF\"", result.Content);
-        Assert.Contains("stroke-width=\"0.25\"", result.Content);
+        Assert.Contains("stroke-width=\"1\"", result.Content);
     }
 
     [Fact]

@@ -41,6 +41,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 PanY = viewport.PanY,
                 Zoom = viewport.Zoom
             },
+            LineFormats = document.LineFormats.All
+                .Select(ToDto)
+                .ToList(),
             Layers = document.Layers.All
                 .Select(ToDto)
                 .ToList(),
@@ -65,10 +68,12 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         }
 
         CadDocument document = new();
+        LineFormatCollection lineFormats = FromLineFormatDtos(dto.LineFormats);
+        document.ReplaceLineFormats(lineFormats);
 
         foreach (LayerDto layerDto in dto.Layers)
         {
-            Layer layer = FromDto(layerDto);
+            Layer layer = FromDto(layerDto, lineFormats);
 
             if (document.Layers.Contains(layer.Id))
             {
@@ -238,14 +243,25 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         }
     }
 
+    private static LineFormatDto ToDto(LineFormat format)
+    {
+        return new LineFormatDto
+        {
+            Id = format.Id.Value,
+            Name = format.Name,
+            Color = ToHex(format.Color),
+            LineWeight = format.LineWeight.Millimeters,
+            LineStyle = format.LineStyle.ToString()
+        };
+    }
+
     private static LayerDto ToDto(Layer layer)
     {
         return new LayerDto
         {
             Id = layer.Id.Value,
             Name = layer.Name,
-            Color = ToHex(layer.Color),
-            LineWeight = layer.LineWeight.Millimeters,
+            LineFormatId = layer.LineFormatId.Value,
             IsVisible = layer.IsVisible,
             IsLocked = layer.IsLocked
         };
@@ -304,7 +320,52 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         };
     }
 
-    private static Layer FromDto(LayerDto dto)
+    private static LineFormatCollection FromLineFormatDtos(IReadOnlyCollection<LineFormatDto>? dtos)
+    {
+        if (dtos is null || dtos.Count == 0)
+        {
+            return LineFormatCollection.Default;
+        }
+
+        var formats = new List<LineFormat>();
+
+        foreach (LineFormatDto dto in dtos)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Id))
+            {
+                continue;
+            }
+
+            string name = string.IsNullOrWhiteSpace(dto.Name)
+                ? dto.Id
+                : dto.Name;
+
+            formats.Add(new LineFormat(
+                new LineFormatId(dto.Id),
+                name,
+                FromHex(dto.Color),
+                LineWeight.FromMillimeters(Math.Max(0, dto.LineWeight)),
+                ParseLineStyle(dto.LineStyle)));
+        }
+
+        if (formats.Count == 0)
+        {
+            return LineFormatCollection.Default;
+        }
+
+        if (!formats.Any(format => format.Id == LineFormatId.Continuous))
+        {
+            formats.Insert(
+                0,
+                LineFormatCollection.Default.GetById(LineFormatId.Continuous));
+        }
+
+        return new LineFormatCollection(formats);
+    }
+
+    private static Layer FromDto(
+        LayerDto dto,
+        LineFormatCollection lineFormats)
     {
         if (string.IsNullOrWhiteSpace(dto.Id))
         {
@@ -312,11 +373,19 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 "A layer has an empty id.");
         }
 
+        LineFormatId lineFormatId = string.IsNullOrWhiteSpace(dto.LineFormatId)
+            ? LineFormatId.Continuous
+            : new LineFormatId(dto.LineFormatId);
+
+        if (!lineFormats.Contains(lineFormatId))
+        {
+            lineFormatId = LineFormatId.Continuous;
+        }
+
         return new Layer(
             new LayerId(dto.Id),
             string.IsNullOrWhiteSpace(dto.Name) ? dto.Id : dto.Name,
-            FromHex(dto.Color),
-            LineWeight.FromMillimeters(Math.Max(0, dto.LineWeight)),
+            lineFormatId,
             dto.IsVisible,
             dto.IsLocked);
     }
@@ -362,6 +431,16 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
 
             _ => null
         };
+    }
+
+    private static LineStyle ParseLineStyle(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out LineStyle result)
+            ? result
+            : LineStyle.Continuous;
     }
 
     private static EntityId ParseEntityId(string value)

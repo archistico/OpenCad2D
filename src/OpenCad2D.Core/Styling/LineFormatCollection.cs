@@ -108,7 +108,7 @@ public sealed class LineFormatCollection
             LineFormatId.Continuous,
             "Continua",
             CadColor.FromRgb(255, 255, 255),
-            LineWeight.FromMillimeters(0.25),
+            LineWeight.FromMillimeters(1.0),
             LineStyle.Continuous);
 
         yield return new LineFormat(

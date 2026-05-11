@@ -9,9 +9,22 @@ public sealed class LayerDto
 
     public string Name { get; set; } = string.Empty;
 
-    public string Color { get; set; } = "#FFFFFF";
+    /// <summary>
+    /// Identifier of the reusable line format assigned to this layer.
+    /// </summary>
+    public string LineFormatId { get; set; } = "Continuous";
 
-    public double LineWeight { get; set; } = 0.25;
+    /// <summary>
+    /// Legacy field kept only so older JSON files can still be read.
+    /// New documents should use LineFormatId instead.
+    /// </summary>
+    public string? Color { get; set; }
+
+    /// <summary>
+    /// Legacy field kept only so older JSON files can still be read.
+    /// New documents should use LineFormatId instead.
+    /// </summary>
+    public double? LineWeight { get; set; }
 
     public bool IsVisible { get; set; } = true;
 

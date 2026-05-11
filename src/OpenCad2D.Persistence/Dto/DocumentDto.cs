@@ -13,6 +13,8 @@ public sealed class DocumentDto
 
     public ViewportStateDto Viewport { get; set; } = new();
 
+    public List<LineFormatDto> LineFormats { get; set; } = new();
+
     public List<LayerDto> Layers { get; set; } = new();
 
     public List<EntityDto> Entities { get; set; } = new();

@@ -86,7 +86,51 @@ public sealed class JsonDocumentSerializerTests
     }
 
     [Fact]
-    public void Deserialize_ShouldRestoreLayers()
+    public void Serialize_ShouldIncludeLineFormatsAndLayerReferences()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var document = new CadDocument();
+        LineFormatId customFormatId = new("CustomDashed");
+        LayerId layerId = new("Walls");
+
+        var customFormat = new LineFormat(
+            customFormatId,
+            "Custom dashed",
+            CadColor.FromRgb(17, 34, 51),
+            LineWeight.FromMillimeters(0.75),
+            LineStyle.Dashed);
+
+        document.ReplaceLineFormats(
+            document.LineFormats.WithFormats(
+                document.LineFormats.All.Concat(new[] { customFormat })));
+
+        document.Layers.Add(
+            new Layer(
+                layerId,
+                "Walls",
+                customFormatId));
+
+        DocumentDto dto = serializer.Serialize(
+            document,
+            layerId.Value,
+            new ViewportStateDto());
+
+        Assert.Contains(dto.LineFormats, format =>
+            format.Id == customFormatId.Value &&
+            format.Name == "Custom dashed" &&
+            format.Color == "#112233" &&
+            format.LineWeight == 0.75 &&
+            format.LineStyle == nameof(LineStyle.Dashed));
+
+        LayerDto layerDto = Assert.Single(
+            dto.Layers,
+            layer => layer.Id == layerId.Value);
+
+        Assert.Equal(customFormatId.Value, layerDto.LineFormatId);
+    }
+
+    [Fact]
+    public void Deserialize_ShouldRestoreLayersAndLineFormats()
     {
         var serializer = new JsonDocumentSerializer();
 
@@ -97,14 +141,32 @@ public sealed class JsonDocumentSerializerTests
             {
                 CurrentLayerId = "Walls"
             },
+            LineFormats =
+            {
+                new LineFormatDto
+                {
+                    Id = "Continuous",
+                    Name = "Continua",
+                    Color = "#FFFFFF",
+                    LineWeight = 1.0,
+                    LineStyle = "Continuous"
+                },
+                new LineFormatDto
+                {
+                    Id = "WallsFormat",
+                    Name = "Walls format",
+                    Color = "#112233",
+                    LineWeight = 0.50,
+                    LineStyle = "DashDot"
+                }
+            },
             Layers =
             {
                 new LayerDto
                 {
                     Id = "0",
                     Name = "0",
-                    Color = "#FFFFFF",
-                    LineWeight = 0.25,
+                    LineFormatId = "Continuous",
                     IsVisible = true,
                     IsLocked = false
                 },
@@ -112,8 +174,7 @@ public sealed class JsonDocumentSerializerTests
                 {
                     Id = "Walls",
                     Name = "Walls",
-                    Color = "#112233",
-                    LineWeight = 0.50,
+                    LineFormatId = "WallsFormat",
                     IsVisible = false,
                     IsLocked = true
                 }
@@ -126,15 +187,96 @@ public sealed class JsonDocumentSerializerTests
             out _);
 
         Layer layer = document.Layers.GetRequired(new LayerId("Walls"));
+        LineFormat format = document.LineFormats.GetById(new LineFormatId("WallsFormat"));
 
         Assert.Equal("Walls", currentLayerId);
         Assert.Equal("Walls", layer.Name);
-        Assert.Equal(0x11, layer.Color.R);
-        Assert.Equal(0x22, layer.Color.G);
-        Assert.Equal(0x33, layer.Color.B);
-        Assert.Equal(0.50, layer.LineWeight.Millimeters);
+        Assert.Equal(new LineFormatId("WallsFormat"), layer.LineFormatId);
         Assert.False(layer.IsVisible);
         Assert.True(layer.IsLocked);
+        Assert.Equal(0x11, format.Color.R);
+        Assert.Equal(0x22, format.Color.G);
+        Assert.Equal(0x33, format.Color.B);
+        Assert.Equal(0.50, format.LineWeight.Millimeters);
+        Assert.Equal(LineStyle.DashDot, format.LineStyle);
+    }
+
+    [Fact]
+    public void Deserialize_WithoutLineFormats_ShouldUseDefaults()
+    {
+        var serializer = new JsonDocumentSerializer();
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = "0"
+            },
+            Layers =
+            {
+                new LayerDto
+                {
+                    Id = "0",
+                    Name = "0",
+                    LineFormatId = "Continuous"
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        Assert.True(document.LineFormats.Contains(LineFormatId.Continuous));
+        Assert.Equal(
+            1.0,
+            document.LineFormats.GetById(LineFormatId.Continuous).LineWeight.Millimeters);
+    }
+
+    [Fact]
+    public void Deserialize_WithUnknownLayerLineFormat_ShouldFallbackToContinuous()
+    {
+        var serializer = new JsonDocumentSerializer();
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = "0"
+            },
+            LineFormats =
+            {
+                new LineFormatDto
+                {
+                    Id = "Continuous",
+                    Name = "Continua",
+                    Color = "#FFFFFF",
+                    LineWeight = 1.0,
+                    LineStyle = "Continuous"
+                }
+            },
+            Layers =
+            {
+                new LayerDto
+                {
+                    Id = "0",
+                    Name = "0",
+                    LineFormatId = "MissingFormat"
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        Layer layer = document.Layers.GetRequired(LayerId.Default);
+
+        Assert.Equal(LineFormatId.Continuous, layer.LineFormatId);
     }
 
     [Fact]
@@ -163,12 +305,20 @@ public sealed class JsonDocumentSerializerTests
           "savedAt": "2026-05-09T12:00:00Z",
           "settings": { "currentLayerId": "0" },
           "viewport": { "panX": 0, "panY": 0, "zoom": 1 },
+          "lineFormats": [
+            {
+              "id": "Continuous",
+              "name": "Continua",
+              "color": "#FFFFFF",
+              "lineWeight": 1.0,
+              "lineStyle": "Continuous"
+            }
+          ],
           "layers": [
             {
               "id": "0",
               "name": "0",
-              "color": "#FFFFFF",
-              "lineWeight": 0.25,
+              "lineFormatId": "Continuous",
               "isVisible": true,
               "isLocked": false
             }
@@ -226,6 +376,7 @@ public sealed class JsonDocumentSerializerTests
             DocumentDto loaded = serializer.LoadFromFile(filePath);
 
             Assert.Equal(JsonDocumentSerializer.CurrentVersion, loaded.Version);
+            Assert.NotEmpty(loaded.LineFormats);
             Assert.Single(loaded.Entities);
             Assert.Equal(3, loaded.Viewport.Zoom);
         }
