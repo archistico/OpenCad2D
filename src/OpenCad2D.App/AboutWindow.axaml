@@ -1,0 +1,156 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OpenCad2D.App.AboutWindow"
+        Title="About OpenCad2D"
+        Width="520"
+        Height="430"
+        MinWidth="460"
+        MinHeight="380"
+        CanResize="False"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.about-title">
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontSize" Value="30" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="TextBlock.about-subtitle">
+            <Setter Property="Foreground" Value="#9CDCFE" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="TextBlock.about-label">
+            <Setter Property="Foreground" Value="#AFAFAF" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <Style Selector="TextBlock.about-value">
+            <Setter Property="Foreground" Value="#F0F0F0" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="VerticalAlignment" Value="Top" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="BorderBrush" Value="#555555" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="86" />
+        </Style>
+    </Window.Styles>
+
+    <Border Margin="16"
+            Background="#232323"
+            BorderBrush="#3A3A3A"
+            BorderThickness="1"
+            CornerRadius="12">
+
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0"
+                    Background="#2D2D30"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="0,0,0,1"
+                    CornerRadius="12,12,0,0"
+                    Padding="18,16">
+
+                <Grid ColumnDefinitions="Auto,*"
+                      ColumnSpacing="16">
+                    <Border Grid.Column="0"
+                            Width="72"
+                            Height="72"
+                            Background="#0E639C"
+                            BorderBrush="#33A9FF"
+                            BorderThickness="1"
+                            CornerRadius="16">
+                        <TextBlock Text="OC"
+                                   Foreground="#FFFFFF"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Spacing="4">
+                        <TextBlock Classes="about-title"
+                                   Text="OpenCad2D" />
+
+                        <TextBlock Classes="about-subtitle"
+                                   Text="Open-source 2D CAD for precise technical drawing" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="1"
+                        Margin="18,16"
+                        Spacing="14">
+
+                <Grid ColumnDefinitions="112,*"
+                      ColumnSpacing="12">
+                    <TextBlock Grid.Column="0"
+                               Classes="about-label"
+                               Text="Author" />
+                    <TextBlock Grid.Column="1"
+                               Classes="about-value"
+                               Text="Emilie Rollandin" />
+                </Grid>
+
+                <Grid ColumnDefinitions="112,*"
+                      ColumnSpacing="12">
+                    <TextBlock Grid.Column="0"
+                               Classes="about-label"
+                               Text="Contact" />
+                    <TextBlock Grid.Column="1"
+                               Classes="about-value"
+                               Text="info@archistico.com" />
+                </Grid>
+
+                <Border Background="#1E1E1E"
+                        BorderBrush="#333333"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12">
+                    <StackPanel Spacing="8">
+                        <TextBlock Foreground="#DCDCAA"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Text="Project information" />
+
+                        <TextBlock Classes="about-value"
+                                   Text="OpenCad2D is a compact CAD application focused on 2D model-space drafting, layers, line formats, snapping, polar tracking, grip editing and SVG/DXF export." />
+
+                        <TextBlock Classes="about-value"
+                                   Text="The project is designed around testable modules: geometry, core document model, interaction, tools, persistence, export and Avalonia UI." />
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Foreground="#858585"
+                           FontSize="11"
+                           Text="© Emilie Rollandin. Built with .NET and Avalonia."
+                           TextWrapping="Wrap" />
+            </StackPanel>
+
+            <Border Grid.Row="2"
+                    Background="#252526"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,12,12"
+                    Padding="12">
+                <Button Classes="dialog-button"
+                        Content="Close"
+                        HorizontalAlignment="Right"
+                        IsDefault="True"
+                        IsCancel="True"
+                        Click="Close_Click" />
+            </Border>
+        </Grid>
+    </Border>
+</Window>

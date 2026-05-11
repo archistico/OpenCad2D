@@ -246,6 +246,18 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void About_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        var dialog = new AboutWindow();
+
+        await dialog.ShowDialog(this);
+
+        CadCanvas.Focus();
+    }
+
+
     private async Task<bool> SaveAsync(bool forceSaveAs)
     {
         try

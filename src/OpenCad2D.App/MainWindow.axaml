@@ -127,6 +127,15 @@
                 Padding="7,5">
 
             <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            Spacing="6">
+                    <Button Classes="global-button"
+                            Content="About"
+                            ToolTip.Tip="About OpenCad2D"
+                            Click="About_Click" />
+                </StackPanel>
+
                 <StackPanel DockPanel.Dock="Left"
                             Orientation="Horizontal"
                             Spacing="6">
