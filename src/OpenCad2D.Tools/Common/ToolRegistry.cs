@@ -59,6 +59,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.ArcThreePoints,
+                "ArcThreePoints",
+                "Arc 3P",
+                "Draw"),
+            () => new ArcThreePointsTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Polyline,
                 "Polyline",
                 "Polyline",

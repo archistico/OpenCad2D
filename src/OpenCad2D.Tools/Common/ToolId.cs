@@ -10,6 +10,7 @@ public enum ToolId
     Rectangle,
     Circle,
     Arc,
+    ArcThreePoints,
     Polyline,
     Move,
     Copy,

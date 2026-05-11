@@ -227,6 +227,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 };
             }
 
+            if (Workspace.ToolController.ActiveTool is ArcThreePointsTool arcThreePointsTool)
+            {
+                return arcThreePointsTool.State switch
+                {
+                    ArcThreePointsToolState.WaitingForStartPoint => "Arc 3P: specify start point or type coordinates:",
+                    ArcThreePointsToolState.WaitingForPointOnArc => "Arc 3P: specify point on arc or type coordinates:",
+                    ArcThreePointsToolState.WaitingForEndPoint => "Arc 3P: specify end point or type coordinates:",
+                    _ => "Arc 3P: specify point:"
+                };
+            }
+
             return Workspace.Context.CurrentBasePoint is null
                 ? "Specify first point or type coordinates:"
                 : "Specify second point, type coordinates, relative coordinates, or distance:";

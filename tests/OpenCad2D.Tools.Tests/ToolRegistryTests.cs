@@ -17,6 +17,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Rectangle));
         Assert.True(registry.Contains(ToolId.Circle));
         Assert.True(registry.Contains(ToolId.Arc));
+        Assert.True(registry.Contains(ToolId.ArcThreePoints));
         Assert.True(registry.Contains(ToolId.Polyline));
         Assert.True(registry.Contains(ToolId.Move));
         Assert.True(registry.Contains(ToolId.Copy));
@@ -37,7 +38,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(16, tools.Count);
+        Assert.Equal(17, tools.Count);
 
         Assert.Contains(
             tools,
@@ -101,6 +102,10 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.ArcThreePoints);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.Polyline);
     }
 
@@ -124,11 +129,12 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
 
-        Assert.Equal(5, tools.Count);
+        Assert.Equal(6, tools.Count);
         Assert.Contains(tools, tool => tool.Id == ToolId.Line);
         Assert.Contains(tools, tool => tool.Id == ToolId.Rectangle);
         Assert.Contains(tools, tool => tool.Id == ToolId.Circle);
         Assert.Contains(tools, tool => tool.Id == ToolId.Arc);
+        Assert.Contains(tools, tool => tool.Id == ToolId.ArcThreePoints);
         Assert.Contains(tools, tool => tool.Id == ToolId.Polyline);
     }
 
@@ -206,6 +212,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<ArcTool>(tool);
         Assert.Equal("Arc", tool.Name);
+    }
+
+    [Fact]
+    public void Create_ArcThreePoints_ShouldReturnArcThreePointsTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.ArcThreePoints);
+
+        Assert.IsType<ArcThreePointsTool>(tool);
+        Assert.Equal("Arc 3P", tool.Name);
     }
 
     [Fact]
@@ -339,11 +356,12 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
 
-        Assert.Equal(5, tools.Count);
+        Assert.Equal(6, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Circle);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Arc);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.ArcThreePoints);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Polyline);
     }
 

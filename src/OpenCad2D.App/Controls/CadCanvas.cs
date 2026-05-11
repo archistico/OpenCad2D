@@ -1043,6 +1043,10 @@ public sealed class CadCanvas : Control
                 DrawArcPreview(context, arcTool);
                 break;
 
+            case ArcThreePointsTool arcThreePointsTool:
+                DrawArcThreePointsPreview(context, arcThreePointsTool);
+                break;
+
             case PolylineTool polylineTool:
                 DrawPolylinePreview(context, polylineTool);
                 break;
@@ -1128,6 +1132,12 @@ public sealed class CadCanvas : Control
                 context,
                 arcTool);
         }
+        else if (Workspace.ToolController.ActiveTool is ArcThreePointsTool arcThreePointsTool)
+        {
+            DrawArcThreePointsToolMeasurementPreview(
+                context,
+                arcThreePointsTool);
+        }
     }
 
     private void DrawArcToolMeasurementPreview(
@@ -1169,6 +1179,58 @@ public sealed class CadCanvas : Control
             _measurementVectorPen,
             center,
             ToScreenPoint(tool.CurrentPoint.Value));
+    }
+
+    private void DrawArcThreePointsToolMeasurementPreview(
+        DrawingContext context,
+        ArcThreePointsTool tool)
+    {
+        if (tool.StartPoint is null)
+        {
+            return;
+        }
+
+        const double markerRadius = 4;
+        Point start = ToScreenPoint(tool.StartPoint.Value);
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            start,
+            markerRadius,
+            markerRadius);
+
+        if (tool.PointOnArc is not null)
+        {
+            Point pointOnArc = ToScreenPoint(tool.PointOnArc.Value);
+
+            context.DrawEllipse(
+                _basePointMarkerFill,
+                _basePointMarkerPen,
+                pointOnArc,
+                markerRadius,
+                markerRadius);
+
+            context.DrawLine(
+                _measurementVectorPen,
+                start,
+                pointOnArc);
+
+            if (tool.CurrentPoint is not null)
+            {
+                context.DrawLine(
+                    _measurementVectorPen,
+                    pointOnArc,
+                    ToScreenPoint(tool.CurrentPoint.Value));
+            }
+        }
+        else if (tool.CurrentPoint is not null)
+        {
+            context.DrawLine(
+                _measurementVectorPen,
+                start,
+                ToScreenPoint(tool.CurrentPoint.Value));
+        }
     }
 
     private void DrawMoveToolMeasurementPreview(
@@ -1429,6 +1491,21 @@ public sealed class CadCanvas : Control
     private void DrawArcPreview(
         DrawingContext context,
         ArcTool tool)
+    {
+        ArcEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
+    private void DrawArcThreePointsPreview(
+        DrawingContext context,
+        ArcThreePointsTool tool)
     {
         ArcEntity? preview = tool.GetPreviewEntity();
 

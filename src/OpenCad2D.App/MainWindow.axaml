@@ -307,6 +307,11 @@
                                 Content="Arc"
                                 Click="Arc_Click" />
 
+                        <Button x:Name="ArcThreePointsButton"
+                                Classes="tool-button"
+                                Content="Arc 3P"
+                                Click="ArcThreePoints_Click" />
+
                         <Button x:Name="PolylineButton"
                                 Classes="tool-button"
                                 Content="Polyline"
