@@ -297,6 +297,11 @@
                                 Content="Rectangle"
                                 Click="Rectangle_Click" />
 
+                        <Button x:Name="RectangleBySidesButton"
+                                Classes="tool-button"
+                                Content="Rect Sides"
+                                Click="RectangleBySides_Click" />
+
                         <Button x:Name="CircleButton"
                                 Classes="tool-button"
                                 Content="Circle"

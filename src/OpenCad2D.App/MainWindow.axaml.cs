@@ -533,6 +533,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void RectangleBySides_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.RectangleBySides);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Circle_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1286,6 +1297,9 @@ public partial class MainWindow : Window
             RectangleButton,
             activeToolName.Equals("Rectangle", StringComparison.OrdinalIgnoreCase));
 
+        SetActiveToolButton(
+            RectangleBySidesButton,
+            activeToolName.Equals("Rectangle Sides", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             CircleButton,

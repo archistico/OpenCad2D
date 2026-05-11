@@ -8,6 +8,7 @@ public enum ToolId
     Selection,
     Line,
     Rectangle,
+    RectangleBySides,
     Circle,
     Arc,
     ArcThreePoints,

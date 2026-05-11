@@ -1035,6 +1035,10 @@ public sealed class CadCanvas : Control
                 DrawRectanglePreview(context, rectangleTool);
                 break;
 
+            case RectangleBySidesTool rectangleBySidesTool:
+                DrawRectangleBySidesPreview(context, rectangleBySidesTool);
+                break;
+
             case CircleTool circleTool:
                 DrawCirclePreview(context, circleTool);
                 break;
@@ -1469,6 +1473,31 @@ public sealed class CadCanvas : Control
             DrawEntity(
                 context,
                 preview,
+                _previewPen);
+        }
+    }
+
+    private void DrawRectangleBySidesPreview(
+        DrawingContext context,
+        RectangleBySidesTool tool)
+    {
+        LineEntity? firstSidePreview = tool.GetFirstSidePreviewEntity();
+
+        if (firstSidePreview is not null)
+        {
+            DrawEntity(
+                context,
+                firstSidePreview,
+                _previewPen);
+        }
+
+        PolylineEntity? rectanglePreview = tool.GetPreviewEntity();
+
+        if (rectanglePreview is not null)
+        {
+            DrawEntity(
+                context,
+                rectanglePreview,
                 _previewPen);
         }
     }

@@ -15,6 +15,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Selection));
         Assert.True(registry.Contains(ToolId.Line));
         Assert.True(registry.Contains(ToolId.Rectangle));
+        Assert.True(registry.Contains(ToolId.RectangleBySides));
         Assert.True(registry.Contains(ToolId.Circle));
         Assert.True(registry.Contains(ToolId.Arc));
         Assert.True(registry.Contains(ToolId.ArcThreePoints));
@@ -38,7 +39,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(17, tools.Count);
+        Assert.Equal(18, tools.Count);
 
         Assert.Contains(
             tools,
@@ -51,6 +52,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Rectangle);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.RectangleBySides);
 
         Assert.Contains(
             tools,
@@ -129,9 +134,10 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
 
-        Assert.Equal(6, tools.Count);
+        Assert.Equal(7, tools.Count);
         Assert.Contains(tools, tool => tool.Id == ToolId.Line);
         Assert.Contains(tools, tool => tool.Id == ToolId.Rectangle);
+        Assert.Contains(tools, tool => tool.Id == ToolId.RectangleBySides);
         Assert.Contains(tools, tool => tool.Id == ToolId.Circle);
         Assert.Contains(tools, tool => tool.Id == ToolId.Arc);
         Assert.Contains(tools, tool => tool.Id == ToolId.ArcThreePoints);
@@ -201,6 +207,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<RectangleTool>(tool);
         Assert.Equal("Rectangle", tool.Name);
+    }
+
+    [Fact]
+    public void Create_RectangleBySides_ShouldReturnRectangleBySidesTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.RectangleBySides);
+
+        Assert.IsType<RectangleBySidesTool>(tool);
+        Assert.Equal("Rectangle Sides", tool.Name);
     }
 
     [Fact]
@@ -356,9 +373,10 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
 
-        Assert.Equal(6, tools.Count);
+        Assert.Equal(7, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.RectangleBySides);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Circle);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Arc);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.ArcThreePoints);

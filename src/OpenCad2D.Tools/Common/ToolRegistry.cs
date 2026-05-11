@@ -43,6 +43,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.RectangleBySides,
+                "RectangleBySides",
+                "Rect Sides",
+                "Draw"),
+            () => new RectangleBySidesTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Circle,
                 "Circle",
                 "Circle",
