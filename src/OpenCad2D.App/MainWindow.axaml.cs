@@ -35,6 +35,12 @@ public partial class MainWindow : Window
         MimeTypes = new[] { "image/svg+xml" }
     };
 
+    private static readonly FilePickerFileType DxfFileType = new("DXF drawing")
+    {
+        Patterns = new[] { "*.dxf" },
+        MimeTypes = new[] { "application/dxf", "application/x-dxf" }
+    };
+
     private readonly MainWindowViewModel _viewModel;
     private bool _closeConfirmed;
 
@@ -190,6 +196,51 @@ public partial class MainWindow : Window
         {
             await ShowMessageAsync(
                 "Export SVG failed",
+                exception.Message);
+        }
+    }
+
+    private async void ExportDxf_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            IStorageFile? file = await StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = "Export DXF",
+                    SuggestedFileName = _viewModel.CurrentFileName == "Untitled"
+                        ? "drawing.dxf"
+                        : System.IO.Path.ChangeExtension(_viewModel.CurrentFileName, ".dxf"),
+                    DefaultExtension = "dxf",
+                    FileTypeChoices = new[] { DxfFileType }
+                });
+
+            if (file is null)
+            {
+                return;
+            }
+
+            string? filePath = file.TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Export DXF",
+                    "Only local files are supported in this version.");
+                return;
+            }
+
+            _viewModel.ExportDxfToFile(filePath);
+
+            RefreshStatus();
+            CadCanvas.Focus();
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Export DXF failed",
                 exception.Message);
         }
     }

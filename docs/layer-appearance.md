@@ -164,6 +164,29 @@ Hidden layers are ignored. Locked visible layers are exported normally.
 
 ---
 
+## DXF export
+
+DXF export uses the same resolution rule as the canvas and SVG export:
+
+```text
+Entity -> Layer -> LineFormat
+```
+
+The resolved format is written on the DXF layer record:
+
+```text
+62   ACI color
+420  true color RGB
+6    DXF linetype
+370  lineweight
+```
+
+Entities are exported as `BYLAYER`, so their visible appearance comes from the DXF layer table, not from per-entity overrides.
+
+Hidden layers are written with a negative ACI color in the layer table. Hidden-layer entities are ignored by default.
+
+---
+
 ## Persistence
 
 Native persistence stores line formats in the document and stores only `LineFormatId` on layers.

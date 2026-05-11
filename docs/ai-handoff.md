@@ -94,8 +94,12 @@ The project currently supports:
 - viewport state save/restore;
 - `OpenCad2D.Export` project;
 - SVG export from the file command bar;
+- DXF export from the file command bar;
 - SVG background rectangle matching the canvas;
 - SVG export preserves the same visual Y orientation as the canvas;
+- DXF export writes AutoCAD 2000 ASCII DXF with LINE, CIRCLE, ARC and LWPOLYLINE;
+- DXF export writes LTYPE/LAYER tables and uses LineFormat-derived layer appearance with BYLAYER entities;
+- DXF export mirrors Y by exported content bounds to preserve the visual top/bottom orientation in external viewers;
 - SVG export does not save the drawing and does not clear dirty state.
 
 ---

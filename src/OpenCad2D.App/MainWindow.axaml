@@ -158,6 +158,10 @@
                             Content="Export SVG"
                             Click="ExportSvg_Click" />
 
+                    <Button Classes="global-button"
+                            Content="Export DXF"
+                            Click="ExportDxf_Click" />
+
                     <Separator Margin="5,0" />
 
                     <TextBlock Text="{Binding FileStatusText}"

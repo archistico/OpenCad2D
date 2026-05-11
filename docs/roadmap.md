@@ -28,6 +28,7 @@ composite commands
 undo/redo
 persistence
 SVG export
+DXF export
 hit testing
 selection
 entity snap and overlapping selection cycling
@@ -150,6 +151,7 @@ Implemented:
 - `ModifyEntitiesCommand`.
 
 ### SVG export
+DXF export
 
 Implemented:
 
@@ -164,6 +166,24 @@ Implemented:
 - dark background rectangle;
 - same visual Y orientation as the canvas.
 
+
+### DXF export
+
+Implemented:
+
+- `OpenCad2D.Export.Dxf` infrastructure;
+- AutoCAD 2000 ASCII DXF (`AC1015`);
+- `HEADER`, `TABLES`, `LTYPE`, `LAYER`, `ENTITIES` and `EOF` sections;
+- geometric entity export: `LINE`, `CIRCLE`, `ARC`, `LWPOLYLINE`;
+- layer table export;
+- linetype table export;
+- layer appearance from `LineFormat`;
+- entities written as `BYLAYER`;
+- hidden layer handling;
+- locked layer table flag;
+- Y flip by exported content bounds to match visual orientation in tested viewers;
+- file command bar integration through `Export DXF`.
+
 ### PolylineTool v1
 
 Implemented:
@@ -175,30 +195,34 @@ Implemented:
 
 ---
 
-## Next recommended phase: refine modify and editing UX
+## Next recommended phase: DXF validation and editing polish
 
-Trim and Extend now cover the main entity types. The next step is to make the behavior more polished and easier to inspect while working.
+DXF export is now implemented enough to be useful. The next step should be practical compatibility validation, followed by editing UX refinement.
 
 Recommended order:
 
-1. improve Trim/Extend previews so the exact removed/extended portion is highlighted;
-2. add clearer status messages when an operation is ignored;
-3. broaden Break Point and Break Segment beyond `LineEntity`;
-4. add more tests for tangent, near-tangent, overlapping and multi-segment cases.
+1. open exported DXF files in LibreCAD, QCAD, AutoCAD/DWG TrueView and at least one online viewer;
+2. create a small compatibility checklist for layer colors, linetypes, lineweights, arcs and Y orientation;
+3. add an export options dialog only after the default behavior is stable;
+4. improve Trim/Extend previews so the exact removed/extended portion is highlighted;
+5. add clearer status messages when an operation is ignored;
+6. broaden Break Point and Break Segment beyond `LineEntity`;
+7. add more tests for tangent, near-tangent, overlapping and multi-segment cases.
 
 ---
 
 ## Follow-up phases
 
-### SVG export improvements
+### Export improvements
 
-Future SVG export improvements:
+Future SVG/DXF export improvements:
 
 - optional export settings dialog;
 - export selected entities only;
 - preserve layer grouping with SVG `<g>` elements;
-- optional transparent background;
+- optional transparent SVG background;
 - richer fill support when layer fill color is implemented;
+- text, dimensions, hatches and blocks in DXF when the model supports them;
 - physical units / print-oriented export options.
 
 ### Polyline grip editing

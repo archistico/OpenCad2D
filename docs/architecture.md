@@ -82,11 +82,11 @@ It depends on `Core` and `Geometry`, not on `Tools`, `Interaction` or `App`.
 
 ### OpenCad2D.Export
 
-Export services for non-native output formats such as SVG.
+Export services for non-native output formats such as SVG and DXF.
 
 It depends on `Core` and `Geometry`, not on `App`, `Tools`, `Interaction` or `Persistence`.
 
-The exporter reads the document and produces external output. It must not mutate the document and must not affect dirty state.
+The exporter reads the document and produces external output. It must not mutate the document and must not affect dirty state. SVG and DXF exporters share this rule.
 
 ### OpenCad2D.App
 

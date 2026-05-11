@@ -59,6 +59,8 @@ Multi-character shortcuts are only active when no command line input is in progr
 | `Ctrl+Z` | Undo |
 | `Ctrl+Y` | Redo |
 | `Ctrl+S` | Save |
+| button | Export SVG |
+| button | Export DXF |
 | `Ctrl+Shift+S` | Save As |
 | `Ctrl+O` | Open |
 | `Ctrl+N` | New |

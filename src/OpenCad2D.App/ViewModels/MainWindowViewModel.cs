@@ -15,6 +15,7 @@ using System.IO;
 using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Persistence;
 using OpenCad2D.Export.Svg;
+using OpenCad2D.Export.Dxf;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -32,6 +33,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
     private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
     private readonly ISvgExporter _svgExporter = new SvgExporter();
+    private readonly IDxfExporter _dxfExporter = new DxfExporter();
     private string? _currentFilePath;
     private PropertyPanelViewModel _propertyPanel = new("Properties", Array.Empty<PropertySectionViewModel>());
     private bool _isPropertyPanelVisible = true;
@@ -349,6 +351,32 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             options);
 
         SetMessage($"Exported SVG '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities)." );
+        OnPropertiesChanged(
+            nameof(LastMessage),
+            nameof(StatusText));
+
+        return result;
+    }
+
+    public DxfExportResult ExportDxfToFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "DXF export file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        DxfExportResult result = _dxfExporter.Export(
+            Workspace.Document,
+            DxfExportOptions.Default);
+
+        _dxfExporter.ExportToFile(
+            Workspace.Document,
+            filePath,
+            DxfExportOptions.Default);
+
+        SetMessage($"Exported DXF '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities).");
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));

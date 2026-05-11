@@ -34,6 +34,7 @@ The application already supports a functional CAD workflow:
 - internal JSON save/load using `.opencad2d.json`;
 - New, Open, Save and Save As file commands;
 - SVG export using `.svg`;
+- DXF export using AutoCAD 2000 ASCII `.dxf`;
 - dirty-state tracking and “Save changes?” confirmation;
 - object snapping, including geometric snaps and entity snap for selection-oriented tools;
 - configurable rectangular and isometric grid display and grid snapping;
@@ -105,6 +106,7 @@ The UI supports:
 | Save | `Ctrl+S` |
 | Save As | `Ctrl+Shift+S` |
 | Export SVG | button in file bar |
+| Export DXF | button in file bar |
 
 The application tracks dirty state using command history generation. When the drawing has unsaved changes, the title/file bar shows `*`.
 
@@ -145,6 +147,29 @@ Export SVG does not clear the dirty marker.
 ```
 
 The SVG exporter lives in `OpenCad2D.Export` and does not depend on Avalonia, App or Tools.
+
+
+
+## DXF export
+
+OpenCad2D can export the visible model-space drawing to AutoCAD 2000 ASCII DXF (`AC1015`).
+
+Current DXF export behavior:
+
+- writes `HEADER`, `TABLES`, `LTYPE`, `LAYER`, `ENTITIES` and `EOF` sections;
+- exports `LineEntity` as `LINE`;
+- exports `CircleEntity` as `CIRCLE`;
+- exports `ArcEntity` as `ARC`;
+- exports `PolylineEntity` as `LWPOLYLINE`;
+- writes all document layers to the DXF `LAYER` table;
+- writes `CONTINUOUS`, `DASHED`, `DASHDOT` and `DASHDOTDOT` to the DXF `LTYPE` table;
+- derives layer color, true color, lineweight and linetype from the layer's `LineFormat`;
+- writes entity appearance as `BYLAYER`;
+- ignores entities on hidden layers by default;
+- exports visible locked-layer entities;
+- mirrors Y using the exported content bounds so the exported drawing keeps the same visual top/bottom orientation seen in OpenCad2D viewers.
+
+Exporting DXF does not change the current `.opencad2d.json` file path and does not clear dirty state.
 
 ---
 

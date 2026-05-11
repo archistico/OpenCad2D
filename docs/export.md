@@ -112,6 +112,101 @@ This is a deliberate choice for the current export workflow, where the SVG is ex
 
 ---
 
+
+## DXF export
+
+Current DXF export is implemented by `DxfExporter`.
+
+The exporter writes a minimal AutoCAD 2000 ASCII DXF file:
+
+```text
+$ACADVER = AC1015
+```
+
+Current supported entities:
+
+```text
+LineEntity      -> LINE
+CircleEntity    -> CIRCLE
+ArcEntity       -> ARC
+PolylineEntity  -> LWPOLYLINE
+```
+
+Current DXF structure:
+
+```text
+HEADER
+TABLES
+  LTYPE
+  LAYER
+ENTITIES
+EOF
+```
+
+Layer and appearance rules:
+
+```text
+all document layers -> written to the LAYER table
+hidden layer records -> written with negative ACI color
+hidden layer entities -> ignored by default
+visible locked layers -> exported
+entity color/style/weight -> BYLAYER
+layer color/style/weight -> resolved from LineFormat
+```
+
+`DxfExportOptions.IncludeHiddenLayers` can include entities on hidden layers when explicitly enabled.
+
+The UI exposes DXF export through the file command bar as `Export DXF`. The App owns the save file dialog; `OpenCad2D.Export` owns the DXF content generation.
+
+---
+
+## Line formats in DXF
+
+DXF export resolves layer appearance through the same model used by rendering and SVG export:
+
+```text
+entity.LayerId
+-> document.Layers.GetById(...)
+-> layer.LineFormatId
+-> document.LineFormats.GetById(...)
+```
+
+The resolved `LineFormat` is written on the layer record:
+
+| DXF group | Meaning | Source |
+|---:|---|---|
+| `62` | ACI color | nearest basic AutoCAD color index |
+| `420` | true color | RGB value |
+| `6` | linetype | `CONTINUOUS`, `DASHED`, `DASHDOT`, `DASHDOTDOT` |
+| `370` | lineweight | converted from the graphic line-weight value |
+
+Entities use:
+
+```text
+62  256       // BYLAYER color
+6   BYLAYER   // BYLAYER linetype
+370 -1        // BYLAYER lineweight
+```
+
+If a layer references a missing line format, the exporter falls back to `Continuous`.
+
+---
+
+## DXF coordinate orientation
+
+The current DXF exporter mirrors Y using the exported content bounds:
+
+```text
+DXF_Y = bounds.MinY + bounds.MaxY - modelY
+```
+
+This was added after practical viewer testing because the first DXF output appeared vertically flipped in external viewers.
+
+The transformation is limited to export. It does not change the internal model coordinate system.
+
+Arc angles are converted consistently with this Y flip.
+
+---
 ## Export is not Save
 
 SVG export does not affect native document state.
@@ -138,5 +233,7 @@ Possible improvements:
 - fill export once layer fill color is implemented;
 - SVG layer groups using line format metadata where useful;
 - export settings dialog;
-- PDF export;
-- DXF export.
+- DXF export options dialog;
+- export selected entities only;
+- text, dimensions, hatches and blocks for DXF when the model supports them;
+- PDF export.
