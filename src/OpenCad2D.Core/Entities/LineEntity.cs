@@ -80,4 +80,17 @@ public sealed class LineEntity : CadEntity
             IsLocked,
             DrawOrder);
     }
+
+    public override CadEntity WithLayer(LayerId layerId)
+    {
+        return new LineEntity(
+            Start,
+            End,
+            Id,
+            layerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder);
+    }
 }

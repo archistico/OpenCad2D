@@ -115,4 +115,20 @@ public sealed class ArcEntity : CadEntity
             IsLocked,
             DrawOrder);
     }
+
+    public override CadEntity WithLayer(LayerId layerId)
+    {
+        return new ArcEntity(
+            Center,
+            Radius,
+            StartAngle,
+            EndAngle,
+            IsCounterClockwise,
+            Id,
+            layerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder);
+    }
 }

@@ -1,7 +1,8 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
@@ -265,4 +266,99 @@ public sealed class CadWorkspaceTests
         Assert.Equal(layerId, workspace.CurrentLayerId);
         Assert.Equal(layerId, workspace.Context.CurrentLayerId);
     }
+
+
+    [Fact]
+    public void AssignSelectedEntitiesToCurrentLayer_WhenSelectionIsEmpty_ShouldDoNothing()
+    {
+        var workspace = new CadWorkspace();
+
+        ToolResult result = workspace.AssignSelectedEntitiesToCurrentLayer();
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Empty(workspace.Document.Entities.All);
+    }
+
+    [Fact]
+    public void AssignSelectedEntitiesToCurrentLayer_ShouldMoveSelectedEntitiesToCurrentLayer()
+    {
+        var targetLayerId = new LayerId("Walls");
+        var workspace = new CadWorkspace();
+        workspace.Document.Layers.Add(new Layer(targetLayerId, "Walls"));
+        workspace.CurrentLayerId = targetLayerId;
+
+        var selectedLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: LayerId.Default);
+        var unselectedLine = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1),
+            layerId: LayerId.Default);
+
+        workspace.Document.AddEntity(selectedLine);
+        workspace.Document.AddEntity(unselectedLine);
+        workspace.SelectionSet.Select(selectedLine.Id);
+
+        ToolResult result = workspace.AssignSelectedEntitiesToCurrentLayer();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(
+            targetLayerId,
+            workspace.Document.Entities.GetRequired(selectedLine.Id).LayerId);
+        Assert.Equal(
+            LayerId.Default,
+            workspace.Document.Entities.GetRequired(unselectedLine.Id).LayerId);
+        Assert.True(workspace.SelectionSet.Contains(selectedLine.Id));
+    }
+
+    [Fact]
+    public void AssignSelectedEntitiesToCurrentLayer_ShouldBeUndoable()
+    {
+        var targetLayerId = new LayerId("Walls");
+        var workspace = new CadWorkspace();
+        workspace.Document.Layers.Add(new Layer(targetLayerId, "Walls"));
+        workspace.CurrentLayerId = targetLayerId;
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: LayerId.Default);
+
+        workspace.Document.AddEntity(line);
+        workspace.SelectionSet.Select(line.Id);
+
+        workspace.AssignSelectedEntitiesToCurrentLayer();
+
+        workspace.ActionController.Undo();
+
+        Assert.Equal(
+            LayerId.Default,
+            workspace.Document.Entities.GetRequired(line.Id).LayerId);
+
+        workspace.ActionController.Redo();
+
+        Assert.Equal(
+            targetLayerId,
+            workspace.Document.Entities.GetRequired(line.Id).LayerId);
+    }
+
+    [Fact]
+    public void AssignSelectedEntitiesToCurrentLayer_WhenAllSelectedEntitiesAreAlreadyOnCurrentLayer_ShouldDoNothing()
+    {
+        var workspace = new CadWorkspace();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: LayerId.Default);
+
+        workspace.Document.AddEntity(line);
+        workspace.SelectionSet.Select(line.Id);
+
+        ToolResult result = workspace.AssignSelectedEntitiesToCurrentLayer();
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(0, workspace.CommandHistory.UndoCount);
+    }
+
 }

@@ -465,6 +465,21 @@ public partial class MainWindow : Window
         CadCanvas.InvalidateVisual();
     }
 
+    private void AssignCurrentLayer_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.AssignSelectedEntitiesToCurrentLayer();
+
+        RefreshLayerControls();
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+
     private void LayerComboBox_SelectionChanged(
         object? sender,
         SelectionChangedEventArgs e)

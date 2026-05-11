@@ -353,6 +353,58 @@ public sealed class CadWorkspace
         return ToolResult.Completed("Line formats updated.");
     }
 
+    public ToolResult AssignSelectedEntitiesToCurrentLayer()
+    {
+        if (SelectionSet.IsEmpty)
+        {
+            return ToolResult.None("No selected entities to assign.");
+        }
+
+        EnsureCurrentLayerIsUsable();
+
+        Layer currentLayer = Document.Layers.GetRequired(CurrentLayerId);
+
+        if (!currentLayer.IsVisible || currentLayer.IsLocked)
+        {
+            return ToolResult.None("The current layer must be visible and unlocked.");
+        }
+
+        List<CadEntity> selectedEntities = SelectionSet.SelectedIds
+            .Where(Document.Entities.Contains)
+            .Select(Document.Entities.GetRequired)
+            .Where(Document.IsEntitySelectable)
+            .ToList();
+
+        if (selectedEntities.Count == 0)
+        {
+            ClearSelectionOfNonSelectableEntities();
+
+            return ToolResult.None("No selectable entities to assign.");
+        }
+
+        List<CadEntity> entitiesToReplace = selectedEntities
+            .Where(entity => entity.LayerId != CurrentLayerId)
+            .Select(entity => entity.WithLayer(CurrentLayerId))
+            .ToList();
+
+        if (entitiesToReplace.Count == 0)
+        {
+            return ToolResult.None($"Selected entities are already on layer '{currentLayer.Name}'.");
+        }
+
+        var command = new ReplaceEntitiesCommand(entitiesToReplace);
+
+        CommandHistory.Execute(
+            Document,
+            command);
+
+        SelectionSet.ReplaceWith(selectedEntities.Select(entity => entity.Id));
+
+        return ToolResult.Completed(
+            $"Assigned {entitiesToReplace.Count} selected entity/entities to layer '{currentLayer.Name}'.");
+    }
+
+
     public void EnsureCurrentLayerIsUsable()
     {
         if (!Document.Layers.Contains(CurrentLayerId))

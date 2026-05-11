@@ -50,6 +50,11 @@ public abstract class CadEntity
 
     public abstract CadEntity WithId(EntityId id);
 
+    /// <summary>
+    /// Creates a copy of this entity assigned to the specified layer.
+    /// </summary>
+    public abstract CadEntity WithLayer(LayerId layerId);
+
     protected T CopyCommonTo<T>(T entity)
         where T : CadEntity
     {

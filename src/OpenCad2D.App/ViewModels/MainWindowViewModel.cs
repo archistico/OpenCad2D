@@ -566,6 +566,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+    public ToolResult AssignSelectedEntitiesToCurrentLayer()
+    {
+        ToolResult result = Workspace.AssignSelectedEntitiesToCurrentLayer();
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+
     public ToolResult ApplyLayerChanges(
         IEnumerable<Layer> layers,
         LayerId currentLayerId)

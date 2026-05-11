@@ -186,6 +186,11 @@
                                VerticalAlignment="Center"
                                Margin="0,0,2,0" />
 
+                    <Button Classes="global-button"
+                            Content="Assegna"
+                            ToolTip.Tip="Assign selected entities to the current layer"
+                            Click="AssignCurrentLayer_Click" />
+
                     <ComboBox x:Name="LayerComboBox"
                               Classes="compact-combo"
                               Width="142"
