@@ -150,13 +150,19 @@ public sealed class SelectionTool : ICadTool, ISnapModeProvider
     }
 
     private ToolResult SelectByPoint(
-    ToolContext context,
-    PointerInfo pointer)
+        ToolContext context,
+        PointerInfo pointer)
     {
-        EntityId? selectedId = context.Selection.Service.SelectByPoint(
-            context.Document,
-            pointer.ModelPoint,
-            context.Selection.Tolerance);
+        EntityId? selectedId = pointer.IsControlPressed
+            ? context.Selection.Service.SelectNextByPoint(
+                context.Document,
+                pointer.ModelPoint,
+                context.Selection.Tolerance,
+                context.Selection.Set.LastSelectedId)
+            : context.Selection.Service.SelectByPoint(
+                context.Document,
+                pointer.ModelPoint,
+                context.Selection.Tolerance);
 
         bool shiftPressed = HasShift(pointer);
 
@@ -176,12 +182,16 @@ public sealed class SelectionTool : ICadTool, ISnapModeProvider
         {
             context.Selection.Set.Toggle(selectedId.Value);
 
-            return ToolResult.Updated("Selection toggled.");
+            return ToolResult.Updated(pointer.IsControlPressed
+                ? "Overlapping entity toggled."
+                : "Selection toggled.");
         }
 
         context.Selection.Set.ReplaceWith(selectedId.Value);
 
-        return ToolResult.Updated("Entity selected.");
+        return ToolResult.Updated(pointer.IsControlPressed
+            ? "Overlapping entity selected."
+            : "Entity selected.");
     }
 
     private ToolResult SelectByWindow(

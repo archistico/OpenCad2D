@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Operations;
@@ -35,6 +35,69 @@ public sealed class SelectionService
             tolerance);
 
         return result?.Entity.Id;
+    }
+
+    /// <summary>
+    /// Returns all selectable entities hit by a point, ordered using the same hit-test priority
+    /// used by point selection. This is useful when several entities overlap at the cursor.
+    /// </summary>
+    public IReadOnlyList<EntityId> SelectAllByPoint(
+        CadDocument document,
+        Point2D point,
+        double tolerance)
+    {
+        return _hitTestService.HitTestAll(
+                document,
+                point,
+                tolerance)
+            .Select(result => result.Entity.Id)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Returns the next selectable entity under the cursor after <paramref name="currentEntityId"/>.
+    /// When the current entity is not under the cursor, the first hit entity is returned.
+    /// </summary>
+    public EntityId? SelectNextByPoint(
+        CadDocument document,
+        Point2D point,
+        double tolerance,
+        EntityId? currentEntityId)
+    {
+        IReadOnlyList<EntityId> ids = SelectAllByPoint(
+            document,
+            point,
+            tolerance);
+
+        if (ids.Count == 0)
+        {
+            return null;
+        }
+
+        if (currentEntityId is null)
+        {
+            return ids[0];
+        }
+
+        int currentIndex = -1;
+
+        for (int index = 0; index < ids.Count; index++)
+        {
+            if (ids[index] == currentEntityId.Value)
+            {
+                currentIndex = index;
+                break;
+            }
+        }
+
+        if (currentIndex < 0)
+        {
+            return ids[0];
+        }
+
+        int nextIndex = (currentIndex + 1) % ids.Count;
+
+        return ids[nextIndex];
     }
 
     public IReadOnlyList<EntityId> SelectByWindow(

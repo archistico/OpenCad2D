@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
@@ -268,4 +268,63 @@ public sealed class SelectionServiceTests
 
         Assert.Empty(result);
     }
+    [Fact]
+    public void SelectAllByPoint_WhenEntitiesOverlap_ShouldReturnAllHitsInPriorityOrder()
+    {
+        var document = new CadDocument();
+
+        var lower = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 1);
+
+        var upper = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 2);
+
+        document.AddEntity(lower);
+        document.AddEntity(upper);
+
+        var service = new SelectionService();
+
+        IReadOnlyList<EntityId> result = service.SelectAllByPoint(
+            document,
+            new Point2D(5, 0),
+            tolerance: 1);
+
+        Assert.Equal(2, result.Count);
+        Assert.Equal(upper.Id, result[0]);
+        Assert.Equal(lower.Id, result[1]);
+    }
+
+    [Fact]
+    public void SelectNextByPoint_WhenCurrentEntityIsUnderCursor_ShouldReturnNextHit()
+    {
+        var document = new CadDocument();
+
+        var lower = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 1);
+
+        var upper = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 2);
+
+        document.AddEntity(lower);
+        document.AddEntity(upper);
+
+        var service = new SelectionService();
+
+        EntityId? result = service.SelectNextByPoint(
+            document,
+            new Point2D(5, 0),
+            tolerance: 1,
+            currentEntityId: upper.Id);
+
+        Assert.Equal(lower.Id, result);
+    }
+
 }

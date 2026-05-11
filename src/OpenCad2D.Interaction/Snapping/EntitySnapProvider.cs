@@ -28,20 +28,18 @@ public sealed class EntitySnapProvider : ISnapProvider
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        HitTestResult? result = _hitTestService.HitTest(
+        IReadOnlyList<HitTestResult> results = _hitTestService.HitTestAll(
             request.Document,
             request.CursorPoint,
             request.Tolerance);
 
-        if (result is null)
+        foreach (HitTestResult result in results)
         {
-            yield break;
+            yield return new SnapCandidate(
+                SnapKind.Entity,
+                result.ClosestPoint,
+                result.Entity.Id,
+                result.Distance);
         }
-
-        yield return new SnapCandidate(
-            SnapKind.Entity,
-            result.ClosestPoint,
-            result.Entity.Id,
-            result.Distance);
     }
 }

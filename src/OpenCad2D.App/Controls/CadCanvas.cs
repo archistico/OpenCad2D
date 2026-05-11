@@ -514,27 +514,19 @@ public sealed class CadCanvas : Control
         DrawingContext context,
         Point point)
     {
-        const double size = 8;
+        const double width = 18;
+        const double height = 12;
 
-        Point top = new(point.X, point.Y - size);
-        Point right = new(point.X + size, point.Y);
-        Point bottom = new(point.X, point.Y + size);
-        Point left = new(point.X - size, point.Y);
+        var rect = new Rect(
+            point.X - width / 2,
+            point.Y - height / 2,
+            width,
+            height);
 
-        context.DrawLine(_snapMarkerPen, top, right);
-        context.DrawLine(_snapMarkerPen, right, bottom);
-        context.DrawLine(_snapMarkerPen, bottom, left);
-        context.DrawLine(_snapMarkerPen, left, top);
-
-        context.DrawLine(
+        context.DrawRectangle(
+            null,
             _snapMarkerPen,
-            new Point(point.X - size - 3, point.Y),
-            new Point(point.X + size + 3, point.Y));
-
-        context.DrawLine(
-            _snapMarkerPen,
-            new Point(point.X, point.Y - size - 3),
-            new Point(point.X, point.Y + size + 3));
+            rect);
     }
 
     private void DrawDefaultSnapMarker(
@@ -1474,6 +1466,14 @@ public sealed class CadCanvas : Control
             result = alignToolWithScale.ConfirmWithScale(Workspace.Context);
             ClearSnapMarker();
             e.Handled = true;
+        }
+        else if (Workspace.ToolController.ActiveTool is MoveTool moveTool &&
+                 moveTool.MoveState == MoveToolState.WaitingForEntitySelection &&
+                 e.Key == Key.Enter)
+        {
+            result = moveTool.ConfirmEntitySelection(Workspace.Context);
+            ClearSnapMarker();
+            e.Handled = result.Changed;
         }
         else if (Workspace.ToolController.ActiveTool is PolylineTool polylineTool &&
                  polylineTool.State == PolylineToolState.CollectingVertices &&

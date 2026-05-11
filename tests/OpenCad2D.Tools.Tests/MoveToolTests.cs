@@ -80,8 +80,8 @@ public sealed class MoveToolTests
             context,
             new PointerInfo(new Point2D(5, 0)));
 
-        Assert.Equal(ToolResultKind.Started, result.Kind);
-        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal(MoveToolState.WaitingForEntitySelection, tool.MoveState);
         Assert.True(selection.Contains(line.Id));
         Assert.Null(tool.FirstPoint);
         Assert.Null(tool.CurrentPoint);
@@ -101,6 +101,72 @@ public sealed class MoveToolTests
         Assert.Equal(MoveToolState.WaitingForEntitySelection, tool.MoveState);
         Assert.Null(tool.FirstPoint);
         Assert.Null(tool.CurrentPoint);
+    }
+
+
+    [Fact]
+    public void ConfirmEntitySelection_WithSelectedEntity_ShouldStartBasePointPhase()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+
+        var context = CreateContext(document, selection);
+        var tool = new MoveTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.ConfirmEntitySelection(context);
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
+    }
+
+    [Fact]
+    public void EntitySelection_WithControlPressed_ShouldCycleOverOverlappingEntities()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var lower = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 1);
+
+        var upper = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 2);
+
+        document.AddEntity(lower);
+        document.AddEntity(upper);
+
+        var context = CreateContext(document, selection);
+        var tool = new MoveTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(
+                new Point2D(5, 0),
+                PointerModifiers.Control));
+
+        Assert.True(selection.Contains(upper.Id));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(
+                new Point2D(5, 0),
+                PointerModifiers.Control));
+
+        Assert.True(selection.Contains(lower.Id));
+        Assert.False(selection.Contains(upper.Id));
     }
 
     [Fact]
@@ -191,6 +257,8 @@ public sealed class MoveToolTests
         tool.OnPointerPressed(
             context,
             new PointerInfo(new Point2D(5, 0)));
+
+        tool.ConfirmEntitySelection(context);
 
         tool.OnPointerPressed(
             context,

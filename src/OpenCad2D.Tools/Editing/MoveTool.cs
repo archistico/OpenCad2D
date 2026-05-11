@@ -138,18 +138,45 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
         return ToolResult.None("Move tool deactivated.");
     }
 
+    public ToolResult ConfirmEntitySelection(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        if (_state != MoveToolState.WaitingForEntitySelection)
+        {
+            return ToolResult.None();
+        }
+
+        if (!context.Selection.HasSelection)
+        {
+            return ToolResult.None("Select entities to move.");
+        }
+
+        _state = MoveToolState.WaitingForBasePoint;
+
+        return ToolResult.Started("Specify base point.");
+    }
+
     private ToolResult SelectEntityToMove(
         ToolContext context,
         PointerInfo pointer)
     {
-        EntityId? selectedId = context.Selection.Service.SelectByPoint(
-            context.Document,
-            pointer.ModelPoint,
-            context.Selection.Tolerance);
+        EntityId? selectedId = pointer.IsControlPressed
+            ? context.Selection.Service.SelectNextByPoint(
+                context.Document,
+                pointer.ModelPoint,
+                context.Selection.Tolerance,
+                context.Selection.Set.LastSelectedId)
+            : context.Selection.Service.SelectByPoint(
+                context.Document,
+                pointer.ModelPoint,
+                context.Selection.Tolerance);
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select entities to move.");
+            return ToolResult.None("Select entities to move, then press Enter.");
         }
 
         if (pointer.IsShiftPressed)
@@ -161,14 +188,9 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
             context.Selection.Set.ReplaceWith(selectedId.Value);
         }
 
-        if (!context.Selection.HasSelection)
-        {
-            return ToolResult.None("Select entities to move.");
-        }
-
-        _state = MoveToolState.WaitingForBasePoint;
-
-        return ToolResult.Started("Entity selected. Specify base point.");
+        return ToolResult.Updated(pointer.IsControlPressed
+            ? "Overlapping entity selected. Press Enter to specify base point."
+            : "Entity selected. Press Enter to specify base point.");
     }
 
     private ToolResult SelectBasePoint(
@@ -272,6 +294,12 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
     private void EnsureInitialState(ToolContext context)
     {
         if (_basePoint is not null)
+        {
+            return;
+        }
+
+        if (_state == MoveToolState.WaitingForEntitySelection &&
+            context.Selection.HasSelection)
         {
             return;
         }

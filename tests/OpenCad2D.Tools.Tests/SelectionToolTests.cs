@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
@@ -678,6 +678,63 @@ public sealed class SelectionToolTests
         Assert.False(tool.HasWindowPreview);
         Assert.Null(tool.GetPreviewWindow());
         Assert.True(selectionSet.IsEmpty);
+    }
+
+
+    [Fact]
+    public void PointerPressed_WithControlOnOverlappingEntities_ShouldCycleSelection()
+    {
+        CadDocument document = new();
+        SelectionSet selectionSet = new();
+
+        var lower = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 1);
+
+        var upper = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 2);
+
+        document.AddEntity(lower);
+        document.AddEntity(upper);
+
+        var context = CreateContext(
+            document,
+            selectionSet,
+            selectionTolerance: 1);
+
+        var tool = new SelectionTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(
+                new Point2D(5, 0),
+                PointerModifiers.Control));
+
+        tool.OnPointerReleased(
+            context,
+            new PointerInfo(
+                new Point2D(5, 0),
+                PointerModifiers.Control));
+
+        Assert.True(selectionSet.Contains(upper.Id));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(
+                new Point2D(5, 0),
+                PointerModifiers.Control));
+
+        tool.OnPointerReleased(
+            context,
+            new PointerInfo(
+                new Point2D(5, 0),
+                PointerModifiers.Control));
+
+        Assert.True(selectionSet.Contains(lower.Id));
+        Assert.False(selectionSet.Contains(upper.Id));
     }
 
     private static ToolContext CreateContext(
