@@ -1,7 +1,8 @@
-﻿using OpenCad2D.Core.Collections;
+using OpenCad2D.Core.Collections;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
+using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Core.Documents;
@@ -14,12 +15,22 @@ public sealed class CadDocument
     public CadDocument()
     {
         Layers = new LayerCollection();
+        LineFormats = LineFormatCollection.Default;
         Entities = new EntityCollection();
     }
 
     public LayerCollection Layers { get; }
 
+    public LineFormatCollection LineFormats { get; }
+
     public EntityCollection Entities { get; }
+
+    public void ReplaceLineFormats(LineFormatCollection lineFormats)
+    {
+        ArgumentNullException.ThrowIfNull(lineFormats);
+
+        LineFormats.ReplaceAll(lineFormats.All);
+    }
 
     public void AddEntity(CadEntity entity)
     {

@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Styling;
 
 namespace OpenCad2D.Core.Layers;
@@ -8,6 +8,30 @@ namespace OpenCad2D.Core.Layers;
 /// </summary>
 public sealed class Layer
 {
+    /// <summary>
+    /// Creates a layer that references a reusable line format.
+    /// </summary>
+    public Layer(
+        LayerId id,
+        string name,
+        LineFormatId lineFormatId,
+        bool isVisible = true,
+        bool isLocked = false)
+        : this(
+            id,
+            name,
+            lineFormatId,
+            CadColor.FromRgb(255, 255, 255),
+            LineWeight.FromMillimeters(0.25),
+            isVisible,
+            isLocked)
+    {
+    }
+
+    /// <summary>
+    /// Transitional constructor kept so the rest of the application can keep compiling
+    /// while rendering, persistence and UI are moved to LineFormat in later phases.
+    /// </summary>
     public Layer(
         LayerId id,
         string name,
@@ -15,6 +39,25 @@ public sealed class Layer
         LineWeight? lineWeight = null,
         bool isVisible = true,
         bool isLocked = false)
+        : this(
+            id,
+            name,
+            LineFormatId.Continuous,
+            color ?? CadColor.FromRgb(255, 255, 255),
+            lineWeight ?? LineWeight.FromMillimeters(0.25),
+            isVisible,
+            isLocked)
+    {
+    }
+
+    private Layer(
+        LayerId id,
+        string name,
+        LineFormatId lineFormatId,
+        CadColor color,
+        LineWeight lineWeight,
+        bool isVisible,
+        bool isLocked)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -23,10 +66,18 @@ public sealed class Layer
                 nameof(name));
         }
 
+        if (string.IsNullOrWhiteSpace(lineFormatId.Value))
+        {
+            throw new ArgumentException(
+                "Layer line format id cannot be empty.",
+                nameof(lineFormatId));
+        }
+
         Id = id;
-        Name = name;
-        Color = color ?? CadColor.FromRgb(255, 255, 255);
-        LineWeight = lineWeight ?? LineWeight.FromMillimeters(0.25);
+        Name = name.Trim();
+        LineFormatId = lineFormatId;
+        Color = color;
+        LineWeight = lineWeight;
         IsVisible = isVisible;
         IsLocked = isLocked;
     }
@@ -35,20 +86,45 @@ public sealed class Layer
 
     public string Name { get; }
 
+    /// <summary>
+    /// Gets the line format referenced by this layer.
+    /// </summary>
+    public LineFormatId LineFormatId { get; }
+
+    /// <summary>
+    /// Transitional appearance property kept until rendering and persistence are fully
+    /// moved to LineFormat in the next implementation phases.
+    /// </summary>
     public CadColor Color { get; }
 
+    /// <summary>
+    /// Transitional appearance property kept until rendering and persistence are fully
+    /// moved to LineFormat in the next implementation phases.
+    /// </summary>
     public LineWeight LineWeight { get; }
 
     public bool IsVisible { get; }
 
     public bool IsLocked { get; }
 
-
     public Layer WithName(string name)
     {
         return new Layer(
             Id,
             name,
+            LineFormatId,
+            Color,
+            LineWeight,
+            IsVisible,
+            IsLocked);
+    }
+
+    public Layer WithLineFormat(LineFormatId lineFormatId)
+    {
+        return new Layer(
+            Id,
+            Name,
+            lineFormatId,
             Color,
             LineWeight,
             IsVisible,
@@ -62,6 +138,7 @@ public sealed class Layer
         return new Layer(
             Id,
             Name,
+            LineFormatId,
             color,
             lineWeight,
             IsVisible,
@@ -73,6 +150,7 @@ public sealed class Layer
         return new Layer(
             Id,
             Name,
+            LineFormatId,
             Color,
             LineWeight,
             isVisible,
@@ -84,6 +162,7 @@ public sealed class Layer
         return new Layer(
             Id,
             Name,
+            LineFormatId,
             Color,
             LineWeight,
             IsVisible,
@@ -93,6 +172,5 @@ public sealed class Layer
     public static Layer Default => new(
         LayerId.Default,
         "0",
-        CadColor.FromRgb(255, 255, 255),
-        LineWeight.FromMillimeters(0.25));
+        LineFormatId.Continuous);
 }
