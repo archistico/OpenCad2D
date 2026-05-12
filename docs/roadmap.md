@@ -324,8 +324,8 @@ OpenCad2D currently includes:
 - [ ] tests for radius dimension;
 - [ ] tests for diameter dimension;
 - [x] persistence tests for dimension styles and first dimension entities;
-- [ ] SVG export tests for dimensions;
-- [ ] DXF export tests for dimensions;
+- [x] SVG export tests for horizontal, vertical and aligned dimensions;
+- [x] DXF export tests for horizontal, vertical and aligned dimensions as graphical primitives;
 - [x] undo/redo tests for first dimension tools.
 
 
@@ -335,7 +335,8 @@ OpenCad2D currently includes:
 - [x] Phase 0 started with `DimensionStyleId`, `DimensionStyle`, `DimensionStyleCollection` and document-level `DimensionStyles`.
 - [x] First core entities added: `LinearDimensionEntity` and `AlignedDimensionEntity`.
 - [x] Phase 2 added `DimensionGeometryBuilder`, canvas rendering and placement preview for horizontal, vertical and aligned dimensions.
-- [ ] Next phase: SVG/DXF export for horizontal, vertical and aligned dimensions as graphical primitives.
+- [x] Phase 3 added SVG/DXF export for horizontal, vertical and aligned dimensions as graphical primitives.
+- [ ] Next phase: radius and diameter dimensions.
 
 ### Editing polish
 

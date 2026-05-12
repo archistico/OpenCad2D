@@ -398,3 +398,28 @@ Current v0.4 decisions:
 - DXF export will initially write dimensions as graphical primitives;
 - horizontal and vertical dimensions will use separate tools;
 - angular dimensions must support angles greater than 180°.
+
+
+---
+
+## Dimension export status
+
+The v0.4 dimension system currently exports horizontal, vertical and aligned dimensions as graphical primitives.
+
+SVG export writes:
+
+```text
+dimension line / extension lines / arrows -> <line>
+measurement text                          -> <text>
+```
+
+DXF export writes:
+
+```text
+dimension line / extension lines / arrows -> LINE
+measurement text                          -> TEXT
+```
+
+This is deliberate. Dimensions are non-associative in v0.4 and DXF output prioritizes visual compatibility over native editable `DIMENSION` records.
+
+All dimension export uses the shared `DimensionGeometryBuilder`, so canvas rendering, SVG export and DXF export derive from the same dimension geometry model.

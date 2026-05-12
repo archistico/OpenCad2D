@@ -1,4 +1,6 @@
 using System.Text;
+using OpenCad2D.Core.Dimensions;
+using OpenCad2D.Core.Dimensions.Rendering;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -41,7 +43,9 @@ public sealed class DxfExporter : IDxfExporter
         WriteTables(
             writer,
             document);
-        BoundingBox2D? contentBounds = GetContentBounds(entities);
+        BoundingBox2D? contentBounds = GetContentBounds(
+            document,
+            entities);
 
         WriteEntities(
             writer,
@@ -252,6 +256,24 @@ public sealed class DxfExporter : IDxfExporter
                         contentBounds);
                     break;
 
+                case LinearDimensionEntity linearDimension:
+                    WriteDimension(
+                        writer,
+                        document,
+                        layer.Name,
+                        linearDimension,
+                        contentBounds);
+                    break;
+
+                case AlignedDimensionEntity alignedDimension:
+                    WriteDimension(
+                        writer,
+                        document,
+                        layer.Name,
+                        alignedDimension,
+                        contentBounds);
+                    break;
+
                 case LineEntity line:
                     WriteLine(
                         writer,
@@ -287,6 +309,75 @@ public sealed class DxfExporter : IDxfExporter
         }
 
         writer.EndSection();
+    }
+
+
+    private static void WriteDimension(
+        DxfDocumentWriter writer,
+        CadDocument document,
+        string layerName,
+        DimensionEntity dimension,
+        BoundingBox2D? contentBounds)
+    {
+        DimensionStyle style = ResolveDimensionStyle(
+            document,
+            dimension);
+        TextFormat textFormat = ResolveDimensionTextFormat(
+            document,
+            style);
+        DimensionRenderModel model = new DimensionGeometryBuilder().Build(
+            dimension,
+            style);
+
+        foreach (DimensionLinePrimitive line in model.Lines.Concat(model.Arrows))
+        {
+            WriteLinePrimitive(
+                writer,
+                layerName,
+                line,
+                contentBounds);
+        }
+
+        Point2D textPosition = ToDxfPoint(
+            model.Text.Position,
+            contentBounds);
+
+        writer.WriteGroup(0, "TEXT");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, textPosition.X);
+        writer.WriteGroup(20, textPosition.Y);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(40, textFormat.Height);
+        writer.WriteGroup(1, model.Text.Text);
+        writer.WriteGroup(50, NormalizeDegrees(-model.Text.RotationDegrees));
+        writer.WriteGroup(7, textFormat.Name);
+    }
+
+    private static void WriteLinePrimitive(
+        DxfDocumentWriter writer,
+        string layerName,
+        DimensionLinePrimitive line,
+        BoundingBox2D? contentBounds)
+    {
+        Point2D start = ToDxfPoint(
+            line.Start,
+            contentBounds);
+        Point2D end = ToDxfPoint(
+            line.End,
+            contentBounds);
+
+        writer.WriteGroup(0, "LINE");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, start.X);
+        writer.WriteGroup(20, start.Y);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(11, end.X);
+        writer.WriteGroup(21, end.Y);
+        writer.WriteGroup(31, 0.0);
     }
 
     private static void WriteText(
@@ -441,6 +532,7 @@ public sealed class DxfExporter : IDxfExporter
 
 
     private static BoundingBox2D? GetContentBounds(
+        CadDocument document,
         IReadOnlyList<CadEntity> entities)
     {
         if (entities.Count == 0)
@@ -448,7 +540,9 @@ public sealed class DxfExporter : IDxfExporter
             return null;
         }
 
-        BoundingBox2D first = entities[0].GetBoundingBox();
+        BoundingBox2D first = GetExportBounds(
+            document,
+            entities[0]);
 
         double minX = first.MinX;
         double minY = first.MinY;
@@ -457,7 +551,9 @@ public sealed class DxfExporter : IDxfExporter
 
         foreach (CadEntity entity in entities.Skip(1))
         {
-            BoundingBox2D bounds = entity.GetBoundingBox();
+            BoundingBox2D bounds = GetExportBounds(
+                document,
+                entity);
 
             minX = Math.Min(minX, bounds.MinX);
             minY = Math.Min(minY, bounds.MinY);
@@ -470,6 +566,26 @@ public sealed class DxfExporter : IDxfExporter
             minY,
             maxX,
             maxY);
+    }
+
+    private static BoundingBox2D GetExportBounds(
+        CadDocument document,
+        CadEntity entity)
+    {
+        if (entity is DimensionEntity dimension)
+        {
+            DimensionStyle style = ResolveDimensionStyle(
+                document,
+                dimension);
+
+            return new DimensionGeometryBuilder()
+                .Build(
+                    dimension,
+                    style)
+                .Bounds;
+        }
+
+        return entity.GetBoundingBox();
     }
 
     private static Point2D ToDxfPoint(
@@ -501,6 +617,36 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(62, 256);
         writer.WriteGroup(6, "BYLAYER");
         writer.WriteGroup(370, -1);
+    }
+
+    private static DimensionStyle ResolveDimensionStyle(
+        CadDocument document,
+        DimensionEntity dimension)
+    {
+        if (document.DimensionStyles.TryGetById(
+                dimension.DimensionStyleId,
+                out DimensionStyle? style) &&
+            style is not null)
+        {
+            return style;
+        }
+
+        return document.DimensionStyles.GetById(DimensionStyleId.Standard);
+    }
+
+    private static TextFormat ResolveDimensionTextFormat(
+        CadDocument document,
+        DimensionStyle style)
+    {
+        if (document.TextFormats.TryGetById(
+                style.TextFormatId,
+                out TextFormat? format) &&
+            format is not null)
+        {
+            return format;
+        }
+
+        return document.TextFormats.GetById(TextFormatId.Annotation);
     }
 
     private static TextFormat ResolveTextFormat(

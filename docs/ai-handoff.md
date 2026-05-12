@@ -26,7 +26,7 @@ The project currently supports:
 
 ### Drawing
 
-- v0.4 dimension foundation has started: dimension styles and first non-associative linear/aligned dimension entities exist in Core and Persistence;
+- v0.4 dimension work has started: dimension styles, non-associative horizontal/vertical/aligned dimension entities, rendering, tools, preview and SVG/DXF graphical export exist;
 - `PointTool`;
 - `TextTool` for single-line text;
 - `LineTool`;
@@ -105,9 +105,9 @@ The project currently supports:
 - DXF export from the file command bar;
 - SVG background rectangle matching the canvas;
 - SVG export preserves the same visual Y orientation as the canvas;
-- DXF export writes AutoCAD 2000 ASCII DXF with POINT, TEXT, LINE, CIRCLE, ARC and LWPOLYLINE;
+- DXF export writes AutoCAD 2000 ASCII DXF with POINT, TEXT, LINE, CIRCLE, ARC and LWPOLYLINE; v0.4 dimensions currently export as LINE + TEXT graphical primitives, not native DIMENSION records;
 - DXF export writes LTYPE/LAYER tables and uses LineFormat-derived layer appearance with BYLAYER entities;
-- SVG/DXF export include points and single-line text;
+- SVG/DXF export include points, single-line text and horizontal/vertical/aligned dimensions;
 - DXF export mirrors Y by exported content bounds to preserve the visual top/bottom orientation in external viewers;
 - automated DXF tests cover balanced code/value pairs, representative entity records, BYLAYER entity properties, built-in line format mapping, TEXT records and LWPOLYLINE flags;
 - SVG export does not save the drawing and does not clear dirty state.

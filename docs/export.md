@@ -41,13 +41,16 @@ Current SVG export is implemented by `SvgExporter`.
 Supported entities:
 
 ```text
-PointEntity     -> small marker
-TextEntity      -> <text>
-LineEntity      -> <line>
-CircleEntity    -> <circle>
-Polyline open   -> <polyline>
-Polyline closed -> <polygon>
-ArcEntity       -> <path>
+PointEntity               -> small marker
+TextEntity                -> <text>
+LineEntity                -> <line>
+CircleEntity              -> <circle>
+Polyline open             -> <polyline>
+Polyline closed           -> <polygon>
+ArcEntity                 -> <path>
+Horizontal dimension      -> lines + text
+Vertical dimension        -> lines + text
+Aligned dimension         -> lines + text
 ```
 
 Layer rules:
@@ -65,6 +68,7 @@ stroke           -> LineFormat.Color referenced by the entity layer
 stroke-width     -> LineFormat.LineWeight referenced by the entity layer
 stroke-dasharray -> LineStyleDashPattern for non-continuous formats
 text fill        -> TextFormat.Color referenced by TextEntity.TextFormatId
+dimension text   -> DimensionStyle.TextFormatId -> TextFormat
 text font        -> TextFormat.FontFamily
 text size        -> TextFormat.Height
 fill             -> none for closed geometry for now
@@ -131,12 +135,15 @@ $ACADVER = AC1015
 Current supported entities:
 
 ```text
-PointEntity     -> POINT
-TextEntity      -> TEXT
-LineEntity      -> LINE
-CircleEntity    -> CIRCLE
-ArcEntity       -> ARC
-PolylineEntity  -> LWPOLYLINE
+PointEntity               -> POINT
+TextEntity                -> TEXT
+LineEntity                -> LINE
+CircleEntity              -> CIRCLE
+ArcEntity                 -> ARC
+PolylineEntity            -> LWPOLYLINE
+Horizontal dimension      -> LINE + TEXT graphical primitives
+Vertical dimension        -> LINE + TEXT graphical primitives
+Aligned dimension         -> LINE + TEXT graphical primitives
 ```
 
 Current DXF structure:
@@ -245,6 +252,49 @@ The current implementation intentionally does not export multiline text because 
 
 ---
 
+
+## Dimension export
+
+The first v0.4 dimension export is intentionally graphical, not associative.
+
+Horizontal, vertical and aligned dimensions are exported through the shared `DimensionGeometryBuilder` render model:
+
+```text
+DimensionEntity
+-> DimensionStyle
+-> DimensionGeometryBuilder
+-> dimension lines, extension lines, arrow lines and measurement text
+```
+
+SVG writes dimensions as visual primitives:
+
+```text
+line primitives -> <line>
+measurement     -> <text>
+```
+
+DXF writes dimensions as simple graphical entities:
+
+```text
+line primitives -> LINE
+measurement     -> TEXT
+```
+
+This means external CAD programs can display the dimension graphics, but the exported DXF dimensions are not native editable `DIMENSION` objects yet. Native DXF `DIMENSION` export is intentionally left for a later interoperability phase because it requires more complex DXF block/style handling and viewer-specific validation.
+
+Dimension text appearance is resolved from:
+
+```text
+DimensionEntity.DimensionStyleId
+-> Document.DimensionStyles
+-> DimensionStyle.TextFormatId
+-> Document.TextFormats
+```
+
+The default `Standard` dimension style uses the `Annotation` text format.
+
+---
+
 ## Export is not Save
 
 SVG export does not affect native document state.
@@ -275,6 +325,8 @@ layer records write a single linetype group
 built-in line formats map to expected DXF linetype, true color and lineweight values
 TEXT export writes content, height, style name and mirrored angle
 open/closed LWPOLYLINE records write expected vertex count and flags
+horizontal, vertical and aligned dimensions export as LINE + TEXT graphical primitives
+dimension primitives use BYLAYER properties
 ```
 
 These tests do not replace manual validation in LibreCAD, QCAD and Autodesk DWG TrueView. They are intended to catch structural regressions before external viewer testing.
@@ -293,5 +345,6 @@ Possible improvements:
 - export settings dialog;
 - DXF export options dialog;
 - export selected entities only;
-- text, dimensions, hatches and blocks for DXF when the model supports them;
+- native DXF `DIMENSION` export after the internal dimension model is stable;
+- hatches and blocks for DXF when the model supports them;
 - PDF export.

@@ -1,6 +1,8 @@
 ﻿using System.Globalization;
 using System.Text;
 using System.Xml;
+using OpenCad2D.Core.Dimensions;
+using OpenCad2D.Core.Dimensions.Rendering;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -31,7 +33,9 @@ public sealed class SvgExporter : ISvgExporter
             actualOptions)
             .ToList();
 
-        BoundingBox2D? contentBounds = GetContentBounds(entities);
+        BoundingBox2D? contentBounds = GetContentBounds(
+            document,
+            entities);
 
         double width;
         double height;
@@ -140,6 +144,7 @@ public sealed class SvgExporter : ISvgExporter
     }
 
     private static BoundingBox2D? GetContentBounds(
+        CadDocument document,
         IReadOnlyList<CadEntity> entities)
     {
         if (entities.Count == 0)
@@ -147,7 +152,9 @@ public sealed class SvgExporter : ISvgExporter
             return null;
         }
 
-        BoundingBox2D first = entities[0].GetBoundingBox();
+        BoundingBox2D first = GetExportBounds(
+            document,
+            entities[0]);
 
         double minX = first.MinX;
         double minY = first.MinY;
@@ -156,7 +163,9 @@ public sealed class SvgExporter : ISvgExporter
 
         foreach (CadEntity entity in entities.Skip(1))
         {
-            BoundingBox2D bounds = entity.GetBoundingBox();
+            BoundingBox2D bounds = GetExportBounds(
+                document,
+                entity);
 
             minX = Math.Min(minX, bounds.MinX);
             minY = Math.Min(minY, bounds.MinY);
@@ -169,6 +178,26 @@ public sealed class SvgExporter : ISvgExporter
             minY,
             maxX,
             maxY);
+    }
+
+    private static BoundingBox2D GetExportBounds(
+        CadDocument document,
+        CadEntity entity)
+    {
+        if (entity is DimensionEntity dimension)
+        {
+            DimensionStyle style = ResolveDimensionStyle(
+                document,
+                dimension);
+
+            return new DimensionGeometryBuilder()
+                .Build(
+                    dimension,
+                    style)
+                .Bounds;
+        }
+
+        return entity.GetBoundingBox();
     }
 
     private static string? ExportEntity(
@@ -197,6 +226,22 @@ public sealed class SvgExporter : ISvgExporter
             TextEntity text => ExportText(
                 document,
                 text,
+                contentBounds.Value,
+                height,
+                margin),
+
+            LinearDimensionEntity linearDimension => ExportDimension(
+                document,
+                linearDimension,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
+            AlignedDimensionEntity alignedDimension => ExportDimension(
+                document,
+                alignedDimension,
+                lineFormat,
                 contentBounds.Value,
                 height,
                 margin),
@@ -231,6 +276,57 @@ public sealed class SvgExporter : ISvgExporter
 
             _ => null
         };
+    }
+
+
+    private static string ExportDimension(
+        CadDocument document,
+        DimensionEntity dimension,
+        LineFormat lineFormat,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        DimensionStyle style = ResolveDimensionStyle(
+            document,
+            dimension);
+        TextFormat textFormat = ResolveDimensionTextFormat(
+            document,
+            style);
+        DimensionRenderModel model = new DimensionGeometryBuilder().Build(
+            dimension,
+            style);
+
+        var builder = new StringBuilder();
+
+        foreach (DimensionLinePrimitive line in model.Lines.Concat(model.Arrows))
+        {
+            Point2D start = ToSvgPoint(
+                line.Start,
+                bounds,
+                svgHeight,
+                margin);
+            Point2D end = ToSvgPoint(
+                line.End,
+                bounds,
+                svgHeight,
+                margin);
+
+            builder.AppendLine($"  <line x1=\"{Format(start.X)}\" y1=\"{Format(start.Y)}\" x2=\"{Format(end.X)}\" y2=\"{Format(end.Y)}\" {StrokeAttributes(lineFormat)} />");
+        }
+
+        Point2D textPoint = ToSvgPoint(
+            model.Text.Position,
+            bounds,
+            svgHeight,
+            margin);
+        double svgRotation = -model.Text.RotationDegrees;
+        string fontWeight = textFormat.IsBold ? "bold" : "normal";
+        string fontStyle = textFormat.IsItalic ? "italic" : "normal";
+
+        builder.Append($"  <text x=\"{Format(textPoint.X)}\" y=\"{Format(textPoint.Y)}\" font-family=\"{Escape(textFormat.FontFamily)}\" font-size=\"{Format(textFormat.Height)}\" font-weight=\"{fontWeight}\" font-style=\"{fontStyle}\" fill=\"{ToHex(textFormat.Color)}\" transform=\"rotate({Format(svgRotation)} {Format(textPoint.X)} {Format(textPoint.Y)})\">{Escape(model.Text.Text)}</text>");
+
+        return builder.ToString().TrimEnd();
     }
 
     private static string ExportText(
@@ -406,6 +502,36 @@ public sealed class SvgExporter : ISvgExporter
         return new Point2D(
             x,
             y);
+    }
+
+    private static DimensionStyle ResolveDimensionStyle(
+        CadDocument document,
+        DimensionEntity dimension)
+    {
+        if (document.DimensionStyles.TryGetById(
+                dimension.DimensionStyleId,
+                out DimensionStyle? style) &&
+            style is not null)
+        {
+            return style;
+        }
+
+        return document.DimensionStyles.GetById(DimensionStyleId.Standard);
+    }
+
+    private static TextFormat ResolveDimensionTextFormat(
+        CadDocument document,
+        DimensionStyle style)
+    {
+        if (document.TextFormats.TryGetById(
+                style.TextFormatId,
+                out TextFormat? format) &&
+            format is not null)
+        {
+            return format;
+        }
+
+        return document.TextFormats.GetById(TextFormatId.Annotation);
     }
 
     private static TextFormat ResolveTextFormat(
