@@ -261,6 +261,26 @@ If the drawing is dirty before export, it remains dirty after export.
 
 ---
 
+## Automated DXF checks
+
+The test suite includes internal DXF compatibility checks before manual validation in external CAD viewers.
+
+Covered automated checks:
+
+```text
+ASCII DXF code/value pairs are balanced
+representative entity records are written for POINT, TEXT, LINE, CIRCLE, ARC, LWPOLYLINE
+entity records use BYLAYER color, linetype and lineweight
+layer records write a single linetype group
+built-in line formats map to expected DXF linetype, true color and lineweight values
+TEXT export writes content, height, style name and mirrored angle
+open/closed LWPOLYLINE records write expected vertex count and flags
+```
+
+These tests do not replace manual validation in LibreCAD, QCAD and Autodesk DWG TrueView. They are intended to catch structural regressions before external viewer testing.
+
+---
+
 ## Future work
 
 Possible improvements:

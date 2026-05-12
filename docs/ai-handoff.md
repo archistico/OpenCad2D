@@ -106,6 +106,7 @@ The project currently supports:
 - DXF export writes LTYPE/LAYER tables and uses LineFormat-derived layer appearance with BYLAYER entities;
 - SVG/DXF export include points and single-line text;
 - DXF export mirrors Y by exported content bounds to preserve the visual top/bottom orientation in external viewers;
+- automated DXF tests cover balanced code/value pairs, representative entity records, BYLAYER entity properties, built-in line format mapping, TEXT records and LWPOLYLINE flags;
 - SVG export does not save the drawing and does not clear dirty state.
 
 ---

@@ -36,6 +36,7 @@ OpenCad2D currently includes:
 - [x] persistence;
 - [x] SVG export;
 - [x] DXF export;
+- [x] automated DXF structure and compatibility tests;
 - [x] hit testing;
 - [x] selection;
 - [x] entity snap and overlapping selection cycling;
@@ -217,7 +218,10 @@ OpenCad2D currently includes:
 - [x] hidden layer handling;
 - [x] locked layer table flag;
 - [x] Y flip by exported content bounds to match visual orientation in tested viewers;
-- [x] file command bar integration through `Export DXF`.
+- [x] file command bar integration through `Export DXF`;
+- [x] automated structure tests for representative DXF entity records;
+- [x] automated layer compatibility tests for colors, linetypes and lineweights;
+- [x] automated check that DXF code/value pairs are balanced.
 
 ### PolylineTool v1
 
@@ -258,18 +262,19 @@ OpenCad2D currently includes:
 - [ ] validate DXF export in LibreCAD;
 - [ ] validate DXF export in QCAD;
 - [ ] validate DXF export in Autodesk DWG TrueView;
-- [ ] create compatibility checklist for colors;
-- [ ] create compatibility checklist for linetypes;
-- [ ] create compatibility checklist for lineweights;
+- [x] create automated compatibility checks for colors;
+- [x] create automated compatibility checks for linetypes;
+- [x] create automated compatibility checks for lineweights;
 - [x] add systematic tests for `PointEntity`;
 - [x] add systematic tests for `TextEntity`;
 - [x] add systematic tests for text formats;
 - [x] add systematic tests for point/text persistence;
 - [x] add systematic tests for point/text SVG export;
 - [x] add systematic tests for point/text DXF export;
-- [ ] add more edge-case geometric tests for tangents;
-- [ ] add more edge-case geometric tests for overlaps;
-- [ ] add more edge-case geometric tests for near-tangents.
+- [x] add more edge-case geometric tests for tangents;
+- [x] add more edge-case geometric tests for overlaps;
+- [x] add more edge-case geometric tests for near-tangents;
+- [x] add more edge-case geometric tests for near-collinear and shared-vertex intersections.
 
 ### Documentation
 
