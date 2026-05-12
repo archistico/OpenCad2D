@@ -47,6 +47,7 @@ OpenCad2D currently includes:
 - [x] drawing tools;
 - [x] editing/transform tools;
 - [x] two-column left tool panel organization;
+- [x] application icon and logo assets;
 - [x] modify tools for lines/arcs/circles/polylines where supported;
 - [x] grip editing;
 - [x] custom Avalonia canvas;
@@ -701,8 +702,8 @@ docs/v0.6-command-line-property-panel-plan.md
 - [ ] shortcuts persistence;
 - [ ] last file persistence;
 - [ ] default grid settings;
-- [ ] finalized visual identity;
-- [ ] application icon;
+- [~] finalized visual identity;
+- [x] application icon;
 - [ ] favicon;
 - [ ] final XAML theme;
 - [ ] draw order / Z-order independent from layers.

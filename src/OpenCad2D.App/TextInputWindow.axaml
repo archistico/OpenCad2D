@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="OpenCad2D.App.TextInputWindow"
         Title="Insert Text"
+        Icon="/Assets/app-icon.ico"
         Width="420"
         Height="250"
         CanResize="False"

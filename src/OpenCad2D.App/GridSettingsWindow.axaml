@@ -4,6 +4,7 @@
         x:Class="OpenCad2D.App.GridSettingsWindow"
         x:DataType="gridvm:GridSettingsWindowViewModel"
         Title="Grid Settings"
+        Icon="/Assets/app-icon.ico"
         Width="520"
         Height="560"
         MinWidth="480"

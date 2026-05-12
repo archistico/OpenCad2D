@@ -918,3 +918,21 @@ Recommended v0.7 starting point:
 2. design a minimal DXF importer for layers, line formats and base entities;
 3. keep unsupported DXF entities as skip + readable log;
 4. then design PDF export with page format, scale and margins.
+
+## Branding and application icon
+
+Logo source files are kept in `screenshot/`:
+
+```text
+screenshot/logo_opencad2d.svg
+screenshot/logo_opencad2d_16.png
+screenshot/logo_opencad2d_32.png
+screenshot/logo_opencad2d_64.png
+screenshot/logo_opencad2d_128.png
+screenshot/logo_opencad2d_256.png
+screenshot/logo_opencad2d_512.png
+```
+
+Runtime application assets are copied under `src/OpenCad2D.App/Assets/`. The app icon is `Assets/app-icon.ico`, generated from the logo PNG resolutions, and is configured in `OpenCad2D.App.csproj` through `ApplicationIcon`. Avalonia windows use `Icon="/Assets/app-icon.ico"`. The About window displays `Assets/logo_opencad2d_128.png`.
+
+Documentation should use the SVG logo where appropriate. The root `README.md` uses `screenshot/logo_opencad2d.svg`; documentation under `docs/` should reference `../screenshot/logo_opencad2d.svg`. More details are in `docs/branding.md`.

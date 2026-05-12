@@ -4,6 +4,7 @@
         x:Class="OpenCad2D.App.LineFormatManagerWindow"
         x:DataType="lineFormats:LineFormatManagerWindowViewModel"
         Title="Line Format Manager"
+        Icon="/Assets/app-icon.ico"
         Width="940"
         Height="500"
         MinWidth="820"

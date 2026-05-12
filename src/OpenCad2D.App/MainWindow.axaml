@@ -6,6 +6,7 @@
         x:Class="OpenCad2D.App.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Title="OpenCad2D"
+        Icon="/Assets/app-icon.ico"
         Width="1600"
         Height="960"
         Background="#1E1E1E"

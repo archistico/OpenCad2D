@@ -4,6 +4,7 @@
         x:Class="OpenCad2D.App.LayerManagerWindow"
         x:DataType="layers:LayerManagerWindowViewModel"
         Title="Layer Manager"
+        Icon="/Assets/app-icon.ico"
         Width="900"
         Height="460"
         MinWidth="760"

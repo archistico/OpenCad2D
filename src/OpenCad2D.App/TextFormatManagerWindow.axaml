@@ -4,6 +4,7 @@
         x:Class="OpenCad2D.App.TextFormatManagerWindow"
         x:DataType="textFormats:TextFormatManagerWindowViewModel"
         Title="Text Format Manager"
+        Icon="/Assets/app-icon.ico"
         Width="1040"
         Height="520"
         MinWidth="900"
