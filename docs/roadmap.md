@@ -518,7 +518,7 @@ docs/release-v0.5.md
 
 ## v0.6 - Real command line and Property Panel v2
 
-Status: in progress. Phase 0 audit/design and Phase 1 command activation completed.
+Status: in progress. Phase 0 audit/design, Phase 1 command activation and Phase 2 absolute coordinate pipeline completed.
 
 Detailed planning document:
 
@@ -566,15 +566,16 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ### Phase 2 - Absolute coordinate pipeline
 
-- [ ] centralize `x,y` parsing;
-- [ ] support whitespace around the comma;
-- [ ] support decimal point values;
-- [ ] reject invalid coordinate text clearly;
-- [ ] submit parsed points to the active tool;
-- [ ] verify Line/Polyline/Rectangle/Circle/Point workflows;
-- [ ] tests for valid absolute coordinates;
-- [ ] tests for invalid coordinates;
-- [ ] tests for culture-invariant parsing.
+- [x] keep `x,y` parsing centralized in `CommandInputParser`;
+- [x] support whitespace around the comma;
+- [x] support decimal point values;
+- [x] reject invalid coordinate text clearly;
+- [x] submit parsed points to the active tool;
+- [x] verify Line/Circle/Point workflows with command-line coordinates;
+- [x] tests for valid absolute coordinates;
+- [x] tests for invalid coordinates;
+- [x] tests for command history not storing coordinate point input;
+- [x] tests for culture-invariant decimal point parsing.
 
 ### Phase 3 - Relative coordinates and direct distance
 

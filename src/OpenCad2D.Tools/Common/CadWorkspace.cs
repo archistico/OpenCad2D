@@ -201,6 +201,7 @@ public sealed class CadWorkspace
 
         bool originalOrthoState = Context.IsOrthoEnabled;
         AngleConstraintSettings originalAngleConstraintSettings = Context.AngleConstraintSettings;
+        SnapKind originalEnabledSnaps = Context.EnabledSnaps;
 
         try
         {
@@ -209,6 +210,7 @@ public sealed class CadWorkspace
             // calculates its own destination before submitting the final point.
             Context.IsOrthoEnabled = false;
             Context.AngleConstraintSettings = AngleConstraintSettings.Off;
+            Context.EnabledSnaps = SnapKind.None;
 
             return ToolController.OnPointerPressed(pointer);
         }
@@ -216,6 +218,7 @@ public sealed class CadWorkspace
         {
             Context.IsOrthoEnabled = originalOrthoState;
             Context.AngleConstraintSettings = originalAngleConstraintSettings;
+            Context.EnabledSnaps = originalEnabledSnaps;
         }
     }
 

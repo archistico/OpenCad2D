@@ -832,8 +832,10 @@ Phase 1 should add the alias registry/service, connect command-line submission t
 
 ---
 
-## Current state after v0.6 phase 1
+## Current state after v0.6 phase 2
 
-Command-line activation by alias has been added. `CommandAliasRegistry` resolves tool names and aliases before coordinate parsing. The UI command input now supports activating tools with aliases such as `L`, `C`, `TR`, `EX`, `HDIM`, `ANG`, etc. Unknown textual commands produce a clear message, valid tool activations are stored in `MainWindowViewModel.CommandLineHistory`, and existing coordinate input remains intact.
+Command-line activation by alias has been added. `CommandAliasRegistry` resolves tool names and aliases before coordinate parsing. The UI command input supports activating tools with aliases such as `L`, `C`, `TR`, `EX`, `HDIM`, `ANG`, etc. Unknown textual commands produce a clear message, and valid tool activations are stored in `MainWindowViewModel.CommandLineHistory`.
 
-Next recommended phase: v0.6 phase 2, absolute coordinate pipeline. The project already had basic `x,y` parsing before v0.6; the next phase should centralize and strengthen this pipeline, add additional tests, and verify the workflow against drawing tools.
+Phase 2 verified the absolute coordinate pipeline. The project already had centralized `x,y` parsing in `CommandInputParser`; this phase strengthened it with workflow tests for Line, Circle and Point, invalid coordinate tests, and command-history tests. Absolute coordinate inputs such as `100,50` are submitted to the active tool through the same workspace/tool pipeline used by mouse clicks. Coordinate inputs are intentionally not stored in command history.
+
+Next recommended phase: v0.6 phase 3, relative coordinates and direct distance. The parser already supports `@x,y` and direct distance values; the next phase should add stronger workflow tests and verify errors when no base point or cursor direction is available.

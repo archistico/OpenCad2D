@@ -47,6 +47,34 @@ public sealed class CommandInputParserTests
         Assert.Equal(new Point2D(100.5, 50.25), result.Point);
     }
 
+
+    [Fact]
+    public void Parse_WhenAbsolutePointContainsWhitespace_ShouldReturnAbsolutePoint()
+    {
+        CommandInputParseResult result = _parser.Parse(" 100.5, 50.25 ");
+
+        Assert.True(result.IsValid);
+        Assert.Equal(CommandInputKind.AbsolutePoint, result.Kind);
+        Assert.Equal(new Point2D(100.5, 50.25), result.Point);
+    }
+
+    [Theory]
+    [InlineData("10,")]
+    [InlineData(",20")]
+    [InlineData("10,20,30")]
+    [InlineData("abc,20")]
+    [InlineData("10,abc")]
+    public void Parse_WhenAbsolutePointIsInvalid_ShouldReturnInvalid(string input)
+    {
+        CommandInputParseResult result = _parser.Parse(input);
+
+        Assert.False(result.IsValid);
+        Assert.Equal(CommandInputKind.Invalid, result.Kind);
+        Assert.Equal(
+            "Invalid absolute coordinate format. Use x,y for example: 100,50.",
+            result.ErrorMessage);
+    }
+
     [Fact]
     public void Parse_WhenInputIsRelativePoint_ShouldReturnRelativePoint()
     {
