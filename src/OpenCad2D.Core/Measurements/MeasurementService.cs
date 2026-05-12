@@ -31,6 +31,8 @@ public static class MeasurementService
         {
             PointEntity point => MeasurePoint(point),
             TextEntity text => MeasureText(text),
+            LinearDimensionEntity linearDimension => MeasureLinearDimension(linearDimension),
+            AlignedDimensionEntity alignedDimension => MeasureAlignedDimension(alignedDimension),
             LineEntity line => MeasureLine(line),
             CircleEntity circle => MeasureCircle(circle),
             ArcEntity arc => MeasureArc(arc),
@@ -118,6 +120,24 @@ public static class MeasurementService
         ArgumentNullException.ThrowIfNull(text);
 
         return new EntityMeasurement(EntityKind.Text);
+    }
+
+    private static EntityMeasurement MeasureLinearDimension(LinearDimensionEntity dimension)
+    {
+        ArgumentNullException.ThrowIfNull(dimension);
+
+        return new EntityMeasurement(
+            dimension.Kind,
+            length: dimension.MeasurementValue);
+    }
+
+    private static EntityMeasurement MeasureAlignedDimension(AlignedDimensionEntity dimension)
+    {
+        ArgumentNullException.ThrowIfNull(dimension);
+
+        return new EntityMeasurement(
+            EntityKind.AlignedDimension,
+            length: dimension.MeasurementValue);
     }
 
     private static EntityMeasurement MeasureLine(LineEntity line)

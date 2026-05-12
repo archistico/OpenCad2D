@@ -2,7 +2,7 @@
 
 This document describes the annotation direction for OpenCad2D.
 
-Text is now implemented as single-line annotation text. Dimensions are still planned and will be built on top of the same general principles: semantic entities, reusable styles and undoable commands.
+Text is implemented as single-line annotation text. The first v0.4 dimension foundation is now implemented in Core and Persistence, using the same general principles: semantic entities, reusable styles and undoable commands.
 
 ---
 
@@ -293,11 +293,9 @@ The current implementation targets simple single-line interoperability. Multilin
 
 ## Dimensions
 
-Dimensions are planned but not implemented yet.
+The first dimension foundation is implemented. Dimensions are non-associative in v0.4: they store their own definition points and layout points instead of references to the entities they measure.
 
-The design goal is that dimensions should be semantic annotation entities, not groups of primitive lines and text.
-
-A dimension entity should store definition points and a style reference, then compute its visual representation at render/export time.
+The design goal is that dimensions are semantic annotation entities inside the document model, not loose groups of primitive lines and text. Rendering and export will derive graphical primitives from the dimension entity and its `DimensionStyle`.
 
 ---
 
@@ -305,15 +303,26 @@ A dimension entity should store definition points and a style reference, then co
 
 ### Linear and aligned dimension
 
+Implemented core entities:
+
+- `LinearDimensionEntity`;
+- `AlignedDimensionEntity`.
+
+`LinearDimensionEntity` supports two orientations:
+
+- `Horizontal`;
+- `Vertical`.
+
 Measures the distance between two definition points.
 
-Planned definition data:
+Definition data:
 
 ```text
-DefinitionPoint1
-DefinitionPoint2
+FirstPoint
+SecondPoint
 DimensionLinePoint
 DimensionStyleId
+TextOverride
 ```
 
 ### Angular dimension
@@ -330,21 +339,22 @@ Measures a circle or arc diameter.
 
 ---
 
-## Dimension style direction
+## Dimension style
 
-A future `DimensionStyle` should probably reference or embed text appearance rules.
+`DimensionStyle` is implemented as a reusable document-level configuration object. It references an existing text format through `TextFormatId`, so dimension text appearance stays integrated with the single-line text format system.
 
-Potential properties:
+Current properties:
 
 ```text
 Name
 TextFormatId
 ArrowSize
+TextOffset
 ExtensionLineOffset
-ExtensionLineExtension
-DecimalPrecision
-UnitSuffix
-ScaleFactor
+ExtensionLineOvershoot
+DecimalPlaces
+DecimalSeparator
+Suffix
 ```
 
 The important rule is the same as text and line formats:
@@ -354,3 +364,10 @@ Do not duplicate style settings inside every dimension entity.
 ```
 
 Use reusable style objects instead.
+
+Current v0.4 decisions:
+
+- dimensions are non-associative;
+- DXF export will initially write dimensions as graphical primitives;
+- horizontal and vertical dimensions will use separate tools;
+- angular dimensions must support angles greater than 180°.

@@ -1,4 +1,5 @@
 ﻿using OpenCad2D.Core.Collections;
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -17,6 +18,7 @@ public sealed class CadDocument
         Layers = new LayerCollection();
         LineFormats = LineFormatCollection.Default;
         TextFormats = TextFormatCollection.Default;
+        DimensionStyles = DimensionStyleCollection.Default;
         Entities = new EntityCollection();
     }
 
@@ -25,6 +27,8 @@ public sealed class CadDocument
     public LineFormatCollection LineFormats { get; }
 
     public TextFormatCollection TextFormats { get; }
+
+    public DimensionStyleCollection DimensionStyles { get; }
 
     public EntityCollection Entities { get; }
 
@@ -40,6 +44,13 @@ public sealed class CadDocument
         ArgumentNullException.ThrowIfNull(textFormats);
 
         TextFormats.ReplaceAll(textFormats.All);
+    }
+
+    public void ReplaceDimensionStyles(DimensionStyleCollection dimensionStyles)
+    {
+        ArgumentNullException.ThrowIfNull(dimensionStyles);
+
+        DimensionStyles.ReplaceAll(dimensionStyles.All);
     }
 
     public void AddEntity(CadEntity entity)

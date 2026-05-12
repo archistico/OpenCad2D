@@ -7,6 +7,9 @@ public enum EntityKind
 {
     Point,
     Text,
+    HorizontalDimension,
+    VerticalDimension,
+    AlignedDimension,
     Line,
     Circle,
     Arc,

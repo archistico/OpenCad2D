@@ -8,6 +8,7 @@ Legend:
 
 ```text
 [x] done
+[~] partially implemented
 [ ] planned
 ```
 
@@ -302,27 +303,38 @@ OpenCad2D currently includes:
 
 ### Feature & UX
 
-- [ ] linear dimension;
-- [ ] aligned dimension;
+- [~] linear dimension core entity;
+- [~] aligned dimension core entity;
+- [ ] horizontal dimension tool;
+- [ ] vertical dimension tool;
+- [ ] aligned dimension tool;
 - [ ] angular dimension;
 - [ ] radius dimension;
 - [ ] diameter dimension;
-- [ ] base dimension style;
-- [ ] dimension text format/style integration;
+- [x] base dimension style core model;
+- [x] dimension text format/style integration through `DimensionStyle.TextFormatId`;
 - [ ] preview while placing dimensions.
 
 ### Stability & Test
 
-- [ ] tests for horizontal linear dimension;
-- [ ] tests for vertical linear dimension;
-- [ ] tests for aligned dimension;
+- [x] tests for horizontal linear dimension core entity;
+- [x] tests for vertical linear dimension core entity;
+- [x] tests for aligned dimension core entity;
 - [ ] tests for angular dimension;
 - [ ] tests for radius dimension;
 - [ ] tests for diameter dimension;
-- [ ] persistence tests for dimensions;
+- [x] persistence tests for dimension styles and first dimension entities;
 - [ ] SVG export tests for dimensions;
 - [ ] DXF export tests for dimensions;
 - [ ] undo/redo tests for dimension tools.
+
+
+### Implementation notes
+
+- [x] v0.4 architectural decisions recorded: dimensions are non-associative; DXF export will initially write dimensions as graphical primitives; horizontal and vertical dimensions will use separate tools; angular dimensions must support angles greater than 180°.
+- [x] Phase 0 started with `DimensionStyleId`, `DimensionStyle`, `DimensionStyleCollection` and document-level `DimensionStyles`.
+- [x] First core entities added: `LinearDimensionEntity` and `AlignedDimensionEntity`.
+- [ ] Next phase: render model and canvas preview for horizontal, vertical and aligned dimensions.
 
 ### Editing polish
 

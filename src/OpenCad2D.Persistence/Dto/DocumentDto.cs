@@ -17,6 +17,8 @@ public sealed class DocumentDto
 
     public List<TextFormatDto> TextFormats { get; set; } = new();
 
+    public List<DimensionStyleDto> DimensionStyles { get; set; } = new();
+
     public List<LayerDto> Layers { get; set; } = new();
 
     public List<EntityDto> Entities { get; set; } = new();

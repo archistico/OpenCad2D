@@ -1,5 +1,6 @@
 ﻿using System.Globalization;
 using System.Text.Json;
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -47,6 +48,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             TextFormats = document.TextFormats.All
                 .Select(ToDto)
                 .ToList(),
+            DimensionStyles = document.DimensionStyles.All
+                .Select(ToDto)
+                .ToList(),
             Layers = document.Layers.All
                 .Select(ToDto)
                 .ToList(),
@@ -76,6 +80,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
 
         TextFormatCollection textFormats = FromTextFormatDtos(dto.TextFormats);
         document.ReplaceTextFormats(textFormats);
+
+        DimensionStyleCollection dimensionStyles = FromDimensionStyleDtos(dto.DimensionStyles);
+        document.ReplaceDimensionStyles(dimensionStyles);
 
         foreach (LayerDto layerDto in dto.Layers)
         {
@@ -275,6 +282,23 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         };
     }
 
+    private static DimensionStyleDto ToDto(DimensionStyle style)
+    {
+        return new DimensionStyleDto
+        {
+            Id = style.Id.Value,
+            Name = style.Name,
+            TextFormatId = style.TextFormatId.Value,
+            ArrowSize = style.ArrowSize,
+            TextOffset = style.TextOffset,
+            ExtensionLineOffset = style.ExtensionLineOffset,
+            ExtensionLineOvershoot = style.ExtensionLineOvershoot,
+            DecimalPlaces = style.DecimalPlaces,
+            DecimalSeparator = style.DecimalSeparator,
+            Suffix = style.Suffix
+        };
+    }
+
     private static LayerDto ToDto(Layer layer)
     {
         return new LayerDto
@@ -308,6 +332,35 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 InsertionY = text.InsertionPoint.Y,
                 RotationDegrees = text.RotationDegrees,
                 TextFormatId = text.TextFormatId.Value
+            },
+
+            LinearDimensionEntity linearDimension => new LinearDimensionEntityDto
+            {
+                Id = linearDimension.Id.ToString(),
+                LayerId = linearDimension.LayerId.Value,
+                FirstX = linearDimension.FirstPoint.X,
+                FirstY = linearDimension.FirstPoint.Y,
+                SecondX = linearDimension.SecondPoint.X,
+                SecondY = linearDimension.SecondPoint.Y,
+                DimensionLineX = linearDimension.DimensionLinePoint.X,
+                DimensionLineY = linearDimension.DimensionLinePoint.Y,
+                Orientation = linearDimension.Orientation.ToString(),
+                DimensionStyleId = linearDimension.DimensionStyleId.Value,
+                TextOverride = linearDimension.TextOverride
+            },
+
+            AlignedDimensionEntity alignedDimension => new AlignedDimensionEntityDto
+            {
+                Id = alignedDimension.Id.ToString(),
+                LayerId = alignedDimension.LayerId.Value,
+                FirstX = alignedDimension.FirstPoint.X,
+                FirstY = alignedDimension.FirstPoint.Y,
+                SecondX = alignedDimension.SecondPoint.X,
+                SecondY = alignedDimension.SecondPoint.Y,
+                DimensionLineX = alignedDimension.DimensionLinePoint.X,
+                DimensionLineY = alignedDimension.DimensionLinePoint.Y,
+                DimensionStyleId = alignedDimension.DimensionStyleId.Value,
+                TextOverride = alignedDimension.TextOverride
             },
 
             LineEntity line => new LineEntityDto
@@ -451,6 +504,58 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         return new TextFormatCollection(formats);
     }
 
+    private static DimensionStyleCollection FromDimensionStyleDtos(IReadOnlyCollection<DimensionStyleDto>? dtos)
+    {
+        if (dtos is null || dtos.Count == 0)
+        {
+            return DimensionStyleCollection.Default;
+        }
+
+        var styles = new List<DimensionStyle>();
+
+        foreach (DimensionStyleDto dto in dtos)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Id))
+            {
+                continue;
+            }
+
+            string name = string.IsNullOrWhiteSpace(dto.Name)
+                ? dto.Id
+                : dto.Name;
+
+            TextFormatId textFormatId = string.IsNullOrWhiteSpace(dto.TextFormatId)
+                ? TextFormatId.Annotation
+                : new TextFormatId(dto.TextFormatId);
+
+            styles.Add(new DimensionStyle(
+                new DimensionStyleId(dto.Id),
+                name,
+                textFormatId,
+                dto.ArrowSize <= 0 ? 4.0 : dto.ArrowSize,
+                dto.TextOffset < 0 ? 2.0 : dto.TextOffset,
+                dto.ExtensionLineOffset < 0 ? 1.5 : dto.ExtensionLineOffset,
+                dto.ExtensionLineOvershoot < 0 ? 2.0 : dto.ExtensionLineOvershoot,
+                dto.DecimalPlaces < 0 ? 2 : Math.Min(dto.DecimalPlaces, 8),
+                string.IsNullOrWhiteSpace(dto.DecimalSeparator) ? "." : dto.DecimalSeparator,
+                dto.Suffix ?? string.Empty));
+        }
+
+        if (styles.Count == 0)
+        {
+            return DimensionStyleCollection.Default;
+        }
+
+        if (!styles.Any(style => style.Id == DimensionStyleId.Standard))
+        {
+            styles.Insert(
+                0,
+                DimensionStyleCollection.Default.GetById(DimensionStyleId.Standard));
+        }
+
+        return new DimensionStyleCollection(styles);
+    }
+
     private static Layer FromDto(
         LayerDto dto,
         LineFormatCollection lineFormats)
@@ -507,6 +612,29 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     id,
                     layerId),
 
+            LinearDimensionEntityDto linearDimension => new LinearDimensionEntity(
+                new Point2D(linearDimension.FirstX, linearDimension.FirstY),
+                new Point2D(linearDimension.SecondX, linearDimension.SecondY),
+                new Point2D(linearDimension.DimensionLineX, linearDimension.DimensionLineY),
+                ParseDimensionOrientation(linearDimension.Orientation),
+                string.IsNullOrWhiteSpace(linearDimension.DimensionStyleId)
+                    ? DimensionStyleId.Standard
+                    : new DimensionStyleId(linearDimension.DimensionStyleId),
+                linearDimension.TextOverride,
+                id,
+                layerId),
+
+            AlignedDimensionEntityDto alignedDimension => new AlignedDimensionEntity(
+                new Point2D(alignedDimension.FirstX, alignedDimension.FirstY),
+                new Point2D(alignedDimension.SecondX, alignedDimension.SecondY),
+                new Point2D(alignedDimension.DimensionLineX, alignedDimension.DimensionLineY),
+                string.IsNullOrWhiteSpace(alignedDimension.DimensionStyleId)
+                    ? DimensionStyleId.Standard
+                    : new DimensionStyleId(alignedDimension.DimensionStyleId),
+                alignedDimension.TextOverride,
+                id,
+                layerId),
+
             LineEntityDto line => new LineEntity(
                 new Point2D(line.StartX, line.StartY),
                 new Point2D(line.EndX, line.EndY),
@@ -536,6 +664,16 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
 
             _ => null
         };
+    }
+
+    private static DimensionOrientation ParseDimensionOrientation(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out DimensionOrientation result)
+            ? result
+            : DimensionOrientation.Horizontal;
     }
 
     private static LineStyle ParseLineStyle(string? value)

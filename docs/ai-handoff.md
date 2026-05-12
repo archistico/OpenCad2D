@@ -26,6 +26,7 @@ The project currently supports:
 
 ### Drawing
 
+- v0.4 dimension foundation has started: dimension styles and first non-associative linear/aligned dimension entities exist in Core and Persistence;
 - `PointTool`;
 - `TextTool` for single-line text;
 - `LineTool`;
@@ -91,6 +92,8 @@ The project currently supports:
 ### Persistence and export
 
 - internal JSON format `.opencad2d.json`;
+- document-level `DimensionStyleCollection` for dimension settings;
+- first dimension entities persisted in JSON as `LinearDimension` and `AlignedDimension`;
 - `OpenCad2D.Persistence` project;
 - New/Open/Save/Save As;
 - current file path;

@@ -23,6 +23,8 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
         {
             EntityTypeNames.Point => root.Deserialize<PointEntityDto>(options),
             EntityTypeNames.Text => root.Deserialize<TextEntityDto>(options),
+            EntityTypeNames.LinearDimension => root.Deserialize<LinearDimensionEntityDto>(options),
+            EntityTypeNames.AlignedDimension => root.Deserialize<AlignedDimensionEntityDto>(options),
             EntityTypeNames.Line => root.Deserialize<LineEntityDto>(options),
             EntityTypeNames.Circle => root.Deserialize<CircleEntityDto>(options),
             EntityTypeNames.Arc => root.Deserialize<ArcEntityDto>(options),
@@ -52,6 +54,14 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
 
             case TextEntityDto text:
                 JsonSerializer.Serialize(writer, text, options);
+                break;
+
+            case LinearDimensionEntityDto linearDimension:
+                JsonSerializer.Serialize(writer, linearDimension, options);
+                break;
+
+            case AlignedDimensionEntityDto alignedDimension:
+                JsonSerializer.Serialize(writer, alignedDimension, options);
                 break;
 
             case LineEntityDto line:
