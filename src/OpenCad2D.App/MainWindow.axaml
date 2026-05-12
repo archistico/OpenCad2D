@@ -1,4 +1,4 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:OpenCad2D.App.Controls"
         xmlns:vm="clr-namespace:OpenCad2D.App.ViewModels"
@@ -353,6 +353,27 @@
                                 Classes="tool-button"
                                 Content="Polyline"
                                 Click="Polyline_Click" />
+
+
+                        <Separator Margin="0,5" />
+
+                        <TextBlock Classes="panel-section-label"
+                                   Text="DIMENSION" />
+
+                        <Button x:Name="HorizontalDimensionButton"
+                                Classes="tool-button"
+                                Content="Horizontal Dim"
+                                Click="HorizontalDimension_Click" />
+
+                        <Button x:Name="VerticalDimensionButton"
+                                Classes="tool-button"
+                                Content="Vertical Dim"
+                                Click="VerticalDimension_Click" />
+
+                        <Button x:Name="AlignedDimensionButton"
+                                Classes="tool-button"
+                                Content="Aligned Dim"
+                                Click="AlignedDimension_Click" />
 
                         <Separator Margin="0,5" />
 

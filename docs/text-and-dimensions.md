@@ -295,7 +295,9 @@ The current implementation targets simple single-line interoperability. Multilin
 
 The first dimension foundation is implemented. Dimensions are non-associative in v0.4: they store their own definition points and layout points instead of references to the entities they measure.
 
-The design goal is that dimensions are semantic annotation entities inside the document model, not loose groups of primitive lines and text. Rendering and export will derive graphical primitives from the dimension entity and its `DimensionStyle`.
+Horizontal, vertical and aligned dimensions now have core entities, a renderer-agnostic geometry builder, canvas rendering and three-click placement tools.
+
+The design goal is that dimensions are semantic annotation entities inside the document model, not loose groups of primitive lines and text. Rendering and export derive graphical primitives from the dimension entity and its `DimensionStyle`.
 
 ---
 
@@ -303,10 +305,13 @@ The design goal is that dimensions are semantic annotation entities inside the d
 
 ### Linear and aligned dimension
 
-Implemented core entities:
+Implemented core entities and first tools:
 
 - `LinearDimensionEntity`;
-- `AlignedDimensionEntity`.
+- `AlignedDimensionEntity`;
+- `HorizontalDimensionTool`;
+- `VerticalDimensionTool`;
+- `AlignedDimensionTool`.
 
 `LinearDimensionEntity` supports two orientations:
 
@@ -324,6 +329,28 @@ DimensionLinePoint
 DimensionStyleId
 TextOverride
 ```
+
+Placement workflow:
+
+```text
+pick first measured point
+pick second measured point
+pick dimension-line placement point
+```
+
+During placement, the canvas shows a preview. After the third click, the tool creates the dimension through `AddEntityCommand`, so undo/redo works like the existing drawing tools.
+
+`DimensionGeometryBuilder` converts the dimension entity and its style into render primitives:
+
+```text
+dimension line
+extension lines
+arrow wings
+measurement text
+bounds
+```
+
+The same builder is intended to be reused by SVG and DXF export in the next phase.
 
 ### Angular dimension
 

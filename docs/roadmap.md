@@ -303,17 +303,17 @@ OpenCad2D currently includes:
 
 ### Feature & UX
 
-- [~] linear dimension core entity;
-- [~] aligned dimension core entity;
-- [ ] horizontal dimension tool;
-- [ ] vertical dimension tool;
-- [ ] aligned dimension tool;
+- [x] linear dimension core entity and canvas render model;
+- [x] aligned dimension core entity and canvas render model;
+- [x] horizontal dimension tool;
+- [x] vertical dimension tool;
+- [x] aligned dimension tool;
 - [ ] angular dimension;
 - [ ] radius dimension;
 - [ ] diameter dimension;
 - [x] base dimension style core model;
 - [x] dimension text format/style integration through `DimensionStyle.TextFormatId`;
-- [ ] preview while placing dimensions.
+- [x] preview while placing horizontal, vertical and aligned dimensions.
 
 ### Stability & Test
 
@@ -326,7 +326,7 @@ OpenCad2D currently includes:
 - [x] persistence tests for dimension styles and first dimension entities;
 - [ ] SVG export tests for dimensions;
 - [ ] DXF export tests for dimensions;
-- [ ] undo/redo tests for dimension tools.
+- [x] undo/redo tests for first dimension tools.
 
 
 ### Implementation notes
@@ -334,7 +334,8 @@ OpenCad2D currently includes:
 - [x] v0.4 architectural decisions recorded: dimensions are non-associative; DXF export will initially write dimensions as graphical primitives; horizontal and vertical dimensions will use separate tools; angular dimensions must support angles greater than 180°.
 - [x] Phase 0 started with `DimensionStyleId`, `DimensionStyle`, `DimensionStyleCollection` and document-level `DimensionStyles`.
 - [x] First core entities added: `LinearDimensionEntity` and `AlignedDimensionEntity`.
-- [ ] Next phase: render model and canvas preview for horizontal, vertical and aligned dimensions.
+- [x] Phase 2 added `DimensionGeometryBuilder`, canvas rendering and placement preview for horizontal, vertical and aligned dimensions.
+- [ ] Next phase: SVG/DXF export for horizontal, vertical and aligned dimensions as graphical primitives.
 
 ### Editing polish
 

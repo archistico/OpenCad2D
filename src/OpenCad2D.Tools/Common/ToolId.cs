@@ -1,4 +1,4 @@
-﻿namespace OpenCad2D.Tools.Common;
+namespace OpenCad2D.Tools.Common;
 
 /// <summary>
 /// Identifies a CAD tool available in the application.
@@ -15,6 +15,9 @@ public enum ToolId
     Arc,
     ArcThreePoints,
     Polyline,
+    HorizontalDimension,
+    VerticalDimension,
+    AlignedDimension,
     Move,
     Copy,
     Rotate,

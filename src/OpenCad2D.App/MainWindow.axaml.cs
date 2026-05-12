@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
 using System.Threading.Tasks;
@@ -682,6 +682,40 @@ public partial class MainWindow : Window
         RoutedEventArgs e)
     {
         _viewModel.SetTool(ToolId.Polyline);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+
+    private void HorizontalDimension_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.HorizontalDimension);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void VerticalDimension_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.VerticalDimension);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void AlignedDimension_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.AlignedDimension);
 
         RefreshStatus();
 
@@ -1495,6 +1529,22 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             PolylineButton,
             activeToolName.Equals("Polyline", StringComparison.OrdinalIgnoreCase));
+
+
+        SetActiveToolButton(
+            HorizontalDimensionButton,
+            activeToolName.Equals("Horizontal Dimension", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("HorizontalDimension", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            VerticalDimensionButton,
+            activeToolName.Equals("Vertical Dimension", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("VerticalDimension", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            AlignedDimensionButton,
+            activeToolName.Equals("Aligned Dimension", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("AlignedDimension", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MoveButton,

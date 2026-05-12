@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -131,6 +132,8 @@ public sealed class SelectionPropertyPanelBuilder
         {
             PointEntity point => BuildPointGeometrySection(point),
             TextEntity text => BuildTextGeometrySection(text),
+            LinearDimensionEntity linearDimension => BuildLinearDimensionGeometrySection(linearDimension),
+            AlignedDimensionEntity alignedDimension => BuildAlignedDimensionGeometrySection(alignedDimension),
             LineEntity line => BuildLineGeometrySection(line),
             CircleEntity circle => BuildCircleGeometrySection(circle),
             PolylineEntity polyline => BuildPolylineGeometrySection(polyline),
@@ -165,6 +168,39 @@ public sealed class SelectionPropertyPanelBuilder
                 Row("Y", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.Y)),
                 Row("Rotation", PropertyValueFormatter.FormatAngleDegrees(text.RotationDegrees)),
                 Row("Format", text.TextFormatId.Value)
+            });
+    }
+
+
+    private static PropertySectionViewModel BuildLinearDimensionGeometrySection(LinearDimensionEntity dimension)
+    {
+        return new PropertySectionViewModel(
+            "Dimension",
+            new[]
+            {
+                Row("Kind", dimension.Orientation == DimensionOrientation.Horizontal ? "Horizontal" : "Vertical"),
+                Row("First point", PropertyValueFormatter.FormatPoint(dimension.FirstPoint)),
+                Row("Second point", PropertyValueFormatter.FormatPoint(dimension.SecondPoint)),
+                Row("Dimension line", PropertyValueFormatter.FormatPoint(dimension.DimensionLinePoint)),
+                Row("Measurement", PropertyValueFormatter.FormatLength(dimension.MeasurementValue)),
+                Row("Style", dimension.DimensionStyleId.Value),
+                Row("Text override", string.IsNullOrWhiteSpace(dimension.TextOverride) ? "<automatic>" : dimension.TextOverride!)
+            });
+    }
+
+    private static PropertySectionViewModel BuildAlignedDimensionGeometrySection(AlignedDimensionEntity dimension)
+    {
+        return new PropertySectionViewModel(
+            "Dimension",
+            new[]
+            {
+                Row("Kind", "Aligned"),
+                Row("First point", PropertyValueFormatter.FormatPoint(dimension.FirstPoint)),
+                Row("Second point", PropertyValueFormatter.FormatPoint(dimension.SecondPoint)),
+                Row("Dimension line", PropertyValueFormatter.FormatPoint(dimension.DimensionLinePoint)),
+                Row("Measurement", PropertyValueFormatter.FormatLength(dimension.MeasurementValue)),
+                Row("Style", dimension.DimensionStyleId.Value),
+                Row("Text override", string.IsNullOrWhiteSpace(dimension.TextOverride) ? "<automatic>" : dimension.TextOverride!)
             });
     }
 
@@ -317,6 +353,10 @@ public sealed class SelectionPropertyPanelBuilder
         {
             PointEntity => "Point",
             TextEntity => "Text",
+            LinearDimensionEntity linearDimension => linearDimension.Orientation == DimensionOrientation.Horizontal
+                ? "Horizontal Dimension"
+                : "Vertical Dimension",
+            AlignedDimensionEntity => "Aligned Dimension",
             LineEntity => "Line",
             CircleEntity => "Circle",
             PolylineEntity => "Polyline",

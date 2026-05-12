@@ -1,4 +1,5 @@
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Measurements;
@@ -23,6 +24,9 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Arc));
         Assert.True(registry.Contains(ToolId.ArcThreePoints));
         Assert.True(registry.Contains(ToolId.Polyline));
+        Assert.True(registry.Contains(ToolId.HorizontalDimension));
+        Assert.True(registry.Contains(ToolId.VerticalDimension));
+        Assert.True(registry.Contains(ToolId.AlignedDimension));
         Assert.True(registry.Contains(ToolId.Move));
         Assert.True(registry.Contains(ToolId.Copy));
         Assert.True(registry.Contains(ToolId.Rotate));
@@ -46,7 +50,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(24, tools.Count);
+        Assert.Equal(27, tools.Count);
 
         Assert.Contains(
             tools,
@@ -130,6 +134,18 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.HorizontalDimension);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.VerticalDimension);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.AlignedDimension);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.MeasureDistance);
 
         Assert.Contains(
@@ -199,6 +215,19 @@ public sealed class ToolRegistryTests
     }
 
 
+
+    [Fact]
+    public void GetByCategory_Dimension_ShouldReturnDimensionTools()
+    {
+        var registry = new ToolRegistry();
+
+        IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Dimension");
+
+        Assert.Equal(3, tools.Count);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.HorizontalDimension);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.VerticalDimension);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.AlignedDimension);
+    }
 
     [Fact]
     public void GetByCategory_Measure_ShouldReturnMeasureTools()
@@ -322,6 +351,40 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<PolylineTool>(tool);
         Assert.Equal("Polyline", tool.Name);
+    }
+
+
+    [Fact]
+    public void Create_HorizontalDimension_ShouldReturnHorizontalDimensionTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.HorizontalDimension);
+
+        Assert.IsType<HorizontalDimensionTool>(tool);
+        Assert.Equal("Horizontal Dimension", tool.Name);
+    }
+
+    [Fact]
+    public void Create_VerticalDimension_ShouldReturnVerticalDimensionTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.VerticalDimension);
+
+        Assert.IsType<VerticalDimensionTool>(tool);
+        Assert.Equal("Vertical Dimension", tool.Name);
+    }
+
+    [Fact]
+    public void Create_AlignedDimension_ShouldReturnAlignedDimensionTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.AlignedDimension);
+
+        Assert.IsType<AlignedDimensionTool>(tool);
+        Assert.Equal("Aligned Dimension", tool.Name);
     }
 
     [Fact]

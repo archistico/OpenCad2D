@@ -572,3 +572,16 @@ Before adding or changing code:
 4. run `dotnet build` and `dotnet test`;
 5. update docs after each milestone;
 6. avoid overwriting stable UI regions such as file commands.
+
+## v0.4 dimensions phase 2 status
+
+Implemented after the initial dimension core phase:
+
+- `DimensionGeometryBuilder` creates renderer-agnostic primitives for `LinearDimensionEntity` and `AlignedDimensionEntity`.
+- Horizontal and vertical dimensions use separate tools: `HorizontalDimensionTool` and `VerticalDimensionTool`.
+- `AlignedDimensionTool` uses the same three-click placement flow.
+- Tool flow is: first measured point, second measured point, dimension-line placement point.
+- Canvas rendering currently draws dimension lines, extension lines, arrow wings and automatic text through the dimension style's `TextFormatId`.
+- Dimension selection uses the same selected pen color as other entities.
+- Dimension tools create entities through `AddEntityCommand`, so undo/redo is available.
+- DXF/SVG native export for dimensions is still pending; the agreed v0.4 strategy is to export dimensions as graphical primitives rather than native DXF `DIMENSION` entities.

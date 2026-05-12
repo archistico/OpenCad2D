@@ -5,6 +5,8 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using OpenCad2D.App.Rendering;
 using OpenCad2D.App.Viewport;
+using OpenCad2D.Core.Dimensions;
+using OpenCad2D.Core.Dimensions.Rendering;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -14,6 +16,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Grips;
@@ -61,6 +64,7 @@ public sealed class CadCanvas : Control
     private readonly IBrush _backgroundBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30));
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
     private readonly ViewportTransform _viewport = new();
+    private readonly DimensionGeometryBuilder _dimensionGeometryBuilder = new();
     private Point? _pointerScreenPoint;
     private bool _isPointerInside;
     private readonly Dictionary<PenCacheKey, Pen> _penCache = new();
@@ -1061,6 +1065,24 @@ public sealed class CadCanvas : Control
                 DrawPolylinePreview(context, polylineTool);
                 break;
 
+            case HorizontalDimensionTool horizontalDimensionTool:
+                DrawEntitiesPreview(
+                    context,
+                    horizontalDimensionTool.GetPreviewEntities());
+                break;
+
+            case VerticalDimensionTool verticalDimensionTool:
+                DrawEntitiesPreview(
+                    context,
+                    verticalDimensionTool.GetPreviewEntities());
+                break;
+
+            case AlignedDimensionTool alignedDimensionTool:
+                DrawEntitiesPreview(
+                    context,
+                    alignedDimensionTool.GetPreviewEntities());
+                break;
+
             case MoveTool moveTool:
                 DrawEntitiesPreview(
                     context,
@@ -1695,6 +1717,22 @@ public sealed class CadCanvas : Control
                     isSelected);
                 break;
 
+            case LinearDimensionEntity linearDimension:
+                DrawDimension(
+                    context,
+                    linearDimension,
+                    pen,
+                    isSelected);
+                break;
+
+            case AlignedDimensionEntity alignedDimension:
+                DrawDimension(
+                    context,
+                    alignedDimension,
+                    pen,
+                    isSelected);
+                break;
+
             case LineEntity line:
                 context.DrawLine(
                     pen,
@@ -1725,6 +1763,123 @@ public sealed class CadCanvas : Control
                     pen);
                 break;
         }
+    }
+
+
+    private void DrawDimension(
+        DrawingContext context,
+        DimensionEntity dimension,
+        Pen pen,
+        bool isSelected)
+    {
+        if (Workspace is null)
+        {
+            return;
+        }
+
+        DimensionStyle style = ResolveDimensionStyle(dimension);
+        DimensionRenderModel model = _dimensionGeometryBuilder.Build(
+            dimension,
+            style);
+
+        foreach (DimensionLinePrimitive line in model.Lines)
+        {
+            context.DrawLine(
+                pen,
+                ToScreenPoint(line.Start),
+                ToScreenPoint(line.End));
+        }
+
+        foreach (DimensionLinePrimitive arrow in model.Arrows)
+        {
+            context.DrawLine(
+                pen,
+                ToScreenPoint(arrow.Start),
+                ToScreenPoint(arrow.End));
+        }
+
+        DrawDimensionText(
+            context,
+            model.Text,
+            style,
+            pen,
+            isSelected);
+    }
+
+    private void DrawDimensionText(
+        DrawingContext context,
+        DimensionTextPrimitive text,
+        DimensionStyle style,
+        Pen pen,
+        bool isSelected)
+    {
+        if (Workspace is null)
+        {
+            return;
+        }
+
+        TextFormat format = ResolveDimensionTextFormat(style);
+        Point insertionPoint = ToScreenPoint(text.Position);
+        double fontSize = Math.Max(1.0, _viewport.ModelLengthToScreen(format.Height));
+
+        IBrush brush = isSelected && pen.Brush is not null
+            ? pen.Brush
+            : new SolidColorBrush(
+                Color.FromRgb(
+                    format.Color.R,
+                    format.Color.G,
+                    format.Color.B));
+
+        var typeface = new Typeface(
+            new FontFamily(format.FontFamily),
+            format.IsItalic ? FontStyle.Italic : FontStyle.Normal,
+            format.IsBold ? FontWeight.Bold : FontWeight.Normal);
+
+        var formattedText = new FormattedText(
+            text.Text,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            typeface,
+            fontSize,
+            brush);
+
+        using (context.PushTransform(CadTextTransform.CreateCadRotationAt(
+                   text.RotationDegrees,
+                   insertionPoint.X,
+                   insertionPoint.Y)))
+        {
+            context.DrawText(
+                formattedText,
+                insertionPoint);
+        }
+    }
+
+    private DimensionStyle ResolveDimensionStyle(DimensionEntity dimension)
+    {
+        if (Workspace is not null &&
+            Workspace.Document.DimensionStyles.TryGetById(
+                dimension.DimensionStyleId,
+                out DimensionStyle? style) &&
+            style is not null)
+        {
+            return style;
+        }
+
+        return DimensionStyleCollection.Default.GetById(DimensionStyleId.Standard);
+    }
+
+    private TextFormat ResolveDimensionTextFormat(DimensionStyle style)
+    {
+        if (Workspace is not null &&
+            Workspace.Document.TextFormats.TryGetById(
+                style.TextFormatId,
+                out TextFormat? format) &&
+            format is not null)
+        {
+            return format;
+        }
+
+        return TextFormatCollection.Default.GetById(TextFormatId.Annotation);
     }
 
     private void DrawText(

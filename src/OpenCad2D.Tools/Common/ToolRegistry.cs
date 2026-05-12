@@ -1,4 +1,5 @@
-﻿using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Dimensions;
+using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Selection;
@@ -97,6 +98,31 @@ public sealed class ToolRegistry
                 "Polyline",
                 "Draw"),
             () => new PolylineTool());
+
+
+        Register(
+            new ToolDescriptor(
+                ToolId.HorizontalDimension,
+                "HorizontalDimension",
+                "Horizontal Dim",
+                "Dimension"),
+            () => new HorizontalDimensionTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.VerticalDimension,
+                "VerticalDimension",
+                "Vertical Dim",
+                "Dimension"),
+            () => new VerticalDimensionTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.AlignedDimension,
+                "AlignedDimension",
+                "Aligned Dim",
+                "Dimension"),
+            () => new AlignedDimensionTool());
 
         Register(
             new ToolDescriptor(
