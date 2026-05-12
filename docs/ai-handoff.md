@@ -872,3 +872,22 @@ Deferred to the next v0.6 phase:
 - text format selection from the panel;
 - layer and format references;
 - arc, polyline and dimension property editing.
+
+
+## v0.6 Phase 7 Property Panel v2 complete completed
+
+The Property Panel now covers the remaining main entity families. All successful edits still go through `ReplaceEntitiesCommand`, so undo/redo remains centralized in the normal command history.
+
+Added in this phase:
+
+- common layer assignment editing through the `Layer id` row;
+- `TextEntity` text format editing through the `Text format` row;
+- `ArcEntity` editing for center X/Y, radius, start angle and end angle;
+- `PolylineEntity` open/closed editing through the `Closed` row;
+- dimension style editing through the `Dimension style` row;
+- dimension text override editing through the `Text override` row. Empty value, or `<automatic>`, clears the override;
+- tests for representative undo/redo flows across layer, arc, text format, polyline and dimension override edits.
+
+Polyline vertex editing remains intentionally delegated to grip editing. The Property Panel exposes the high-level polyline state only.
+
+Next recommended phase: v0.6 phase 8, final polish and release documentation.

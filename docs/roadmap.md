@@ -518,7 +518,7 @@ docs/release-v0.5.md
 
 ## v0.6 - Real command line and Property Panel v2
 
-Status: in progress. Phase 0 audit/design, Phase 1 command activation, Phase 2 absolute coordinate pipeline, Phase 3 relative/direct distance, Phase 4 distance-angle input, Phase 5 repeat-last-command and Phase 6 Property Panel v2 base completed.
+Status: in progress. Phase 0 audit/design, Phase 1 command activation, Phase 2 absolute coordinate pipeline, Phase 3 relative/direct distance, Phase 4 distance-angle input, Phase 5 repeat-last-command, Phase 6 Property Panel v2 base and Phase 7 Property Panel v2 complete are completed.
 
 Detailed planning document:
 
@@ -620,7 +620,7 @@ docs/v0.6-command-line-property-panel-plan.md
 - [x] edit `LineEntity` start/end;
 - [x] edit `CircleEntity` center/radius;
 - [x] edit `TextEntity` content, insertion point and rotation;
-- [ ] edit `TextEntity` text format from the panel;
+- [x] edit `TextEntity` text format from the panel;
 - [x] validate and parse numeric input with invariant decimal point;
 - [x] apply edits through command history using `ReplaceEntitiesCommand`;
 - [x] refresh the panel after a successful edit;
@@ -629,16 +629,16 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ### Phase 7 - Property Panel v2 complete
 
-- [ ] edit `ArcEntity` properties;
-- [ ] edit common `PolylineEntity` properties;
-- [ ] keep detailed polyline vertex editing primarily in grips;
-- [ ] edit common dimension properties;
-- [ ] edit dimension style id;
-- [ ] edit dimension text override where available;
-- [ ] edit layer assignment;
-- [ ] edit style/format references where appropriate;
-- [ ] test undo/redo coverage;
-- [ ] test locked-layer edit rejection.
+- [x] edit `ArcEntity` properties;
+- [x] edit common `PolylineEntity` properties;
+- [x] keep detailed polyline vertex editing primarily in grips;
+- [x] edit common dimension properties;
+- [x] edit dimension style id;
+- [x] edit dimension text override where available;
+- [x] edit layer assignment;
+- [x] edit style/format references where appropriate;
+- [x] test undo/redo coverage;
+- [x] test locked-layer edit rejection.
 
 ### Phase 8 - Final polish and release documentation
 

@@ -1,7 +1,10 @@
 using System.Linq;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Properties;
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.App.Tests;
@@ -108,6 +111,142 @@ public sealed class PropertyPanelEditingTests
         var unchanged = Assert.IsType<PointEntity>(viewModel.Workspace.Document.Entities.GetRequired(point.Id));
         Assert.Equal(point.Position, unchanged.Position);
         Assert.Equal("Invalid numeric value. Use point as decimal separator, for example 10.5.", viewModel.LastMessage);
+    }
+
+
+
+    [Fact]
+    public void ApplyCommand_ForLayerId_ShouldMoveEntityToExistingLayerAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var layerId = new LayerId("Annotations");
+
+        if (!viewModel.Workspace.Document.Layers.Contains(layerId))
+        {
+            viewModel.Workspace.Document.Layers.Add(new Layer(layerId, "Annotations"));
+        }
+
+        var point = new PointEntity(new Point2D(10, 20));
+        viewModel.Workspace.Document.AddEntity(point);
+        SelectEntity(viewModel, point);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Layer id");
+        row.EditableValue = "Annotations";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<PointEntity>(viewModel.Workspace.Document.Entities.GetRequired(point.Id));
+        Assert.Equal(layerId, updated.LayerId);
+        Assert.Equal("Entity layer updated.", viewModel.LastMessage);
+        Assert.True(viewModel.Workspace.CommandHistory.CanUndo);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<PointEntity>(viewModel.Workspace.Document.Entities.GetRequired(point.Id));
+        Assert.Equal(point.LayerId, restored.LayerId);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForArcRadius_ShouldReplaceArcAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+        viewModel.Workspace.Document.AddEntity(arc);
+        SelectEntity(viewModel, arc);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Radius");
+        row.EditableValue = "25";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<ArcEntity>(viewModel.Workspace.Document.Entities.GetRequired(arc.Id));
+        Assert.Equal(25, updated.Radius);
+        Assert.Equal("Arc updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<ArcEntity>(viewModel.Workspace.Document.Entities.GetRequired(arc.Id));
+        Assert.Equal(10, restored.Radius);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForTextFormat_ShouldReplaceTextFormatAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var text = new TextEntity(
+            new Point2D(0, 0),
+            "Label");
+        viewModel.Workspace.Document.AddEntity(text);
+        SelectEntity(viewModel, text);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Text format");
+        row.EditableValue = "Title";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<TextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal(TextFormatId.Title, updated.TextFormatId);
+        Assert.Equal("Text format updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<TextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal(TextFormatId.Standard, restored.TextFormatId);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForPolylineClosed_ShouldUpdateClosedFlagAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            });
+        viewModel.Workspace.Document.AddEntity(polyline);
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Closed");
+        row.EditableValue = "yes";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.True(updated.IsClosed);
+        Assert.Equal("Polyline updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.False(restored.IsClosed);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForDimensionTextOverride_ShouldReplaceDimensionAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var dimension = new LinearDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(100, 0),
+            new Point2D(0, 20),
+            DimensionOrientation.Horizontal);
+        viewModel.Workspace.Document.AddEntity(dimension);
+        SelectEntity(viewModel, dimension);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Text override");
+        row.EditableValue = "custom value";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<LinearDimensionEntity>(viewModel.Workspace.Document.Entities.GetRequired(dimension.Id));
+        Assert.Equal("custom value", updated.TextOverride);
+        Assert.Equal("Dimension text override updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<LinearDimensionEntity>(viewModel.Workspace.Document.Entities.GetRequired(dimension.Id));
+        Assert.Null(restored.TextOverride);
     }
 
     private static void SelectEntity(
