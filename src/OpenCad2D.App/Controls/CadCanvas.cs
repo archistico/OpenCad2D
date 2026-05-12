@@ -1750,8 +1750,8 @@ public sealed class CadCanvas : Control
             fontSize,
             brush);
 
-        using (context.PushTransform(CreateRotationAtMatrix(
-                   -text.RotationDegrees * Math.PI / 180.0,
+        using (context.PushTransform(CadTextTransform.CreateCadRotationAt(
+                   text.RotationDegrees,
                    insertionPoint.X,
                    insertionPoint.Y)))
         {
@@ -1759,26 +1759,6 @@ public sealed class CadCanvas : Control
                 formattedText,
                 insertionPoint);
         }
-    }
-
-    private static Matrix CreateRotationAtMatrix(
-        double radians,
-        double centerX,
-        double centerY)
-    {
-        double cosine = Math.Cos(radians);
-        double sine = Math.Sin(radians);
-
-        double offsetX = centerX - (centerX * cosine) + (centerY * sine);
-        double offsetY = centerY - (centerX * sine) - (centerY * cosine);
-
-        return new Matrix(
-            cosine,
-            sine,
-            -sine,
-            cosine,
-            offsetX,
-            offsetY);
     }
 
     private TextFormat ResolveTextFormat(TextEntity text)
