@@ -481,7 +481,8 @@
                 <controls:CadCanvas x:Name="CadCanvas"
                                     ClipToBounds="True"
                                     Workspace="{Binding Workspace}"
-                                    WorkspaceChanged="CadCanvas_WorkspaceChanged" />
+                                    WorkspaceChanged="CadCanvas_WorkspaceChanged"
+                                    RepeatLastCommandRequested="CadCanvas_RepeatLastCommandRequested" />
             </Border>
 
             <!-- Right property panel -->

@@ -1241,6 +1241,18 @@ public partial class MainWindow : Window
         return false;
     }
 
+
+    private void CadCanvas_RepeatLastCommandRequested(
+        object? sender,
+        EventArgs e)
+    {
+        _viewModel.RepeatLastCommandFromCanvas();
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
     private void SubmitCommandInputText()
     {
         string input = CommandInputTextBox.Text ?? string.Empty;

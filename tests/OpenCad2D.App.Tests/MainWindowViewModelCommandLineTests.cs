@@ -246,7 +246,7 @@ public sealed class MainWindowViewModelCommandLineTests
 
         var result = viewModel.SubmitCommandInput(" ");
 
-        Assert.Equal("Command input cannot be empty.", viewModel.LastMessage);
+        Assert.Equal("No command to repeat.", viewModel.LastMessage);
         Assert.Empty(viewModel.CommandLineHistory);
         Assert.NotNull(result);
     }
@@ -303,6 +303,121 @@ public sealed class MainWindowViewModelCommandLineTests
 
         Assert.Single(viewModel.CommandLineHistory);
         Assert.Equal("L", viewModel.CommandLineHistory[0]);
+    }
+
+
+    [Fact]
+    public void SubmitCommandInput_WithEmptyInputAfterCommand_ShouldRepeatLastCommand()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("C");
+        var result = viewModel.SubmitCommandInput(" ");
+
+        Assert.Equal("Circle", viewModel.ActiveToolName);
+        Assert.Equal("Repeated command: Circle.", viewModel.LastMessage);
+        Assert.Equal(new[] { "L", "C" }, viewModel.CommandLineHistory);
+        Assert.True(viewModel.CanRepeatLastCommand);
+        Assert.Equal("C", viewModel.LastCommandText);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithEmptyInputAndNoLastCommand_ShouldReportClearError()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        var result = viewModel.SubmitCommandInput(" ");
+
+        Assert.Equal("No command to repeat.", viewModel.LastMessage);
+        Assert.Empty(viewModel.CommandLineHistory);
+        Assert.False(viewModel.CanRepeatLastCommand);
+        Assert.Equal(string.Empty, viewModel.LastCommandText);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void RepeatLastCommand_AfterCoordinateInput_ShouldRepeatLastToolCommandOnly()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("10,0");
+        var result = viewModel.RepeatLastCommand();
+
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Equal("Repeated command: Line.", viewModel.LastMessage);
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.Equal("L", viewModel.CommandLineHistory[0]);
+        Assert.Equal("L", viewModel.LastCommandText);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SetTool_ShouldRegisterLastCommandForRepeatWithoutAddingHistory()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SetTool(OpenCad2D.Tools.Common.ToolId.Circle);
+        viewModel.SetTool(OpenCad2D.Tools.Common.ToolId.Line);
+        var result = viewModel.RepeatLastCommand();
+
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Equal("Repeated command: Line.", viewModel.LastMessage);
+        Assert.Empty(viewModel.CommandLineHistory);
+        Assert.True(viewModel.CanRepeatLastCommand);
+        Assert.Equal("Line", viewModel.LastCommandText);
+        Assert.NotNull(result);
+    }
+
+
+
+    [Fact]
+    public void SubmitCommandInput_WithInvalidCommand_ShouldNotReplaceRepeatableCommand()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("FOO");
+        var result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Equal("Repeated command: Line.", viewModel.LastMessage);
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.Equal("L", viewModel.CommandLineHistory[0]);
+        Assert.Equal("L", viewModel.LastCommandText);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void RepeatLastCommandFromCanvas_ShouldNotInterruptActivePointCommand()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        var result = viewModel.RepeatLastCommandFromCanvas();
+
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Equal("Finish or cancel the current command before repeating the last command.", viewModel.LastMessage);
+        Assert.Equal("L", viewModel.LastCommandText);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void RepeatLastCommandFromCanvas_WhenIdle_ShouldRepeatLastToolCommand()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("C");
+        var result = viewModel.RepeatLastCommandFromCanvas();
+
+        Assert.Equal("Circle", viewModel.ActiveToolName);
+        Assert.Equal("Repeated command: Circle.", viewModel.LastMessage);
+        Assert.Equal("C", viewModel.LastCommandText);
+        Assert.NotNull(result);
     }
 
     private static bool ArePointsNear(

@@ -427,3 +427,33 @@ L
 ```
 
 creates a 50-unit line in the indicated direction.
+
+
+## v0.6 repeat last command
+
+The command line now remembers the last valid tool activation as the repeatable command. Coordinate inputs are intentionally excluded from repeat history.
+
+Examples:
+
+```text
+L
+0,0
+100,0
+Enter
+```
+
+The final `Enter` on an empty command input repeats the last command, so `Line` becomes active again.
+
+Right-clicking inside the CAD canvas also requests repeat-last-command. This is handled at the canvas/UI boundary and calls `MainWindowViewModel.RepeatLastCommandFromCanvas()`. Canvas repeat is intentionally conservative: if a point-based command is already active and has a base point, right-click reports that the current command should be finished or cancelled first.
+
+Rules:
+
+```text
+Valid command or alias: stored as repeatable command
+Coordinate input: not stored as repeatable command
+Relative input: not stored as repeatable command
+Direct distance input: not stored as repeatable command
+Distance-angle input: not stored as repeatable command
+Invalid command: not stored as repeatable command
+No previous command: reports "No command to repeat."
+```

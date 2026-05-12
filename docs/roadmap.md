@@ -518,7 +518,7 @@ docs/release-v0.5.md
 
 ## v0.6 - Real command line and Property Panel v2
 
-Status: in progress. Phase 0 audit/design, Phase 1 command activation, Phase 2 absolute coordinate pipeline, Phase 3 relative/direct distance and Phase 4 distance-angle input completed.
+Status: in progress. Phase 0 audit/design, Phase 1 command activation, Phase 2 absolute coordinate pipeline, Phase 3 relative/direct distance, Phase 4 distance-angle input and Phase 5 repeat-last-command completed.
 
 Detailed planning document:
 
@@ -603,14 +603,15 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ### Phase 5 - Repeat last command
 
-- [ ] track last valid tool activation;
-- [ ] do not treat coordinate input as the last command;
-- [ ] `Enter` on an empty command line repeats the last command when appropriate;
-- [ ] right-click repeats the last command when the workspace is idle;
-- [ ] right-click does not interrupt active multi-step tools unexpectedly;
-- [ ] tests for repeat by Enter;
-- [ ] tests for repeat by right-click;
-- [ ] tests for no repeat after invalid command.
+- [x] track last valid tool activation;
+- [x] do not treat coordinate input as the last command;
+- [x] `Enter` on an empty command line repeats the last command when appropriate;
+- [x] right-click repeats the last command from the canvas when the workspace is idle;
+- [x] right-click does not interrupt active point-based commands;
+- [x] invalid commands do not become repeatable commands;
+- [x] tests for repeat by empty command-line submission;
+- [x] tests for repeat after coordinate input;
+- [x] tests for no repeat after invalid/no command.
 
 ### Phase 6 - Property Panel v2 base
 

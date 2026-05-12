@@ -33,6 +33,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly CommandInputParser _commandInputParser = new();
     private readonly CommandAliasRegistry _commandAliasRegistry = CommandAliasRegistry.CreateDefault();
     private readonly List<string> _commandLineHistory = new();
+    private ToolId? _lastCommandToolId;
+    private string? _lastCommandInput;
     private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
     private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
     private readonly ISvgExporter _svgExporter = new SvgExporter();
@@ -71,6 +73,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public string? CurrentFilePath => _currentFilePath;
 
     public IReadOnlyList<string> CommandLineHistory => _commandLineHistory;
+
+    public bool CanRepeatLastCommand => _lastCommandToolId is not null;
+
+    public string LastCommandText => _lastCommandInput ?? string.Empty;
 
     public string CurrentFileName => string.IsNullOrWhiteSpace(_currentFilePath)
         ? "Untitled"
@@ -434,17 +440,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (string.IsNullOrWhiteSpace(normalizedInput))
         {
-            ToolResult emptyResult = ToolResult.None("Command input cannot be empty.");
-            SetLastResult(emptyResult);
-            NotifyCommandInputStateChanged();
-            return emptyResult;
+            return RepeatLastCommand();
         }
 
         if (_commandAliasRegistry.TryResolve(normalizedInput, out ToolId toolId))
         {
             _commandLineHistory.Add(normalizedInput);
 
-            ToolResult result = SetTool(toolId);
+            ToolResult result = SetTool(
+                toolId,
+                rememberAsLastCommand: true,
+                commandInput: normalizedInput);
 
             NotifyCommandInputStateChanged();
             return result;
@@ -767,13 +773,73 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ToolResult SetTool(ToolId toolId)
     {
+        return SetTool(
+            toolId,
+            rememberAsLastCommand: true,
+            commandInput: null);
+    }
+
+    public ToolResult RepeatLastCommand()
+    {
+        return RepeatLastCommandCore(requireIdleWorkspace: false);
+    }
+
+    public ToolResult RepeatLastCommandFromCanvas()
+    {
+        return RepeatLastCommandCore(requireIdleWorkspace: true);
+    }
+
+    private ToolResult RepeatLastCommandCore(bool requireIdleWorkspace)
+    {
+        if (_lastCommandToolId is null)
+        {
+            ToolResult result = ToolResult.None("No command to repeat.");
+            SetLastResult(result);
+            NotifyCommandInputStateChanged();
+            return result;
+        }
+
+        if (requireIdleWorkspace && Workspace.Context.CurrentBasePoint is not null)
+        {
+            ToolResult result = ToolResult.None("Finish or cancel the current command before repeating the last command.");
+            SetLastResult(result);
+            NotifyCommandInputStateChanged();
+            return result;
+        }
+
+        ToolResult repeated = SetTool(
+            _lastCommandToolId.Value,
+            rememberAsLastCommand: false,
+            commandInput: null);
+
+        SetMessage($"Repeated command: {Workspace.ToolController.ActiveToolName}.");
+        NotifyCommandInputStateChanged();
+
+        return repeated;
+    }
+
+    private ToolResult SetTool(
+        ToolId toolId,
+        bool rememberAsLastCommand,
+        string? commandInput)
+    {
         ToolResult result = Workspace.SetActiveTool(toolId);
+
+        if (rememberAsLastCommand)
+        {
+            _lastCommandToolId = toolId;
+            _lastCommandInput = string.IsNullOrWhiteSpace(commandInput)
+                ? Workspace.ToolController.ActiveToolName
+                : commandInput.Trim();
+        }
 
         SetLastResult(result);
         SetMessage($"Tool changed to {Workspace.ToolController.ActiveToolName}.");
 
         OnPropertiesChanged(
             nameof(ActiveToolName),
+            nameof(CanRepeatLastCommand),
+            nameof(LastCommandText),
             nameof(StatusText));
 
         return result;
@@ -974,7 +1040,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(MeasurementText),
             nameof(StatusText),
             nameof(LastMessage),
-            nameof(CommandLineHistory));
+            nameof(CommandLineHistory),
+            nameof(CanRepeatLastCommand),
+            nameof(LastCommandText));
     }
 
     private void NotifyLayerStateChanged()

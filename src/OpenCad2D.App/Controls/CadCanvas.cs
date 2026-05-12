@@ -129,6 +129,8 @@ public sealed class CadCanvas : Control
 
     public event EventHandler<CadCanvasWorkspaceChangedEventArgs>? WorkspaceChanged;
 
+    public event EventHandler? RepeatLastCommandRequested;
+
     public CadCanvas()
     {
         Focusable = true;
@@ -2153,11 +2155,20 @@ public sealed class CadCanvas : Control
         _isPointerInside = true;
         _pointerScreenPoint = position;
 
-        if (e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed)
+        PointerPointProperties pointerProperties = e.GetCurrentPoint(this).Properties;
+
+        if (pointerProperties.IsMiddleButtonPressed)
         {
             _isPanning = true;
             _lastPanScreenPoint = position;
             e.Pointer.Capture(this);
+            return;
+        }
+
+        if (pointerProperties.IsRightButtonPressed)
+        {
+            RepeatLastCommandRequested?.Invoke(this, EventArgs.Empty);
+            e.Handled = true;
             return;
         }
 

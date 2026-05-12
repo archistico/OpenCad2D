@@ -832,7 +832,7 @@ Phase 1 should add the alias registry/service, connect command-line submission t
 
 ---
 
-## Current state after v0.6 phase 4
+## Current state after v0.6 phase 5
 
 Command-line activation by alias has been added. `CommandAliasRegistry` resolves tool names and aliases before coordinate parsing. The UI command input supports activating tools with aliases such as `L`, `C`, `TR`, `EX`, `HDIM`, `ANG`, etc. Unknown textual commands produce a clear message, and valid tool activations are stored in `MainWindowViewModel.CommandLineHistory`.
 
@@ -842,4 +842,6 @@ Phase 3 verified relative coordinates and direct distance input. `@x,y` is resol
 
 Phase 4 added CAD-style distance-angle input such as `100<45`. The parser returns `CommandInputKind.DistanceAngle`; angles are normalized, use CAD orientation (`0°` right, `90°` up), support negative values and values over 360°, and are resolved from the active tool base point.
 
-Next recommended phase: v0.6 phase 5, repeat last command via Enter/right-click.
+Phase 5 added repeat-last-command. `MainWindowViewModel` tracks the last valid tool activation separately from coordinate/history input. Empty command-line submission repeats that tool. Right-click on the canvas raises `RepeatLastCommandRequested`, handled by `MainWindow`, and calls `RepeatLastCommandFromCanvas()`. That path refuses to repeat when a point-based command already has `Workspace.Context.CurrentBasePoint`, so right-click does not interrupt an active multi-step command. Coordinate inputs, relative inputs, direct distance and distance-angle inputs are not repeatable commands.
+
+Next recommended phase: v0.6 phase 6, Property Panel v2 base editing.
