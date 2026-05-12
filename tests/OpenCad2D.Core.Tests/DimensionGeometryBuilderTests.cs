@@ -25,7 +25,7 @@ public sealed class DimensionGeometryBuilderTests
         Assert.Equal(3, model.Lines.Count);
         Assert.Equal(4, model.Arrows.Count);
         Assert.Equal("100.00", model.Text.Text);
-        Assert.Equal(new Point2D(50, 22), model.Text.Position);
+        Assert.Equal(new Point2D(50, 6), model.Text.Position);
         Assert.Equal(0, model.Text.RotationDegrees);
         Assert.Contains(model.Lines, line =>
             line.Start == new Point2D(0, 20) &&
@@ -44,11 +44,40 @@ public sealed class DimensionGeometryBuilderTests
         DimensionRenderModel model = _builder.Build(dimension, _style);
 
         Assert.Equal("50.00", model.Text.Text);
-        Assert.Equal(new Point2D(22, 25), model.Text.Position);
+        Assert.Equal(new Point2D(34, 25), model.Text.Position);
         Assert.Equal(90, model.Text.RotationDegrees);
         Assert.Contains(model.Lines, line =>
             line.Start == new Point2D(20, 0) &&
             line.End == new Point2D(20, 50));
+    }
+
+
+    [Fact]
+    public void Build_WithHorizontalDimensionBelowMeasuredPoints_ShouldUseOppositeTextOffsetDirection()
+    {
+        var dimension = new LinearDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(100, 0),
+            new Point2D(50, -20),
+            DimensionOrientation.Horizontal);
+
+        DimensionRenderModel model = _builder.Build(dimension, _style);
+
+        Assert.Equal(new Point2D(50, -34), model.Text.Position);
+    }
+
+    [Fact]
+    public void Build_WithVerticalDimensionLeftOfMeasuredPoints_ShouldKeepTextRightOfDimensionLine()
+    {
+        var dimension = new LinearDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(0, 50),
+            new Point2D(-20, 25),
+            DimensionOrientation.Vertical);
+
+        DimensionRenderModel model = _builder.Build(dimension, _style);
+
+        Assert.Equal(new Point2D(-6, 25), model.Text.Position);
     }
 
     [Fact]
@@ -63,8 +92,23 @@ public sealed class DimensionGeometryBuilderTests
 
         Assert.Equal("50.00", model.Text.Text);
         Assert.Equal(53.13010235415598, model.Text.RotationDegrees, 10);
+        AssertPointNear(new Point2D(18.2, 17.6), model.Text.Position);
         Assert.Equal(3, model.Lines.Count);
         Assert.Equal(4, model.Arrows.Count);
+    }
+
+
+    [Fact]
+    public void Build_WithAlignedDimensionOnOppositeSide_ShouldUseOppositeTextOffsetDirection()
+    {
+        var dimension = new AlignedDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(30, 40),
+            new Point2D(8, -6));
+
+        DimensionRenderModel model = _builder.Build(dimension, _style);
+
+        AssertPointNear(new Point2D(11.8, 22.4), model.Text.Position);
     }
 
     [Fact]
@@ -117,5 +161,13 @@ public sealed class DimensionGeometryBuilderTests
             _style);
 
         Assert.Equal("approx.", text);
+    }
+    private static void AssertPointNear(
+        Point2D expected,
+        Point2D actual,
+        int precision = 10)
+    {
+        Assert.Equal(expected.X, actual.X, precision);
+        Assert.Equal(expected.Y, actual.Y, precision);
     }
 }

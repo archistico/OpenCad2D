@@ -21,7 +21,8 @@
             <Setter Property="Padding" Value="7,4" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="MinWidth" Value="82" />
+            <Setter Property="MinWidth" Value="145" />
+            <Setter Property="Width" Value="145" />
         </Style>
 
         <Style Selector="Button.tool-button.active-tool">
@@ -286,7 +287,7 @@
 
             <!-- Left tool panel -->
             <Border Grid.Column="0"
-                    Width="118"
+                    Width="318"
                     Background="#202020"
                     BorderBrush="#3A3A3A"
                     BorderThickness="0,0,1,0"
@@ -294,178 +295,176 @@
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
-                    <StackPanel Spacing="4">
+                    <Grid ColumnDefinitions="145,145"
+                          ColumnSpacing="8">
 
-                        <TextBlock Classes="panel-section-label"
-                                   Text="SELECT" />
+                        <StackPanel Grid.Column="0"
+                                    Spacing="4">
 
-                        <Button x:Name="SelectButton"
-                                Classes="tool-button"
-                                Content="Select"
-                                Click="Select_Click" />
+                            <TextBlock Classes="panel-section-label"
+                                       Text="SELECT" />
 
-                        <Separator Margin="0,5" />
+                            <Button x:Name="SelectButton"
+                                    Classes="tool-button"
+                                    Content="Select"
+                                    Click="Select_Click" />
 
-                        <TextBlock Classes="panel-section-label"
-                                   Text="DRAW" />
+                            <TextBlock Classes="panel-section-label"
+                                       Text="DRAW" />
 
-                        <Button x:Name="PointButton"
-                                Classes="tool-button"
-                                Content="Point"
-                                Click="Point_Click" />
+                            <Button x:Name="PointButton"
+                                    Classes="tool-button"
+                                    Content="Point"
+                                    Click="Point_Click" />
 
-                        <Button x:Name="TextButton"
-                                Classes="tool-button"
-                                Content="Text"
-                                Click="Text_Click" />
+                            <Button x:Name="TextButton"
+                                    Classes="tool-button"
+                                    Content="Text"
+                                    Click="Text_Click" />
 
-                        <Button x:Name="LineButton"
-                                Classes="tool-button"
-                                Content="Line"
-                                Click="Line_Click" />
+                            <Button x:Name="LineButton"
+                                    Classes="tool-button"
+                                    Content="Line"
+                                    Click="Line_Click" />
 
-                        <Button x:Name="RectangleButton"
-                                Classes="tool-button"
-                                Content="Rectangle"
-                                Click="Rectangle_Click" />
+                            <Button x:Name="RectangleButton"
+                                    Classes="tool-button"
+                                    Content="Rectangle"
+                                    Click="Rectangle_Click" />
 
-                        <Button x:Name="RectangleBySidesButton"
-                                Classes="tool-button"
-                                Content="Rect Sides"
-                                Click="RectangleBySides_Click" />
+                            <Button x:Name="RectangleBySidesButton"
+                                    Classes="tool-button"
+                                    Content="Rect Sides"
+                                    Click="RectangleBySides_Click" />
 
-                        <Button x:Name="CircleButton"
-                                Classes="tool-button"
-                                Content="Circle"
-                                Click="Circle_Click" />
+                            <Button x:Name="CircleButton"
+                                    Classes="tool-button"
+                                    Content="Circle"
+                                    Click="Circle_Click" />
 
-                        <Button x:Name="ArcButton"
-                                Classes="tool-button"
-                                Content="Arc"
-                                Click="Arc_Click" />
+                            <Button x:Name="ArcButton"
+                                    Classes="tool-button"
+                                    Content="Arc"
+                                    Click="Arc_Click" />
 
-                        <Button x:Name="ArcThreePointsButton"
-                                Classes="tool-button"
-                                Content="Arc 3P"
-                                Click="ArcThreePoints_Click" />
+                            <Button x:Name="ArcThreePointsButton"
+                                    Classes="tool-button"
+                                    Content="Arc 3P"
+                                    Click="ArcThreePoints_Click" />
 
-                        <Button x:Name="PolylineButton"
-                                Classes="tool-button"
-                                Content="Polyline"
-                                Click="Polyline_Click" />
+                            <Button x:Name="PolylineButton"
+                                    Classes="tool-button"
+                                    Content="Polyline"
+                                    Click="Polyline_Click" />
 
+                            <TextBlock Classes="panel-section-label"
+                                       Text="DIMENSION" />
 
-                        <Separator Margin="0,5" />
+                            <Button x:Name="HorizontalDimensionButton"
+                                    Classes="tool-button"
+                                    Content="Horizontal Dim"
+                                    Click="HorizontalDimension_Click" />
 
-                        <TextBlock Classes="panel-section-label"
-                                   Text="DIMENSION" />
+                            <Button x:Name="VerticalDimensionButton"
+                                    Classes="tool-button"
+                                    Content="Vertical Dim"
+                                    Click="VerticalDimension_Click" />
 
-                        <Button x:Name="HorizontalDimensionButton"
-                                Classes="tool-button"
-                                Content="Horizontal Dim"
-                                Click="HorizontalDimension_Click" />
+                            <Button x:Name="AlignedDimensionButton"
+                                    Classes="tool-button"
+                                    Content="Aligned Dim"
+                                    Click="AlignedDimension_Click" />
 
-                        <Button x:Name="VerticalDimensionButton"
-                                Classes="tool-button"
-                                Content="Vertical Dim"
-                                Click="VerticalDimension_Click" />
+                            <Button x:Name="RadiusDimensionButton"
+                                    Classes="tool-button"
+                                    Content="Radius Dim"
+                                    Click="RadiusDimension_Click" />
 
-                        <Button x:Name="AlignedDimensionButton"
-                                Classes="tool-button"
-                                Content="Aligned Dim"
-                                Click="AlignedDimension_Click" />
+                            <Button x:Name="DiameterDimensionButton"
+                                    Classes="tool-button"
+                                    Content="Diameter Dim"
+                                    Click="DiameterDimension_Click" />
 
-                        <Button x:Name="RadiusDimensionButton"
-                                Classes="tool-button"
-                                Content="Radius Dim"
-                                Click="RadiusDimension_Click" />
+                            <TextBlock Classes="panel-section-label"
+                                       Text="MEASURE" />
 
-                        <Button x:Name="DiameterDimensionButton"
-                                Classes="tool-button"
-                                Content="Diameter Dim"
-                                Click="DiameterDimension_Click" />
+                            <Button x:Name="MeasureDistanceButton"
+                                    Classes="tool-button"
+                                    Content="Distance"
+                                    Click="MeasureDistance_Click" />
 
-                        <Separator Margin="0,5" />
+                            <Button x:Name="MeasureEntityButton"
+                                    Classes="tool-button"
+                                    Content="Entity"
+                                    Click="MeasureEntity_Click" />
 
-                        <TextBlock Classes="panel-section-label"
-                                   Text="EDIT" />
+                            <Button x:Name="MeasureAngleButton"
+                                    Classes="tool-button"
+                                    Content="Angle"
+                                    Click="MeasureAngle_Click" />
 
-                        <Button x:Name="MoveButton"
-                                Classes="tool-button"
-                                Content="Move"
-                                Click="Move_Click" />
+                            <Button x:Name="MeasureAreaButton"
+                                    Classes="tool-button"
+                                    Content="Area"
+                                    Click="MeasureArea_Click" />
+                        </StackPanel>
 
-                        <Button x:Name="CopyButton"
-                                Classes="tool-button"
-                                Content="Copy"
-                                Click="Copy_Click" />
+                        <StackPanel Grid.Column="1"
+                                    Spacing="4">
 
-                        <Button x:Name="RotateButton"
-                                Classes="tool-button"
-                                Content="Rotate"
-                                Click="Rotate_Click" />
+                            <TextBlock Classes="panel-section-label"
+                                       Text="EDIT" />
 
-                        <Button x:Name="ScaleButton"
-                                Classes="tool-button"
-                                Content="Scale"
-                                Click="Scale_Click" />
+                            <Button x:Name="MoveButton"
+                                    Classes="tool-button"
+                                    Content="Move"
+                                    Click="Move_Click" />
 
-                        <Button x:Name="AlignButton"
-                                Classes="tool-button"
-                                Content="Align"
-                                Click="Align_Click" />
+                            <Button x:Name="CopyButton"
+                                    Classes="tool-button"
+                                    Content="Copy"
+                                    Click="Copy_Click" />
 
-                        <Separator Margin="0,5" />
+                            <Button x:Name="RotateButton"
+                                    Classes="tool-button"
+                                    Content="Rotate"
+                                    Click="Rotate_Click" />
 
-                        <Button x:Name="BreakAtPointButton"
-                                Classes="tool-button"
-                                Content="Break Pt"
-                                Click="BreakAtPoint_Click" />
+                            <Button x:Name="ScaleButton"
+                                    Classes="tool-button"
+                                    Content="Scale"
+                                    Click="Scale_Click" />
 
-                        <Button x:Name="BreakBetweenPointsButton"
-                                Classes="tool-button"
-                                Content="Break Seg"
-                                Click="BreakBetweenPoints_Click" />
+                            <Button x:Name="AlignButton"
+                                    Classes="tool-button"
+                                    Content="Align"
+                                    Click="Align_Click" />
 
-                        <Button x:Name="ExtendButton"
-                                Classes="tool-button"
-                                Content="Extend"
-                                Click="Extend_Click" />
+                            <Button x:Name="BreakAtPointButton"
+                                    Classes="tool-button"
+                                    Content="Break Pt"
+                                    Click="BreakAtPoint_Click" />
 
-                        <Button x:Name="TrimButton"
-                                Classes="tool-button"
-                                Content="Trim"
-                                Click="Trim_Click" />
+                            <Button x:Name="BreakBetweenPointsButton"
+                                    Classes="tool-button"
+                                    Content="Break Seg"
+                                    Click="BreakBetweenPoints_Click" />
 
-                        <Button Classes="tool-button"
-                                Content="Delete"
-                                Click="Delete_Click" />
+                            <Button x:Name="ExtendButton"
+                                    Classes="tool-button"
+                                    Content="Extend"
+                                    Click="Extend_Click" />
 
-                        <Separator Margin="0,5" />
+                            <Button x:Name="TrimButton"
+                                    Classes="tool-button"
+                                    Content="Trim"
+                                    Click="Trim_Click" />
 
-                        <TextBlock Classes="panel-section-label"
-                                   Text="MEASURE" />
-
-                        <Button x:Name="MeasureDistanceButton"
-                                Classes="tool-button"
-                                Content="Distance"
-                                Click="MeasureDistance_Click" />
-
-                        <Button x:Name="MeasureEntityButton"
-                                Classes="tool-button"
-                                Content="Entity"
-                                Click="MeasureEntity_Click" />
-
-                        <Button x:Name="MeasureAngleButton"
-                                Classes="tool-button"
-                                Content="Angle"
-                                Click="MeasureAngle_Click" />
-
-                        <Button x:Name="MeasureAreaButton"
-                                Classes="tool-button"
-                                Content="Area"
-                                Click="MeasureArea_Click" />
-                    </StackPanel>
+                            <Button Classes="tool-button"
+                                    Content="Delete"
+                                    Click="Delete_Click" />
+                        </StackPanel>
+                    </Grid>
                 </ScrollViewer>
             </Border>
 
@@ -657,7 +656,7 @@
 
         <!-- Status bar -->
         <Border Grid.Row="5"
-                Background="#111111"
+                Background="#252526"
                 BorderBrush="#3A3A3A"
                 BorderThickness="0,1,0,0"
                 Padding="8,5"

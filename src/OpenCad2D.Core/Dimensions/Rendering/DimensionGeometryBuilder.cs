@@ -12,6 +12,7 @@ public sealed class DimensionGeometryBuilder
 {
     private const double ArrowHalfAngleDegrees = 25.0;
     private const double EstimatedTextWidthFactor = 0.6;
+    private const double LinearTextClearanceAdjustment = 12.0;
 
     public DimensionRenderModel Build(
         DimensionEntity dimension,
@@ -87,6 +88,10 @@ public sealed class DimensionGeometryBuilder
             ? new Point2D(dimension.SecondPoint.X, dimension.DimensionLinePoint.Y)
             : new Point2D(dimension.DimensionLinePoint.X, dimension.SecondPoint.Y);
 
+        Vector2D textOffsetDirection = dimension.Orientation == DimensionOrientation.Horizontal
+            ? new Vector2D(0, -1)
+            : new Vector2D(1, 0);
+
         return BuildFromProjectedPoints(
             dimension,
             style,
@@ -96,6 +101,8 @@ public sealed class DimensionGeometryBuilder
             dimension.SecondPoint,
             firstProjection,
             secondProjection,
+            textOffsetDirection,
+            style.TextOffset + LinearTextClearanceAdjustment,
             dimension.Orientation == DimensionOrientation.Horizontal ? 0.0 : 90.0);
     }
 
@@ -123,6 +130,8 @@ public sealed class DimensionGeometryBuilder
             dimension.SecondPoint,
             firstProjection,
             secondProjection,
+            sideNormal * -1,
+            style.TextOffset + LinearTextClearanceAdjustment,
             angle);
     }
 
@@ -218,6 +227,8 @@ public sealed class DimensionGeometryBuilder
         Point2D secondMeasuredPoint,
         Point2D firstProjection,
         Point2D secondProjection,
+        Vector2D textOffsetDirection,
+        double textOffsetDistance,
         double textRotationDegrees)
     {
         var lines = new List<DimensionLinePrimitive>
@@ -246,7 +257,7 @@ public sealed class DimensionGeometryBuilder
         Point2D midpoint = new(
             (firstProjection.X + secondProjection.X) / 2.0,
             (firstProjection.Y + secondProjection.Y) / 2.0);
-        Point2D textPosition = midpoint + sideNormal * style.TextOffset;
+        Point2D textPosition = midpoint + textOffsetDirection.Normalize() * textOffsetDistance;
 
         var text = new DimensionTextPrimitive(
             FormatMeasurement(dimension, style),
