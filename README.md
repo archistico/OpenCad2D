@@ -18,6 +18,8 @@ The current focus is to build strong foundations: geometry, entities, layers, co
 
 The application already supports a functional CAD workflow:
 
+- drawing points;
+- drawing single-line text annotations;
 - drawing lines;
 - drawing rectangles by opposite corners;
 - drawing rectangles by first side and second side (`Rect Sides`);
@@ -33,8 +35,8 @@ The application already supports a functional CAD workflow:
 - undo and redo;
 - internal JSON save/load using `.opencad2d.json`;
 - New, Open, Save and Save As file commands;
-- SVG export using `.svg`;
-- DXF export using AutoCAD 2000 ASCII `.dxf`;
+- SVG export using `.svg`, including points and single-line text;
+- DXF export using AutoCAD 2000 ASCII `.dxf`, including `POINT` and `TEXT`;
 - dirty-state tracking and “Save changes?” confirmation;
 - object snapping, including geometric snaps and entity snap for selection-oriented tools;
 - configurable rectangular and isometric grid display and grid snapping;
@@ -42,7 +44,9 @@ The application already supports a functional CAD workflow:
 - layer visibility and locked layer behavior;
 - assigning selected entities to the current layer from the top CAD bar;
 - reusable line formats for layer stroke color, weight and style;
+- reusable text formats for single-line annotation appearance;
 - Line Format Manager;
+- Text Format Manager;
 - Layer Manager with line format selection;
 - read-only Property Panel v1;
 - command line coordinate input;
@@ -64,7 +68,7 @@ The current UI layout is intentionally divided into stable areas:
 
 ```text
 File command bar     New / Open / Save / Save As / current file name / dirty marker
-Top CAD bar          layer selector, layer state, Layers..., Line formats..., Grid..., Polar selector, Undo/Redo, Extents, Props, active command
+Top CAD bar          layer selector, layer state, Layers..., Line formats..., Text formats..., Grid..., Polar selector, Undo/Redo, Extents, Props, active command
 Left tool panel      Select / Draw / Edit tool groups
 Center canvas        drawing area
 Right panel          optional read-only Property Panel
@@ -130,10 +134,11 @@ OpenCad2D can export the current visible drawing to SVG.
 
 Current SVG export behavior:
 
-- exports visible `LineEntity`, `CircleEntity`, `PolylineEntity` and `ArcEntity`;
+- exports visible `PointEntity`, `TextEntity`, `LineEntity`, `CircleEntity`, `PolylineEntity` and `ArcEntity`;
 - ignores entities on hidden layers;
 - includes entities on locked layers when their layer is visible;
 - uses stroke color, line weight and dash style from the line format assigned to the entity layer;
+- uses text format font, height, color, bold and italic for single-line text;
 - computes an automatic `viewBox` from visible drawing bounds;
 - exports a dark background rectangle matching the OpenCad2D canvas;
 - preserves the same visual Y orientation as the canvas;
@@ -158,6 +163,8 @@ OpenCad2D can export the visible model-space drawing to AutoCAD 2000 ASCII DXF (
 Current DXF export behavior:
 
 - writes `HEADER`, `TABLES`, `LTYPE`, `LAYER`, `ENTITIES` and `EOF` sections;
+- exports `PointEntity` as `POINT`;
+- exports `TextEntity` as `TEXT`;
 - exports `LineEntity` as `LINE`;
 - exports `CircleEntity` as `CIRCLE`;
 - exports `ArcEntity` as `ARC`;
@@ -178,6 +185,8 @@ Exporting DXF does not change the current `.opencad2d.json` file path and does n
 
 Implemented drawing tools:
 
+- `PointTool` — one picked position;
+- `TextTool` — insertion point plus single-line text dialog;
 - `LineTool` — two points;
 - `RectangleTool` — opposite corners, stored as closed polyline;
 - `RectangleBySidesTool` / `Rect Sides` — first point, first side, second side;
@@ -346,6 +355,25 @@ It manages reusable stroke definitions used by layers:
 
 Default formats are `Continua`, `Asse`, `Tratteggiata`, `Tratto due punti` and `Tratto e punto`.
 
+### Text Format Manager
+
+The Text Format Manager is opened from `Text formats...`.
+
+It manages reusable appearance definitions for single-line text annotations:
+
+- format name;
+- font family;
+- text height in model units;
+- color;
+- bold;
+- italic;
+- preview;
+- built-in formats, editable but not deletable;
+- user-defined formats;
+- undoable application through `UpdateTextFormatsCommand`.
+
+Default text formats are `Standard`, `Title`, `Annotation` and `Small`.
+
 ---
 
 ## Property Panel v1
@@ -357,6 +385,8 @@ It shows:
 - document state when nothing is selected;
 - line properties: start, end, length, `DX`, `DY`, angle and bounds;
 - circle properties: center, radius, diameter, area, circumference and bounds;
+- point properties: position and bounds;
+- text properties: text content, insertion point, rotation, text format and bounds;
 - polyline properties: vertices, closed/open state, length, area when closed and bounds;
 - multiple-selection summary: count, entity types, layers and combined bounding box.
 
@@ -493,6 +523,8 @@ Recommended reading:
 - [Export](docs/export.md)
 - [Layer Appearance](docs/layer-appearance.md)
 - [Line Formats](docs/line-formats.md)
+- [Text Formats](docs/text-formats.md)
+- [Text and Dimensions](docs/text-and-dimensions.md)
 - [AI Handoff Document](docs/ai-handoff.md)
 
 ---

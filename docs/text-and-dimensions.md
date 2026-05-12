@@ -1,78 +1,141 @@
 # Text and Dimensions
 
-This document covers two kinds of annotation entities: text and dimensions.
+This document describes the annotation direction for OpenCad2D.
 
-Text entities display free-form annotated content with basic Markdown-style inline formatting. Dimension entities measure geometry and display the result with extension lines, arrows and a formatted value.
-
----
-
-## Text
-
-### Main idea
-
-Text entities allow the user to annotate drawings with readable labels, titles and notes.
-
-Formatting uses a small subset of Markdown syntax. This keeps the text model simple while allowing enough visual variety for practical annotation work. There is no embedded rich text format, no font table and no per-character attribute list.
+Text is now implemented as single-line annotation text. Dimensions are still planned and will be built on top of the same general principles: semantic entities, reusable styles and undoable commands.
 
 ---
 
-### Supported formatting
+## Text status
 
-Only inline formatting and heading levels are supported.
+Implemented:
 
-| Syntax | Result |
-|---|---|
-| `**bold**` | bold text |
-| `*italic*` | italic text |
-| `_italic_` | italic text (alternate) |
-| `__underline__` | underlined text |
-| `# Heading` | heading level 1 (largest) |
-| `## Heading` | heading level 2 |
-| `### Heading` | heading level 3 |
+- [x] `TextEntity`;
+- [x] `TextTool`;
+- [x] single-line text input dialog;
+- [x] document-level text formats;
+- [x] Text Format Manager;
+- [x] text rendering in the canvas;
+- [x] selection highlight;
+- [x] grip editing through insertion point;
+- [x] snap point at insertion point;
+- [x] JSON persistence;
+- [x] SVG export;
+- [x] DXF export as `TEXT`;
+- [x] tests for entity behavior, formats, persistence, export, tools and rotation direction.
 
-Heading prefixes apply to the entire line they appear on. Inline styles can be combined within the same line.
+Planned:
 
-Unsupported Markdown constructs (lists, tables, code blocks, links, images) are rendered as literal text.
+- [ ] editable text properties in Property Panel v2;
+- [ ] text format selector in a dedicated annotation toolbar or improved top-bar control;
+- [ ] rotation grip;
+- [ ] more accurate font-aware hit testing if needed;
+- [ ] multiline text as a later, separate entity or mode.
 
 ---
 
-### TextEntity
+## TextEntity
 
-`TextEntity` stores:
+`TextEntity` is a semantic CAD entity for single-line annotations.
+
+It stores:
 
 ```text
-Id              entity identifier
-LayerId         controls text appearance through the layer line format
-InsertionPoint  WCS anchor point
-RawText         the raw Markdown-formatted string
-TextHeight      base character height in model units
-Rotation        angle in degrees, counterclockwise
-HorizontalAlign left, center, right (relative to InsertionPoint)
-VerticalAlign   bottom, middle, top (relative to InsertionPoint)
+Id                 entity identifier
+LayerId            entity layer
+InsertionPoint     WCS anchor point
+Text               single-line text content
+RotationDegrees    rotation angle in degrees
+TextFormatId       reference to a reusable TextFormat
 ```
 
-The text entity does not store pre-parsed formatting tokens. Parsing happens at render time. This keeps the entity model stable even if the parser is extended later.
+The entity does **not** store font family, height, color, bold or italic directly. Those properties belong to the referenced `TextFormat`.
 
-`TextHeight` and `Rotation` are per-entity because they are geometric properties. Text stroke/fill color should resolve through the layer line format unless a later text-format system overrides this rule.
-
----
-
-### Heading size scaling
-
-Heading levels scale relative to `TextHeight`:
+This keeps text appearance reusable and consistent:
 
 ```text
-Normal text    TextHeight × 1.0
-### Heading 3  TextHeight × 1.25
-## Heading 2   TextHeight × 1.5
-# Heading 1    TextHeight × 2.0
+TextEntity -> TextFormatId -> Document.TextFormats -> TextFormat
 ```
-
-These multipliers can be defined as constants in the renderer and adjusted later.
 
 ---
 
-### TextTool
+## Single-line rule
+
+The current implementation intentionally supports only single-line text.
+
+This means:
+
+- the text input window is single-line;
+- DXF export uses native `TEXT`, not `MTEXT`;
+- SVG export uses one `<text>` element;
+- there is no paragraph layout;
+- there are no per-character rich text runs.
+
+Multiline text should not be added by stretching `TextEntity` too far. When needed, it should be designed explicitly, probably as a future `MTextEntity` or as a clearly separated multiline mode.
+
+---
+
+## TextFormat
+
+Text appearance is controlled by document-level `TextFormat` objects.
+
+A text format contains:
+
+```text
+Id
+Name
+FontFamily
+Height
+Color
+IsBold
+IsItalic
+```
+
+Built-in formats:
+
+| Id | Name | Default height | Notes |
+|---|---|---:|---|
+| `Standard` | Standard | 10 | default format |
+| `Title` | Title | 18 | bold title format |
+| `Annotation` | Annotation | 8 | annotation format |
+| `Small` | Small | 6 | small note format |
+
+Heights are expressed in model units. They zoom together with the drawing, like other CAD geometry.
+
+Built-in formats are editable but not deletable. User-defined formats can be deleted only when no text entity uses them.
+
+---
+
+## Text Format Manager
+
+The Text Format Manager is opened from the top CAD bar through:
+
+```text
+Text formats...
+```
+
+It allows the user to edit:
+
+- format name;
+- font family;
+- text height;
+- color as hex value;
+- bold;
+- italic.
+
+It also shows a simple preview.
+
+Changes are applied through `UpdateTextFormatsCommand`, so they participate in undo/redo.
+
+The manager follows the same design idea as the Line Format Manager:
+
+```text
+Reusable document-level style -> manager window -> undoable command
+```
+
+---
+
+## TextTool
 
 `TextTool` places a `TextEntity`.
 
@@ -81,246 +144,213 @@ Workflow:
 ```text
 activate Text tool
 pick insertion point
-type text content in a dedicated input area or in the command line
-confirm with Enter
-execute AddEntityCommand
+enter single-line text
+choose text format
+enter rotation if needed
+OK -> execute AddEntityCommand
+Cancel -> no entity is created
 ```
 
-The text input area should support multi-line input before confirmation. Each newline in the input becomes a line break in the rendered text.
+The text input window is opened asynchronously by the Avalonia app layer. The tool itself stays UI-independent through `ITextInputProvider`.
 
-After confirmation, `AddEntityCommand` adds the entity to the document.
+Dependency rule:
 
-The default `TextHeight` is taken from `DrawingSettings`. The default rotation is 0.
+```text
+OpenCad2D.Tools knows ITextInputProvider
+OpenCad2D.App implements the Avalonia dialog provider
+```
+
+This keeps tools independent from Avalonia controls and windows.
 
 ---
 
-### Text rendering
+## Text rendering
 
-The renderer parses `RawText` at render time and produces a sequence of styled runs and line breaks.
+Canvas rendering resolves the text format at draw time:
 
-For each line, the heading level determines the character height. Within a line, inline styles determine bold, italic and underline attributes.
+```text
+TextEntity.TextFormatId
+-> document.TextFormats.GetById(...)
+-> font family, height, color, bold, italic
+```
 
-Text is rendered using the color resolved from the layer line format. Text fill/background formats are not supported at this stage.
+The rendered text:
 
-Text entities are selectable and can be moved, copied, deleted and grip-edited. Grip editing can expose the insertion point as a grip.
+- uses model-space height converted through the current viewport scale;
+- rotates around the insertion point;
+- uses the selected entity highlight color when selected;
+- uses the format color when not selected;
+- remains visible only when its layer is visible.
+
+Text rotation follows the expected CAD/user-facing direction in the canvas. Dedicated tests in `CadTextTransformTests` protect this behavior.
+
+---
+
+## Hit testing and bounds
+
+`TextEntity` currently uses an estimated bounding box.
+
+The estimate is based on:
+
+```text
+height = default estimated height or resolved text format height where available
+width  = max(height, Text.Length * height * 0.6)
+```
+
+The rectangle is rotated according to `RotationDegrees` and then converted to an axis-aligned bounding box.
+
+This is sufficient for v0.3 selection, culling and basic hit testing. A future text geometry service may make this font-aware if practical editing requires it.
+
+---
+
+## Grip editing and snapping
+
+Current behavior:
+
+- one grip at `InsertionPoint`;
+- moving the grip moves the text;
+- the operation is undoable through entity replacement;
+- the insertion point is exposed as a snap point.
+
+Future behavior:
+
+- optional rotation grip;
+- optional baseline/end grip;
+- editable text content and format in Property Panel v2.
+
+---
+
+## Persistence
+
+Native JSON stores text formats at document level and stores only `TextFormatId` inside text entities.
+
+Conceptual shape:
+
+```text
+DocumentDto
+  TextFormats[]
+  Entities[]
+
+TextFormatDto
+  Id
+  Name
+  FontFamily
+  Height
+  Color
+  IsBold
+  IsItalic
+
+TextEntityDto
+  Type = Text
+  Text
+  InsertionX
+  InsertionY
+  RotationDegrees
+  TextFormatId
+```
+
+If old files do not contain text formats, the serializer falls back to the default text format collection.
+
+---
+
+## Export
+
+### SVG
+
+`TextEntity` exports as SVG `<text>`.
+
+The exporter writes:
+
+- position;
+- escaped text content;
+- font family;
+- font size;
+- fill color;
+- bold/italic style when enabled;
+- rotation transform.
+
+### DXF
+
+`TextEntity` exports as native DXF `TEXT`.
+
+Important DXF groups:
+
+```text
+0   TEXT
+8   layer name
+10  insertion X
+20  insertion Y
+30  insertion Z = 0
+40  text height
+1   text content
+50  rotation degrees
+7   text style / format name
+```
+
+The current implementation targets simple single-line interoperability. Multiline text should use a separate future design and likely DXF `MTEXT`.
 
 ---
 
 ## Dimensions
 
-### Main idea
+Dimensions are planned but not implemented yet.
 
-Dimensions are semantic annotation entities that measure geometric distances and display the result with extension lines, arrows and formatted text.
+The design goal is that dimensions should be semantic annotation entities, not groups of primitive lines and text.
 
-A dimension entity is not a group of lines and text. It is a single entity that stores definition points and computes its visual representation at render time. This means the measured value is always derived from the definition points and never stored separately.
-
----
-
-### DimensionEntity
-
-`DimensionEntity` stores:
-
-```text
-Id               entity identifier
-LayerId          controls dimension color
-DimensionType    the kind of dimension
-DefinitionPoints list of WCS points that define the measurement
-TextPositionOverride  optional WCS point to reposition the label
-DimensionStyleId reference to a named DimensionStyle
-```
-
-The exact number and meaning of definition points depends on the dimension type.
-
-The rendered arrows, extension lines and text are all computed from the definition points at render time. Changing a definition point (via grip edit) updates the measurement and all visual elements automatically.
+A dimension entity should store definition points and a style reference, then compute its visual representation at render/export time.
 
 ---
 
-### Dimension types
+## Planned dimension entities
 
-#### Linear dimension
+### Linear and aligned dimension
 
-A linear dimension measures the horizontal, vertical or aligned distance between two definition points.
+Measures the distance between two definition points.
 
-Definition points:
-
-```text
-DefinitionPoint1   first measured point (WCS)
-DefinitionPoint2   second measured point (WCS)
-DimensionLinePoint a point on the dimension line, determines offset and mode
-```
-
-The dimension line point position determines the mode:
-
-- if aligned horizontally with both definition points → horizontal dimension
-- if aligned vertically with both definition points → vertical dimension
-- otherwise → aligned dimension (measures direct distance)
-
-Rendered elements:
+Planned definition data:
 
 ```text
-two extension lines from definition points to dimension line
-dimension line with arrows at each end
-text label showing the measured value centered on the dimension line
+DefinitionPoint1
+DefinitionPoint2
+DimensionLinePoint
+DimensionStyleId
 ```
 
-#### Radius dimension
+### Angular dimension
 
-A radius dimension measures the radius of a circle or arc.
+Measures an angle defined by three points or two selected entities.
 
-Definition points:
+### Radius dimension
 
-```text
-CenterPoint    center of the circle or arc
-RadiusPoint    a point on the circle or arc edge, determines text position
-```
+Measures a circle or arc radius.
 
-Rendered elements:
+### Diameter dimension
 
-```text
-leader line from center toward edge
-arrow at the RadiusPoint end
-text label with 'R' prefix and measured value
-```
-
-#### Diameter dimension
-
-A diameter dimension measures the diameter of a circle or arc.
-
-Definition points:
-
-```text
-CenterPoint      center of the circle or arc
-DiameterPoint1   one end of the diameter line
-DiameterPoint2   opposite end of the diameter line
-```
-
-Rendered elements:
-
-```text
-line spanning the full diameter
-arrows at both ends
-text label with diameter symbol (Ø) prefix and measured value
-```
+Measures a circle or arc diameter.
 
 ---
 
-### Dimension tools
+## Dimension style direction
 
-#### LinearDimensionTool
+A future `DimensionStyle` should probably reference or embed text appearance rules.
 
-Workflow:
-
-```text
-activate Linear Dimension
-pick first definition point
-pick second definition point
-move pointer to set dimension line position and mode (horizontal / vertical / aligned)
-click to confirm
-execute AddEntityCommand
-```
-
-While the pointer moves after picking the two definition points, the tool shows a live preview of the dimension including mode switching.
-
-#### RadiusDimensionTool
-
-Workflow:
+Potential properties:
 
 ```text
-activate Radius Dimension
-click on a circle or arc entity (reads center and radius automatically)
-move pointer to set label position
-click to confirm
-execute AddEntityCommand
+Name
+TextFormatId
+ArrowSize
+ExtensionLineOffset
+ExtensionLineExtension
+DecimalPrecision
+UnitSuffix
+ScaleFactor
 ```
 
-#### DiameterDimensionTool
-
-Workflow:
+The important rule is the same as text and line formats:
 
 ```text
-activate Diameter Dimension
-click on a circle or arc entity (reads center and diameter automatically)
-move pointer to set label position
-click to confirm
-execute AddEntityCommand
+Do not duplicate style settings inside every dimension entity.
 ```
 
----
-
-### DimensionStyle
-
-`DimensionStyle` is a named document-level object that controls the visual appearance of dimensions.
-
-It stores:
-
-```text
-Id                  unique identifier
-Name                display name
-TextHeight          character height for dimension text
-ArrowSize           length of arrowheads
-ExtLineOffset       gap between definition point and extension line start
-ExtLineBeyond       length of extension line beyond the dimension line
-TextOffset          gap between dimension line and text baseline
-DecimalPlaces       number of decimal places in the measured value
-UnitSuffix          optional unit string appended to values (e.g. "mm")
-```
-
-The document can contain multiple named styles. Each dimension entity references one style by id.
-
-A default style named `Standard` is created automatically with a new document.
-
-Changes to a `DimensionStyle` affect all dimension entities that reference it. This matches the behavior of named text styles and layer definitions.
-
----
-
-### Measured value format
-
-The displayed value is computed at render time from the definition points.
-
-Format:
-
-```text
-[prefix][value][suffix]
-```
-
-For a linear dimension with `DecimalPlaces = 2` and `UnitSuffix = "mm"`:
-
-```text
-123.45mm
-```
-
-For a radius dimension:
-
-```text
-R45.00mm
-```
-
-For a diameter dimension:
-
-```text
-Ø90.00mm
-```
-
-The value uses the document linear precision setting from `DrawingSettings` unless overridden by the dimension style's `DecimalPlaces`.
-
----
-
-### Grip editing dimensions
-
-Dimension definition points are exposed as grips.
-
-Moving a grip changes the corresponding definition point and therefore changes the measurement, label position or both.
-
-`GripEditTool` handles dimension grips through the standard grip provider mechanism.
-
-`ReplaceEntitiesCommand` commits the change. Undo restores the original definition points and therefore the original measurement.
-
----
-
-### Persistence
-
-`DimensionEntity` and `DimensionStyle` are serialized in the `.opencad2d.json` format.
-
-The serialized entity stores only definition points and style reference, not computed visual elements. Computed elements are reconstructed at load time.
-
-Unknown dimension types encountered in a file from a newer build are skipped to preserve backward compatibility.
+Use reusable style objects instead.

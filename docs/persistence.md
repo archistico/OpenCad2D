@@ -48,6 +48,8 @@ The serializer handles:
 - layers;
 - line formats;
 - layer line format references;
+- text formats;
+- text entity text format references;
 - entities;
 - current layer id;
 - viewport state;
@@ -102,6 +104,49 @@ Saving rules:
 - save `Document.LineFormats`;
 - save each layer's `LineFormatId`;
 - do not write active layer color/weight fields as the current appearance model.
+
+---
+
+## Text format persistence
+
+The native JSON format stores reusable text formats at document level and stores only the selected format id on each `TextEntity`.
+
+Conceptual DTO shape:
+
+```text
+DocumentDto
+  TextFormats[]
+  Entities[]
+
+TextFormatDto
+  Id
+  Name
+  FontFamily
+  Height
+  Color
+  IsBold
+  IsItalic
+
+TextEntityDto
+  Type = Text
+  Text
+  InsertionX
+  InsertionY
+  RotationDegrees
+  TextFormatId
+```
+
+Loading rules:
+
+- if `TextFormats` is missing or empty, use the default text format collection;
+- if older files have no text format information, new text entities use `Standard`;
+- text format appearance is not duplicated inside each text entity.
+
+Saving rules:
+
+- save `Document.TextFormats`;
+- save each `TextEntity.TextFormatId`;
+- save text content, insertion point and rotation on each text entity.
 
 ---
 

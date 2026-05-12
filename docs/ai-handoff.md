@@ -26,6 +26,8 @@ The project currently supports:
 
 ### Drawing
 
+- `PointTool`;
+- `TextTool` for single-line text;
 - `LineTool`;
 - `RectangleTool`;
 - `RectangleBySidesTool`;
@@ -63,9 +65,11 @@ The project currently supports:
 - locked layer behavior;
 - Layer Manager with line format selection;
 - Line Format Manager;
+- Text Format Manager;
 - current layer must remain visible and unlocked;
 - layer `0` protected;
 - reusable line formats control layer stroke color, weight and style;
+- reusable text formats control single-line text font, height, color, bold and italic;
 - selected entities can be assigned to the current layer with the `Assegna` top-bar button.
 
 ### UI
@@ -80,6 +84,7 @@ The project currently supports:
 - status bar;
 - grid configuration with rectangular/isometric layouts;
 - line format management from the top CAD bar;
+- text format management from the top CAD bar;
 - viewport culling;
 - rendered entity count.
 
@@ -97,8 +102,9 @@ The project currently supports:
 - DXF export from the file command bar;
 - SVG background rectangle matching the canvas;
 - SVG export preserves the same visual Y orientation as the canvas;
-- DXF export writes AutoCAD 2000 ASCII DXF with LINE, CIRCLE, ARC and LWPOLYLINE;
+- DXF export writes AutoCAD 2000 ASCII DXF with POINT, TEXT, LINE, CIRCLE, ARC and LWPOLYLINE;
 - DXF export writes LTYPE/LAYER tables and uses LineFormat-derived layer appearance with BYLAYER entities;
+- SVG/DXF export include points and single-line text;
 - DXF export mirrors Y by exported content bounds to preserve the visual top/bottom orientation in external viewers;
 - SVG export does not save the drawing and does not clear dirty state.
 
@@ -440,6 +446,26 @@ Tratto e punto     green       0.75  DashDot
 ```
 
 ---
+
+## Text Format Manager status
+
+Text Format Manager is implemented as a separate window opened from `Text formats...`.
+
+Implemented text model:
+
+- `TextFormatId`;
+- `TextFormat`;
+- `TextFormatCollection`;
+- built-in formats: `Standard`, `Title`, `Annotation`, `Small`;
+- `CadDocument.TextFormats`;
+- `TextEntity.TextFormatId`;
+- `UpdateTextFormatsCommand`;
+- JSON persistence for text formats;
+- SVG and DXF text export;
+- tests for format validation, manager behavior and undo/redo.
+
+Text entities are intentionally single-line for now. They store content, insertion point, rotation and format id. They do not store font, height, color, bold or italic directly.
+
 
 ## Grid and viewport culling status
 

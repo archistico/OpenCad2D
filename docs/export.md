@@ -41,6 +41,8 @@ Current SVG export is implemented by `SvgExporter`.
 Supported entities:
 
 ```text
+PointEntity     -> small marker
+TextEntity      -> <text>
 LineEntity      -> <line>
 CircleEntity    -> <circle>
 Polyline open   -> <polyline>
@@ -62,7 +64,10 @@ Appearance rules:
 stroke           -> LineFormat.Color referenced by the entity layer
 stroke-width     -> LineFormat.LineWeight referenced by the entity layer
 stroke-dasharray -> LineStyleDashPattern for non-continuous formats
-fill             -> none for now
+text fill        -> TextFormat.Color referenced by TextEntity.TextFormatId
+text font        -> TextFormat.FontFamily
+text size        -> TextFormat.Height
+fill             -> none for closed geometry for now
 ```
 
 This matches the project rule that entity appearance comes from the layer's reusable line format, not from per-entity overrides.
@@ -126,6 +131,8 @@ $ACADVER = AC1015
 Current supported entities:
 
 ```text
+PointEntity     -> POINT
+TextEntity      -> TEXT
 LineEntity      -> LINE
 CircleEntity    -> CIRCLE
 ArcEntity       -> ARC
@@ -207,6 +214,37 @@ The transformation is limited to export. It does not change the internal model c
 Arc angles are converted consistently with this Y flip.
 
 ---
+
+## Text and point export
+
+`PointEntity` is exported as a native point where possible:
+
+```text
+SVG -> small marker
+DXF -> POINT
+```
+
+`TextEntity` is exported as single-line text:
+
+```text
+SVG -> <text>
+DXF -> TEXT
+```
+
+Text export resolves appearance through `Document.TextFormats`:
+
+```text
+TextEntity.TextFormatId
+-> TextFormat.FontFamily
+-> TextFormat.Height
+-> TextFormat.Color
+-> TextFormat.IsBold / IsItalic
+```
+
+The current implementation intentionally does not export multiline text because the model currently supports only single-line `TextEntity`. A future multiline text feature should be designed separately and may map to DXF `MTEXT`.
+
+---
+
 ## Export is not Save
 
 SVG export does not affect native document state.

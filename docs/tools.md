@@ -68,6 +68,37 @@ MoveTool:     Enter confirms the entity-selection phase and asks for base point
 
 ## Drawing tools
 
+### PointTool
+
+Creates a `PointEntity` from one picked point.
+
+Supports:
+
+- mouse point;
+- snap;
+- current layer;
+- undo/redo through `AddEntityCommand`.
+
+### TextTool
+
+Creates a single-line `TextEntity`.
+
+Workflow:
+
+```text
+activate Text
+pick insertion point
+enter text in the async text input dialog
+choose text format
+set optional rotation
+OK -> AddEntityCommand
+Cancel -> no entity is created
+```
+
+`TextTool` stays UI-independent. It depends on `ITextInputProvider`; the Avalonia app provides the actual dialog implementation.
+
+The created entity stores only `Text`, `InsertionPoint`, `RotationDegrees` and `TextFormatId`. Font, height, color, bold and italic come from the document-level `TextFormat`.
+
 ### LineTool
 
 Creates a line from two points.
