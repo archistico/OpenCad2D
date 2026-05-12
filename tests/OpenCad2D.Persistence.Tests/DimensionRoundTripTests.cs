@@ -139,6 +139,44 @@ public sealed class DimensionRoundTripTests
         Assert.Equal(10, restoredDiameter.MeasurementValue);
     }
 
+
+    [Fact]
+    public void SerializeDeserialize_ShouldPreserveAngularDimension()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var document = new CadDocument();
+
+        var dimension = new AngularDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(0, 10),
+            new Point2D(8, -8),
+            isCounterClockwise: false,
+            textOverride: "reflex");
+
+        document.AddEntity(dimension);
+
+        DocumentDto dto = serializer.Serialize(
+            document,
+            LayerId.Default.Value,
+            new ViewportStateDto());
+
+        CadDocument restored = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        var restoredDimension = Assert.IsType<AngularDimensionEntity>(restored.Entities.GetRequired(dimension.Id));
+
+        Assert.Equal(dimension.Center, restoredDimension.Center);
+        Assert.Equal(dimension.FirstRayPoint, restoredDimension.FirstRayPoint);
+        Assert.Equal(dimension.SecondRayPoint, restoredDimension.SecondRayPoint);
+        Assert.Equal(dimension.ArcPoint, restoredDimension.ArcPoint);
+        Assert.False(restoredDimension.IsCounterClockwise);
+        Assert.Equal(270, restoredDimension.MeasurementValue, precision: 10);
+        Assert.Equal("reflex", restoredDimension.TextOverride);
+    }
+
     [Fact]
     public void JsonRoundTrip_ShouldPreserveDimensionEntityTypes()
     {
@@ -156,6 +194,13 @@ public sealed class DimensionRoundTripTests
             new Point2D(3, 4),
             new Point2D(0, 6)));
 
+        document.AddEntity(new AngularDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(0, 10),
+            new Point2D(8, 8),
+            isCounterClockwise: true));
+
         DocumentDto dto = serializer.Serialize(
             document,
             LayerId.Default.Value,
@@ -166,6 +211,7 @@ public sealed class DimensionRoundTripTests
 
         Assert.Contains(loadedDto.Entities, entity => entity is LinearDimensionEntityDto);
         Assert.Contains(loadedDto.Entities, entity => entity is AlignedDimensionEntityDto);
+        Assert.Contains(loadedDto.Entities, entity => entity is AngularDimensionEntityDto);
         Assert.NotEmpty(loadedDto.DimensionStyles);
     }
 }

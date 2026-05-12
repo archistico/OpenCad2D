@@ -744,6 +744,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void AngularDimension_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.AngularDimension);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Move_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1577,6 +1588,11 @@ public partial class MainWindow : Window
             DiameterDimensionButton,
             activeToolName.Equals("Diameter Dimension", StringComparison.OrdinalIgnoreCase) ||
             activeToolName.Equals("DiameterDimension", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            AngularDimensionButton,
+            activeToolName.Equals("Angular Dimension", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("AngularDimension", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MoveButton,

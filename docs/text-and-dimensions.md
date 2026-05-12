@@ -423,3 +423,11 @@ measurement text                          -> TEXT
 This is deliberate. Dimensions are non-associative in v0.4 and DXF output prioritizes visual compatibility over native editable `DIMENSION` records.
 
 All dimension export uses the shared `DimensionGeometryBuilder`, so canvas rendering, SVG export and DXF export derive from the same dimension geometry model.
+
+## Angular dimensions
+
+Angular dimensions are non-associative. They store the center point, the first ray point, the second ray point, the arc placement point and the selected sweep direction.
+
+The fourth click chooses the angular sector. If the arc placement point falls inside the counter-clockwise sweep from the first ray to the second ray, the dimension uses that counter-clockwise sweep. Otherwise it uses the clockwise sweep. This allows both minor angles and reflex angles greater than 180°.
+
+Angular dimension text is generated automatically as degrees, for example `90.00°` or `270.00°`, unless `TextOverride` is set.

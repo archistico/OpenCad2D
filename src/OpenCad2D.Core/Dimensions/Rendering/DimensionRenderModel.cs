@@ -13,14 +13,32 @@ public sealed class DimensionRenderModel
         IEnumerable<DimensionLinePrimitive> arrows,
         DimensionTextPrimitive text,
         BoundingBox2D bounds)
+        : this(
+            lines,
+            Enumerable.Empty<DimensionArcPrimitive>(),
+            arrows,
+            text,
+            bounds)
+    {
+    }
+
+    public DimensionRenderModel(
+        IEnumerable<DimensionLinePrimitive> lines,
+        IEnumerable<DimensionArcPrimitive> arcs,
+        IEnumerable<DimensionLinePrimitive> arrows,
+        DimensionTextPrimitive text,
+        BoundingBox2D bounds)
     {
         Lines = lines?.ToList() ?? throw new ArgumentNullException(nameof(lines));
+        Arcs = arcs?.ToList() ?? throw new ArgumentNullException(nameof(arcs));
         Arrows = arrows?.ToList() ?? throw new ArgumentNullException(nameof(arrows));
         Text = text;
         Bounds = bounds;
     }
 
     public IReadOnlyList<DimensionLinePrimitive> Lines { get; }
+
+    public IReadOnlyList<DimensionArcPrimitive> Arcs { get; }
 
     public IReadOnlyList<DimensionLinePrimitive> Arrows { get; }
 

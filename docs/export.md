@@ -353,3 +353,12 @@ Possible improvements:
 ## v0.4 radius and diameter dimension export
 
 Radius and diameter dimensions are exported graphically, like the first linear/aligned dimensions. SVG writes `<line>` primitives plus `<text>`. DXF writes `LINE` records for leaders/arrows and one `TEXT` record for the measurement label. The DXF output remains visual-first and does not yet create native editable `DIMENSION` entities.
+
+## Angular dimensions export
+
+Angular dimensions are exported as graphical primitives in both SVG and DXF.
+
+- SVG uses line primitives, one path arc and one text element.
+- DXF uses `LINE`, `ARC` and `TEXT` records.
+
+The exported result is visually compatible with CAD viewers but is not yet a native DXF `DIMENSION` entity. Native DXF dimensions remain a future interoperability improvement.

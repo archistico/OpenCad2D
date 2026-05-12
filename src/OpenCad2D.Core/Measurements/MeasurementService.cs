@@ -35,6 +35,7 @@ public static class MeasurementService
             AlignedDimensionEntity alignedDimension => MeasureAlignedDimension(alignedDimension),
             RadiusDimensionEntity radiusDimension => MeasureRadiusDimension(radiusDimension),
             DiameterDimensionEntity diameterDimension => MeasureDiameterDimension(diameterDimension),
+            AngularDimensionEntity angularDimension => MeasureAngularDimension(angularDimension),
             LineEntity line => MeasureLine(line),
             CircleEntity circle => MeasureCircle(circle),
             ArcEntity arc => MeasureArc(arc),
@@ -158,6 +159,15 @@ public static class MeasurementService
         return new EntityMeasurement(
             EntityKind.DiameterDimension,
             diameter: dimension.MeasurementValue);
+    }
+
+    private static EntityMeasurement MeasureAngularDimension(AngularDimensionEntity dimension)
+    {
+        ArgumentNullException.ThrowIfNull(dimension);
+
+        return new EntityMeasurement(
+            EntityKind.AngularDimension,
+            sweepAngleDegrees: dimension.MeasurementValue);
     }
 
     private static EntityMeasurement MeasureLine(LineEntity line)

@@ -20,6 +20,7 @@ public enum ToolId
     AlignedDimension,
     RadiusDimension,
     DiameterDimension,
+    AngularDimension,
     Move,
     Copy,
     Rotate,

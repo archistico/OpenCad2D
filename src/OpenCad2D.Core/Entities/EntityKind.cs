@@ -12,6 +12,7 @@ public enum EntityKind
     AlignedDimension,
     RadiusDimension,
     DiameterDimension,
+    AngularDimension,
     Line,
     Circle,
     Arc,

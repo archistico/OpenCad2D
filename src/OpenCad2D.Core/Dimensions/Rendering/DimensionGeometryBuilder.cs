@@ -27,6 +27,7 @@ public sealed class DimensionGeometryBuilder
             AlignedDimensionEntity aligned => BuildAligned(aligned, style),
             RadiusDimensionEntity radius => BuildRadius(radius, style),
             DiameterDimensionEntity diameter => BuildDiameter(diameter, style),
+            AngularDimensionEntity angular => BuildAngular(angular, style),
             _ => throw new NotSupportedException(
                 $"Dimension type '{dimension.GetType().Name}' is not supported by the geometry builder.")
         };
@@ -57,6 +58,7 @@ public sealed class DimensionGeometryBuilder
         {
             RadiusDimensionEntity => "R " + text + style.Suffix,
             DiameterDimensionEntity => "Ø " + text + style.Suffix,
+            AngularDimensionEntity => text + "°" + style.Suffix,
             _ => text + style.Suffix
         };
     }
@@ -133,6 +135,88 @@ public sealed class DimensionGeometryBuilder
             sideNormal * -1,
             style.TextOffset + LinearTextClearanceAdjustment,
             angle);
+    }
+
+
+    private DimensionRenderModel BuildAngular(
+        AngularDimensionEntity dimension,
+        DimensionStyle style)
+    {
+        double radius = dimension.Radius;
+        double startAngle = dimension.StartAngleDegrees;
+        double endAngle = dimension.EndAngleDegrees;
+        double sweep = dimension.MeasurementValue;
+        double midAngle = dimension.IsCounterClockwise
+            ? NormalizeAngle(startAngle + sweep / 2.0)
+            : NormalizeAngle(startAngle - sweep / 2.0);
+
+        Point2D startPoint = PointOnCircle(
+            dimension.Center,
+            radius,
+            startAngle);
+        Point2D endPoint = PointOnCircle(
+            dimension.Center,
+            radius,
+            endAngle);
+
+        var lines = new List<DimensionLinePrimitive>
+        {
+            new(dimension.Center, startPoint),
+            new(dimension.Center, endPoint)
+        };
+
+        var arcs = new List<DimensionArcPrimitive>
+        {
+            new(
+                dimension.Center,
+                radius,
+                startAngle,
+                endAngle,
+                dimension.IsCounterClockwise)
+        };
+
+        var arrows = new List<DimensionLinePrimitive>();
+        Vector2D startTangent = dimension.IsCounterClockwise
+            ? UnitAt(startAngle).PerpendicularLeft()
+            : UnitAt(startAngle).PerpendicularRight();
+        Vector2D endTangent = dimension.IsCounterClockwise
+            ? UnitAt(endAngle).PerpendicularRight()
+            : UnitAt(endAngle).PerpendicularLeft();
+
+        AddArrow(
+            arrows,
+            startPoint,
+            startTangent,
+            style.ArrowSize);
+        AddArrow(
+            arrows,
+            endPoint,
+            endTangent,
+            style.ArrowSize);
+
+        Point2D textPosition = PointOnCircle(
+            dimension.Center,
+            radius + style.TextOffset + LinearTextClearanceAdjustment,
+            midAngle);
+
+        var text = new DimensionTextPrimitive(
+            FormatMeasurement(dimension, style),
+            textPosition,
+            NormalizeAngle(midAngle));
+
+        BoundingBox2D bounds = BuildBounds(
+            lines,
+            arcs,
+            arrows,
+            text,
+            style);
+
+        return new DimensionRenderModel(
+            lines,
+            arcs,
+            arrows,
+            text,
+            bounds);
     }
 
 
@@ -297,12 +381,34 @@ public sealed class DimensionGeometryBuilder
         DimensionTextPrimitive text,
         DimensionStyle style)
     {
+        return BuildBounds(
+            lines,
+            Array.Empty<DimensionArcPrimitive>(),
+            arrows,
+            text,
+            style);
+    }
+
+    private static BoundingBox2D BuildBounds(
+        IReadOnlyList<DimensionLinePrimitive> lines,
+        IReadOnlyList<DimensionArcPrimitive> arcs,
+        IReadOnlyList<DimensionLinePrimitive> arrows,
+        DimensionTextPrimitive text,
+        DimensionStyle style)
+    {
         var points = new List<Point2D>();
 
         foreach (DimensionLinePrimitive line in lines.Concat(arrows))
         {
             points.Add(line.Start);
             points.Add(line.End);
+        }
+
+        foreach (DimensionArcPrimitive arc in arcs)
+        {
+            BoundingBox2D arcBounds = arc.ToArc2D().GetBoundingBox();
+            points.Add(new Point2D(arcBounds.MinX, arcBounds.MinY));
+            points.Add(new Point2D(arcBounds.MaxX, arcBounds.MaxY));
         }
 
         double estimatedTextWidth = Math.Max(
@@ -322,6 +428,27 @@ public sealed class DimensionGeometryBuilder
         double maxY = points.Max(point => point.Y);
 
         return new BoundingBox2D(minX, minY, maxX, maxY);
+    }
+
+    private static Point2D PointOnCircle(
+        Point2D center,
+        double radius,
+        double angleDegrees)
+    {
+        double radians = angleDegrees * Math.PI / 180.0;
+
+        return new Point2D(
+            center.X + Math.Cos(radians) * radius,
+            center.Y + Math.Sin(radians) * radius);
+    }
+
+    private static Vector2D UnitAt(double angleDegrees)
+    {
+        double radians = angleDegrees * Math.PI / 180.0;
+
+        return new Vector2D(
+            Math.Cos(radians),
+            Math.Sin(radians));
     }
 
     private static Vector2D Rotate(

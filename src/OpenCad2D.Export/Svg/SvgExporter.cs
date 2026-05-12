@@ -262,6 +262,14 @@ public sealed class SvgExporter : ISvgExporter
                 height,
                 margin),
 
+            AngularDimensionEntity angularDimension => ExportDimension(
+                document,
+                angularDimension,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
             LineEntity line => ExportLine(
                 line,
                 lineFormat,
@@ -331,6 +339,16 @@ public sealed class SvgExporter : ISvgExporter
             builder.AppendLine($"  <line x1=\"{Format(start.X)}\" y1=\"{Format(start.Y)}\" x2=\"{Format(end.X)}\" y2=\"{Format(end.Y)}\" {StrokeAttributes(lineFormat)} />");
         }
 
+        foreach (DimensionArcPrimitive arc in model.Arcs)
+        {
+            builder.AppendLine(ExportDimensionArc(
+                arc,
+                lineFormat,
+                bounds,
+                svgHeight,
+                margin));
+        }
+
         Point2D textPoint = ToSvgPoint(
             model.Text.Position,
             bounds,
@@ -343,6 +361,40 @@ public sealed class SvgExporter : ISvgExporter
         builder.Append($"  <text x=\"{Format(textPoint.X)}\" y=\"{Format(textPoint.Y)}\" font-family=\"{Escape(textFormat.FontFamily)}\" font-size=\"{Format(textFormat.Height)}\" font-weight=\"{fontWeight}\" font-style=\"{fontStyle}\" fill=\"{ToHex(textFormat.Color)}\" transform=\"rotate({Format(svgRotation)} {Format(textPoint.X)} {Format(textPoint.Y)})\">{Escape(model.Text.Text)}</text>");
 
         return builder.ToString().TrimEnd();
+    }
+
+    private static string ExportDimensionArc(
+        DimensionArcPrimitive arc,
+        LineFormat lineFormat,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        Point2D start = ToSvgPoint(
+            arc.StartPoint,
+            bounds,
+            svgHeight,
+            margin);
+        Point2D end = ToSvgPoint(
+            arc.EndPoint,
+            bounds,
+            svgHeight,
+            margin);
+
+        double delta = GetPositiveSweepRadians(
+            arc.StartAngleDegrees * Math.PI / 180.0,
+            arc.EndAngleDegrees * Math.PI / 180.0,
+            arc.IsCounterClockwise);
+
+        int largeArcFlag = delta > Math.PI
+            ? 1
+            : 0;
+
+        int sweepFlag = arc.IsCounterClockwise
+            ? 1
+            : 0;
+
+        return $"  <path d=\"M {Format(start.X)} {Format(start.Y)} A {Format(arc.Radius)} {Format(arc.Radius)} 0 {largeArcFlag} {sweepFlag} {Format(end.X)} {Format(end.Y)}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static string ExportText(

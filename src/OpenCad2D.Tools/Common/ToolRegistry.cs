@@ -142,6 +142,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.AngularDimension,
+                "AngularDimension",
+                "Angular Dim",
+                "Dimension"),
+            () => new AngularDimensionTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Move,
                 "Move",
                 "Move",

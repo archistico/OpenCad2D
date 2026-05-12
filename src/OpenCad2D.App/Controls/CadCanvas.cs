@@ -1095,6 +1095,12 @@ public sealed class CadCanvas : Control
                     diameterDimensionTool.GetPreviewEntities());
                 break;
 
+            case AngularDimensionTool angularDimensionTool:
+                DrawEntitiesPreview(
+                    context,
+                    angularDimensionTool.GetPreviewEntities());
+                break;
+
             case MoveTool moveTool:
                 DrawEntitiesPreview(
                     context,
@@ -1761,6 +1767,14 @@ public sealed class CadCanvas : Control
                     isSelected);
                 break;
 
+            case AngularDimensionEntity angularDimension:
+                DrawDimension(
+                    context,
+                    angularDimension,
+                    pen,
+                    isSelected);
+                break;
+
             case LineEntity line:
                 context.DrawLine(
                     pen,
@@ -1818,6 +1832,14 @@ public sealed class CadCanvas : Control
                 ToScreenPoint(line.End));
         }
 
+        foreach (DimensionArcPrimitive arc in model.Arcs)
+        {
+            DrawDimensionArc(
+                context,
+                arc,
+                pen);
+        }
+
         foreach (DimensionLinePrimitive arrow in model.Arrows)
         {
             context.DrawLine(
@@ -1832,6 +1854,47 @@ public sealed class CadCanvas : Control
             style,
             pen,
             isSelected);
+    }
+
+
+    private void DrawDimensionArc(
+        DrawingContext context,
+        DimensionArcPrimitive arc,
+        Pen pen)
+    {
+        const int segments = 48;
+
+        Point2D previous = arc.StartPoint;
+        double start = arc.StartAngleDegrees * Math.PI / 180.0;
+        double end = arc.EndAngleDegrees * Math.PI / 180.0;
+
+        double sweep = arc.IsCounterClockwise
+            ? end - start
+            : start - end;
+
+        if (sweep < 0)
+        {
+            sweep += Math.PI * 2;
+        }
+
+        for (int i = 1; i <= segments; i++)
+        {
+            double t = i / (double)segments;
+            double angle = arc.IsCounterClockwise
+                ? start + sweep * t
+                : start - sweep * t;
+
+            Point2D current = new(
+                arc.Center.X + Math.Cos(angle) * arc.Radius,
+                arc.Center.Y + Math.Sin(angle) * arc.Radius);
+
+            context.DrawLine(
+                pen,
+                ToScreenPoint(previous),
+                ToScreenPoint(current));
+
+            previous = current;
+        }
     }
 
     private void DrawDimensionText(

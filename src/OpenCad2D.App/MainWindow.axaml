@@ -385,6 +385,11 @@
                                     Content="Diameter Dim"
                                     Click="DiameterDimension_Click" />
 
+                            <Button x:Name="AngularDimensionButton"
+                                    Classes="tool-button"
+                                    Content="Angular Dim"
+                                    Click="AngularDimension_Click" />
+
                             <TextBlock Classes="panel-section-label"
                                        Text="MEASURE" />
 

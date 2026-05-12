@@ -292,6 +292,15 @@ public sealed class DxfExporter : IDxfExporter
                         contentBounds);
                     break;
 
+                case AngularDimensionEntity angularDimension:
+                    WriteDimension(
+                        writer,
+                        document,
+                        layer.Name,
+                        angularDimension,
+                        contentBounds);
+                    break;
+
                 case LineEntity line:
                     WriteLine(
                         writer,
@@ -356,6 +365,15 @@ public sealed class DxfExporter : IDxfExporter
                 contentBounds);
         }
 
+        foreach (DimensionArcPrimitive arc in model.Arcs)
+        {
+            WriteArcPrimitive(
+                writer,
+                layerName,
+                arc,
+                contentBounds);
+        }
+
         Point2D textPosition = ToDxfPoint(
             model.Text.Position,
             contentBounds);
@@ -371,6 +389,39 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(1, model.Text.Text);
         writer.WriteGroup(50, NormalizeDegrees(-model.Text.RotationDegrees));
         writer.WriteGroup(7, textFormat.Name);
+    }
+
+
+    private static void WriteArcPrimitive(
+        DxfDocumentWriter writer,
+        string layerName,
+        DimensionArcPrimitive arc,
+        BoundingBox2D? contentBounds)
+    {
+        Point2D center = ToDxfPoint(
+            arc.Center,
+            contentBounds);
+
+        writer.WriteGroup(0, "ARC");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, center.X);
+        writer.WriteGroup(20, center.Y);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(40, arc.Radius);
+
+        double startDegrees = NormalizeDegrees(-arc.StartAngleDegrees);
+        double endDegrees = NormalizeDegrees(-arc.EndAngleDegrees);
+        bool dxfArcIsCounterClockwise = !arc.IsCounterClockwise;
+
+        if (!dxfArcIsCounterClockwise)
+        {
+            (startDegrees, endDegrees) = (endDegrees, startDegrees);
+        }
+
+        writer.WriteGroup(50, startDegrees);
+        writer.WriteGroup(51, endDegrees);
     }
 
     private static void WriteLinePrimitive(

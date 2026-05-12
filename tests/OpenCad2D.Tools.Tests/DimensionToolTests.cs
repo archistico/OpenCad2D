@@ -174,6 +174,73 @@ public sealed class DimensionToolTests
         Assert.Equal(new Point2D(14, 2), preview.TextPoint);
     }
 
+
+    [Fact]
+    public void AngularDimensionTool_ShouldCreateMinorAngularDimensionAfterFourClicks()
+    {
+        ToolContext context = CreateContext();
+        var tool = new AngularDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 10)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(8, 8)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        var dimension = Assert.Single(context.Document.Entities.All.OfType<AngularDimensionEntity>());
+        Assert.True(dimension.IsCounterClockwise);
+        Assert.Equal(90, dimension.MeasurementValue, precision: 10);
+    }
+
+    [Fact]
+    public void AngularDimensionTool_ShouldCreateReflexAngularDimensionWhenArcPointIsOutsideMinorSector()
+    {
+        ToolContext context = CreateContext();
+        var tool = new AngularDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 10)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(8, -8)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        var dimension = Assert.Single(context.Document.Entities.All.OfType<AngularDimensionEntity>());
+        Assert.False(dimension.IsCounterClockwise);
+        Assert.Equal(270, dimension.MeasurementValue, precision: 10);
+    }
+
+    [Fact]
+    public void AngularDimensionTool_AfterThirdPoint_ShouldExposeDimensionPreview()
+    {
+        ToolContext context = CreateContext();
+        var tool = new AngularDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 10)));
+        tool.OnPointerMoved(context, new PointerInfo(new Point2D(8, -8)));
+
+        var preview = Assert.Single(tool.GetPreviewEntities().OfType<AngularDimensionEntity>());
+
+        Assert.False(preview.IsCounterClockwise);
+        Assert.Equal(270, preview.MeasurementValue, precision: 10);
+    }
+
+    [Fact]
+    public void AngularDimensionTool_WithInvalidFirstRay_ShouldNotCreateDimension()
+    {
+        ToolContext context = CreateContext();
+        var tool = new AngularDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Empty(context.Document.Entities.All);
+    }
+
     private static ToolContext CreateContext()
     {
         return new ToolContext(

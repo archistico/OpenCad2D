@@ -590,3 +590,9 @@ Implemented after the initial dimension core phase:
 ## v0.4 dimensions phase 4 status
 
 Implemented radius and diameter dimensions as non-associative entities. Both store center, point on circle and text point. `RadiusDimensionTool` and `DiameterDimensionTool` use a three-click flow: center, point on circle, text placement. Rendering/export reuse `DimensionGeometryBuilder`; SVG/DXF export remains graphical (`LINE` + `TEXT`) rather than native DXF `DIMENSION`. Next planned dimension phase: angular dimension, including support for angles greater than 180°.
+
+## v0.4 angular dimensions
+
+Angular dimensions are implemented as non-associative entities through `AngularDimensionEntity`. The entity stores `Center`, `FirstRayPoint`, `SecondRayPoint`, `ArcPoint` and `IsCounterClockwise`. The chosen sweep can be minor or reflex; `AngularDimensionTool` derives the sweep direction from the fourth click using `AngularDimensionEntity.ShouldUseCounterClockwiseSweep`.
+
+Rendering/export use `DimensionGeometryBuilder`, which now emits `DimensionArcPrimitive` in addition to line, arrow and text primitives. SVG/DXF export writes angular dimensions as graphical primitives, not native DXF `DIMENSION` records.

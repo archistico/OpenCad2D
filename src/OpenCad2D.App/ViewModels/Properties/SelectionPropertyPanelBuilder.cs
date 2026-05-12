@@ -136,6 +136,7 @@ public sealed class SelectionPropertyPanelBuilder
             AlignedDimensionEntity alignedDimension => BuildAlignedDimensionGeometrySection(alignedDimension),
             RadiusDimensionEntity radiusDimension => BuildRadiusDimensionGeometrySection(radiusDimension),
             DiameterDimensionEntity diameterDimension => BuildDiameterDimensionGeometrySection(diameterDimension),
+            AngularDimensionEntity angularDimension => BuildAngularDimensionGeometrySection(angularDimension),
             LineEntity line => BuildLineGeometrySection(line),
             CircleEntity circle => BuildCircleGeometrySection(circle),
             PolylineEntity polyline => BuildPolylineGeometrySection(polyline),
@@ -234,6 +235,24 @@ public sealed class SelectionPropertyPanelBuilder
                 Row("Opposite point", PropertyValueFormatter.FormatPoint(dimension.OppositePoint)),
                 Row("Text point", PropertyValueFormatter.FormatPoint(dimension.TextPoint)),
                 Row("Measurement", PropertyValueFormatter.FormatLength(dimension.MeasurementValue)),
+                Row("Style", dimension.DimensionStyleId.Value),
+                Row("Text override", string.IsNullOrWhiteSpace(dimension.TextOverride) ? "<automatic>" : dimension.TextOverride!)
+            });
+    }
+
+    private static PropertySectionViewModel BuildAngularDimensionGeometrySection(AngularDimensionEntity dimension)
+    {
+        return new PropertySectionViewModel(
+            "Dimension",
+            new[]
+            {
+                Row("Kind", "Angular"),
+                Row("Center", PropertyValueFormatter.FormatPoint(dimension.Center)),
+                Row("First ray", PropertyValueFormatter.FormatPoint(dimension.FirstRayPoint)),
+                Row("Second ray", PropertyValueFormatter.FormatPoint(dimension.SecondRayPoint)),
+                Row("Arc point", PropertyValueFormatter.FormatPoint(dimension.ArcPoint)),
+                Row("Direction", dimension.IsCounterClockwise ? "Counter-clockwise" : "Clockwise"),
+                Row("Measurement", PropertyValueFormatter.FormatAngleDegrees(dimension.MeasurementValue)),
                 Row("Style", dimension.DimensionStyleId.Value),
                 Row("Text override", string.IsNullOrWhiteSpace(dimension.TextOverride) ? "<automatic>" : dimension.TextOverride!)
             });
@@ -394,6 +413,7 @@ public sealed class SelectionPropertyPanelBuilder
             AlignedDimensionEntity => "Aligned Dimension",
             RadiusDimensionEntity => "Radius Dimension",
             DiameterDimensionEntity => "Diameter Dimension",
+            AngularDimensionEntity => "Angular Dimension",
             LineEntity => "Line",
             CircleEntity => "Circle",
             PolylineEntity => "Polyline",

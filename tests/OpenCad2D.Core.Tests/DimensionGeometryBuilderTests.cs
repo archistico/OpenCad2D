@@ -171,3 +171,49 @@ public sealed class DimensionGeometryBuilderTests
         Assert.Equal(expected.Y, actual.Y, precision);
     }
 }
+
+public sealed class AngularDimensionGeometryBuilderTests
+{
+    [Fact]
+    public void Build_WithAngularDimension_ShouldCreateArcTextAndArrows()
+    {
+        var dimension = new AngularDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(0, 10),
+            new Point2D(10, 10),
+            isCounterClockwise: true);
+        var builder = new DimensionGeometryBuilder();
+
+        DimensionRenderModel model = builder.Build(
+            dimension,
+            DimensionStyleCollection.Default.GetById(DimensionStyleId.Standard));
+
+        Assert.Equal(2, model.Lines.Count);
+        Assert.Single(model.Arcs);
+        Assert.Equal(4, model.Arrows.Count);
+        Assert.Equal("90.00°", model.Text.Text);
+        Assert.Equal(45, model.Text.RotationDegrees, precision: 10);
+    }
+
+    [Fact]
+    public void Build_WithReflexAngularDimension_ShouldCreateLargeSweepText()
+    {
+        var dimension = new AngularDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(0, 10),
+            new Point2D(10, -10),
+            isCounterClockwise: false);
+        var builder = new DimensionGeometryBuilder();
+
+        DimensionRenderModel model = builder.Build(
+            dimension,
+            DimensionStyleCollection.Default.GetById(DimensionStyleId.Standard));
+
+        DimensionArcPrimitive arc = Assert.Single(model.Arcs);
+        Assert.False(arc.IsCounterClockwise);
+        Assert.Equal("270.00°", model.Text.Text);
+        Assert.Equal(225, model.Text.RotationDegrees, precision: 10);
+    }
+}

@@ -391,6 +391,23 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 TextOverride = diameterDimension.TextOverride
             },
 
+            AngularDimensionEntity angularDimension => new AngularDimensionEntityDto
+            {
+                Id = angularDimension.Id.ToString(),
+                LayerId = angularDimension.LayerId.Value,
+                CenterX = angularDimension.Center.X,
+                CenterY = angularDimension.Center.Y,
+                FirstRayX = angularDimension.FirstRayPoint.X,
+                FirstRayY = angularDimension.FirstRayPoint.Y,
+                SecondRayX = angularDimension.SecondRayPoint.X,
+                SecondRayY = angularDimension.SecondRayPoint.Y,
+                ArcX = angularDimension.ArcPoint.X,
+                ArcY = angularDimension.ArcPoint.Y,
+                IsCounterClockwise = angularDimension.IsCounterClockwise,
+                DimensionStyleId = angularDimension.DimensionStyleId.Value,
+                TextOverride = angularDimension.TextOverride
+            },
+
             LineEntity line => new LineEntityDto
             {
                 Id = line.Id.ToString(),
@@ -682,6 +699,19 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     ? DimensionStyleId.Standard
                     : new DimensionStyleId(diameterDimension.DimensionStyleId),
                 diameterDimension.TextOverride,
+                id,
+                layerId),
+
+            AngularDimensionEntityDto angularDimension => new AngularDimensionEntity(
+                new Point2D(angularDimension.CenterX, angularDimension.CenterY),
+                new Point2D(angularDimension.FirstRayX, angularDimension.FirstRayY),
+                new Point2D(angularDimension.SecondRayX, angularDimension.SecondRayY),
+                new Point2D(angularDimension.ArcX, angularDimension.ArcY),
+                angularDimension.IsCounterClockwise,
+                string.IsNullOrWhiteSpace(angularDimension.DimensionStyleId)
+                    ? DimensionStyleId.Standard
+                    : new DimensionStyleId(angularDimension.DimensionStyleId),
+                angularDimension.TextOverride,
                 id,
                 layerId),
 
