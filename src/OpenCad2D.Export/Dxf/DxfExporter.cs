@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -235,6 +235,23 @@ public sealed class DxfExporter : IDxfExporter
 
             switch (entity)
             {
+                case PointEntity point:
+                    WritePoint(
+                        writer,
+                        layer.Name,
+                        point,
+                        contentBounds);
+                    break;
+
+                case TextEntity text:
+                    WriteText(
+                        writer,
+                        document,
+                        layer.Name,
+                        text,
+                        contentBounds);
+                    break;
+
                 case LineEntity line:
                     WriteLine(
                         writer,
@@ -270,6 +287,53 @@ public sealed class DxfExporter : IDxfExporter
         }
 
         writer.EndSection();
+    }
+
+    private static void WriteText(
+        DxfDocumentWriter writer,
+        CadDocument document,
+        string layerName,
+        TextEntity text,
+        BoundingBox2D? contentBounds)
+    {
+        Point2D position = ToDxfPoint(
+            text.InsertionPoint,
+            contentBounds);
+
+        TextFormat textFormat = ResolveTextFormat(
+            document,
+            text);
+
+        writer.WriteGroup(0, "TEXT");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, position.X);
+        writer.WriteGroup(20, position.Y);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(40, textFormat.Height);
+        writer.WriteGroup(1, text.Text);
+        writer.WriteGroup(50, NormalizeDegrees(-text.RotationDegrees));
+        writer.WriteGroup(7, textFormat.Name);
+    }
+
+    private static void WritePoint(
+        DxfDocumentWriter writer,
+        string layerName,
+        PointEntity point,
+        BoundingBox2D? contentBounds)
+    {
+        Point2D position = ToDxfPoint(
+            point.Position,
+            contentBounds);
+
+        writer.WriteGroup(0, "POINT");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, position.X);
+        writer.WriteGroup(20, position.Y);
+        writer.WriteGroup(30, 0.0);
     }
 
     private static void WriteLine(
@@ -437,6 +501,21 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(62, 256);
         writer.WriteGroup(6, "BYLAYER");
         writer.WriteGroup(370, -1);
+    }
+
+    private static TextFormat ResolveTextFormat(
+        CadDocument document,
+        TextEntity text)
+    {
+        if (document.TextFormats.TryGetById(
+                text.TextFormatId,
+                out TextFormat? format) &&
+            format is not null)
+        {
+            return format;
+        }
+
+        return document.TextFormats.GetById(TextFormatId.Standard);
     }
 
     private static LineFormat ResolveLineFormat(

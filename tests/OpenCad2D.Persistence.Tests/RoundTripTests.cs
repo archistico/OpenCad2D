@@ -22,6 +22,10 @@ public sealed class RoundTripTests
                 detailLayerId,
                 "Details"));
 
+        var point = new PointEntity(
+            new Point2D(-5, 12),
+            layerId: detailLayerId);
+
         var line = new LineEntity(
             new Point2D(0, 0),
             new Point2D(10, 0),
@@ -49,6 +53,7 @@ public sealed class RoundTripTests
             isClosed: true,
             layerId: detailLayerId);
 
+        document.AddEntity(point);
         document.AddEntity(line);
         document.AddEntity(circle);
         document.AddEntity(arc);
@@ -73,7 +78,11 @@ public sealed class RoundTripTests
         Assert.Equal(11, viewport.PanX);
         Assert.Equal(22, viewport.PanY);
         Assert.Equal(2.5, viewport.Zoom);
-        Assert.Equal(4, restored.Entities.Count);
+        Assert.Equal(5, restored.Entities.Count);
+
+        var restoredPoint = Assert.IsType<PointEntity>(restored.Entities.GetRequired(point.Id));
+        Assert.Equal(point.Position, restoredPoint.Position);
+        Assert.Equal(detailLayerId, restoredPoint.LayerId);
 
         var restoredLine = Assert.IsType<LineEntity>(restored.Entities.GetRequired(line.Id));
         Assert.Equal(line.Start, restoredLine.Start);
@@ -102,6 +111,10 @@ public sealed class RoundTripTests
         var document = new CadDocument();
 
         document.AddEntity(
+            new PointEntity(
+                new Point2D(-1, -2)));
+
+        document.AddEntity(
             new LineEntity(
                 new Point2D(0, 0),
                 new Point2D(1, 1)));
@@ -119,6 +132,7 @@ public sealed class RoundTripTests
         string json = JsonDocumentSerializer.ToJson(dto);
         DocumentDto loadedDto = JsonDocumentSerializer.FromJson(json);
 
+        Assert.Contains(loadedDto.Entities, entity => entity is PointEntityDto);
         Assert.Contains(loadedDto.Entities, entity => entity is LineEntityDto);
         Assert.Contains(loadedDto.Entities, entity => entity is CircleEntityDto);
     }

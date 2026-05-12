@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using OpenCad2D.Persistence.Dto;
 
@@ -21,6 +21,8 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
 
         EntityDto? result = type switch
         {
+            EntityTypeNames.Point => root.Deserialize<PointEntityDto>(options),
+            EntityTypeNames.Text => root.Deserialize<TextEntityDto>(options),
             EntityTypeNames.Line => root.Deserialize<LineEntityDto>(options),
             EntityTypeNames.Circle => root.Deserialize<CircleEntityDto>(options),
             EntityTypeNames.Arc => root.Deserialize<ArcEntityDto>(options),
@@ -44,6 +46,14 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
     {
         switch (value)
         {
+            case PointEntityDto point:
+                JsonSerializer.Serialize(writer, point, options);
+                break;
+
+            case TextEntityDto text:
+                JsonSerializer.Serialize(writer, text, options);
+                break;
+
             case LineEntityDto line:
                 JsonSerializer.Serialize(writer, line, options);
                 break;

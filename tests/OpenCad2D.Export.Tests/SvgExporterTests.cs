@@ -414,4 +414,21 @@ public sealed class SvgExporterTests
         Assert.DoesNotContain("<rect ", result.Content);
     }
 
+    [Fact]
+    public void Export_WhenDocumentContainsPoint_ShouldWritePointMarker()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new PointEntity(new Point2D(5, 9)));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Contains("<circle", result.Content);
+        Assert.Contains("cx=\"20\"", result.Content);
+        Assert.Contains("cy=\"20\"", result.Content);
+        Assert.Contains("r=\"2\"", result.Content);
+    }
+
 }

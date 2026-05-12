@@ -53,6 +53,19 @@ public sealed class MeasurementServiceTests
     }
 
     [Fact]
+    public void MeasureEntity_WithPoint_ShouldReturnPointKindWithoutLinearValues()
+    {
+        var point = new PointEntity(new Point2D(2, 3));
+
+        EntityMeasurement measurement = MeasurementService.MeasureEntity(point);
+
+        Assert.Equal(EntityKind.Point, measurement.EntityKind);
+        Assert.Null(measurement.Length);
+        Assert.Null(measurement.Area);
+        Assert.Equal("Point", MeasurementFormatter.FormatEntity(measurement));
+    }
+
+    [Fact]
     public void MeasureEntity_WithLine_ShouldReturnLengthAndAngle()
     {
         var line = new LineEntity(

@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Documents;
+﻿using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -40,12 +40,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool _isPropertyPanelVisible = true;
     private PolarTrackingOptionViewModel _selectedPolarTrackingOption;
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(ITextInputProvider? textInputProvider = null)
     {
         PolarTrackingOptions = CreatePolarTrackingOptions();
         _selectedPolarTrackingOption = PolarTrackingOptions[0];
 
         Workspace = new CadWorkspace(
+            toolRegistry: new ToolRegistry(textInputProvider),
             enabledSnaps: SnapKind.Endpoint |
                           SnapKind.Midpoint |
                           SnapKind.Center |
@@ -239,6 +240,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     ArcThreePointsToolState.WaitingForEndPoint => "Arc 3P: specify end point or type coordinates:",
                     _ => "Arc 3P: specify point:"
                 };
+            }
+
+            if (Workspace.ToolController.ActiveTool is PointTool)
+            {
+                return "Point: specify point or type coordinates:";
+            }
+
+            if (Workspace.ToolController.ActiveTool is TextTool)
+            {
+                return "Text: specify insertion point or type coordinates:";
             }
 
             if (Workspace.ToolController.ActiveTool is MeasureDistanceTool measureDistanceTool)

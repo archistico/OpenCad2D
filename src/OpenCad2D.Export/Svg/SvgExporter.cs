@@ -1,8 +1,9 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text;
 using System.Xml;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Primitives;
@@ -70,6 +71,7 @@ public sealed class SvgExporter : ISvgExporter
                 layer);
 
             string? svgElement = ExportEntity(
+                document,
                 entity,
                 lineFormat,
                 contentBounds,
@@ -170,6 +172,7 @@ public sealed class SvgExporter : ISvgExporter
     }
 
     private static string? ExportEntity(
+        CadDocument document,
         CadEntity entity,
         LineFormat lineFormat,
         BoundingBox2D? contentBounds,
@@ -184,6 +187,20 @@ public sealed class SvgExporter : ISvgExporter
 
         return entity switch
         {
+            PointEntity point => ExportPoint(
+                point,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
+            TextEntity text => ExportText(
+                document,
+                text,
+                contentBounds.Value,
+                height,
+                margin),
+
             LineEntity line => ExportLine(
                 line,
                 lineFormat,
@@ -214,6 +231,48 @@ public sealed class SvgExporter : ISvgExporter
 
             _ => null
         };
+    }
+
+    private static string ExportText(
+        CadDocument document,
+        TextEntity text,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        TextFormat format = ResolveTextFormat(
+            document,
+            text);
+
+        Point2D point = ToSvgPoint(
+            text.InsertionPoint,
+            bounds,
+            svgHeight,
+            margin);
+
+        double svgRotation = -text.RotationDegrees;
+        string fontWeight = format.IsBold ? "bold" : "normal";
+        string fontStyle = format.IsItalic ? "italic" : "normal";
+
+        return $"  <text x=\"{Format(point.X)}\" y=\"{Format(point.Y)}\" font-family=\"{Escape(format.FontFamily)}\" font-size=\"{Format(format.Height)}\" font-weight=\"{fontWeight}\" font-style=\"{fontStyle}\" fill=\"{ToHex(format.Color)}\" transform=\"rotate({Format(svgRotation)} {Format(point.X)} {Format(point.Y)})\">{Escape(text.Text)}</text>";
+    }
+
+    private static string ExportPoint(
+        PointEntity point,
+        LineFormat lineFormat,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        Point2D center = ToSvgPoint(
+            point.Position,
+            bounds,
+            svgHeight,
+            margin);
+
+        const double radius = 2.0;
+
+        return $"  <circle cx=\"{Format(center.X)}\" cy=\"{Format(center.Y)}\" r=\"{Format(radius)}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static string ExportLine(
@@ -347,6 +406,21 @@ public sealed class SvgExporter : ISvgExporter
         return new Point2D(
             x,
             y);
+    }
+
+    private static TextFormat ResolveTextFormat(
+        CadDocument document,
+        TextEntity text)
+    {
+        if (document.TextFormats.TryGetById(
+                text.TextFormatId,
+                out TextFormat? format) &&
+            format is not null)
+        {
+            return format;
+        }
+
+        return document.TextFormats.GetById(TextFormatId.Standard);
     }
 
     private static LineFormat ResolveLineFormat(

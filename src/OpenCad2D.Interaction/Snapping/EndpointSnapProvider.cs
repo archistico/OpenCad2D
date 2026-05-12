@@ -34,6 +34,14 @@ public sealed class EndpointSnapProvider : ISnapProvider
     {
         switch (entity)
         {
+            case PointEntity point:
+                yield return point.Position;
+                break;
+
+            case TextEntity text:
+                yield return text.InsertionPoint;
+                break;
+
             case LineEntity line:
                 yield return line.Start;
                 yield return line.End;

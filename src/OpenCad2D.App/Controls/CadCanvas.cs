@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Layout;
 using Avalonia.Media;
 using OpenCad2D.App.Rendering;
 using OpenCad2D.App.Viewport;
@@ -20,7 +21,9 @@ using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Selection;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace OpenCad2D.App.Controls;
 
@@ -70,6 +73,7 @@ public sealed class CadCanvas : Control
         double Scale);
     private const double GridLineDetectionTolerance = 1e-6;
     private bool _isPanning;
+    private bool _isTextInputDialogOpen;
     private Point _lastPanScreenPoint;
     private readonly Pen _crosshairPen = new(
         new SolidColorBrush(Color.FromArgb(160, 220, 220, 220)),
@@ -1661,6 +1665,19 @@ public sealed class CadCanvas : Control
     {
         switch (entity)
         {
+            case PointEntity point:
+                DrawPoint(
+                    context,
+                    point,
+                    pen);
+                break;
+
+            case TextEntity text:
+                DrawText(
+                    context,
+                    text);
+                break;
+
             case LineEntity line:
                 context.DrawLine(
                     pen,
@@ -1691,6 +1708,102 @@ public sealed class CadCanvas : Control
                     pen);
                 break;
         }
+    }
+
+    private void DrawText(
+        DrawingContext context,
+        TextEntity text)
+    {
+        if (Workspace is null)
+        {
+            return;
+        }
+
+        TextFormat format = ResolveTextFormat(text);
+        Point insertionPoint = ToScreenPoint(text.InsertionPoint);
+        double fontSize = Math.Max(1.0, _viewport.ModelLengthToScreen(format.Height));
+
+        var brush = new SolidColorBrush(
+            Color.FromRgb(
+                format.Color.R,
+                format.Color.G,
+                format.Color.B));
+
+        var typeface = new Typeface(
+            new FontFamily(format.FontFamily),
+            format.IsItalic ? FontStyle.Italic : FontStyle.Normal,
+            format.IsBold ? FontWeight.Bold : FontWeight.Normal);
+
+        var formattedText = new FormattedText(
+            text.Text,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            typeface,
+            fontSize,
+            brush);
+
+        using (context.PushTransform(CreateRotationAtMatrix(
+                   -text.RotationDegrees * Math.PI / 180.0,
+                   insertionPoint.X,
+                   insertionPoint.Y)))
+        {
+            context.DrawText(
+                formattedText,
+                insertionPoint);
+        }
+    }
+
+    private static Matrix CreateRotationAtMatrix(
+        double radians,
+        double centerX,
+        double centerY)
+    {
+        double cosine = Math.Cos(radians);
+        double sine = Math.Sin(radians);
+
+        double offsetX = centerX - (centerX * cosine) + (centerY * sine);
+        double offsetY = centerY - (centerX * sine) - (centerY * cosine);
+
+        return new Matrix(
+            cosine,
+            sine,
+            -sine,
+            cosine,
+            offsetX,
+            offsetY);
+    }
+
+    private TextFormat ResolveTextFormat(TextEntity text)
+    {
+        if (Workspace is not null &&
+            Workspace.Document.TextFormats.TryGetById(
+                text.TextFormatId,
+                out TextFormat? format) &&
+            format is not null)
+        {
+            return format;
+        }
+
+        return TextFormatCollection.Default.GetById(TextFormatId.Standard);
+    }
+
+    private void DrawPoint(
+        DrawingContext context,
+        PointEntity point,
+        Pen pen)
+    {
+        Point center = ToScreenPoint(point.Position);
+        const double markerSize = 5.0;
+
+        context.DrawLine(
+            pen,
+            new Point(center.X - markerSize, center.Y),
+            new Point(center.X + markerSize, center.Y));
+
+        context.DrawLine(
+            pen,
+            new Point(center.X, center.Y - markerSize),
+            new Point(center.X, center.Y + markerSize));
     }
 
     private void DrawPolyline(
@@ -1756,7 +1869,7 @@ public sealed class CadCanvas : Control
         }
     }
 
-    private void OnPointerPressed(
+    private async void OnPointerPressed(
         object? sender,
         PointerPressedEventArgs e)
     {
@@ -1782,10 +1895,37 @@ public sealed class CadCanvas : Control
         Point2D modelPoint = ToModelPoint(position);
         UpdateCurrentSnapCandidate(modelPoint);
 
-        ToolResult result = Workspace.ToolController.OnPointerPressed(
-            CreatePointerInfo(
-                position,
-                e.KeyModifiers));
+        if (_isTextInputDialogOpen)
+        {
+            return;
+        }
+
+        ToolResult result;
+
+        if (Workspace.ToolController.ActiveTool is IAsyncCadTool)
+        {
+            _isTextInputDialogOpen = true;
+
+            try
+            {
+                result = await Workspace.ToolController.OnPointerPressedAsync(
+                    CreatePointerInfo(
+                        position,
+                        e.KeyModifiers));
+            }
+            finally
+            {
+                _isTextInputDialogOpen = false;
+                Focus();
+            }
+        }
+        else
+        {
+            result = Workspace.ToolController.OnPointerPressed(
+                CreatePointerInfo(
+                    position,
+                    e.KeyModifiers));
+        }
 
         NotifyWorkspaceChanged(
             result,

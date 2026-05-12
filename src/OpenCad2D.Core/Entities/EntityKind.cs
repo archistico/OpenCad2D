@@ -5,6 +5,8 @@
 /// </summary>
 public enum EntityKind
 {
+    Point,
+    Text,
     Line,
     Circle,
     Arc,

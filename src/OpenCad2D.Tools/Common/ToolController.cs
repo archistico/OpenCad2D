@@ -1,4 +1,6 @@
-﻿namespace OpenCad2D.Tools.Common;
+using System.Threading.Tasks;
+
+namespace OpenCad2D.Tools.Common;
 
 /// <summary>
 /// Coordinates the active CAD tool and forwards input events to it.
@@ -54,6 +56,26 @@ public sealed class ToolController
         LastResult = ActiveTool.OnPointerPressed(
             _context,
             pointer);
+
+        return LastResult;
+    }
+
+    public async Task<ToolResult> OnPointerPressedAsync(PointerInfo pointer)
+    {
+        ArgumentNullException.ThrowIfNull(pointer);
+
+        if (ActiveTool is IAsyncCadTool asyncTool)
+        {
+            LastResult = await asyncTool
+                .OnPointerPressedAsync(_context, pointer)
+                .ConfigureAwait(true);
+        }
+        else
+        {
+            LastResult = ActiveTool.OnPointerPressed(
+                _context,
+                pointer);
+        }
 
         return LastResult;
     }

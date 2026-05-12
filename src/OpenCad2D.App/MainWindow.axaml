@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:OpenCad2D.App.Controls"
         xmlns:vm="clr-namespace:OpenCad2D.App.ViewModels"
@@ -304,6 +304,16 @@
 
                         <TextBlock Classes="panel-section-label"
                                    Text="DRAW" />
+
+                        <Button x:Name="PointButton"
+                                Classes="tool-button"
+                                Content="Point"
+                                Click="Point_Click" />
+
+                        <Button x:Name="TextButton"
+                                Classes="tool-button"
+                                Content="Text"
+                                Click="Text_Click" />
 
                         <Button x:Name="LineButton"
                                 Classes="tool-button"

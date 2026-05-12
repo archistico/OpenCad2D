@@ -1,4 +1,4 @@
-namespace OpenCad2D.Persistence.Dto;
+﻿namespace OpenCad2D.Persistence.Dto;
 
 /// <summary>
 /// Serializable representation of an OpenCad2D document.
@@ -14,6 +14,8 @@ public sealed class DocumentDto
     public ViewportStateDto Viewport { get; set; } = new();
 
     public List<LineFormatDto> LineFormats { get; set; } = new();
+
+    public List<TextFormatDto> TextFormats { get; set; } = new();
 
     public List<LayerDto> Layers { get; set; } = new();
 

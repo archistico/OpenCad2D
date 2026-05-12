@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
 using System.Threading.Tasks;
@@ -49,7 +49,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
-        _viewModel = new MainWindowViewModel();
+        _viewModel = new MainWindowViewModel(new AvaloniaTextInputProvider(this));
 
         DataContext = _viewModel;
 
@@ -588,6 +588,26 @@ public partial class MainWindow : Window
         RefreshStatus();
 
         CadCanvas.ClearSnapMarker();
+    }
+
+    private void Point_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Point);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void Text_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Text);
+        RefreshStatus();
+        CadCanvas.Focus();
     }
 
     private void Line_Click(
@@ -1411,6 +1431,14 @@ public partial class MainWindow : Window
             SelectButton,
             activeToolName.Equals("Select", StringComparison.OrdinalIgnoreCase) ||
             activeToolName.Equals("Selection", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            PointButton,
+            activeToolName.Equals("Point", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            TextButton,
+            activeToolName.Equals("Text", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             LineButton,

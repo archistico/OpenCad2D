@@ -1,0 +1,64 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OpenCad2D.App.TextInputWindow"
+        Title="Insert Text"
+        Width="420"
+        Height="250"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#252526">
+
+    <Border Padding="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+              RowSpacing="12">
+
+            <TextBlock Grid.Row="0"
+                       Text="Single-line text"
+                       Foreground="#FFFFFF"
+                       FontSize="18"
+                       FontWeight="Bold" />
+
+            <StackPanel Grid.Row="1"
+                        Spacing="5">
+                <TextBlock Text="Text"
+                           Foreground="#CCCCCC" />
+                <TextBox x:Name="TextValueTextBox"
+                         PlaceholderText="Text to insert"
+                         MaxLines="1" />
+            </StackPanel>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,Auto"
+                  ColumnSpacing="12">
+                <StackPanel Grid.Column="0"
+                            Spacing="5">
+                    <TextBlock Text="Text format"
+                               Foreground="#CCCCCC" />
+                    <ComboBox x:Name="TextFormatComboBox"
+                              MinWidth="220" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Spacing="5">
+                    <TextBlock Text="Rotation °"
+                               Foreground="#CCCCCC" />
+                    <TextBox x:Name="RotationTextBox"
+                             Width="90"
+                             Text="0" />
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8">
+                <Button Content="Cancel"
+                        MinWidth="80"
+                        Click="Cancel_Click" />
+                <Button Content="OK"
+                        MinWidth="80"
+                        Click="Ok_Click" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

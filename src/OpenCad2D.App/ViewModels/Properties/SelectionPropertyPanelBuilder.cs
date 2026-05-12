@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using OpenCad2D.Core.Entities;
@@ -129,6 +129,8 @@ public sealed class SelectionPropertyPanelBuilder
     {
         return entity switch
         {
+            PointEntity point => BuildPointGeometrySection(point),
+            TextEntity text => BuildTextGeometrySection(text),
             LineEntity line => BuildLineGeometrySection(line),
             CircleEntity circle => BuildCircleGeometrySection(circle),
             PolylineEntity polyline => BuildPolylineGeometrySection(polyline),
@@ -137,6 +139,33 @@ public sealed class SelectionPropertyPanelBuilder
                 "Geometry",
                 new[] { Row("Details", "Not available") })
         };
+    }
+
+    private static PropertySectionViewModel BuildPointGeometrySection(PointEntity point)
+    {
+        return new PropertySectionViewModel(
+            "Geometry",
+            new[]
+            {
+                Row("Position", PropertyValueFormatter.FormatPoint(point.Position)),
+                Row("X", PropertyValueFormatter.FormatCoordinate(point.Position.X)),
+                Row("Y", PropertyValueFormatter.FormatCoordinate(point.Position.Y))
+            });
+    }
+
+    private static PropertySectionViewModel BuildTextGeometrySection(TextEntity text)
+    {
+        return new PropertySectionViewModel(
+            "Text",
+            new[]
+            {
+                Row("Value", text.Text),
+                Row("Insertion", PropertyValueFormatter.FormatPoint(text.InsertionPoint)),
+                Row("X", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.X)),
+                Row("Y", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.Y)),
+                Row("Rotation", PropertyValueFormatter.FormatAngleDegrees(text.RotationDegrees)),
+                Row("Format", text.TextFormatId.Value)
+            });
     }
 
     private static PropertySectionViewModel BuildLineGeometrySection(LineEntity line)
@@ -286,6 +315,8 @@ public sealed class SelectionPropertyPanelBuilder
     {
         return entity switch
         {
+            PointEntity => "Point",
+            TextEntity => "Text",
             LineEntity => "Line",
             CircleEntity => "Circle",
             PolylineEntity => "Polyline",

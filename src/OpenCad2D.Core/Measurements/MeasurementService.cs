@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Entities;
+﻿using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Core.Measurements;
@@ -29,6 +29,8 @@ public static class MeasurementService
 
         return entity switch
         {
+            PointEntity point => MeasurePoint(point),
+            TextEntity text => MeasureText(text),
             LineEntity line => MeasureLine(line),
             CircleEntity circle => MeasureCircle(circle),
             ArcEntity arc => MeasureArc(arc),
@@ -102,6 +104,20 @@ public static class MeasurementService
         }
 
         return start - end;
+    }
+
+    private static EntityMeasurement MeasurePoint(PointEntity point)
+    {
+        ArgumentNullException.ThrowIfNull(point);
+
+        return new EntityMeasurement(EntityKind.Point);
+    }
+
+    private static EntityMeasurement MeasureText(TextEntity text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        return new EntityMeasurement(EntityKind.Text);
     }
 
     private static EntityMeasurement MeasureLine(LineEntity line)

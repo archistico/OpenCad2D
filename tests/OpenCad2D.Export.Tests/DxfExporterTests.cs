@@ -427,6 +427,23 @@ public sealed class DxfExporterTests
         Assert.Contains("370\n100", content);
     }
 
+    [Fact]
+    public void Export_WhenDocumentContainsPoint_ShouldWritePointEntity()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new PointEntity(new Point2D(5, 9)));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(document);
+        string content = Normalize(result.Content);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Contains("0\nPOINT", content);
+        Assert.Contains("8\n0", content);
+        Assert.Contains("10\n5\n20\n9\n30\n0", content);
+    }
+
     private static string Normalize(string value)
     {
         return value.Replace("\r\n", "\n");

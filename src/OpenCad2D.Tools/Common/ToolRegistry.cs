@@ -1,4 +1,4 @@
-using OpenCad2D.Tools.Drawing;
+﻿using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Selection;
@@ -13,7 +13,7 @@ public sealed class ToolRegistry
     private readonly Dictionary<ToolId, Func<ICadTool>> _factories;
     private readonly Dictionary<ToolId, ToolDescriptor> _descriptors;
 
-    public ToolRegistry()
+    public ToolRegistry(ITextInputProvider? textInputProvider = null)
     {
         _factories = new Dictionary<ToolId, Func<ICadTool>>();
         _descriptors = new Dictionary<ToolId, ToolDescriptor>();
@@ -25,6 +25,22 @@ public sealed class ToolRegistry
                 "Selection",
                 "Modify"),
             () => new SelectionTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Point,
+                "Point",
+                "Point",
+                "Draw"),
+            () => new PointTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Text,
+                "Text",
+                "Text",
+                "Draw"),
+            () => new TextTool(textInputProvider));
 
         Register(
             new ToolDescriptor(

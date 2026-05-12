@@ -1,10 +1,13 @@
-namespace OpenCad2D.Persistence.Dto;
+﻿namespace OpenCad2D.Persistence.Dto;
 
 /// <summary>
 /// Entity type discriminator values used by the v1 JSON format.
 /// </summary>
 public static class EntityTypeNames
 {
+    public const string Point = "Point";
+
+    public const string Text = "Text";
     public const string Line = "Line";
     public const string Circle = "Circle";
     public const string Arc = "Arc";

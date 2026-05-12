@@ -11,6 +11,8 @@ public sealed class GripProviderRegistry
 
     public GripProviderRegistry()
     {
+        Register(new PointGripProvider());
+        Register(new TextGripProvider());
         Register(new LineGripProvider());
         Register(new CircleGripProvider());
         Register(new ArcGripProvider());

@@ -10,7 +10,10 @@ public sealed class ToolCreationContext
     public ToolCreationContext(LayerId currentLayerId)
     {
         CurrentLayerId = currentLayerId;
+        CurrentTextFormatId = TextFormatId.Standard;
     }
 
     public LayerId CurrentLayerId { get; set; }
+
+    public TextFormatId CurrentTextFormatId { get; set; }
 }

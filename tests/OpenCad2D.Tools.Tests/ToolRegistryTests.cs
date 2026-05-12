@@ -14,6 +14,8 @@ public sealed class ToolRegistryTests
         var registry = new ToolRegistry();
 
         Assert.True(registry.Contains(ToolId.Selection));
+        Assert.True(registry.Contains(ToolId.Point));
+        Assert.True(registry.Contains(ToolId.Text));
         Assert.True(registry.Contains(ToolId.Line));
         Assert.True(registry.Contains(ToolId.Rectangle));
         Assert.True(registry.Contains(ToolId.RectangleBySides));
@@ -44,11 +46,19 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(22, tools.Count);
+        Assert.Equal(24, tools.Count);
 
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Selection);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Point);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Text);
 
         Assert.Contains(
             tools,
@@ -155,7 +165,9 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
 
-        Assert.Equal(7, tools.Count);
+        Assert.Equal(9, tools.Count);
+        Assert.Contains(tools, tool => tool.Id == ToolId.Point);
+        Assert.Contains(tools, tool => tool.Id == ToolId.Text);
         Assert.Contains(tools, tool => tool.Id == ToolId.Line);
         Assert.Contains(tools, tool => tool.Id == ToolId.Rectangle);
         Assert.Contains(tools, tool => tool.Id == ToolId.RectangleBySides);
@@ -222,6 +234,28 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<SelectionTool>(tool);
         Assert.Equal("Selection", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Point_ShouldReturnPointTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Point);
+
+        Assert.IsType<PointTool>(tool);
+        Assert.Equal("Point", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Text_ShouldReturnTextTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Text);
+
+        Assert.IsType<TextTool>(tool);
+        Assert.Equal("Text", tool.Name);
     }
 
     [Fact]
@@ -456,7 +490,9 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
 
-        Assert.Equal(7, tools.Count);
+        Assert.Equal(9, tools.Count);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Point);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Text);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.RectangleBySides);

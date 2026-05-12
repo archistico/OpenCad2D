@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
@@ -44,6 +44,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             LineFormats = document.LineFormats.All
                 .Select(ToDto)
                 .ToList(),
+            TextFormats = document.TextFormats.All
+                .Select(ToDto)
+                .ToList(),
             Layers = document.Layers.All
                 .Select(ToDto)
                 .ToList(),
@@ -70,6 +73,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         CadDocument document = new();
         LineFormatCollection lineFormats = FromLineFormatDtos(dto.LineFormats);
         document.ReplaceLineFormats(lineFormats);
+
+        TextFormatCollection textFormats = FromTextFormatDtos(dto.TextFormats);
+        document.ReplaceTextFormats(textFormats);
 
         foreach (LayerDto layerDto in dto.Layers)
         {
@@ -255,6 +261,20 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         };
     }
 
+    private static TextFormatDto ToDto(TextFormat format)
+    {
+        return new TextFormatDto
+        {
+            Id = format.Id.Value,
+            Name = format.Name,
+            FontFamily = format.FontFamily,
+            Height = format.Height,
+            Color = ToHex(format.Color),
+            IsBold = format.IsBold,
+            IsItalic = format.IsItalic
+        };
+    }
+
     private static LayerDto ToDto(Layer layer)
     {
         return new LayerDto
@@ -271,6 +291,25 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
     {
         return entity switch
         {
+            PointEntity point => new PointEntityDto
+            {
+                Id = point.Id.ToString(),
+                LayerId = point.LayerId.Value,
+                X = point.Position.X,
+                Y = point.Position.Y
+            },
+
+            TextEntity text => new TextEntityDto
+            {
+                Id = text.Id.ToString(),
+                LayerId = text.LayerId.Value,
+                Text = text.Text,
+                InsertionX = text.InsertionPoint.X,
+                InsertionY = text.InsertionPoint.Y,
+                RotationDegrees = text.RotationDegrees,
+                TextFormatId = text.TextFormatId.Value
+            },
+
             LineEntity line => new LineEntityDto
             {
                 Id = line.Id.ToString(),
@@ -363,6 +402,55 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         return new LineFormatCollection(formats);
     }
 
+    private static TextFormatCollection FromTextFormatDtos(IReadOnlyCollection<TextFormatDto>? dtos)
+    {
+        if (dtos is null || dtos.Count == 0)
+        {
+            return TextFormatCollection.Default;
+        }
+
+        var formats = new List<TextFormat>();
+
+        foreach (TextFormatDto dto in dtos)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Id))
+            {
+                continue;
+            }
+
+            string name = string.IsNullOrWhiteSpace(dto.Name)
+                ? dto.Id
+                : dto.Name;
+
+            string fontFamily = string.IsNullOrWhiteSpace(dto.FontFamily)
+                ? "Arial"
+                : dto.FontFamily;
+
+            formats.Add(new TextFormat(
+                new TextFormatId(dto.Id),
+                name,
+                fontFamily,
+                dto.Height <= 0 ? 2.5 : dto.Height,
+                FromHex(dto.Color),
+                dto.IsBold,
+                dto.IsItalic));
+        }
+
+        if (formats.Count == 0)
+        {
+            return TextFormatCollection.Default;
+        }
+
+        if (!formats.Any(format => format.Id == TextFormatId.Standard))
+        {
+            formats.Insert(
+                0,
+                TextFormatCollection.Default.GetById(TextFormatId.Standard));
+        }
+
+        return new TextFormatCollection(formats);
+    }
+
     private static Layer FromDto(
         LayerDto dto,
         LineFormatCollection lineFormats)
@@ -402,6 +490,23 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
 
         return dto switch
         {
+            PointEntityDto point => new PointEntity(
+                new Point2D(point.X, point.Y),
+                id,
+                layerId),
+
+            TextEntityDto text => string.IsNullOrWhiteSpace(text.Text)
+                ? null
+                : new TextEntity(
+                    new Point2D(text.InsertionX, text.InsertionY),
+                    text.Text,
+                    text.RotationDegrees,
+                    string.IsNullOrWhiteSpace(text.TextFormatId)
+                        ? TextFormatId.Standard
+                        : new TextFormatId(text.TextFormatId),
+                    id,
+                    layerId),
+
             LineEntityDto line => new LineEntity(
                 new Point2D(line.StartX, line.StartY),
                 new Point2D(line.EndX, line.EndY),
