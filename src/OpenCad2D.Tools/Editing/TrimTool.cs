@@ -110,13 +110,13 @@ public sealed class TrimTool : ICadTool
         ToolContext context,
         PointerInfo pointer)
     {
-        EntityId? selectedId = SelectEntityByPoint(
+        EntityId? selectedId = SelectVisibleEntityByPoint(
             context,
             pointer.ModelPoint);
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select a boundary entity.");
+            return ToolResult.None("Select a visible boundary entity.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
@@ -155,13 +155,29 @@ public sealed class TrimTool : ICadTool
                 "Cannot trim before selecting a boundary entity.");
         }
 
+        if (pointer.IsControlPressed && _boundaryEntities.Count == 1)
+        {
+            EntityId? visibleBoundaryId = SelectVisibleEntityByPoint(
+                context,
+                pointer.ModelPoint);
+
+            if (visibleBoundaryId is null)
+            {
+                return ToolResult.None("Select a visible second cutting edge.");
+            }
+
+            CadEntity visibleBoundary = context.Document.Entities.GetRequired(visibleBoundaryId.Value);
+
+            return AcceptSecondBoundaryEntity(context, visibleBoundary, pointer);
+        }
+
         EntityId? selectedId = SelectEntityByPoint(
             context,
             pointer.ModelPoint);
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select an entity to trim.");
+            return ToolResult.None("Select an editable entity to trim.");
         }
 
         if (_boundaryEntities.Any(boundary => selectedId.Value.Equals(boundary.Id)))
@@ -170,11 +186,6 @@ public sealed class TrimTool : ICadTool
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
-
-        if (pointer.IsControlPressed && _boundaryEntities.Count == 1)
-        {
-            return AcceptSecondBoundaryEntity(context, entity, pointer);
-        }
 
         if (!IsSupportedEntity(entity))
         {
@@ -220,6 +231,11 @@ public sealed class TrimTool : ICadTool
         CadEntity entity,
         PointerInfo pointer)
     {
+        if (_boundaryEntities.Any(boundary => boundary.Id.Equals(entity.Id)))
+        {
+            return ToolResult.None("Second cutting edge must be different from the first cutting edge.");
+        }
+
         if (!IsSupportedEntity(entity))
         {
             return ToolResult.None("Trim supports lines, circles, arcs and polylines as cutting edges.");
@@ -374,6 +390,30 @@ public sealed class TrimTool : ICadTool
                 isLocked: source.IsLocked,
                 drawOrder: source.DrawOrder)
         };
+    }
+
+
+    private static EntityId? SelectVisibleEntityByPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        BoundingBox2D searchArea = new(
+            point.X - context.Selection.Tolerance,
+            point.Y - context.Selection.Tolerance,
+            point.X + context.Selection.Tolerance,
+            point.Y + context.Selection.Tolerance);
+
+        return context.Document.GetVisibleEntities(searchArea)
+            .Select(entity => new
+            {
+                Entity = entity,
+                Distance = point.DistanceTo(entity.GetClosestPoint(point))
+            })
+            .Where(result => result.Distance <= context.Selection.Tolerance)
+            .OrderBy(result => result.Distance)
+            .ThenByDescending(result => result.Entity.DrawOrder)
+            .Select(result => (EntityId?)result.Entity.Id)
+            .FirstOrDefault();
     }
 
     private static EntityId? SelectEntityByPoint(

@@ -106,13 +106,13 @@ public sealed class ExtendTool : ICadTool
         ToolContext context,
         PointerInfo pointer)
     {
-        EntityId? selectedId = SelectEntityByPoint(
+        EntityId? selectedId = SelectVisibleEntityByPoint(
             context,
             pointer.ModelPoint);
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select a boundary entity.");
+            return ToolResult.None("Select a visible boundary entity.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
@@ -409,6 +409,30 @@ public sealed class ExtendTool : ICadTool
                 isLocked: source.IsLocked,
                 drawOrder: source.DrawOrder)
         };
+    }
+
+
+    private static EntityId? SelectVisibleEntityByPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        BoundingBox2D searchArea = new(
+            point.X - context.Selection.Tolerance,
+            point.Y - context.Selection.Tolerance,
+            point.X + context.Selection.Tolerance,
+            point.Y + context.Selection.Tolerance);
+
+        return context.Document.GetVisibleEntities(searchArea)
+            .Select(entity => new
+            {
+                Entity = entity,
+                Distance = point.DistanceTo(entity.GetClosestPoint(point))
+            })
+            .Where(result => result.Distance <= context.Selection.Tolerance)
+            .OrderBy(result => result.Distance)
+            .ThenByDescending(result => result.Entity.DrawOrder)
+            .Select(result => (EntityId?)result.Entity.Id)
+            .FirstOrDefault();
     }
 
     private static EntityId? SelectEntityByPoint(

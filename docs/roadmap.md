@@ -389,7 +389,7 @@ Status: **feature-complete for the planned v0.4 scope**.
 
 ## v0.5 - Advanced editing and refinement
 
-Status: implementation started; Phase 3 Trim with two cutting edges completed for line targets.
+Status: implementation started; Phase 5 layer-rule regression completed for Break/Trim/Extend tools.
 
 This milestone is stability-first. It improves modify tools after the v0.4 Basic Dimensions milestone, without adding command-line workflows or Property Panel editing.
 
@@ -471,13 +471,28 @@ docs/v0.5-modify-tools-audit.md
 - [x] improved Extend on all supported entity types;
 - [x] clearer status messages for unsupported Extend operations;
 
+### Phase 5 - Layer rules and modify-tool regression
+
+- [x] Break Point ignores hidden targets;
+- [x] Break Point ignores locked targets;
+- [x] Break Segment ignores hidden targets;
+- [x] Break Segment ignores locked targets;
+- [x] Trim can use locked visible cutting edges;
+- [x] Trim ignores hidden cutting edges;
+- [x] Trim does not modify locked targets;
+- [x] Extend can use locked visible boundaries;
+- [x] Extend ignores hidden boundaries;
+- [x] Extend does not modify locked targets;
+- [x] locked visible entities are references only, never editable targets;
+- [x] hidden entities do not participate as references or targets.
+
 ### Stability & Test
 
-- [~] systematic Trim tests;
+- [x] systematic Trim tests;
 - [x] systematic Extend tests;
-- [~] systematic Break tests;
-- [ ] locked-layer behavior in all modify tools;
-- [ ] hidden-layer behavior in all modify tools;
+- [x] systematic Break tests;
+- [x] locked-layer behavior in all modify tools;
+- [x] hidden-layer behavior in all modify tools;
 - [ ] robust intersections for multi-segment entities;
 - [ ] robust intersections for near-tangent cases;
 - [ ] robust intersections for overlapping geometry;

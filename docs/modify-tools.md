@@ -246,9 +246,26 @@ Main v0.5 implementation decisions:
 ```text
 Break Point on CircleEntity: not applicable with clear message
 Break Segment on CircleEntity: remove minor arc between two picked points
-Trim with two cutting edges: 3-click workflow, edge 1 -> edge 2 -> target portion
+Trim with two cutting edges: 3-click workflow, edge 1 -> Ctrl-click edge 2 -> target portion
 Locked visible references: usable as boundary/cutting edge, not editable as targets
 Hidden entities: ignored entirely by modify tools
+```
+
+Layer behavior is now covered by regression tests:
+
+```text
+Break Point / Break Segment:
+    hidden or locked targets are ignored.
+
+Trim:
+    hidden cutting edges are ignored;
+    locked visible cutting edges can be used as references;
+    locked targets are not modified.
+
+Extend:
+    hidden boundaries are ignored;
+    locked visible boundaries can be used as references;
+    locked targets are not modified.
 ```
 
 Recommended order:

@@ -712,3 +712,18 @@ Core and tool tests cover arcs, circles, open polylines, closed polylines and ex
 ```
 
 Next v0.5 phase recommended: Trim with two cutting edges.
+
+## v0.5 modify-tool layer rules
+
+The v0.5 modify tools use this rule set:
+
+```text
+hidden entities:
+    ignored as targets and references
+
+locked visible entities:
+    valid as Trim cutting edges / Extend boundaries
+    not editable as Break/Trim/Extend targets
+```
+
+`TrimTool` and `ExtendTool` therefore use visible-entity picking for boundary/cutting-edge selection, while target selection remains based on selectable/editable entities. Regression coverage lives in `ModifyToolLayerRuleTests`.
