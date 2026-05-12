@@ -185,7 +185,8 @@ public sealed class CadCanvas : Control
             DrawEntity(
                 context,
                 entity,
-                pen);
+                pen,
+                isSelected);
         }
 
         DrawActiveToolPreview(context);
@@ -1661,7 +1662,8 @@ public sealed class CadCanvas : Control
     private void DrawEntity(
         DrawingContext context,
         CadEntity entity,
-        Pen pen)
+        Pen pen,
+        bool isSelected = false)
     {
         switch (entity)
         {
@@ -1675,7 +1677,9 @@ public sealed class CadCanvas : Control
             case TextEntity text:
                 DrawText(
                     context,
-                    text);
+                    text,
+                    pen,
+                    isSelected);
                 break;
 
             case LineEntity line:
@@ -1712,7 +1716,9 @@ public sealed class CadCanvas : Control
 
     private void DrawText(
         DrawingContext context,
-        TextEntity text)
+        TextEntity text,
+        Pen pen,
+        bool isSelected)
     {
         if (Workspace is null)
         {
@@ -1723,11 +1729,13 @@ public sealed class CadCanvas : Control
         Point insertionPoint = ToScreenPoint(text.InsertionPoint);
         double fontSize = Math.Max(1.0, _viewport.ModelLengthToScreen(format.Height));
 
-        var brush = new SolidColorBrush(
-            Color.FromRgb(
-                format.Color.R,
-                format.Color.G,
-                format.Color.B));
+        IBrush brush = isSelected && pen.Brush is not null
+            ? pen.Brush
+            : new SolidColorBrush(
+                Color.FromRgb(
+                    format.Color.R,
+                    format.Color.G,
+                    format.Color.B));
 
         var typeface = new Typeface(
             new FontFamily(format.FontFamily),
