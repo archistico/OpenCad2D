@@ -280,7 +280,28 @@ Dimension limitations in v0.4:
 - dimensions are not associative;
 - there is no dimension grip editing yet;
 - dimension styles are persisted but do not yet have a dedicated manager window;
-- Property Panel support is read-only.
+- Property Panel v2 can edit dimension style and text override; geometric dimension editing remains primarily tool/grip driven.
+
+---
+
+## Property Panel v2
+
+The Property Panel is editable for supported single-selection properties.
+
+Editable entities/properties include:
+
+- `PointEntity`: position;
+- `LineEntity`: start and end points;
+- `CircleEntity`: center and radius;
+- `ArcEntity`: center, radius, start angle and end angle;
+- `TextEntity`: text value, insertion point, rotation and text format;
+- `PolylineEntity`: common state such as closed/open;
+- dimensions: dimension style and text override;
+- common layer assignment where applicable.
+
+All successful edits are committed through undoable commands. The UI does not mutate entities directly.
+
+Polyline vertex editing remains handled by grip editing. This keeps the Property Panel compact and avoids duplicating the existing vertex-grip workflow.
 
 ---
 

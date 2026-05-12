@@ -277,7 +277,7 @@ v0.6 will expand the existing typed point input into a real command line.
 
 The command line should support command activation through command names and aliases without duplicating tool logic. Typed commands should activate existing tools; typed coordinates should be submitted to the active tool through the same input path used by mouse picks.
 
-Planned coordinate syntax:
+Supported coordinate syntax:
 
 ```text
 100,50      absolute point
@@ -288,7 +288,7 @@ Planned coordinate syntax:
 
 Numeric parsing should be culture-invariant. The decimal separator is `.` and the coordinate separator is `,`.
 
-Planned alias examples:
+Supported alias examples:
 
 ```text
 L      -> LINE
@@ -304,7 +304,7 @@ DIA    -> Diameter Dimension
 ANG    -> Angular Dimension
 ```
 
-Ambiguous one-letter aliases such as `R` and `D` should be avoided until a clear shortcut policy exists.
+Ambiguous one-letter aliases such as `R` and `D` are deliberately avoided for now.
 
 See:
 
@@ -457,3 +457,71 @@ Distance-angle input: not stored as repeatable command
 Invalid command: not stored as repeatable command
 No previous command: reports "No command to repeat."
 ```
+
+
+---
+
+## v0.6 command-line final behavior
+
+The v0.6 command line supports both tool activation and precise point input.
+
+Tool activation examples:
+
+```text
+L / LINE                    -> Line
+PL / POLYLINE               -> Polyline
+C / CIRCLE                  -> Circle
+A / ARC                     -> Arc
+T / TEXT                    -> Text
+PO / POINT                  -> Point
+HDIM / H                    -> Horizontal Dimension
+VDIM / V                    -> Vertical Dimension
+ADIM / AL                   -> Aligned Dimension
+RAD / RDIM                  -> Radius Dimension
+DIA / DDIM                  -> Diameter Dimension
+ANG / ANGDIM                -> Angular Dimension
+TR / TRIM                   -> Trim
+EX / EXTEND                 -> Extend
+BP / BREAKPOINT             -> Break Point
+BS / BREAKSEGMENT           -> Break Segment
+DI / DISTANCE               -> Measure Distance
+ME / MEASURE                -> Measure Entity
+```
+
+Point input forms:
+
+```text
+100,50      absolute model point
+@100,0      relative point from the current tool base point
+50          direct distance in current pointer/constrained direction
+100<45      distance plus CAD-model angle from the current base point
+```
+
+Command-line coordinate input is routed through the active tool. It does not duplicate drawing logic.
+
+Coordinate input is intentionally not stored as the repeatable command. The repeatable command is the last valid tool activation.
+
+`Enter` with an empty command line repeats the last valid command. Right-click on the canvas does the same when the workspace is idle. If a multi-step command is already in progress, right-click does not interrupt it.
+
+`Esc` with an empty command line cancels the active command.
+
+---
+
+## v0.6 Property Panel v2 final behavior
+
+Property Panel edits are undoable document mutations.
+
+Supported editable properties include:
+
+- `PointEntity`: X/Y position;
+- `LineEntity`: start/end coordinates;
+- `CircleEntity`: center/radius;
+- `ArcEntity`: center/radius/start angle/end angle;
+- `TextEntity`: value, insertion point, rotation and text format;
+- `PolylineEntity`: common state such as closed/open;
+- dimensions: dimension style and text override;
+- common layer assignment where applicable.
+
+The panel validates input before applying edits. Invalid numeric values, invalid radii, empty text values and invalid geometry are rejected before a command is executed.
+
+All successful edits are applied through command history, normally by replacing the selected entity with a modified copy. This keeps undo/redo, dirty-state tracking and spatial-index updates consistent.

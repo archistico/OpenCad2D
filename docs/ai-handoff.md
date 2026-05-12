@@ -389,7 +389,7 @@ Polyline and rectangle grip editing is implemented. Generic polylines support ve
 
 ## Property Panel status
 
-Property Panel v1 is implemented and read-only.
+Property Panel v2 is implemented and editable for supported single-selection properties.
 
 It displays:
 
@@ -399,7 +399,7 @@ It displays:
 - single polyline properties;
 - multiple-selection summary.
 
-Do not add editing fields to the property panel until modifications can be routed through undoable commands.
+Property edits must continue to be routed through undoable commands, usually entity replacement via command history. Do not mutate entities directly from the UI.
 
 ---
 
@@ -874,20 +874,47 @@ Deferred to the next v0.6 phase:
 - arc, polyline and dimension property editing.
 
 
-## v0.6 Phase 7 Property Panel v2 complete completed
+---
 
-The Property Panel now covers the remaining main entity families. All successful edits still go through `ReplaceEntitiesCommand`, so undo/redo remains centralized in the normal command history.
+## v0.6 completed state
 
-Added in this phase:
+The v0.6 milestone is complete.
 
-- common layer assignment editing through the `Layer id` row;
-- `TextEntity` text format editing through the `Text format` row;
-- `ArcEntity` editing for center X/Y, radius, start angle and end angle;
-- `PolylineEntity` open/closed editing through the `Closed` row;
-- dimension style editing through the `Dimension style` row;
-- dimension text override editing through the `Text override` row. Empty value, or `<automatic>`, clears the override;
-- tests for representative undo/redo flows across layer, arc, text format, polyline and dimension override edits.
+Command line:
 
-Polyline vertex editing remains intentionally delegated to grip editing. The Property Panel exposes the high-level polyline state only.
+- `CommandAliasRegistry` resolves command names and aliases before coordinate parsing;
+- command activation is case-insensitive;
+- supported point input includes absolute `x,y`, relative `@x,y`, direct distance and distance-angle `distance<angle`;
+- distance-angle uses CAD model orientation: `0°` right, `90°` up;
+- typed coordinate input bypasses snap/ortho/polar side effects so numeric values stay exact;
+- command history stores valid tool activations, not point/coordinate input;
+- empty `Enter` repeats the last valid command;
+- right-click on the canvas repeats the last valid command when the workspace is idle;
+- `Esc` cancels the active tool when the command input is empty.
 
-Next recommended phase: v0.6 phase 8, final polish and release documentation.
+Property Panel v2:
+
+- editable rows use text input plus Apply;
+- edits are validated before application;
+- successful edits are committed through undoable command history, normally through `ReplaceEntitiesCommand`;
+- supported properties include Point position, Line start/end, Circle center/radius, Arc center/radius/start/end angles, Text value/insertion/rotation/text format, common Polyline state, layer assignment, DimensionStyle and dimension text override;
+- detailed polyline vertex editing remains handled by grip editing.
+
+Release notes are in:
+
+```text
+docs/release-v0.6.md
+```
+
+Next milestone:
+
+```text
+v0.7 - Interoperability: DXF import and PDF export
+```
+
+Recommended v0.7 starting point:
+
+1. audit current DXF exporter and document entity coverage;
+2. design a minimal DXF importer for layers, line formats and base entities;
+3. keep unsupported DXF entities as skip + readable log;
+4. then design PDF export with page format, scale and margins.

@@ -51,8 +51,8 @@ The application already supports a functional CAD workflow:
 - Line Format Manager;
 - Text Format Manager;
 - Layer Manager with line format selection;
-- read-only Property Panel v1;
-- command line coordinate input;
+- editable Property Panel v2 with undoable edits for supported entity properties;
+- real command line with tool aliases, command history, absolute/relative coordinates, direct distance and distance-angle input;
 - direct distance entry;
 - non-mutating measure tools for distance, entity properties, angles and closed-polyline areas;
 - Ortho mode and Polar Tracking with selectable angle steps (`Off`, `90°`, `45°`, `30°`, `15°`);
@@ -76,7 +76,7 @@ File command bar     New / Open / Save / Save As / current file name / dirty mar
 Top CAD bar          layer selector, layer state, Layers..., Line formats..., Text formats..., Grid..., Polar selector, Undo/Redo, Extents, Props, active command
 Left tool panel      two columns: Select / Draw / Dimension / Measure and Edit
 Center canvas        drawing area
-Right panel          optional read-only Property Panel
+Right panel          optional editable Property Panel v2
 Bottom snap bar      object snapping and legacy Ortho controls
 Command line         typed point, distance and command input
 Status bar           coordinates, snap state, measurements, rendered count and messages
@@ -132,6 +132,59 @@ Viewport state is saved and restored with the drawing. This includes pan and zoo
 
 ---
 
+
+## Command line
+
+OpenCad2D includes a CAD-style command line for tool activation and precise point input.
+
+Supported command-line behavior:
+
+- tool activation by command name or alias, for example `LINE`, `L`, `CIRCLE`, `C`, `TRIM`, `TR`, `HDIM` and `ANG`;
+- case-insensitive alias resolution through `CommandAliasRegistry`;
+- absolute point input, for example `100,50`;
+- relative point input from the current tool base point, for example `@100,0`;
+- direct distance input in the current cursor/constrained direction, for example `50`;
+- distance-angle input in CAD model coordinates, for example `100<45`;
+- command history for valid tool activations;
+- `Enter` on an empty command line repeats the last valid command;
+- right-click on the canvas repeats the last valid command when the workspace is idle;
+- `Esc` cancels the active tool when the command input is empty.
+
+The decimal separator is always `.`. The comma is reserved for separating X/Y coordinates.
+
+Distance-angle input uses CAD orientation:
+
+```text
+0°   = right
+90°  = up
+180° = left
+270° = down
+```
+
+Typed coordinate input is submitted to the same tools used by mouse input. It is also protected from accidental snap/ortho/polar alteration so exact numeric values remain exact.
+
+---
+
+## Property Panel v2
+
+The right Property Panel is now editable for the supported properties of selected entities.
+
+Supported edit groups include:
+
+- point position;
+- line start/end coordinates;
+- circle center/radius;
+- arc center/radius/start/end angles;
+- text value, insertion point, rotation and text format;
+- common polyline state such as `Closed`;
+- layer assignment;
+- dimension style and dimension text override.
+
+Detailed polyline vertex editing remains intentionally handled by grip editing instead of a vertex table in the Property Panel.
+
+All Property Panel edits are committed through undoable commands, primarily `ReplaceEntitiesCommand`, so undo/redo, dirty-state tracking and spatial-index consistency remain intact.
+
+---
 
 ## SVG export
 

@@ -518,9 +518,15 @@ docs/release-v0.5.md
 
 ## v0.6 - Real command line and Property Panel v2
 
-Status: in progress. Phase 0 audit/design, Phase 1 command activation, Phase 2 absolute coordinate pipeline, Phase 3 relative/direct distance, Phase 4 distance-angle input, Phase 5 repeat-last-command, Phase 6 Property Panel v2 base and Phase 7 Property Panel v2 complete are completed.
+Status: completed.
 
-Detailed planning document:
+Release notes:
+
+```text
+docs/release-v0.6.md
+```
+
+Detailed planning and implementation notes:
 
 ```text
 docs/v0.6-command-line-property-panel-plan.md
@@ -528,10 +534,10 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ### Architectural decisions
 
-- [x] mouse input and command-line input should feed the same tool implementations;
-- [x] command activation should use a dedicated alias registry/service instead of hardcoded UI logic;
-- [x] command parsing should stay independent from Avalonia controls;
-- [x] Property Panel v2 edits must be committed through undoable commands;
+- [x] mouse input and command-line input feed the same tool implementations;
+- [x] command activation uses `CommandAliasRegistry` instead of hardcoded UI-only logic;
+- [x] command parsing stays independent from Avalonia controls;
+- [x] Property Panel v2 edits are committed through undoable commands;
 - [x] decimal point `.` is the only decimal separator for command-line numeric input;
 - [x] comma `,` separates X/Y coordinates;
 - [x] distance-angle syntax uses CAD model orientation: `0°` right, `90°` up.
@@ -571,6 +577,7 @@ docs/v0.6-command-line-property-panel-plan.md
 - [x] support decimal point values;
 - [x] reject invalid coordinate text clearly;
 - [x] submit parsed points to the active tool;
+- [x] command-line points bypass snap/ortho/polar so typed coordinates remain exact;
 - [x] verify Line/Circle/Point workflows with command-line coordinates;
 - [x] tests for valid absolute coordinates;
 - [x] tests for invalid coordinates;
@@ -592,6 +599,8 @@ docs/v0.6-command-line-property-panel-plan.md
 ### Phase 4 - Distance plus angle
 
 - [x] parse `distance<angle`;
+- [x] support spaces around `<`;
+- [x] support decimal distance and angle values;
 - [x] support negative angles;
 - [x] support angles over 360°;
 - [x] use CAD model orientation, not screen orientation;
@@ -620,7 +629,6 @@ docs/v0.6-command-line-property-panel-plan.md
 - [x] edit `LineEntity` start/end;
 - [x] edit `CircleEntity` center/radius;
 - [x] edit `TextEntity` content, insertion point and rotation;
-- [x] edit `TextEntity` text format from the panel;
 - [x] validate and parse numeric input with invariant decimal point;
 - [x] apply edits through command history using `ReplaceEntitiesCommand`;
 - [x] refresh the panel after a successful edit;
@@ -629,6 +637,7 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ### Phase 7 - Property Panel v2 complete
 
+- [x] edit `TextEntity` text format from the panel;
 - [x] edit `ArcEntity` properties;
 - [x] edit common `PolylineEntity` properties;
 - [x] keep detailed polyline vertex editing primarily in grips;
@@ -642,14 +651,16 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ### Phase 8 - Final polish and release documentation
 
-- [ ] command-line UI polish;
-- [ ] clearer prompts and status feedback;
-- [ ] update `README.md`;
-- [ ] update `docs/tools.md`;
-- [ ] update `docs/commands.md`;
-- [ ] update `docs/ai-handoff.md`;
-- [ ] create `docs/release-v0.6.md`;
-- [ ] mark v0.6 completed in this roadmap.
+- [x] command-line behavior documented;
+- [x] coordinate syntax documented;
+- [x] repeat-last-command documented;
+- [x] Property Panel v2 behavior documented;
+- [x] update `README.md`;
+- [x] update `docs/tools.md`;
+- [x] update `docs/commands.md`;
+- [x] update `docs/ai-handoff.md`;
+- [x] create `docs/release-v0.6.md`;
+- [x] mark v0.6 completed in this roadmap.
 
 ---
 
