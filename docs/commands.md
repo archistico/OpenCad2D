@@ -268,3 +268,88 @@ Replace an entity with an extended version that reaches a boundary.
 Uses `ModifyEntitiesCommand` for consistency with the other modify tools. Current targets include lines, arcs and open polylines; circles are not extended because they are closed.
 
 All three must respect locked-layer protection by using `CadDocument` mutation APIs.
+
+---
+
+## v0.6 command-line planning notes
+
+v0.6 will expand the existing typed point input into a real command line.
+
+The command line should support command activation through command names and aliases without duplicating tool logic. Typed commands should activate existing tools; typed coordinates should be submitted to the active tool through the same input path used by mouse picks.
+
+Planned coordinate syntax:
+
+```text
+100,50      absolute point
+@100,50     relative point
+100         direct distance in current pointer/constrained direction
+100<45      distance and CAD-model angle
+```
+
+Numeric parsing should be culture-invariant. The decimal separator is `.` and the coordinate separator is `,`.
+
+Planned alias examples:
+
+```text
+L      -> LINE
+C      -> CIRCLE
+PL     -> POLYLINE
+TR     -> TRIM
+EX     -> EXTEND
+HDIM   -> Horizontal Dimension
+VDIM   -> Vertical Dimension
+ADIM   -> Aligned Dimension
+RAD    -> Radius Dimension
+DIA    -> Diameter Dimension
+ANG    -> Angular Dimension
+```
+
+Ambiguous one-letter aliases such as `R` and `D` should be avoided until a clear shortcut policy exists.
+
+See:
+
+```text
+docs/v0.6-command-line-property-panel-plan.md
+```
+
+---
+
+## v0.6 Property Panel command rule
+
+Property Panel v2 edits must be undoable.
+
+A property edit should create or trigger a command, usually by replacing the selected entity with a modified copy.
+
+Correct flow:
+
+```text
+Property editor value
+-> validation/parsing
+-> modified entity copy
+-> ReplaceEntitiesCommand or dedicated command
+-> CommandHistory
+```
+
+The UI must not directly mutate entity objects. This protects undo/redo, dirty-state tracking, layer validation and spatial-index consistency.
+
+
+---
+
+## Command-line tool activation
+
+v0.6 introduces command-line activation for tools. This is separate from undoable document commands: typing `LINE` or `L` activates `LineTool`; it does not directly mutate the document.
+
+Alias resolution is handled by `CommandAliasRegistry` in `OpenCad2D.Tools.Input` before the existing coordinate parser runs. This preserves existing typed coordinate behavior such as `100,50`, `@10,0` and direct distance input.
+
+Examples:
+
+```text
+L       -> Line
+C       -> Circle
+TR      -> Trim
+EX      -> Extend
+HDIM    -> Horizontal Dimension
+ANG     -> Angular Dimension
+```
+
+Unknown textual commands return a clear message and do not change the active tool.

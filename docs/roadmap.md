@@ -518,29 +518,134 @@ docs/release-v0.5.md
 
 ## v0.6 - Real command line and Property Panel v2
 
-### Feature & UX
+Status: in progress. Phase 0 audit/design and Phase 1 command activation completed.
 
-- [ ] real command aliases;
-- [ ] absolute coordinates through command input;
-- [ ] relative coordinates through command input;
-- [ ] command history;
-- [ ] contextual feedback;
-- [ ] clear command errors;
-- [ ] right-click to repeat last command;
-- [ ] editable Property Panel v2;
-- [ ] edit properties for all core entities;
-- [ ] edit text content, rotation and text format;
-- [ ] edit layer and common entity properties.
+Detailed planning document:
 
-### Stability & Test
+```text
+docs/v0.6-command-line-property-panel-plan.md
+```
 
-- [ ] all Property Panel edits must be undoable commands;
-- [ ] tests for empty input;
-- [ ] tests for invalid input;
-- [ ] tests for `Esc`;
-- [ ] tests for `Enter`;
-- [ ] tests for command repetition;
-- [ ] tests for text property editing.
+### Architectural decisions
+
+- [x] mouse input and command-line input should feed the same tool implementations;
+- [x] command activation should use a dedicated alias registry/service instead of hardcoded UI logic;
+- [x] command parsing should stay independent from Avalonia controls;
+- [x] Property Panel v2 edits must be committed through undoable commands;
+- [x] decimal point `.` is the only decimal separator for command-line numeric input;
+- [x] comma `,` separates X/Y coordinates;
+- [x] distance-angle syntax uses CAD model orientation: `0°` right, `90°` up.
+
+### Phase 0 - Command line and Property Panel audit/design
+
+- [x] define v0.6 scope;
+- [x] define command-line architecture rules;
+- [x] define coordinate syntax;
+- [x] define decimal separator rule;
+- [x] define initial alias table;
+- [x] define repeat-last-command behavior;
+- [x] define Property Panel v2 undo rule;
+- [x] define implementation phases;
+- [x] document out-of-scope items.
+
+### Phase 1 - Command activation by alias
+
+- [x] add `CommandAliasRegistry`;
+- [x] connect command-line submission to the UI;
+- [x] activate tools by command name;
+- [x] activate tools by alias;
+- [x] make matching case-insensitive;
+- [x] unknown command produces clear feedback;
+- [x] valid command activation is added to command history;
+- [x] existing typed coordinate behavior remains intact;
+- [x] `Esc` on an empty command line cancels the active tool;
+- [x] tests for alias resolution;
+- [x] tests for unknown commands;
+- [x] tests for empty input;
+- [x] tests for command history.
+
+### Phase 2 - Absolute coordinate pipeline
+
+- [ ] centralize `x,y` parsing;
+- [ ] support whitespace around the comma;
+- [ ] support decimal point values;
+- [ ] reject invalid coordinate text clearly;
+- [ ] submit parsed points to the active tool;
+- [ ] verify Line/Polyline/Rectangle/Circle/Point workflows;
+- [ ] tests for valid absolute coordinates;
+- [ ] tests for invalid coordinates;
+- [ ] tests for culture-invariant parsing.
+
+### Phase 3 - Relative coordinates and direct distance
+
+- [ ] parse `@x,y` relative coordinates;
+- [ ] compute relative point from the current tool base point;
+- [ ] preserve direct distance entry;
+- [ ] use current pointer/constrained direction for direct distance;
+- [ ] clear error when no base point exists;
+- [ ] clear error when distance direction is unavailable;
+- [ ] tests for relative input;
+- [ ] tests for direct distance input;
+- [ ] tests for invalid relative input.
+
+### Phase 4 - Distance plus angle
+
+- [ ] parse `distance<angle`;
+- [ ] support negative angles;
+- [ ] support angles over 360°;
+- [ ] use CAD model orientation, not screen orientation;
+- [ ] tests for `100<0`;
+- [ ] tests for `100<90`;
+- [ ] tests for `100<180`;
+- [ ] tests for `100<-90`;
+- [ ] tests for invalid polar input.
+
+### Phase 5 - Repeat last command
+
+- [ ] track last valid tool activation;
+- [ ] do not treat coordinate input as the last command;
+- [ ] `Enter` on an empty command line repeats the last command when appropriate;
+- [ ] right-click repeats the last command when the workspace is idle;
+- [ ] right-click does not interrupt active multi-step tools unexpectedly;
+- [ ] tests for repeat by Enter;
+- [ ] tests for repeat by right-click;
+- [ ] tests for no repeat after invalid command.
+
+### Phase 6 - Property Panel v2 base
+
+- [ ] introduce editable property models;
+- [ ] edit `PointEntity` position;
+- [ ] edit `LineEntity` start/end;
+- [ ] edit `CircleEntity` center/radius;
+- [ ] edit `TextEntity` content, insertion point, rotation and text format;
+- [ ] validate and parse numbers/coordinates;
+- [ ] apply edits through command history;
+- [ ] tests for undo/redo for each edited entity type;
+- [ ] tests for invalid values.
+
+### Phase 7 - Property Panel v2 complete
+
+- [ ] edit `ArcEntity` properties;
+- [ ] edit common `PolylineEntity` properties;
+- [ ] keep detailed polyline vertex editing primarily in grips;
+- [ ] edit common dimension properties;
+- [ ] edit dimension style id;
+- [ ] edit dimension text override where available;
+- [ ] edit layer assignment;
+- [ ] edit style/format references where appropriate;
+- [ ] test undo/redo coverage;
+- [ ] test locked-layer edit rejection.
+
+### Phase 8 - Final polish and release documentation
+
+- [ ] command-line UI polish;
+- [ ] clearer prompts and status feedback;
+- [ ] update `README.md`;
+- [ ] update `docs/tools.md`;
+- [ ] update `docs/commands.md`;
+- [ ] update `docs/ai-handoff.md`;
+- [ ] create `docs/release-v0.6.md`;
+- [ ] mark v0.6 completed in this roadmap.
 
 ---
 

@@ -31,6 +31,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
     private readonly CommandInputParser _commandInputParser = new();
+    private readonly CommandAliasRegistry _commandAliasRegistry = CommandAliasRegistry.CreateDefault();
+    private readonly List<string> _commandLineHistory = new();
     private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
     private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
     private readonly ISvgExporter _svgExporter = new SvgExporter();
@@ -67,6 +69,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public CadWorkspace Workspace { get; }
 
     public string? CurrentFilePath => _currentFilePath;
+
+    public IReadOnlyList<string> CommandLineHistory => _commandLineHistory;
 
     public string CurrentFileName => string.IsNullOrWhiteSpace(_currentFilePath)
         ? "Untitled"
@@ -426,11 +430,35 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ToolResult SubmitCommandInput(string? input)
     {
-        CommandInputParseResult parseResult = _commandInputParser.Parse(input);
+        string normalizedInput = input?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(normalizedInput))
+        {
+            ToolResult emptyResult = ToolResult.None("Command input cannot be empty.");
+            SetLastResult(emptyResult);
+            NotifyCommandInputStateChanged();
+            return emptyResult;
+        }
+
+        if (_commandAliasRegistry.TryResolve(normalizedInput, out ToolId toolId))
+        {
+            _commandLineHistory.Add(normalizedInput);
+
+            ToolResult result = SetTool(toolId);
+
+            NotifyCommandInputStateChanged();
+            return result;
+        }
+
+        CommandInputParseResult parseResult = _commandInputParser.Parse(normalizedInput);
 
         if (!parseResult.IsValid)
         {
-            ToolResult invalidResult = ToolResult.None(parseResult.ErrorMessage);
+            string message = IsLikelyCommandAlias(normalizedInput)
+                ? $"Unknown command or alias '{normalizedInput}'."
+                : parseResult.ErrorMessage ?? "Invalid command input.";
+
+            ToolResult invalidResult = ToolResult.None(message);
             SetLastResult(invalidResult);
             NotifyCommandInputStateChanged();
             return invalidResult;
@@ -444,13 +472,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return invalidResult;
         }
 
-        ToolResult result = Workspace.SubmitPointFromCommandLine(worldPoint);
+        ToolResult pointResult = Workspace.SubmitPointFromCommandLine(worldPoint);
 
-        SetLastResult(result);
+        SetLastResult(pointResult);
         NotifyDocumentStateChanged();
         NotifyCommandInputStateChanged();
 
-        return result;
+        return pointResult;
+    }
+
+    private static bool IsLikelyCommandAlias(string input)
+    {
+        return input.All(character =>
+            char.IsLetter(character) ||
+            char.IsDigit(character) ||
+            character == '_');
     }
 
     private bool TryResolveCommandInputPoint(
@@ -904,7 +940,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CommandPromptText),
             nameof(MeasurementText),
             nameof(StatusText),
-            nameof(LastMessage));
+            nameof(LastMessage),
+            nameof(CommandLineHistory));
     }
 
     private void NotifyLayerStateChanged()

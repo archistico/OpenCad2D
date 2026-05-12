@@ -1102,9 +1102,20 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.Escape && !string.IsNullOrEmpty(CommandInputTextBox.Text))
+        if (e.Key == Key.Escape)
         {
-            ClearCommandInputText();
+            if (!string.IsNullOrEmpty(CommandInputTextBox.Text))
+            {
+                ClearCommandInputText();
+            }
+            else
+            {
+                _viewModel.Escape();
+                RefreshStatus();
+                CadCanvas.ClearSnapMarker();
+                CadCanvas.InvalidateVisual();
+            }
+
             e.Handled = true;
         }
     }
@@ -1173,9 +1184,20 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.Escape && !string.IsNullOrEmpty(CommandInputTextBox.Text))
+        if (e.Key == Key.Escape)
         {
-            ClearCommandInputText();
+            if (!string.IsNullOrEmpty(CommandInputTextBox.Text))
+            {
+                ClearCommandInputText();
+            }
+            else
+            {
+                _viewModel.Escape();
+                RefreshStatus();
+                CadCanvas.ClearSnapMarker();
+                CadCanvas.InvalidateVisual();
+            }
+
             e.Handled = true;
         }
     }
@@ -1381,12 +1403,12 @@ public partial class MainWindow : Window
 
         foreach (char character in text)
         {
-            if (char.IsDigit(character))
+            if (char.IsLetterOrDigit(character))
             {
                 continue;
             }
 
-            if (character is ',' or '.' or '-' or '+' or '@' or ' ')
+            if (character is ',' or '.' or '-' or '+' or '@' or '_' or ' ')
             {
                 continue;
             }

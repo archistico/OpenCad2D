@@ -788,3 +788,52 @@ v0.6 - Real command line and Property Panel v2
 ```
 
 Recommended starting point for v0.6: design the command input architecture before writing code, because it affects tool activation, aliases, coordinate parsing, command history, contextual prompts and right-click repeat-last-command behavior.
+
+---
+
+## v0.6 planning state
+
+The next milestone is `v0.6 - Real command line and Property Panel v2`.
+
+Phase 0 planning is complete and documented in:
+
+```text
+docs/v0.6-command-line-property-panel-plan.md
+```
+
+Key decisions:
+
+- command-line input and mouse input should feed the same tool implementations;
+- command activation should be handled through a dedicated alias registry/service;
+- command parsing should remain independent from Avalonia controls;
+- Property Panel v2 edits must be undoable commands;
+- coordinate syntax is:
+
+```text
+100,50      absolute point
+@100,50     relative point
+100         direct distance
+100<45      distance plus CAD-model angle
+```
+
+- decimal separator is always `.`;
+- comma separates X/Y;
+- avoid ambiguous aliases such as `R` and `D` at first;
+- planned first implementation phase is command activation by alias, not coordinate redesign.
+
+Recommended next implementation phase:
+
+```text
+v0.6 Phase 1 - Command activation by alias
+```
+
+Phase 1 should add the alias registry/service, connect command-line submission to tool activation, preserve existing coordinate input behavior and add tests for aliases, unknown commands, empty input and command history.
+
+
+---
+
+## Current state after v0.6 phase 1
+
+Command-line activation by alias has been added. `CommandAliasRegistry` resolves tool names and aliases before coordinate parsing. The UI command input now supports activating tools with aliases such as `L`, `C`, `TR`, `EX`, `HDIM`, `ANG`, etc. Unknown textual commands produce a clear message, valid tool activations are stored in `MainWindowViewModel.CommandLineHistory`, and existing coordinate input remains intact.
+
+Next recommended phase: v0.6 phase 2, absolute coordinate pipeline. The project already had basic `x,y` parsing before v0.6; the next phase should centralize and strengthen this pipeline, add additional tests, and verify the workflow against drawing tools.
