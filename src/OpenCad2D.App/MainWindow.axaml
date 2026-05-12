@@ -528,16 +528,33 @@
                                         <ItemsControl ItemsSource="{Binding Rows}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="props:PropertyRowViewModel">
-                                                    <Grid ColumnDefinitions="105,*"
+                                                    <Grid ColumnDefinitions="95,*,Auto"
                                                           ColumnSpacing="8"
                                                           Margin="0,2">
                                                         <TextBlock Grid.Column="0"
                                                                    Classes="property-name"
+                                                                   VerticalAlignment="Center"
                                                                    Text="{Binding Name}" />
 
                                                         <TextBlock Grid.Column="1"
                                                                    Classes="property-value"
+                                                                   VerticalAlignment="Center"
+                                                                   IsVisible="{Binding !IsEditable}"
                                                                    Text="{Binding Value}" />
+
+                                                        <TextBox Grid.Column="1"
+                                                                 MinHeight="26"
+                                                                 Padding="5,2"
+                                                                 IsVisible="{Binding IsEditable}"
+                                                                 Text="{Binding EditableValue, Mode=TwoWay}" />
+
+                                                        <Button Grid.Column="2"
+                                                                Classes="global-button"
+                                                                MinWidth="48"
+                                                                Padding="6,2"
+                                                                Content="Apply"
+                                                                IsVisible="{Binding IsEditable}"
+                                                                Command="{Binding ApplyCommand}" />
                                                     </Grid>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>

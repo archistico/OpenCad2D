@@ -624,9 +624,27 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public void RefreshPropertyPanel()
     {
-        _propertyPanel = _propertyPanelBuilder.Build(Workspace);
+        _propertyPanel = _propertyPanelBuilder.Build(
+            Workspace,
+            SetMessage,
+            RefreshAfterPropertyEdit);
 
         OnPropertiesChanged(nameof(PropertyPanel));
+    }
+
+
+    private void RefreshAfterPropertyEdit()
+    {
+        RefreshPropertyPanel();
+
+        OnPropertiesChanged(
+            nameof(EntityCount),
+            nameof(SelectedCount),
+            nameof(IsDirty),
+            nameof(TitleText),
+            nameof(FileStatusText),
+            nameof(LastMessage),
+            nameof(StatusText));
     }
 
     public void SetMousePosition(Point2D point)

@@ -518,7 +518,7 @@ docs/release-v0.5.md
 
 ## v0.6 - Real command line and Property Panel v2
 
-Status: in progress. Phase 0 audit/design, Phase 1 command activation, Phase 2 absolute coordinate pipeline, Phase 3 relative/direct distance, Phase 4 distance-angle input and Phase 5 repeat-last-command completed.
+Status: in progress. Phase 0 audit/design, Phase 1 command activation, Phase 2 absolute coordinate pipeline, Phase 3 relative/direct distance, Phase 4 distance-angle input, Phase 5 repeat-last-command and Phase 6 Property Panel v2 base completed.
 
 Detailed planning document:
 
@@ -615,15 +615,17 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ### Phase 6 - Property Panel v2 base
 
-- [ ] introduce editable property models;
-- [ ] edit `PointEntity` position;
-- [ ] edit `LineEntity` start/end;
-- [ ] edit `CircleEntity` center/radius;
-- [ ] edit `TextEntity` content, insertion point, rotation and text format;
-- [ ] validate and parse numbers/coordinates;
-- [ ] apply edits through command history;
-- [ ] tests for undo/redo for each edited entity type;
-- [ ] tests for invalid values.
+- [x] introduce editable property row models;
+- [x] edit `PointEntity` position;
+- [x] edit `LineEntity` start/end;
+- [x] edit `CircleEntity` center/radius;
+- [x] edit `TextEntity` content, insertion point and rotation;
+- [ ] edit `TextEntity` text format from the panel;
+- [x] validate and parse numeric input with invariant decimal point;
+- [x] apply edits through command history using `ReplaceEntitiesCommand`;
+- [x] refresh the panel after a successful edit;
+- [x] tests for undo/redo for the first edited entity types;
+- [x] tests for invalid values.
 
 ### Phase 7 - Property Panel v2 complete
 

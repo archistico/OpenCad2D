@@ -845,3 +845,30 @@ Phase 4 added CAD-style distance-angle input such as `100<45`. The parser return
 Phase 5 added repeat-last-command. `MainWindowViewModel` tracks the last valid tool activation separately from coordinate/history input. Empty command-line submission repeats that tool. Right-click on the canvas raises `RepeatLastCommandRequested`, handled by `MainWindow`, and calls `RepeatLastCommandFromCanvas()`. That path refuses to repeat when a point-based command already has `Workspace.Context.CurrentBasePoint`, so right-click does not interrupt an active multi-step command. Coordinate inputs, relative inputs, direct distance and distance-angle inputs are not repeatable commands.
 
 Next recommended phase: v0.6 phase 6, Property Panel v2 base editing.
+
+
+## v0.6 Phase 6 Property Panel v2 base completed
+
+The Property Panel now supports a first editable set of entities. Editable rows show a text box and an `Apply` button. Successful edits are committed through `ReplaceEntitiesCommand`, so undo/redo works through the normal command history.
+
+Supported in this phase:
+
+- `PointEntity`: X/Y position;
+- `LineEntity`: start/end X/Y coordinates;
+- `CircleEntity`: center X/Y and radius;
+- `TextEntity`: value, insertion X/Y and rotation.
+
+Validation rules:
+
+- numeric values use invariant parsing and the `.` decimal separator;
+- `10,5` is rejected as a number because comma is reserved for coordinate input;
+- circle radius must be greater than zero;
+- text value cannot be empty;
+- line start and end points cannot become equal;
+- hidden or locked selected entities cannot be edited from the panel.
+
+Deferred to the next v0.6 phase:
+
+- text format selection from the panel;
+- layer and format references;
+- arc, polyline and dimension property editing.
