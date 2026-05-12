@@ -22,8 +22,8 @@
             <Setter Property="Padding" Value="7,4" />
             <Setter Property="FontSize" Value="11" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="MinWidth" Value="145" />
-            <Setter Property="Width" Value="145" />
+            <Setter Property="MinWidth" Value="110" />
+            <Setter Property="Width" Value="110" />
         </Style>
 
         <Style Selector="Button.tool-button.active-tool">
@@ -288,7 +288,7 @@
 
             <!-- Left tool panel -->
             <Border Grid.Column="0"
-                    Width="318"
+                    Width="248"
                     Background="#202020"
                     BorderBrush="#3A3A3A"
                     BorderThickness="0,0,1,0"
@@ -296,7 +296,7 @@
 
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
-                    <Grid ColumnDefinitions="145,145"
+                    <Grid ColumnDefinitions="110,110"
                           ColumnSpacing="8">
 
                         <StackPanel Grid.Column="0"
