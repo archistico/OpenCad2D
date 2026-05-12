@@ -80,3 +80,83 @@ public sealed class CadTrimServiceTests
         Assert.Equal(new Point2D(5, 0), polyline.Vertices[^1]);
     }
 }
+
+public sealed class CadTrimServiceTwoBoundaryTests
+{
+    [Fact]
+    public void TrimLine_ByTwoBoundaries_WhenPickedMiddle_ShouldReturnTwoOuterFragments()
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var leftBoundary = new LineEntity(new Point2D(3, -5), new Point2D(3, 5));
+        var rightBoundary = new LineEntity(new Point2D(7, -5), new Point2D(7, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundaries(
+            target,
+            new CadEntity[] { leftBoundary, rightBoundary },
+            new Point2D(5, 0));
+
+        Assert.Equal(2, result.Count);
+
+        LineEntity first = Assert.IsType<LineEntity>(result[0]);
+        LineEntity second = Assert.IsType<LineEntity>(result[1]);
+
+        Assert.Equal(new Point2D(0, 0), first.Start);
+        Assert.Equal(new Point2D(3, 0), first.End);
+        Assert.Equal(new Point2D(7, 0), second.Start);
+        Assert.Equal(new Point2D(10, 0), second.End);
+    }
+
+    [Fact]
+    public void TrimLine_ByTwoBoundaries_WhenPickedLeftOuterSide_ShouldReturnSingleRightFragment()
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var leftBoundary = new LineEntity(new Point2D(3, -5), new Point2D(3, 5));
+        var rightBoundary = new LineEntity(new Point2D(7, -5), new Point2D(7, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundaries(
+            target,
+            new CadEntity[] { leftBoundary, rightBoundary },
+            new Point2D(1, 0));
+
+        LineEntity kept = Assert.IsType<LineEntity>(Assert.Single(result));
+
+        Assert.Equal(new Point2D(3, 0), kept.Start);
+        Assert.Equal(new Point2D(10, 0), kept.End);
+    }
+
+    [Fact]
+    public void TrimLine_ByTwoBoundaries_WhenPickedRightOuterSide_ShouldReturnSingleLeftFragment()
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var leftBoundary = new LineEntity(new Point2D(3, -5), new Point2D(3, 5));
+        var rightBoundary = new LineEntity(new Point2D(7, -5), new Point2D(7, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundaries(
+            target,
+            new CadEntity[] { leftBoundary, rightBoundary },
+            new Point2D(9, 0));
+
+        LineEntity kept = Assert.IsType<LineEntity>(Assert.Single(result));
+
+        Assert.Equal(new Point2D(0, 0), kept.Start);
+        Assert.Equal(new Point2D(7, 0), kept.End);
+    }
+
+    [Fact]
+    public void TrimLine_ByTwoBoundaries_WhenOnlyOneBoundaryIntersects_ShouldBehaveLikeSingleBoundaryTrim()
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var intersectingBoundary = new LineEntity(new Point2D(5, -5), new Point2D(5, 5));
+        var externalBoundary = new LineEntity(new Point2D(20, -5), new Point2D(20, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundaries(
+            target,
+            new CadEntity[] { intersectingBoundary, externalBoundary },
+            new Point2D(8, 0));
+
+        LineEntity kept = Assert.IsType<LineEntity>(Assert.Single(result));
+
+        Assert.Equal(new Point2D(0, 0), kept.Start);
+        Assert.Equal(new Point2D(5, 0), kept.End);
+    }
+}

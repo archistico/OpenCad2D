@@ -197,3 +197,156 @@ public sealed class BreakAtPointToolTests
         return context;
     }
 }
+
+public sealed class BreakAtPointToolAdvancedTests
+{
+    [Fact]
+    public void BreakAtPoint_WithArc_ShouldReplaceArcWithTwoArcs()
+    {
+        var context = CreateContextWithEntity(
+            new ArcEntity(
+                new Point2D(0, 0),
+                10,
+                Angle.FromDegrees(0),
+                Angle.FromDegrees(180)),
+            out CadEntity original);
+        var tool = new BreakAtPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 10)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(original.Id));
+        Assert.Equal(2, context.Document.Entities.All.OfType<ArcEntity>().Count());
+    }
+
+    [Fact]
+    public void BreakAtPoint_WithOpenPolyline_ShouldReplacePolylineWithTwoPolylines()
+    {
+        var context = CreateContextWithEntity(
+            new PolylineEntity(
+                new[]
+                {
+                    new Point2D(0, 0),
+                    new Point2D(10, 0),
+                    new Point2D(10, 10)
+                }),
+            out CadEntity original);
+        var tool = new BreakAtPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(4, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(original.Id));
+        Assert.Equal(2, context.Document.Entities.All.OfType<PolylineEntity>().Count());
+    }
+
+    [Fact]
+    public void BreakAtPoint_WithClosedPolyline_ShouldReplacePolylineWithOneOpenPolyline()
+    {
+        var context = CreateContextWithEntity(
+            new PolylineEntity(
+                new[]
+                {
+                    new Point2D(0, 0),
+                    new Point2D(10, 0),
+                    new Point2D(10, 10),
+                    new Point2D(0, 10)
+                },
+                isClosed: true),
+            out CadEntity original);
+        var tool = new BreakAtPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(4, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(original.Id));
+
+        PolylineEntity opened = Assert.Single(context.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.False(opened.IsClosed);
+    }
+
+    [Fact]
+    public void BreakAtPoint_WithCircle_ShouldReturnClearNotApplicableMessage()
+    {
+        var context = CreateContextWithEntity(
+            new CircleEntity(
+                new Point2D(0, 0),
+                10),
+            out _);
+        var tool = new BreakAtPointTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Contains("not applicable to circles", result.Message!);
+        Assert.Equal(BreakAtPointToolState.WaitingForTargetEntity, tool.State);
+    }
+
+    [Fact]
+    public void BreakAtPoint_WithPolyline_ShouldBeUndoable()
+    {
+        var context = CreateContextWithEntity(
+            new PolylineEntity(
+                new[]
+                {
+                    new Point2D(0, 0),
+                    new Point2D(10, 0),
+                    new Point2D(10, 10)
+                }),
+            out CadEntity original);
+        var tool = new BreakAtPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(4, 0)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.True(context.CommandHistory.CanUndo);
+
+        context.CommandHistory.Undo(context.Document);
+
+        PolylineEntity restored = Assert.Single(context.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.Equal(original.Id, restored.Id);
+        Assert.Equal(3, restored.Vertices.Count);
+    }
+
+    private static ToolContext CreateContextWithEntity(
+        CadEntity entity,
+        out CadEntity addedEntity)
+    {
+        var document = new CadDocument();
+        var commandHistory = new CommandHistory();
+        var context = new ToolContext(
+            document,
+            commandHistory,
+            new SnapService(),
+            selectionTolerance: 0.5);
+
+        document.AddEntity(entity);
+        addedEntity = entity;
+
+        return context;
+    }
+}

@@ -15,19 +15,104 @@ public static class CadTrimService
         Point2D targetPickPoint,
         GeometryTolerance? tolerance = null)
     {
-        ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(boundary);
+
+        return TrimByBoundaries(
+            target,
+            new[] { boundary },
+            targetPickPoint,
+            tolerance);
+    }
+
+    /// <summary>
+    /// Trims the target entity against one or more boundary entities.
+    /// </summary>
+    public static IReadOnlyList<CadEntity> TrimByBoundaries(
+        CadEntity target,
+        IReadOnlyList<CadEntity> boundaries,
+        Point2D targetPickPoint,
+        GeometryTolerance? tolerance = null)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(boundaries);
 
         GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
 
+        if (boundaries.Count == 0)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        if (target is LineEntity line)
+        {
+            return TrimLineByBoundaries(
+                line,
+                boundaries,
+                targetPickPoint,
+                effectiveTolerance);
+        }
+
+        if (boundaries.Count > 1)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        CadEntity boundary = boundaries[0];
+
         return target switch
         {
-            LineEntity line => TrimLine(line, boundary, targetPickPoint, effectiveTolerance),
             CircleEntity circle => TrimCircle(circle, boundary, targetPickPoint, effectiveTolerance),
             ArcEntity arc => TrimArc(arc, boundary, targetPickPoint, effectiveTolerance),
             PolylineEntity polyline => TrimPolyline(polyline, boundary, targetPickPoint, effectiveTolerance),
             _ => Array.Empty<CadEntity>()
         };
+    }
+
+    private static IReadOnlyList<CadEntity> TrimLineByBoundaries(
+        LineEntity target,
+        IReadOnlyList<CadEntity> boundaries,
+        Point2D pickPoint,
+        GeometryTolerance tolerance)
+    {
+        var cuts = new List<PathCut>
+        {
+            new(0.0, target.Start),
+            new(1.0, target.End)
+        };
+
+        foreach (CadEntity boundary in boundaries)
+        {
+            foreach (Point2D point in CadEntityIntersectionService
+                         .Intersect(target, boundary, tolerance)
+                         .Where(point => !tolerance.ArePointsEqual(point, target.Start) &&
+                                         !tolerance.ArePointsEqual(point, target.End)))
+            {
+                double parameter = LineParameterService.GetParameter(
+                    target.Geometry,
+                    point,
+                    tolerance);
+
+                if (parameter > tolerance.Parameter &&
+                    parameter < 1.0 - tolerance.Parameter)
+                {
+                    cuts.Add(new PathCut(parameter, point));
+                }
+            }
+        }
+
+        if (cuts.Count <= 2)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        return CreateLineFragments(
+            target,
+            cuts,
+            LineParameterService.GetParameter(
+                target.Geometry,
+                pickPoint,
+                tolerance),
+            tolerance);
     }
 
     private static IReadOnlyList<CadEntity> TrimLine(
@@ -205,7 +290,7 @@ public static class CadTrimService
     {
         var normalizedCuts = NormalizeCuts(cuts, tolerance);
         int intervalToRemove = FindIntervalContaining(normalizedCuts, pickParameter);
-        var result = new List<CadEntity>();
+        var keptIntervals = new List<(Point2D Start, Point2D End)>();
 
         for (int index = 0; index < normalizedCuts.Count - 1; index++)
         {
@@ -219,6 +304,43 @@ public static class CadTrimService
 
             if (start.DistanceTo(end) <= tolerance.Distance)
             {
+                continue;
+            }
+
+            keptIntervals.Add((start, end));
+        }
+
+        return CreateMergedLineFragments(
+            source,
+            keptIntervals,
+            tolerance);
+    }
+
+    private static IReadOnlyList<CadEntity> CreateMergedLineFragments(
+        LineEntity source,
+        IReadOnlyList<(Point2D Start, Point2D End)> intervals,
+        GeometryTolerance tolerance)
+    {
+        var result = new List<CadEntity>();
+
+        foreach ((Point2D start, Point2D end) in intervals)
+        {
+            if (start.DistanceTo(end) <= tolerance.Distance)
+            {
+                continue;
+            }
+
+            if (result.LastOrDefault() is LineEntity previous &&
+                tolerance.ArePointsEqual(previous.End, start))
+            {
+                result[^1] = new LineEntity(
+                    previous.Start,
+                    end,
+                    layerId: source.LayerId,
+                    style: source.Style,
+                    isVisible: source.IsVisible,
+                    isLocked: source.IsLocked,
+                    drawOrder: source.DrawOrder);
                 continue;
             }
 

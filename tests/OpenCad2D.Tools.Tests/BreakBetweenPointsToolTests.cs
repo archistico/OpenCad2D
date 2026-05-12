@@ -223,6 +223,100 @@ public sealed class BreakBetweenPointsToolTests
         Assert.Null(context.CurrentBasePoint);
     }
 
+
+    [Fact]
+    public void FirstPointerPress_OnArc_ShouldSelectTargetArc()
+    {
+        var context = CreateContextWithArc(out ArcEntity arc);
+        var tool = new BreakBetweenPointsTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(7, 7)));
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(BreakBetweenPointsToolState.WaitingForFirstBreakPoint, tool.State);
+        Assert.Equal(arc.Id, tool.TargetEntityId);
+    }
+
+    [Fact]
+    public void ThirdPointerPress_OnArc_ShouldRemoveArcSegment()
+    {
+        var context = CreateContextWithArc(out ArcEntity originalArc);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(7, 7)));
+        tool.OnPointerPressed(context, new PointerInfo(PointOnCircle(10, 30)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(PointOnCircle(10, 120)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(originalArc.Id));
+        Assert.Equal(2, context.Document.Entities.All.OfType<ArcEntity>().Count());
+    }
+
+    [Fact]
+    public void ThirdPointerPress_OnCircle_ShouldCreateRemainingArc()
+    {
+        var context = CreateContextWithCircle(out CircleEntity originalCircle);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 10)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(originalCircle.Id));
+
+        ArcEntity arc = Assert.Single(context.Document.Entities.All.OfType<ArcEntity>());
+        Assert.Equal(90, arc.StartAngle.Degrees, precision: 10);
+        Assert.Equal(0, arc.EndAngle.Degrees, precision: 10);
+    }
+
+    [Fact]
+    public void ThirdPointerPress_OnOpenPolyline_ShouldRemovePolylineSegment()
+    {
+        var context = CreateContextWithOpenPolyline(out PolylineEntity originalPolyline);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 5)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(originalPolyline.Id));
+        Assert.Equal(2, context.Document.Entities.All.OfType<PolylineEntity>().Count());
+    }
+
+    [Fact]
+    public void PointerMove_OnCircle_ShouldUpdatePreview()
+    {
+        var context = CreateContextWithCircle(out _);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(0, 10)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.True(tool.HasPreview);
+
+        ArcEntity preview = Assert.IsType<ArcEntity>(Assert.Single(tool.GetPreviewEntities()));
+        Assert.Equal(90, preview.StartAngle.Degrees, precision: 10);
+    }
+
+
     private static ToolContext CreateContext()
     {
         return new ToolContext(
@@ -250,4 +344,61 @@ public sealed class BreakBetweenPointsToolTests
 
         return context;
     }
+
+    private static ToolContext CreateContextWithArc(out ArcEntity arc)
+    {
+        var context = CreateContext();
+
+        arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(180));
+
+        context.Document.AddEntity(arc);
+
+        return context;
+    }
+
+    private static ToolContext CreateContextWithCircle(out CircleEntity circle)
+    {
+        var context = CreateContext();
+
+        circle = new CircleEntity(
+            new Point2D(0, 0),
+            10);
+
+        context.Document.AddEntity(circle);
+
+        return context;
+    }
+
+    private static ToolContext CreateContextWithOpenPolyline(out PolylineEntity polyline)
+    {
+        var context = CreateContext();
+
+        polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            });
+
+        context.Document.AddEntity(polyline);
+
+        return context;
+    }
+
+    private static Point2D PointOnCircle(
+        double radius,
+        double degrees)
+    {
+        double radians = degrees * Math.PI / 180.0;
+
+        return new Point2D(
+            Math.Cos(radians) * radius,
+            Math.Sin(radians) * radius);
+    }
+
 }

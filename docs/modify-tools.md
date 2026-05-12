@@ -34,20 +34,31 @@ ModifyEntitiesCommand
 Current scope:
 
 ```text
-Target: LineEntity
+Targets: LineEntity, ArcEntity, PolylineEntity
+CircleEntity: not applicable, with a clear message
 ```
 
 Workflow:
 
 ```text
 activate Break Point
-pick target line
+pick target entity
 pick break point
-project point onto line
-replace original line with two line segments
+project point onto the selected entity
+replace original entity with the resulting pieces
 ```
 
-The tool rejects break points too close to the line endpoints to avoid degenerate segments.
+Supported behavior:
+
+```text
+LineEntity       -> two line segments
+ArcEntity        -> two arcs preserving the original direction
+Open Polyline    -> two open polylines
+Closed Polyline  -> one open polyline cut at the break point
+CircleEntity     -> not applicable; use Break Segment instead
+```
+
+The tool rejects break points too close to non-useful endpoints to avoid degenerate pieces.
 
 ---
 
@@ -56,21 +67,32 @@ The tool rejects break points too close to the line endpoints to avoid degenerat
 Current scope:
 
 ```text
-Target: LineEntity
+Targets: LineEntity, ArcEntity, CircleEntity, PolylineEntity
 ```
 
 Workflow:
 
 ```text
 activate Break Segment
-pick target line
+pick target entity
 pick first break point
 pick second break point
-project both points onto line
-remove segment between the two projected points
+project both points onto the selected entity
+remove the segment between the two projected points
+replace the original entity with the remaining valid pieces
 ```
 
-The two break points are ordered along the line internally, so click order does not matter. The result may be zero, one or two valid line segments.
+Supported behavior:
+
+```text
+LineEntity       -> zero, one or two remaining line segments
+ArcEntity        -> zero, one or two remaining arcs preserving the original direction
+CircleEntity     -> one remaining major arc after removing the minor arc between the picked points
+Open Polyline    -> zero, one or two open polylines
+Closed Polyline  -> one open polyline after removing the shortest path between the picked points
+```
+
+The two break points are internally projected onto the target entity. For lines, arcs and open polylines, the path order is normalized so click order does not matter. For circles, the minor arc between the two points is removed. For closed polylines, the shortest path between the two points is removed. Degenerate results are discarded.
 
 ---
 
@@ -151,14 +173,27 @@ pick target entity on the side/portion to remove
 replace the target with the remaining geometry
 ```
 
-The tool remains active with the same cutting edge until `Esc`.
+Optional two-cutting-edge workflow for line targets:
+
+```text
+activate Trim
+pick first cutting edge
+Ctrl-click second cutting edge
+pick target line portion to remove
+replace the target with the remaining line fragment(s)
+```
+
+The Ctrl-click step keeps the existing single-boundary workflow compatible. With two cutting edges, a line target can remove the middle interval or one of the external intervals depending on where the target is picked. Adjacent remaining intervals are merged when the removed portion is external.
+
+The tool remains active with the selected cutting edge(s) until `Esc`.
 
 Preview behavior:
 
 - the remaining geometry is shown with the normal preview style;
-- for line targets, the portion that will be removed is highlighted separately.
+- for line targets, the portion that will be removed is highlighted separately;
+- with two cutting edges, the highlighted preview shows the interval selected by the target pick.
 
-The operation is ignored if the cutting edge does not produce a valid trim result. The status message explains that the picked side cannot be trimmed by the selected boundary.
+The operation is ignored if the cutting edge(s) do not produce a valid trim result. The status message explains that the picked side cannot be trimmed by the selected boundary or cutting edges.
 
 ---
 
@@ -181,6 +216,46 @@ Closed entities such as circles are trimmable but not extendable.
 Recommended next refinements:
 
 - broaden highlighted previews beyond line targets for Trim/Extend on arcs, circles and polylines;
-- broaden break operations beyond `LineEntity`;
+- continue systematic regression tests for Break Point and Break Segment;
 - add additional degenerate-case tests for tangent, near-tangent and overlapping geometry;
-- evaluate multi-boundary trim/extend workflows.
+- broaden multi-boundary Trim beyond line targets only if the core geometry remains stable.
+
+---
+
+## v0.5 audit summary
+
+The v0.5 milestone will focus on advanced editing and refinement. The detailed planning document is:
+
+```text
+docs/v0.5-modify-tools-audit.md
+```
+
+Current state before v0.5 implementation:
+
+```text
+Break Point    LineEntity, ArcEntity and PolylineEntity; CircleEntity returns a not-applicable message
+Break Segment  LineEntity, ArcEntity, CircleEntity and PolylineEntity
+Trim           Line/Circle/Arc/Polyline targets with one cutting edge
+Extend         Line/Arc/open Polyline targets to Line/Circle/Arc/Polyline boundaries
+```
+
+Main v0.5 implementation decisions:
+
+```text
+Break Point on CircleEntity: not applicable with clear message
+Break Segment on CircleEntity: remove minor arc between two picked points
+Trim with two cutting edges: 3-click workflow, edge 1 -> edge 2 -> target portion
+Locked visible references: usable as boundary/cutting edge, not editable as targets
+Hidden entities: ignored entirely by modify tools
+```
+
+Recommended order:
+
+```text
+1. Break Point advanced
+2. Break Segment advanced
+3. Trim with two cutting edges
+4. Extend consolidation
+5. Layer rules
+6. systematic tests and v0.5 closure
+```

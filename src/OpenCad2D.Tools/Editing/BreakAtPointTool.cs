@@ -10,14 +10,14 @@ using OpenCad2D.Tools.Common;
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
-/// Breaks a line entity into two line entities at a picked point.
+/// Breaks a supported entity at a picked point.
 /// </summary>
 public sealed class BreakAtPointTool : ICadTool
 {
     private EntityId? _targetEntityId;
-    private LineEntity? _targetLine;
+    private CadEntity? _targetEntity;
     private Point2D? _currentBreakPoint;
-    private IReadOnlyList<LineEntity> _previewSegments = Array.Empty<LineEntity>();
+    private IReadOnlyList<CadEntity> _previewSegments = Array.Empty<CadEntity>();
 
     public string Name => "Break Point";
 
@@ -59,7 +59,7 @@ public sealed class BreakAtPointTool : ICadTool
         ArgumentNullException.ThrowIfNull(pointer);
 
         if (State != BreakAtPointToolState.WaitingForBreakPoint ||
-            _targetLine is null)
+            _targetEntity is null)
         {
             return ToolResult.None();
         }
@@ -74,7 +74,7 @@ public sealed class BreakAtPointTool : ICadTool
 
         return HasPreview
             ? ToolResult.Updated("Break point preview updated.")
-            : ToolResult.None("Break point must be inside the target line.");
+            : ToolResult.None("Break point must be inside the target entity.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -113,91 +113,89 @@ public sealed class BreakAtPointTool : ICadTool
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select a line to break.");
+            return ToolResult.None("Select an entity to break at point.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity line)
+        if (entity is CircleEntity)
         {
-            return ToolResult.None("Break Point currently supports line entities only.");
+            return ToolResult.None("Break Point is not applicable to circles. Use Break Segment with two points instead.");
         }
 
-        if (!context.Document.IsEntitySelectable(line))
+        if (entity is not LineEntity and not ArcEntity and not PolylineEntity)
+        {
+            return ToolResult.None("Break Point supports lines, arcs and polylines only.");
+        }
+
+        if (!context.Document.IsEntitySelectable(entity))
         {
             return ToolResult.None("Target entity is not editable.");
         }
 
-        _targetEntityId = line.Id;
-        _targetLine = line;
+        _targetEntityId = entity.Id;
+        _targetEntity = entity;
         State = BreakAtPointToolState.WaitingForBreakPoint;
 
-        Point2D basePoint = line.GetClosestPoint(pointer.ModelPoint);
+        Point2D basePoint = entity.GetClosestPoint(pointer.ModelPoint);
         context.CurrentBasePoint = basePoint;
 
         return ToolResult.Started(
-            "Specify break point on line.");
+            "Specify break point on entity.");
     }
 
     private ToolResult AcceptBreakPoint(
         ToolContext context,
         PointerInfo pointer)
     {
-        if (_targetLine is null)
+        if (_targetEntity is null)
         {
             throw new InvalidOperationException(
-                "Cannot accept break point before selecting a target line.");
+                "Cannot accept break point before selecting a target entity.");
         }
 
         Point2D point = ResolvePoint(
             context,
             pointer.ModelPoint);
 
-        IReadOnlyList<LineEntity> segments = LineBreakService.BreakAtPoint(
-            _targetLine,
+        IReadOnlyList<CadEntity> segments = CadBreakService.BreakAtPoint(
+            _targetEntity,
             point,
             context.GeometryTolerance);
 
-        if (segments.Count != 2)
+        if (segments.Count == 0)
         {
             return ToolResult.None(
-                "Break point must be inside the target line and not too close to an endpoint.");
+                "Break point must be inside the target entity and not too close to an endpoint.");
         }
 
         context.Commands.Execute(
             context.Document,
             new ModifyEntitiesCommand(
-                new[] { _targetLine },
+                new[] { _targetEntity! },
                 segments,
-                "Break line at point"));
+                "Break entity at point"));
 
         Reset(context);
 
-        return ToolResult.Completed("Line broken at point.");
+        return ToolResult.Completed("Entity broken at point.");
     }
 
     private void UpdatePreview(
         ToolContext context,
         Point2D point)
     {
-        if (_targetLine is null)
+        if (_targetEntity is null)
         {
             _currentBreakPoint = null;
-            _previewSegments = Array.Empty<LineEntity>();
+            _previewSegments = Array.Empty<CadEntity>();
             return;
         }
 
-        double parameter = LineParameterService.GetParameter(
-            _targetLine.Geometry,
-            point,
-            context.GeometryTolerance);
+        _currentBreakPoint = _targetEntity.GetClosestPoint(point);
 
-        _currentBreakPoint = LineParameterService.PointAt(
-            _targetLine.Geometry,
-            parameter);
-
-        _previewSegments = LineBreakService.BreakAtPoint(
-            _targetLine,
+        _previewSegments = CadBreakService.BreakAtPoint(
+            _targetEntity,
             point,
             context.GeometryTolerance);
     }
@@ -228,9 +226,9 @@ public sealed class BreakAtPointTool : ICadTool
     private void Reset(ToolContext? context = null)
     {
         _targetEntityId = null;
-        _targetLine = null;
+        _targetEntity = null;
         _currentBreakPoint = null;
-        _previewSegments = Array.Empty<LineEntity>();
+        _previewSegments = Array.Empty<CadEntity>();
         State = BreakAtPointToolState.WaitingForTargetEntity;
 
         if (context is not null)

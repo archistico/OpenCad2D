@@ -389,30 +389,94 @@ Status: **feature-complete for the planned v0.4 scope**.
 
 ## v0.5 - Advanced editing and refinement
 
-Next planned milestone after v0.4.
+Status: implementation started; Phase 3 Trim with two cutting edges completed for line targets.
 
+This milestone is stability-first. It improves modify tools after the v0.4 Basic Dimensions milestone, without adding command-line workflows or Property Panel editing.
+
+Detailed audit and implementation plan:
+
+```text
+docs/v0.5-modify-tools-audit.md
+```
+
+### Phase 0 - Modify tools audit
+
+- [x] map current Break Point support;
+- [x] map current Break Segment support;
+- [x] map current Trim support;
+- [x] map current Extend support;
+- [x] document current Core editing services;
+- [x] define v0.5 layer rules for hidden/locked entities;
+- [x] define Break Point behavior for circles;
+- [x] define Break Segment behavior for circles;
+- [x] define two-cutting-edge Trim workflow;
+- [x] define recommended v0.5 implementation phases.
+
+### Phase 1 - Break Point advanced
+
+- [x] `CadBreakService` supports line, arc and polyline break-at-point operations;
+- [x] `BreakAtPointTool` accepts `LineEntity`, `ArcEntity` and `PolylineEntity`;
+- [x] `Break Point` on `CircleEntity` returns a clear not-applicable message;
+- [x] open polylines can be split into two open polylines;
+- [x] closed polylines can be opened at the break point;
+- [x] arc break preserves clockwise/counter-clockwise direction;
+- [x] Break Point preview works with the new supported entity types;
+- [x] undo/redo coverage for polyline break-at-point.
+
+### Phase 2 - Break Segment advanced
+
+- [x] `CadBreakService` supports line, arc, circle and polyline break-between-points operations;
+- [x] `BreakBetweenPointsTool` accepts `LineEntity`, `ArcEntity`, `CircleEntity` and `PolylineEntity`;
+- [x] `Break Segment` on `CircleEntity` removes the minor arc and keeps the remaining major arc;
+- [x] open polylines can remove an interval and return zero, one or two open polylines;
+- [x] closed polylines remove the shortest path between the two picked points and return one open polyline;
+- [x] arc break segment preserves clockwise/counter-clockwise direction;
+- [x] Break Segment preview works with the new supported entity types;
+- [x] undo/redo coverage remains in place for break segment operations.
+
+### Phase 3 - Trim with two cutting edges
+
+- [x] `CadTrimService.TrimByBoundaries` supports one or more cutting edges for line targets;
+- [x] single-boundary Trim behavior remains backward compatible;
+- [x] second cutting edge can be selected with Ctrl-click after the first cutting edge;
+- [x] line targets can remove the middle interval between two cutting edges;
+- [x] line targets can remove an external interval outside the two cutting edges;
+- [x] remaining adjacent line intervals are merged when the removed portion is external;
+- [x] preview shows the remaining fragments for two-cutting-edge Trim;
+- [x] highlighted preview shows the removed line segment;
+- [x] undo/redo coverage for two-cutting-edge line Trim.
 
 ### Feature & UX
 
-- [ ] Trim with two cutting edges;
-- [ ] Break Point on arcs;
-- [ ] Break Point on circles;
-- [ ] Break Point on polylines;
-- [ ] Break Segment on arcs;
-- [ ] Break Segment on circles;
-- [ ] Break Segment on polylines;
-- [ ] improved Extend on all supported entity types.
+- [x] Break Point on arcs;
+- [x] Break Point on polylines;
+- [x] Break Point on circles as a clear not-applicable operation;
+- [x] Break Segment on arcs;
+- [x] Break Segment on circles;
+- [x] Break Segment on polylines;
+- [x] Trim with two cutting edges for line targets;
+- [ ] improved Extend on all supported entity types;
+- [ ] clearer status messages for unsupported modify operations.
 
 ### Stability & Test
 
-- [ ] systematic Trim tests;
+- [~] systematic Trim tests;
 - [ ] systematic Extend tests;
-- [ ] systematic Break tests;
+- [~] systematic Break tests;
 - [ ] locked-layer behavior in all modify tools;
 - [ ] hidden-layer behavior in all modify tools;
 - [ ] robust intersections for multi-segment entities;
 - [ ] robust intersections for near-tangent cases;
+- [ ] robust intersections for overlapping geometry;
 - [ ] no regressions in undo/redo for existing tools.
+
+### Current v0.5 decisions
+
+- [x] `Break Point` on circles will not create an artificial gap; it should return a clear not-applicable message;
+- [x] `Break Segment` on circles will remove the minor arc between the two picked points;
+- [x] locked visible entities should be valid references/boundaries, but not editable targets;
+- [x] hidden entities should not participate as references or targets;
+- [x] two-cutting-edge Trim keeps single-boundary Trim compatible by using: cutting edge 1 -> Ctrl-click cutting edge 2 -> target portion.
 
 ---
 

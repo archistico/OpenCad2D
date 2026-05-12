@@ -268,3 +268,185 @@ public sealed class TrimToolTests
         return context;
     }
 }
+
+public sealed class TrimToolTwoBoundaryTests
+{
+    [Fact]
+    public void ControlClick_AfterFirstBoundary_ShouldSelectSecondCuttingEdge()
+    {
+        ToolContext context = CreateContextWithTwoBoundariesAndTarget(
+            out _,
+            out LineEntity rightBoundary,
+            out _);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(3, 2)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(
+                new Point2D(7, 2),
+                PointerModifiers.Control));
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(rightBoundary.Id, tool.SecondBoundaryEntityId);
+        Assert.Equal(TrimToolState.WaitingForTargetEntity, tool.State);
+    }
+
+    [Fact]
+    public void PointerMove_WithTwoBoundaries_ShouldPreviewTwoOuterFragmentsAndHighlightedMiddleSegment()
+    {
+        ToolContext context = CreateContextWithTwoBoundariesAndTarget(
+            out _,
+            out _,
+            out _);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(3, 2)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(7, 2), PointerModifiers.Control));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.True(tool.HasPreview);
+        Assert.Equal(2, tool.GetPreviewEntities().OfType<LineEntity>().Count());
+
+        LineEntity highlighted = Assert.IsType<LineEntity>(
+            Assert.Single(tool.GetHighlightedPreviewEntities()));
+
+        Assert.Equal(new Point2D(3, 0), highlighted.Start);
+        Assert.Equal(new Point2D(7, 0), highlighted.End);
+    }
+
+    [Fact]
+    public void PointerPress_WithTwoBoundaries_WhenPickedMiddle_ShouldTrimMiddleSegment()
+    {
+        ToolContext context = CreateContextWithTwoBoundariesAndTarget(
+            out LineEntity leftBoundary,
+            out LineEntity rightBoundary,
+            out LineEntity target);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(3, 2)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(7, 2), PointerModifiers.Control));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(target.Id));
+
+        List<LineEntity> fragments = context.Document.Entities.All
+            .OfType<LineEntity>()
+            .Where(line => !line.Id.Equals(leftBoundary.Id) &&
+                           !line.Id.Equals(rightBoundary.Id))
+            .OrderBy(line => line.Start.X)
+            .ToList();
+
+        Assert.Equal(2, fragments.Count);
+        Assert.Equal(new Point2D(0, 0), fragments[0].Start);
+        Assert.Equal(new Point2D(3, 0), fragments[0].End);
+        Assert.Equal(new Point2D(7, 0), fragments[1].Start);
+        Assert.Equal(new Point2D(10, 0), fragments[1].End);
+    }
+
+    [Fact]
+    public void PointerPress_WithTwoBoundaries_WhenPickedOuterSide_ShouldTrimOuterSegment()
+    {
+        ToolContext context = CreateContextWithTwoBoundariesAndTarget(
+            out LineEntity leftBoundary,
+            out LineEntity rightBoundary,
+            out LineEntity target);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(3, 2)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(7, 2), PointerModifiers.Control));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(1, 0)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(target.Id));
+
+        LineEntity fragment = Assert.Single(
+            context.Document.Entities.All
+                .OfType<LineEntity>()
+                .Where(line => !line.Id.Equals(leftBoundary.Id) &&
+                               !line.Id.Equals(rightBoundary.Id)));
+
+        Assert.Equal(new Point2D(3, 0), fragment.Start);
+        Assert.Equal(new Point2D(10, 0), fragment.End);
+    }
+
+    [Fact]
+    public void TrimWithTwoBoundaries_ShouldBeUndoable()
+    {
+        ToolContext context = CreateContextWithTwoBoundariesAndTarget(
+            out _,
+            out _,
+            out LineEntity target);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(3, 2)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(7, 2), PointerModifiers.Control));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        Assert.True(context.CommandHistory.CanUndo);
+
+        context.CommandHistory.Undo(context.Document);
+
+        LineEntity restored = (LineEntity)context.Document.Entities.GetRequired(target.Id);
+
+        Assert.Equal(new Point2D(0, 0), restored.Start);
+        Assert.Equal(new Point2D(10, 0), restored.End);
+    }
+
+    private static ToolContext CreateContext()
+    {
+        return new ToolContext(
+            new CadDocument(),
+            new CommandHistory(),
+            new SnapService(),
+            selectionTolerance: 0.5);
+    }
+
+    private static ToolContext CreateContextWithTwoBoundariesAndTarget(
+        out LineEntity leftBoundary,
+        out LineEntity rightBoundary,
+        out LineEntity target)
+    {
+        ToolContext context = CreateContext();
+
+        leftBoundary = new LineEntity(
+            new Point2D(3, -5),
+            new Point2D(3, 5));
+
+        rightBoundary = new LineEntity(
+            new Point2D(7, -5),
+            new Point2D(7, 5));
+
+        target = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        context.Document.AddEntity(leftBoundary);
+        context.Document.AddEntity(rightBoundary);
+        context.Document.AddEntity(target);
+
+        return context;
+    }
+}

@@ -10,15 +10,15 @@ using OpenCad2D.Tools.Common;
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
-/// Breaks a line entity by removing the segment between two picked break points.
+/// Breaks a supported entity by removing the segment between two picked break points.
 /// </summary>
 public sealed class BreakBetweenPointsTool : ICadTool
 {
     private EntityId? _targetEntityId;
-    private LineEntity? _targetLine;
+    private CadEntity? _targetEntity;
     private Point2D? _firstBreakPoint;
     private Point2D? _currentSecondBreakPoint;
-    private IReadOnlyList<LineEntity> _previewSegments = Array.Empty<LineEntity>();
+    private IReadOnlyList<CadEntity> _previewSegments = Array.Empty<CadEntity>();
 
     public string Name => "Break Segment";
 
@@ -65,7 +65,7 @@ public sealed class BreakBetweenPointsTool : ICadTool
         ArgumentNullException.ThrowIfNull(pointer);
 
         if (State != BreakBetweenPointsToolState.WaitingForSecondBreakPoint ||
-            _targetLine is null ||
+            _targetEntity is null ||
             _firstBreakPoint is null)
         {
             return ToolResult.None();
@@ -81,7 +81,7 @@ public sealed class BreakBetweenPointsTool : ICadTool
 
         return HasPreview
             ? ToolResult.Updated("Break segment preview updated.")
-            : ToolResult.None("Second break point must be different and inside the target line.");
+            : ToolResult.None("Second break point must be different and inside the target entity.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -104,9 +104,7 @@ public sealed class BreakBetweenPointsTool : ICadTool
 
     public IReadOnlyList<CadEntity> GetPreviewEntities()
     {
-        return _previewSegments
-            .Cast<CadEntity>()
-            .ToList();
+        return _previewSegments;
     }
 
     private ToolResult AcceptTargetEntity(
@@ -120,84 +118,79 @@ public sealed class BreakBetweenPointsTool : ICadTool
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select a line to break.");
+            return ToolResult.None("Select an entity to break.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity line)
+        if (entity is not LineEntity and not ArcEntity and not CircleEntity and not PolylineEntity)
         {
-            return ToolResult.None("Break Segment currently supports line entities only.");
+            return ToolResult.None("Break Segment supports lines, arcs, circles and polylines only.");
         }
 
-        if (!context.Document.IsEntitySelectable(line))
+        if (!context.Document.IsEntitySelectable(entity))
         {
             return ToolResult.None("Target entity is not editable.");
         }
 
-        _targetEntityId = line.Id;
-        _targetLine = line;
+        _targetEntityId = entity.Id;
+        _targetEntity = entity;
         State = BreakBetweenPointsToolState.WaitingForFirstBreakPoint;
 
-        Point2D basePoint = line.GetClosestPoint(pointer.ModelPoint);
+        Point2D basePoint = entity.GetClosestPoint(pointer.ModelPoint);
         context.CurrentBasePoint = basePoint;
 
-        return ToolResult.Started("Specify first break point on line.");
+        return ToolResult.Started("Specify first break point on entity.");
     }
 
     private ToolResult AcceptFirstBreakPoint(
         ToolContext context,
         PointerInfo pointer)
     {
-        if (_targetLine is null)
+        if (_targetEntity is null)
         {
             throw new InvalidOperationException(
-                "Cannot accept first break point before selecting a target line.");
+                "Cannot accept first break point before selecting a target entity.");
         }
 
         Point2D point = ResolvePoint(
             context,
             pointer.ModelPoint);
 
-        double parameter = LineParameterService.GetParameter(
-            _targetLine.Geometry,
-            point,
-            context.GeometryTolerance);
+        Point2D projectedPoint = _targetEntity.GetClosestPoint(point);
 
-        if (!LineIntersectionService.IsParameterOnSegment(parameter, context.GeometryTolerance))
+        if (_targetEntity.DistanceTo(projectedPoint) > context.GeometryTolerance.Distance)
         {
-            return ToolResult.None("First break point must be on the target line.");
+            return ToolResult.None("First break point must be on the target entity.");
         }
 
-        _firstBreakPoint = LineParameterService.PointAt(
-            _targetLine.Geometry,
-            parameter);
+        _firstBreakPoint = projectedPoint;
 
         _currentSecondBreakPoint = null;
-        _previewSegments = Array.Empty<LineEntity>();
+        _previewSegments = Array.Empty<CadEntity>();
         State = BreakBetweenPointsToolState.WaitingForSecondBreakPoint;
         context.CurrentBasePoint = _firstBreakPoint;
 
-        return ToolResult.Updated("Specify second break point on line.");
+        return ToolResult.Updated("Specify second break point on entity.");
     }
 
     private ToolResult AcceptSecondBreakPoint(
         ToolContext context,
         PointerInfo pointer)
     {
-        if (_targetLine is null ||
+        if (_targetEntity is null ||
             _firstBreakPoint is null)
         {
             throw new InvalidOperationException(
-                "Cannot accept second break point before selecting a target line and first break point.");
+                "Cannot accept second break point before selecting a target entity and first break point.");
         }
 
         Point2D point = ResolvePoint(
             context,
             pointer.ModelPoint);
 
-        IReadOnlyList<LineEntity> segments = LineBreakService.BreakBetweenPoints(
-            _targetLine,
+        IReadOnlyList<CadEntity> segments = CadBreakService.BreakBetweenPoints(
+            _targetEntity,
             _firstBreakPoint.Value,
             point,
             context.GeometryTolerance);
@@ -205,44 +198,37 @@ public sealed class BreakBetweenPointsTool : ICadTool
         if (segments.Count == 0)
         {
             return ToolResult.None(
-                "Break points must be different and inside the target line.");
+                "Break points must be different and inside the target entity.");
         }
 
         context.Commands.Execute(
             context.Document,
             new ModifyEntitiesCommand(
-                new[] { _targetLine },
+                new[] { _targetEntity },
                 segments,
-                "Break line between points"));
+                "Break entity between points"));
 
         Reset(context);
 
-        return ToolResult.Completed("Line segment removed.");
+        return ToolResult.Completed("Entity segment removed.");
     }
 
     private void UpdatePreview(
         ToolContext context,
         Point2D point)
     {
-        if (_targetLine is null ||
+        if (_targetEntity is null ||
             _firstBreakPoint is null)
         {
             _currentSecondBreakPoint = null;
-            _previewSegments = Array.Empty<LineEntity>();
+            _previewSegments = Array.Empty<CadEntity>();
             return;
         }
 
-        double parameter = LineParameterService.GetParameter(
-            _targetLine.Geometry,
-            point,
-            context.GeometryTolerance);
+        _currentSecondBreakPoint = _targetEntity.GetClosestPoint(point);
 
-        _currentSecondBreakPoint = LineParameterService.PointAt(
-            _targetLine.Geometry,
-            parameter);
-
-        _previewSegments = LineBreakService.BreakBetweenPoints(
-            _targetLine,
+        _previewSegments = CadBreakService.BreakBetweenPoints(
+            _targetEntity,
             _firstBreakPoint.Value,
             point,
             context.GeometryTolerance);
@@ -274,10 +260,10 @@ public sealed class BreakBetweenPointsTool : ICadTool
     private void Reset(ToolContext? context = null)
     {
         _targetEntityId = null;
-        _targetLine = null;
+        _targetEntity = null;
         _firstBreakPoint = null;
         _currentSecondBreakPoint = null;
-        _previewSegments = Array.Empty<LineEntity>();
+        _previewSegments = Array.Empty<CadEntity>();
         State = BreakBetweenPointsToolState.WaitingForTargetEntity;
 
         if (context is not null)

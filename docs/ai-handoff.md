@@ -55,7 +55,7 @@ The project currently supports:
 - scale;
 - align with optional scaling confirmation;
 - line-based Break Point and Break Segment;
-- Trim and Extend for lines, arcs, circles and polylines where supported;
+- Trim and Extend for lines, arcs, circles and polylines where supported; Trim supports optional two-cutting-edge line trimming through Ctrl-click on the second cutting edge;
 - grip editing for supported entities;
 - undo and redo.
 
@@ -523,17 +523,17 @@ The App handles:
 Implemented modify tools:
 
 ```text
-Break Point    LineEntity only
-Break Segment  LineEntity only
+Break Point    LineEntity, ArcEntity and PolylineEntity; CircleEntity returns a clear not-applicable message
+Break Segment  LineEntity, ArcEntity, CircleEntity and PolylineEntity
 Extend         boundary: Line/Circle/Arc/Polyline; target: Line/Arc/open Polyline
 Trim           cutting edge: Line/Circle/Arc/Polyline; target: Line/Circle/Arc/Polyline
 ```
 
 Design rule: modify tools use geometry services, produce preview when useful and commit changes through undoable commands that mutate the document through `CadDocument`.
 
-Core services currently include entity intersection, trim and extend services plus line-specific break helpers. `ModifyEntitiesCommand` supports replacing one entity with zero, one or more entities.
+Core services currently include entity intersection, trim and extend services plus generic break helpers through `CadBreakService`. `ModifyEntitiesCommand` supports replacing one entity with zero, one or more entities.
 
-Recommended follow-up: improve trim/extend previews, add clearer ignored-operation messages and broaden break operations beyond `LineEntity`.
+Recommended follow-up: implement Trim with two cutting edges, improve broader trim/extend previews and add stronger layer-rule tests.
 
 ---
 
@@ -639,4 +639,76 @@ Recent UI polish:
 - status bar color is aligned with the rest of the dark UI;
 - horizontal, vertical and aligned dimension text placement was adjusted.
 
-Recommended next milestone: v0.5 Advanced editing and refinement. Start with the remaining modify-tool gaps: Trim with two cutting edges, Break on arcs/circles/polylines, broader highlighted previews and stronger locked/hidden layer tests for modify tools.
+Recommended next milestone: continue v0.5 Advanced editing and refinement. Break Point and Break Segment have been broadened; remaining gaps are Trim with two cutting edges, Extend consolidation, broader highlighted previews and stronger locked/hidden layer tests for modify tools.
+
+## v0.5 modify tools audit
+
+The v0.5 milestone has started with a planning/audit-only phase. No production code was changed in this phase.
+
+New planning document:
+
+```text
+docs/v0.5-modify-tools-audit.md
+```
+
+Current modify-tool baseline after v0.5 phase 2:
+
+```text
+Break Point    LineEntity, ArcEntity and PolylineEntity; CircleEntity returns a clear not-applicable message
+Break Segment  LineEntity, ArcEntity, CircleEntity and PolylineEntity
+Trim           Line/Circle/Arc/Polyline targets with one cutting edge
+Extend         Line/Arc/open Polyline targets to Line/Circle/Arc/Polyline boundaries
+```
+
+Key v0.5 decisions:
+
+- Break Point on CircleEntity should be a clear not-applicable operation, not an artificial tiny-gap arc.
+- Break Segment on CircleEntity should remove the minor arc between the two picked points.
+- Trim with two cutting edges should use the simple three-click workflow: cutting edge 1, cutting edge 2, target portion to remove.
+- Hidden entities should not participate as targets or references.
+- Locked visible entities should be usable as references/boundaries/cutting edges, but not editable as targets.
+- Current hit testing uses selectable entities, so implementing locked references may require a visible-reference hit-test path separate from target selection.
+
+Recommended next implementation phase:
+
+```text
+v0.5 Phase 3 - Trim with two cutting edges
+[ ] two cutting-edge selection workflow
+[ ] target portion selection
+[ ] line target split into zero, one or two remaining pieces
+[ ] preview for remaining geometry and removed portion
+[ ] tests for center/outside trim portions
+[ ] undo/redo tests
+```
+
+
+## v0.5 phase 1 status - Break Point advanced
+
+Completed implementation details:
+
+- Added `CadBreakService` for entity-level break-at-point operations.
+- `BreakAtPointTool` now supports `LineEntity`, `ArcEntity` and `PolylineEntity`.
+- `CircleEntity` is intentionally not applicable for Break Point and returns a clear message recommending Break Segment.
+- Arc break creates two arcs and preserves the original clockwise/counter-clockwise direction.
+- Open polyline break creates two open polylines.
+- Closed polyline break opens the polyline at the selected point.
+- Added core and tool tests, including undo/redo coverage for polyline break-at-point.
+
+This phase is complete. Phase 2 expanded Break Segment to arcs, circles and polylines.
+
+
+## v0.5 phase 2 status - Break Segment advanced
+
+Completed in v0.5 phase 2:
+
+```text
+Break Segment supports LineEntity, ArcEntity, CircleEntity and PolylineEntity.
+CircleEntity removes the minor arc between the two picked points and keeps the remaining major ArcEntity.
+Open PolylineEntity removes the path interval and returns zero, one or two open polylines.
+Closed PolylineEntity removes the shortest path and returns one open polyline.
+BreakBetweenPointsTool now stores a generic CadEntity target and uses CadBreakService.BreakBetweenPoints.
+Preview uses the same generic break service and works for the newly supported target types.
+Core and tool tests cover arcs, circles, open polylines, closed polylines and existing line regression.
+```
+
+Next v0.5 phase recommended: Trim with two cutting edges.
