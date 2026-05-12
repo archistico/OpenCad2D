@@ -1,8 +1,14 @@
 # Text and Dimensions
 
-This document describes the annotation direction for OpenCad2D.
+This document describes the annotation system implemented in OpenCad2D.
 
-Text is implemented as single-line annotation text. The first v0.4 dimension foundation is now implemented in Core and Persistence, using the same general principles: semantic entities, reusable styles and undoable commands.
+The current annotation model covers:
+
+- single-line text entities;
+- reusable text formats;
+- reusable dimension styles;
+- non-associative basic dimensions;
+- canvas rendering, preview, persistence and graphical SVG/DXF export for the implemented dimension types.
 
 ---
 
@@ -17,11 +23,12 @@ Implemented:
 - [x] Text Format Manager;
 - [x] text rendering in the canvas;
 - [x] selection highlight;
+- [x] corrected screen rotation direction;
 - [x] grip editing through insertion point;
 - [x] snap point at insertion point;
 - [x] JSON persistence;
 - [x] SVG export;
-- [x] DXF export as `TEXT`;
+- [x] DXF export as native `TEXT`;
 - [x] tests for entity behavior, formats, persistence, export, tools and rotation direction.
 
 Planned:
@@ -51,27 +58,9 @@ TextFormatId       reference to a reusable TextFormat
 
 The entity does **not** store font family, height, color, bold or italic directly. Those properties belong to the referenced `TextFormat`.
 
-This keeps text appearance reusable and consistent:
-
 ```text
 TextEntity -> TextFormatId -> Document.TextFormats -> TextFormat
 ```
-
----
-
-## Single-line rule
-
-The current implementation intentionally supports only single-line text.
-
-This means:
-
-- the text input window is single-line;
-- DXF export uses native `TEXT`, not `MTEXT`;
-- SVG export uses one `<text>` element;
-- there is no paragraph layout;
-- there are no per-character rich text runs.
-
-Multiline text should not be added by stretching `TextEntity` too far. When needed, it should be designed explicitly, probably as a future `MTextEntity` or as a clearly separated multiline mode.
 
 ---
 
@@ -100,13 +89,7 @@ Built-in formats:
 | `Annotation` | Annotation | 8 | annotation format |
 | `Small` | Small | 6 | small note format |
 
-Heights are expressed in model units. They zoom together with the drawing, like other CAD geometry.
-
-Built-in formats are editable but not deletable. User-defined formats can be deleted only when no text entity uses them.
-
----
-
-## Text Format Manager
+Heights are expressed in model units and zoom together with the drawing.
 
 The Text Format Manager is opened from the top CAD bar through:
 
@@ -114,265 +97,160 @@ The Text Format Manager is opened from the top CAD bar through:
 Text formats...
 ```
 
-It allows the user to edit:
-
-- format name;
-- font family;
-- text height;
-- color as hex value;
-- bold;
-- italic.
-
-It also shows a simple preview.
-
-Changes are applied through `UpdateTextFormatsCommand`, so they participate in undo/redo.
-
-The manager follows the same design idea as the Line Format Manager:
-
-```text
-Reusable document-level style -> manager window -> undoable command
-```
+It edits name, font family, height, color, bold and italic. Updates are applied through `UpdateTextFormatsCommand`, so they participate in undo/redo.
 
 ---
 
-## TextTool
+# Basic dimensions
 
-`TextTool` places a `TextEntity`.
+The v0.4 dimension system is implemented as **non-associative** dimensions.
+
+This means a dimension stores the points needed to draw and measure itself. It does not keep a live reference to the entity that was measured.
+
+Example:
+
+```text
+If a line is dimensioned and the line is later moved,
+the dimension does not automatically update in v0.4.
+```
+
+This is deliberate. It keeps the first dimension system stable and testable before future associative dimensions are designed.
+
+---
+
+## Implemented dimension types
+
+Implemented:
+
+- [x] horizontal dimension;
+- [x] vertical dimension;
+- [x] aligned dimension;
+- [x] radius dimension;
+- [x] diameter dimension;
+- [x] angular dimension;
+- [x] minor angular dimensions;
+- [x] reflex angular dimensions greater than 180°.
+
+---
+
+## Dimension tools
+
+### Horizontal Dimension
 
 Workflow:
 
 ```text
-activate Text tool
-pick insertion point
-enter single-line text
-choose text format
-enter rotation if needed
-OK -> execute AddEntityCommand
-Cancel -> no entity is created
-```
-
-The text input window is opened asynchronously by the Avalonia app layer. The tool itself stays UI-independent through `ITextInputProvider`.
-
-Dependency rule:
-
-```text
-OpenCad2D.Tools knows ITextInputProvider
-OpenCad2D.App implements the Avalonia dialog provider
-```
-
-This keeps tools independent from Avalonia controls and windows.
-
----
-
-## Text rendering
-
-Canvas rendering resolves the text format at draw time:
-
-```text
-TextEntity.TextFormatId
--> document.TextFormats.GetById(...)
--> font family, height, color, bold, italic
-```
-
-The rendered text:
-
-- uses model-space height converted through the current viewport scale;
-- rotates around the insertion point;
-- uses the selected entity highlight color when selected;
-- uses the format color when not selected;
-- remains visible only when its layer is visible.
-
-Text rotation follows the expected CAD/user-facing direction in the canvas. Dedicated tests in `CadTextTransformTests` protect this behavior.
-
----
-
-## Hit testing and bounds
-
-`TextEntity` currently uses an estimated bounding box.
-
-The estimate is based on:
-
-```text
-height = default estimated height or resolved text format height where available
-width  = max(height, Text.Length * height * 0.6)
-```
-
-The rectangle is rotated according to `RotationDegrees` and then converted to an axis-aligned bounding box.
-
-This is sufficient for v0.3 selection, culling and basic hit testing. A future text geometry service may make this font-aware if practical editing requires it.
-
----
-
-## Grip editing and snapping
-
-Current behavior:
-
-- one grip at `InsertionPoint`;
-- moving the grip moves the text;
-- the operation is undoable through entity replacement;
-- the insertion point is exposed as a snap point.
-
-Future behavior:
-
-- optional rotation grip;
-- optional baseline/end grip;
-- editable text content and format in Property Panel v2.
-
----
-
-## Persistence
-
-Native JSON stores text formats at document level and stores only `TextFormatId` inside text entities.
-
-Conceptual shape:
-
-```text
-DocumentDto
-  TextFormats[]
-  Entities[]
-
-TextFormatDto
-  Id
-  Name
-  FontFamily
-  Height
-  Color
-  IsBold
-  IsItalic
-
-TextEntityDto
-  Type = Text
-  Text
-  InsertionX
-  InsertionY
-  RotationDegrees
-  TextFormatId
-```
-
-If old files do not contain text formats, the serializer falls back to the default text format collection.
-
----
-
-## Export
-
-### SVG
-
-`TextEntity` exports as SVG `<text>`.
-
-The exporter writes:
-
-- position;
-- escaped text content;
-- font family;
-- font size;
-- fill color;
-- bold/italic style when enabled;
-- rotation transform.
-
-### DXF
-
-`TextEntity` exports as native DXF `TEXT`.
-
-Important DXF groups:
-
-```text
-0   TEXT
-8   layer name
-10  insertion X
-20  insertion Y
-30  insertion Z = 0
-40  text height
-1   text content
-50  rotation degrees
-7   text style / format name
-```
-
-The current implementation targets simple single-line interoperability. Multiline text should use a separate future design and likely DXF `MTEXT`.
-
----
-
-## Dimensions
-
-The first dimension foundation is implemented. Dimensions are non-associative in v0.4: they store their own definition points and layout points instead of references to the entities they measure.
-
-Horizontal, vertical and aligned dimensions now have core entities, a renderer-agnostic geometry builder, canvas rendering and three-click placement tools.
-
-The design goal is that dimensions are semantic annotation entities inside the document model, not loose groups of primitive lines and text. Rendering and export derive graphical primitives from the dimension entity and its `DimensionStyle`.
-
----
-
-## Planned dimension entities
-
-### Linear and aligned dimension
-
-Implemented core entities and first tools:
-
-- `LinearDimensionEntity`;
-- `AlignedDimensionEntity`;
-- `HorizontalDimensionTool`;
-- `VerticalDimensionTool`;
-- `AlignedDimensionTool`.
-
-`LinearDimensionEntity` supports two orientations:
-
-- `Horizontal`;
-- `Vertical`.
-
-Measures the distance between two definition points.
-
-Definition data:
-
-```text
-FirstPoint
-SecondPoint
-DimensionLinePoint
-DimensionStyleId
-TextOverride
-```
-
-Placement workflow:
-
-```text
+activate Horizontal Dim
 pick first measured point
 pick second measured point
 pick dimension-line placement point
 ```
 
-During placement, the canvas shows a preview. After the third click, the tool creates the dimension through `AddEntityCommand`, so undo/redo works like the existing drawing tools.
-
-`DimensionGeometryBuilder` converts the dimension entity and its style into render primitives:
+The measured value is:
 
 ```text
-dimension line
-extension lines
-arrow wings
-measurement text
-bounds
+abs(second.X - first.X)
 ```
 
-The same builder is intended to be reused by SVG and DXF export in the next phase.
+The automatic label uses the active dimension style decimal settings.
 
-### Angular dimension
+### Vertical Dimension
 
-Measures an angle defined by three points or two selected entities.
+Workflow:
 
-### Radius dimension
+```text
+activate Vertical Dim
+pick first measured point
+pick second measured point
+pick dimension-line placement point
+```
 
-Measures a circle or arc radius. The current non-associative definition stores a center point, a point on the circle and a text placement point. The automatic text uses the `R` prefix, for example `R 25.00`.
+The measured value is:
 
-### Diameter dimension
+```text
+abs(second.Y - first.Y)
+```
 
-Measures a circle or arc diameter. The current non-associative definition stores a center point, a point on the circle and a text placement point. The opposite point is derived from the center and circle point. The automatic text uses the `Ø` prefix, for example `Ø 50.00`.
+### Aligned Dimension
+
+Workflow:
+
+```text
+activate Aligned Dim
+pick first measured point
+pick second measured point
+pick dimension-line placement point
+```
+
+The measured value is the true distance between the two measured points.
+
+### Radius Dimension
+
+Workflow:
+
+```text
+activate Radius Dim
+pick center point
+pick point on circle
+pick text placement point
+```
+
+The automatic label uses the `R` prefix:
+
+```text
+R 25.00
+```
+
+### Diameter Dimension
+
+Workflow:
+
+```text
+activate Diameter Dim
+pick center point
+pick point on circle
+pick text placement point
+```
+
+The automatic label uses the `Ø` prefix:
+
+```text
+Ø 50.00
+```
+
+### Angular Dimension
+
+Workflow:
+
+```text
+activate Angular Dim
+pick angle center
+pick point on first ray
+pick point on second ray
+pick arc placement point
+```
+
+The fourth click chooses the measured angular sector.
+
+If the arc placement point falls inside the counter-clockwise sweep from the first ray to the second ray, the dimension uses that counter-clockwise sweep. Otherwise it uses the clockwise sweep. This supports both minor and reflex angles.
+
+Examples:
+
+```text
+90.00°
+270.00°
+```
 
 ---
 
-## Dimension style
+## DimensionStyle
 
-`DimensionStyle` is implemented as a reusable document-level configuration object. It references an existing text format through `TextFormatId`, so dimension text appearance stays integrated with the single-line text format system.
+`DimensionStyle` is a reusable document-level configuration object. It references an existing text format through `TextFormatId`, so dimension text appearance remains integrated with the text format system.
 
 Current properties:
 
 ```text
+Id
 Name
 TextFormatId
 ArrowSize
@@ -384,7 +262,7 @@ DecimalSeparator
 Suffix
 ```
 
-The important rule is the same as text and line formats:
+The important rule is:
 
 ```text
 Do not duplicate style settings inside every dimension entity.
@@ -392,56 +270,130 @@ Do not duplicate style settings inside every dimension entity.
 
 Use reusable style objects instead.
 
-Current v0.4 decisions:
+Current default:
 
-- dimensions are non-associative;
-- DXF export will initially write dimensions as graphical primitives;
-- horizontal and vertical dimensions will use separate tools;
-- angular dimensions must support angles greater than 180°.
-
+```text
+DimensionStyle.Standard -> TextFormat.Annotation
+```
 
 ---
 
-## Dimension export status
+## Dimension rendering
 
-The v0.4 dimension system currently exports horizontal, vertical, aligned, radius and diameter dimensions as graphical primitives.
+Canvas rendering uses a shared renderer-agnostic model:
+
+```text
+DimensionEntity
+-> DimensionStyle
+-> TextFormat
+-> DimensionGeometryBuilder
+-> DimensionRenderModel
+```
+
+The render model contains:
+
+- dimension line primitives;
+- extension line primitives;
+- arrow line primitives;
+- arc primitives for angular dimensions;
+- measurement text primitive;
+- computed bounds.
+
+This avoids duplicating the geometry calculations in canvas rendering, SVG export and DXF export.
+
+---
+
+## Dimension export
+
+Dimension export in v0.4 is graphical, not associative.
 
 SVG export writes:
 
 ```text
-dimension line / extension lines / arrows -> <line>
-measurement text                          -> <text>
+line primitives -> <line>
+arc primitives  -> <path>
+measurement     -> <text>
 ```
 
 DXF export writes:
 
 ```text
-dimension line / extension lines / arrows -> LINE
-measurement text                          -> TEXT
+line primitives -> LINE
+arc primitives  -> ARC
+measurement     -> TEXT
 ```
 
-This is deliberate. Dimensions are non-associative in v0.4 and DXF output prioritizes visual compatibility over native editable `DIMENSION` records.
+The exported drawing is visually compatible with external viewers, but the dimensions are not native editable DXF `DIMENSION` records yet.
 
-All dimension export uses the shared `DimensionGeometryBuilder`, so canvas rendering, SVG export and DXF export derive from the same dimension geometry model.
+Native DXF `DIMENSION` export remains a future interoperability improvement.
 
-## Angular dimensions
+---
 
-Angular dimensions are non-associative. They store the center point, the first ray point, the second ray point, the arc placement point and the selected sweep direction.
+## Dimension persistence
 
-The fourth click chooses the angular sector. If the arc placement point falls inside the counter-clockwise sweep from the first ray to the second ray, the dimension uses that counter-clockwise sweep. Otherwise it uses the clockwise sweep. This allows both minor angles and reflex angles greater than 180°.
+The native `.opencad2d.json` format stores:
 
-Angular dimension text is generated automatically as degrees, for example `90.00°` or `270.00°`, unless `TextOverride` is set.
+```text
+dimensionStyles[]
+entities[] with dimension-specific DTOs
+```
 
+Implemented dimension entity types:
 
-## Dimension edge cases
+```text
+LinearDimension
+AlignedDimension
+RadiusDimension
+DiameterDimension
+AngularDimension
+```
 
-Dimension entities are tested against common degenerate and robustness cases:
+The serialized dimension stores only geometric definition, style id and optional text override. Style details are kept in `dimensionStyles`.
 
-- zero-length horizontal and vertical dimensions are rejected;
-- aligned dimensions require two distinct measured points;
-- radius and diameter dimensions require a non-zero radius;
-- angular dimensions require two valid ray points, a valid arc point and different ray directions;
-- negative, very small and very large coordinates are covered by render-model tests;
-- transformed dimensions keep stable measurements where the model supports the operation;
-- horizontal/vertical dimensions rotated away from the global axes become aligned dimensions;
-- mirrored angular dimensions flip sweep direction to preserve the measured angle.
+---
+
+## Dimension robustness
+
+Implemented edge-case tests cover:
+
+- zero-length horizontal dimensions;
+- zero-length vertical dimensions;
+- aligned dimensions with coincident points;
+- radius dimensions with zero radius;
+- diameter dimensions with zero radius;
+- angular dimensions with invalid ray points;
+- angular dimensions with coincident rays;
+- negative coordinates;
+- very small dimensions;
+- very large dimensions;
+- `DistanceTo` behavior on dimension geometry;
+- transformation behavior;
+- rotated horizontal/vertical dimensions becoming aligned dimensions when they are no longer axis-aligned;
+- mirrored angular dimensions flipping sweep direction to preserve the measured angle.
+
+---
+
+## Current v0.4 decisions
+
+- [x] dimensions are non-associative;
+- [x] DXF export writes dimensions as graphical primitives;
+- [x] horizontal and vertical dimensions use separate tools;
+- [x] angular dimensions support angles greater than 180°;
+- [x] rendering/export share `DimensionGeometryBuilder`;
+- [x] dimensions use `DimensionStyle.TextFormatId` for label appearance.
+
+---
+
+## Future dimension work
+
+Planned after v0.4:
+
+- [ ] editable dimension properties in Property Panel v2;
+- [ ] Dimension Style Manager window;
+- [ ] dimension grip editing;
+- [ ] native DXF `DIMENSION` export;
+- [ ] associative dimensions;
+- [ ] richer text placement rules;
+- [ ] alternate units and tolerances;
+- [ ] arrowhead styles;
+- [ ] multiline dimension text.

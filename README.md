@@ -27,6 +27,7 @@ The application already supports a functional CAD workflow:
 - drawing arcs by center/start/end;
 - drawing arcs through three points (`Arc 3P`);
 - drawing open and closed polylines;
+- creating horizontal, vertical, aligned, radius, diameter and angular dimensions;
 - selecting entities by point, window and crossing selection;
 - moving, copying, rotating, scaling, aligning and deleting selected entities;
 - break point and break segment for line entities;
@@ -35,8 +36,8 @@ The application already supports a functional CAD workflow:
 - undo and redo;
 - internal JSON save/load using `.opencad2d.json`;
 - New, Open, Save and Save As file commands;
-- SVG export using `.svg`, including points and single-line text;
-- DXF export using AutoCAD 2000 ASCII `.dxf`, including `POINT` and `TEXT`;
+- SVG export using `.svg`, including points, single-line text and basic dimensions;
+- DXF export using AutoCAD 2000 ASCII `.dxf`, including `POINT`, `TEXT` and basic dimensions as graphical primitives;
 - dirty-state tracking and “Save changes?” confirmation;
 - object snapping, including geometric snaps and entity snap for selection-oriented tools;
 - configurable rectangular and isometric grid display and grid snapping;
@@ -56,7 +57,8 @@ The application already supports a functional CAD workflow:
 - zoom, pan, view reset and Zoom Extents;
 - viewport culling for rendering only visible entities;
 - CAD-style crosshair cursor;
-- visual feedback for active command, current layer, snap type, rendered entity count and temporary measurements.
+- visual feedback for active command, current layer, snap type, rendered entity count and temporary measurements;
+- two-column left tool panel grouping Select/Draw/Dimension/Measure separately from Edit tools.
 
 ---
 
@@ -69,7 +71,7 @@ The current UI layout is intentionally divided into stable areas:
 ```text
 File command bar     New / Open / Save / Save As / current file name / dirty marker
 Top CAD bar          layer selector, layer state, Layers..., Line formats..., Text formats..., Grid..., Polar selector, Undo/Redo, Extents, Props, active command
-Left tool panel      Select / Draw / Edit tool groups
+Left tool panel      two columns: Select / Draw / Dimension / Measure and Edit
 Center canvas        drawing area
 Right panel          optional read-only Property Panel
 Bottom snap bar      object snapping and legacy Ortho controls
@@ -134,7 +136,7 @@ OpenCad2D can export the current visible drawing to SVG.
 
 Current SVG export behavior:
 
-- exports visible `PointEntity`, `TextEntity`, `LineEntity`, `CircleEntity`, `PolylineEntity` and `ArcEntity`;
+- exports visible `PointEntity`, `TextEntity`, geometric entities and basic dimensions;
 - ignores entities on hidden layers;
 - includes entities on locked layers when their layer is visible;
 - uses stroke color, line weight and dash style from the line format assigned to the entity layer;
@@ -169,6 +171,7 @@ Current DXF export behavior:
 - exports `CircleEntity` as `CIRCLE`;
 - exports `ArcEntity` as `ARC`;
 - exports `PolylineEntity` as `LWPOLYLINE`;
+- exports dimensions as graphical primitives (`LINE`, `ARC` and `TEXT`), not native DXF `DIMENSION` records;
 - writes all document layers to the DXF `LAYER` table;
 - writes `CONTINUOUS`, `DASHED`, `DASHDOT` and `DASHDOTDOT` to the DXF `LTYPE` table;
 - derives layer color, true color, lineweight and linetype from the layer's `LineFormat`;
@@ -194,6 +197,15 @@ Implemented drawing tools:
 - `ArcTool` — center, start point, end direction;
 - `ArcThreePointsTool` / `Arc 3P` — start point, point on arc, end point;
 - `PolylineTool` — multi-point open or closed polyline.
+
+Implemented dimension tools:
+
+- `HorizontalDimensionTool` — horizontal distance between two measured points;
+- `VerticalDimensionTool` — vertical distance between two measured points;
+- `AlignedDimensionTool` — true distance aligned to the two measured points;
+- `RadiusDimensionTool` — radius label using `R`;
+- `DiameterDimensionTool` — diameter label using `Ø`;
+- `AngularDimensionTool` — angular label in degrees, including reflex angles greater than 180°.
 
 `PolylineTool` supports:
 

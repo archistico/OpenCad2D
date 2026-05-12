@@ -26,7 +26,7 @@ The project currently supports:
 
 ### Drawing
 
-- v0.4 dimension work has started: dimension styles, non-associative horizontal/vertical/aligned/radius/diameter dimension entities, rendering, tools, preview and SVG/DXF graphical export exist;
+- v0.4 basic dimensions are implemented: horizontal, vertical, aligned, radius, diameter and angular dimensions with non-associative entities, tools, preview, rendering, persistence and SVG/DXF graphical export;
 - `PointTool`;
 - `TextTool` for single-line text;
 - `LineTool`;
@@ -77,7 +77,7 @@ The project currently supports:
 
 - stable top file command bar;
 - CAD top bar;
-- vertical left tool panel;
+- two-column left tool panel;
 - canvas with crosshair;
 - optional right Property Panel v1;
 - bottom snap/Ortho bar plus top-bar Polar Tracking selector;
@@ -93,7 +93,7 @@ The project currently supports:
 
 - internal JSON format `.opencad2d.json`;
 - document-level `DimensionStyleCollection` for dimension settings;
-- first dimension entities persisted in JSON as `LinearDimension` and `AlignedDimension`;
+- dimensions persisted in JSON as `LinearDimension`, `AlignedDimension`, `RadiusDimension`, `DiameterDimension` and `AngularDimension`;
 - `OpenCad2D.Persistence` project;
 - New/Open/Save/Save As;
 - current file path;
@@ -105,9 +105,9 @@ The project currently supports:
 - DXF export from the file command bar;
 - SVG background rectangle matching the canvas;
 - SVG export preserves the same visual Y orientation as the canvas;
-- DXF export writes AutoCAD 2000 ASCII DXF with POINT, TEXT, LINE, CIRCLE, ARC and LWPOLYLINE; v0.4 dimensions currently export as LINE + TEXT graphical primitives, not native DIMENSION records;
+- DXF export writes AutoCAD 2000 ASCII DXF with POINT, TEXT, LINE, CIRCLE, ARC and LWPOLYLINE; v0.4 dimensions export as LINE/ARC/TEXT graphical primitives, not native DIMENSION records;
 - DXF export writes LTYPE/LAYER tables and uses LineFormat-derived layer appearance with BYLAYER entities;
-- SVG/DXF export include points, single-line text and horizontal/vertical/aligned dimensions;
+- SVG/DXF export include points, single-line text and all v0.4 basic dimensions;
 - DXF export mirrors Y by exported content bounds to preserve the visual top/bottom orientation in external viewers;
 - automated DXF tests cover balanced code/value pairs, representative entity records, BYLAYER entity properties, built-in line format mapping, TEXT records and LWPOLYLINE flags;
 - SVG export does not save the drawing and does not clear dirty state.
@@ -610,3 +610,33 @@ The v0.4 dimension system includes systematic tests for degenerate cases and tra
 - For line targets, Extend highlights the segment that will be added.
 - `CadCanvas` draws these highlighted modify previews with a separate red pen.
 - Current follow-up: extend highlighted previews to arcs, circles and polylines if needed.
+
+
+## v0.4 final status
+
+The planned v0.4 Basic Dimensions scope is complete. Implemented dimension types:
+
+- horizontal;
+- vertical;
+- aligned;
+- radius;
+- diameter;
+- angular, including reflex angles greater than 180°.
+
+Important decisions:
+
+- dimensions are non-associative;
+- `DimensionStyle` is document-level configuration;
+- dimension text appearance is resolved through `DimensionStyle.TextFormatId`;
+- rendering, preview and export share `DimensionGeometryBuilder`;
+- SVG/DXF export dimensions as graphical primitives, not native editable CAD dimensions.
+
+Recent UI polish:
+
+- left tool panel is organized into two columns;
+- first column contains Select, Draw, Dimension and Measure groups;
+- second column contains Edit tools;
+- status bar color is aligned with the rest of the dark UI;
+- horizontal, vertical and aligned dimension text placement was adjusted.
+
+Recommended next milestone: v0.5 Advanced editing and refinement. Start with the remaining modify-tool gaps: Trim with two cutting edges, Break on arcs/circles/polylines, broader highlighted previews and stronger locked/hidden layer tests for modify tools.

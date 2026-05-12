@@ -26,6 +26,7 @@ OpenCad2D currently includes:
 - [x] Layer Manager with line format selection;
 - [x] Line Format Manager;
 - [x] Text Format Manager;
+- [x] DimensionStyle and basic dimension entities/tools;
 - [x] Property Panel v1;
 - [x] hidden layer behavior;
 - [x] locked layer behavior;
@@ -45,6 +46,7 @@ OpenCad2D currently includes:
 - [x] grid configuration;
 - [x] drawing tools;
 - [x] editing/transform tools;
+- [x] two-column left tool panel organization;
 - [x] modify tools for lines/arcs/circles/polylines where supported;
 - [x] grip editing;
 - [x] custom Avalonia canvas;
@@ -254,6 +256,7 @@ OpenCad2D currently includes:
 - [x] `TextTool`;
 - [x] reusable `TextFormat` configuration;
 - [x] Text Format Manager;
+- [x] DimensionStyle and basic dimension entities/tools;
 - [x] grip editing for polylines: move vertices;
 - [x] grip editing for polylines: insert vertices;
 - [x] grip editing for polylines: delete vertices.
@@ -301,60 +304,93 @@ OpenCad2D currently includes:
 
 ## v0.4 - Basic dimensions
 
+Status: **feature-complete for the planned v0.4 scope**.
+
+### Architectural decisions
+
+- [x] dimensions are non-associative in v0.4;
+- [x] DXF export writes dimensions as graphical primitives, not native `DIMENSION` records;
+- [x] horizontal and vertical dimensions use separate tools;
+- [x] angular dimensions support reflex angles greater than 180°;
+- [x] dimension rendering, SVG export and DXF export share `DimensionGeometryBuilder`.
+
 ### Feature & UX
 
-- [x] linear dimension core entity and canvas render model;
-- [x] aligned dimension core entity and canvas render model;
-- [x] horizontal dimension tool;
-- [x] vertical dimension tool;
-- [x] aligned dimension tool;
-- [x] angular dimension;
-- [x] radius dimension;
-- [x] diameter dimension;
-- [x] base dimension style core model;
+- [x] `DimensionStyleId`;
+- [x] `DimensionStyle`;
+- [x] `DimensionStyleCollection`;
+- [x] document-level `DimensionStyles`;
+- [x] `LinearDimensionEntity`;
+- [x] `AlignedDimensionEntity`;
+- [x] `RadiusDimensionEntity`;
+- [x] `DiameterDimensionEntity`;
+- [x] `AngularDimensionEntity`;
+- [x] `HorizontalDimensionTool`;
+- [x] `VerticalDimensionTool`;
+- [x] `AlignedDimensionTool`;
+- [x] `RadiusDimensionTool`;
+- [x] `DiameterDimensionTool`;
+- [x] `AngularDimensionTool`;
 - [x] dimension text format/style integration through `DimensionStyle.TextFormatId`;
-- [x] preview while placing horizontal, vertical, aligned, radius, diameter and angular dimensions.
+- [x] preview while placing horizontal, vertical, aligned, radius, diameter and angular dimensions;
+- [x] Property Panel support for dimension entities;
+- [x] two-column left tool panel cleanup for Select/Draw/Dimension/Measure and Edit groups;
+- [x] status bar visual polish;
+- [x] horizontal, vertical and aligned dimension text placement polish.
+
+### Persistence and export
+
+- [x] JSON persistence for `DimensionStyle`;
+- [x] JSON persistence for linear and aligned dimensions;
+- [x] JSON persistence for radius and diameter dimensions;
+- [x] JSON persistence for angular dimensions;
+- [x] SVG export for horizontal, vertical and aligned dimensions;
+- [x] SVG export for radius and diameter dimensions;
+- [x] SVG export for angular dimensions;
+- [x] DXF export for horizontal, vertical and aligned dimensions as graphical primitives;
+- [x] DXF export for radius and diameter dimensions as graphical primitives;
+- [x] DXF export for angular dimensions as graphical primitives.
 
 ### Stability & Test
 
-- [x] tests for horizontal linear dimension core entity;
-- [x] tests for vertical linear dimension core entity;
-- [x] tests for aligned dimension core entity;
+- [x] tests for horizontal linear dimension;
+- [x] tests for vertical linear dimension;
+- [x] tests for aligned dimension;
 - [x] tests for angular dimension;
 - [x] tests for radius dimension;
 - [x] tests for diameter dimension;
-- [x] persistence tests for dimension styles and first dimension entities;
-- [x] SVG export tests for horizontal, vertical and aligned dimensions;
-- [x] SVG export tests for radius and diameter dimensions;
-- [x] SVG export tests for angular dimensions;
-- [x] DXF export tests for horizontal, vertical and aligned dimensions as graphical primitives;
-- [x] DXF export tests for radius and diameter dimensions as graphical primitives;
-- [x] DXF export tests for angular dimensions as graphical primitives;
-- [x] undo/redo tests for first dimension tools;
-- [x] systematic tests for dimension edge cases.
-
-
-### Implementation notes
-
-- [x] v0.4 architectural decisions recorded: dimensions are non-associative; DXF export will initially write dimensions as graphical primitives; horizontal and vertical dimensions will use separate tools; angular dimensions must support angles greater than 180°.
-- [x] Phase 0 started with `DimensionStyleId`, `DimensionStyle`, `DimensionStyleCollection` and document-level `DimensionStyles`.
-- [x] First core entities added: `LinearDimensionEntity` and `AlignedDimensionEntity`.
-- [x] Phase 2 added `DimensionGeometryBuilder`, canvas rendering and placement preview for horizontal, vertical and aligned dimensions.
-- [x] Phase 3 added SVG/DXF export for horizontal, vertical and aligned dimensions as graphical primitives.
-- [x] Phase 4 added `RadiusDimensionEntity`, `DiameterDimensionEntity`, their tools, rendering, persistence and SVG/DXF graphical export.
-- [x] Phase 5 added `AngularDimensionEntity`, `AngularDimensionTool`, minor/reflex angle support, rendering, persistence and SVG/DXF graphical export.
-- [x] Phase 6 added systematic dimension edge case tests and transform robustness fixes.
-- [x] Phase 7 started editing polish with Trim/Extend highlighted previews.
+- [x] persistence tests for dimension styles and dimension entities;
+- [x] SVG export tests for dimensions;
+- [x] DXF export tests for dimensions;
+- [x] undo/redo tests for dimension tools;
+- [x] systematic dimension edge-case tests;
+- [x] transform robustness tests for dimensions;
+- [x] Trim/Extend preview tests.
 
 ### Editing polish
 
 - [x] Trim/Extend preview with highlighted portion for line targets;
 - [x] clearer status messages for non-applicable Trim/Extend operations during preview;
-- [x] systematic tests for dimension edge cases.
+- [x] documentation of current Trim/Extend preview scope and limitations.
+
+### Completion criteria
+
+- [x] all planned basic dimension types are implemented;
+- [x] all planned basic dimension tools are implemented;
+- [x] preview is available for all planned dimension tools;
+- [x] dimensions are saved and loaded in `.opencad2d.json`;
+- [x] dimensions are rendered on canvas;
+- [x] dimensions appear in SVG export;
+- [x] dimensions appear in DXF export as graphical primitives;
+- [x] tests pass after the v0.4 implementation phases;
+- [x] documentation has been updated for v0.4.
 
 ---
 
 ## v0.5 - Advanced editing and refinement
+
+Next planned milestone after v0.4.
+
 
 ### Feature & UX
 
@@ -440,7 +476,7 @@ OpenCad2D currently includes:
 ### Feature & UX
 
 - [ ] color picker improvements for layer and formats;
-- [ ] lateral toolbar in two columns: Draw / Edit;
+- [x] initial two-column left tool panel organization;
 - [ ] application settings;
 - [ ] shortcuts persistence;
 - [ ] last file persistence;

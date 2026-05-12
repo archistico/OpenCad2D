@@ -190,6 +190,100 @@ Ortho or Polar Tracking applies to the current segment only.
 
 ---
 
+## Dimension tools
+
+Dimension tools create non-associative annotation entities. They use the current layer, the default dimension style and undoable `AddEntityCommand` commits.
+
+All dimension tools show preview geometry before the final click. Rendering and preview are based on the shared `DimensionGeometryBuilder`, so the interactive view matches SVG/DXF export geometry.
+
+### HorizontalDimensionTool
+
+Workflow:
+
+```text
+activate Horizontal Dim
+pick first measured point
+pick second measured point
+pick dimension-line placement point
+```
+
+The measured value is the horizontal delta between the first and second points.
+
+### VerticalDimensionTool
+
+Workflow:
+
+```text
+activate Vertical Dim
+pick first measured point
+pick second measured point
+pick dimension-line placement point
+```
+
+The measured value is the vertical delta between the first and second points.
+
+### AlignedDimensionTool
+
+Workflow:
+
+```text
+activate Aligned Dim
+pick first measured point
+pick second measured point
+pick dimension-line placement point
+```
+
+The measured value is the true distance between the two measured points.
+
+### RadiusDimensionTool
+
+Workflow:
+
+```text
+activate Radius Dim
+pick center point
+pick point on circle
+pick text placement point
+```
+
+The generated label uses the `R` prefix.
+
+### DiameterDimensionTool
+
+Workflow:
+
+```text
+activate Diameter Dim
+pick center point
+pick point on circle
+pick text placement point
+```
+
+The generated label uses the `Ø` prefix.
+
+### AngularDimensionTool
+
+Workflow:
+
+```text
+activate Angular Dim
+pick angle center
+pick point on first ray
+pick point on second ray
+pick arc placement point
+```
+
+The fourth click chooses the angular sector. This supports both minor and reflex angles greater than 180°.
+
+Dimension limitations in v0.4:
+
+- dimensions are not associative;
+- there is no dimension grip editing yet;
+- dimension styles are persisted but do not yet have a dedicated manager window;
+- Property Panel support is read-only.
+
+---
+
 ## SelectionTool
 
 Selection supports:

@@ -50,6 +50,8 @@ The serializer handles:
 - layer line format references;
 - text formats;
 - text entity text format references;
+- dimension styles;
+- dimension entity style references;
 - entities;
 - current layer id;
 - viewport state;
@@ -150,6 +152,106 @@ Saving rules:
 
 ---
 
+## Dimension style persistence
+
+The native JSON format stores reusable dimension styles at document level and stores only the selected style id on each dimension entity.
+
+Conceptual DTO shape:
+
+```text
+DocumentDto
+  DimensionStyles[]
+  Entities[]
+
+DimensionStyleDto
+  Id
+  Name
+  TextFormatId
+  ArrowSize
+  TextOffset
+  ExtensionLineOffset
+  ExtensionLineOvershoot
+  DecimalPlaces
+  DecimalSeparator
+  Suffix
+```
+
+Loading rules:
+
+- if `DimensionStyles` is missing or empty, use the default dimension style collection;
+- if a dimension references an unknown `DimensionStyleId`, fall back to `Standard`;
+- dimension text appearance is resolved through `DimensionStyle.TextFormatId` and `Document.TextFormats`;
+- style values are not duplicated inside each dimension entity.
+
+Saving rules:
+
+- save `Document.DimensionStyles`;
+- save each dimension entity's `DimensionStyleId`;
+- save only the geometric definition and optional text override on each dimension entity.
+
+---
+
+## Dimension entity persistence
+
+Implemented dimension entity DTOs:
+
+```text
+LinearDimensionEntityDto
+AlignedDimensionEntityDto
+RadiusDimensionEntityDto
+DiameterDimensionEntityDto
+AngularDimensionEntityDto
+```
+
+`LinearDimensionEntityDto` stores:
+
+```text
+Type = LinearDimension
+FirstX / FirstY
+SecondX / SecondY
+DimensionLineX / DimensionLineY
+Orientation = Horizontal | Vertical
+DimensionStyleId
+TextOverride
+```
+
+`AlignedDimensionEntityDto` stores:
+
+```text
+Type = AlignedDimension
+FirstX / FirstY
+SecondX / SecondY
+DimensionLineX / DimensionLineY
+DimensionStyleId
+TextOverride
+```
+
+`RadiusDimensionEntityDto` and `DiameterDimensionEntityDto` store:
+
+```text
+CenterX / CenterY
+PointOnCircleX / PointOnCircleY
+TextPointX / TextPointY
+DimensionStyleId
+TextOverride
+```
+
+`AngularDimensionEntityDto` stores:
+
+```text
+CenterX / CenterY
+FirstRayPointX / FirstRayPointY
+SecondRayPointX / SecondRayPointY
+ArcPointX / ArcPointY
+IsCounterClockwise
+DimensionStyleId
+TextOverride
+```
+
+Dimensions are non-associative in v0.4. The persisted data does not store references to measured entities.
+
+---
+
 ## Dirty state
 
 Dirty state is tracked from command history generation.
@@ -212,9 +314,10 @@ Persistence and export are intentionally separate.
 ```text
 Save / Save As  -> writes .opencad2d.json and marks the document clean
 Export SVG      -> writes .svg and leaves the document state unchanged
+Export DXF      -> writes .dxf and leaves the document state unchanged
 ```
 
-SVG export does not:
+SVG/DXF export does not:
 
 - change `CurrentFilePath`;
 - call `MarkSaved()`;

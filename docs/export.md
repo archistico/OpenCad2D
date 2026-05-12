@@ -51,6 +51,9 @@ ArcEntity                 -> <path>
 Horizontal dimension      -> lines + text
 Vertical dimension        -> lines + text
 Aligned dimension         -> lines + text
+Radius dimension          -> leader/arrow lines + text
+Diameter dimension        -> leader/arrow lines + text
+Angular dimension         -> lines + arc + text
 ```
 
 Layer rules:
@@ -144,6 +147,9 @@ PolylineEntity            -> LWPOLYLINE
 Horizontal dimension      -> LINE + TEXT graphical primitives
 Vertical dimension        -> LINE + TEXT graphical primitives
 Aligned dimension         -> LINE + TEXT graphical primitives
+Radius dimension          -> LINE + TEXT graphical primitives
+Diameter dimension        -> LINE + TEXT graphical primitives
+Angular dimension         -> LINE + ARC + TEXT graphical primitives
 ```
 
 Current DXF structure:
@@ -257,19 +263,20 @@ The current implementation intentionally does not export multiline text because 
 
 The first v0.4 dimension export is intentionally graphical, not associative.
 
-Horizontal, vertical and aligned dimensions are exported through the shared `DimensionGeometryBuilder` render model:
+Horizontal, vertical, aligned, radius, diameter and angular dimensions are exported through the shared `DimensionGeometryBuilder` render model:
 
 ```text
 DimensionEntity
 -> DimensionStyle
 -> DimensionGeometryBuilder
--> dimension lines, extension lines, arrow lines and measurement text
+-> dimension lines, extension lines, arrow lines, angular arcs and measurement text
 ```
 
 SVG writes dimensions as visual primitives:
 
 ```text
 line primitives -> <line>
+arc primitives  -> <path>
 measurement     -> <text>
 ```
 
@@ -277,6 +284,7 @@ DXF writes dimensions as simple graphical entities:
 
 ```text
 line primitives -> LINE
+arc primitives  -> ARC
 measurement     -> TEXT
 ```
 
@@ -297,7 +305,7 @@ The default `Standard` dimension style uses the `Annotation` text format.
 
 ## Export is not Save
 
-SVG export does not affect native document state.
+SVG/DXF export does not affect native document state.
 
 It must not:
 
@@ -307,7 +315,7 @@ It must not:
 - change command history generation;
 - modify the document.
 
-If the drawing is dirty before export, it remains dirty after export.
+If the drawing is dirty before export, it remains dirty after SVG or DXF export.
 
 ---
 
@@ -326,6 +334,8 @@ built-in line formats map to expected DXF linetype, true color and lineweight va
 TEXT export writes content, height, style name and mirrored angle
 open/closed LWPOLYLINE records write expected vertex count and flags
 horizontal, vertical and aligned dimensions export as LINE + TEXT graphical primitives
+radius and diameter dimensions export as LINE + TEXT graphical primitives
+angular dimensions export as LINE + ARC + TEXT graphical primitives
 dimension primitives use BYLAYER properties
 ```
 
@@ -350,15 +360,15 @@ Possible improvements:
 - PDF export.
 
 
-## v0.4 radius and diameter dimension export
+## v0.4 dimension export status
 
-Radius and diameter dimensions are exported graphically, like the first linear/aligned dimensions. SVG writes `<line>` primitives plus `<text>`. DXF writes `LINE` records for leaders/arrows and one `TEXT` record for the measurement label. The DXF output remains visual-first and does not yet create native editable `DIMENSION` entities.
+The v0.4 export scope is complete for the implemented basic dimension types:
 
-## Angular dimensions export
+- horizontal dimensions;
+- vertical dimensions;
+- aligned dimensions;
+- radius dimensions;
+- diameter dimensions;
+- angular dimensions, including reflex angles.
 
-Angular dimensions are exported as graphical primitives in both SVG and DXF.
-
-- SVG uses line primitives, one path arc and one text element.
-- DXF uses `LINE`, `ARC` and `TEXT` records.
-
-The exported result is visually compatible with CAD viewers but is not yet a native DXF `DIMENSION` entity. Native DXF dimensions remain a future interoperability improvement.
+All are exported as graphical primitives. This keeps external-viewer compatibility predictable while the internal dimension model is still evolving. Native editable DXF `DIMENSION` records remain a future interoperability task.
