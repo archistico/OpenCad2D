@@ -309,8 +309,8 @@ OpenCad2D currently includes:
 - [x] vertical dimension tool;
 - [x] aligned dimension tool;
 - [ ] angular dimension;
-- [ ] radius dimension;
-- [ ] diameter dimension;
+- [x] radius dimension;
+- [x] diameter dimension;
 - [x] base dimension style core model;
 - [x] dimension text format/style integration through `DimensionStyle.TextFormatId`;
 - [x] preview while placing horizontal, vertical and aligned dimensions.
@@ -321,11 +321,13 @@ OpenCad2D currently includes:
 - [x] tests for vertical linear dimension core entity;
 - [x] tests for aligned dimension core entity;
 - [ ] tests for angular dimension;
-- [ ] tests for radius dimension;
-- [ ] tests for diameter dimension;
+- [x] tests for radius dimension;
+- [x] tests for diameter dimension;
 - [x] persistence tests for dimension styles and first dimension entities;
 - [x] SVG export tests for horizontal, vertical and aligned dimensions;
+- [x] SVG export tests for radius and diameter dimensions;
 - [x] DXF export tests for horizontal, vertical and aligned dimensions as graphical primitives;
+- [x] DXF export tests for radius and diameter dimensions as graphical primitives;
 - [x] undo/redo tests for first dimension tools.
 
 
@@ -336,7 +338,8 @@ OpenCad2D currently includes:
 - [x] First core entities added: `LinearDimensionEntity` and `AlignedDimensionEntity`.
 - [x] Phase 2 added `DimensionGeometryBuilder`, canvas rendering and placement preview for horizontal, vertical and aligned dimensions.
 - [x] Phase 3 added SVG/DXF export for horizontal, vertical and aligned dimensions as graphical primitives.
-- [ ] Next phase: radius and diameter dimensions.
+- [x] Phase 4 added `RadiusDimensionEntity`, `DiameterDimensionEntity`, their tools, rendering, persistence and SVG/DXF graphical export.
+- [ ] Next phase: angular dimension with support for angles greater than 180°.
 
 ### Editing polish
 

@@ -274,6 +274,24 @@ public sealed class DxfExporter : IDxfExporter
                         contentBounds);
                     break;
 
+                case RadiusDimensionEntity radiusDimension:
+                    WriteDimension(
+                        writer,
+                        document,
+                        layer.Name,
+                        radiusDimension,
+                        contentBounds);
+                    break;
+
+                case DiameterDimensionEntity diameterDimension:
+                    WriteDimension(
+                        writer,
+                        document,
+                        layer.Name,
+                        diameterDimension,
+                        contentBounds);
+                    break;
+
                 case LineEntity line:
                     WriteLine(
                         writer,

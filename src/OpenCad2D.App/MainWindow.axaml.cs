@@ -722,6 +722,28 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void RadiusDimension_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.RadiusDimension);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void DiameterDimension_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.DiameterDimension);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Move_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1545,6 +1567,16 @@ public partial class MainWindow : Window
             AlignedDimensionButton,
             activeToolName.Equals("Aligned Dimension", StringComparison.OrdinalIgnoreCase) ||
             activeToolName.Equals("AlignedDimension", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            RadiusDimensionButton,
+            activeToolName.Equals("Radius Dimension", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("RadiusDimension", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            DiameterDimensionButton,
+            activeToolName.Equals("Diameter Dimension", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("DiameterDimension", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MoveButton,

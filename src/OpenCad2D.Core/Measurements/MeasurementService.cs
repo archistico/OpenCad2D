@@ -33,6 +33,8 @@ public static class MeasurementService
             TextEntity text => MeasureText(text),
             LinearDimensionEntity linearDimension => MeasureLinearDimension(linearDimension),
             AlignedDimensionEntity alignedDimension => MeasureAlignedDimension(alignedDimension),
+            RadiusDimensionEntity radiusDimension => MeasureRadiusDimension(radiusDimension),
+            DiameterDimensionEntity diameterDimension => MeasureDiameterDimension(diameterDimension),
             LineEntity line => MeasureLine(line),
             CircleEntity circle => MeasureCircle(circle),
             ArcEntity arc => MeasureArc(arc),
@@ -138,6 +140,24 @@ public static class MeasurementService
         return new EntityMeasurement(
             EntityKind.AlignedDimension,
             length: dimension.MeasurementValue);
+    }
+
+    private static EntityMeasurement MeasureRadiusDimension(RadiusDimensionEntity dimension)
+    {
+        ArgumentNullException.ThrowIfNull(dimension);
+
+        return new EntityMeasurement(
+            EntityKind.RadiusDimension,
+            radius: dimension.MeasurementValue);
+    }
+
+    private static EntityMeasurement MeasureDiameterDimension(DiameterDimensionEntity dimension)
+    {
+        ArgumentNullException.ThrowIfNull(dimension);
+
+        return new EntityMeasurement(
+            EntityKind.DiameterDimension,
+            diameter: dimension.MeasurementValue);
     }
 
     private static EntityMeasurement MeasureLine(LineEntity line)

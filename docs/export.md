@@ -348,3 +348,8 @@ Possible improvements:
 - native DXF `DIMENSION` export after the internal dimension model is stable;
 - hatches and blocks for DXF when the model supports them;
 - PDF export.
+
+
+## v0.4 radius and diameter dimension export
+
+Radius and diameter dimensions are exported graphically, like the first linear/aligned dimensions. SVG writes `<line>` primitives plus `<text>`. DXF writes `LINE` records for leaders/arrows and one `TEXT` record for the measurement label. The DXF output remains visual-first and does not yet create native editable `DIMENSION` entities.

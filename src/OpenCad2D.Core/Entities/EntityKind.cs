@@ -10,6 +10,8 @@ public enum EntityKind
     HorizontalDimension,
     VerticalDimension,
     AlignedDimension,
+    RadiusDimension,
+    DiameterDimension,
     Line,
     Circle,
     Arc,

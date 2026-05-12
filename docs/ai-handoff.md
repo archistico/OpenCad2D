@@ -26,7 +26,7 @@ The project currently supports:
 
 ### Drawing
 
-- v0.4 dimension work has started: dimension styles, non-associative horizontal/vertical/aligned dimension entities, rendering, tools, preview and SVG/DXF graphical export exist;
+- v0.4 dimension work has started: dimension styles, non-associative horizontal/vertical/aligned/radius/diameter dimension entities, rendering, tools, preview and SVG/DXF graphical export exist;
 - `PointTool`;
 - `TextTool` for single-line text;
 - `LineTool`;
@@ -585,3 +585,8 @@ Implemented after the initial dimension core phase:
 - Dimension selection uses the same selected pen color as other entities.
 - Dimension tools create entities through `AddEntityCommand`, so undo/redo is available.
 - DXF/SVG native export for dimensions is still pending; the agreed v0.4 strategy is to export dimensions as graphical primitives rather than native DXF `DIMENSION` entities.
+
+
+## v0.4 dimensions phase 4 status
+
+Implemented radius and diameter dimensions as non-associative entities. Both store center, point on circle and text point. `RadiusDimensionTool` and `DiameterDimensionTool` use a three-click flow: center, point on circle, text placement. Rendering/export reuse `DimensionGeometryBuilder`; SVG/DXF export remains graphical (`LINE` + `TEXT`) rather than native DXF `DIMENSION`. Next planned dimension phase: angular dimension, including support for angles greater than 180°.

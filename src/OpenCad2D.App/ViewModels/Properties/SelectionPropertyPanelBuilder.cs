@@ -134,6 +134,8 @@ public sealed class SelectionPropertyPanelBuilder
             TextEntity text => BuildTextGeometrySection(text),
             LinearDimensionEntity linearDimension => BuildLinearDimensionGeometrySection(linearDimension),
             AlignedDimensionEntity alignedDimension => BuildAlignedDimensionGeometrySection(alignedDimension),
+            RadiusDimensionEntity radiusDimension => BuildRadiusDimensionGeometrySection(radiusDimension),
+            DiameterDimensionEntity diameterDimension => BuildDiameterDimensionGeometrySection(diameterDimension),
             LineEntity line => BuildLineGeometrySection(line),
             CircleEntity circle => BuildCircleGeometrySection(circle),
             PolylineEntity polyline => BuildPolylineGeometrySection(polyline),
@@ -198,6 +200,39 @@ public sealed class SelectionPropertyPanelBuilder
                 Row("First point", PropertyValueFormatter.FormatPoint(dimension.FirstPoint)),
                 Row("Second point", PropertyValueFormatter.FormatPoint(dimension.SecondPoint)),
                 Row("Dimension line", PropertyValueFormatter.FormatPoint(dimension.DimensionLinePoint)),
+                Row("Measurement", PropertyValueFormatter.FormatLength(dimension.MeasurementValue)),
+                Row("Style", dimension.DimensionStyleId.Value),
+                Row("Text override", string.IsNullOrWhiteSpace(dimension.TextOverride) ? "<automatic>" : dimension.TextOverride!)
+            });
+    }
+
+    private static PropertySectionViewModel BuildRadiusDimensionGeometrySection(RadiusDimensionEntity dimension)
+    {
+        return new PropertySectionViewModel(
+            "Dimension",
+            new[]
+            {
+                Row("Kind", "Radius"),
+                Row("Center", PropertyValueFormatter.FormatPoint(dimension.Center)),
+                Row("Point on circle", PropertyValueFormatter.FormatPoint(dimension.PointOnCircle)),
+                Row("Text point", PropertyValueFormatter.FormatPoint(dimension.TextPoint)),
+                Row("Measurement", PropertyValueFormatter.FormatLength(dimension.MeasurementValue)),
+                Row("Style", dimension.DimensionStyleId.Value),
+                Row("Text override", string.IsNullOrWhiteSpace(dimension.TextOverride) ? "<automatic>" : dimension.TextOverride!)
+            });
+    }
+
+    private static PropertySectionViewModel BuildDiameterDimensionGeometrySection(DiameterDimensionEntity dimension)
+    {
+        return new PropertySectionViewModel(
+            "Dimension",
+            new[]
+            {
+                Row("Kind", "Diameter"),
+                Row("Center", PropertyValueFormatter.FormatPoint(dimension.Center)),
+                Row("Point on circle", PropertyValueFormatter.FormatPoint(dimension.PointOnCircle)),
+                Row("Opposite point", PropertyValueFormatter.FormatPoint(dimension.OppositePoint)),
+                Row("Text point", PropertyValueFormatter.FormatPoint(dimension.TextPoint)),
                 Row("Measurement", PropertyValueFormatter.FormatLength(dimension.MeasurementValue)),
                 Row("Style", dimension.DimensionStyleId.Value),
                 Row("Text override", string.IsNullOrWhiteSpace(dimension.TextOverride) ? "<automatic>" : dimension.TextOverride!)
@@ -357,6 +392,8 @@ public sealed class SelectionPropertyPanelBuilder
                 ? "Horizontal Dimension"
                 : "Vertical Dimension",
             AlignedDimensionEntity => "Aligned Dimension",
+            RadiusDimensionEntity => "Radius Dimension",
+            DiameterDimensionEntity => "Diameter Dimension",
             LineEntity => "Line",
             CircleEntity => "Circle",
             PolylineEntity => "Polyline",

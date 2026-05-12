@@ -27,6 +27,8 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.HorizontalDimension));
         Assert.True(registry.Contains(ToolId.VerticalDimension));
         Assert.True(registry.Contains(ToolId.AlignedDimension));
+        Assert.True(registry.Contains(ToolId.RadiusDimension));
+        Assert.True(registry.Contains(ToolId.DiameterDimension));
         Assert.True(registry.Contains(ToolId.Move));
         Assert.True(registry.Contains(ToolId.Copy));
         Assert.True(registry.Contains(ToolId.Rotate));
@@ -50,7 +52,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(27, tools.Count);
+        Assert.Equal(29, tools.Count);
 
         Assert.Contains(
             tools,
@@ -146,6 +148,14 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.RadiusDimension);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.DiameterDimension);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.MeasureDistance);
 
         Assert.Contains(
@@ -223,10 +233,12 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Dimension");
 
-        Assert.Equal(3, tools.Count);
+        Assert.Equal(5, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.HorizontalDimension);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.VerticalDimension);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.AlignedDimension);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.RadiusDimension);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.DiameterDimension);
     }
 
     [Fact]
@@ -385,6 +397,28 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<AlignedDimensionTool>(tool);
         Assert.Equal("Aligned Dimension", tool.Name);
+    }
+
+    [Fact]
+    public void Create_RadiusDimension_ShouldReturnRadiusDimensionTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.RadiusDimension);
+
+        Assert.IsType<RadiusDimensionTool>(tool);
+        Assert.Equal("Radius Dimension", tool.Name);
+    }
+
+    [Fact]
+    public void Create_DiameterDimension_ShouldReturnDiameterDimensionTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.DiameterDimension);
+
+        Assert.IsType<DiameterDimensionTool>(tool);
+        Assert.Equal("Diameter Dimension", tool.Name);
     }
 
     [Fact]

@@ -24,6 +24,8 @@ public sealed class DimensionGeometryBuilder
         {
             LinearDimensionEntity linear => BuildLinear(linear, style),
             AlignedDimensionEntity aligned => BuildAligned(aligned, style),
+            RadiusDimensionEntity radius => BuildRadius(radius, style),
+            DiameterDimensionEntity diameter => BuildDiameter(diameter, style),
             _ => throw new NotSupportedException(
                 $"Dimension type '{dimension.GetType().Name}' is not supported by the geometry builder.")
         };
@@ -50,7 +52,12 @@ public sealed class DimensionGeometryBuilder
             text = text.Replace('.', ',');
         }
 
-        return text + style.Suffix;
+        return dimension switch
+        {
+            RadiusDimensionEntity => "R " + text + style.Suffix,
+            DiameterDimensionEntity => "Ø " + text + style.Suffix,
+            _ => text + style.Suffix
+        };
     }
 
     private DimensionRenderModel BuildLinear(
@@ -117,6 +124,89 @@ public sealed class DimensionGeometryBuilder
             firstProjection,
             secondProjection,
             angle);
+    }
+
+
+    private DimensionRenderModel BuildRadius(
+        RadiusDimensionEntity dimension,
+        DimensionStyle style)
+    {
+        Vector2D radiusVector = (dimension.PointOnCircle - dimension.Center).Normalize();
+        double angle = ToDegrees(Math.Atan2(radiusVector.Y, radiusVector.X));
+
+        var lines = new List<DimensionLinePrimitive>
+        {
+            new(dimension.Center, dimension.PointOnCircle),
+            new(dimension.PointOnCircle, dimension.TextPoint)
+        };
+
+        var arrows = new List<DimensionLinePrimitive>();
+        AddArrow(
+            arrows,
+            dimension.PointOnCircle,
+            radiusVector * -1,
+            style.ArrowSize);
+
+        var text = new DimensionTextPrimitive(
+            FormatMeasurement(dimension, style),
+            dimension.TextPoint,
+            NormalizeAngle(angle));
+
+        BoundingBox2D bounds = BuildBounds(
+            lines,
+            arrows,
+            text,
+            style);
+
+        return new DimensionRenderModel(
+            lines,
+            arrows,
+            text,
+            bounds);
+    }
+
+    private DimensionRenderModel BuildDiameter(
+        DiameterDimensionEntity dimension,
+        DimensionStyle style)
+    {
+        Vector2D radiusVector = (dimension.PointOnCircle - dimension.Center).Normalize();
+        double angle = ToDegrees(Math.Atan2(radiusVector.Y, radiusVector.X));
+        Point2D oppositePoint = dimension.OppositePoint;
+
+        var lines = new List<DimensionLinePrimitive>
+        {
+            new(oppositePoint, dimension.PointOnCircle),
+            new(dimension.PointOnCircle, dimension.TextPoint)
+        };
+
+        var arrows = new List<DimensionLinePrimitive>();
+        AddArrow(
+            arrows,
+            dimension.PointOnCircle,
+            radiusVector * -1,
+            style.ArrowSize);
+        AddArrow(
+            arrows,
+            oppositePoint,
+            radiusVector,
+            style.ArrowSize);
+
+        var text = new DimensionTextPrimitive(
+            FormatMeasurement(dimension, style),
+            dimension.TextPoint,
+            NormalizeAngle(angle));
+
+        BoundingBox2D bounds = BuildBounds(
+            lines,
+            arrows,
+            text,
+            style);
+
+        return new DimensionRenderModel(
+            lines,
+            arrows,
+            text,
+            bounds);
     }
 
     private DimensionRenderModel BuildFromProjectedPoints(

@@ -358,11 +358,11 @@ Measures an angle defined by three points or two selected entities.
 
 ### Radius dimension
 
-Measures a circle or arc radius.
+Measures a circle or arc radius. The current non-associative definition stores a center point, a point on the circle and a text placement point. The automatic text uses the `R` prefix, for example `R 25.00`.
 
 ### Diameter dimension
 
-Measures a circle or arc diameter.
+Measures a circle or arc diameter. The current non-associative definition stores a center point, a point on the circle and a text placement point. The opposite point is derived from the center and circle point. The automatic text uses the `Ø` prefix, for example `Ø 50.00`.
 
 ---
 
@@ -404,7 +404,7 @@ Current v0.4 decisions:
 
 ## Dimension export status
 
-The v0.4 dimension system currently exports horizontal, vertical and aligned dimensions as graphical primitives.
+The v0.4 dimension system currently exports horizontal, vertical, aligned, radius and diameter dimensions as graphical primitives.
 
 SVG export writes:
 

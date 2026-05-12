@@ -68,6 +68,41 @@ public sealed class DimensionGeometryBuilderTests
     }
 
     [Fact]
+    public void Build_WithRadiusDimension_ShouldCreateLeaderArrowAndPrefixedText()
+    {
+        var dimension = new RadiusDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(14, 2));
+
+        DimensionRenderModel model = _builder.Build(dimension, _style);
+
+        Assert.Equal(2, model.Lines.Count);
+        Assert.Equal(2, model.Arrows.Count);
+        Assert.Equal("R 10.00", model.Text.Text);
+        Assert.Equal(new Point2D(14, 2), model.Text.Position);
+        Assert.Equal(0, model.Text.RotationDegrees);
+    }
+
+    [Fact]
+    public void Build_WithDiameterDimension_ShouldCreateDiameterLineArrowsAndPrefixedText()
+    {
+        var dimension = new DiameterDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(14, 2));
+
+        DimensionRenderModel model = _builder.Build(dimension, _style);
+
+        Assert.Equal(2, model.Lines.Count);
+        Assert.Equal(4, model.Arrows.Count);
+        Assert.Equal("Ø 20.00", model.Text.Text);
+        Assert.Contains(model.Lines, line =>
+            line.Start == new Point2D(-10, 0) &&
+            line.End == new Point2D(10, 0));
+    }
+
+    [Fact]
     public void FormatMeasurement_WithOverride_ShouldUseOverride()
     {
         var dimension = new LinearDimensionEntity(

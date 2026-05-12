@@ -246,6 +246,22 @@ public sealed class SvgExporter : ISvgExporter
                 height,
                 margin),
 
+            RadiusDimensionEntity radiusDimension => ExportDimension(
+                document,
+                radiusDimension,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
+            DiameterDimensionEntity diameterDimension => ExportDimension(
+                document,
+                diameterDimension,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
             LineEntity line => ExportLine(
                 line,
                 lineFormat,

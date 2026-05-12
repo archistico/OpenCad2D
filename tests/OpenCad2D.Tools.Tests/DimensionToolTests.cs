@@ -111,6 +111,69 @@ public sealed class DimensionToolTests
         Assert.Equal(new Point2D(50, 20), preview.DimensionLinePoint);
     }
 
+    [Fact]
+    public void RadiusDimensionTool_ShouldCreateRadiusDimensionAfterThreeClicks()
+    {
+        ToolContext context = CreateContext();
+        var tool = new RadiusDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(14, 2)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        var dimension = Assert.Single(context.Document.Entities.All.OfType<RadiusDimensionEntity>());
+        Assert.Equal(10, dimension.MeasurementValue);
+        Assert.Equal(new Point2D(14, 2), dimension.TextPoint);
+    }
+
+    [Fact]
+    public void DiameterDimensionTool_ShouldCreateDiameterDimensionAfterThreeClicks()
+    {
+        ToolContext context = CreateContext();
+        var tool = new DiameterDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(14, 2)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        var dimension = Assert.Single(context.Document.Entities.All.OfType<DiameterDimensionEntity>());
+        Assert.Equal(20, dimension.MeasurementValue);
+        Assert.Equal(new Point2D(-10, 0), dimension.OppositePoint);
+    }
+
+    [Fact]
+    public void RadiusDimensionTool_WithInvalidCirclePoint_ShouldNotCreateDimension()
+    {
+        ToolContext context = CreateContext();
+        var tool = new RadiusDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Empty(context.Document.Entities.All);
+    }
+
+    [Fact]
+    public void RadiusDimensionTool_AfterSecondPoint_ShouldExposeDimensionPreview()
+    {
+        ToolContext context = CreateContext();
+        var tool = new RadiusDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerMoved(context, new PointerInfo(new Point2D(14, 2)));
+
+        var preview = Assert.Single(tool.GetPreviewEntities().OfType<RadiusDimensionEntity>());
+
+        Assert.Equal(10, preview.MeasurementValue);
+        Assert.Equal(new Point2D(14, 2), preview.TextPoint);
+    }
+
     private static ToolContext CreateContext()
     {
         return new ToolContext(

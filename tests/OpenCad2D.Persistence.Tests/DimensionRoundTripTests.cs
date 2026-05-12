@@ -99,6 +99,47 @@ public sealed class DimensionRoundTripTests
     }
 
     [Fact]
+    public void SerializeDeserialize_ShouldPreserveRadiusAndDiameterDimensions()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var document = new CadDocument();
+
+        var radius = new RadiusDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(14, 2));
+        var diameter = new DiameterDimensionEntity(
+            new Point2D(20, 0),
+            new Point2D(25, 0),
+            new Point2D(30, 2));
+
+        document.AddEntity(radius);
+        document.AddEntity(diameter);
+
+        DocumentDto dto = serializer.Serialize(
+            document,
+            LayerId.Default.Value,
+            new ViewportStateDto());
+
+        CadDocument restored = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        var restoredRadius = Assert.IsType<RadiusDimensionEntity>(restored.Entities.GetRequired(radius.Id));
+        Assert.Equal(radius.Center, restoredRadius.Center);
+        Assert.Equal(radius.PointOnCircle, restoredRadius.PointOnCircle);
+        Assert.Equal(radius.TextPoint, restoredRadius.TextPoint);
+        Assert.Equal(10, restoredRadius.MeasurementValue);
+
+        var restoredDiameter = Assert.IsType<DiameterDimensionEntity>(restored.Entities.GetRequired(diameter.Id));
+        Assert.Equal(diameter.Center, restoredDiameter.Center);
+        Assert.Equal(diameter.PointOnCircle, restoredDiameter.PointOnCircle);
+        Assert.Equal(diameter.TextPoint, restoredDiameter.TextPoint);
+        Assert.Equal(10, restoredDiameter.MeasurementValue);
+    }
+
+    [Fact]
     public void JsonRoundTrip_ShouldPreserveDimensionEntityTypes()
     {
         var serializer = new JsonDocumentSerializer();

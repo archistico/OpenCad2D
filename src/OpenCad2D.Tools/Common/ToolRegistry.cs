@@ -126,6 +126,22 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.RadiusDimension,
+                "RadiusDimension",
+                "Radius Dim",
+                "Dimension"),
+            () => new RadiusDimensionTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.DiameterDimension,
+                "DiameterDimension",
+                "Diameter Dim",
+                "Dimension"),
+            () => new DiameterDimensionTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Move,
                 "Move",
                 "Move",

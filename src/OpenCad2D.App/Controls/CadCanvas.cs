@@ -1083,6 +1083,18 @@ public sealed class CadCanvas : Control
                     alignedDimensionTool.GetPreviewEntities());
                 break;
 
+            case RadiusDimensionTool radiusDimensionTool:
+                DrawEntitiesPreview(
+                    context,
+                    radiusDimensionTool.GetPreviewEntities());
+                break;
+
+            case DiameterDimensionTool diameterDimensionTool:
+                DrawEntitiesPreview(
+                    context,
+                    diameterDimensionTool.GetPreviewEntities());
+                break;
+
             case MoveTool moveTool:
                 DrawEntitiesPreview(
                     context,
@@ -1729,6 +1741,22 @@ public sealed class CadCanvas : Control
                 DrawDimension(
                     context,
                     alignedDimension,
+                    pen,
+                    isSelected);
+                break;
+
+            case RadiusDimensionEntity radiusDimension:
+                DrawDimension(
+                    context,
+                    radiusDimension,
+                    pen,
+                    isSelected);
+                break;
+
+            case DiameterDimensionEntity diameterDimension:
+                DrawDimension(
+                    context,
+                    diameterDimension,
                     pen,
                     isSelected);
                 break;

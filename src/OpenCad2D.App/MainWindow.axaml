@@ -375,6 +375,16 @@
                                 Content="Aligned Dim"
                                 Click="AlignedDimension_Click" />
 
+                        <Button x:Name="RadiusDimensionButton"
+                                Classes="tool-button"
+                                Content="Radius Dim"
+                                Click="RadiusDimension_Click" />
+
+                        <Button x:Name="DiameterDimensionButton"
+                                Classes="tool-button"
+                                Content="Diameter Dim"
+                                Click="DiameterDimension_Click" />
+
                         <Separator Margin="0,5" />
 
                         <TextBlock Classes="panel-section-label"

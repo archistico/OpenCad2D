@@ -363,6 +363,34 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 TextOverride = alignedDimension.TextOverride
             },
 
+            RadiusDimensionEntity radiusDimension => new RadiusDimensionEntityDto
+            {
+                Id = radiusDimension.Id.ToString(),
+                LayerId = radiusDimension.LayerId.Value,
+                CenterX = radiusDimension.Center.X,
+                CenterY = radiusDimension.Center.Y,
+                PointOnCircleX = radiusDimension.PointOnCircle.X,
+                PointOnCircleY = radiusDimension.PointOnCircle.Y,
+                TextX = radiusDimension.TextPoint.X,
+                TextY = radiusDimension.TextPoint.Y,
+                DimensionStyleId = radiusDimension.DimensionStyleId.Value,
+                TextOverride = radiusDimension.TextOverride
+            },
+
+            DiameterDimensionEntity diameterDimension => new DiameterDimensionEntityDto
+            {
+                Id = diameterDimension.Id.ToString(),
+                LayerId = diameterDimension.LayerId.Value,
+                CenterX = diameterDimension.Center.X,
+                CenterY = diameterDimension.Center.Y,
+                PointOnCircleX = diameterDimension.PointOnCircle.X,
+                PointOnCircleY = diameterDimension.PointOnCircle.Y,
+                TextX = diameterDimension.TextPoint.X,
+                TextY = diameterDimension.TextPoint.Y,
+                DimensionStyleId = diameterDimension.DimensionStyleId.Value,
+                TextOverride = diameterDimension.TextOverride
+            },
+
             LineEntity line => new LineEntityDto
             {
                 Id = line.Id.ToString(),
@@ -632,6 +660,28 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     ? DimensionStyleId.Standard
                     : new DimensionStyleId(alignedDimension.DimensionStyleId),
                 alignedDimension.TextOverride,
+                id,
+                layerId),
+
+            RadiusDimensionEntityDto radiusDimension => new RadiusDimensionEntity(
+                new Point2D(radiusDimension.CenterX, radiusDimension.CenterY),
+                new Point2D(radiusDimension.PointOnCircleX, radiusDimension.PointOnCircleY),
+                new Point2D(radiusDimension.TextX, radiusDimension.TextY),
+                string.IsNullOrWhiteSpace(radiusDimension.DimensionStyleId)
+                    ? DimensionStyleId.Standard
+                    : new DimensionStyleId(radiusDimension.DimensionStyleId),
+                radiusDimension.TextOverride,
+                id,
+                layerId),
+
+            DiameterDimensionEntityDto diameterDimension => new DiameterDimensionEntity(
+                new Point2D(diameterDimension.CenterX, diameterDimension.CenterY),
+                new Point2D(diameterDimension.PointOnCircleX, diameterDimension.PointOnCircleY),
+                new Point2D(diameterDimension.TextX, diameterDimension.TextY),
+                string.IsNullOrWhiteSpace(diameterDimension.DimensionStyleId)
+                    ? DimensionStyleId.Standard
+                    : new DimensionStyleId(diameterDimension.DimensionStyleId),
+                diameterDimension.TextOverride,
                 id,
                 layerId),
 
