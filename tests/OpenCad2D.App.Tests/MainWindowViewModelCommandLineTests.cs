@@ -1,6 +1,7 @@
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
+using System;
 using System.Linq;
 
 namespace OpenCad2D.App.Tests;
@@ -140,6 +141,104 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.NotNull(result);
     }
 
+
+
+    [Fact]
+    public void SubmitCommandInput_WithRelativeCoordinatesForLine_ShouldCreateLineFromBasePoint()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("10,10");
+        var result = viewModel.SubmitCommandInput("@100,-25");
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Line created.", viewModel.LastMessage);
+        Assert.Contains(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
+            line => line.Start == new Point2D(10, 10) &&
+                    line.End == new Point2D(110, -15));
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithRelativeCoordinatesAndNoBasePoint_ShouldReportClearError()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        var result = viewModel.SubmitCommandInput("@100,0");
+
+        Assert.Equal("Relative coordinates require a base point.", viewModel.LastMessage);
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithDirectDistanceForLine_ShouldUseCurrentCursorDirection()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+        var result = viewModel.SubmitCommandInput("5");
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Line created.", viewModel.LastMessage);
+        Assert.Contains(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
+            line => line.Start == new Point2D(0, 0) &&
+                    line.End == new Point2D(5, 0));
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithDirectDistanceAndNoBasePoint_ShouldReportClearError()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        var result = viewModel.SubmitCommandInput("5");
+
+        Assert.Equal("Direct distance requires a base point.", viewModel.LastMessage);
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithDirectDistanceAndNoCursorDirection_ShouldReportClearError()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(0, 0));
+        var result = viewModel.SubmitCommandInput("5");
+
+        Assert.Equal("Move the cursor to indicate a direction.", viewModel.LastMessage);
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithRelativeCoordinatesAndDistance_ShouldNotAddPointInputsToCommandHistory()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("@10,0");
+
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.Equal("L", viewModel.CommandLineHistory[0]);
+    }
+
     [Fact]
     public void SubmitCommandInput_WithEmptyInput_ShouldReportClearError()
     {
@@ -151,4 +250,68 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Empty(viewModel.CommandLineHistory);
         Assert.NotNull(result);
     }
+    [Theory]
+    [InlineData("100<0", 100, 0)]
+    [InlineData("100<90", 0, 100)]
+    [InlineData("100<180", -100, 0)]
+    [InlineData("100<270", 0, -100)]
+    [InlineData("100<-90", 0, -100)]
+    [InlineData("100<450", 0, 100)]
+    public void SubmitCommandInput_WithDistanceAngleForLine_ShouldCreateLineAtCadAngle(
+        string input,
+        double expectedEndX,
+        double expectedEndY)
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        var result = viewModel.SubmitCommandInput(input);
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Line created.", viewModel.LastMessage);
+        Assert.Contains(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
+            line => line.Start == Point2D.Origin &&
+                    ArePointsNear(new Point2D(expectedEndX, expectedEndY), line.End));
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithDistanceAngleAndNoBasePoint_ShouldReportClearError()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        var result = viewModel.SubmitCommandInput("100<45");
+
+        Assert.Equal("Distance-angle input requires a base point.", viewModel.LastMessage);
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithDistanceAngle_ShouldNotAddPointInputToCommandHistory()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("100<0");
+
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.Equal("L", viewModel.CommandLineHistory[0]);
+    }
+
+    private static bool ArePointsNear(
+        Point2D expected,
+        Point2D actual,
+        double tolerance = 0.000000001)
+    {
+        return Math.Abs(expected.X - actual.X) <= tolerance &&
+               Math.Abs(expected.Y - actual.Y) <= tolerance;
+    }
+
 }

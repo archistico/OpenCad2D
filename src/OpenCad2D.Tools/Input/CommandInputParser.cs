@@ -30,6 +30,11 @@ public sealed class CommandInputParser
             return ParseAbsolutePoint(value);
         }
 
+        if (value.Contains('<'))
+        {
+            return ParseDistanceAngle(value);
+        }
+
         return ParseDistance(value);
     }
 
@@ -71,6 +76,41 @@ public sealed class CommandInputParser
         }
 
         return CommandInputParseResult.DistanceValue(distance);
+    }
+
+
+    private static CommandInputParseResult ParseDistanceAngle(string input)
+    {
+        string[] parts = input.Split(
+            '<',
+            StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length != 2 ||
+            !TryParseDouble(parts[0], out double distance) ||
+            !TryParseDouble(parts[1], out double angleDegrees))
+        {
+            return CommandInputParseResult.Invalid(
+                "Invalid distance-angle format. Use distance<angle for example: 100<45.");
+        }
+
+        if (distance <= 0 || Tolerance.IsZero(distance))
+        {
+            return CommandInputParseResult.Invalid(
+                "Distance must be greater than zero.");
+        }
+
+        return CommandInputParseResult.DistanceAngleValue(
+            distance,
+            NormalizeAngle(angleDegrees));
+    }
+
+    private static double NormalizeAngle(double angleDegrees)
+    {
+        double normalized = angleDegrees % 360.0;
+
+        return normalized < 0
+            ? normalized + 360.0
+            : normalized;
     }
 
     private static bool TryParsePoint(

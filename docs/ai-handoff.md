@@ -832,10 +832,14 @@ Phase 1 should add the alias registry/service, connect command-line submission t
 
 ---
 
-## Current state after v0.6 phase 2
+## Current state after v0.6 phase 4
 
 Command-line activation by alias has been added. `CommandAliasRegistry` resolves tool names and aliases before coordinate parsing. The UI command input supports activating tools with aliases such as `L`, `C`, `TR`, `EX`, `HDIM`, `ANG`, etc. Unknown textual commands produce a clear message, and valid tool activations are stored in `MainWindowViewModel.CommandLineHistory`.
 
-Phase 2 verified the absolute coordinate pipeline. The project already had centralized `x,y` parsing in `CommandInputParser`; this phase strengthened it with workflow tests for Line, Circle and Point, invalid coordinate tests, and command-history tests. Absolute coordinate inputs such as `100,50` are submitted to the active tool through the same workspace/tool pipeline used by mouse clicks. Coordinate inputs are intentionally not stored in command history.
+Phase 2 verified the absolute coordinate pipeline. Absolute coordinate inputs such as `100,50` are submitted to the active tool through the same workspace/tool pipeline used by mouse clicks. Coordinate inputs are intentionally not stored in command history.
 
-Next recommended phase: v0.6 phase 3, relative coordinates and direct distance. The parser already supports `@x,y` and direct distance values; the next phase should add stronger workflow tests and verify errors when no base point or cursor direction is available.
+Phase 3 verified relative coordinates and direct distance input. `@x,y` is resolved from `Workspace.Context.CurrentBasePoint`; direct distance uses the current mouse/snap direction and applies active Ortho/Polar constraints before computing the final point. Tests cover valid relative input, missing base point errors, direct distance line creation, missing direction errors, invalid relative input and command-history behavior.
+
+Phase 4 added CAD-style distance-angle input such as `100<45`. The parser returns `CommandInputKind.DistanceAngle`; angles are normalized, use CAD orientation (`0°` right, `90°` up), support negative values and values over 360°, and are resolved from the active tool base point.
+
+Next recommended phase: v0.6 phase 5, repeat last command via Enter/right-click.

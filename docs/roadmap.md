@@ -518,7 +518,7 @@ docs/release-v0.5.md
 
 ## v0.6 - Real command line and Property Panel v2
 
-Status: in progress. Phase 0 audit/design, Phase 1 command activation and Phase 2 absolute coordinate pipeline completed.
+Status: in progress. Phase 0 audit/design, Phase 1 command activation, Phase 2 absolute coordinate pipeline, Phase 3 relative/direct distance and Phase 4 distance-angle input completed.
 
 Detailed planning document:
 
@@ -579,27 +579,27 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ### Phase 3 - Relative coordinates and direct distance
 
-- [ ] parse `@x,y` relative coordinates;
-- [ ] compute relative point from the current tool base point;
-- [ ] preserve direct distance entry;
-- [ ] use current pointer/constrained direction for direct distance;
-- [ ] clear error when no base point exists;
-- [ ] clear error when distance direction is unavailable;
-- [ ] tests for relative input;
-- [ ] tests for direct distance input;
-- [ ] tests for invalid relative input.
+- [x] parse `@x,y` relative coordinates;
+- [x] compute relative point from the current tool base point;
+- [x] preserve direct distance entry;
+- [x] use current pointer/constrained direction for direct distance;
+- [x] clear error when no base point exists;
+- [x] clear error when distance direction is unavailable;
+- [x] tests for relative input;
+- [x] tests for direct distance input;
+- [x] tests for invalid relative input.
 
 ### Phase 4 - Distance plus angle
 
-- [ ] parse `distance<angle`;
-- [ ] support negative angles;
-- [ ] support angles over 360°;
-- [ ] use CAD model orientation, not screen orientation;
-- [ ] tests for `100<0`;
-- [ ] tests for `100<90`;
-- [ ] tests for `100<180`;
-- [ ] tests for `100<-90`;
-- [ ] tests for invalid polar input.
+- [x] parse `distance<angle`;
+- [x] support negative angles;
+- [x] support angles over 360°;
+- [x] use CAD model orientation, not screen orientation;
+- [x] tests for `100<0`;
+- [x] tests for `100<90`;
+- [x] tests for `100<180`;
+- [x] tests for `100<-90`;
+- [x] tests for invalid polar input.
 
 ### Phase 5 - Repeat last command
 

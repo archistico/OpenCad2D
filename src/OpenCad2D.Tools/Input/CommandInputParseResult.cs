@@ -12,12 +12,14 @@ public sealed class CommandInputParseResult
         Point2D? point = null,
         Vector2D? offset = null,
         double? distance = null,
+        double? angleDegrees = null,
         string? errorMessage = null)
     {
         Kind = kind;
         Point = point;
         Offset = offset;
         Distance = distance;
+        AngleDegrees = angleDegrees;
         ErrorMessage = errorMessage;
     }
 
@@ -30,6 +32,8 @@ public sealed class CommandInputParseResult
     public Vector2D? Offset { get; }
 
     public double? Distance { get; }
+
+    public double? AngleDegrees { get; }
 
     public string? ErrorMessage { get; }
 
@@ -52,6 +56,16 @@ public sealed class CommandInputParseResult
         return new CommandInputParseResult(
             CommandInputKind.Distance,
             distance: distance);
+    }
+
+    public static CommandInputParseResult DistanceAngleValue(
+        double distance,
+        double angleDegrees)
+    {
+        return new CommandInputParseResult(
+            CommandInputKind.DistanceAngle,
+            distance: distance,
+            angleDegrees: angleDegrees);
     }
 
     public static CommandInputParseResult Invalid(string errorMessage)

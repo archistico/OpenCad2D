@@ -8,5 +8,6 @@ public enum CommandInputKind
     Invalid = 0,
     AbsolutePoint = 1,
     RelativePoint = 2,
-    Distance = 3
+    Distance = 3,
+    DistanceAngle = 4
 }

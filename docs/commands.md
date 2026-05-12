@@ -314,6 +314,40 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ---
 
+
+## v0.6 distance plus angle input
+
+Distance-angle input is supported with CAD model orientation:
+
+```text
+100<0       100 units to the right
+100<90      100 units upward
+100<180     100 units to the left
+100<270     100 units downward
+100<-90     normalized to 270 degrees
+100<450     normalized to 90 degrees
+```
+
+Rules:
+
+- the format is `distance<angle`;
+- spaces around `<` are allowed;
+- distance must be greater than zero;
+- angles are expressed in degrees;
+- negative angles and angles over 360 degrees are normalized;
+- the input requires a current base point accepted by the active tool;
+- distance-angle input is not stored in command history.
+
+Example:
+
+```text
+L
+0,0
+100<45
+```
+
+creates a line from `(0,0)` to the point 100 units away at 45 degrees in CAD coordinates.
+
 ## v0.6 Property Panel command rule
 
 Property Panel v2 edits must be undoable.
@@ -353,3 +387,43 @@ ANG     -> Angular Dimension
 ```
 
 Unknown textual commands return a clear message and do not change the active tool.
+
+
+## v0.6 relative coordinates and direct distance
+
+Relative coordinates and direct distance entry are supported by the same command-line pipeline used for absolute coordinates.
+
+Supported forms:
+
+```text
+@100,0      relative point from the current tool base point
+@0,-50      relative point with negative Y offset
+100         direct distance from the current tool base point
+```
+
+Rules:
+
+- `@x,y` requires a current base point accepted by the active tool;
+- direct distance also requires a current base point;
+- direct distance uses the current cursor direction, after Ortho/Polar constraints when enabled;
+- coordinate and distance input is not stored in command history;
+- the decimal separator is always `.`.
+
+Examples:
+
+```text
+L
+0,0
+@100,0
+```
+
+creates a 100-unit horizontal line.
+
+```text
+L
+0,0
+# move cursor to the right
+50
+```
+
+creates a 50-unit line in the indicated direction.

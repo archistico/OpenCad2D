@@ -520,6 +520,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     out worldPoint,
                     out errorMessage);
 
+            case CommandInputKind.DistanceAngle:
+                return TryResolveDistanceAnglePoint(
+                    parseResult.Distance!.Value,
+                    parseResult.AngleDegrees!.Value,
+                    out worldPoint,
+                    out errorMessage);
+
             default:
                 errorMessage = "Unsupported command input.";
                 return false;
@@ -557,6 +564,32 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         worldPoint = basePoint + direction.Normalize() * distance;
+        return true;
+    }
+
+
+    private bool TryResolveDistanceAnglePoint(
+        double distance,
+        double angleDegrees,
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Distance-angle input requires a base point.";
+            return false;
+        }
+
+        double radians = angleDegrees * Math.PI / 180.0;
+        var userOffset = new Vector2D(
+            distance * Math.Cos(radians),
+            distance * Math.Sin(radians));
+
+        Vector2D worldOffset = Workspace.CurrentUcs.UserVectorToWorld(userOffset);
+        worldPoint = Workspace.Context.CurrentBasePoint.Value + worldOffset;
         return true;
     }
 
