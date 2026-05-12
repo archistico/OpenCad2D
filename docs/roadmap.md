@@ -330,7 +330,8 @@ OpenCad2D currently includes:
 - [x] DXF export tests for horizontal, vertical and aligned dimensions as graphical primitives;
 - [x] DXF export tests for radius and diameter dimensions as graphical primitives;
 - [x] DXF export tests for angular dimensions as graphical primitives;
-- [x] undo/redo tests for first dimension tools.
+- [x] undo/redo tests for first dimension tools;
+- [x] systematic tests for dimension edge cases.
 
 
 ### Implementation notes
@@ -342,13 +343,14 @@ OpenCad2D currently includes:
 - [x] Phase 3 added SVG/DXF export for horizontal, vertical and aligned dimensions as graphical primitives.
 - [x] Phase 4 added `RadiusDimensionEntity`, `DiameterDimensionEntity`, their tools, rendering, persistence and SVG/DXF graphical export.
 - [x] Phase 5 added `AngularDimensionEntity`, `AngularDimensionTool`, minor/reflex angle support, rendering, persistence and SVG/DXF graphical export.
-- [ ] Next phase: dimension edge cases and v0.4 polish.
+- [x] Phase 6 added systematic dimension edge case tests and transform robustness fixes.
+- [ ] Next phase: v0.4 editing polish.
 
 ### Editing polish
 
 - [ ] Trim/Extend preview with highlighted portion;
 - [ ] clearer status messages for non-applicable operations;
-- [ ] systematic tests for dimension edge cases.
+- [x] systematic tests for dimension edge cases.
 
 ---
 

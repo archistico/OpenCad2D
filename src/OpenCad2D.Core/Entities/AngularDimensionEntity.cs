@@ -133,12 +133,16 @@ public sealed class AngularDimensionEntity : DimensionEntity
 
     public override CadEntity Transform(Matrix2D matrix)
     {
+        bool transformedCounterClockwise = HasNegativeDeterminant(matrix)
+            ? !IsCounterClockwise
+            : IsCounterClockwise;
+
         return new AngularDimensionEntity(
             matrix.Transform(Center),
             matrix.Transform(FirstRayPoint),
             matrix.Transform(SecondRayPoint),
             matrix.Transform(ArcPoint),
-            IsCounterClockwise,
+            transformedCounterClockwise,
             DimensionStyleId,
             TextOverride,
             Id,
@@ -147,6 +151,13 @@ public sealed class AngularDimensionEntity : DimensionEntity
             IsVisible,
             IsLocked,
             DrawOrder);
+    }
+
+    private static bool HasNegativeDeterminant(Matrix2D matrix)
+    {
+        double determinant = (matrix.M11 * matrix.M22) - (matrix.M12 * matrix.M21);
+
+        return determinant < 0;
     }
 
     public override CadEntity WithId(EntityId id)

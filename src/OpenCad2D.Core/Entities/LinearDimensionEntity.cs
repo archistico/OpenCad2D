@@ -121,11 +121,52 @@ public sealed class LinearDimensionEntity : DimensionEntity
 
     public override CadEntity Transform(Matrix2D matrix)
     {
-        return new LinearDimensionEntity(
-            matrix.Transform(FirstPoint),
-            matrix.Transform(SecondPoint),
-            matrix.Transform(DimensionLinePoint),
-            Orientation,
+        Point2D transformedFirstPoint = matrix.Transform(FirstPoint);
+        Point2D transformedSecondPoint = matrix.Transform(SecondPoint);
+        Point2D transformedDimensionLinePoint = matrix.Transform(DimensionLinePoint);
+
+        if (AreNearlyEqual(
+                transformedFirstPoint.Y,
+                transformedSecondPoint.Y))
+        {
+            return new LinearDimensionEntity(
+                transformedFirstPoint,
+                transformedSecondPoint,
+                transformedDimensionLinePoint,
+                DimensionOrientation.Horizontal,
+                DimensionStyleId,
+                TextOverride,
+                Id,
+                LayerId,
+                Style,
+                IsVisible,
+                IsLocked,
+                DrawOrder);
+        }
+
+        if (AreNearlyEqual(
+                transformedFirstPoint.X,
+                transformedSecondPoint.X))
+        {
+            return new LinearDimensionEntity(
+                transformedFirstPoint,
+                transformedSecondPoint,
+                transformedDimensionLinePoint,
+                DimensionOrientation.Vertical,
+                DimensionStyleId,
+                TextOverride,
+                Id,
+                LayerId,
+                Style,
+                IsVisible,
+                IsLocked,
+                DrawOrder);
+        }
+
+        return new AlignedDimensionEntity(
+            transformedFirstPoint,
+            transformedSecondPoint,
+            transformedDimensionLinePoint,
             DimensionStyleId,
             TextOverride,
             Id,
@@ -134,6 +175,13 @@ public sealed class LinearDimensionEntity : DimensionEntity
             IsVisible,
             IsLocked,
             DrawOrder);
+    }
+
+    private static bool AreNearlyEqual(
+        double first,
+        double second)
+    {
+        return Math.Abs(first - second) <= 1e-9;
     }
 
     public override CadEntity WithId(EntityId id)

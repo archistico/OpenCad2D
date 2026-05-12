@@ -431,3 +431,17 @@ Angular dimensions are non-associative. They store the center point, the first r
 The fourth click chooses the angular sector. If the arc placement point falls inside the counter-clockwise sweep from the first ray to the second ray, the dimension uses that counter-clockwise sweep. Otherwise it uses the clockwise sweep. This allows both minor angles and reflex angles greater than 180°.
 
 Angular dimension text is generated automatically as degrees, for example `90.00°` or `270.00°`, unless `TextOverride` is set.
+
+
+## Dimension edge cases
+
+Dimension entities are tested against common degenerate and robustness cases:
+
+- zero-length horizontal and vertical dimensions are rejected;
+- aligned dimensions require two distinct measured points;
+- radius and diameter dimensions require a non-zero radius;
+- angular dimensions require two valid ray points, a valid arc point and different ray directions;
+- negative, very small and very large coordinates are covered by render-model tests;
+- transformed dimensions keep stable measurements where the model supports the operation;
+- horizontal/vertical dimensions rotated away from the global axes become aligned dimensions;
+- mirrored angular dimensions flip sweep direction to preserve the measured angle.
