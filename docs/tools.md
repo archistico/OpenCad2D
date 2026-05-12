@@ -437,9 +437,9 @@ Align owns a multi-step state machine and does not derive from `TwoPointToolBase
 
 ## Modify tools
 
-Modify tools change existing geometry topologically or by extending/trimming parts.
+Modify tools change existing geometry topologically or by extending/trimming parts. The v0.5 milestone consolidated these tools and their layer rules.
 
-Break tools are currently line-based. Trim and Extend now support multiple entity types where the operation is geometrically meaningful.
+All modify operations must go through undoable commands and Core editing services. Tools own workflow state; Core owns geometry calculations.
 
 ### BreakAtPointTool
 
@@ -447,13 +447,21 @@ Workflow:
 
 ```text
 activate Break Point
-pick target LineEntity
+pick target entity
 pick break point
-project break point onto line
-replace original line with two line entities
+project break point onto target
+replace original entity with resulting piece(s)
 ```
 
-Uses `LineBreakService` and commits through `ModifyEntitiesCommand`.
+Supported targets:
+
+```text
+LineEntity       -> two line entities
+ArcEntity        -> two arc entities preserving direction
+Open Polyline    -> two open polylines
+Closed Polyline  -> one open polyline cut at the selected point
+CircleEntity     -> not applicable; use Break Segment
+```
 
 ### BreakBetweenPointsTool
 
@@ -461,13 +469,22 @@ Workflow:
 
 ```text
 activate Break Segment
-pick target LineEntity
+pick target entity
 pick first break point
 pick second break point
-remove the segment between the projected break points
+project both points onto target
+remove the segment between the projected points
 ```
 
-The two break points are ordered along the line. The result may be zero, one or two remaining line segments depending on where the break points fall.
+Supported targets:
+
+```text
+LineEntity       -> zero, one or two remaining line segments
+ArcEntity        -> zero, one or two remaining arcs
+CircleEntity     -> one remaining major arc after removing the minor arc
+Open Polyline    -> zero, one or two open polylines
+Closed Polyline  -> one open polyline after removing the shortest path
+```
 
 ### ExtendTool
 
@@ -480,13 +497,29 @@ pick target entity near the endpoint to extend
 extend the nearest valid endpoint until it reaches the boundary
 ```
 
-Boundaries may be lines, circles, arcs or polylines. Targets currently include lines, arcs and open polylines. Circles are not extended because they are closed.
+Boundary entities may be lines, circles, arcs or polylines when visible. Targets currently include:
 
-The tool stays active with the same boundary until `Esc`.
+```text
+LineEntity
+ArcEntity
+open PolylineEntity
+```
+
+Non-extendable targets return clear feedback rather than silently failing:
+
+```text
+CircleEntity
+closed PolylineEntity
+PointEntity
+TextEntity
+dimension entities
+```
+
+The tool stays active with the same boundary until `Esc`. Preview shows the resulting entity and, where supported, highlights the added portion.
 
 ### TrimTool
 
-Workflow:
+Single-cutting-edge workflow:
 
 ```text
 activate Trim
@@ -495,9 +528,28 @@ pick target entity on the portion to remove
 replace the target with the remaining geometry
 ```
 
-Cutting edges and targets may be lines, circles, arcs or polylines. A trimmed circle can become one or more arcs.
+Two-cutting-edge workflow for line targets:
 
-The tool stays active with the same cutting edge until `Esc`.
+```text
+activate Trim
+pick first cutting edge
+Ctrl-click second cutting edge
+pick target line portion to remove
+replace the target with remaining line fragment(s)
+```
+
+The Ctrl-click workflow keeps the original single-boundary Trim interaction compatible. The target pick decides whether the middle interval or an outside interval is removed. Preview shows remaining geometry and highlights the removed line segment where available.
+
+### Layer rules
+
+```text
+Hidden entities:
+    ignored as targets and references.
+
+Locked visible entities:
+    usable as references, boundaries and cutting edges;
+    not editable targets.
+```
 
 All modify tools create undoable changes and use Core geometry services.
 

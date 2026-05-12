@@ -30,8 +30,10 @@ The application already supports a functional CAD workflow:
 - creating horizontal, vertical, aligned, radius, diameter and angular dimensions;
 - selecting entities by point, window and crossing selection;
 - moving, copying, rotating, scaling, aligning and deleting selected entities;
-- break point and break segment for line entities;
-- trim and extend for lines, arcs, circles and polylines where supported by the current geometry services;
+- break point for lines, arcs and polylines, with clear non-applicable feedback for circles;
+- break segment for lines, arcs, circles and polylines;
+- trim with one cutting edge and two-cutting-edge Trim for line targets;
+- extend for lines, arcs and open polylines where supported by the current geometry services;
 - grip editing for supported entities;
 - undo and redo;
 - internal JSON save/load using `.opencad2d.json`;
@@ -58,7 +60,8 @@ The application already supports a functional CAD workflow:
 - viewport culling for rendering only visible entities;
 - CAD-style crosshair cursor;
 - visual feedback for active command, current layer, snap type, rendered entity count and temporary measurements;
-- two-column left tool panel grouping Select/Draw/Dimension/Measure separately from Edit tools.
+- two-column left tool panel grouping Select/Draw/Dimension/Measure separately from Edit tools;
+- v0.5 advanced modify-tool behavior for Break, Trim and Extend with locked/hidden-layer regression coverage.
 
 ---
 

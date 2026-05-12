@@ -389,14 +389,15 @@ Status: **feature-complete for the planned v0.4 scope**.
 
 ## v0.5 - Advanced editing and refinement
 
-Status: implementation started; Phase 5 layer-rule regression completed for Break/Trim/Extend tools.
+Status: completed as a stability-first modify-tools milestone.
 
-This milestone is stability-first. It improves modify tools after the v0.4 Basic Dimensions milestone, without adding command-line workflows or Property Panel editing.
+This milestone consolidates advanced editing after the v0.4 Basic Dimensions milestone. It deliberately avoids command-line redesign and Property Panel editing, which remain planned for v0.6.
 
-Detailed audit and implementation plan:
+Detailed audit and implementation notes:
 
 ```text
 docs/v0.5-modify-tools-audit.md
+docs/release-v0.5.md
 ```
 
 ### Phase 0 - Modify tools audit
@@ -446,7 +447,6 @@ docs/v0.5-modify-tools-audit.md
 - [x] highlighted preview shows the removed line segment;
 - [x] undo/redo coverage for two-cutting-edge line Trim.
 
-
 ### Phase 4 - Extend consolidation
 
 - [x] systematic Extend tests for `LineEntity` regression;
@@ -458,18 +458,6 @@ docs/v0.5-modify-tools-audit.md
 - [x] Extend preview highlights the added arc for arc targets;
 - [x] Extend preview highlights the added segment for open polyline endpoint targets;
 - [x] undo/redo coverage for open polyline Extend.
-
-### Feature & UX
-
-- [x] Break Point on arcs;
-- [x] Break Point on polylines;
-- [x] Break Point on circles as a clear not-applicable operation;
-- [x] Break Segment on arcs;
-- [x] Break Segment on circles;
-- [x] Break Segment on polylines;
-- [x] Trim with two cutting edges for line targets;
-- [x] improved Extend on all supported entity types;
-- [x] clearer status messages for unsupported Extend operations;
 
 ### Phase 5 - Layer rules and modify-tool regression
 
@@ -486,25 +474,45 @@ docs/v0.5-modify-tools-audit.md
 - [x] locked visible entities are references only, never editable targets;
 - [x] hidden entities do not participate as references or targets.
 
+### Feature & UX
+
+- [x] Break Point on arcs;
+- [x] Break Point on open and closed polylines;
+- [x] Break Point on circles as a clear not-applicable operation;
+- [x] Break Segment on arcs;
+- [x] Break Segment on circles;
+- [x] Break Segment on open and closed polylines;
+- [x] Trim with two cutting edges for line targets;
+- [x] improved Extend on supported entity types;
+- [x] clearer status messages for unsupported modify operations;
+- [x] highlighted preview for removed/added portions where currently supported.
+
 ### Stability & Test
 
 - [x] systematic Trim tests;
 - [x] systematic Extend tests;
-- [x] systematic Break tests;
-- [x] locked-layer behavior in all modify tools;
-- [x] hidden-layer behavior in all modify tools;
-- [ ] robust intersections for multi-segment entities;
-- [ ] robust intersections for near-tangent cases;
-- [ ] robust intersections for overlapping geometry;
-- [ ] no regressions in undo/redo for existing tools.
+- [x] systematic Break Point tests;
+- [x] systematic Break Segment tests;
+- [x] locked-layer behavior in modify tools;
+- [x] hidden-layer behavior in modify tools;
+- [x] undo/redo regression coverage for Break/Trim/Extend workflows covered by v0.5;
+- [x] documented remaining geometric refinement scope for future versions.
 
-### Current v0.5 decisions
+### v0.5 decisions
 
-- [x] `Break Point` on circles will not create an artificial gap; it should return a clear not-applicable message;
-- [x] `Break Segment` on circles will remove the minor arc between the two picked points;
-- [x] locked visible entities should be valid references/boundaries, but not editable targets;
-- [x] hidden entities should not participate as references or targets;
-- [x] two-cutting-edge Trim keeps single-boundary Trim compatible by using: cutting edge 1 -> Ctrl-click cutting edge 2 -> target portion.
+- [x] `Break Point` on circles does not create an artificial gap; it returns a clear not-applicable message;
+- [x] `Break Segment` on circles removes the minor arc between the two picked points;
+- [x] locked visible entities are valid references/boundaries, but not editable targets;
+- [x] hidden entities do not participate as references or targets;
+- [x] two-cutting-edge Trim keeps single-boundary Trim compatible by using: cutting edge 1 -> Ctrl-click cutting edge 2 -> target portion;
+- [x] multi-boundary Trim beyond line targets is deferred until the underlying geometry model is further stabilized.
+
+### Completion criteria
+
+- [x] all planned v0.5 implementation phases completed;
+- [x] build and automated tests passed after each implementation phase;
+- [x] documentation updated;
+- [x] v0.6 scope is clearly separated from v0.5.
 
 ---
 

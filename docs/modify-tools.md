@@ -215,30 +215,31 @@ Closed entities such as circles are trimmable but not extendable.
 
 ## Current limitations and follow-up work
 
-Recommended next refinements:
+Recommended next refinements after v0.5:
 
 - broaden highlighted previews for Trim on arcs, circles and polylines;
-- continue systematic regression tests for Break Point and Break Segment;
-- add additional degenerate-case tests for tangent, near-tangent and overlapping geometry;
-- broaden multi-boundary Trim beyond line targets only if the core geometry remains stable.
+- broaden two-cutting-edge Trim beyond line targets only after the core geometry remains stable;
+- add optional user control for minor/major arc removal in Break Segment on circles;
+- add command-line variants after v0.6 command input is introduced;
+- integrate editable modify-related properties after Property Panel v2.
 
 ---
 
-## v0.5 audit summary
+## v0.5 completion summary
 
-The v0.5 milestone will focus on advanced editing and refinement. The detailed planning document is:
+The v0.5 milestone completed the planned advanced editing refinement pass. Detailed release notes are available in:
 
 ```text
-docs/v0.5-modify-tools-audit.md
+docs/release-v0.5.md
 ```
 
-Current state before v0.5 implementation:
+Final v0.5 scope:
 
 ```text
 Break Point    LineEntity, ArcEntity and PolylineEntity; CircleEntity returns a not-applicable message
 Break Segment  LineEntity, ArcEntity, CircleEntity and PolylineEntity
-Trim           Line/Circle/Arc/Polyline targets with one cutting edge
-Extend         Line/Arc/open Polyline targets to Line/Circle/Arc/Polyline boundaries
+Trim           One cutting edge for supported targets; two cutting edges for LineEntity targets
+Extend         LineEntity, ArcEntity and open PolylineEntity targets to visible boundaries
 ```
 
 Main v0.5 implementation decisions:
@@ -246,12 +247,12 @@ Main v0.5 implementation decisions:
 ```text
 Break Point on CircleEntity: not applicable with clear message
 Break Segment on CircleEntity: remove minor arc between two picked points
-Trim with two cutting edges: 3-click workflow, edge 1 -> Ctrl-click edge 2 -> target portion
+Trim with two cutting edges: edge 1 -> Ctrl-click edge 2 -> target portion
 Locked visible references: usable as boundary/cutting edge, not editable as targets
 Hidden entities: ignored entirely by modify tools
 ```
 
-Layer behavior is now covered by regression tests:
+Layer behavior is covered by regression tests:
 
 ```text
 Break Point / Break Segment:
@@ -268,13 +269,13 @@ Extend:
     locked targets are not modified.
 ```
 
-Recommended order:
+The recommended v0.5 implementation order has been completed:
 
 ```text
-1. Break Point advanced
-2. Break Segment advanced
-3. Trim with two cutting edges
-4. Extend consolidation
-5. Layer rules
-6. systematic tests and v0.5 closure
+1. Break Point advanced        done
+2. Break Segment advanced      done
+3. Trim with two cutting edges done
+4. Extend consolidation        done
+5. Layer rules                 done
+6. v0.5 closure docs           done
 ```

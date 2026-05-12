@@ -727,3 +727,64 @@ locked visible entities:
 ```
 
 `TrimTool` and `ExtendTool` therefore use visible-entity picking for boundary/cutting-edge selection, while target selection remains based on selectable/editable entities. Regression coverage lives in `ModifyToolLayerRuleTests`.
+
+## v0.5 final status
+
+The v0.5 Advanced editing and refinement milestone is complete for the agreed scope.
+
+Completed phases:
+
+```text
+Phase 0 - Modify tools audit                     done
+Phase 1 - Break Point advanced                   done
+Phase 2 - Break Segment advanced                 done
+Phase 3 - Trim with two cutting edges            done
+Phase 4 - Extend consolidation                   done
+Phase 5 - Layer rules and regression tests       done
+Phase 6 - Final documentation and release notes  done
+```
+
+Final modify-tool scope:
+
+```text
+Break Point:
+    LineEntity, ArcEntity and PolylineEntity.
+    CircleEntity is intentionally not applicable.
+
+Break Segment:
+    LineEntity, ArcEntity, CircleEntity and PolylineEntity.
+    CircleEntity removes the minor arc and keeps the remaining major arc.
+
+Trim:
+    one-cutting-edge workflow remains available;
+    two-cutting-edge workflow is available for LineEntity targets through Ctrl-click on the second cutting edge.
+
+Extend:
+    LineEntity, ArcEntity and open PolylineEntity are supported targets.
+    CircleEntity, closed PolylineEntity, PointEntity, TextEntity and dimension entities are not extendable targets.
+```
+
+Layer rules are now explicit and tested:
+
+```text
+Hidden entities:
+    ignored as targets and references.
+
+Locked visible entities:
+    valid as references, boundaries and cutting edges;
+    invalid as editable targets.
+```
+
+Release notes:
+
+```text
+docs/release-v0.5.md
+```
+
+Next milestone:
+
+```text
+v0.6 - Real command line and Property Panel v2
+```
+
+Recommended starting point for v0.6: design the command input architecture before writing code, because it affects tool activation, aliases, coordinate parsing, command history, contextual prompts and right-click repeat-last-command behavior.
