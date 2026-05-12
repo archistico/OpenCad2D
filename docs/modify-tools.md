@@ -131,9 +131,11 @@ The tool remains active with the same boundary until `Esc`.
 Preview behavior:
 
 - the full resulting entity is shown with the normal preview style;
-- for line targets, the newly added extension segment is highlighted separately.
+- for line targets, the newly added extension segment is highlighted separately;
+- for arc targets, the newly added arc portion is highlighted separately;
+- for open polyline targets, the newly added endpoint segment is highlighted separately.
 
-The operation is ignored if there is no valid extension intersection or if the target cannot be extended in a meaningful way. The status message explains that no valid endpoint-to-boundary extension was found from the picked side.
+The operation is ignored if there is no valid extension intersection or if the target cannot be extended in a meaningful way. The status message explains that no valid endpoint-to-boundary extension was found from the picked side. Closed polylines, circles, points, text and dimensions are not valid Extend targets.
 
 ---
 
@@ -215,7 +217,7 @@ Closed entities such as circles are trimmable but not extendable.
 
 Recommended next refinements:
 
-- broaden highlighted previews beyond line targets for Trim/Extend on arcs, circles and polylines;
+- broaden highlighted previews for Trim on arcs, circles and polylines;
 - continue systematic regression tests for Break Point and Break Segment;
 - add additional degenerate-case tests for tangent, near-tangent and overlapping geometry;
 - broaden multi-boundary Trim beyond line targets only if the core geometry remains stable.

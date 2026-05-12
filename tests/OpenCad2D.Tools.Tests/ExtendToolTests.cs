@@ -243,6 +243,173 @@ public sealed class ExtendToolTests
         Assert.Null(context.CurrentBasePoint);
     }
 
+
+    [Fact]
+    public void PointerMove_AfterBoundary_OnArcTarget_ShouldExposeHighlightedExtensionArc()
+    {
+        ToolContext context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(-10, 0),
+            new Point2D(10, 0));
+        var target = new ArcEntity(
+            new Point2D(0, 0),
+            5,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(-5, 0)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(target.Geometry.EndPoint));
+
+        IReadOnlyList<CadEntity> highlighted = tool.GetHighlightedPreviewEntities();
+        ArcEntity arc = Assert.IsType<ArcEntity>(Assert.Single(highlighted));
+
+        Assert.Equal(target.EndAngle, arc.StartAngle);
+        Assert.True(arc.EndAngle.NormalizePositive().Degrees > 170);
+    }
+
+    [Fact]
+    public void PointerMove_AfterBoundary_OnPolylineTarget_ShouldExposeHighlightedExtensionLine()
+    {
+        ToolContext context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(10, -5),
+            new Point2D(10, 5));
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 0)
+        });
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        IReadOnlyList<CadEntity> highlighted = tool.GetHighlightedPreviewEntities();
+        LineEntity extension = Assert.IsType<LineEntity>(Assert.Single(highlighted));
+
+        Assert.Equal(new Point2D(5, 0), extension.Start);
+        Assert.Equal(new Point2D(10, 0), extension.End);
+    }
+
+    [Fact]
+    public void SecondPointerPress_OnClosedPolylineTarget_ShouldReturnClearMessage()
+    {
+        ToolContext context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(10, -5),
+            new Point2D(10, 5));
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 0),
+            new Point2D(5, 5)
+        }, isClosed: true);
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(
+            "Extend supports lines, arcs and open polylines as targets.",
+            result.Message);
+    }
+
+    [Fact]
+    public void SecondPointerPress_OnCircleTarget_ShouldReturnClearMessage()
+    {
+        ToolContext context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(10, -5),
+            new Point2D(10, 5));
+        var target = new CircleEntity(new Point2D(0, 0), 5);
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(
+            "Extend supports lines, arcs and open polylines as targets.",
+            result.Message);
+    }
+
+    [Fact]
+    public void ExtendOpenPolyline_ShouldBeUndoable()
+    {
+        ToolContext context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(10, -5),
+            new Point2D(10, 5));
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 0)
+        });
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        context.CommandHistory.Undo(context.Document);
+
+        PolylineEntity restored =
+            (PolylineEntity)context.Document.Entities.GetRequired(target.Id);
+
+        Assert.Equal(new Point2D(0, 0), restored.Vertices[0]);
+        Assert.Equal(new Point2D(5, 0), restored.Vertices[^1]);
+    }
+
     private static ToolContext CreateContext()
     {
         return new ToolContext(

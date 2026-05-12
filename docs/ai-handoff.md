@@ -607,7 +607,7 @@ The v0.4 dimension system includes systematic tests for degenerate cases and tra
 
 - Trim and Extend now expose highlighted preview entities in addition to the normal result preview.
 - For line targets, Trim highlights the segment that will be removed.
-- For line targets, Extend highlights the segment that will be added.
+- For line targets, Extend highlights the segment that will be added. For arc targets, Extend highlights the added arc portion. For open-polyline targets, Extend highlights the added endpoint segment.
 - `CadCanvas` draws these highlighted modify previews with a separate red pen.
 - Current follow-up: extend highlighted previews to arcs, circles and polylines if needed.
 
@@ -639,7 +639,7 @@ Recent UI polish:
 - status bar color is aligned with the rest of the dark UI;
 - horizontal, vertical and aligned dimension text placement was adjusted.
 
-Recommended next milestone: continue v0.5 Advanced editing and refinement. Break Point and Break Segment have been broadened; remaining gaps are Trim with two cutting edges, Extend consolidation, broader highlighted previews and stronger locked/hidden layer tests for modify tools.
+Recommended next milestone: continue v0.5 Advanced editing and refinement. Break Point, Break Segment, Trim with two cutting edges, and Extend consolidation are complete for the current v0.5 scope; remaining gaps are stronger locked/hidden layer tests, near-tangent/overlap regressions and final v0.5 documentation.
 
 ## v0.5 modify tools audit
 

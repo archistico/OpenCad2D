@@ -446,6 +446,19 @@ docs/v0.5-modify-tools-audit.md
 - [x] highlighted preview shows the removed line segment;
 - [x] undo/redo coverage for two-cutting-edge line Trim.
 
+
+### Phase 4 - Extend consolidation
+
+- [x] systematic Extend tests for `LineEntity` regression;
+- [x] systematic Extend tests for `ArcEntity` start/end extension;
+- [x] systematic Extend tests for open `PolylineEntity` endpoint extension;
+- [x] `CircleEntity`, closed `PolylineEntity`, point/text/dimension targets remain not applicable;
+- [x] clear unsupported-target message for non-extendable entities;
+- [x] Extend preview highlights the added segment for line targets;
+- [x] Extend preview highlights the added arc for arc targets;
+- [x] Extend preview highlights the added segment for open polyline endpoint targets;
+- [x] undo/redo coverage for open polyline Extend.
+
 ### Feature & UX
 
 - [x] Break Point on arcs;
@@ -455,13 +468,13 @@ docs/v0.5-modify-tools-audit.md
 - [x] Break Segment on circles;
 - [x] Break Segment on polylines;
 - [x] Trim with two cutting edges for line targets;
-- [ ] improved Extend on all supported entity types;
-- [ ] clearer status messages for unsupported modify operations.
+- [x] improved Extend on all supported entity types;
+- [x] clearer status messages for unsupported Extend operations;
 
 ### Stability & Test
 
 - [~] systematic Trim tests;
-- [ ] systematic Extend tests;
+- [x] systematic Extend tests;
 - [~] systematic Break tests;
 - [ ] locked-layer behavior in all modify tools;
 - [ ] hidden-layer behavior in all modify tools;

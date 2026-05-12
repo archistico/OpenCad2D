@@ -259,12 +259,26 @@ public sealed class ExtendTool : ICadTool
         CadEntity extended,
         GeometryTolerance tolerance)
     {
-        if (source is not LineEntity sourceLine ||
-            extended is not LineEntity extendedLine)
+        return (source, extended) switch
         {
-            return Array.Empty<CadEntity>();
-        }
+            (LineEntity sourceLine, LineEntity extendedLine) =>
+                CreateLineExtendHighlightEntities(sourceLine, extendedLine, tolerance),
 
+            (ArcEntity sourceArc, ArcEntity extendedArc) =>
+                CreateArcExtendHighlightEntities(sourceArc, extendedArc, tolerance),
+
+            (PolylineEntity sourcePolyline, PolylineEntity extendedPolyline) =>
+                CreatePolylineExtendHighlightEntities(sourcePolyline, extendedPolyline, tolerance),
+
+            _ => Array.Empty<CadEntity>()
+        };
+    }
+
+    private static IReadOnlyList<CadEntity> CreateLineExtendHighlightEntities(
+        LineEntity sourceLine,
+        LineEntity extendedLine,
+        GeometryTolerance tolerance)
+    {
         if (!tolerance.ArePointsEqual(sourceLine.Start, extendedLine.Start))
         {
             return CreateHighlightLine(
@@ -286,8 +300,95 @@ public sealed class ExtendTool : ICadTool
         return Array.Empty<CadEntity>();
     }
 
+    private static IReadOnlyList<CadEntity> CreateArcExtendHighlightEntities(
+        ArcEntity sourceArc,
+        ArcEntity extendedArc,
+        GeometryTolerance tolerance)
+    {
+        if (!tolerance.ArePointsEqual(
+                sourceArc.Geometry.StartPoint,
+                extendedArc.Geometry.StartPoint))
+        {
+            return CreateHighlightArc(
+                sourceArc,
+                extendedArc.StartAngle,
+                sourceArc.StartAngle);
+        }
+
+        if (!tolerance.ArePointsEqual(
+                sourceArc.Geometry.EndPoint,
+                extendedArc.Geometry.EndPoint))
+        {
+            return CreateHighlightArc(
+                sourceArc,
+                sourceArc.EndAngle,
+                extendedArc.EndAngle);
+        }
+
+        return Array.Empty<CadEntity>();
+    }
+
+    private static IReadOnlyList<CadEntity> CreatePolylineExtendHighlightEntities(
+        PolylineEntity sourcePolyline,
+        PolylineEntity extendedPolyline,
+        GeometryTolerance tolerance)
+    {
+        if (sourcePolyline.IsClosed ||
+            extendedPolyline.IsClosed ||
+            sourcePolyline.Vertices.Count < 2 ||
+            extendedPolyline.Vertices.Count < 2)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        if (!tolerance.ArePointsEqual(
+                sourcePolyline.Vertices[0],
+                extendedPolyline.Vertices[0]))
+        {
+            return CreateHighlightLine(
+                sourcePolyline,
+                extendedPolyline.Vertices[0],
+                sourcePolyline.Vertices[0],
+                tolerance);
+        }
+
+        if (!tolerance.ArePointsEqual(
+                sourcePolyline.Vertices[^1],
+                extendedPolyline.Vertices[^1]))
+        {
+            return CreateHighlightLine(
+                sourcePolyline,
+                sourcePolyline.Vertices[^1],
+                extendedPolyline.Vertices[^1],
+                tolerance);
+        }
+
+        return Array.Empty<CadEntity>();
+    }
+
+    private static IReadOnlyList<CadEntity> CreateHighlightArc(
+        ArcEntity source,
+        Angle startAngle,
+        Angle endAngle)
+    {
+        return new[]
+        {
+            new ArcEntity(
+                source.Center,
+                source.Radius,
+                startAngle,
+                endAngle,
+                source.IsCounterClockwise,
+                layerId: source.LayerId,
+                style: source.Style,
+                isVisible: source.IsVisible,
+                isLocked: source.IsLocked,
+                drawOrder: source.DrawOrder)
+        };
+    }
+
     private static IReadOnlyList<CadEntity> CreateHighlightLine(
-        LineEntity source,
+        CadEntity source,
         Point2D start,
         Point2D end,
         GeometryTolerance tolerance)
