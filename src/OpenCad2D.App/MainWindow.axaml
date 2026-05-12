@@ -232,6 +232,10 @@
                             Click="LineFormats_Click" />
 
                     <Button Classes="global-button"
+                            Content="Text formats..."
+                            Click="TextFormats_Click" />
+
+                    <Button Classes="global-button"
                             Content="Grid..."
                             Click="Grid_Click" />
 

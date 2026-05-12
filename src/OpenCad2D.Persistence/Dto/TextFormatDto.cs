@@ -11,7 +11,7 @@ public sealed class TextFormatDto
 
     public string FontFamily { get; set; } = "Arial";
 
-    public double Height { get; set; } = 2.5;
+    public double Height { get; set; } = 10.0;
 
     public string Color { get; set; } = "#FFFFFF";
 

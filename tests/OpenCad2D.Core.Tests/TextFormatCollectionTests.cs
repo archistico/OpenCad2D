@@ -14,6 +14,18 @@ public sealed class TextFormatCollectionTests
         Assert.NotNull(collection.GetById(TextFormatId.Standard));
     }
 
+
+    [Fact]
+    public void Default_ShouldUseReadableDrawingUnitHeights()
+    {
+        TextFormatCollection collection = TextFormatCollection.Default;
+
+        Assert.Equal(10.0, collection.GetById(TextFormatId.Standard).Height);
+        Assert.Equal(18.0, collection.GetById(TextFormatId.Title).Height);
+        Assert.Equal(8.0, collection.GetById(TextFormatId.Annotation).Height);
+        Assert.Equal(6.0, collection.GetById(TextFormatId.Small).Height);
+    }
+
     [Fact]
     public void Constructor_WithDuplicateIds_ShouldThrow()
     {

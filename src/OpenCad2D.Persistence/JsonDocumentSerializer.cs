@@ -430,7 +430,7 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 new TextFormatId(dto.Id),
                 name,
                 fontFamily,
-                dto.Height <= 0 ? 2.5 : dto.Height,
+                dto.Height <= 0 ? 10.0 : dto.Height,
                 FromHex(dto.Color),
                 dto.IsBold,
                 dto.IsItalic));

@@ -27,7 +27,7 @@ public sealed class TextExportTests
         Assert.Equal(1, result.ExportedEntityCount);
         Assert.Contains("<text ", result.Content);
         Assert.Contains("font-family=\"Arial\"", result.Content);
-        Assert.Contains("font-size=\"2.5\"", result.Content);
+        Assert.Contains("font-size=\"10\"", result.Content);
         Assert.Contains("A&amp;B", result.Content);
         Assert.Contains("rotate(-30", result.Content);
     }
@@ -50,7 +50,7 @@ public sealed class TextExportTests
         Assert.Equal(1, result.ExportedEntityCount);
         Assert.Contains("0\nTEXT", content);
         Assert.Contains("1\nRoom", content);
-        Assert.Contains("40\n2.5", content);
+        Assert.Contains("40\n10", content);
         Assert.Contains("50\n315", content);
         Assert.Contains("7\nStandard", content);
     }

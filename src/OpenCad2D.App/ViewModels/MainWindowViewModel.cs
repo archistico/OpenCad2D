@@ -800,6 +800,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+
+    public ToolResult ApplyTextFormatChanges(IEnumerable<TextFormat> textFormats)
+    {
+        ToolResult result = Workspace.ApplyTextFormatChanges(textFormats);
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+
     public ToolResult ApplyGridSettings(GridSettings gridSettings)
     {
         ToolResult result = Workspace.SetGridSettings(gridSettings);

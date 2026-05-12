@@ -11,6 +11,7 @@ using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.App.ViewModels.Grid;
 using OpenCad2D.App.ViewModels.LineFormats;
+using OpenCad2D.App.ViewModels.TextFormats;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
@@ -957,6 +958,33 @@ public partial class MainWindow : Window
         CadCanvas.InvalidateVisual();
         CadCanvas.Focus();
     }
+
+    private async void TextFormats_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        var dialogViewModel = new TextFormatManagerWindowViewModel(
+            _viewModel.Workspace.Document);
+
+        var dialog = new TextFormatManagerWindow(dialogViewModel);
+
+        TextFormatManagerResult? result = await dialog.ShowDialog<TextFormatManagerResult?>(this);
+
+        if (result is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        ToolResult toolResult = _viewModel.ApplyTextFormatChanges(result.TextFormats);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
 
 
 

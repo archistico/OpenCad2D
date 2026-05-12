@@ -103,14 +103,14 @@ public sealed class TextFormatCollection
             TextFormatId.Standard,
             "Standard",
             "Arial",
-            2.5,
+            10.0,
             CadColor.FromRgb(255, 255, 255));
 
         yield return new TextFormat(
             TextFormatId.Title,
             "Title",
             "Arial",
-            5.0,
+            18.0,
             CadColor.FromRgb(255, 255, 255),
             isBold: true);
 
@@ -118,14 +118,14 @@ public sealed class TextFormatCollection
             TextFormatId.Annotation,
             "Annotation",
             "Arial",
-            2.0,
+            8.0,
             CadColor.FromRgb(255, 255, 0));
 
         yield return new TextFormat(
             TextFormatId.Small,
             "Small",
             "Arial",
-            1.5,
+            6.0,
             CadColor.FromRgb(180, 180, 180));
     }
 }

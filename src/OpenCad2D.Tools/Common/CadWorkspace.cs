@@ -354,6 +354,37 @@ public sealed class CadWorkspace
         return ToolResult.Completed("Line formats updated.");
     }
 
+
+    public ToolResult ApplyTextFormatChanges(IEnumerable<TextFormat> textFormats)
+    {
+        ArgumentNullException.ThrowIfNull(textFormats);
+
+        List<TextFormat> textFormatList = textFormats.ToList();
+
+        if (textFormatList.Count == 0)
+        {
+            return ToolResult.None("Text format manager requires at least one format.");
+        }
+
+        if (!textFormatList.Any(format => format.Id == TextFormatId.Standard))
+        {
+            return ToolResult.None("The Standard text format is required.");
+        }
+
+        var command = new UpdateTextFormatsCommand(
+            Document.TextFormats.All.ToList(),
+            textFormatList);
+
+        CommandHistory.Execute(
+            Document,
+            command);
+
+        ClearSelectionOfNonSelectableEntities();
+
+        return ToolResult.Completed("Text formats updated.");
+    }
+
+
     public ToolResult AssignSelectedEntitiesToCurrentLayer()
     {
         if (SelectionSet.IsEmpty)

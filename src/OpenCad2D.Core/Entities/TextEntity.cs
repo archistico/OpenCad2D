@@ -10,7 +10,7 @@ namespace OpenCad2D.Core.Entities;
 /// </summary>
 public sealed class TextEntity : CadEntity
 {
-    private const double DefaultEstimatedHeight = 2.5;
+    private const double DefaultEstimatedHeight = 10.0;
     private const double EstimatedWidthFactor = 0.6;
 
     public TextEntity(
