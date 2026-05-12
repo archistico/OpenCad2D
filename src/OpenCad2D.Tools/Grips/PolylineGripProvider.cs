@@ -11,6 +11,8 @@ namespace OpenCad2D.Tools.Grips;
 /// </summary>
 public sealed class PolylineGripProvider : IGripProvider
 {
+    private const int InsertGripIndexOffset = 10_000;
+
     public bool CanHandle(CadEntity entity)
     {
         return entity is PolylineEntity;
@@ -50,6 +52,99 @@ public sealed class PolylineGripProvider : IGripProvider
             destination);
     }
 
+    /// <summary>
+    /// Returns true when the provided grip can insert a new polyline vertex.
+    /// </summary>
+    public bool CanInsertVertex(
+        CadEntity entity,
+        int gripIndex)
+    {
+        PolylineEntity polyline = GetPolyline(entity);
+
+        return !TryGetRectangleFrame(polyline, out _) &&
+               IsInsertGripIndex(gripIndex) &&
+               DecodeInsertGripIndex(gripIndex) >= 0 &&
+               DecodeInsertGripIndex(gripIndex) < GetSegmentCount(polyline);
+    }
+
+    /// <summary>
+    /// Returns true when the provided grip can delete an existing polyline vertex.
+    /// </summary>
+    public bool CanDeleteVertex(
+        CadEntity entity,
+        int gripIndex)
+    {
+        PolylineEntity polyline = GetPolyline(entity);
+
+        return !TryGetRectangleFrame(polyline, out _) &&
+               gripIndex >= 0 &&
+               gripIndex < polyline.Vertices.Count &&
+               CanRemoveVertex(polyline);
+    }
+
+    /// <summary>
+    /// Inserts a new vertex on the segment represented by an insert grip.
+    /// </summary>
+    public CadEntity InsertVertex(
+        CadEntity entity,
+        int gripIndex,
+        Point2D destination)
+    {
+        PolylineEntity polyline = GetPolyline(entity);
+
+        if (!CanInsertVertex(polyline, gripIndex))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(gripIndex),
+                gripIndex,
+                "Unknown polyline insert grip index.");
+        }
+
+        int segmentIndex = DecodeInsertGripIndex(gripIndex);
+        var vertices = polyline.Vertices.ToList();
+        int insertIndex = segmentIndex + 1;
+
+        if (polyline.IsClosed && segmentIndex == polyline.Vertices.Count - 1)
+        {
+            insertIndex = polyline.Vertices.Count;
+        }
+
+        vertices.Insert(
+            insertIndex,
+            destination);
+
+        return CreateGenericPolyline(
+            polyline,
+            vertices,
+            polyline.IsClosed);
+    }
+
+    /// <summary>
+    /// Deletes the vertex represented by a vertex grip.
+    /// </summary>
+    public CadEntity DeleteVertex(
+        CadEntity entity,
+        int gripIndex)
+    {
+        PolylineEntity polyline = GetPolyline(entity);
+
+        if (!CanDeleteVertex(polyline, gripIndex))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(gripIndex),
+                gripIndex,
+                "Unknown polyline vertex grip index or the polyline has too few vertices.");
+        }
+
+        var vertices = polyline.Vertices.ToList();
+        vertices.RemoveAt(gripIndex);
+
+        return CreateGenericPolyline(
+            polyline,
+            vertices,
+            polyline.IsClosed);
+    }
+
     private static IReadOnlyList<GripPoint> GetGenericPolylineGrips(PolylineEntity polyline)
     {
         var grips = new List<GripPoint>();
@@ -61,6 +156,20 @@ public sealed class PolylineGripProvider : IGripProvider
                 GripKind.MoveVertex,
                 polyline.Id,
                 i));
+        }
+
+        int segmentCount = GetSegmentCount(polyline);
+
+        for (int i = 0; i < segmentCount; i++)
+        {
+            Point2D start = polyline.Vertices[i];
+            Point2D end = GetSegmentEnd(polyline, i);
+
+            grips.Add(new GripPoint(
+                GetMidpoint(start, end),
+                GripKind.InsertVertex,
+                polyline.Id,
+                EncodeInsertGripIndex(i)));
         }
 
         grips.Add(new GripPoint(
@@ -101,24 +210,27 @@ public sealed class PolylineGripProvider : IGripProvider
         };
     }
 
-    private static CadEntity ApplyGenericPolylineGripMove(
+    private CadEntity ApplyGenericPolylineGripMove(
         PolylineEntity polyline,
         int gripIndex,
         Point2D destination)
     {
+        if (IsInsertGripIndex(gripIndex))
+        {
+            return InsertVertex(
+                polyline,
+                gripIndex,
+                destination);
+        }
+
         if (gripIndex == polyline.Vertices.Count)
         {
             Vector2D vector = GetCentroid(polyline.Vertices).VectorTo(destination);
 
-            return new PolylineEntity(
+            return CreateGenericPolyline(
+                polyline,
                 polyline.Vertices.Select(vertex => vertex + vector),
-                polyline.IsClosed,
-                polyline.Id,
-                polyline.LayerId,
-                polyline.Style,
-                polyline.IsVisible,
-                polyline.IsLocked,
-                polyline.DrawOrder);
+                polyline.IsClosed);
         }
 
         if (gripIndex < 0 || gripIndex >= polyline.Vertices.Count)
@@ -132,15 +244,10 @@ public sealed class PolylineGripProvider : IGripProvider
         Point2D[] vertices = polyline.Vertices.ToArray();
         vertices[gripIndex] = destination;
 
-        return new PolylineEntity(
+        return CreateGenericPolyline(
+            polyline,
             vertices,
-            polyline.IsClosed,
-            polyline.Id,
-            polyline.LayerId,
-            polyline.Style,
-            polyline.IsVisible,
-            polyline.IsLocked,
-            polyline.DrawOrder);
+            polyline.IsClosed);
     }
 
     private static CadEntity ApplyRectangleGripMove(
@@ -156,7 +263,7 @@ public sealed class PolylineGripProvider : IGripProvider
                     rectangle.Height / 2.0)
                 .VectorTo(destination);
 
-            return CreatePolyline(
+            return CreateRectanglePolyline(
                 polyline,
                 rectangle.Origin + vector,
                 rectangle.AxisX,
@@ -236,7 +343,7 @@ public sealed class PolylineGripProvider : IGripProvider
             ? rectangle.AxisY
             : rectangle.AxisY * -1.0;
 
-        return CreatePolyline(
+        return CreateRectanglePolyline(
             polyline,
             origin,
             axisX,
@@ -245,7 +352,7 @@ public sealed class PolylineGripProvider : IGripProvider
             Math.Abs(height));
     }
 
-    private static PolylineEntity CreatePolyline(
+    private static PolylineEntity CreateRectanglePolyline(
         PolylineEntity source,
         Point2D origin,
         Vector2D axisX,
@@ -261,9 +368,20 @@ public sealed class PolylineGripProvider : IGripProvider
             origin + axisY * height
         };
 
+        return CreateGenericPolyline(
+            source,
+            vertices,
+            isClosed: true);
+    }
+
+    private static PolylineEntity CreateGenericPolyline(
+        PolylineEntity source,
+        IEnumerable<Point2D> vertices,
+        bool isClosed)
+    {
         return new PolylineEntity(
             vertices,
-            isClosed: true,
+            isClosed,
             source.Id,
             source.LayerId,
             source.Style,
@@ -321,6 +439,65 @@ public sealed class PolylineGripProvider : IGripProvider
             height);
 
         return true;
+    }
+
+    private static int GetSegmentCount(PolylineEntity polyline)
+    {
+        if (polyline.Vertices.Count < 2)
+        {
+            return 0;
+        }
+
+        return polyline.IsClosed
+            ? polyline.Vertices.Count
+            : polyline.Vertices.Count - 1;
+    }
+
+    private static Point2D GetSegmentEnd(
+        PolylineEntity polyline,
+        int segmentIndex)
+    {
+        int nextIndex = segmentIndex + 1;
+
+        if (nextIndex >= polyline.Vertices.Count)
+        {
+            nextIndex = 0;
+        }
+
+        return polyline.Vertices[nextIndex];
+    }
+
+    private static bool CanRemoveVertex(PolylineEntity polyline)
+    {
+        int minimumVertexCount = polyline.IsClosed
+            ? 3
+            : 2;
+
+        return polyline.Vertices.Count > minimumVertexCount;
+    }
+
+    private static Point2D GetMidpoint(
+        Point2D first,
+        Point2D second)
+    {
+        return new Point2D(
+            (first.X + second.X) / 2.0,
+            (first.Y + second.Y) / 2.0);
+    }
+
+    private static int EncodeInsertGripIndex(int segmentIndex)
+    {
+        return InsertGripIndexOffset + segmentIndex;
+    }
+
+    private static bool IsInsertGripIndex(int gripIndex)
+    {
+        return gripIndex >= InsertGripIndexOffset;
+    }
+
+    private static int DecodeInsertGripIndex(int gripIndex)
+    {
+        return gripIndex - InsertGripIndexOffset;
     }
 
     private static Point2D GetCentroid(IReadOnlyList<Point2D> vertices)

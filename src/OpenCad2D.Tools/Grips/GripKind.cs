@@ -18,5 +18,10 @@ public enum GripKind
     /// <summary>
     /// Resizes a radial entity, such as a circle radius.
     /// </summary>
-    ResizeRadius
+    ResizeRadius,
+
+    /// <summary>
+    /// Inserts a new vertex on a polyline segment.
+    /// </summary>
+    InsertVertex
 }

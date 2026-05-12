@@ -58,6 +58,60 @@ public sealed class GripEditTool : ICadTool
         ? null
         : _grips[_warmGripIndex.Value].Kind;
 
+    /// <summary>
+    /// Deletes the currently active or highlighted polyline vertex when possible.
+    /// </summary>
+    public ToolResult DeleteCurrentVertex(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        ToolResult initializeResult = EnsureInitialized(context);
+
+        if (initializeResult.Changed && _shouldExit)
+        {
+            return initializeResult;
+        }
+
+        if (_provider is not PolylineGripProvider polylineProvider ||
+            _entity is not PolylineEntity polyline)
+        {
+            return ToolResult.None("The active grip does not support vertex deletion.");
+        }
+
+        int? gripListIndex = _warmGripIndex ?? _hotGripIndex;
+
+        if (gripListIndex is null)
+        {
+            return ToolResult.None("No polyline vertex grip is selected.");
+        }
+
+        GripPoint grip = _grips[gripListIndex.Value];
+
+        if (!polylineProvider.CanDeleteVertex(
+                polyline,
+                grip.GripIndex))
+        {
+            return ToolResult.None("This polyline vertex cannot be deleted.");
+        }
+
+        CadEntity replacement = polylineProvider.DeleteVertex(
+            polyline,
+            grip.GripIndex);
+
+        context.Commands.Execute(
+            context.Document,
+            new ReplaceEntitiesCommand(replacement));
+
+        _entity = context.Document.Entities.GetRequired(_entityId);
+        _warmGripIndex = null;
+        _previewEntity = null;
+        _currentDestination = null;
+        context.CurrentBasePoint = null;
+        RefreshGrips();
+
+        return ToolResult.Completed("Polyline vertex deleted.");
+    }
+
     public ToolResult OnPointerPressed(
         ToolContext context,
         PointerInfo pointer)

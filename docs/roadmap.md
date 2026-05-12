@@ -226,6 +226,17 @@ OpenCad2D currently includes:
 - [x] C to close;
 - [x] command line, snap, Ortho and Polar Tracking support.
 
+### Polyline grip editing
+
+- [x] move generic polyline vertices;
+- [x] insert vertices from segment midpoint grips;
+- [x] delete vertices with `Delete` while a vertex grip is hot or warm;
+- [x] protect open polylines from going below two vertices;
+- [x] protect closed polylines from going below three vertices;
+- [x] keep rectangle-like closed polylines on rectangle-specific resize grips;
+- [x] undo/redo support through `ReplaceEntitiesCommand`;
+- [x] unit tests for provider behavior and grip tool workflow.
+
 ---
 
 ## v0.3 - Points, text and DXF validation
@@ -238,9 +249,9 @@ OpenCad2D currently includes:
 - [x] `TextTool`;
 - [x] reusable `TextFormat` configuration;
 - [x] Text Format Manager;
-- [ ] grip editing for polylines: move vertices;
-- [ ] grip editing for polylines: insert vertices;
-- [ ] grip editing for polylines: delete vertices.
+- [x] grip editing for polylines: move vertices;
+- [x] grip editing for polylines: insert vertices;
+- [x] grip editing for polylines: delete vertices.
 
 ### Stability & Test
 

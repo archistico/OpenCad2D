@@ -379,7 +379,7 @@ Esc                  -> cancel
 
 The tool supports command line input, snap, Ortho, Polar Tracking and direct distance entry.
 
-Polyline and rectangle grip editing is implemented; midpoint insertion grips remain a possible follow-up.
+Polyline and rectangle grip editing is implemented. Generic polylines support vertex movement, midpoint insertion grips, vertex deletion through `Delete`, and undoable updates. Rectangle-like closed four-vertex polylines keep their rectangle-specific corner/edge/center resize behavior.
 
 ---
 

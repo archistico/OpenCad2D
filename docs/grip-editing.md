@@ -14,6 +14,8 @@ In grip edit mode, the entity is shown with a set of small square markers called
 
 The user clicks a grip to make it active. Then the user moves the cursor and clicks a destination point. The entity is updated and the command is recorded in history so it can be undone.
 
+For generic polylines, segment midpoint grips can also be used to insert new vertices. A vertex can be removed by hovering or activating its vertex grip and pressing `Delete`, as long as the operation would not make the polyline invalid.
+
 The tool remains in grip edit mode after each edit. The user can continue editing other grips on the same entity. `ESC` exits grip edit mode and returns to `SelectionTool` with the entity still selected.
 
 ---
@@ -30,7 +32,8 @@ The tool remains in grip edit mode after each edit. The user can continue editin
 7. User clicks a grip -> grip becomes active (warm state), tool enters grip-active sub-state
 8. User moves cursor -> CadCanvas shows preview of the modified entity
 9. User clicks destination point -> tool creates ReplaceEntityCommand and executes it
-10. Document updates, entity is reloaded, grips refresh
+10. For generic polylines, user can press Delete on a hot/warm vertex grip to delete that vertex
+11. Document updates, entity is reloaded, grips refresh
 11. Tool returns to idle grip state (step 5)
 12. User presses ESC -> GripEditTool deactivates, SelectionTool resumes, entity remains selected
 ```
@@ -78,7 +81,8 @@ public enum GripKind
 {
     MoveVertex,   // moves a single geometric point (e.g. line endpoint)
     MoveEntity,   // moves the entire entity rigidly (e.g. line midpoint, circle center)
-    ResizeRadius  // moves a quadrant point, changing radius (e.g. circle quadrant)
+    ResizeRadius, // moves a quadrant point, changing radius (e.g. circle quadrant)
+    InsertVertex  // inserts a new vertex on a polyline segment
 }
 ```
 
@@ -192,6 +196,61 @@ Quadrant 90  -> center + (0, radius)
 Quadrant 180 -> center + (-radius, 0)
 Quadrant 270 -> center + (0, -radius)
 ```
+
+---
+
+### PolylineGripProvider
+
+A generic `PolylineEntity` exposes three categories of grips.
+
+```text
+Vertex grips       -> GripKind.MoveVertex
+Segment midpoints  -> GripKind.InsertVertex
+Centroid grip      -> GripKind.MoveEntity
+```
+
+For an open polyline with `n` vertices:
+
+```text
+vertex grips: n
+insert grips: n - 1
+center grip: 1
+```
+
+For a closed generic polyline with `n` vertices:
+
+```text
+vertex grips: n
+insert grips: n, including the closing segment from last vertex to first vertex
+center grip: 1
+```
+
+Insertion behavior:
+
+```text
+Click segment midpoint grip
+Move to destination
+Click destination
+-> new vertex is inserted between the two segment vertices
+```
+
+Deletion behavior:
+
+```text
+Hover or activate a vertex grip
+Press Delete
+-> vertex is removed through an undoable ReplaceEntitiesCommand
+```
+
+Safety rules:
+
+```text
+open polyline cannot go below 2 vertices
+closed polyline cannot go below 3 vertices
+rectangle-like closed four-vertex polylines keep rectangle-specific resize behavior
+```
+
+Rectangle-like closed polylines intentionally keep their existing corner/edge/center grips, so their right-angle rectangle behavior is preserved.
 
 ---
 

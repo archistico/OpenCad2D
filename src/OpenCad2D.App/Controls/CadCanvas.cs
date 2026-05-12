@@ -1402,6 +1402,7 @@ public sealed class CadCanvas : Control
             DrawGripMarker(
                 context,
                 point,
+                grips[i].Kind,
                 isHot,
                 isWarm);
         }
@@ -1410,6 +1411,7 @@ public sealed class CadCanvas : Control
     private void DrawGripMarker(
         DrawingContext context,
         Point center,
+        GripKind kind,
         bool isHot,
         bool isWarm)
     {
@@ -1453,6 +1455,17 @@ public sealed class CadCanvas : Control
 
             fill = _gripHotFill;
             pen = _gripHotPen;
+        }
+
+        if (kind == GripKind.InsertVertex)
+        {
+            context.DrawEllipse(
+                fill,
+                pen,
+                center,
+                half,
+                half);
+            return;
         }
 
         context.DrawRectangle(
@@ -2065,6 +2078,12 @@ public sealed class CadCanvas : Control
         {
             result = closingPolylineTool.CompleteClosed(Workspace.Context);
             ClearSnapMarker();
+            e.Handled = true;
+        }
+        else if (Workspace.ToolController.ActiveTool is GripEditTool activeGripEditTool &&
+                 e.Key == Key.Delete)
+        {
+            result = activeGripEditTool.DeleteCurrentVertex(Workspace.Context);
             e.Handled = true;
         }
         else if (e.Key == Key.Delete)

@@ -238,11 +238,15 @@ public sealed class ExtendedGripProviderTests
 
         IReadOnlyList<GripPoint> grips = provider.GetGrips(polyline);
 
-        Assert.Equal(4, grips.Count);
+        Assert.Equal(6, grips.Count);
         Assert.Equal(new Point2D(0, 0), grips[0].Position);
         Assert.Equal(new Point2D(10, 0), grips[1].Position);
         Assert.Equal(new Point2D(10, 3), grips[2].Position);
-        Assert.Equal(GripKind.MoveEntity, grips[3].Kind);
+        Assert.Equal(new Point2D(5, 0), grips[3].Position);
+        Assert.Equal(GripKind.InsertVertex, grips[3].Kind);
+        Assert.Equal(new Point2D(10, 1.5), grips[4].Position);
+        Assert.Equal(GripKind.InsertVertex, grips[4].Kind);
+        Assert.Equal(GripKind.MoveEntity, grips[5].Kind);
     }
 
     [Fact]
