@@ -1,7 +1,5 @@
 # OpenCad2D
 
-![OpenCad2D logo](screenshot/logo_opencad2d.svg)
-
 **OpenCad2D** is an experimental open-source 2D CAD application built with **C#**, **.NET 8** and **Avalonia UI**.
 
 The project explores how to build a small but serious 2D CAD system from the ground up, with a clean separation between geometry, document modeling, interaction logic, tools, persistence and the graphical user interface.
