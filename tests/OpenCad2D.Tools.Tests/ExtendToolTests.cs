@@ -80,6 +80,30 @@ public sealed class ExtendToolTests
         Assert.Equal(new Point2D(10, 0), line.End);
     }
 
+
+    [Fact]
+    public void PointerMove_AfterBoundary_ShouldExposeHighlightedExtensionSegment()
+    {
+        var context = CreateContextWithBoundaryAndTarget(
+            out _,
+            out _);
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 2)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        IReadOnlyList<CadEntity> highlighted = tool.GetHighlightedPreviewEntities();
+        LineEntity extension = Assert.IsType<LineEntity>(Assert.Single(highlighted));
+
+        Assert.Equal(new Point2D(5, 0), extension.Start);
+        Assert.Equal(new Point2D(10, 0), extension.End);
+    }
+
     [Fact]
     public void SecondPointerPress_NearEnd_ShouldExtendLineToBoundary()
     {

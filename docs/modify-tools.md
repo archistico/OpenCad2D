@@ -106,7 +106,12 @@ extend the nearest valid endpoint until it reaches the boundary
 
 The tool remains active with the same boundary until `Esc`.
 
-The operation is ignored if there is no valid extension intersection or if the target cannot be extended in a meaningful way.
+Preview behavior:
+
+- the full resulting entity is shown with the normal preview style;
+- for line targets, the newly added extension segment is highlighted separately.
+
+The operation is ignored if there is no valid extension intersection or if the target cannot be extended in a meaningful way. The status message explains that no valid endpoint-to-boundary extension was found from the picked side.
 
 ---
 
@@ -148,7 +153,12 @@ replace the target with the remaining geometry
 
 The tool remains active with the same cutting edge until `Esc`.
 
-The operation is ignored if the cutting edge does not produce a valid trim result.
+Preview behavior:
+
+- the remaining geometry is shown with the normal preview style;
+- for line targets, the portion that will be removed is highlighted separately.
+
+The operation is ignored if the cutting edge does not produce a valid trim result. The status message explains that the picked side cannot be trimmed by the selected boundary.
 
 ---
 
@@ -170,8 +180,7 @@ Closed entities such as circles are trimmable but not extendable.
 
 Recommended next refinements:
 
-- improve previews for the exact portion that will be removed or extended;
-- add clearer status messages for ignored operations;
+- broaden highlighted previews beyond line targets for Trim/Extend on arcs, circles and polylines;
 - broaden break operations beyond `LineEntity`;
 - add additional degenerate-case tests for tangent, near-tangent and overlapping geometry;
 - evaluate multi-boundary trim/extend workflows.

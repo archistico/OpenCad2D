@@ -33,6 +33,9 @@ namespace OpenCad2D.App.Controls;
 public sealed class CadCanvas : Control
 {
     private readonly Pen _previewPen = new(Brushes.Orange, 1);
+    private readonly Pen _modifyPreviewHighlightPen = new(
+        new SolidColorBrush(Color.FromRgb(255, 90, 90)),
+        2.5);
     private readonly Pen _measurementVectorPen = new(
         new SolidColorBrush(Color.FromRgb(255, 190, 70)),
         1.5);
@@ -1147,12 +1150,20 @@ public sealed class CadCanvas : Control
                 DrawEntitiesPreview(
                     context,
                     extendTool.GetPreviewEntities());
+                DrawEntitiesPreview(
+                    context,
+                    extendTool.GetHighlightedPreviewEntities(),
+                    _modifyPreviewHighlightPen);
                 break;
 
             case TrimTool trimTool:
                 DrawEntitiesPreview(
                     context,
                     trimTool.GetPreviewEntities());
+                DrawEntitiesPreview(
+                    context,
+                    trimTool.GetHighlightedPreviewEntities(),
+                    _modifyPreviewHighlightPen);
                 break;
 
             case MeasureDistanceTool measureDistanceTool:
@@ -1633,12 +1644,23 @@ public sealed class CadCanvas : Control
         DrawingContext context,
         IReadOnlyList<CadEntity> entities)
     {
+        DrawEntitiesPreview(
+            context,
+            entities,
+            _previewPen);
+    }
+
+    private void DrawEntitiesPreview(
+        DrawingContext context,
+        IReadOnlyList<CadEntity> entities,
+        Pen pen)
+    {
         foreach (CadEntity entity in entities)
         {
             DrawEntity(
                 context,
                 entity,
-                _previewPen);
+                pen);
         }
     }
 

@@ -2,6 +2,7 @@ using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Editing;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
 
@@ -15,6 +16,7 @@ public sealed class TrimTool : ICadTool
     private EntityId? _boundaryEntityId;
     private CadEntity? _boundaryEntity;
     private IReadOnlyList<CadEntity> _previewEntities = Array.Empty<CadEntity>();
+    private IReadOnlyList<CadEntity> _highlightPreviewEntities = Array.Empty<CadEntity>();
 
     public string Name => "Trim";
 
@@ -89,6 +91,14 @@ public sealed class TrimTool : ICadTool
         return _previewEntities.ToList();
     }
 
+    /// <summary>
+    /// Gets the entities that represent the portion that will be removed by the current trim preview.
+    /// </summary>
+    public IReadOnlyList<CadEntity> GetHighlightedPreviewEntities()
+    {
+        return _highlightPreviewEntities.ToList();
+    }
+
     private ToolResult AcceptBoundaryEntity(
         ToolContext context,
         PointerInfo pointer)
@@ -117,6 +127,7 @@ public sealed class TrimTool : ICadTool
         _boundaryEntityId = entity.Id;
         _boundaryEntity = entity;
         _previewEntities = Array.Empty<CadEntity>();
+        _highlightPreviewEntities = Array.Empty<CadEntity>();
         State = TrimToolState.WaitingForTargetEntity;
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
@@ -180,6 +191,7 @@ public sealed class TrimTool : ICadTool
                 "Trim entity"));
 
         _previewEntities = Array.Empty<CadEntity>();
+        _highlightPreviewEntities = Array.Empty<CadEntity>();
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Completed(
@@ -193,6 +205,7 @@ public sealed class TrimTool : ICadTool
         if (_boundaryEntity is null)
         {
             _previewEntities = Array.Empty<CadEntity>();
+            _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
         }
 
@@ -204,6 +217,7 @@ public sealed class TrimTool : ICadTool
             selectedId.Value.Equals(_boundaryEntity.Id))
         {
             _previewEntities = Array.Empty<CadEntity>();
+            _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
         }
 
@@ -213,6 +227,7 @@ public sealed class TrimTool : ICadTool
             !context.Document.IsEntitySelectable(entity))
         {
             _previewEntities = Array.Empty<CadEntity>();
+            _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
         }
 
@@ -221,6 +236,102 @@ public sealed class TrimTool : ICadTool
             _boundaryEntity,
             point,
             context.GeometryTolerance);
+        _highlightPreviewEntities = CreateTrimHighlightEntities(
+            entity,
+            _previewEntities,
+            context.GeometryTolerance);
+    }
+
+
+    private static IReadOnlyList<CadEntity> CreateTrimHighlightEntities(
+        CadEntity target,
+        IReadOnlyList<CadEntity> keptEntities,
+        GeometryTolerance tolerance)
+    {
+        if (target is not LineEntity sourceLine)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        List<LineEntity> keptLines = keptEntities
+            .OfType<LineEntity>()
+            .ToList();
+
+        if (keptLines.Count == 0)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        if (keptLines.Count == 1)
+        {
+            LineEntity kept = keptLines[0];
+
+            if (tolerance.ArePointsEqual(kept.Start, sourceLine.Start))
+            {
+                return CreateHighlightLine(
+                    sourceLine,
+                    kept.End,
+                    sourceLine.End,
+                    tolerance);
+            }
+
+            if (tolerance.ArePointsEqual(kept.End, sourceLine.End))
+            {
+                return CreateHighlightLine(
+                    sourceLine,
+                    sourceLine.Start,
+                    kept.Start,
+                    tolerance);
+            }
+        }
+
+        if (keptLines.Count >= 2)
+        {
+            LineEntity first = keptLines
+                .OrderBy(line => LineParameterService.GetParameter(
+                    sourceLine.Geometry,
+                    line.Start,
+                    tolerance))
+                .First();
+            LineEntity last = keptLines
+                .OrderBy(line => LineParameterService.GetParameter(
+                    sourceLine.Geometry,
+                    line.End,
+                    tolerance))
+                .Last();
+
+            return CreateHighlightLine(
+                sourceLine,
+                first.End,
+                last.Start,
+                tolerance);
+        }
+
+        return Array.Empty<CadEntity>();
+    }
+
+    private static IReadOnlyList<CadEntity> CreateHighlightLine(
+        LineEntity source,
+        Point2D start,
+        Point2D end,
+        GeometryTolerance tolerance)
+    {
+        if (start.DistanceTo(end) <= tolerance.Distance)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        return new[]
+        {
+            new LineEntity(
+                start,
+                end,
+                layerId: source.LayerId,
+                style: source.Style,
+                isVisible: source.IsVisible,
+                isLocked: source.IsLocked,
+                drawOrder: source.DrawOrder)
+        };
     }
 
     private static EntityId? SelectEntityByPoint(
@@ -244,6 +355,7 @@ public sealed class TrimTool : ICadTool
         _boundaryEntityId = null;
         _boundaryEntity = null;
         _previewEntities = Array.Empty<CadEntity>();
+        _highlightPreviewEntities = Array.Empty<CadEntity>();
         State = TrimToolState.WaitingForBoundaryEntity;
 
         if (context is not null)

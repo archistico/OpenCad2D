@@ -601,3 +601,12 @@ Rendering/export use `DimensionGeometryBuilder`, which now emits `DimensionArcPr
 ## Dimension edge cases
 
 The v0.4 dimension system includes systematic tests for degenerate cases and transform robustness. Linear dimensions reject zero measured distance on their orientation axis. Aligned, radius, diameter and angular dimensions reject invalid zero-length definitions. Horizontal/vertical dimensions transformed by arbitrary rotation become aligned dimensions when they are no longer axis-aligned. Angular dimensions flip `IsCounterClockwise` when transformed by a matrix with negative determinant, such as mirror, so the visual/measured sweep remains stable.
+
+
+## Recent v0.4 editing polish update
+
+- Trim and Extend now expose highlighted preview entities in addition to the normal result preview.
+- For line targets, Trim highlights the segment that will be removed.
+- For line targets, Extend highlights the segment that will be added.
+- `CadCanvas` draws these highlighted modify previews with a separate red pen.
+- Current follow-up: extend highlighted previews to arcs, circles and polylines if needed.

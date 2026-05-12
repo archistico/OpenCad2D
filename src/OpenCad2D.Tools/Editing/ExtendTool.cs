@@ -2,6 +2,7 @@ using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Editing;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
 
@@ -16,6 +17,7 @@ public sealed class ExtendTool : ICadTool
     private CadEntity? _boundaryEntity;
     private EntityId? _previewTargetEntityId;
     private CadEntity? _previewEntity;
+    private IReadOnlyList<CadEntity> _highlightPreviewEntities = Array.Empty<CadEntity>();
 
     public string Name => "Extend";
 
@@ -92,6 +94,14 @@ public sealed class ExtendTool : ICadTool
             : new[] { _previewEntity };
     }
 
+    /// <summary>
+    /// Gets the entities that represent the new portion added by the current extend preview.
+    /// </summary>
+    public IReadOnlyList<CadEntity> GetHighlightedPreviewEntities()
+    {
+        return _highlightPreviewEntities.ToList();
+    }
+
     private ToolResult AcceptBoundaryEntity(
         ToolContext context,
         PointerInfo pointer)
@@ -121,6 +131,7 @@ public sealed class ExtendTool : ICadTool
         _boundaryEntity = entity;
         _previewTargetEntityId = null;
         _previewEntity = null;
+        _highlightPreviewEntities = Array.Empty<CadEntity>();
         State = ExtendToolState.WaitingForTargetEntity;
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
@@ -185,6 +196,7 @@ public sealed class ExtendTool : ICadTool
 
         _previewTargetEntityId = null;
         _previewEntity = null;
+        _highlightPreviewEntities = Array.Empty<CadEntity>();
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Completed(
@@ -199,6 +211,7 @@ public sealed class ExtendTool : ICadTool
         {
             _previewTargetEntityId = null;
             _previewEntity = null;
+            _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
         }
 
@@ -211,6 +224,7 @@ public sealed class ExtendTool : ICadTool
         {
             _previewTargetEntityId = null;
             _previewEntity = null;
+            _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
         }
 
@@ -221,6 +235,7 @@ public sealed class ExtendTool : ICadTool
         {
             _previewTargetEntityId = null;
             _previewEntity = null;
+            _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
         }
 
@@ -230,6 +245,69 @@ public sealed class ExtendTool : ICadTool
             _boundaryEntity,
             point,
             context.GeometryTolerance);
+        _highlightPreviewEntities = _previewEntity is null
+            ? Array.Empty<CadEntity>()
+            : CreateExtendHighlightEntities(
+                entity,
+                _previewEntity,
+                context.GeometryTolerance);
+    }
+
+
+    private static IReadOnlyList<CadEntity> CreateExtendHighlightEntities(
+        CadEntity source,
+        CadEntity extended,
+        GeometryTolerance tolerance)
+    {
+        if (source is not LineEntity sourceLine ||
+            extended is not LineEntity extendedLine)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        if (!tolerance.ArePointsEqual(sourceLine.Start, extendedLine.Start))
+        {
+            return CreateHighlightLine(
+                sourceLine,
+                extendedLine.Start,
+                sourceLine.Start,
+                tolerance);
+        }
+
+        if (!tolerance.ArePointsEqual(sourceLine.End, extendedLine.End))
+        {
+            return CreateHighlightLine(
+                sourceLine,
+                sourceLine.End,
+                extendedLine.End,
+                tolerance);
+        }
+
+        return Array.Empty<CadEntity>();
+    }
+
+    private static IReadOnlyList<CadEntity> CreateHighlightLine(
+        LineEntity source,
+        Point2D start,
+        Point2D end,
+        GeometryTolerance tolerance)
+    {
+        if (start.DistanceTo(end) <= tolerance.Distance)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        return new[]
+        {
+            new LineEntity(
+                start,
+                end,
+                layerId: source.LayerId,
+                style: source.Style,
+                isVisible: source.IsVisible,
+                isLocked: source.IsLocked,
+                drawOrder: source.DrawOrder)
+        };
     }
 
     private static EntityId? SelectEntityByPoint(
@@ -259,6 +337,7 @@ public sealed class ExtendTool : ICadTool
         _boundaryEntity = null;
         _previewTargetEntityId = null;
         _previewEntity = null;
+        _highlightPreviewEntities = Array.Empty<CadEntity>();
         State = ExtendToolState.WaitingForBoundaryEntity;
 
         if (context is not null)

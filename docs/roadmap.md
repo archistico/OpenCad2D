@@ -344,12 +344,12 @@ OpenCad2D currently includes:
 - [x] Phase 4 added `RadiusDimensionEntity`, `DiameterDimensionEntity`, their tools, rendering, persistence and SVG/DXF graphical export.
 - [x] Phase 5 added `AngularDimensionEntity`, `AngularDimensionTool`, minor/reflex angle support, rendering, persistence and SVG/DXF graphical export.
 - [x] Phase 6 added systematic dimension edge case tests and transform robustness fixes.
-- [ ] Next phase: v0.4 editing polish.
+- [x] Phase 7 started editing polish with Trim/Extend highlighted previews.
 
 ### Editing polish
 
-- [ ] Trim/Extend preview with highlighted portion;
-- [ ] clearer status messages for non-applicable operations;
+- [x] Trim/Extend preview with highlighted portion for line targets;
+- [x] clearer status messages for non-applicable Trim/Extend operations during preview;
 - [x] systematic tests for dimension edge cases.
 
 ---

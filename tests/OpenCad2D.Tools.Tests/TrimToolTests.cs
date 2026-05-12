@@ -80,6 +80,30 @@ public sealed class TrimToolTests
         Assert.Equal(new Point2D(5, 0), line.End);
     }
 
+
+    [Fact]
+    public void PointerMove_AfterBoundary_ShouldExposeHighlightedRemovedSegment()
+    {
+        var context = CreateContextWithBoundaryAndTarget(
+            out _,
+            out _);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(8, 0)));
+
+        IReadOnlyList<CadEntity> highlighted = tool.GetHighlightedPreviewEntities();
+        LineEntity removed = Assert.IsType<LineEntity>(Assert.Single(highlighted));
+
+        Assert.Equal(new Point2D(5, 0), removed.Start);
+        Assert.Equal(new Point2D(10, 0), removed.End);
+    }
+
     [Fact]
     public void SecondPointerPress_OnRightSide_ShouldTrimRightSide()
     {
