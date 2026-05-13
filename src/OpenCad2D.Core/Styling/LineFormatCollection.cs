@@ -112,17 +112,31 @@ public sealed class LineFormatCollection
             LineStyle.Continuous);
 
         yield return new LineFormat(
+            LineFormatId.Annotations,
+            "Annotations",
+            CadColor.FromRgb(160, 160, 160),
+            LineWeight.FromMillimeters(0.8),
+            LineStyle.Continuous);
+
+        yield return new LineFormat(
+            LineFormatId.Walls,
+            "Walls",
+            CadColor.FromRgb(255, 255, 255),
+            LineWeight.FromMillimeters(2.0),
+            LineStyle.Continuous);
+
+        yield return new LineFormat(
             LineFormatId.Axis,
             "Asse",
             CadColor.FromRgb(255, 0, 0),
-            LineWeight.FromMillimeters(0.5),
+            LineWeight.FromMillimeters(0.75),
             LineStyle.DashDot);
 
         yield return new LineFormat(
             LineFormatId.Dashed,
             "Tratteggiata",
             CadColor.FromRgb(255, 255, 0),
-            LineWeight.FromMillimeters(1.0),
+            LineWeight.FromMillimeters(0.75),
             LineStyle.Dashed);
 
         yield return new LineFormat(

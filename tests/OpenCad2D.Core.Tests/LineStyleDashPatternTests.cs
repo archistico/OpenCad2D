@@ -12,8 +12,8 @@ public sealed class LineStyleDashPatternTests
 
     [Theory]
     [InlineData(LineStyle.Dashed, new[] { 6.0, 3.0 })]
-    [InlineData(LineStyle.DashDot, new[] { 6.0, 2.0, 1.0, 2.0 })]
-    [InlineData(LineStyle.DashDotDot, new[] { 6.0, 2.0, 1.0, 2.0, 1.0, 2.0 })]
+    [InlineData(LineStyle.DashDot, new[] { 12.0, 4.0, 2.0, 4.0 })]
+    [InlineData(LineStyle.DashDotDot, new[] { 12.0, 4.0, 2.0, 4.0, 2.0, 4.0 })]
     public void Get_ForNonContinuousStyle_ShouldReturnExpectedPattern(
         LineStyle style,
         double[] expected)

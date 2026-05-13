@@ -172,5 +172,45 @@ public sealed class Layer
     public static Layer Default => new(
         LayerId.Default,
         "0",
-        LineFormatId.Continuous);
+        LineFormatId.Continuous,
+        CadColor.FromRgb(255, 255, 255),
+        LineWeight.FromMillimeters(1.0),
+        isVisible: true,
+        isLocked: false);
+
+    public static Layer Annotations => new(
+        LayerId.Annotations,
+        "Annotations",
+        LineFormatId.Annotations,
+        CadColor.FromRgb(160, 160, 160),
+        LineWeight.FromMillimeters(0.8),
+        isVisible: true,
+        isLocked: false);
+
+    public static Layer Walls => new(
+        LayerId.Walls,
+        "Walls",
+        LineFormatId.Walls,
+        CadColor.FromRgb(255, 255, 255),
+        LineWeight.FromMillimeters(2.0),
+        isVisible: true,
+        isLocked: false);
+
+    public static Layer Axis => new(
+        LayerId.Axis,
+        "Axis",
+        LineFormatId.Axis,
+        CadColor.FromRgb(255, 0, 0),
+        LineWeight.FromMillimeters(0.75),
+        isVisible: true,
+        isLocked: false);
+
+    public static Layer ConstructionLines => new(
+        LayerId.ConstructionLines,
+        "Construction lines",
+        LineFormatId.Dashed,
+        CadColor.FromRgb(255, 255, 0),
+        LineWeight.FromMillimeters(0.75),
+        isVisible: true,
+        isLocked: false);
 }

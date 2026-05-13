@@ -31,6 +31,17 @@ public sealed class LayerLineFormatTests
     public void Default_ShouldUseContinuousLineFormat()
     {
         Assert.Equal(LineFormatId.Continuous, Layer.Default.LineFormatId);
+        Assert.Equal(1.0, Layer.Default.LineWeight.Millimeters);
+        Assert.Equal(CadColor.FromRgb(255, 255, 255), Layer.Default.Color);
+    }
+
+    [Fact]
+    public void BuiltInLayers_ShouldUseExpectedLineFormats()
+    {
+        Assert.Equal(LineFormatId.Annotations, Layer.Annotations.LineFormatId);
+        Assert.Equal(LineFormatId.Walls, Layer.Walls.LineFormatId);
+        Assert.Equal(LineFormatId.Axis, Layer.Axis.LineFormatId);
+        Assert.Equal(LineFormatId.Dashed, Layer.ConstructionLines.LineFormatId);
     }
 
     [Fact]

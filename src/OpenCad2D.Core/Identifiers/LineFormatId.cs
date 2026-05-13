@@ -35,6 +35,10 @@ public readonly record struct LineFormatId(string Value)
     /// </summary>
     public static LineFormatId Axis => new("Axis");
 
+    public static LineFormatId Annotations => new("Annotations");
+
+    public static LineFormatId Walls => new("Walls");
+
     public override string ToString()
     {
         return Value;

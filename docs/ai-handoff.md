@@ -439,15 +439,29 @@ It supports:
 - OK/Cancel workflow;
 - undoable application through `UpdateLineFormatsCommand`.
 
-Default formats:
+Default layers used by the application template:
+
+```text
+0                    Continuous   white   1.0
+Annotations          Continuous   gray    0.8
+Walls                Continuous   white   2.0
+Axis                 DashDot      red     0.75
+Construction lines   Dashed       yellow  0.75
+```
+
+Default line formats:
 
 ```text
 Continua           white       1     Continuous
-Asse               red         0.5   DashDot
-Tratteggiata       yellow      1     Dashed
+Annotations        gray        0.8   Continuous
+Walls              white       2     Continuous
+Asse               red         0.75  DashDot
+Tratteggiata       yellow      0.75  Dashed
 Tratto due punti   light blue  0.5   DashDotDot
 Tratto e punto     green       0.75  DashDot
 ```
+
+The dash-dot and dash-dot-dot patterns were lengthened before closing v0.7 so they remain readable at normal CAD zoom levels.
 
 ---
 

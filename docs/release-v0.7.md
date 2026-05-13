@@ -19,7 +19,30 @@ The main goal of this release is to make OpenCad2D more useful in real workflows
 - corrected PDF Y-orientation behavior;
 - SVG export background options;
 - SVG layer grouping;
+- default CAD startup layers for `0`, `Annotations`, `Walls`, `Axis` and `Construction lines`;
+- improved startup sample drawing with one object for each supported OpenCad2D entity kind;
+- longer dash-dot and dash-dot-dot stroke patterns;
 - updated interoperability documentation.
+
+---
+
+## Final startup template polish
+
+Before closing v0.7, the default application template was refined.
+
+Default startup layers:
+
+```text
+0                    Continuous   white   1.0
+Annotations          Continuous   gray    0.8
+Walls                Continuous   white   2.0
+Axis                 DashDot      red     0.75
+Construction lines   Dashed       yellow  0.75
+```
+
+The startup drawing now includes at least one object for each supported OpenCad2D entity kind, including base geometry, text and dimension entities. This makes a fresh launch more useful for visual checks, export tests and screenshots.
+
+Dash-dot and dash-dot-dot patterns were lengthened to make their dash and gap spacing easier to read.
 
 ---
 

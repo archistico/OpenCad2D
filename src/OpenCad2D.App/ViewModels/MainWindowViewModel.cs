@@ -1,3 +1,4 @@
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -316,6 +317,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public void NewDocument()
     {
         Workspace.NewDocument();
+        EnsureDemoLayers();
         _currentFilePath = null;
         SetMessage("New document created.");
         NotifyDocumentStateChanged();
@@ -1206,67 +1208,131 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private void EnsureDemoLayers()
     {
-        AddLayerIfMissing(
-            new LayerId("Walls"),
-            "Walls",
-            CadColor.FromRgb(230, 120, 80));
-
-        AddLayerIfMissing(
-            new LayerId("Furniture"),
-            "Furniture",
-            CadColor.FromRgb(120, 200, 120));
-
-        AddLayerIfMissing(
-            new LayerId("Annotations"),
-            "Annotations",
-            CadColor.FromRgb(120, 170, 240));
+        AddLayerIfMissing(Layer.Default);
+        AddLayerIfMissing(Layer.Annotations);
+        AddLayerIfMissing(Layer.Walls);
+        AddLayerIfMissing(Layer.Axis);
+        AddLayerIfMissing(Layer.ConstructionLines);
     }
 
-    private void AddLayerIfMissing(
-        LayerId layerId,
-        string name,
-        CadColor color)
+    private void AddLayerIfMissing(Layer layer)
     {
-        if (Workspace.Document.Layers.Contains(layerId))
+        if (Workspace.Document.Layers.Contains(layer.Id))
         {
             return;
         }
 
-        Workspace.Document.Layers.Add(
-            new Layer(
-                layerId,
-                name,
-                color,
-                LineWeight.FromMillimeters(0.25)));
+        Workspace.Document.Layers.Add(layer);
     }
 
     private void SeedDemoDrawing()
     {
         Workspace.Document.AddEntity(
             new LineEntity(
-                new Point2D(50, 50),
-                new Point2D(250, 50)));
+                new Point2D(40, 40),
+                new Point2D(300, 40),
+                layerId: LayerId.ConstructionLines));
 
         Workspace.Document.AddEntity(
             new LineEntity(
-                new Point2D(250, 50),
-                new Point2D(250, 180)));
+                new Point2D(40, 40),
+                new Point2D(40, 240),
+                layerId: LayerId.ConstructionLines));
 
         Workspace.Document.AddEntity(
-            new CircleEntity(
-                new Point2D(400, 150),
-                60));
+            new LineEntity(
+                new Point2D(40, 140),
+                new Point2D(300, 140),
+                layerId: LayerId.Axis));
+
+        Workspace.Document.AddEntity(
+            new LineEntity(
+                new Point2D(170, 40),
+                new Point2D(170, 240),
+                layerId: LayerId.Axis));
 
         Workspace.Document.AddEntity(
             new PolylineEntity(
                 new[]
                 {
-                    new Point2D(80, 260),
-                    new Point2D(220, 260),
-                    new Point2D(220, 360),
-                    new Point2D(80, 360)
+                    new Point2D(70, 70),
+                    new Point2D(270, 70),
+                    new Point2D(270, 210),
+                    new Point2D(70, 210)
                 },
-                isClosed: true));
+                isClosed: true,
+                layerId: LayerId.Walls));
+
+        Workspace.Document.AddEntity(
+            new CircleEntity(
+                new Point2D(420, 150),
+                55,
+                layerId: LayerId.Default));
+
+        Workspace.Document.AddEntity(
+            new ArcEntity(
+                new Point2D(420, 150),
+                85,
+                Angle.FromDegrees(30),
+                Angle.FromDegrees(145),
+                layerId: LayerId.Default));
+
+        Workspace.Document.AddEntity(
+            new PointEntity(
+                new Point2D(420, 150),
+                layerId: LayerId.Axis));
+
+        Workspace.Document.AddEntity(
+            new TextEntity(
+                new Point2D(70, 260),
+                "OpenCad2D sample drawing",
+                layerId: LayerId.Annotations));
+
+        Workspace.Document.AddEntity(
+            new LinearDimensionEntity(
+                new Point2D(70, 70),
+                new Point2D(270, 70),
+                new Point2D(170, 40),
+                DimensionOrientation.Horizontal,
+                layerId: LayerId.Annotations));
+
+        Workspace.Document.AddEntity(
+            new LinearDimensionEntity(
+                new Point2D(270, 70),
+                new Point2D(270, 210),
+                new Point2D(310, 140),
+                DimensionOrientation.Vertical,
+                layerId: LayerId.Annotations));
+
+        Workspace.Document.AddEntity(
+            new AlignedDimensionEntity(
+                new Point2D(70, 70),
+                new Point2D(270, 210),
+                new Point2D(180, 245),
+                layerId: LayerId.Annotations));
+
+        Workspace.Document.AddEntity(
+            new RadiusDimensionEntity(
+                new Point2D(420, 150),
+                new Point2D(475, 150),
+                new Point2D(500, 175),
+                layerId: LayerId.Annotations));
+
+        Workspace.Document.AddEntity(
+            new DiameterDimensionEntity(
+                new Point2D(420, 150),
+                new Point2D(420, 205),
+                new Point2D(455, 230),
+                layerId: LayerId.Annotations));
+
+        Workspace.Document.AddEntity(
+            new AngularDimensionEntity(
+                new Point2D(420, 150),
+                new Point2D(505, 150),
+                new Point2D(420, 235),
+                new Point2D(480, 210),
+                isCounterClockwise: true,
+                layerId: LayerId.Annotations));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

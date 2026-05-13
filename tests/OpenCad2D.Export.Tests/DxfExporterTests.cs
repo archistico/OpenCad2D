@@ -413,7 +413,7 @@ public sealed class DxfExporterTests
         Assert.Contains("62\n1", content);
         Assert.Contains("420\n16711680", content);
         Assert.Contains("6\nDASHDOT", content);
-        Assert.Contains("370\n50", content);
+        Assert.Contains("370\n75", content);
     }
 
     [Fact]

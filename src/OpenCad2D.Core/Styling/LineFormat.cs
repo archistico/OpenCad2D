@@ -54,7 +54,9 @@ public sealed class LineFormat
         Id == LineFormatId.Dashed ||
         Id == LineFormatId.DashDot ||
         Id == LineFormatId.DashDotDot ||
-        Id == LineFormatId.Axis;
+        Id == LineFormatId.Axis ||
+        Id == LineFormatId.Annotations ||
+        Id == LineFormatId.Walls;
 
     public LineFormat WithName(string name)
     {

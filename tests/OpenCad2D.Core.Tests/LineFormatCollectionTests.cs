@@ -15,14 +15,22 @@ public sealed class LineFormatCollectionTests
         Assert.True(formats.Contains(LineFormatId.DashDot));
         Assert.True(formats.Contains(LineFormatId.DashDotDot));
         Assert.True(formats.Contains(LineFormatId.Axis));
+        Assert.True(formats.Contains(LineFormatId.Annotations));
+        Assert.True(formats.Contains(LineFormatId.Walls));
         Assert.Equal(
             1.0,
             formats.GetById(LineFormatId.Continuous).LineWeight.Millimeters);
         Assert.Equal(
-            0.5,
+            0.8,
+            formats.GetById(LineFormatId.Annotations).LineWeight.Millimeters);
+        Assert.Equal(
+            2.0,
+            formats.GetById(LineFormatId.Walls).LineWeight.Millimeters);
+        Assert.Equal(
+            0.75,
             formats.GetById(LineFormatId.Axis).LineWeight.Millimeters);
         Assert.Equal(
-            1.0,
+            0.75,
             formats.GetById(LineFormatId.Dashed).LineWeight.Millimeters);
         Assert.Equal(
             0.5,
@@ -36,6 +44,12 @@ public sealed class LineFormatCollectionTests
         Assert.Equal(
             CadColor.FromRgb(0, 255, 0),
             formats.GetById(LineFormatId.DashDot).Color);
+        Assert.Equal(
+            CadColor.FromRgb(160, 160, 160),
+            formats.GetById(LineFormatId.Annotations).Color);
+        Assert.Equal(
+            CadColor.FromRgb(255, 255, 255),
+            formats.GetById(LineFormatId.Walls).Color);
         Assert.Equal(
             "Tratto due punti",
             formats.GetById(LineFormatId.DashDotDot).Name);

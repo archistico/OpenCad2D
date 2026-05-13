@@ -15,8 +15,8 @@ public static class LineStyleDashPattern
         {
             LineStyle.Continuous => null,
             LineStyle.Dashed => [6.0, 3.0],
-            LineStyle.DashDot => [6.0, 2.0, 1.0, 2.0],
-            LineStyle.DashDotDot => [6.0, 2.0, 1.0, 2.0, 1.0, 2.0],
+            LineStyle.DashDot => [12.0, 4.0, 2.0, 4.0],
+            LineStyle.DashDotDot => [12.0, 4.0, 2.0, 4.0, 2.0, 4.0],
             _ => null,
         };
     }

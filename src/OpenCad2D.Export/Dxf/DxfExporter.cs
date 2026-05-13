@@ -91,7 +91,7 @@ public sealed class DxfExporter : IDxfExporter
         File.WriteAllText(
             filePath,
             result.Content,
-            Encoding.ASCII);
+            new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
     }
 
     private static IReadOnlyList<CadEntity> GetExportableEntities(

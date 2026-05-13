@@ -94,8 +94,8 @@ public sealed class DxfExportCompatibilityTests
 
     [Theory]
     [InlineData("LayerContinuous", "Continuous", "CONTINUOUS", "16777215", "100")]
-    [InlineData("LayerAxis", "Axis", "DASHDOT", "16711680", "50")]
-    [InlineData("LayerDashed", "Dashed", "DASHED", "16776960", "100")]
+    [InlineData("LayerAxis", "Axis", "DASHDOT", "16711680", "75")]
+    [InlineData("LayerDashed", "Dashed", "DASHED", "16776960", "75")]
     [InlineData("LayerDashDot", "DashDot", "DASHDOT", "65280", "75")]
     [InlineData("LayerDashDotDot", "DashDotDot", "DASHDOTDOT", "51455", "50")]
     public void Export_LayerRecords_ShouldMapBuiltInLineFormatsToDxfProperties(
