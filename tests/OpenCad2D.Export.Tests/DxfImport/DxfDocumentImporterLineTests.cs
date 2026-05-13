@@ -218,19 +218,13 @@ public sealed class DxfDocumentImporterLineTests
             2
             ENTITIES
             0
-            ARC
+            HATCH
             8
             0
             10
             0
             20
             0
-            40
-            5
-            50
-            0
-            51
-            90
             0
             ENDSEC
             0
@@ -243,7 +237,7 @@ public sealed class DxfDocumentImporterLineTests
         Assert.Empty(result.Document.Entities.All);
         Assert.True(result.HasWarnings);
         DxfImportLogEntry warning = Assert.Single(result.Log);
-        Assert.Contains("Skipped unsupported DXF entity: ARC", warning.Message);
+        Assert.Contains("Skipped unsupported DXF entity: HATCH", warning.Message);
     }
 
     [Fact]

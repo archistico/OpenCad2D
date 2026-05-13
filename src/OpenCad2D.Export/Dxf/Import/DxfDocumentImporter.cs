@@ -116,6 +116,16 @@ public sealed class DxfDocumentImporter : IDxfImporter
                 continue;
             }
 
+            if (entityRecord.Type == "ARC")
+            {
+                ImportArc(
+                    entityRecord,
+                    document,
+                    log);
+
+                continue;
+            }
+
             log.Add(new DxfImportLogEntry(
                 DxfImportLogSeverity.Warning,
                 $"Skipped unsupported DXF entity: {entityRecord.Type}.",
@@ -269,6 +279,76 @@ public sealed class DxfDocumentImporter : IDxfImporter
             layerId: layerId));
     }
 
+
+    private static void ImportArc(
+        DxfEntityRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        if (!TryReadPoint(
+                record,
+                xCode: 10,
+                yCode: 20,
+                pointName: "center point",
+                log,
+                out Point2D center) ||
+            !TryReadDouble(
+                record,
+                code: 40,
+                fieldName: "ARC radius",
+                log,
+                out double radius) ||
+            !TryReadDouble(
+                record,
+                code: 50,
+                fieldName: "ARC start angle",
+                log,
+                out double startAngleDegrees) ||
+            !TryReadDouble(
+                record,
+                code: 51,
+                fieldName: "ARC end angle",
+                log,
+                out double endAngleDegrees))
+        {
+            return;
+        }
+
+        if (radius <= 0)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped ARC entity because its radius is less than or equal to zero.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        if (AreEquivalentAngles(
+                startAngleDegrees,
+                endAngleDegrees))
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped ARC entity because its start angle and end angle are equal.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        LayerId layerId = EnsureLayer(
+            document,
+            GetLayerName(record));
+
+        document.AddEntity(new ArcEntity(
+            center,
+            radius,
+            Angle.FromDegrees(startAngleDegrees),
+            Angle.FromDegrees(endAngleDegrees),
+            isCounterClockwise: true,
+            layerId: layerId));
+    }
+
     private static bool TryReadPoint(
         DxfEntityRecord record,
         int xCode,
@@ -334,6 +414,29 @@ public sealed class DxfDocumentImporter : IDxfImporter
         }
 
         return true;
+    }
+
+
+    private static bool AreEquivalentAngles(
+        double firstDegrees,
+        double secondDegrees)
+    {
+        double normalizedFirst = NormalizeDegrees(firstDegrees);
+        double normalizedSecond = NormalizeDegrees(secondDegrees);
+
+        return Math.Abs(normalizedFirst - normalizedSecond) <= Tolerance.Default;
+    }
+
+    private static double NormalizeDegrees(double degrees)
+    {
+        double normalized = degrees % 360.0;
+
+        if (normalized < 0)
+        {
+            normalized += 360.0;
+        }
+
+        return normalized;
     }
 
     private static string GetLayerName(DxfEntityRecord record)
