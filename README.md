@@ -62,7 +62,7 @@ The application already supports a functional CAD workflow:
 - viewport culling for rendering only visible entities;
 - CAD-style crosshair cursor;
 - visual feedback for active command, current layer, snap type, rendered entity count and temporary measurements;
-- application icon and in-app logo assets based on `screenshot/logo_opencad2d.*`;
+- application icon and in-app logo assets created and owned by Emilie Rollandin;
 - two-column left tool panel grouping Select/Draw/Dimension/Measure separately from Edit tools;
 - v0.5 advanced modify-tool behavior for Break, Trim and Extend with locked/hidden-layer regression coverage.
 
@@ -769,9 +769,25 @@ Next planned areas:
 
 ## License
 
-OpenCad2D is released under the **GNU General Public License v3.0 or later**.
+OpenCad2D source code is released under the **GNU General Public License v3.0 or later**.
 
 See the [`LICENSE`](LICENSE) file for details.
+
+Third-party dependencies and notices are listed in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
+
+---
+
+## Branding and trademarks
+
+The OpenCad2D name, logo and application icon are original branding assets created and owned by **Emilie Rollandin**.
+
+They may be used to identify the official OpenCad2D project, documentation, builds and releases. They may not be used to misrepresent modified versions, forks or unrelated products as official OpenCad2D releases.
+
+OpenCad2D is an independent project. It is not affiliated with, endorsed by, sponsored by or approved by Autodesk, Inc., Dassault Systèmes, LibreCAD, QCAD, FreeCAD or any other CAD vendor/project.
+
+AutoCAD, Autodesk, DWG and DWG TrueView are trademarks or registered trademarks of Autodesk, Inc. and/or its affiliates. DXF support is implemented for interoperability purposes.
+
+Additional legal notes are available in [`docs/legal.md`](docs/legal.md).
 
 ---
 
