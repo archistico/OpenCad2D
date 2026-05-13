@@ -37,24 +37,47 @@ public sealed class DxfDocumentImporter : IDxfImporter
     {
         ArgumentNullException.ThrowIfNull(content);
 
-        IReadOnlyList<DxfCodePair> pairs = _reader.Read(content);
+        try
+        {
+            IReadOnlyList<DxfCodePair> pairs = _reader.Read(content);
 
-        return ImportPairs(pairs);
+            return ImportPairs(pairs);
+        }
+        catch (DxfReadException exception)
+        {
+            return CreateFailedResult(exception.Message);
+        }
     }
 
     /// <inheritdoc />
     public DxfImportResult ImportFile(string filePath)
     {
-        IReadOnlyList<DxfCodePair> pairs = _reader.ReadFile(filePath);
+        try
+        {
+            IReadOnlyList<DxfCodePair> pairs = _reader.ReadFile(filePath);
 
-        return ImportPairs(pairs);
+            return ImportPairs(pairs);
+        }
+        catch (DxfReadException exception)
+        {
+            return CreateFailedResult(exception.Message);
+        }
     }
 
     private DxfImportResult ImportPairs(IReadOnlyList<DxfCodePair> pairs)
     {
         var document = new CadDocument();
         var log = new List<DxfImportLogEntry>();
-        IReadOnlyList<DxfSection> sections = _sectionReader.ReadSections(pairs);
+        IReadOnlyList<DxfSection> sections;
+
+        try
+        {
+            sections = _sectionReader.ReadSections(pairs);
+        }
+        catch (DxfReadException exception)
+        {
+            return CreateFailedResult(exception.Message);
+        }
 
         DxfSection? tablesSection = sections.FirstOrDefault(
             section => section.Name == "TABLES");
@@ -91,6 +114,19 @@ public sealed class DxfDocumentImporter : IDxfImporter
             log);
     }
 
+    private static DxfImportResult CreateFailedResult(string message)
+    {
+        var log = new List<DxfImportLogEntry>
+        {
+            new(
+                DxfImportLogSeverity.Error,
+                message)
+        };
+
+        return new DxfImportResult(
+            new CadDocument(),
+            log);
+    }
 
     private static void ImportLayerTable(
         DxfSection tablesSection,

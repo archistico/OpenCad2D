@@ -14,6 +14,8 @@ public sealed class DxfImportResultTests
 
         Assert.True(result.HasWarnings);
         Assert.False(result.HasErrors);
+        Assert.Equal(1, result.Statistics.WarningCount);
+        Assert.Equal(0, result.Statistics.ErrorCount);
     }
 
     [Fact]
@@ -24,5 +26,6 @@ public sealed class DxfImportResultTests
             [new DxfImportLogEntry(DxfImportLogSeverity.Error, "Invalid file.")]);
 
         Assert.True(result.HasErrors);
+        Assert.Equal(1, result.Statistics.ErrorCount);
     }
 }

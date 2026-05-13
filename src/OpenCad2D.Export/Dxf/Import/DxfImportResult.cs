@@ -13,13 +13,16 @@ public sealed class DxfImportResult
     {
         Document = document ?? throw new ArgumentNullException(nameof(document));
         Log = log ?? throw new ArgumentNullException(nameof(log));
+        Statistics = DxfImportStatistics.From(Document, Log);
     }
 
     public CadDocument Document { get; }
 
     public IReadOnlyList<DxfImportLogEntry> Log { get; }
 
-    public bool HasWarnings => Log.Any(entry => entry.Severity == DxfImportLogSeverity.Warning);
+    public DxfImportStatistics Statistics { get; }
 
-    public bool HasErrors => Log.Any(entry => entry.Severity == DxfImportLogSeverity.Error);
+    public bool HasWarnings => Statistics.WarningCount > 0;
+
+    public bool HasErrors => Statistics.ErrorCount > 0;
 }
