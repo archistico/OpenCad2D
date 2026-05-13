@@ -667,6 +667,21 @@ docs/v0.6-command-line-property-panel-plan.md
 
 ## v0.7 - Interoperability: DXF import and PDF export
 
+Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperability-plan.md).
+
+### Phase progress
+
+- [x] Phase 0 started: scope and architecture documented;
+- [x] Phase 1 started: DXF reader infrastructure added;
+- [ ] Phase 2: DXF base entity import;
+- [ ] Phase 3: DXF layers and formats;
+- [ ] Phase 4: DXF import UI;
+- [ ] Phase 5: DXF round-trip validation;
+- [ ] Phase 6: PDF export core;
+- [ ] Phase 7: PDF export UI;
+- [ ] Phase 8: SVG export options;
+- [ ] Phase 9: documentation and release notes.
+
 ### Feature & UX
 
 - [ ] import DXF entities;
