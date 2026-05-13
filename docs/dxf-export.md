@@ -29,12 +29,15 @@ Supported entity mappings:
 
 | OpenCad2D entity | DXF entity |
 |---|---|
+| `PointEntity` | `POINT` |
+| `TextEntity` | `TEXT` |
 | `LineEntity` | `LINE` |
 | `CircleEntity` | `CIRCLE` |
 | `ArcEntity` | `ARC` |
 | `PolylineEntity` | `LWPOLYLINE` |
+| basic dimensions | graphical primitives: `LINE`, `ARC`, `TEXT` |
 
-Text, dimensions, hatches, blocks, layouts and paper space are not exported yet.
+Hatches, blocks, layouts and paper space are not exported yet.
 
 ---
 
@@ -227,7 +230,17 @@ Recommended next DXF improvements:
 1. test output in LibreCAD, QCAD, AutoCAD/DWG TrueView and one online viewer;
 2. add an export options dialog;
 3. optionally export selected entities only;
-4. add text export when `TextEntity` exists;
-5. add dimensions when dimension entities exist;
+4. add an export options dialog for DXF when needed;
+5. optionally export selected entities only;
 6. add hatches/fills when fill support exists;
 7. consider blocks only after the entity model has block references.
+
+---
+
+## Related DXF import document
+
+DXF import is documented separately in:
+
+```text
+docs/dxf-import.md
+```

@@ -550,15 +550,19 @@ CircleEntity    -> <circle>
 Polyline open   -> <polyline>
 Polyline closed -> <polygon>
 ArcEntity       -> <path>
+PointEntity     -> marker
+TextEntity      -> <text>
+Dimensions      -> graphical primitives
 ```
 
 Export rules:
 
-- hidden layers are ignored;
+- hidden layers are ignored by default;
 - locked but visible layers are exported;
 - stroke color, stroke width and dash array come from the line format referenced by each entity layer;
 - the SVG `viewBox` is computed from visible drawing bounds;
-- a dark background rectangle is exported by default;
+- background mode supports canvas dark, white and transparent;
+- optional layer grouping writes `<g id="layer-..." data-layer-name="...">`;
 - Y orientation matches the OpenCad2D canvas;
 - export does not change current file path, does not mark the document saved and does not clear dirty state.
 
@@ -903,21 +907,37 @@ Property Panel v2:
 Release notes are in:
 
 ```text
-docs/release-v0.6.md
+docs/release-v0.7.md
 ```
 
-Next milestone:
+Current milestone status:
 
 ```text
-v0.7 - Interoperability: DXF import and PDF export
+v0.7 - Interoperability: DXF import, PDF export and SVG options is implemented.
 ```
 
-Recommended v0.7 starting point:
+Key v0.7 implementation areas:
 
-1. audit current DXF exporter and document entity coverage;
-2. design a minimal DXF importer for layers, line formats and base entities;
-3. keep unsupported DXF entities as skip + readable log;
-4. then design PDF export with page format, scale and margins.
+1. DXF import for `LINE`, `CIRCLE`, `ARC`, `POINT`, `LWPOLYLINE` and `TEXT`;
+2. DXF layer table import and diagnostics;
+3. DXF import report UI;
+4. DXF export/import round-trip validation;
+5. PDF export core and settings UI;
+6. SVG export options for background mode and grouping by layer.
+
+Recommended next milestone:
+
+```text
+v0.8 - UI, colors and settings
+```
+
+Likely v0.8 starting points:
+
+1. persist application settings;
+2. remember last file and default export options;
+3. improve color-picker workflows;
+4. polish final visual theme;
+5. design draw order / Z-order independent from layers.
 
 ## Branding and application icon
 
@@ -936,3 +956,61 @@ screenshot/logo_opencad2d_512.png
 Runtime application assets are copied under `src/OpenCad2D.App/Assets/`. The app icon is `Assets/app-icon.ico`, generated from the logo PNG resolutions, and is configured in `OpenCad2D.App.csproj` through `ApplicationIcon`. Avalonia windows use `Icon="/Assets/app-icon.ico"`. The About window displays `Assets/logo_opencad2d_128.png`.
 
 Documentation should use the SVG logo where appropriate. The root `README.md` uses `screenshot/logo_opencad2d.svg`; documentation under `docs/` should reference `../screenshot/logo_opencad2d.svg`. More details are in `docs/branding.md`.
+
+
+## DXF import status
+
+DXF import is implemented in `OpenCad2D.Export.Dxf.Import`.
+
+Supported imported DXF entities:
+
+```text
+LINE
+CIRCLE
+ARC
+POINT
+LWPOLYLINE
+TEXT
+```
+
+The importer reads `TABLES/LAYER`, maps basic ACI color, linetype, lineweight, hidden/frozen and locked state, and creates missing layers when an entity references an undeclared layer.
+
+Unsupported records are skipped with diagnostics. Malformed input handled through `DxfDocumentImporter` returns an error `DxfImportResult` instead of crashing the UI flow.
+
+UI integration:
+
+```text
+Import DXF -> dirty-document protection -> replace current document on successful import -> show report for warnings/errors
+```
+
+Detailed docs:
+
+```text
+docs/dxf-import.md
+docs/v0.7-interoperability-plan.md
+```
+
+## PDF export status
+
+PDF export is implemented in `OpenCad2D.Export.Pdf`.
+
+Current behavior:
+
+```text
+single-page vector PDF
+A4/A3/A2/A1/A0
+portrait/landscape
+margin in millimeters
+fit-to-page
+visible layers by default
+optional hidden-layer inclusion
+print-friendly color mode by default
+```
+
+The PDF settings UI is implemented in `PdfExportSettingsWindow` and `PdfExportSettingsWindowViewModel`.
+
+Detailed docs:
+
+```text
+docs/pdf-export.md
+```

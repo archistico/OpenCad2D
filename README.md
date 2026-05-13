@@ -38,8 +38,10 @@ The application already supports a functional CAD workflow:
 - undo and redo;
 - internal JSON save/load using `.opencad2d.json`;
 - New, Open, Save and Save As file commands;
-- SVG export using `.svg`, including points, single-line text and basic dimensions;
-- DXF export using AutoCAD 2000 ASCII `.dxf`, including `POINT`, `TEXT` and basic dimensions as graphical primitives;
+- SVG export using `.svg`, including points, single-line text, basic dimensions, layer grouping and selectable background modes;
+- DXF import using ASCII `.dxf` for base 2D entities and layer tables, with diagnostics for unsupported records;
+- DXF export using AutoCAD 2000 ASCII `.dxf`, including `POINT`, `TEXT`, base geometry and basic dimensions as graphical primitives;
+- PDF export using `.pdf`, with page size, orientation, margins, fit-to-page and print-friendly colors;
 - dirty-state tracking and “Save changes?” confirmation;
 - object snapping, including geometric snaps and entity snap for selection-oriented tools;
 - configurable rectangular and isometric grid display and grid snapping;
@@ -194,13 +196,15 @@ OpenCad2D can export the current visible drawing to SVG.
 Current SVG export behavior:
 
 - exports visible `PointEntity`, `TextEntity`, geometric entities and basic dimensions;
-- ignores entities on hidden layers;
+- ignores entities on hidden layers by default;
+- can optionally include hidden layers;
 - includes entities on locked layers when their layer is visible;
 - uses stroke color, line weight and dash style from the line format assigned to the entity layer;
 - uses text format font, height, color, bold and italic for single-line text;
 - computes an automatic `viewBox` from visible drawing bounds;
-- exports a dark background rectangle matching the OpenCad2D canvas;
 - preserves the same visual Y orientation as the canvas;
+- supports selectable background modes: canvas dark, white or transparent;
+- can group output by layer using SVG `<g>` elements with `data-layer-name` attributes;
 - writes standard `.svg` files that can be opened in a browser or vector editor.
 
 Exporting SVG is not the same as saving the drawing:
@@ -213,7 +217,51 @@ Export SVG does not clear the dirty marker.
 
 The SVG exporter lives in `OpenCad2D.Export` and does not depend on Avalonia, App or Tools.
 
+See also:
 
+```text
+docs/svg-export.md
+docs/export.md
+```
+
+---
+
+## DXF import
+
+OpenCad2D can import a focused subset of ASCII DXF files.
+
+Supported DXF import entities:
+
+```text
+LINE
+CIRCLE
+ARC
+POINT
+LWPOLYLINE
+TEXT
+```
+
+The importer also reads the DXF `TABLES/LAYER` table where available and maps common layer properties:
+
+- layer name;
+- basic ACI color;
+- common linetypes;
+- lineweight group code `370`;
+- negative ACI color and frozen state as hidden;
+- locked state as locked.
+
+Unsupported DXF records are skipped with readable diagnostics rather than stopping the whole import. The dedicated DXF Import Report window shows imported entity counts, layer counts, warnings, errors and skipped records.
+
+Importing DXF replaces the current document after the normal unsaved-changes confirmation. The imported drawing is treated as a new unsaved OpenCad2D document: `CurrentFilePath` is cleared and the document is marked dirty so it can be saved as `.opencad2d.json`.
+
+See also:
+
+```text
+docs/dxf-import.md
+docs/v0.7-interoperability-plan.md
+```
+
+---
 
 ## DXF export
 
@@ -230,14 +278,52 @@ Current DXF export behavior:
 - exports `PolylineEntity` as `LWPOLYLINE`;
 - exports dimensions as graphical primitives (`LINE`, `ARC` and `TEXT`), not native DXF `DIMENSION` records;
 - writes all document layers to the DXF `LAYER` table;
-- writes `CONTINUOUS`, `DASHED`, `DASHDOT` and `DASHDOTDOT` to the DXF `LTYPE` table;
+- writes common linetypes to the DXF `LTYPE` table;
 - derives layer color, true color, lineweight and linetype from the layer's `LineFormat`;
 - writes entity appearance as `BYLAYER`;
 - ignores entities on hidden layers by default;
 - exports visible locked-layer entities;
-- mirrors Y using the exported content bounds so the exported drawing keeps the same visual top/bottom orientation seen in OpenCad2D viewers.
+- keeps a viewer-friendly Y orientation for normal DXF export.
+
+DXF export/import round-trip tests cover the supported base entity subset using a deterministic model-coordinate option.
 
 Exporting DXF does not change the current `.opencad2d.json` file path and does not clear dirty state.
+
+See also:
+
+```text
+docs/dxf-export.md
+docs/dxf-import.md
+```
+
+---
+
+## PDF export
+
+OpenCad2D can export the current visible drawing to a single-page vector PDF.
+
+Current PDF export behavior:
+
+- exports visible base geometry and single-line text;
+- supports A4, A3, A2, A1 and A0 page sizes;
+- supports portrait and landscape orientation;
+- supports margins in millimeters;
+- uses fit-to-page scaling;
+- exports visible layers by default;
+- can optionally include hidden layers;
+- uses print-friendly colors by default so very light screen colors remain visible on a white page;
+- preserves the visual top/bottom orientation of the canvas.
+
+The `Export PDF` command opens a settings window before the save-file picker.
+
+PDF export does not save the drawing and does not clear dirty state.
+
+See also:
+
+```text
+docs/pdf-export.md
+docs/export.md
+```
 
 ---
 

@@ -2,7 +2,7 @@
 
 OpenCad2D supports external export formats separately from native persistence.
 
-Native persistence saves and reopens `.opencad2d.json` drawings. Export creates derived output files such as SVG and must not change the document state.
+Native persistence saves and reopens `.opencad2d.json` drawings. Export creates derived output files such as SVG, DXF and PDF and must not change the document state.
 
 ---
 
@@ -37,6 +37,8 @@ The App owns file dialogs and error dialogs. The exporter owns file content gene
 ## SVG export
 
 Current SVG export is implemented by `SvgExporter`.
+
+Detailed document: [`svg-export.md`](svg-export.md).
 
 Supported entities:
 
@@ -102,7 +104,7 @@ The SVG exporter must not use legacy layer color/weight fields or per-entity sty
 
 The SVG exporter computes the `viewBox` from the bounds of visible exported entities and applies a configurable margin.
 
-By default, the SVG includes a background rectangle matching the OpenCad2D canvas dark background:
+By default, the SVG can include a background rectangle matching the OpenCad2D canvas dark background:
 
 ```text
 #1E1E1E
@@ -110,7 +112,7 @@ By default, the SVG includes a background rectangle matching the OpenCad2D canva
 
 The background rectangle is the size of the SVG viewBox.
 
-`SvgExportOptions` can disable the background or change its color.
+`SvgExportOptions` supports `CanvasDark`, `White` and `Transparent` background modes. It can also group exported entities by layer with SVG `<g>` elements.
 
 ---
 
@@ -128,6 +130,8 @@ This is a deliberate choice for the current export workflow, where the SVG is ex
 ## DXF export
 
 Current DXF export is implemented by `DxfExporter`.
+
+Detailed document: [`dxf-export.md`](dxf-export.md).
 
 The exporter writes a minimal AutoCAD 2000 ASCII DXF file:
 
@@ -227,6 +231,52 @@ The transformation is limited to export. It does not change the internal model c
 Arc angles are converted consistently with this Y flip.
 
 ---
+
+
+---
+
+## DXF import
+
+DXF import is implemented by `DxfDocumentImporter`.
+
+Detailed document: [`dxf-import.md`](dxf-import.md).
+
+Current imported DXF entities:
+
+```text
+LINE
+CIRCLE
+ARC
+POINT
+LWPOLYLINE
+TEXT
+```
+
+The importer reads `TABLES/LAYER`, maps common layer appearance information and returns `DxfImportResult` with diagnostics and aggregate `DxfImportStatistics`.
+
+Unsupported entities are skipped with warnings instead of crashing the import pipeline.
+
+---
+
+## PDF export
+
+PDF export is implemented by `PdfExporter`.
+
+Detailed document: [`pdf-export.md`](pdf-export.md).
+
+Current PDF behavior:
+
+```text
+single-page vector PDF
+A4/A3/A2/A1/A0
+portrait/landscape
+margins in millimeters
+fit-to-page
+print-friendly colors
+optional hidden-layer inclusion
+```
+
+PDF export is independent from Avalonia and does not mutate or save the document.
 
 ## Text and point export
 

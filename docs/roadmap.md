@@ -680,7 +680,7 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - [x] Phase 6: PDF export core;
 - [x] Phase 7: PDF export UI;
 - [x] Phase 8: SVG export options;
-- [ ] Phase 9: documentation and release notes.
+- [x] Phase 9: documentation and release notes.
 
 ### Feature & UX
 
@@ -772,8 +772,8 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 ### Criteria
 
 - [ ] text and basic dimensions operational;
-- [ ] DXF import and export verified;
-- [ ] PDF export working;
+- [x] DXF import and export verified;
+- [x] PDF export working;
 - [ ] editable Property Panel for all primary entities;
 - [ ] real command line with aliases and coordinates;
 - [ ] stable undo/redo on all primary tools;
@@ -814,20 +814,23 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - A phase is not complete until it compiles, tests pass and documentation is updated.
 
 
-## v0.7 progress update
+## v0.7 completion update
 
-Completed in the current v0.7 development cycle:
+Completed in the v0.7 development cycle:
 
 - DXF import for base entities;
 - DXF layer table import;
-- DXF import diagnostics;
+- DXF import diagnostics and report window;
 - DXF import UI;
 - DXF round-trip validation;
 - PDF export core;
 - PDF export UI basic command;
 - PDF export settings dialog;
-- SVG export options for layer grouping and transparent, white or canvas-dark background.
-
-Next planned work:
-
+- SVG export options for layer grouping and transparent, white or canvas-dark background;
 - final v0.7 documentation and release notes.
+
+Release notes:
+
+```text
+docs/release-v0.7.md
+```
