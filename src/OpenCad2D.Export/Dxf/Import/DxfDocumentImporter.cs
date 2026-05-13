@@ -3,6 +3,7 @@ using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
+using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 
@@ -55,6 +56,17 @@ public sealed class DxfDocumentImporter : IDxfImporter
         var log = new List<DxfImportLogEntry>();
         IReadOnlyList<DxfSection> sections = _sectionReader.ReadSections(pairs);
 
+        DxfSection? tablesSection = sections.FirstOrDefault(
+            section => section.Name == "TABLES");
+
+        if (tablesSection is not null)
+        {
+            ImportLayerTable(
+                tablesSection,
+                document,
+                log);
+        }
+
         DxfSection? entitiesSection = sections.FirstOrDefault(
             section => section.Name == "ENTITIES");
 
@@ -77,6 +89,178 @@ public sealed class DxfDocumentImporter : IDxfImporter
         return new DxfImportResult(
             document,
             log);
+    }
+
+
+    private static void ImportLayerTable(
+        DxfSection tablesSection,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        foreach (DxfTable table in ReadTables(tablesSection.Pairs))
+        {
+            if (table.Name != "LAYER")
+            {
+                continue;
+            }
+
+            foreach (DxfTableRecord record in ReadTableRecords(table.Pairs))
+            {
+                if (record.Type != "LAYER")
+                {
+                    continue;
+                }
+
+                ImportLayerRecord(
+                    record,
+                    document,
+                    log);
+            }
+        }
+    }
+
+    private static IReadOnlyList<DxfTable> ReadTables(IReadOnlyList<DxfCodePair> pairs)
+    {
+        var tables = new List<DxfTable>();
+        int index = 0;
+
+        while (index < pairs.Count)
+        {
+            DxfCodePair current = pairs[index];
+
+            if (!current.IsMarkerValue("TABLE"))
+            {
+                index++;
+                continue;
+            }
+
+            int startLineNumber = current.CodeLineNumber;
+            index++;
+
+            if (index >= pairs.Count || pairs[index].Code != 2)
+            {
+                index++;
+                continue;
+            }
+
+            string tableName = pairs[index].Value.Trim().ToUpperInvariant();
+            index++;
+
+            var tablePairs = new List<DxfCodePair>();
+
+            while (index < pairs.Count && !pairs[index].IsMarkerValue("ENDTAB"))
+            {
+                tablePairs.Add(pairs[index]);
+                index++;
+            }
+
+            if (index < pairs.Count && pairs[index].IsMarkerValue("ENDTAB"))
+            {
+                index++;
+            }
+
+            tables.Add(new DxfTable(
+                tableName,
+                tablePairs,
+                startLineNumber));
+        }
+
+        return tables;
+    }
+
+    private static IReadOnlyList<DxfTableRecord> ReadTableRecords(IReadOnlyList<DxfCodePair> pairs)
+    {
+        var records = new List<DxfTableRecord>();
+        int index = 0;
+
+        while (index < pairs.Count)
+        {
+            DxfCodePair current = pairs[index];
+
+            if (!current.IsMarker)
+            {
+                index++;
+                continue;
+            }
+
+            string recordType = current.Value.Trim().ToUpperInvariant();
+            int startLineNumber = current.CodeLineNumber;
+            index++;
+
+            var recordPairs = new List<DxfCodePair>();
+
+            while (index < pairs.Count && !pairs[index].IsMarker)
+            {
+                recordPairs.Add(pairs[index]);
+                index++;
+            }
+
+            records.Add(new DxfTableRecord(
+                recordType,
+                recordPairs,
+                startLineNumber));
+        }
+
+        return records;
+    }
+
+    private static void ImportLayerRecord(
+        DxfTableRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        DxfCodePair? namePair = record.LastOrDefault(2);
+
+        if (namePair is null || string.IsNullOrWhiteSpace(namePair.Value.Value))
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped DXF LAYER table record because the layer name is missing or empty.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        string layerName = namePair.Value.Value.Trim();
+        LayerId layerId = new(layerName);
+        int flags = ReadOptionalInt(
+            record,
+            code: 70,
+            defaultValue: 0);
+        int aciColor = ReadOptionalInt(
+            record,
+            code: 62,
+            defaultValue: 7);
+        int lineWeightValue = ReadOptionalInt(
+            record,
+            code: 370,
+            defaultValue: -1);
+
+        bool isFrozen = (flags & 1) == 1;
+        bool isLocked = (flags & 4) == 4;
+        bool isVisible = aciColor >= 0 && !isFrozen;
+        CadColor color = FromAci(Math.Abs(aciColor));
+        LineWeight lineWeight = FromDxfLineWeight(lineWeightValue);
+        DxfCodePair? lineTypePair = record.LastOrDefault(6);
+        LineFormatId lineFormatId = ToLineFormatId(lineTypePair is null
+            ? null
+            : lineTypePair.Value.Value);
+
+        var layer = new Layer(
+            layerId,
+            layerName,
+            color,
+            lineWeight,
+            isVisible,
+            isLocked).WithLineFormat(lineFormatId);
+
+        if (document.Layers.Contains(layerId))
+        {
+            document.Layers.Replace(layer);
+            return;
+        }
+
+        document.Layers.Add(layer);
     }
 
     private static void ImportEntities(
@@ -764,6 +948,75 @@ public sealed class DxfDocumentImporter : IDxfImporter
         return normalized;
     }
 
+
+    private static int ReadOptionalInt(
+        DxfRecord record,
+        int code,
+        int defaultValue)
+    {
+        DxfCodePair? pair = record.LastOrDefault(code);
+
+        if (pair is null)
+        {
+            return defaultValue;
+        }
+
+        if (!int.TryParse(
+                pair.Value.Value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int value))
+        {
+            return defaultValue;
+        }
+
+        return value;
+    }
+
+    private static CadColor FromAci(int aciColor)
+    {
+        return aciColor switch
+        {
+            1 => CadColor.FromRgb(255, 0, 0),
+            2 => CadColor.FromRgb(255, 255, 0),
+            3 => CadColor.FromRgb(0, 255, 0),
+            4 => CadColor.FromRgb(0, 255, 255),
+            5 => CadColor.FromRgb(0, 0, 255),
+            6 => CadColor.FromRgb(255, 0, 255),
+            8 => CadColor.FromRgb(128, 128, 128),
+            9 => CadColor.FromRgb(192, 192, 192),
+            _ => CadColor.FromRgb(255, 255, 255),
+        };
+    }
+
+    private static LineFormatId ToLineFormatId(string? dxfLineTypeName)
+    {
+        string normalizedName = string.IsNullOrWhiteSpace(dxfLineTypeName)
+            ? "CONTINUOUS"
+            : dxfLineTypeName.Trim().ToUpperInvariant();
+
+        return normalizedName switch
+        {
+            "DASHED" => LineFormatId.Dashed,
+            "DASHDOT" => LineFormatId.DashDot,
+            "DASHDOTDOT" => LineFormatId.DashDotDot,
+            "CENTER" => LineFormatId.Axis,
+            "CENTER2" => LineFormatId.Axis,
+            "CENTERX2" => LineFormatId.Axis,
+            _ => LineFormatId.Continuous,
+        };
+    }
+
+    private static LineWeight FromDxfLineWeight(int dxfLineWeight)
+    {
+        if (dxfLineWeight < 0)
+        {
+            return LineWeight.FromMillimeters(0.25);
+        }
+
+        return LineWeight.FromMillimeters(dxfLineWeight / 100.0);
+    }
+
     private static string GetLayerName(DxfEntityRecord record)
     {
         DxfCodePair? layerPair = record.LastOrDefault(8);
@@ -802,9 +1055,63 @@ public sealed class DxfDocumentImporter : IDxfImporter
         Point2D Point,
         double Bulge);
 
-    private sealed class DxfEntityRecord
+    private sealed class DxfTable
+    {
+        public DxfTable(
+            string name,
+            IReadOnlyList<DxfCodePair> pairs,
+            int startLineNumber)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                throw new ArgumentException(
+                    "DXF table name cannot be empty.",
+                    nameof(name));
+            }
+
+            Name = name.Trim().ToUpperInvariant();
+            Pairs = pairs ?? throw new ArgumentNullException(nameof(pairs));
+            StartLineNumber = startLineNumber;
+        }
+
+        public string Name { get; }
+
+        public IReadOnlyList<DxfCodePair> Pairs { get; }
+
+        public int StartLineNumber { get; }
+    }
+
+    private sealed class DxfTableRecord : DxfRecord
+    {
+        public DxfTableRecord(
+            string type,
+            IReadOnlyList<DxfCodePair> pairs,
+            int startLineNumber)
+            : base(
+                type,
+                pairs,
+                startLineNumber)
+        {
+        }
+    }
+
+    private sealed class DxfEntityRecord : DxfRecord
     {
         public DxfEntityRecord(
+            string type,
+            IReadOnlyList<DxfCodePair> pairs,
+            int startLineNumber)
+            : base(
+                type,
+                pairs,
+                startLineNumber)
+        {
+        }
+    }
+
+    private abstract class DxfRecord
+    {
+        protected DxfRecord(
             string type,
             IReadOnlyList<DxfCodePair> pairs,
             int startLineNumber)
@@ -812,7 +1119,7 @@ public sealed class DxfDocumentImporter : IDxfImporter
             if (string.IsNullOrWhiteSpace(type))
             {
                 throw new ArgumentException(
-                    "DXF entity type cannot be empty.",
+                    "DXF record type cannot be empty.",
                     nameof(type));
             }
 
