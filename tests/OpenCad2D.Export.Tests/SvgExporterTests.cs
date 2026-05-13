@@ -431,4 +431,82 @@ public sealed class SvgExporterTests
         Assert.Contains("r=\"2\"", result.Content);
     }
 
+    [Fact]
+    public void Export_WhenBackgroundModeIsWhite_ShouldWriteWhiteBackgroundRectangle()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0)));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(
+            document,
+            new SvgExportOptions
+            {
+                BackgroundMode = SvgBackgroundMode.White
+            });
+
+        Assert.Contains("<rect x=\"0\" y=\"0\"", result.Content);
+        Assert.Contains("fill=\"#FFFFFF\"", result.Content);
+    }
+
+    [Fact]
+    public void Export_WhenBackgroundModeIsTransparent_ShouldNotWriteBackgroundRectangle()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0)));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(
+            document,
+            new SvgExportOptions
+            {
+                BackgroundMode = SvgBackgroundMode.Transparent
+            });
+
+        Assert.DoesNotContain("<rect ", result.Content);
+    }
+
+    [Fact]
+    public void Export_WhenGroupByLayerIsEnabled_ShouldWriteLayerGroups()
+    {
+        var document = new CadDocument();
+        var wallsLayerId = new LayerId("Walls");
+        var furnitureLayerId = new LayerId("Furniture");
+
+        document.Layers.Add(new Layer(
+            wallsLayerId,
+            "Walls"));
+        document.Layers.Add(new Layer(
+            furnitureLayerId,
+            "Furniture"));
+
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            layerId: wallsLayerId));
+        document.AddEntity(new CircleEntity(
+            new Point2D(5, 5),
+            2,
+            layerId: furnitureLayerId));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(
+            document,
+            new SvgExportOptions
+            {
+                GroupByLayer = true
+            });
+
+        Assert.Contains("<g id=\"layer-Walls\" data-layer-name=\"Walls\">", result.Content);
+        Assert.Contains("<g id=\"layer-Furniture\" data-layer-name=\"Furniture\">", result.Content);
+        Assert.Contains("</g>", result.Content);
+    }
+
 }

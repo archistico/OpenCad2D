@@ -381,6 +381,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public SvgExportResult ExportSvgToFile(string filePath)
     {
+        var options = new SvgExportOptions
+        {
+            Title = CurrentFileName == "Untitled"
+                ? "OpenCad2D export"
+                : CurrentFileName
+        };
+
+        return ExportSvgToFile(
+            filePath,
+            options);
+    }
+
+    public SvgExportResult ExportSvgToFile(
+        string filePath,
+        SvgExportOptions options)
+    {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException(
@@ -388,12 +404,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 nameof(filePath));
         }
 
-        var options = new SvgExportOptions
-        {
-            Title = CurrentFileName == "Untitled"
-                ? "OpenCad2D export"
-                : CurrentFileName
-        };
+        ArgumentNullException.ThrowIfNull(options);
 
         SvgExportResult result = _svgExporter.Export(
             Workspace.Document,
@@ -404,7 +415,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             filePath,
             options);
 
-        SetMessage($"Exported SVG '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities)." );
+        SetMessage($"Exported SVG '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities).");
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));

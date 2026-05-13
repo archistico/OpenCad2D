@@ -678,8 +678,8 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - [x] Phase 4: DXF import UI;
 - [x] Phase 5: DXF round-trip validation;
 - [x] Phase 6: PDF export core;
-- [ ] Phase 7: PDF export UI;
-- [ ] Phase 8: SVG export options;
+- [x] Phase 7: PDF export UI;
+- [x] Phase 8: SVG export options;
 - [ ] Phase 9: documentation and release notes.
 
 ### Feature & UX
@@ -695,14 +695,14 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - [x] PDF page format;
 - [x] PDF fit-to-page scale;
 - [x] PDF margins;
-- [ ] SVG layer grouping;
-- [ ] optional transparent SVG background.
+- [x] SVG layer grouping;
+- [x] optional transparent SVG background.
 
 ### Stability & Test
 
 - [x] DXF import error handling;
 - [x] DXF export -> import round-trip tests;
-- [ ] PDF export tests;
+- [x] PDF export tests;
 - [x] unsupported DXF entity tests.
 
 ---
@@ -825,9 +825,9 @@ Completed in the current v0.7 development cycle:
 - DXF round-trip validation;
 - PDF export core;
 - PDF export UI basic command;
-- PDF export settings dialog.
+- PDF export settings dialog;
+- SVG export options for layer grouping and transparent, white or canvas-dark background.
 
 Next planned work:
 
-- SVG export options for layer grouping and transparent background;
 - final v0.7 documentation and release notes.
