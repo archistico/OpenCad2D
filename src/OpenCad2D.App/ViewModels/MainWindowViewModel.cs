@@ -482,6 +482,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public PdfExportResult ExportPdfToFile(string filePath)
     {
+        return ExportPdfToFile(
+            filePath,
+            PdfExportOptions.Default);
+    }
+
+    public PdfExportResult ExportPdfToFile(
+        string filePath,
+        PdfExportOptions options)
+    {
         if (string.IsNullOrWhiteSpace(filePath))
         {
             throw new ArgumentException(
@@ -489,7 +498,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 nameof(filePath));
         }
 
-        PdfExportOptions options = PdfExportOptions.Default;
+        ArgumentNullException.ThrowIfNull(options);
 
         PdfExportResult result = _pdfExporter.Export(
             Workspace.Document,
@@ -500,7 +509,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             filePath,
             options);
 
-        SetMessage($"Exported PDF '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities).");
+        SetMessage(
+            $"Exported PDF '{Path.GetFileName(filePath)}' " +
+            $"({result.ExportedEntityCount} entities, " +
+            $"{options.PageSize} {options.Orientation}, " +
+            $"margin {options.MarginMillimeters:0.##} mm).");
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));

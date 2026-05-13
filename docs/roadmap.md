@@ -824,10 +824,10 @@ Completed in the current v0.7 development cycle:
 - DXF import UI;
 - DXF round-trip validation;
 - PDF export core;
-- PDF export UI basic command.
+- PDF export UI basic command;
+- PDF export settings dialog.
 
 Next planned work:
 
-- PDF export settings dialog;
 - SVG export options for layer grouping and transparent background;
 - final v0.7 documentation and release notes.

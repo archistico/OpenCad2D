@@ -1,0 +1,165 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pdf="clr-namespace:OpenCad2D.App.ViewModels.Pdf"
+        x:Class="OpenCad2D.App.PdfExportSettingsWindow"
+        x:DataType="pdf:PdfExportSettingsWindowViewModel"
+        Title="Export PDF"
+        Icon="/Assets/app-icon.ico"
+        Width="520"
+        Height="430"
+        MinWidth="480"
+        MinHeight="390"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.dialog-title">
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="TextBlock.dialog-description">
+            <Setter Property="Foreground" Value="#BDBDBD" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.field-help">
+            <Setter Property="Foreground" Value="#9A9A9A" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style Selector="ComboBox.dialog-input">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style Selector="TextBox.dialog-input">
+            <Setter Property="MinHeight" Value="30" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style Selector="CheckBox.dialog-check">
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="BorderBrush" Value="#555555" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="92" />
+        </Style>
+
+        <Style Selector="Button.dialog-button.primary">
+            <Setter Property="Background" Value="#0E639C" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#33A9FF" />
+        </Style>
+    </Window.Styles>
+
+    <Border Margin="14"
+            Background="#232323"
+            BorderBrush="#3A3A3A"
+            BorderThickness="1"
+            CornerRadius="12">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0"
+                    Background="#2D2D30"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="0,0,0,1"
+                    CornerRadius="12,12,0,0"
+                    Padding="18,15">
+                <StackPanel Spacing="5">
+                    <TextBlock Classes="dialog-title"
+                               Text="Export PDF" />
+                    <TextBlock Classes="dialog-description"
+                               Text="Choose the basic print settings for this single-page PDF export." />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Row="1"
+                        Margin="18,16"
+                        Spacing="14">
+                <Grid ColumnDefinitions="150,*"
+                      RowDefinitions="Auto,Auto,Auto"
+                      RowSpacing="10"
+                      ColumnSpacing="12">
+                    <TextBlock Grid.Row="0"
+                               Grid.Column="0"
+                               Classes="field-label"
+                               Text="Page size" />
+                    <ComboBox Grid.Row="0"
+                              Grid.Column="1"
+                              x:Name="PageSizeComboBox"
+                              Classes="dialog-input"
+                              ItemsSource="{Binding PageSizes}"
+                              SelectedItem="{Binding SelectedPageSize}" />
+
+                    <TextBlock Grid.Row="1"
+                               Grid.Column="0"
+                               Classes="field-label"
+                               Text="Orientation" />
+                    <ComboBox Grid.Row="1"
+                              Grid.Column="1"
+                              x:Name="OrientationComboBox"
+                              Classes="dialog-input"
+                              ItemsSource="{Binding Orientations}"
+                              SelectedItem="{Binding SelectedOrientation}" />
+
+                    <TextBlock Grid.Row="2"
+                               Grid.Column="0"
+                               Classes="field-label"
+                               Text="Margin (mm)" />
+                    <TextBox Grid.Row="2"
+                             Grid.Column="1"
+                             x:Name="MarginTextBox"
+                             Classes="dialog-input"
+                             Text="{Binding MarginMillimetersText}" />
+                </Grid>
+
+                <StackPanel Spacing="8">
+                    <CheckBox x:Name="IncludeHiddenLayersCheckBox"
+                              Classes="dialog-check"
+                              Content="Include hidden layers"
+                              IsChecked="{Binding IncludeHiddenLayers}" />
+                    <CheckBox x:Name="PrintFriendlyColorsCheckBox"
+                              Classes="dialog-check"
+                              Content="Use print-friendly colors"
+                              IsChecked="{Binding UsePrintFriendlyColors}" />
+                </StackPanel>
+
+                <TextBlock Classes="field-help"
+                           Text="The current PDF exporter uses fit-to-page. Technical scales such as 1:50 or 1:100 will be added later when print layouts and units are formalized." />
+            </StackPanel>
+
+            <Border Grid.Row="2"
+                    Background="#2D2D30"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,12,12"
+                    Padding="14">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8">
+                    <Button Classes="dialog-button"
+                            Content="Cancel"
+                            Click="Cancel_Click" />
+                    <Button Classes="dialog-button primary"
+                            Content="Export"
+                            Click="Export_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

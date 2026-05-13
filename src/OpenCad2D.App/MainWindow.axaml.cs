@@ -15,6 +15,7 @@ using OpenCad2D.App.ViewModels.LineFormats;
 using OpenCad2D.App.ViewModels.TextFormats;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.Export.Dxf.Import;
+using OpenCad2D.Export.Pdf;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -326,6 +327,13 @@ public partial class MainWindow : Window
     {
         try
         {
+            PdfExportOptions? options = await ShowPdfExportSettingsAsync();
+
+            if (options is null)
+            {
+                return;
+            }
+
             IStorageFile? file = await StorageProvider.SaveFilePickerAsync(
                 new FilePickerSaveOptions
                 {
@@ -352,7 +360,9 @@ public partial class MainWindow : Window
                 return;
             }
 
-            _viewModel.ExportPdfToFile(filePath);
+            _viewModel.ExportPdfToFile(
+                filePath,
+                options);
 
             RefreshStatus();
             CadCanvas.Focus();
@@ -377,6 +387,15 @@ public partial class MainWindow : Window
     }
 
 
+
+
+
+    private async Task<PdfExportOptions?> ShowPdfExportSettingsAsync()
+    {
+        var dialog = new PdfExportSettingsWindow(PdfExportOptions.Default);
+
+        return await dialog.ShowDialog<PdfExportOptions?>(this);
+    }
 
     private async Task ShowDxfImportReportAsync(DxfImportResult result)
     {
