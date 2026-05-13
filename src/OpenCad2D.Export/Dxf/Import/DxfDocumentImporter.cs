@@ -136,6 +136,16 @@ public sealed class DxfDocumentImporter : IDxfImporter
                 continue;
             }
 
+            if (entityRecord.Type == "TEXT")
+            {
+                ImportText(
+                    entityRecord,
+                    document,
+                    log);
+
+                continue;
+            }
+
             log.Add(new DxfImportLogEntry(
                 DxfImportLogSeverity.Warning,
                 $"Skipped unsupported DXF entity: {entityRecord.Type}.",
@@ -533,6 +543,68 @@ public sealed class DxfDocumentImporter : IDxfImporter
         return (flags & 1) == 1;
     }
 
+    private static void ImportText(
+        DxfEntityRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        if (!TryReadPoint(
+                record,
+                xCode: 10,
+                yCode: 20,
+                pointName: "insertion point",
+                log,
+                out Point2D insertionPoint) ||
+            !TryReadRequiredString(
+                record,
+                code: 1,
+                fieldName: "TEXT value",
+                log,
+                out string text))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped TEXT entity because its text value is empty.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        double rotationDegrees = 0.0;
+
+        if (!TryReadOptionalDouble(
+                record,
+                code: 50,
+                fieldName: "TEXT rotation",
+                log,
+                out double? parsedRotationDegrees))
+        {
+            return;
+        }
+
+        if (parsedRotationDegrees.HasValue)
+        {
+            rotationDegrees = parsedRotationDegrees.Value;
+        }
+
+        LayerId layerId = EnsureLayer(
+            document,
+            GetLayerName(record));
+
+        document.AddEntity(new TextEntity(
+            insertionPoint,
+            text,
+            rotationDegrees,
+            TextFormatId.Standard,
+            layerId: layerId));
+    }
+
+
     private static bool TryReadPoint(
         DxfEntityRecord record,
         int xCode,
@@ -590,6 +662,60 @@ public sealed class DxfDocumentImporter : IDxfImporter
             log,
             out value);
     }
+
+    private static bool TryReadOptionalDouble(
+        DxfEntityRecord record,
+        int code,
+        string fieldName,
+        List<DxfImportLogEntry> log,
+        out double? value)
+    {
+        value = null;
+        DxfCodePair? pair = record.LastOrDefault(code);
+
+        if (pair is null)
+        {
+            return true;
+        }
+
+        if (!TryParseDouble(
+                pair.Value,
+                record,
+                fieldName,
+                log,
+                out double parsedValue))
+        {
+            return false;
+        }
+
+        value = parsedValue;
+        return true;
+    }
+
+    private static bool TryReadRequiredString(
+        DxfEntityRecord record,
+        int code,
+        string fieldName,
+        List<DxfImportLogEntry> log,
+        out string value)
+    {
+        value = string.Empty;
+        DxfCodePair? pair = record.LastOrDefault(code);
+
+        if (pair is null)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                $"Skipped {record.Type} entity because required field '{fieldName}' with group code {code} is missing.",
+                record.StartLineNumber));
+
+            return false;
+        }
+
+        value = pair.Value.Value;
+        return true;
+    }
+
 
     private static bool TryParseDouble(
         DxfCodePair pair,
