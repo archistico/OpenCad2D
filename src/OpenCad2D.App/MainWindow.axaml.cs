@@ -45,6 +45,12 @@ public partial class MainWindow : Window
         MimeTypes = new[] { "application/dxf", "application/x-dxf" }
     };
 
+    private static readonly FilePickerFileType PdfFileType = new("PDF document")
+    {
+        Patterns = new[] { "*.pdf" },
+        MimeTypes = new[] { "application/pdf" }
+    };
+
     private readonly MainWindowViewModel _viewModel;
     private bool _closeConfirmed;
 
@@ -310,6 +316,51 @@ public partial class MainWindow : Window
         {
             await ShowMessageAsync(
                 "Export DXF failed",
+                exception.Message);
+        }
+    }
+
+    private async void ExportPdf_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            IStorageFile? file = await StorageProvider.SaveFilePickerAsync(
+                new FilePickerSaveOptions
+                {
+                    Title = "Export PDF",
+                    SuggestedFileName = _viewModel.CurrentFileName == "Untitled"
+                        ? "drawing.pdf"
+                        : System.IO.Path.ChangeExtension(_viewModel.CurrentFileName, ".pdf"),
+                    DefaultExtension = "pdf",
+                    FileTypeChoices = new[] { PdfFileType }
+                });
+
+            if (file is null)
+            {
+                return;
+            }
+
+            string? filePath = file.TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Export PDF",
+                    "Only local files are supported in this version.");
+                return;
+            }
+
+            _viewModel.ExportPdfToFile(filePath);
+
+            RefreshStatus();
+            CadCanvas.Focus();
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Export PDF failed",
                 exception.Message);
         }
     }

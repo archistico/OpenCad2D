@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -18,6 +18,7 @@ using OpenCad2D.Persistence;
 using OpenCad2D.Export.Svg;
 using OpenCad2D.Export.Dxf;
 using OpenCad2D.Export.Dxf.Import;
+using OpenCad2D.Export.Pdf;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -41,6 +42,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly ISvgExporter _svgExporter = new SvgExporter();
     private readonly IDxfExporter _dxfExporter = new DxfExporter();
     private readonly IDxfImporter _dxfImporter = new DxfDocumentImporter();
+    private readonly IPdfExporter _pdfExporter = new PdfExporter();
     private string? _currentFilePath;
     private PropertyPanelViewModel _propertyPanel = new("Properties", Array.Empty<PropertySectionViewModel>());
     private bool _isPropertyPanelVisible = true;
@@ -471,6 +473,34 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             DxfExportOptions.Default);
 
         SetMessage($"Exported DXF '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities).");
+        OnPropertiesChanged(
+            nameof(LastMessage),
+            nameof(StatusText));
+
+        return result;
+    }
+
+    public PdfExportResult ExportPdfToFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "PDF export file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        PdfExportOptions options = PdfExportOptions.Default;
+
+        PdfExportResult result = _pdfExporter.Export(
+            Workspace.Document,
+            options);
+
+        _pdfExporter.ExportToFile(
+            Workspace.Document,
+            filePath,
+            options);
+
+        SetMessage($"Exported PDF '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities).");
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));

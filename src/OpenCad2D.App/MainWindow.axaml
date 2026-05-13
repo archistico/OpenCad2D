@@ -178,6 +178,11 @@
                             Content="Export DXF"
                             Click="ExportDxf_Click" />
 
+                    <Button Classes="global-button"
+                            Content="Export PDF"
+                            ToolTip.Tip="Export a print-friendly PDF drawing"
+                            Click="ExportPdf_Click" />
+
                     <Separator Margin="5,0" />
 
                     <TextBlock Text="{Binding FileStatusText}"

@@ -812,3 +812,22 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - Keep CAD logic out of Avalonia.
 - Update docs after each milestone.
 - A phase is not complete until it compiles, tests pass and documentation is updated.
+
+
+## v0.7 progress update
+
+Completed in the current v0.7 development cycle:
+
+- DXF import for base entities;
+- DXF layer table import;
+- DXF import diagnostics;
+- DXF import UI;
+- DXF round-trip validation;
+- PDF export core;
+- PDF export UI basic command.
+
+Next planned work:
+
+- PDF export settings dialog;
+- SVG export options for layer grouping and transparent background;
+- final v0.7 documentation and release notes.
