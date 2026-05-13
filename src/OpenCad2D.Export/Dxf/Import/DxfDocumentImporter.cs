@@ -96,6 +96,26 @@ public sealed class DxfDocumentImporter : IDxfImporter
                 continue;
             }
 
+            if (entityRecord.Type == "CIRCLE")
+            {
+                ImportCircle(
+                    entityRecord,
+                    document,
+                    log);
+
+                continue;
+            }
+
+            if (entityRecord.Type == "POINT")
+            {
+                ImportPoint(
+                    entityRecord,
+                    document,
+                    log);
+
+                continue;
+            }
+
             log.Add(new DxfImportLogEntry(
                 DxfImportLogSeverity.Warning,
                 $"Skipped unsupported DXF entity: {entityRecord.Type}.",
@@ -182,6 +202,73 @@ public sealed class DxfDocumentImporter : IDxfImporter
             layerId: layerId));
     }
 
+    private static void ImportCircle(
+        DxfEntityRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        if (!TryReadPoint(
+                record,
+                xCode: 10,
+                yCode: 20,
+                pointName: "center point",
+                log,
+                out Point2D center) ||
+            !TryReadDouble(
+                record,
+                code: 40,
+                fieldName: "CIRCLE radius",
+                log,
+                out double radius))
+        {
+            return;
+        }
+
+        if (radius <= 0)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped CIRCLE entity because its radius is less than or equal to zero.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        LayerId layerId = EnsureLayer(
+            document,
+            GetLayerName(record));
+
+        document.AddEntity(new CircleEntity(
+            center,
+            radius,
+            layerId: layerId));
+    }
+
+    private static void ImportPoint(
+        DxfEntityRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        if (!TryReadPoint(
+                record,
+                xCode: 10,
+                yCode: 20,
+                pointName: "position",
+                log,
+                out Point2D position))
+        {
+            return;
+        }
+
+        LayerId layerId = EnsureLayer(
+            document,
+            GetLayerName(record));
+
+        document.AddEntity(new PointEntity(
+            position,
+            layerId: layerId));
+    }
+
     private static bool TryReadPoint(
         DxfEntityRecord record,
         int xCode,
@@ -195,13 +282,13 @@ public sealed class DxfDocumentImporter : IDxfImporter
         if (!TryReadDouble(
                 record,
                 xCode,
-                $"LINE {pointName} X coordinate",
+                $"{record.Type} {pointName} X coordinate",
                 log,
                 out double x) ||
             !TryReadDouble(
                 record,
                 yCode,
-                $"LINE {pointName} Y coordinate",
+                $"{record.Type} {pointName} Y coordinate",
                 log,
                 out double y))
         {

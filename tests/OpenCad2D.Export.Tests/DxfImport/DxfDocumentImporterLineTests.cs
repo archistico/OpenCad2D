@@ -218,7 +218,7 @@ public sealed class DxfDocumentImporterLineTests
             2
             ENTITIES
             0
-            CIRCLE
+            ARC
             8
             0
             10
@@ -227,6 +227,10 @@ public sealed class DxfDocumentImporterLineTests
             0
             40
             5
+            50
+            0
+            51
+            90
             0
             ENDSEC
             0
@@ -239,7 +243,7 @@ public sealed class DxfDocumentImporterLineTests
         Assert.Empty(result.Document.Entities.All);
         Assert.True(result.HasWarnings);
         DxfImportLogEntry warning = Assert.Single(result.Log);
-        Assert.Contains("Skipped unsupported DXF entity: CIRCLE", warning.Message);
+        Assert.Contains("Skipped unsupported DXF entity: ARC", warning.Message);
     }
 
     [Fact]
