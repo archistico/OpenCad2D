@@ -2,6 +2,8 @@
 
 This document covers four configuration areas: keyboard shortcuts, window and session persistence, grid improvements and drawing configuration.
 
+Persistent application/session settings are a pre-v1.0 requirement. Runtime-only settings are acceptable during prototype milestones, but v1.0 should remember the most important user preferences between sessions.
+
 ---
 
 ## Keyboard Shortcuts

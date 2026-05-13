@@ -417,7 +417,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             filePath,
             options);
 
-        SetMessage($"Exported SVG '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities).");
+        SetMessage($"Exported SVG '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities). Use Save to save the native drawing.");
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));
@@ -485,7 +485,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             filePath,
             DxfExportOptions.Default);
 
-        SetMessage($"Exported DXF '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities).");
+        SetMessage($"Exported DXF '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities). Use Save to save the native drawing.");
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));
@@ -526,7 +526,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             $"Exported PDF '{Path.GetFileName(filePath)}' " +
             $"({result.ExportedEntityCount} entities, " +
             $"{options.PageSize} {options.Orientation}, " +
-            $"margin {options.MarginMillimeters:0.##} mm).");
+            $"margin {options.MarginMillimeters:0.##} mm). Use Save to save the native drawing.");
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));

@@ -14,6 +14,16 @@ Legend:
 
 ---
 
+## Pre-v1.0 focus
+
+Before the first stable release, OpenCad2D should prioritize user trust and predictable workflows over new advanced geometry features:
+
+- [ ] persist application/session settings;
+- [ ] implement draw order / Z-order independent from layers;
+- [ ] validate DXF import/export in external CAD viewers;
+- [ ] add end-to-end workflow tests for save/reopen and import/modify/export;
+- [ ] keep current limitations visible in the README and user documentation.
+
 ## Current implemented foundations
 
 OpenCad2D currently includes:
@@ -27,7 +37,7 @@ OpenCad2D currently includes:
 - [x] Line Format Manager;
 - [x] Text Format Manager;
 - [x] DimensionStyle and basic dimension entities/tools;
-- [x] Property Panel v1;
+- [x] editable Property Panel v2 for supported primary entity properties;
 - [x] hidden layer behavior;
 - [x] locked layer behavior;
 - [x] spatial index abstraction;
@@ -52,7 +62,7 @@ OpenCad2D currently includes:
 - [x] grip editing;
 - [x] custom Avalonia canvas;
 - [x] CAD-style crosshair;
-- [x] command line input;
+- [x] real command line with aliases, command history, absolute/relative coordinates, direct distance and distance-angle input;
 - [x] Ortho mode;
 - [x] Polar Tracking with Off/90°/45°/30°/15°.
 
@@ -148,14 +158,17 @@ OpenCad2D currently includes:
 - [x] preview and direct distance input using the constrained direction;
 - [x] snap first, then angular constraint.
 
-### Property Panel v1
+### Property Panel v1/v2
 
-- [x] right-side read-only panel;
+- [x] right-side panel;
 - [x] no-selection state;
 - [x] single entity details;
 - [x] multiple selection summary;
 - [x] Point details;
-- [x] Text details.
+- [x] Text details;
+- [x] editable Property Panel v2 for supported entity properties;
+- [x] undoable Property Panel edits through document commands;
+- [ ] numeric polyline vertex table editing.
 
 ### Layer Manager
 
@@ -267,6 +280,7 @@ OpenCad2D currently includes:
 - [ ] validate DXF export in LibreCAD;
 - [ ] validate DXF export in QCAD;
 - [ ] validate DXF export in Autodesk DWG TrueView;
+- [ ] document tested external viewer versions and results.
 - [x] create automated compatibility checks for colors;
 - [x] create automated compatibility checks for linetypes;
 - [x] create automated compatibility checks for lineweights;
@@ -299,7 +313,7 @@ OpenCad2D currently includes:
 - [x] save/load works for points, text and text formats;
 - [x] SVG/DXF export includes points and text;
 - [x] tests pass after point and text implementation;
-- [ ] DXF compatibility validated externally.
+- [ ] DXF compatibility validated externally with documented viewer versions.
 
 ---
 
@@ -721,14 +735,14 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - [x] application icon;
 - [ ] favicon;
 - [ ] final XAML theme;
-- [ ] draw order / Z-order independent from layers.
+- [ ] draw order / Z-order independent from layers before v1.0.
 
 ### Stability & Test
 
 - [ ] snap icons: active / detected / disabled states;
 - [ ] dark theme regression tests;
 - [ ] settings persistence tests;
-- [ ] draw order tests.
+- [ ] draw order / Z-order tests.
 
 ---
 
@@ -771,13 +785,18 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 
 ### Criteria
 
-- [ ] text and basic dimensions operational;
-- [x] DXF import and export verified;
+- [x] text and basic dimensions operational;
 - [x] PDF export working;
-- [ ] editable Property Panel for all primary entities;
-- [ ] real command line with aliases and coordinates;
+- [x] real command line with aliases, command history and coordinate input;
+- [~] editable Property Panel for supported primary entity properties;
+- [~] DXF import/export covered by automated structural and round-trip tests;
+- [ ] DXF import/export externally validated in LibreCAD, QCAD and Autodesk DWG TrueView;
+- [ ] application/session settings persistence;
+- [ ] draw order / Z-order independent from layers;
+- [ ] end-to-end workflow: draw -> save -> reopen;
+- [ ] end-to-end workflow: import DXF -> modify -> export;
 - [ ] stable undo/redo on all primary tools;
-- [ ] reliable `.opencad2d.json` persistence;
+- [ ] reliable `.opencad2d.json` persistence under end-to-end workflow tests;
 - [ ] no known crash in common operations;
 - [ ] complete user documentation;
 - [ ] updated developer documentation;
@@ -795,7 +814,7 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - [ ] background/reference raster images;
 - [ ] SVG import;
 - [ ] associative dimensions;
-- [ ] layer appearance v2: fill and advanced draw order;
+- [ ] layer appearance v2: fill and advanced appearance rules;
 - [ ] advanced style system for line/text/dimension/fill/entity;
 - [ ] technical I/T profiles;
 - [ ] Blender export;

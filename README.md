@@ -14,7 +14,7 @@ The long-term goal is not only to create a usable CAD application, but also to k
 
 OpenCad2D is currently an early prototype. It is **not** intended to replace mature CAD software yet.
 
-The current focus is to build strong foundations: geometry, entities, layers, commands, undo/redo, snapping, selection, tools, coordinate systems, spatial queries, CAD-style numeric input, persistence and a first cross-platform UI.
+The current focus is to build strong foundations: geometry, entities, layers, commands, undo/redo, snapping, selection, tools, coordinate systems, spatial queries, CAD-style numeric input, persistence, interoperability and a first cross-platform UI.
 
 The application already supports a functional CAD workflow:
 
@@ -207,7 +207,7 @@ Current SVG export behavior:
 - can group output by layer using SVG `<g>` elements with `data-layer-name` attributes;
 - writes standard `.svg` files that can be opened in a browser or vector editor.
 
-Exporting SVG is not the same as saving the drawing:
+Exporting SVG is not the same as saving the drawing. Export commands create external files, but they do not save the editable native OpenCad2D project. Use **Save** or **Save As** to save the `.opencad2d.json` drawing.
 
 ```text
 Export SVG does not change CurrentFilePath.
@@ -285,9 +285,9 @@ Current DXF export behavior:
 - exports visible locked-layer entities;
 - keeps a viewer-friendly Y orientation for normal DXF export.
 
-DXF export/import round-trip tests cover the supported base entity subset using a deterministic model-coordinate option.
+DXF export/import round-trip tests cover the supported base entity subset using a deterministic model-coordinate option. External compatibility validation in LibreCAD, QCAD and Autodesk DWG TrueView is still part of the pre-1.0 work.
 
-Exporting DXF does not change the current `.opencad2d.json` file path and does not clear dirty state.
+Exporting DXF is not the same as saving the drawing. It creates an external interchange file, but it does not change the current `.opencad2d.json` file path and does not clear dirty state.
 
 See also:
 
@@ -316,7 +316,7 @@ Current PDF export behavior:
 
 The `Export PDF` command opens a settings window before the save-file picker.
 
-PDF export does not save the drawing and does not clear dirty state.
+PDF export creates an external print/share file. It does not save the native OpenCad2D drawing and does not clear dirty state.
 
 See also:
 
@@ -399,7 +399,7 @@ Implemented editing tools:
 - `ScaleTool`;
 - `AlignTool`.
 
-`RotateTool` uses base point, reference point and destination point. With Ortho enabled, interactive rotation is constrained to 90-degree directions. Polar Tracking is currently applied to point-placement tools such as line, polyline and move, not to explicit rotate-angle computation.
+`RotateTool` uses base point, reference point and destination point. With Ortho enabled, interactive rotation is constrained to 90-degree directions. Polar Tracking is currently applied to point-placement workflows such as line, polyline and move; explicit rotate-angle computation is separate and does not yet use the Polar Tracking angle step.
 
 `ScaleTool` uses base point, reference point and destination point. The scale factor is calculated as:
 
@@ -531,9 +531,9 @@ Default text formats are `Standard`, `Title`, `Annotation` and `Small`.
 
 ---
 
-## Property Panel v1
+## Property Panel v2
 
-The Property Panel is a right-side optional panel. It is read-only in v1.
+The Property Panel is a right-side optional editable panel. It shows document/selection information and allows undoable edits for the supported properties of primary entities.
 
 It shows:
 
@@ -543,9 +543,10 @@ It shows:
 - point properties: position and bounds;
 - text properties: text content, insertion point, rotation, text format and bounds;
 - polyline properties: vertices, closed/open state, length, area when closed and bounds;
+- dimension style and dimension text override where supported;
 - multiple-selection summary: count, entity types, layers and combined bounding box.
 
-The panel does not modify the document, does not create commands and does not affect undo/redo.
+Editable changes are committed through undoable commands, so undo/redo, dirty-state tracking and spatial-index consistency remain intact. Detailed polyline vertex coordinate editing is not yet available in the panel; polyline vertices are currently edited through grip editing.
 
 ---
 
@@ -661,6 +662,21 @@ The main architectural rule is that CAD behavior should remain outside the UI.
 
 ---
 
+## Current limitations
+
+OpenCad2D is still an experimental CAD prototype. The most important current limitations are:
+
+- dimensions are non-associative: they do not automatically update when measured geometry is moved, edited or deleted;
+- export commands create SVG, DXF or PDF files, but they do not save the native `.opencad2d.json` project and do not clear the dirty marker;
+- DXF import/export supports a focused 2D subset and still needs systematic external validation in LibreCAD, QCAD and Autodesk DWG TrueView before v1.0;
+- Polar Tracking is applied to point-placement workflows, not yet to explicit `RotateTool` angle computation;
+- two-cutting-edge Trim is currently supported for line targets; broader multi-boundary Trim behavior is planned for future geometry refinement;
+- detailed numeric editing of individual polyline vertices is currently done through grip editing, not through a Property Panel vertex table;
+- application/session settings are not yet fully persisted between sessions;
+- draw order / Z-order independent from layers is planned before v1.0.
+
+See also [Known limitations](docs/known-limitations.md).
+
 ## Documentation
 
 Technical documentation lives in the [`docs`](docs/) folder.
@@ -680,6 +696,7 @@ Recommended reading:
 - [Line Formats](docs/line-formats.md)
 - [Text Formats](docs/text-formats.md)
 - [Text and Dimensions](docs/text-and-dimensions.md)
+- [Known Limitations](docs/known-limitations.md)
 - [AI Handoff Document](docs/ai-handoff.md)
 
 ---
@@ -746,24 +763,26 @@ Recently completed:
 1. persistence and stable file command bar;
 2. grid configuration with `Grid...` dialog and rectangular/isometric layouts;
 3. viewport culling;
-4. property panel v1;
-5. layer manager v1;
-6. rotate, scale and align tools;
-7. polyline tool v1;
-8. arc tools, rectangle by sides and broader Trim/Extend geometry support;
-9. SVG export;
-10. entity snap for selection-oriented tools and Ctrl-click cycling for overlapping entities;
-11. selected-entity assignment to the current layer.
+4. editable Property Panel v2 for supported primary properties;
+5. layer manager, line formats and text formats;
+6. real command line with aliases, command history, coordinates, direct distance and distance-angle input;
+7. rotate, scale and align tools;
+8. polyline tool and grip editing;
+9. arc tools, rectangle by sides and broader Break/Trim/Extend geometry support;
+10. text and non-associative dimension tools;
+11. measure tools;
+12. SVG, DXF and PDF export;
+13. DXF import for a focused 2D subset;
+14. application icon and initial branding assets.
 
-Next planned areas:
+Next planned areas before v1.0:
 
-1. update grip editing for polyline vertices;
-2. refine Trim/Extend previews and edge cases for arcs/circles/polylines;
-3. distance and area measure tools;
-4. text and dimensions;
-5. application/session settings;
-6. richer layer appearance: fill color and draw order;
-7. DXF/PDF import/export experiments and richer SVG options.
+1. application/session settings persistence;
+2. draw order / Z-order independent from layers;
+3. external DXF validation in LibreCAD, QCAD and Autodesk DWG TrueView;
+4. end-to-end workflow tests: draw -> save -> reopen and import DXF -> modify -> export;
+5. clearer UX feedback for partially supported operations;
+6. first-use, import/export and shortcuts documentation.
 
 ---
 

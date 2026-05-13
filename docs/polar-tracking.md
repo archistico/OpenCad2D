@@ -132,3 +132,8 @@ The `90°` Polar option is similar to Ortho, but it goes through the generalized
 Polar Tracking is a point-placement aid. It should not be confused with explicit typed angles used by transformation tools such as Rotate.
 
 For tools where the second point does not represent a free direction, apply the constraint carefully. Rectangle creation, radius resize grips and explicit typed transform values may need separate rules.
+
+
+## RotateTool limitation
+
+Polar Tracking is currently a point-placement aid. `RotateTool` computes the rotation angle from base/reference/destination points and can use Ortho for 90-degree constraint, but it does not yet apply the selected Polar Tracking angle step to explicit rotate-angle computation.

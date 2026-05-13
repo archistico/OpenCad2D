@@ -227,7 +227,7 @@ Current DXF tests cover:
 
 Recommended next DXF improvements:
 
-1. test output in LibreCAD, QCAD, AutoCAD/DWG TrueView and one online viewer;
+1. test output in LibreCAD, QCAD, Autodesk DWG TrueView and one online viewer, then document tested versions and results;
 2. add an export options dialog;
 3. optionally export selected entities only;
 4. add an export options dialog for DXF when needed;

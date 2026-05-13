@@ -105,6 +105,10 @@ It edits name, font family, height, color, bold and italic. Updates are applied 
 
 The v0.4 dimension system is implemented as **non-associative** dimensions.
 
+### User-facing limitation
+
+Dimensions do not automatically update when the measured geometry is moved, edited or deleted. This should remain visible in user documentation until associative dimensions are implemented.
+
 This means a dimension stores the points needed to draw and measure itself. It does not keep a live reference to the entity that was measured.
 
 Example:

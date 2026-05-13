@@ -79,7 +79,7 @@ The project currently supports:
 - CAD top bar;
 - two-column left tool panel;
 - canvas with crosshair;
-- optional right Property Panel v1;
+- optional right editable Property Panel v2;
 - bottom snap/Ortho bar plus top-bar Polar Tracking selector;
 - fixed command line input;
 - status bar;
@@ -951,7 +951,7 @@ Likely v0.8 starting points:
 2. remember last file and default export options;
 3. improve color-picker workflows;
 4. polish final visual theme;
-5. design draw order / Z-order independent from layers.
+5. design and implement draw order / Z-order independent from layers before v1.0.
 
 ## Branding and application icon
 
