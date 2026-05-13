@@ -126,6 +126,16 @@ public sealed class DxfDocumentImporter : IDxfImporter
                 continue;
             }
 
+            if (entityRecord.Type == "LWPOLYLINE")
+            {
+                ImportLightweightPolyline(
+                    entityRecord,
+                    document,
+                    log);
+
+                continue;
+            }
+
             log.Add(new DxfImportLogEntry(
                 DxfImportLogSeverity.Warning,
                 $"Skipped unsupported DXF entity: {entityRecord.Type}.",
@@ -349,6 +359,180 @@ public sealed class DxfDocumentImporter : IDxfImporter
             layerId: layerId));
     }
 
+    private static void ImportLightweightPolyline(
+        DxfEntityRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        int initialLogCount = log.Count;
+
+        List<DxfPolylineVertex> vertices = ReadLightweightPolylineVertices(
+            record,
+            log);
+
+        if (vertices.Count < 2)
+        {
+            if (log.Count == initialLogCount)
+            {
+                log.Add(new DxfImportLogEntry(
+                    DxfImportLogSeverity.Warning,
+                    "Skipped LWPOLYLINE entity because it contains fewer than two valid vertices.",
+                    record.StartLineNumber));
+            }
+
+            return;
+        }
+
+        bool hasBulge = vertices.Any(vertex =>
+            !Tolerance.AreEqual(vertex.Bulge, 0));
+
+        if (hasBulge)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "LWPOLYLINE bulge values are not supported yet; curved segments were imported as straight segments.",
+                record.StartLineNumber));
+        }
+
+        bool isClosed = IsLightweightPolylineClosed(record);
+        LayerId layerId = EnsureLayer(
+            document,
+            GetLayerName(record));
+
+        document.AddEntity(new PolylineEntity(
+            vertices.Select(vertex => vertex.Point),
+            isClosed,
+            layerId: layerId));
+    }
+
+    private static List<DxfPolylineVertex> ReadLightweightPolylineVertices(
+        DxfEntityRecord record,
+        List<DxfImportLogEntry> log)
+    {
+        var vertices = new List<DxfPolylineVertex>();
+        double? currentX = null;
+        int currentXLineNumber = record.StartLineNumber;
+
+        foreach (DxfCodePair pair in record.Pairs)
+        {
+            if (pair.Code == 10)
+            {
+                if (currentX.HasValue)
+                {
+                    log.Add(new DxfImportLogEntry(
+                        DxfImportLogSeverity.Warning,
+                        "Skipped LWPOLYLINE entity because a vertex X coordinate is missing its matching Y coordinate.",
+                        currentXLineNumber));
+
+                    return new List<DxfPolylineVertex>();
+                }
+
+                if (!TryParseDouble(
+                        pair,
+                        record,
+                        "LWPOLYLINE vertex X coordinate",
+                        log,
+                        out double x))
+                {
+                    return new List<DxfPolylineVertex>();
+                }
+
+                currentX = x;
+                currentXLineNumber = pair.CodeLineNumber;
+                continue;
+            }
+
+            if (pair.Code == 20)
+            {
+                if (!currentX.HasValue)
+                {
+                    log.Add(new DxfImportLogEntry(
+                        DxfImportLogSeverity.Warning,
+                        "Skipped LWPOLYLINE entity because a vertex Y coordinate appears before its X coordinate.",
+                        pair.CodeLineNumber));
+
+                    return new List<DxfPolylineVertex>();
+                }
+
+                if (!TryParseDouble(
+                        pair,
+                        record,
+                        "LWPOLYLINE vertex Y coordinate",
+                        log,
+                        out double y))
+                {
+                    return new List<DxfPolylineVertex>();
+                }
+
+                vertices.Add(new DxfPolylineVertex(
+                    new Point2D(currentX.Value, y),
+                    0));
+
+                currentX = null;
+                continue;
+            }
+
+            if (pair.Code == 42)
+            {
+                if (vertices.Count == 0)
+                {
+                    log.Add(new DxfImportLogEntry(
+                        DxfImportLogSeverity.Warning,
+                        "Skipped LWPOLYLINE entity because a bulge value appears before the first vertex.",
+                        pair.CodeLineNumber));
+
+                    return new List<DxfPolylineVertex>();
+                }
+
+                if (!TryParseDouble(
+                        pair,
+                        record,
+                        "LWPOLYLINE bulge",
+                        log,
+                        out double bulge))
+                {
+                    return new List<DxfPolylineVertex>();
+                }
+
+                DxfPolylineVertex lastVertex = vertices[^1];
+                vertices[^1] = lastVertex with { Bulge = bulge };
+            }
+        }
+
+        if (currentX.HasValue)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped LWPOLYLINE entity because a vertex X coordinate is missing its matching Y coordinate.",
+                currentXLineNumber));
+
+            return new List<DxfPolylineVertex>();
+        }
+
+        return vertices;
+    }
+
+    private static bool IsLightweightPolylineClosed(DxfEntityRecord record)
+    {
+        DxfCodePair? flagsPair = record.LastOrDefault(70);
+
+        if (flagsPair is null)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(
+                flagsPair.Value.Value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int flags))
+        {
+            return false;
+        }
+
+        return (flags & 1) == 1;
+    }
+
     private static bool TryReadPoint(
         DxfEntityRecord record,
         int xCode,
@@ -399,16 +583,31 @@ public sealed class DxfDocumentImporter : IDxfImporter
             return false;
         }
 
+        return TryParseDouble(
+            pair.Value,
+            record,
+            fieldName,
+            log,
+            out value);
+    }
+
+    private static bool TryParseDouble(
+        DxfCodePair pair,
+        DxfEntityRecord record,
+        string fieldName,
+        List<DxfImportLogEntry> log,
+        out double value)
+    {
         if (!double.TryParse(
-                pair.Value.Value,
+                pair.Value,
                 NumberStyles.Float,
                 CultureInfo.InvariantCulture,
                 out value))
         {
             log.Add(new DxfImportLogEntry(
                 DxfImportLogSeverity.Warning,
-                $"Skipped {record.Type} entity because field '{fieldName}' with group code {code} is not a valid number: '{pair.Value.Value}'.",
-                pair.Value.ValueLineNumber));
+                $"Skipped {record.Type} entity because field '{fieldName}' with group code {pair.Code} is not a valid number: '{pair.Value}'.",
+                pair.ValueLineNumber));
 
             return false;
         }
@@ -472,6 +671,10 @@ public sealed class DxfDocumentImporter : IDxfImporter
 
         return layerId;
     }
+
+    private readonly record struct DxfPolylineVertex(
+        Point2D Point,
+        double Bulge);
 
     private sealed class DxfEntityRecord
     {
