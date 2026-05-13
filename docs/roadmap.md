@@ -677,7 +677,7 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - [x] Phase 3: DXF layers and formats;
 - [x] Phase 4: DXF import UI;
 - [x] Phase 5: DXF round-trip validation;
-- [ ] Phase 6: PDF export core;
+- [x] Phase 6: PDF export core;
 - [ ] Phase 7: PDF export UI;
 - [ ] Phase 8: SVG export options;
 - [ ] Phase 9: documentation and release notes.
@@ -691,10 +691,10 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 - [x] import DXF lineweights;
 - [x] import DXF text where supported;
 - [x] skip unsupported DXF entities with readable log;
-- [ ] export PDF;
-- [ ] PDF page format;
-- [ ] PDF scale;
-- [ ] PDF margins;
+- [x] export PDF;
+- [x] PDF page format;
+- [x] PDF fit-to-page scale;
+- [x] PDF margins;
 - [ ] SVG layer grouping;
 - [ ] optional transparent SVG background.
 
