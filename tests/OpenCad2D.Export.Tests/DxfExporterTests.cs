@@ -253,6 +253,53 @@ public sealed class DxfExporterTests
         Assert.Contains("70\n1", content);
     }
 
+
+    [Fact]
+    public void Export_WithModelCoordinateSystem_ShouldNotFlipYCoordinates()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 100)));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(
+            document,
+            new DxfExportOptions
+            {
+                UseCadViewerCoordinateSystem = false
+            });
+        string content = Normalize(result.Content);
+
+        Assert.Contains("10\n0\n20\n0", content);
+        Assert.Contains("11\n10\n21\n100", content);
+    }
+
+    [Fact]
+    public void Export_WithModelCoordinateSystem_ShouldNotInvertAngles()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(30),
+            Angle.FromDegrees(120),
+            isCounterClockwise: true));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(
+            document,
+            new DxfExportOptions
+            {
+                UseCadViewerCoordinateSystem = false
+            });
+        string content = Normalize(result.Content);
+
+        Assert.Contains("50\n30\n51\n120", content);
+    }
+
     [Fact]
     public void Export_ShouldIgnoreEntitiesOnHiddenLayersByDefault()
     {

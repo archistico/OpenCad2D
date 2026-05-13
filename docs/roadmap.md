@@ -673,10 +673,10 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 
 - [x] Phase 0 started: scope and architecture documented;
 - [x] Phase 1 started: DXF reader infrastructure added;
-- [ ] Phase 2: DXF base entity import;
-- [ ] Phase 3: DXF layers and formats;
-- [ ] Phase 4: DXF import UI;
-- [ ] Phase 5: DXF round-trip validation;
+- [x] Phase 2: DXF base entity import;
+- [x] Phase 3: DXF layers and formats;
+- [x] Phase 4: DXF import UI;
+- [x] Phase 5: DXF round-trip validation;
 - [ ] Phase 6: PDF export core;
 - [ ] Phase 7: PDF export UI;
 - [ ] Phase 8: SVG export options;
@@ -684,13 +684,13 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 
 ### Feature & UX
 
-- [ ] import DXF entities;
-- [ ] import DXF layers;
-- [ ] import DXF linetypes;
-- [ ] import DXF colors;
-- [ ] import DXF lineweights;
-- [ ] import DXF text where supported;
-- [ ] skip unsupported DXF entities with readable log;
+- [x] import DXF entities;
+- [x] import DXF layers;
+- [x] import DXF linetypes;
+- [x] import DXF colors;
+- [x] import DXF lineweights;
+- [x] import DXF text where supported;
+- [x] skip unsupported DXF entities with readable log;
 - [ ] export PDF;
 - [ ] PDF page format;
 - [ ] PDF scale;
@@ -700,10 +700,10 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 
 ### Stability & Test
 
-- [ ] DXF import error handling;
-- [ ] DXF export -> import round-trip tests;
+- [x] DXF import error handling;
+- [x] DXF export -> import round-trip tests;
 - [ ] PDF export tests;
-- [ ] unsupported DXF entity tests.
+- [x] unsupported DXF entity tests.
 
 ---
 

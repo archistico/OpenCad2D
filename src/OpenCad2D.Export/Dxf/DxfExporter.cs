@@ -43,15 +43,18 @@ public sealed class DxfExporter : IDxfExporter
         WriteTables(
             writer,
             document);
-        BoundingBox2D? contentBounds = GetContentBounds(
-            document,
-            entities);
+        BoundingBox2D? contentBounds = actualOptions.UseCadViewerCoordinateSystem
+            ? GetContentBounds(
+                document,
+                entities)
+            : null;
 
         WriteEntities(
             writer,
             document,
             entities,
-            contentBounds);
+            contentBounds,
+            actualOptions);
         writer.WriteEndOfFile();
 
         return new DxfExportResult(
@@ -229,7 +232,8 @@ public sealed class DxfExporter : IDxfExporter
         DxfDocumentWriter writer,
         CadDocument document,
         IEnumerable<CadEntity> entities,
-        BoundingBox2D? contentBounds)
+        BoundingBox2D? contentBounds,
+        DxfExportOptions options)
     {
         writer.BeginSection("ENTITIES");
 
@@ -253,7 +257,8 @@ public sealed class DxfExporter : IDxfExporter
                         document,
                         layer.Name,
                         text,
-                        contentBounds);
+                        contentBounds,
+                        options);
                     break;
 
                 case LinearDimensionEntity linearDimension:
@@ -262,7 +267,8 @@ public sealed class DxfExporter : IDxfExporter
                         document,
                         layer.Name,
                         linearDimension,
-                        contentBounds);
+                        contentBounds,
+                        options);
                     break;
 
                 case AlignedDimensionEntity alignedDimension:
@@ -271,7 +277,8 @@ public sealed class DxfExporter : IDxfExporter
                         document,
                         layer.Name,
                         alignedDimension,
-                        contentBounds);
+                        contentBounds,
+                        options);
                     break;
 
                 case RadiusDimensionEntity radiusDimension:
@@ -280,7 +287,8 @@ public sealed class DxfExporter : IDxfExporter
                         document,
                         layer.Name,
                         radiusDimension,
-                        contentBounds);
+                        contentBounds,
+                        options);
                     break;
 
                 case DiameterDimensionEntity diameterDimension:
@@ -289,7 +297,8 @@ public sealed class DxfExporter : IDxfExporter
                         document,
                         layer.Name,
                         diameterDimension,
-                        contentBounds);
+                        contentBounds,
+                        options);
                     break;
 
                 case AngularDimensionEntity angularDimension:
@@ -298,7 +307,8 @@ public sealed class DxfExporter : IDxfExporter
                         document,
                         layer.Name,
                         angularDimension,
-                        contentBounds);
+                        contentBounds,
+                        options);
                     break;
 
                 case LineEntity line:
@@ -322,7 +332,8 @@ public sealed class DxfExporter : IDxfExporter
                         writer,
                         layer.Name,
                         arc,
-                        contentBounds);
+                        contentBounds,
+                        options);
                     break;
 
                 case PolylineEntity polyline:
@@ -344,7 +355,8 @@ public sealed class DxfExporter : IDxfExporter
         CadDocument document,
         string layerName,
         DimensionEntity dimension,
-        BoundingBox2D? contentBounds)
+        BoundingBox2D? contentBounds,
+        DxfExportOptions options)
     {
         DimensionStyle style = ResolveDimensionStyle(
             document,
@@ -371,7 +383,8 @@ public sealed class DxfExporter : IDxfExporter
                 writer,
                 layerName,
                 arc,
-                contentBounds);
+                contentBounds,
+                options);
         }
 
         Point2D textPosition = ToDxfPoint(
@@ -387,7 +400,9 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(30, 0.0);
         writer.WriteGroup(40, textFormat.Height);
         writer.WriteGroup(1, model.Text.Text);
-        writer.WriteGroup(50, NormalizeDegrees(-model.Text.RotationDegrees));
+        writer.WriteGroup(50, ToDxfRotationDegrees(
+            model.Text.RotationDegrees,
+            options));
         writer.WriteGroup(7, textFormat.Name);
     }
 
@@ -396,7 +411,8 @@ public sealed class DxfExporter : IDxfExporter
         DxfDocumentWriter writer,
         string layerName,
         DimensionArcPrimitive arc,
-        BoundingBox2D? contentBounds)
+        BoundingBox2D? contentBounds,
+        DxfExportOptions options)
     {
         Point2D center = ToDxfPoint(
             arc.Center,
@@ -411,9 +427,15 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(30, 0.0);
         writer.WriteGroup(40, arc.Radius);
 
-        double startDegrees = NormalizeDegrees(-arc.StartAngleDegrees);
-        double endDegrees = NormalizeDegrees(-arc.EndAngleDegrees);
-        bool dxfArcIsCounterClockwise = !arc.IsCounterClockwise;
+        double startDegrees = ToDxfRotationDegrees(
+            arc.StartAngleDegrees,
+            options);
+        double endDegrees = ToDxfRotationDegrees(
+            arc.EndAngleDegrees,
+            options);
+        bool dxfArcIsCounterClockwise = ToDxfCounterClockwise(
+            arc.IsCounterClockwise,
+            options);
 
         if (!dxfArcIsCounterClockwise)
         {
@@ -454,7 +476,8 @@ public sealed class DxfExporter : IDxfExporter
         CadDocument document,
         string layerName,
         TextEntity text,
-        BoundingBox2D? contentBounds)
+        BoundingBox2D? contentBounds,
+        DxfExportOptions options)
     {
         Point2D position = ToDxfPoint(
             text.InsertionPoint,
@@ -473,7 +496,9 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(30, 0.0);
         writer.WriteGroup(40, textFormat.Height);
         writer.WriteGroup(1, text.Text);
-        writer.WriteGroup(50, NormalizeDegrees(-text.RotationDegrees));
+        writer.WriteGroup(50, ToDxfRotationDegrees(
+            text.RotationDegrees,
+            options));
         writer.WriteGroup(7, textFormat.Name);
     }
 
@@ -546,7 +571,8 @@ public sealed class DxfExporter : IDxfExporter
         DxfDocumentWriter writer,
         string layerName,
         ArcEntity arc,
-        BoundingBox2D? contentBounds)
+        BoundingBox2D? contentBounds,
+        DxfExportOptions options)
     {
         Point2D center = ToDxfPoint(
             arc.Center,
@@ -561,10 +587,16 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(30, 0.0);
         writer.WriteGroup(40, arc.Radius);
 
-        double startDegrees = ToDxfAngleDegrees(arc.StartAngle);
-        double endDegrees = ToDxfAngleDegrees(arc.EndAngle);
+        double startDegrees = ToDxfAngleDegrees(
+            arc.StartAngle,
+            options);
+        double endDegrees = ToDxfAngleDegrees(
+            arc.EndAngle,
+            options);
 
-        bool dxfArcIsCounterClockwise = !arc.IsCounterClockwise;
+        bool dxfArcIsCounterClockwise = ToDxfCounterClockwise(
+            arc.IsCounterClockwise,
+            options);
 
         if (!dxfArcIsCounterClockwise)
         {
@@ -673,9 +705,31 @@ public sealed class DxfExporter : IDxfExporter
             bounds.MinY + bounds.MaxY - point.Y);
     }
 
-    private static double ToDxfAngleDegrees(Angle angle)
+    private static double ToDxfAngleDegrees(
+        Angle angle,
+        DxfExportOptions options)
     {
-        return NormalizeDegrees(-angle.Degrees);
+        return ToDxfRotationDegrees(
+            angle.Degrees,
+            options);
+    }
+
+    private static double ToDxfRotationDegrees(
+        double degrees,
+        DxfExportOptions options)
+    {
+        return options.UseCadViewerCoordinateSystem
+            ? NormalizeDegrees(-degrees)
+            : NormalizeDegrees(degrees);
+    }
+
+    private static bool ToDxfCounterClockwise(
+        bool isCounterClockwise,
+        DxfExportOptions options)
+    {
+        return options.UseCadViewerCoordinateSystem
+            ? !isCounterClockwise
+            : isCounterClockwise;
     }
 
     private static void WriteEntityByLayerProperties(

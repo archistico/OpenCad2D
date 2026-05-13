@@ -18,5 +18,13 @@ public sealed class DxfExportOptions
     /// </summary>
     public bool IncludeHiddenLayers { get; init; } = false;
 
+    /// <summary>
+    /// Gets whether Y coordinates and angular values should be transformed for
+    /// conventional CAD viewers that use an upward-positive Y axis.
+    /// Keep this enabled for normal interoperability exports. Disable it only for
+    /// model-coordinate round-trip tests or internal diagnostics.
+    /// </summary>
+    public bool UseCadViewerCoordinateSystem { get; init; } = true;
+
     public static DxfExportOptions Default => new();
 }
