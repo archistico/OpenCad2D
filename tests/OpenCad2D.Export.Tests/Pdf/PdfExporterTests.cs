@@ -226,6 +226,39 @@ public sealed class PdfExporterTests
         }
     }
 
+
+    [Fact]
+    public void Export_ShouldMapLowerModelYToLowerPdfPagePosition()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(0, 100)));
+        var exporter = new PdfExporter();
+
+        PdfExportResult result = exporter.Export(document);
+        string content = ToAscii(result.Content);
+
+        Assert.Contains("293.712 813.543 m", content);
+        Assert.Contains("293.712 28.346 l", content);
+    }
+
+    [Fact]
+    public void Export_WhenTextIsRotated_ShouldInvertRotationForPdfPageCoordinates()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new TextEntity(
+            new Point2D(10, 20),
+            "Rotated",
+            rotationDegrees: 90));
+        var exporter = new PdfExporter();
+
+        PdfExportResult result = exporter.Export(document);
+        string content = ToAscii(result.Content);
+
+        Assert.Contains("0 -1 1 0", content);
+    }
+
     private static string ToAscii(byte[] bytes)
     {
         return Encoding.ASCII.GetString(bytes);

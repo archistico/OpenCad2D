@@ -409,7 +409,7 @@ public sealed class PdfExporter : IPdfExporter
             text.InsertionPoint,
             context);
         double fontSize = Math.Max(1.0, format.Height * context.Scale);
-        double radians = text.RotationDegrees * Math.PI / 180.0;
+        double radians = -text.RotationDegrees * Math.PI / 180.0;
         double cos = Math.Cos(radians);
         double sin = Math.Sin(radians);
 
@@ -441,7 +441,7 @@ public sealed class PdfExporter : IPdfExporter
 
         return new Point2D(
             offsetX + (point.X - context.ContentBounds.Value.MinX) * context.Scale,
-            offsetY + (point.Y - context.ContentBounds.Value.MinY) * context.Scale);
+            offsetY + (context.ContentBounds.Value.MaxY - point.Y) * context.Scale);
     }
 
     private static double GetPositiveSweepRadians(
