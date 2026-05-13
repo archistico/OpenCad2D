@@ -1,0 +1,227 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dxfImport="clr-namespace:OpenCad2D.App.ViewModels.DxfImport"
+        x:Class="OpenCad2D.App.DxfImportReportWindow"
+        x:DataType="dxfImport:DxfImportReportWindowViewModel"
+        Title="DXF Import Report"
+        Icon="/Assets/app-icon.ico"
+        Width="760"
+        Height="560"
+        MinWidth="620"
+        MinHeight="460"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.report-title">
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontSize" Value="22" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="TextBlock.report-description">
+            <Setter Property="Foreground" Value="#BDBDBD" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style Selector="TextBlock.metric-label">
+            <Setter Property="Foreground" Value="#AFAFAF" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
+        <Style Selector="TextBlock.metric-value">
+            <Setter Property="Foreground" Value="#F0F0F0" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="TextBlock.section-title">
+            <Setter Property="Foreground" Value="#DCDCAA" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="TextBlock.header-cell">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.cell-text">
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="BorderBrush" Value="#555555" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="12,5" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="86" />
+        </Style>
+    </Window.Styles>
+
+    <Border Margin="14"
+            Background="#232323"
+            BorderBrush="#3A3A3A"
+            BorderThickness="1"
+            CornerRadius="12">
+        <Grid RowDefinitions="Auto,*,Auto">
+            <Border Grid.Row="0"
+                    Background="#2D2D30"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="0,0,0,1"
+                    CornerRadius="12,12,0,0"
+                    Padding="18,15">
+                <StackPanel Spacing="5">
+                    <TextBlock Classes="report-title"
+                               Text="{Binding StatusTitle}" />
+                    <TextBlock Classes="report-description"
+                               Text="{Binding StatusDescription}" />
+                </StackPanel>
+            </Border>
+
+            <ScrollViewer Grid.Row="1"
+                          Padding="18,16">
+                <StackPanel Spacing="16">
+                    <Grid ColumnDefinitions="*,*,*,*,*"
+                          ColumnSpacing="8">
+                        <Border Grid.Column="0" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10">
+                            <StackPanel Spacing="3">
+                                <TextBlock Classes="metric-label" Text="Entities" />
+                                <TextBlock Classes="metric-value" Text="{Binding TotalImportedEntities}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="1" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10">
+                            <StackPanel Spacing="3">
+                                <TextBlock Classes="metric-label" Text="Layers" />
+                                <TextBlock Classes="metric-value" Text="{Binding ImportedLayerCount}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="2" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10">
+                            <StackPanel Spacing="3">
+                                <TextBlock Classes="metric-label" Text="Warnings" />
+                                <TextBlock Classes="metric-value" Text="{Binding WarningCount}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="3" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10">
+                            <StackPanel Spacing="3">
+                                <TextBlock Classes="metric-label" Text="Errors" />
+                                <TextBlock Classes="metric-value" Text="{Binding ErrorCount}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Column="4" Background="#1E1E1E" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10">
+                            <StackPanel Spacing="3">
+                                <TextBlock Classes="metric-label" Text="Skipped" />
+                                <TextBlock Classes="metric-value" Text="{Binding SkippedRecordCount}" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <StackPanel Spacing="7"
+                                IsVisible="{Binding HasEntityRows}">
+                        <TextBlock Classes="section-title"
+                                   Text="Imported entity counts" />
+
+                        <Border BorderBrush="#3A3A3A"
+                                BorderThickness="1"
+                                Background="#202020">
+                            <Grid RowDefinitions="Auto,*">
+                                <Border Grid.Row="0"
+                                        Background="#2D2D30"
+                                        Padding="8,5">
+                                    <Grid ColumnDefinitions="*,100">
+                                        <TextBlock Grid.Column="0" Classes="header-cell" Text="Entity" />
+                                        <TextBlock Grid.Column="1" Classes="header-cell" Text="Count" />
+                                    </Grid>
+                                </Border>
+
+                                <ListBox Grid.Row="1"
+                                         ItemsSource="{Binding EntityRows}"
+                                         MaxHeight="150"
+                                         Background="#202020"
+                                         BorderThickness="0">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="dxfImport:DxfImportEntityCountRowViewModel">
+                                            <Border Padding="8,4">
+                                                <Grid ColumnDefinitions="*,100">
+                                                    <TextBlock Grid.Column="0" Classes="cell-text" Text="{Binding EntityKind}" />
+                                                    <TextBlock Grid.Column="1" Classes="cell-text" Text="{Binding Count}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Spacing="7"
+                                IsVisible="{Binding HasDiagnosticRows}">
+                        <TextBlock Classes="section-title"
+                                   Text="Diagnostics" />
+
+                        <Border BorderBrush="#3A3A3A"
+                                BorderThickness="1"
+                                Background="#202020">
+                            <Grid RowDefinitions="Auto,*">
+                                <Border Grid.Row="0"
+                                        Background="#2D2D30"
+                                        Padding="8,5">
+                                    <Grid ColumnDefinitions="86,68,*"
+                                          ColumnSpacing="8">
+                                        <TextBlock Grid.Column="0" Classes="header-cell" Text="Severity" />
+                                        <TextBlock Grid.Column="1" Classes="header-cell" Text="Line" />
+                                        <TextBlock Grid.Column="2" Classes="header-cell" Text="Message" />
+                                    </Grid>
+                                </Border>
+
+                                <ListBox Grid.Row="1"
+                                         ItemsSource="{Binding DiagnosticRows}"
+                                         MinHeight="150"
+                                         Background="#202020"
+                                         BorderThickness="0">
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate x:DataType="dxfImport:DxfImportDiagnosticRowViewModel">
+                                            <Border Padding="8,5">
+                                                <Grid ColumnDefinitions="86,68,*"
+                                                      ColumnSpacing="8">
+                                                    <TextBlock Grid.Column="0" Classes="cell-text" Text="{Binding Severity}" />
+                                                    <TextBlock Grid.Column="1" Classes="cell-text" Text="{Binding Line}" />
+                                                    <TextBlock Grid.Column="2" Classes="cell-text" Text="{Binding Message}" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+
+            <Border Grid.Row="2"
+                    Background="#252526"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,12,12"
+                    Padding="12">
+                <Button Classes="dialog-button"
+                        Content="Close"
+                        HorizontalAlignment="Right"
+                        IsDefault="True"
+                        IsCancel="True"
+                        Click="Close_Click" />
+            </Border>
+        </Grid>
+    </Border>
+</Window>

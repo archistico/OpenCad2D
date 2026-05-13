@@ -184,9 +184,7 @@ public partial class MainWindow : Window
 
             if (result.HasErrors)
             {
-                await ShowMessageAsync(
-                    "DXF import failed",
-                    BuildDxfImportSummary(result));
+                await ShowDxfImportReportAsync(result);
                 return;
             }
 
@@ -201,9 +199,7 @@ public partial class MainWindow : Window
 
             if (result.HasWarnings)
             {
-                await ShowMessageAsync(
-                    "DXF imported with warnings",
-                    BuildDxfImportSummary(result));
+                await ShowDxfImportReportAsync(result);
             }
         }
         catch (Exception exception)
@@ -331,39 +327,11 @@ public partial class MainWindow : Window
 
 
 
-    private static string BuildDxfImportSummary(DxfImportResult result)
+    private async Task ShowDxfImportReportAsync(DxfImportResult result)
     {
-        ArgumentNullException.ThrowIfNull(result);
+        var dialog = new DxfImportReportWindow(result);
 
-        List<string> lines = new()
-        {
-            $"Imported entities: {result.Statistics.TotalImportedEntities}",
-            $"Layers: {result.Statistics.ImportedLayerCount}",
-            $"Warnings: {result.Statistics.WarningCount}",
-            $"Errors: {result.Statistics.ErrorCount}"
-        };
-
-        if (result.Log.Count > 0)
-        {
-            lines.Add(string.Empty);
-            lines.Add("Diagnostics:");
-
-            foreach (DxfImportLogEntry entry in result.Log.Take(8))
-            {
-                string location = entry.LineNumber is null
-                    ? string.Empty
-                    : $" at line {entry.LineNumber}";
-
-                lines.Add($"- {entry.Severity}{location}: {entry.Message}");
-            }
-
-            if (result.Log.Count > 8)
-            {
-                lines.Add($"- ... {result.Log.Count - 8} more diagnostic entries.");
-            }
-        }
-
-        return string.Join(Environment.NewLine, lines);
+        await dialog.ShowDialog(this);
     }
 
     private async Task<bool> SaveAsync(bool forceSaveAs)
