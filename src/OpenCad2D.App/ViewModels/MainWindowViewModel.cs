@@ -17,6 +17,7 @@ using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Persistence;
 using OpenCad2D.Export.Svg;
 using OpenCad2D.Export.Dxf;
+using OpenCad2D.Export.Dxf.Import;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -39,6 +40,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
     private readonly ISvgExporter _svgExporter = new SvgExporter();
     private readonly IDxfExporter _dxfExporter = new DxfExporter();
+    private readonly IDxfImporter _dxfImporter = new DxfDocumentImporter();
     private string? _currentFilePath;
     private PropertyPanelViewModel _propertyPanel = new("Properties", Array.Empty<PropertySectionViewModel>());
     private bool _isPropertyPanelVisible = true;
@@ -404,6 +406,48 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));
+
+        return result;
+    }
+
+
+    public DxfImportResult ImportDxfFromFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "DXF import file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        DxfImportResult result = _dxfImporter.ImportFile(filePath);
+
+        if (result.HasErrors)
+        {
+            SetMessage($"DXF import failed: {Path.GetFileName(filePath)}.");
+            OnPropertiesChanged(
+                nameof(LastMessage),
+                nameof(StatusText));
+
+            return result;
+        }
+
+        Workspace.LoadDocument(
+            result.Document,
+            LayerId.Default);
+        Workspace.EnsureCurrentLayerIsUsable();
+        Workspace.MarkDocumentChanged();
+
+        _currentFilePath = null;
+
+        SetMessage(
+            $"Imported DXF '{Path.GetFileName(filePath)}' " +
+            $"({result.Statistics.TotalImportedEntities} entities, " +
+            $"{result.Statistics.ImportedLayerCount} layers, " +
+            $"{result.Statistics.WarningCount} warnings).");
+
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
 
         return result;
     }

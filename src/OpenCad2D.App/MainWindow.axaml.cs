@@ -3,6 +3,7 @@ using Avalonia.Interactivity;
 using Avalonia.Input;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Linq;
 using OpenCad2D.Persistence;
 using Avalonia.Platform.Storage;
 using Avalonia.Layout;
@@ -13,6 +14,7 @@ using OpenCad2D.App.ViewModels.Grid;
 using OpenCad2D.App.ViewModels.LineFormats;
 using OpenCad2D.App.ViewModels.TextFormats;
 using OpenCad2D.App.ViewModels.PolarTracking;
+using OpenCad2D.Export.Dxf.Import;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -143,6 +145,75 @@ public partial class MainWindow : Window
         }
     }
 
+
+    private async void ImportDxf_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            if (!await ConfirmProceedWithUnsavedChangesAsync())
+            {
+                return;
+            }
+
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
+                {
+                    Title = "Import DXF drawing",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { DxfFileType }
+                });
+
+            if (files.Count == 0)
+            {
+                return;
+            }
+
+            string? filePath = files[0].TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Import DXF",
+                    "Only local files are supported in this version.");
+                return;
+            }
+
+            DxfImportResult result = _viewModel.ImportDxfFromFile(filePath);
+
+            if (result.HasErrors)
+            {
+                await ShowMessageAsync(
+                    "DXF import failed",
+                    BuildDxfImportSummary(result));
+                return;
+            }
+
+            CadCanvas.ResetViewport();
+            InitializeLayerComboBox();
+            InitializePolarTrackingComboBox();
+            RefreshLayerControls();
+            RefreshStatus();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+            CadCanvas.Focus();
+
+            if (result.HasWarnings)
+            {
+                await ShowMessageAsync(
+                    "DXF imported with warnings",
+                    BuildDxfImportSummary(result));
+            }
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Import DXF failed",
+                exception.Message);
+        }
+    }
+
     private async void Save_Click(
         object? sender,
         RoutedEventArgs e)
@@ -258,6 +329,42 @@ public partial class MainWindow : Window
         CadCanvas.Focus();
     }
 
+
+
+    private static string BuildDxfImportSummary(DxfImportResult result)
+    {
+        ArgumentNullException.ThrowIfNull(result);
+
+        List<string> lines = new()
+        {
+            $"Imported entities: {result.Statistics.TotalImportedEntities}",
+            $"Layers: {result.Statistics.ImportedLayerCount}",
+            $"Warnings: {result.Statistics.WarningCount}",
+            $"Errors: {result.Statistics.ErrorCount}"
+        };
+
+        if (result.Log.Count > 0)
+        {
+            lines.Add(string.Empty);
+            lines.Add("Diagnostics:");
+
+            foreach (DxfImportLogEntry entry in result.Log.Take(8))
+            {
+                string location = entry.LineNumber is null
+                    ? string.Empty
+                    : $" at line {entry.LineNumber}";
+
+                lines.Add($"- {entry.Severity}{location}: {entry.Message}");
+            }
+
+            if (result.Log.Count > 8)
+            {
+                lines.Add($"- ... {result.Log.Count - 8} more diagnostic entries.");
+            }
+        }
+
+        return string.Join(Environment.NewLine, lines);
+    }
 
     private async Task<bool> SaveAsync(bool forceSaveAs)
     {

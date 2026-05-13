@@ -156,6 +156,11 @@
                             Click="Open_Click" />
 
                     <Button Classes="global-button"
+                            Content="Import DXF"
+                            ToolTip.Tip="Import an ASCII DXF drawing into a new OpenCad2D document"
+                            Click="ImportDxf_Click" />
+
+                    <Button Classes="global-button"
                             Content="Save"
                             Click="Save_Click" />
 
