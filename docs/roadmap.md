@@ -753,20 +753,22 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 
 ### Main goal
 
-The v0.8 milestone introduces a guided command input system. The command line should no longer be only a command launcher: it should show the active command, the current command phase, the expected input and the available options.
+The v0.8 milestone introduces a guided CAD-style command input system. The command line is no longer only a command launcher: it shows the active command, the current command phase, the expected input and the available options.
 
-Core decisions for v0.8:
+Core decisions implemented for v0.8:
 
-- [ ] mouse clicks and typed command input must feed the same tool state machine;
-- [ ] whenever a command asks for a point, the user can either click on the canvas or type a coordinate;
-- [ ] `LINE` remains a single-segment command: first point, second point, then command ends;
-- [ ] absolute coordinate input is supported, for example `100,100`;
-- [ ] relative cartesian input is supported, for example `@100,0`;
-- [ ] relative polar input is supported, for example `@100<45`;
-- [ ] empty Enter while idle repeats the last valid command;
-- [ ] empty Enter inside an active command confirms the current phase only when that phase allows it;
-- [ ] a compact visible command history is added near the command input;
-- [ ] Trim is planned as an advanced base workflow, not only a minimal trim command.
+- [x] mouse clicks and typed command input feed the same tool state machine for migrated tools;
+- [x] whenever a migrated command asks for a point, the user can either click on the canvas or type a coordinate;
+- [x] `LINE` remains a single-segment command: first point, second point, then command ends;
+- [x] absolute coordinate input is supported, for example `100,100`;
+- [x] relative cartesian input is supported, for example `@100,0`;
+- [x] relative polar input is supported, for example `@100<45`;
+- [x] direct distance input is supported when the prompt can resolve a distance from the current cursor direction;
+- [x] empty Enter while idle repeats the last valid command;
+- [x] empty Enter inside an active command confirms the current phase only when that phase allows it;
+- [x] a compact visible command history is available near the command input;
+- [x] Trim has a first advanced base workflow with `All`, in-command `Undo` and repeated trimming;
+- [x] Offset and Fillet were added before release stabilization because they are fundamental modify tools.
 
 Detailed design document:
 
@@ -776,90 +778,115 @@ docs/command-input.md
 
 ### Block 1 - Specification and parser infrastructure
 
-- [ ] add `CommandPromptState`;
-- [ ] add `CommandOption`;
-- [ ] add `CommandInputKind`;
-- [ ] add `CommandInputSubmission`;
-- [ ] add `CommandInputSubmissionKind`;
-- [ ] add centralized parser for command text input;
-- [ ] parse absolute points: `x,y`;
-- [ ] parse relative cartesian points: `@dx,dy`;
-- [ ] parse relative polar points: `@distance<angle`;
-- [ ] parse distances/numbers when the prompt expects them;
-- [ ] parse options by keyword or shortcut;
-- [ ] parse empty input as Confirm/Repeat depending on active state;
-- [ ] add parser tests before changing tool behavior.
+- [x] add `CommandPromptState`;
+- [x] add `CommandOption`;
+- [x] add `CommandInputKind`;
+- [x] add `CommandInputSubmission`;
+- [x] add `CommandInputSubmissionKind`;
+- [x] add centralized parser for command text input;
+- [x] parse absolute points: `x,y`;
+- [x] parse relative cartesian points: `@dx,dy`;
+- [x] parse relative polar points: `@distance<angle`;
+- [x] parse distances/numbers when the prompt expects them;
+- [x] parse options by keyword or shortcut;
+- [x] parse empty input as Confirm/Repeat depending on active state;
+- [x] add parser tests before changing tool behavior.
 
 ### Block 2 - ViewModel and UI integration
 
-- [ ] add current command prompt text to the view-model;
-- [ ] add a compact visible command history;
-- [ ] keep existing command aliases working;
-- [ ] keep existing action commands working: Select All, Select Last, Zoom Window, Zoom Extents;
-- [ ] route active command input to command-driven tools;
-- [ ] implement idle Enter repeat-last-command;
-- [ ] ensure invalid commands do not become repeatable commands;
-- [ ] keep Escape behavior: first Esc cancels active tool, second Esc clears selection.
+- [x] add current command prompt text to the view-model;
+- [x] add a compact visible command history;
+- [x] keep existing command aliases working;
+- [x] keep existing action commands working: Select All, Select Last, Zoom Window, Zoom Extents;
+- [x] route active command input to command-driven tools;
+- [x] implement idle Enter repeat-last-command;
+- [x] ensure invalid commands do not become repeatable commands;
+- [x] keep Escape behavior: first Esc cancels active tool, second Esc clears selection.
 
 ### Block 3 - Convert `LINE`
 
-- [ ] show `LINE: Specify first point:`;
-- [ ] accept first point from mouse or typed coordinate;
-- [ ] show `LINE: Specify second point:`;
-- [ ] accept second point from mouse, absolute input, relative input or polar input;
-- [ ] create a single line segment;
-- [ ] finish the command after the second point;
-- [ ] add tests for absolute, relative and polar input.
+- [x] show `LINE: Specify first point:`;
+- [x] accept first point from mouse or typed coordinate;
+- [x] show `LINE: Specify second point:`;
+- [x] accept second point from mouse, absolute input, relative input, polar input or direct distance;
+- [x] create a single line segment;
+- [x] finish the command after the second point;
+- [x] add tests for absolute, relative and polar input.
 
 ### Block 4 - Convert `POLYLINE`
 
-- [ ] show `POLYLINE: Specify start point:`;
-- [ ] show `POLYLINE: Specify next point or [Close/Undo]:`;
-- [ ] support absolute, relative and polar point input;
-- [ ] support `Close` / `C`;
-- [ ] support `Undo` / `U`;
-- [ ] use empty Enter to finish an open polyline;
-- [ ] add tests for options and mixed mouse/text input.
+- [x] show `POLYLINE: Specify first point:`;
+- [x] show `POLYLINE: Specify next point or [Close/Undo]:`;
+- [x] support absolute, relative and polar point input;
+- [x] support `Close` / `C`;
+- [x] support `Undo` / `U`;
+- [x] use empty Enter to finish an open polyline;
+- [x] add tests for options and mixed mouse/text input.
 
 ### Block 5 - Convert base drawing tools
 
-- [ ] Rectangle: first corner, opposite corner;
-- [ ] Circle: center point, radius;
-- [ ] Arc 3P: start point, point on arc, end point;
-- [ ] add tests for typed point/distance input.
+- [x] Rectangle: first corner, opposite corner;
+- [x] Circle: center point, radius point or typed radius;
+- [x] Arc 3P: start point, point on arc, end point;
+- [x] add tests for typed point/distance input.
 
 ### Block 6 - Convert Move, Copy and Break
 
-- [ ] Move: select objects, base point, destination point;
-- [ ] Copy: select objects, base point, destination point;
-- [ ] Break: select entity, first break point, second break point;
-- [ ] support relative and polar destination input for Move/Copy;
-- [ ] support mixed mouse/entity selection and typed point input for Break.
+- [x] Move: select objects, base point, destination point;
+- [x] Copy: select objects, base point, destination point;
+- [x] Break Segment: select entity, first break point, second break point;
+- [x] support relative and polar destination input for Move/Copy;
+- [x] support mixed mouse/entity selection and typed point input for Break.
+
+### Block 6b - Command-driven coverage pass
+
+- [x] Rotate: selection, base point, reference point, destination point or typed angle;
+- [x] Scale: selection, base point, reference point, destination point or typed factor;
+- [x] Align: source/destination point pairs and scale confirmation;
+- [x] Break Point: entity selection and typed/clicked break point;
+- [x] Extend: boundary and target prompts;
+- [x] Trim: baseline cutting-edge and target prompts before the advanced workflow;
+- [x] Delete: Enter confirmation.
 
 ### Block 7 - Trim advanced base
 
-- [ ] add `TRIM: Select cutting edges or [All]:`;
-- [ ] support multiple cutting-edge selection;
-- [ ] support `All` / `A`;
-- [ ] empty Enter confirms cutting-edge selection;
-- [ ] add `TRIM: Select object to trim or [Undo]:`;
-- [ ] keep Trim active after each trim operation;
-- [ ] support `Undo` / `U` inside the Trim session;
-- [ ] introduce picked-entity input with entity id and pick point;
-- [ ] defer Fence/Crossing/Edge/Project/Erase/Shift-Extend to later milestones.
+- [x] add `TRIM: Select cutting edge or [All]:`;
+- [x] support additional cutting-edge selection through Ctrl-click;
+- [x] support `All` / `A`;
+- [x] allow Enter to finish/reset the Trim session while trimming;
+- [x] add `TRIM: Select entity side to trim or [All/Undo]:`;
+- [x] keep Trim active after each trim operation;
+- [x] support `Undo` / `U` inside the Trim session;
+- [x] introduce picked-entity input foundation with entity id and pick point;
+- [x] defer Fence/Crossing/Edge/Project/Erase/Shift-Extend to later milestones.
+
+### Block 7b - Offset and Fillet
+
+- [x] add `ToolPickedEntityInput` for side-sensitive modify tools;
+- [x] add `OFFSET` / `O`;
+- [x] support line, circle and arc offset;
+- [x] keep Offset active after creating one offset while preserving the current distance;
+- [x] defer robust polyline offset;
+- [x] add `FILLET` / `F`;
+- [x] support Line-Line fillet;
+- [x] support `Radius` / `R`;
+- [x] support radius `0` as sharp-corner join;
+- [x] defer Line-Arc, Arc-Arc, polyline fillet, multiple fillet and NoTrim mode.
 
 ### Block 8 - Documentation and release stabilization
 
-- [ ] update `docs/commands.md`;
-- [ ] update `docs/tools.md`;
-- [ ] update `docs/ai-handoff.md`;
-- [ ] update README user-facing command input section if needed;
-- [ ] add release notes for v0.8;
-- [ ] ensure full solution build and tests pass.
+- [x] update `docs/commands.md`;
+- [x] update `docs/tools.md`;
+- [x] update `docs/command-input.md`;
+- [x] update `docs/modify-tools.md`;
+- [x] update `docs/ai-handoff.md`;
+- [x] update README user-facing command input and modify-tool sections;
+- [x] add release notes for v0.8;
+- [ ] run the final local full solution build and tests before tagging the release.
 
-### Secondary v0.8 backlog
+### Secondary v0.8 backlog moved forward
 
-These remain useful but are lower priority than the command input refactor:
+These remain useful but are intentionally deferred beyond v0.8:
 
 - [ ] color picker improvements for layer and formats;
 - [ ] application settings;
@@ -872,10 +899,12 @@ These remain useful but are lower priority than the command input refactor:
 - [ ] snap icons: active / detected / disabled states;
 - [ ] dark theme regression tests;
 - [ ] settings persistence tests;
-- [ ] draw order / Z-order tests.
+- [ ] draw order / Z-order tests;
+- [ ] polyline offset;
+- [ ] advanced Fillet variants;
+- [ ] advanced Trim Fence/Crossing/Edge/Project/Erase modes.
 
 ---
-
 ## v0.9 - Release candidate
 
 ### Rule

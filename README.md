@@ -14,6 +14,8 @@ The long-term goal is not only to create a usable CAD application, but also to k
 
 OpenCad2D is currently an early prototype. It is **not** intended to replace mature CAD software yet.
 
+See also: `docs/release-v0.8.md`.
+
 The current focus is to build strong foundations: geometry, entities, layers, commands, undo/redo, snapping, selection, tools, coordinate systems, spatial queries, CAD-style numeric input, persistence, interoperability and a first cross-platform UI.
 
 The application already supports a functional CAD workflow:
@@ -32,8 +34,10 @@ The application already supports a functional CAD workflow:
 - moving, copying, rotating, scaling, aligning and deleting selected entities;
 - break point for lines, arcs and polylines, with clear non-applicable feedback for circles;
 - break segment for lines, arcs, circles and polylines;
-- trim with one cutting edge and two-cutting-edge Trim for line targets;
+- trim with one cutting edge, Ctrl-click additional cutting edges, `All` cutting-edge mode and in-command `Undo`;
 - extend for lines, arcs and open polylines where supported by the current geometry services;
+- offset for lines, circles and arcs;
+- line-line fillet with `Radius` option and radius `0` sharp-corner join;
 - grip editing for supported entities;
 - undo and redo;
 - internal JSON save/load using `.opencad2d.json`;
@@ -54,8 +58,7 @@ The application already supports a functional CAD workflow:
 - Text Format Manager;
 - Layer Manager with line format selection;
 - editable Property Panel v2 with undoable edits for supported entity properties;
-- real command line with tool aliases, command history, absolute/relative coordinates, direct distance and distance-angle input;
-- direct distance entry;
+- CAD-style guided command input with contextual prompts, visible command history, tool aliases, absolute coordinates, relative coordinates, relative polar input and direct distance entry;
 - non-mutating measure tools for distance, entity properties, angles and closed-polyline areas;
 - Ortho mode and Polar Tracking with selectable angle steps (`Off`, `90°`, `45°`, `30°`, `15°`);
 - zoom, pan, view reset and Zoom Extents;
@@ -142,20 +145,22 @@ OpenCad2D includes a CAD-style command line for tool activation and precise poin
 
 Supported command-line behavior:
 
-- tool activation by command name or alias, for example `LINE`, `L`, `CIRCLE`, `C`, `TRIM`, `TR`, `HDIM` and `ANG`;
+- tool activation by command name or alias, for example `LINE`, `L`, `CIRCLE`, `C`, `TRIM`, `TR`, `OFFSET`, `O`, `FILLET` and `F`;
 - case-insensitive alias resolution through `CommandAliasRegistry`;
+- contextual prompts that show the active command phase;
+- a compact visible command history;
 - absolute point input, for example `100,50`;
 - relative point input from the current tool base point, for example `@100,0`;
+- relative polar input, for example `@100<45`;
 - direct distance input in the current cursor/constrained direction, for example `50`;
-- distance-angle input in CAD model coordinates, for example `100<45`;
-- command history for valid tool activations;
-- `Enter` on an empty command line repeats the last valid command;
+- `Enter` on an empty command line repeats the last valid command when the workspace is idle;
+- empty Enter inside an active command is routed to that command and confirms only phases that allow confirmation;
 - right-click on the canvas repeats the last valid command when the workspace is idle;
 - `Esc` cancels the active tool when the command input is empty.
 
 The decimal separator is always `.`. The comma is reserved for separating X/Y coordinates.
 
-Distance-angle input uses CAD orientation:
+Relative polar input uses CAD orientation:
 
 ```text
 0°   = right
@@ -765,15 +770,16 @@ Recently completed:
 3. viewport culling;
 4. editable Property Panel v2 for supported primary properties;
 5. layer manager, line formats and text formats;
-6. real command line with aliases, command history, coordinates, direct distance and distance-angle input;
+6. CAD-style guided command input with aliases, visible history, coordinates, direct distance and relative polar input;
 7. rotate, scale and align tools;
 8. polyline tool and grip editing;
 9. arc tools, rectangle by sides and broader Break/Trim/Extend geometry support;
-10. text and non-associative dimension tools;
-11. measure tools;
-12. SVG, DXF and PDF export;
-13. DXF import for a focused 2D subset;
-14. application icon and initial branding assets.
+10. Offset and Line-Line Fillet as command-driven modify tools;
+11. text and non-associative dimension tools;
+12. measure tools;
+13. SVG, DXF and PDF export;
+14. DXF import for a focused 2D subset;
+15. application icon and initial branding assets.
 
 Next planned areas before v1.0:
 

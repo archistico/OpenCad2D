@@ -1474,3 +1474,52 @@ Implemented in Block 7b:
 Fixed a command-input routing issue introduced by the Offset/Fillet phase: pure distance prompts such as `OFFSET: Specify offset distance` must receive a `Distance` submission, while mixed point-or-distance prompts such as `LINE` second point or `CIRCLE` radius point may resolve a numeric distance into a point using the current cursor direction. Added an explicit `ShouldResolveDistanceAsPoint(...)` gate in `MainWindowViewModel` so Offset can move from distance input to entity selection correctly.
 
 Also tightened nullable guards in `OffsetTool` and `FilletTool` before constructing `AddEntityCommand` / `ModifyEntitiesCommand`.
+
+## 2026-05-16 - v0.8 Block 8: documentation and release stabilization
+
+Completed the documentation stabilization pass for v0.8.
+
+Updated documentation:
+
+- `docs/roadmap.md` now marks the v0.8 command-input blocks as completed and records the remaining deferred backlog.
+- `docs/command-input.md` now includes the final v0.8 command-driven coverage summary and the distance-routing rule.
+- `docs/commands.md` now includes a v0.8 command/alias summary table.
+- `docs/tools.md` now includes a v0.8 tool workflow summary for guided input, Offset and Fillet.
+- `docs/modify-tools.md` now documents Offset, Fillet and `ToolPickedEntityInput`.
+- `README.md` now reflects guided command input, advanced Trim, Offset and Fillet.
+- Added `docs/release-v0.8.md`.
+
+Final v0.8 implemented scope to remember:
+
+- guided command input with prompt phases and visible history;
+- absolute coordinates: `100,50`;
+- relative cartesian coordinates: `@100,0`;
+- relative polar coordinates: `@100<45`;
+- idle Enter repeats the last valid command;
+- active Enter is routed to the active command;
+- command-driven Line, Polyline, Rectangle, Circle, Arc 3P;
+- command-driven Move, Copy, Rotate, Scale, Align, Delete;
+- command-driven Break Point, Break Segment, Extend, Trim, Offset, Fillet;
+- Trim advanced base with `All`, Ctrl-click additional cutting edges, local `Undo` and repeated trimming;
+- Offset supports Line, Circle and Arc;
+- Fillet supports Line-Line with `Radius` / `R` and radius `0` sharp-corner join;
+- `ToolPickedEntityInput` is the side-sensitive selection foundation.
+
+Validation still to run locally before tagging the release:
+
+```bash
+dotnet build OpenCad2D.sln
+dotnet test OpenCad2D.sln --no-build
+```
+
+Suggested manual smoke checks:
+
+```text
+LINE -> 100,100 -> @100<45
+POLYLINE -> 0,0 -> @100,0 -> @50<90 -> C
+OFFSET -> distance -> line/circle/arc -> side point
+FILLET -> R -> 10 -> first line -> second line
+TRIM -> All -> target side -> Undo
+MOVE/COPY -> selection -> base point -> @50,0
+BREAK -> entity -> first point -> second point
+```

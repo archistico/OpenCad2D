@@ -806,3 +806,40 @@ Supported in v0.8:
 - trim mode always enabled.
 
 Line-arc, arc-arc, polyline fillet, multiple fillet and no-trim mode are deferred.
+
+---
+
+## v0.8 release stabilization status
+
+The v0.8 command input refactor is now implemented for the main drawing and modify workflows.
+
+Implemented command-driven coverage:
+
+| Area | Commands |
+|---|---|
+| Draw | `LINE`, `POLYLINE`, `RECTANGLE`, `CIRCLE`, `ARC3P` |
+| Transform/Edit | `MOVE`, `COPY`, `ROTATE`, `SCALE`, `ALIGN`, `DELETE` |
+| Modify | `BREAKPOINT`, `BREAK` / `BREAKSEGMENT`, `EXTEND`, `TRIM`, `OFFSET`, `FILLET` |
+| Navigate/Selection | `ZOOMWINDOW`, `ZOOMEXTENTS`, `SELECTALL`, `SELECTLAST` |
+
+Core implemented input formats:
+
+```text
+100,50      absolute point
+@100,0      relative cartesian point
+@100<45     relative polar point
+50          distance/number, depending on the active prompt
+```
+
+Important routing rule:
+
+- pure distance prompts, such as `OFFSET: Specify offset distance:`, receive a `Distance` submission;
+- mixed point-or-distance prompts, such as `LINE` second point or `CIRCLE` radius point, may resolve a numeric distance into a point using the current cursor direction.
+
+`ToolPickedEntityInput` is now available as the foundation for side-sensitive tools. It carries the selected entity id, the pick point, the closest point and the entity reference. It is currently used by Offset and Fillet and is intended to support future improvements to Trim, Extend, Break and Chamfer.
+
+Final v0.8 documentation is tracked in:
+
+```text
+docs/release-v0.8.md
+```

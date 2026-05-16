@@ -279,3 +279,75 @@ The recommended v0.5 implementation order has been completed:
 5. Layer rules                 done
 6. v0.5 closure docs           done
 ```
+
+---
+
+## v0.8 modify-tool additions
+
+v0.8 adds command-driven Offset and Fillet and improves Trim workflow guidance.
+
+### Offset
+
+Current scope:
+
+```text
+Targets: LineEntity, CircleEntity, ArcEntity
+PolylineEntity: deferred
+```
+
+Workflow:
+
+```text
+activate Offset
+specify offset distance
+pick object to offset
+pick side point
+create offset entity
+return to object selection with the same distance
+```
+
+Behavior:
+
+- line offset creates a parallel line at the specified distance;
+- circle offset increases or decreases radius based on the side point;
+- arc offset increases or decreases radius while preserving center, angles and direction;
+- offsets that would create a zero or negative radius are rejected with a clear message.
+
+### Fillet
+
+Current scope:
+
+```text
+Targets: LineEntity + LineEntity
+```
+
+Workflow:
+
+```text
+activate Fillet
+optionally set Radius / R
+pick first line
+pick second line
+replace the original lines with trimmed/extended result geometry
+add tangent fillet arc when radius is greater than zero
+```
+
+Behavior:
+
+- radius `0` creates a sharp-corner join at the theoretical line intersection;
+- positive radius creates a tangent arc and trims/extends both lines;
+- parallel lines are rejected with a clear message;
+- trim mode is always enabled in v0.8.
+
+### Picked entity input
+
+`ToolPickedEntityInput` was introduced for side-sensitive modify commands. It preserves:
+
+```text
+EntityId
+PickPoint
+ClosestPoint
+Entity
+```
+
+This foundation is needed by Offset, Fillet and future improvements to Trim, Extend, Break and Chamfer.

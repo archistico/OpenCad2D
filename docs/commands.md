@@ -494,8 +494,10 @@ Point input forms:
 100,50      absolute model point
 @100,0      relative point from the current tool base point
 50          direct distance in current pointer/constrained direction
-100<45      distance plus CAD-model angle from the current base point
+@100<45     relative polar point from the current tool base point
 ```
+
+Older v0.6 notes used `100<45` for distance-angle input. The v0.8 guided command input documentation uses the clearer relative polar form `@distance<angle`.
 
 Command-line coordinate input is routed through the active tool. It does not duplicate drawing logic.
 
@@ -712,3 +714,51 @@ Creates a constant-distance copy of a line, circle or arc. The command asks for 
 Aliases: `FILLET`, `F`.
 
 Creates a line-line fillet. Use `R` or `Radius` to set the radius. Radius `0` joins the two selected lines at their theoretical intersection without creating an arc.
+
+---
+
+## v0.8 final command input summary
+
+The v0.8 command system supports guided prompts, visible command history and exact typed input for the main drawing/editing workflows.
+
+### Coordinate input
+
+```text
+100,50      absolute point
+@100,0      relative cartesian point
+@100<45     relative polar point
+50          distance/number when the active prompt expects it
+```
+
+### Main aliases
+
+| Command | Aliases | Notes |
+|---|---|---|
+| Line | `LINE`, `L` | Single segment: first point, second point, finish. |
+| Polyline | `POLYLINE`, `PL` | Supports `Close` / `C`, `Undo` / `U`, Enter to finish open polyline. |
+| Rectangle | `RECTANGLE`, `REC` | First corner, opposite corner. |
+| Circle | `CIRCLE`, `C` | Center point, radius point or typed radius. |
+| Arc 3P | `ARC3P` | Start, point on arc, end. |
+| Move | `MOVE`, `M` | Selection, base point, destination point. |
+| Copy | `COPY`, `CO` | Selection, base point, destination point. |
+| Rotate | `ROTATE`, `RO` | Selection, base point, reference point, destination point or typed angle. |
+| Scale | `SCALE`, `SC` | Selection, base point, reference point, destination point or typed factor. |
+| Align | `ALIGN`, `AL` | Two source/destination point pairs and scale confirmation. |
+| Break Point | `BREAKPOINT`, `BP` | Entity selection and break point. |
+| Break Segment | `BREAK`, `BR`, `BREAKSEGMENT`, `BS` | Entity selection, first point, second point. |
+| Extend | `EXTEND`, `EX` | Boundary entity, target entity. |
+| Trim | `TRIM`, `TR` | Cutting edge or `All`, then repeated target side trimming with `Undo`. |
+| Delete | `DELETE`, `DEL` | Enter confirms deletion of the current selection. |
+| Offset | `OFFSET`, `O` | Distance, object, side point. Supports line/circle/arc. |
+| Fillet | `FILLET`, `F` | Line-Line fillet. Supports `Radius` / `R`; radius `0` joins at a sharp corner. |
+| Select All | `SELECTALL`, `SA`, `ALL` | Selects selectable visible/unlocked entities. |
+| Select Last | `SELECTLAST`, `SL`, `LAST` | Restores the last real selection before deselection. |
+| Zoom Window | `ZOOMWINDOW`, `ZW` | Fits the viewport to a picked rectangle. |
+| Zoom Extents | `ZOOMEXTENTS`, `ZE` | Fits the viewport to visible drawing extents. |
+
+### Enter behavior
+
+- Empty Enter while idle repeats the last valid command.
+- Empty Enter during an active command is routed to that command.
+- If the active phase accepts confirmation, Enter confirms/completes the phase.
+- If the active phase requires input, Enter reports that input is required and stays in the current phase.

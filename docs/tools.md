@@ -878,3 +878,69 @@ The command input system now covers the main edit/modify commands before the adv
 - Offset currently supports Line, Circle and Arc.
 - Fillet currently supports Line-Line.
 - Both tools use picked entity input internally, preserving both the entity id and the pick point so the selected side can influence the resulting geometry.
+
+---
+
+## v0.8 tool workflow summary
+
+v0.8 migrates the main tools to guided command-driven workflows while preserving mouse interaction and snapping.
+
+For migrated tools, a point request can be satisfied either by:
+
+```text
+clicking on the canvas
+or typing coordinates in the command input
+```
+
+The command input supports absolute, relative cartesian and relative polar coordinates. Mouse input continues to use the existing snapping and preview behavior.
+
+### Modify tool additions in v0.8
+
+#### Offset
+
+Flow:
+
+```text
+OFFSET: Specify offset distance:
+OFFSET: Select object to offset:
+OFFSET: Specify side to offset:
+```
+
+Supported targets:
+
+```text
+LineEntity
+CircleEntity
+ArcEntity
+```
+
+Offset stays active after creating one offset and returns to object selection with the same distance.
+
+#### Fillet
+
+Flow:
+
+```text
+FILLET: Select first line or [Radius] <0>:
+FILLET: Specify fillet radius:
+FILLET: Select second line:
+```
+
+Supported target pair:
+
+```text
+LineEntity + LineEntity
+```
+
+Radius `0` joins the two selected lines at the theoretical intersection without creating an arc. Positive radius creates a tangent arc and trims/extends the two lines.
+
+### Deferred tool extensions
+
+```text
+Polyline offset
+Line-Arc / Arc-Arc fillet
+Fillet whole polyline
+NoTrim fillet mode
+Trim Fence / Crossing / Edge / Project / Erase modes
+Shift-click Extend inside Trim
+```
