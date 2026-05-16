@@ -33,8 +33,9 @@ Implemented:
 - `ArcTool`
 - `ArcThreePointsTool`
 - `PolylineTool`
+- `SplineTool`
 
-`MTEXT` inserts multiline annotation text through the text dialog. `LINE` creates a single segment and then ends. `POLYLINE` supports `Close`, `Undo` and Enter to finish an open polyline.
+`MTEXT` inserts multiline annotation text through the text dialog. `LINE` creates a single segment and then ends. `POLYLINE` supports `Close`, `Undo` and Enter to finish an open polyline. `SPLINE` creates an open or closed Bezier spline from control points, with `Undo`, `Close` and Enter-to-finish command flow.
 
 ---
 
@@ -103,9 +104,10 @@ Supported targets:
 - Line;
 - Circle;
 - Arc;
-- straight-segment open/closed Polyline.
+- straight-segment open/closed Polyline;
+- Bezier Spline through sampled polyline approximation.
 
-Polyline offset uses miter joins. Rounded joins, bulge/arc polyline segments and advanced self-intersection cleanup are future work.
+Polyline and sampled spline offset use miter joins. Rounded joins, bulge/arc polyline segments and advanced self-intersection cleanup are future work.
 
 The side preview must use the same geometry method as final creation.
 

@@ -285,6 +285,32 @@ public sealed class OffsetToolTests
         Assert.Single(document.Entities.All);
     }
 
+
+    [Fact]
+    public void OffsetBezierSpline_ShouldCreatePolylineApproximationOffset()
+    {
+        CadDocument document = new();
+        var spline = new BezierSplineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 10),
+            new Point2D(10, 0)
+        });
+        document.AddEntity(spline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("1", 1), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 4)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 8)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity offset = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All.Where(entity => !entity.Id.Equals(spline.Id))));
+        Assert.False(offset.IsClosed);
+        Assert.True(offset.Vertices.Count > 10);
+    }
+
     private static void AssertPointNear(Point2D expected, Point2D actual)
     {
         Assert.True(

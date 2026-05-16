@@ -614,6 +614,20 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     .ToList()
             },
 
+            BezierSplineEntity spline => new BezierSplineEntityDto
+            {
+                Id = spline.Id.ToString(),
+                LayerId = spline.LayerId.Value,
+                IsClosed = spline.IsClosed,
+                ControlPoints = spline.ControlPoints
+                    .Select(point => new PointDto
+                    {
+                        X = point.X,
+                        Y = point.Y
+                    })
+                    .ToList()
+            },
+
             _ => null
         };
     }
@@ -947,6 +961,14 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 polyline.IsClosed,
                 id,
                 layerId),
+
+            BezierSplineEntityDto spline => spline.ControlPoints.Count < 2
+                ? null
+                : new BezierSplineEntity(
+                    spline.ControlPoints.Select(point => new Point2D(point.X, point.Y)),
+                    spline.IsClosed,
+                    id,
+                    layerId),
 
             _ => null
         };

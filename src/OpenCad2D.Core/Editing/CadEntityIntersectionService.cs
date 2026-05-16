@@ -175,6 +175,26 @@ public static class CadEntityIntersectionService
                 }
 
                 break;
+
+            case BezierSplineEntity spline:
+                IReadOnlyList<Point2D> splinePoints = spline.GetSamplePoints();
+                for (int index = 0; index < splinePoints.Count - 1; index++)
+                {
+                    yield return EntitySegment.FromLine(
+                        new LineSegment2D(
+                            splinePoints[index],
+                            splinePoints[index + 1]));
+                }
+
+                if (spline.IsClosed && splinePoints.Count > 1)
+                {
+                    yield return EntitySegment.FromLine(
+                        new LineSegment2D(
+                            splinePoints[^1],
+                            splinePoints[0]));
+                }
+
+                break;
         }
     }
 

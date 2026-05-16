@@ -28,6 +28,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Arc));
         Assert.True(registry.Contains(ToolId.ArcThreePoints));
         Assert.True(registry.Contains(ToolId.Polyline));
+        Assert.True(registry.Contains(ToolId.Spline));
         Assert.True(registry.Contains(ToolId.Polygon));
         Assert.True(registry.Contains(ToolId.HorizontalDimension));
         Assert.True(registry.Contains(ToolId.VerticalDimension));
@@ -61,7 +62,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(37, tools.Count);
+        Assert.Equal(38, tools.Count);
 
         Assert.Contains(
             tools,
@@ -169,6 +170,10 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.Spline);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.Polygon);
 
         Assert.Contains(
@@ -232,7 +237,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
 
-        Assert.Equal(12, tools.Count);
+        Assert.Equal(13, tools.Count);
         Assert.Contains(tools, tool => tool.Id == ToolId.Point);
         Assert.Contains(tools, tool => tool.Id == ToolId.Text);
         Assert.Contains(tools, tool => tool.Id == ToolId.MultilineText);
@@ -244,6 +249,7 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, tool => tool.Id == ToolId.Arc);
         Assert.Contains(tools, tool => tool.Id == ToolId.ArcThreePoints);
         Assert.Contains(tools, tool => tool.Id == ToolId.Polyline);
+        Assert.Contains(tools, tool => tool.Id == ToolId.Spline);
         Assert.Contains(tools, tool => tool.Id == ToolId.Polygon);
     }
 
@@ -457,6 +463,18 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<PolylineTool>(tool);
         Assert.Equal("Polyline", tool.Name);
+    }
+
+
+    [Fact]
+    public void Create_Spline_ShouldReturnSplineTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Spline);
+
+        Assert.IsType<SplineTool>(tool);
+        Assert.Equal("Spline", tool.Name);
     }
 
 
@@ -725,7 +743,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
 
-        Assert.Equal(12, tools.Count);
+        Assert.Equal(13, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Point);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Text);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.MultilineText);
@@ -737,6 +755,7 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Arc);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.ArcThreePoints);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Polyline);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Spline);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Polygon);
     }
 

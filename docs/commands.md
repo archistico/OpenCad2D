@@ -56,6 +56,7 @@ Aliases are case-insensitive.
 | Arc | `ARC`, `A` |
 | Arc 3P | `ARC3P`, `A3` |
 | Polyline | `POLYLINE`, `PL` |
+| Spline | `SPLINE`, `SPL` |
 
 ### Dimensions
 

@@ -58,6 +58,16 @@ public static class CadEntityDrawOrderExtensions
                 polyline.IsLocked,
                 drawOrder),
 
+            BezierSplineEntity spline => new BezierSplineEntity(
+                spline.ControlPoints,
+                spline.IsClosed,
+                spline.Id,
+                spline.LayerId,
+                spline.Style,
+                spline.IsVisible,
+                spline.IsLocked,
+                drawOrder),
+
             PointEntity point => new PointEntity(
                 point.Position,
                 point.Id,

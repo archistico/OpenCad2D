@@ -18,6 +18,7 @@ public enum ToolId
     Arc,
     ArcThreePoints,
     Polyline,
+    Spline,
     Polygon,
     HorizontalDimension,
     VerticalDimension,

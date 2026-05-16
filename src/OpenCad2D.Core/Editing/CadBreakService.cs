@@ -42,6 +42,11 @@ public static class CadBreakService
                 breakPoint,
                 effectiveTolerance),
 
+            BezierSplineEntity spline => BreakPolylineAtPoint(
+                spline.ToPolylineApproximation(),
+                breakPoint,
+                effectiveTolerance),
+
             _ => Array.Empty<CadEntity>()
         };
     }
@@ -87,6 +92,12 @@ public static class CadBreakService
 
             PolylineEntity polyline => BreakPolylineBetweenPoints(
                 polyline,
+                firstBreakPoint,
+                secondBreakPoint,
+                effectiveTolerance),
+
+            BezierSplineEntity spline => BreakPolylineBetweenPoints(
+                spline.ToPolylineApproximation(),
                 firstBreakPoint,
                 secondBreakPoint,
                 effectiveTolerance),

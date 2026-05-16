@@ -43,6 +43,15 @@ public static class CadTrimService
             return Array.Empty<CadEntity>();
         }
 
+        if (target is BezierSplineEntity spline)
+        {
+            return TrimPolylineByBoundaries(
+                spline.ToPolylineApproximation(),
+                boundaries,
+                targetPickPoint,
+                effectiveTolerance);
+        }
+
         if (target is LineEntity line)
         {
             return TrimLineByBoundaries(
@@ -293,6 +302,7 @@ public static class CadTrimService
             new(0.0, segments[0].Start)
         };
 
+        double totalLength = segments.Sum(segment => segment.Length);
         double accumulated = 0.0;
         double pickParameter = GetPolylinePathParameter(target, pickPoint, tolerance);
         int intersectionCutCount = 0;
@@ -313,13 +323,13 @@ public static class CadTrimService
                         segment,
                         point,
                         tolerance);
+                    double pathParameter = accumulated +
+                                           Math.Clamp(localParameter, 0.0, 1.0) * segment.Length;
 
-                    if (localParameter > tolerance.Parameter &&
-                        localParameter < 1.0 - tolerance.Parameter)
+                    if (pathParameter > tolerance.Distance &&
+                        pathParameter < totalLength - tolerance.Distance)
                     {
-                        cuts.Add(new PathCut(
-                            accumulated + localParameter * segment.Length,
-                            point));
+                        cuts.Add(new PathCut(pathParameter, point));
                         intersectionCutCount++;
                     }
                 }

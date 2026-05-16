@@ -842,6 +842,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Spline_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Spline);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Polygon_Click(
         object? sender,
         RoutedEventArgs e)

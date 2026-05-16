@@ -34,6 +34,7 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
             EntityTypeNames.Ellipse => root.Deserialize<EllipseEntityDto>(options),
             EntityTypeNames.Arc => root.Deserialize<ArcEntityDto>(options),
             EntityTypeNames.Polyline => root.Deserialize<PolylineEntityDto>(options),
+            EntityTypeNames.BezierSpline => root.Deserialize<BezierSplineEntityDto>(options),
             _ => new UnknownEntityDto
             {
                 Type = type ?? string.Empty,
@@ -103,6 +104,10 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
 
             case PolylineEntityDto polyline:
                 JsonSerializer.Serialize(writer, polyline, options);
+                break;
+
+            case BezierSplineEntityDto spline:
+                JsonSerializer.Serialize(writer, spline, options);
                 break;
 
             case UnknownEntityDto unknown:

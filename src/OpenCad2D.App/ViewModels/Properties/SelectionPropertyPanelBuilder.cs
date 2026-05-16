@@ -162,6 +162,7 @@ public sealed class SelectionPropertyPanelBuilder
             CircleEntity circle => BuildCircleGeometrySection(workspace, circle, setMessage, refresh),
             EllipseEntity ellipse => BuildEllipseGeometrySection(ellipse),
             PolylineEntity polyline => BuildPolylineGeometrySection(workspace, polyline, setMessage, refresh),
+            BezierSplineEntity spline => BuildBezierSplineGeometrySection(spline),
             ArcEntity arc => BuildArcGeometrySection(workspace, arc, setMessage, refresh),
             _ => new PropertySectionViewModel(
                 "Geometry",
@@ -433,6 +434,20 @@ public sealed class SelectionPropertyPanelBuilder
         return new PropertySectionViewModel(
             "Geometry",
             rows);
+    }
+
+    private static PropertySectionViewModel BuildBezierSplineGeometrySection(BezierSplineEntity spline)
+    {
+        PolylineEntity approximation = spline.ToPolylineApproximation();
+        return new PropertySectionViewModel(
+            "Geometry",
+            new[]
+            {
+                Row("Control points", spline.ControlPoints.Count.ToString(CultureInfo.InvariantCulture)),
+                Row("Closed", PropertyValueFormatter.FormatBoolean(spline.IsClosed)),
+                Row("Approx. samples", approximation.Vertices.Count.ToString(CultureInfo.InvariantCulture)),
+                Row("Approx. length", PropertyValueFormatter.FormatLength(GetPolylineLength(approximation)))
+            });
     }
 
     private static PropertySectionViewModel BuildArcGeometrySection(
@@ -916,6 +931,7 @@ public sealed class SelectionPropertyPanelBuilder
             CircleEntity => "Circle",
             EllipseEntity => "Ellipse",
             PolylineEntity => "Polyline",
+            BezierSplineEntity => "Spline",
             ArcEntity => "Arc",
             _ => entity.Kind.ToString()
         };

@@ -19,6 +19,7 @@ public sealed class GripProviderRegistry
         Register(new EllipseGripProvider());
         Register(new ArcGripProvider());
         Register(new PolylineGripProvider());
+        Register(new BezierSplineGripProvider());
     }
 
     public IReadOnlyList<IGripProvider> Providers => _providers;

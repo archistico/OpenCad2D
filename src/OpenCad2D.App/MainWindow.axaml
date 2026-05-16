@@ -412,6 +412,12 @@
                                     ToolTip.Tip="Draw a polyline with multiple vertices"
                                     Click="Polyline_Click" />
 
+                            <Button x:Name="SplineButton"
+                                    Classes="tool-button"
+                                    Content="Spline"
+                                    ToolTip.Tip="Draw a Bezier spline with control points"
+                                    Click="Spline_Click" />
+
                             <Button x:Name="PolygonButton"
                                     Classes="tool-button"
                                     Content="Polygon"

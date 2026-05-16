@@ -11,7 +11,8 @@ Targets:
 - Line;
 - Arc;
 - Ellipse;
-- Polyline.
+- Polyline;
+- Bezier Spline, converted to an open polyline approximation.
 
 Circle is not applicable; use Break Segment for circles. Ellipse Break Point opens the ellipse into an approximated open polyline starting and ending at the break point.
 
@@ -34,7 +35,8 @@ Targets:
 - Arc;
 - Circle;
 - Ellipse;
-- Polyline.
+- Polyline;
+- Bezier Spline, converted to an open polyline approximation.
 
 Workflow:
 
@@ -90,7 +92,8 @@ Target support:
 - Circle;
 - Arc;
 - Ellipse;
-- Polyline.
+- Polyline;
+- Bezier Spline, converted to polyline approximation fragments.
 
 Workflow:
 
@@ -108,7 +111,8 @@ Features:
 - command remains active for repeated trims until cancelled or confirmed;
 - open and closed polylines, including regular polygons stored as closed `PolylineEntity`, can be trimmed;
 - trimmed polyline/polygon fragments are returned as open `PolylineEntity` fragments;
-- trimmed ellipse fragments are returned as open polyline approximations because the model currently has a full `EllipseEntity` but no partial ellipse-arc entity.
+- trimmed ellipse fragments are returned as open polyline approximations because the model currently has a full `EllipseEntity` but no partial ellipse-arc entity;
+- trimmed spline fragments are returned as open polyline approximations, preserving layer/style/draw-order metadata.
 
 ---
 
@@ -127,13 +131,14 @@ Targets:
 - Line;
 - Circle;
 - Arc;
-- straight-segment open/closed Polyline.
+- straight-segment open/closed Polyline;
+- Bezier Spline, offset through sampled polyline approximation.
 
 Rules:
 
 - line offset creates a parallel line;
 - circle/arc offset changes radius based on picked side;
-- polyline offset uses miter joins;
+- polyline/spline approximation offset uses miter joins;
 - invalid or degenerate results are rejected;
 - live preview is shown while choosing the side.
 

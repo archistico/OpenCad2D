@@ -175,7 +175,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity and not ArcEntity and not CircleEntity and not EllipseEntity and not PolylineEntity)
+        if (entity is not LineEntity and not ArcEntity and not CircleEntity and not EllipseEntity and not PolylineEntity and not BezierSplineEntity)
         {
             return ToolResult.None("Break Segment supports lines, arcs, circles, ellipses and polylines only.");
         }

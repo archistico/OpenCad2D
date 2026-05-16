@@ -41,6 +41,7 @@ public static class MeasurementService
             CircleEntity circle => MeasureCircle(circle),
             ArcEntity arc => MeasureArc(arc),
             PolylineEntity polyline => MeasurePolyline(polyline),
+            BezierSplineEntity spline => MeasureBezierSpline(spline),
             _ => throw new NotSupportedException(
                 $"Measurements are not supported for entity kind '{entity.Kind}'."),
         };
@@ -226,5 +227,16 @@ public static class MeasurementService
             area: area,
             vertexCount: polyline.Vertices.Count,
             isClosed: polyline.IsClosed);
+    }
+
+    private static EntityMeasurement MeasureBezierSpline(BezierSplineEntity spline)
+    {
+        PolylineEntity approximation = spline.ToPolylineApproximation();
+
+        return new EntityMeasurement(
+            EntityKind.BezierSpline,
+            length: CalculatePolylineLength(approximation),
+            vertexCount: spline.ControlPoints.Count,
+            isClosed: spline.IsClosed);
     }
 }

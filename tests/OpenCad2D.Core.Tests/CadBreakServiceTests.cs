@@ -423,4 +423,41 @@ public sealed class CadBreakServiceTests
             Math.Sin(radians) * radius);
     }
 
+    [Fact]
+    public void BreakAtPoint_WithBezierSpline_ShouldReturnPolylineApproximationFragments()
+    {
+        var spline = new BezierSplineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 10),
+            new Point2D(10, 0)
+        });
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakAtPoint(
+            spline,
+            new Point2D(5, 5));
+
+        Assert.NotEmpty(result);
+        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
+    }
+
+    [Fact]
+    public void BreakBetweenPoints_WithBezierSpline_ShouldReturnPolylineApproximationFragments()
+    {
+        var spline = new BezierSplineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 10),
+            new Point2D(10, 0)
+        });
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakBetweenPoints(
+            spline,
+            new Point2D(2.5, 3.75),
+            new Point2D(7.5, 3.75));
+
+        Assert.NotEmpty(result);
+        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
+    }
+
 }

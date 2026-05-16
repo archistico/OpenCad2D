@@ -93,6 +93,9 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("POLYLINE", ToolId.Polyline);
         yield return new CommandAlias("PL", ToolId.Polyline);
 
+        yield return new CommandAlias("SPLINE", ToolId.Spline);
+        yield return new CommandAlias("SPL", ToolId.Spline);
+
         yield return new CommandAlias("POLYGON", ToolId.Polygon);
         yield return new CommandAlias("PG", ToolId.Polygon);
 

@@ -49,6 +49,14 @@ public sealed class MidpointSnapProvider : ISnapProvider
             case ArcEntity arc:
                 yield return GetArcMidpoint(arc.Geometry);
                 break;
+
+            case BezierSplineEntity spline:
+                foreach (LineSegment2D segment in spline.ToPolylineApproximation().Geometry.GetSegments())
+                {
+                    yield return segment.Midpoint;
+                }
+
+                break;
         }
     }
 

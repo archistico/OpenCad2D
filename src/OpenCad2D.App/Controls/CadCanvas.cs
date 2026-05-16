@@ -1082,6 +1082,10 @@ public sealed class CadCanvas : Control
                 DrawPolylinePreview(context, polylineTool);
                 break;
 
+            case SplineTool splineTool:
+                DrawSplinePreview(context, splineTool);
+                break;
+
             case PolygonTool polygonTool:
                 DrawPolygonPreview(context, polygonTool);
                 break;
@@ -1685,6 +1689,21 @@ public sealed class CadCanvas : Control
         }
     }
 
+    private void DrawSplinePreview(
+        DrawingContext context,
+        SplineTool tool)
+    {
+        BezierSplineEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
     private void DrawPolygonPreview(
         DrawingContext context,
         PolygonTool tool)
@@ -1981,6 +2000,13 @@ public sealed class CadCanvas : Control
                 DrawPolyline(
                     context,
                     polyline,
+                    pen);
+                break;
+
+            case BezierSplineEntity spline:
+                DrawBezierSpline(
+                    context,
+                    spline,
                     pen);
                 break;
         }
@@ -2313,6 +2339,30 @@ public sealed class CadCanvas : Control
                 pen,
                 ToScreenPoint(start),
                 ToScreenPoint(end));
+        }
+    }
+
+    private void DrawBezierSpline(
+        DrawingContext context,
+        BezierSplineEntity spline,
+        Pen pen)
+    {
+        IReadOnlyList<Point2D> points = spline.GetSamplePoints();
+
+        for (int i = 0; i < points.Count - 1; i++)
+        {
+            context.DrawLine(
+                pen,
+                ToScreenPoint(points[i]),
+                ToScreenPoint(points[i + 1]));
+        }
+
+        if (spline.IsClosed && points.Count > 1)
+        {
+            context.DrawLine(
+                pen,
+                ToScreenPoint(points[^1]),
+                ToScreenPoint(points[0]));
         }
     }
 

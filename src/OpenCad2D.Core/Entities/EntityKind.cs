@@ -18,5 +18,6 @@ public enum EntityKind
     Circle,
     Ellipse,
     Arc,
-    Polyline
+    Polyline,
+    BezierSpline
 }

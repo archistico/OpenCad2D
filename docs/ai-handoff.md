@@ -1811,3 +1811,14 @@ Verified and strengthened modification coverage for polylines and polygon-like c
 Operational note: regular polygons are stored as closed `PolylineEntity`, so the same Trim/Break rules apply to both manually drawn closed polylines and polygons created by the Polygon tool.
 
 Next planned block: multiline text (`MTEXT`) with insertion point, multiline dialog, persistence and export.
+
+
+### Block 6 — SPLINE phase 1
+
+Added initial Bezier spline support. The new `BezierSplineEntity` stores control points and an open/closed flag, evaluates the curve with De Casteljau sampling, and exposes `ToPolylineApproximation()` for modify/export workflows that need segment geometry.
+
+Implemented `SplineTool` with `SPLINE` / `SPL` aliases. Workflow: specify control points, `Undo` removes the last control point, `Close` creates a closed spline, Enter creates an open spline. Rendering and preview draw the sampled curve. Grip editing exposes each control point plus a move-entity grip.
+
+Export/persistence status: JSON round-trip includes `BezierSplineEntityDto`; SVG/PDF export use sampled polyline/polygon approximations; DXF export writes a `SPLINE` entity with control points. DXF import is still deferred.
+
+Modify support: Trim, Break Point, Break Segment and Offset accept splines by converting them to sampled `PolylineEntity` geometry. Result fragments are currently polylines, not partial spline entities. This is intentional for phase 1 and avoids introducing a partial spline model before the core curve behavior stabilizes.

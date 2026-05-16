@@ -195,6 +195,26 @@ public sealed class CadTrimServiceTests
         Assert.Contains(polyline.Vertices, point => Math.Abs(point.X) <= 1.0e-6 && Math.Abs(point.Y - 5) <= 1.0e-6);
         Assert.Contains(polyline.Vertices, point => Math.Abs(point.X) <= 1.0e-6 && Math.Abs(point.Y + 5) <= 1.0e-6);
     }
+
+    [Fact]
+    public void TrimBezierSpline_ByLineBoundary_ShouldCreatePolylineFragments()
+    {
+        var target = new BezierSplineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 10),
+            new Point2D(10, 0)
+        });
+        var boundary = new LineEntity(new Point2D(5, -5), new Point2D(5, 15));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(3, 4));
+
+        Assert.NotEmpty(result);
+        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
+    }
 }
 
 public sealed class CadTrimServiceTwoBoundaryTests

@@ -126,6 +126,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Spline,
+                "Spline",
+                "Spline",
+                "Draw"),
+            () => new SplineTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Polygon,
                 "Polygon",
                 "Polygon",

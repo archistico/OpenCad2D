@@ -394,6 +394,13 @@ public sealed class SvgExporter : ISvgExporter
                 height,
                 margin),
 
+            BezierSplineEntity spline => ExportBezierSpline(
+                spline,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
             ArcEntity arc => ExportArc(
                 arc,
                 lineFormat,
@@ -637,6 +644,30 @@ public sealed class SvgExporter : ISvgExporter
             }));
 
         return $"  <polygon points=\"{points}\" {StrokeAttributes(lineFormat)} />";
+    }
+
+    private static string ExportBezierSpline(
+        BezierSplineEntity spline,
+        LineFormat lineFormat,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        string points = string.Join(
+            " ",
+            spline.GetSamplePoints().Select(point =>
+            {
+                Point2D svgPoint = ToSvgPoint(
+                    point,
+                    bounds,
+                    svgHeight,
+                    margin);
+
+                return $"{Format(svgPoint.X)},{Format(svgPoint.Y)}";
+            }));
+
+        string elementName = spline.IsClosed ? "polygon" : "polyline";
+        return $"  <{elementName} points=\"{points}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static string ExportPolyline(

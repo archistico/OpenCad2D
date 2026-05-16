@@ -361,6 +361,14 @@ public sealed class DxfExporter : IDxfExporter
                         polyline,
                         contentBounds);
                     break;
+
+                case BezierSplineEntity spline:
+                    WriteBezierSpline(
+                        writer,
+                        layer.Name,
+                        spline,
+                        contentBounds);
+                    break;
             }
         }
 
@@ -714,6 +722,35 @@ public sealed class DxfExporter : IDxfExporter
 
             writer.WriteGroup(10, dxfVertex.X);
             writer.WriteGroup(20, dxfVertex.Y);
+        }
+    }
+
+
+    private static void WriteBezierSpline(
+        DxfDocumentWriter writer,
+        string layerName,
+        BezierSplineEntity spline,
+        BoundingBox2D? contentBounds)
+    {
+        writer.WriteGroup(0, "SPLINE");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(70, spline.IsClosed ? 11 : 8);
+        writer.WriteGroup(71, Math.Min(3, spline.ControlPoints.Count - 1));
+        writer.WriteGroup(72, 0);
+        writer.WriteGroup(73, spline.ControlPoints.Count);
+        writer.WriteGroup(74, 0);
+
+        foreach (Point2D controlPoint in spline.ControlPoints)
+        {
+            Point2D dxfPoint = ToDxfPoint(
+                controlPoint,
+                contentBounds);
+
+            writer.WriteGroup(10, dxfPoint.X);
+            writer.WriteGroup(20, dxfPoint.Y);
+            writer.WriteGroup(30, 0.0);
         }
     }
 

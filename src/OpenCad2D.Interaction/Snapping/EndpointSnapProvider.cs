@@ -59,6 +59,14 @@ public sealed class EndpointSnapProvider : ISnapProvider
 
                 break;
 
+            case BezierSplineEntity spline:
+                foreach (Point2D point in spline.ControlPoints)
+                {
+                    yield return point;
+                }
+
+                break;
+
             case ArcEntity arc:
                 yield return arc.Geometry.StartPoint;
                 yield return arc.Geometry.EndPoint;
