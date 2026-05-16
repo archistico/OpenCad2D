@@ -22,8 +22,12 @@ public sealed class TextFormatManagerWindowViewModel : INotifyPropertyChanged
         ArgumentNullException.ThrowIfNull(document);
 
         _usedTextFormatIds = document.Entities.All
-            .OfType<TextEntity>()
-            .Select(entity => entity.TextFormatId)
+            .SelectMany(entity => entity switch
+            {
+                TextEntity text => new[] { text.TextFormatId },
+                MultilineTextEntity multilineText => new[] { multilineText.TextFormatId },
+                _ => Array.Empty<TextFormatId>()
+            })
             .ToHashSet();
 
         Formats = new ObservableCollection<EditableTextFormatViewModel>(

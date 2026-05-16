@@ -85,6 +85,7 @@ The project currently supports:
 - v0.4 basic dimensions are implemented: horizontal, vertical, aligned, radius, diameter and angular dimensions with non-associative entities, tools, preview, rendering, persistence and SVG/DXF graphical export;
 - `PointTool`;
 - `TextTool` for single-line text;
+- `MultilineTextTool` / `MTEXT` for multiline annotation text;
 - `LineTool`;
 - `RectangleTool`;
 - `RectangleBySidesTool`;
@@ -539,7 +540,7 @@ Implemented text model:
 - SVG and DXF text export;
 - tests for format validation, manager behavior and undo/redo.
 
-Text entities are intentionally single-line for now. They store content, insertion point, rotation and format id. They do not store font, height, color, bold or italic directly.
+Text annotations now include `TextEntity` for single-line text and `MultilineTextEntity` for MTEXT-style multiline notes. Both store content, insertion point, rotation and format id. They do not store font, height, color, bold or italic directly.
 
 
 ## Grid and viewport culling status
@@ -624,6 +625,7 @@ Polyline closed -> <polygon>
 ArcEntity       -> <path>
 PointEntity     -> marker
 TextEntity      -> <text>
+MultilineTextEntity -> <text> with <tspan> lines
 Dimensions      -> graphical primitives
 ```
 

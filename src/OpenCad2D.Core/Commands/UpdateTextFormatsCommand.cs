@@ -13,7 +13,7 @@ public sealed class UpdateTextFormatsCommand : ICadCommand
 {
     private readonly IReadOnlyList<TextFormat> _oldFormats;
     private readonly IReadOnlyList<TextFormat> _newFormats;
-    private IReadOnlyList<TextEntity>? _oldTextEntities;
+    private IReadOnlyList<CadEntity>? _oldTextEntities;
 
     public UpdateTextFormatsCommand(
         IEnumerable<TextFormat> oldFormats,
@@ -44,7 +44,7 @@ public sealed class UpdateTextFormatsCommand : ICadCommand
         EnsureStandardExists(nextCollection);
 
         _oldTextEntities ??= document.Entities.All
-            .OfType<TextEntity>()
+            .Where(entity => entity is TextEntity or MultilineTextEntity)
             .ToList();
 
         document.ReplaceTextFormats(nextCollection);
@@ -68,7 +68,7 @@ public sealed class UpdateTextFormatsCommand : ICadCommand
             return;
         }
 
-        foreach (TextEntity oldTextEntity in _oldTextEntities)
+        foreach (CadEntity oldTextEntity in _oldTextEntities)
         {
             if (document.Entities.Contains(oldTextEntity.Id))
             {
@@ -90,13 +90,19 @@ public sealed class UpdateTextFormatsCommand : ICadCommand
         CadDocument document,
         TextFormatCollection formats)
     {
-        List<TextEntity> rebasedTextEntities = document.Entities.All
-            .OfType<TextEntity>()
-            .Where(entity => !formats.Contains(entity.TextFormatId))
-            .Select(entity => entity.WithTextFormat(TextFormatId.Standard))
+        List<CadEntity> rebasedTextEntities = document.Entities.All
+            .Where(entity =>
+                entity is TextEntity text && !formats.Contains(text.TextFormatId) ||
+                entity is MultilineTextEntity multilineText && !formats.Contains(multilineText.TextFormatId))
+            .Select(entity => entity switch
+            {
+                TextEntity text => text.WithTextFormat(TextFormatId.Standard),
+                MultilineTextEntity multilineText => multilineText.WithTextFormat(TextFormatId.Standard),
+                _ => entity
+            })
             .ToList();
 
-        foreach (TextEntity rebasedTextEntity in rebasedTextEntities)
+        foreach (CadEntity rebasedTextEntity in rebasedTextEntities)
         {
             document.Entities.Replace(rebasedTextEntity);
         }

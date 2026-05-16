@@ -745,6 +745,15 @@ public partial class MainWindow : Window
         CadCanvas.Focus();
     }
 
+    private void MultilineText_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.MultilineText);
+        RefreshStatus();
+        CadCanvas.Focus();
+    }
+
     private void Line_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1901,6 +1910,11 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             TextButton,
             activeToolName.Equals("Text", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            MultilineTextButton,
+            activeToolName.Equals("Multiline Text", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("MultilineText", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             LineButton,

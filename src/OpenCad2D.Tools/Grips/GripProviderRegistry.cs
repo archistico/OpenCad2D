@@ -13,6 +13,7 @@ public sealed class GripProviderRegistry
     {
         Register(new PointGripProvider());
         Register(new TextGripProvider());
+        Register(new MultilineTextGripProvider());
         Register(new LineGripProvider());
         Register(new CircleGripProvider());
         Register(new EllipseGripProvider());

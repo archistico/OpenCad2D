@@ -473,6 +473,17 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 TextFormatId = text.TextFormatId.Value
             },
 
+            MultilineTextEntity multilineText => new MultilineTextEntityDto
+            {
+                Id = multilineText.Id.ToString(),
+                LayerId = multilineText.LayerId.Value,
+                Text = multilineText.Text,
+                InsertionX = multilineText.InsertionPoint.X,
+                InsertionY = multilineText.InsertionPoint.Y,
+                RotationDegrees = multilineText.RotationDegrees,
+                TextFormatId = multilineText.TextFormatId.Value
+            },
+
             LinearDimensionEntity linearDimension => new LinearDimensionEntityDto
             {
                 Id = linearDimension.Id.ToString(),
@@ -828,6 +839,18 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     string.IsNullOrWhiteSpace(text.TextFormatId)
                         ? TextFormatId.Standard
                         : new TextFormatId(text.TextFormatId),
+                    id,
+                    layerId),
+
+            MultilineTextEntityDto multilineText => string.IsNullOrWhiteSpace(multilineText.Text)
+                ? null
+                : new MultilineTextEntity(
+                    new Point2D(multilineText.InsertionX, multilineText.InsertionY),
+                    multilineText.Text,
+                    multilineText.RotationDegrees,
+                    string.IsNullOrWhiteSpace(multilineText.TextFormatId)
+                        ? TextFormatId.Standard
+                        : new TextFormatId(multilineText.TextFormatId),
                     id,
                     layerId),
 

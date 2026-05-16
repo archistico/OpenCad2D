@@ -13,6 +13,7 @@ namespace OpenCad2D.App;
 public partial class TextInputWindow : Window
 {
     private readonly IReadOnlyList<TextFormat> _formats;
+    private readonly bool _isMultiline;
 
     public TextInputWindow()
         : this(new TextInputRequest(
@@ -32,6 +33,14 @@ public partial class TextInputWindow : Window
         _formats = request.TextFormats.Count > 0
             ? request.TextFormats
             : TextFormatCollection.Default.All;
+        _isMultiline = request.IsMultiline;
+
+        Title = _isMultiline ? "Insert Multiline Text" : "Insert Text";
+        TextLabel.Text = _isMultiline ? "Multiline text" : "Text";
+        TextValueTextBox.AcceptsReturn = _isMultiline;
+        TextValueTextBox.TextWrapping = _isMultiline ? Avalonia.Media.TextWrapping.Wrap : Avalonia.Media.TextWrapping.NoWrap;
+        TextValueTextBox.MaxLines = _isMultiline ? 8 : 1;
+        TextValueTextBox.MinHeight = _isMultiline ? 120 : 30;
 
         TextFormatComboBox.ItemsSource = _formats
             .Select(format => format.Name)
@@ -51,7 +60,7 @@ public partial class TextInputWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        string text = TextValueTextBox.Text?.Trim() ?? string.Empty;
+        string text = NormalizeDialogText(TextValueTextBox.Text);
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -84,5 +93,13 @@ public partial class TextInputWindow : Window
         RoutedEventArgs e)
     {
         Close(null);
+    }
+
+    private static string NormalizeDialogText(string? text)
+    {
+        return (text ?? string.Empty)
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Trim();
     }
 }

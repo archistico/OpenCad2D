@@ -8,6 +8,7 @@ public static class EntityTypeNames
     public const string Point = "Point";
 
     public const string Text = "Text";
+    public const string MultilineText = "MultilineText";
     public const string LinearDimension = "LinearDimension";
     public const string AlignedDimension = "AlignedDimension";
     public const string RadiusDimension = "RadiusDimension";

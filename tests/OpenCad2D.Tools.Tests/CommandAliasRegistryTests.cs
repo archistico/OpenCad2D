@@ -8,6 +8,8 @@ public sealed class CommandAliasRegistryTests
     [Theory]
     [InlineData("L", ToolId.Line)]
     [InlineData("line", ToolId.Line)]
+    [InlineData("MTEXT", ToolId.MultilineText)]
+    [InlineData("mt", ToolId.MultilineText)]
     [InlineData("C", ToolId.Circle)]
     [InlineData("EL", ToolId.Ellipse)]
     [InlineData("ellipse", ToolId.Ellipse)]

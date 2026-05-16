@@ -54,6 +54,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.MultilineText,
+                "MultilineText",
+                "MText",
+                "Draw"),
+            () => new MultilineTextTool(textInputProvider));
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Line,
                 "Line",
                 "Line",

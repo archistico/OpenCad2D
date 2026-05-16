@@ -261,6 +261,16 @@ public sealed class DxfExporter : IDxfExporter
                         options);
                     break;
 
+                case MultilineTextEntity multilineText:
+                    WriteMultilineText(
+                        writer,
+                        document,
+                        layer.Name,
+                        multilineText,
+                        contentBounds,
+                        options);
+                    break;
+
                 case LinearDimensionEntity linearDimension:
                     WriteDimension(
                         writer,
@@ -508,6 +518,45 @@ public sealed class DxfExporter : IDxfExporter
             text.RotationDegrees,
             options));
         writer.WriteGroup(7, textFormat.Name);
+    }
+
+    private static void WriteMultilineText(
+        DxfDocumentWriter writer,
+        CadDocument document,
+        string layerName,
+        MultilineTextEntity text,
+        BoundingBox2D? contentBounds,
+        DxfExportOptions options)
+    {
+        Point2D position = ToDxfPoint(
+            text.InsertionPoint,
+            contentBounds);
+
+        TextFormat textFormat = ResolveTextFormat(
+            document,
+            text);
+
+        writer.WriteGroup(0, "MTEXT");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, position.X);
+        writer.WriteGroup(20, position.Y);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(40, textFormat.Height);
+        writer.WriteGroup(1, ToDxfMTextContent(text.Text));
+        writer.WriteGroup(50, ToDxfRotationDegrees(
+            text.RotationDegrees,
+            options));
+        writer.WriteGroup(7, textFormat.Name);
+    }
+
+    private static string ToDxfMTextContent(string text)
+    {
+        return text
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n')
+            .Replace("\n", "\\P", StringComparison.Ordinal);
     }
 
     private static void WritePoint(
@@ -813,8 +862,26 @@ public sealed class DxfExporter : IDxfExporter
         CadDocument document,
         TextEntity text)
     {
+        return ResolveTextFormat(
+            document,
+            text.TextFormatId);
+    }
+
+    private static TextFormat ResolveTextFormat(
+        CadDocument document,
+        MultilineTextEntity text)
+    {
+        return ResolveTextFormat(
+            document,
+            text.TextFormatId);
+    }
+
+    private static TextFormat ResolveTextFormat(
+        CadDocument document,
+        TextFormatId textFormatId)
+    {
         if (document.TextFormats.TryGetById(
-                text.TextFormatId,
+                textFormatId,
                 out TextFormat? format) &&
             format is not null)
         {

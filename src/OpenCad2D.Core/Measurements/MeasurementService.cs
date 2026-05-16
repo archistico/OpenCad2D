@@ -31,6 +31,7 @@ public static class MeasurementService
         {
             PointEntity point => MeasurePoint(point),
             TextEntity text => MeasureText(text),
+            MultilineTextEntity multilineText => MeasureMultilineText(multilineText),
             LinearDimensionEntity linearDimension => MeasureLinearDimension(linearDimension),
             AlignedDimensionEntity alignedDimension => MeasureAlignedDimension(alignedDimension),
             RadiusDimensionEntity radiusDimension => MeasureRadiusDimension(radiusDimension),
@@ -123,6 +124,13 @@ public static class MeasurementService
         ArgumentNullException.ThrowIfNull(text);
 
         return new EntityMeasurement(EntityKind.Text);
+    }
+
+    private static EntityMeasurement MeasureMultilineText(MultilineTextEntity text)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+
+        return new EntityMeasurement(EntityKind.MultilineText);
     }
 
     private static EntityMeasurement MeasureLinearDimension(LinearDimensionEntity dimension)

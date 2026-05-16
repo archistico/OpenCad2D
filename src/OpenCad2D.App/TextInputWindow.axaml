@@ -4,7 +4,7 @@
         Title="Insert Text"
         Icon="/Assets/app-icon.ico"
         Width="420"
-        Height="250"
+        Height="360"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="#252526">
@@ -14,17 +14,21 @@
               RowSpacing="12">
 
             <TextBlock Grid.Row="0"
-                       Text="Single-line text"
+                       Text="Text"
                        Foreground="#FFFFFF"
                        FontSize="18"
                        FontWeight="Bold" />
 
             <StackPanel Grid.Row="1"
                         Spacing="5">
-                <TextBlock Text="Text"
+                <TextBlock x:Name="TextLabel"
+                           Text="Text"
                            Foreground="#CCCCCC" />
                 <TextBox x:Name="TextValueTextBox"
                          PlaceholderText="Text to insert"
+                         AcceptsReturn="False"
+                         TextWrapping="NoWrap"
+                         MinHeight="30"
                          MaxLines="1" />
             </StackPanel>
 

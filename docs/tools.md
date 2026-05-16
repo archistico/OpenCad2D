@@ -24,6 +24,7 @@ Implemented:
 
 - `PointTool`
 - `TextTool`
+- `MultilineTextTool`
 - `LineTool`
 - `RectangleTool`
 - `RectangleBySidesTool`
@@ -33,7 +34,7 @@ Implemented:
 - `ArcThreePointsTool`
 - `PolylineTool`
 
-`LINE` creates a single segment and then ends. `POLYLINE` supports `Close`, `Undo` and Enter to finish an open polyline.
+`MTEXT` inserts multiline annotation text through the text dialog. `LINE` creates a single segment and then ends. `POLYLINE` supports `Close`, `Undo` and Enter to finish an open polyline.
 
 ---
 

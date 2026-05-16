@@ -152,6 +152,7 @@ public sealed class SelectionPropertyPanelBuilder
         {
             PointEntity point => BuildPointGeometrySection(workspace, point, setMessage, refresh),
             TextEntity text => BuildTextGeometrySection(workspace, text, setMessage, refresh),
+            MultilineTextEntity multilineText => BuildMultilineTextGeometrySection(multilineText),
             LinearDimensionEntity linearDimension => BuildLinearDimensionGeometrySection(workspace, linearDimension, setMessage, refresh),
             AlignedDimensionEntity alignedDimension => BuildAlignedDimensionGeometrySection(workspace, alignedDimension, setMessage, refresh),
             RadiusDimensionEntity radiusDimension => BuildRadiusDimensionGeometrySection(workspace, radiusDimension, setMessage, refresh),
@@ -206,6 +207,24 @@ public sealed class SelectionPropertyPanelBuilder
                 EditableRow("Y", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.Y), value => ReplaceTextCoordinate(workspace, text.Id, value, updateX: false, setMessage, refresh)),
                 EditableRow("Rotation", PropertyValueFormatter.FormatCoordinate(text.RotationDegrees), value => ReplaceTextRotation(workspace, text.Id, value, setMessage, refresh)),
                 EditableRow("Text format", text.TextFormatId.Value, value => ReplaceTextFormat(workspace, text.Id, value, setMessage, refresh))
+            });
+    }
+
+
+    private static PropertySectionViewModel BuildMultilineTextGeometrySection(
+        MultilineTextEntity text)
+    {
+        return new PropertySectionViewModel(
+            "Multiline Text",
+            new[]
+            {
+                Row("Value", text.Text),
+                Row("Insertion", PropertyValueFormatter.FormatPoint(text.InsertionPoint)),
+                Row("X", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.X)),
+                Row("Y", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.Y)),
+                Row("Rotation", PropertyValueFormatter.FormatCoordinate(text.RotationDegrees)),
+                Row("Text format", text.TextFormatId.Value),
+                Row("Lines", text.Lines.Count.ToString(System.Globalization.CultureInfo.InvariantCulture))
             });
     }
 
@@ -887,6 +906,7 @@ public sealed class SelectionPropertyPanelBuilder
         {
             PointEntity => "Point",
             TextEntity => "Text",
+            MultilineTextEntity => "Multiline Text",
             LinearDimensionEntity linearDimension => linearDimension.Orientation == DimensionOrientation.Horizontal ? "Horizontal Dimension" : "Vertical Dimension",
             AlignedDimensionEntity => "Aligned Dimension",
             RadiusDimensionEntity => "Radius Dimension",

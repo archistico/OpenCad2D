@@ -366,6 +366,16 @@ public sealed class DxfDocumentImporter : IDxfImporter
                 continue;
             }
 
+            if (entityRecord.Type == "MTEXT")
+            {
+                ImportMultilineText(
+                    entityRecord,
+                    document,
+                    log);
+
+                continue;
+            }
+
             log.Add(new DxfImportLogEntry(
                 DxfImportLogSeverity.Warning,
                 $"Skipped unsupported DXF entity: {entityRecord.Type}.",
@@ -761,6 +771,77 @@ public sealed class DxfDocumentImporter : IDxfImporter
         }
 
         return (flags & 1) == 1;
+    }
+
+    private static void ImportMultilineText(
+        DxfEntityRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        if (!TryReadPoint(
+                record,
+                xCode: 10,
+                yCode: 20,
+                pointName: "insertion point",
+                log,
+                out Point2D insertionPoint) ||
+            !TryReadRequiredString(
+                record,
+                code: 1,
+                fieldName: "MTEXT value",
+                log,
+                out string text))
+        {
+            return;
+        }
+
+        text = FromDxfMTextContent(text);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped MTEXT entity because its text value is empty.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        double rotationDegrees = 0.0;
+
+        if (!TryReadOptionalDouble(
+                record,
+                code: 50,
+                fieldName: "MTEXT rotation",
+                log,
+                out double? parsedRotationDegrees))
+        {
+            return;
+        }
+
+        if (parsedRotationDegrees.HasValue)
+        {
+            rotationDegrees = parsedRotationDegrees.Value;
+        }
+
+        LayerId layerId = EnsureLayer(
+            document,
+            GetLayerName(record));
+
+        document.AddEntity(new MultilineTextEntity(
+            insertionPoint,
+            text,
+            rotationDegrees,
+            TextFormatId.Standard,
+            layerId: layerId));
+    }
+
+    private static string FromDxfMTextContent(string text)
+    {
+        return text
+            .Replace("\\P", "\n", StringComparison.Ordinal)
+            .Replace("\\p", "\n", StringComparison.Ordinal)
+            .Trim();
     }
 
     private static void ImportText(

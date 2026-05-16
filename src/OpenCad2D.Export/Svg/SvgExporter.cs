@@ -319,6 +319,13 @@ public sealed class SvgExporter : ISvgExporter
                 height,
                 margin),
 
+            MultilineTextEntity multilineText => ExportMultilineText(
+                document,
+                multilineText,
+                contentBounds.Value,
+                height,
+                margin),
+
             LinearDimensionEntity linearDimension => ExportDimension(
                 document,
                 linearDimension,
@@ -515,6 +522,42 @@ public sealed class SvgExporter : ISvgExporter
         string fontStyle = format.IsItalic ? "italic" : "normal";
 
         return $"  <text x=\"{Format(point.X)}\" y=\"{Format(point.Y)}\" font-family=\"{Escape(format.FontFamily)}\" font-size=\"{Format(format.Height)}\" font-weight=\"{fontWeight}\" font-style=\"{fontStyle}\" fill=\"{ToHex(format.Color)}\" transform=\"rotate({Format(svgRotation)} {Format(point.X)} {Format(point.Y)})\">{Escape(text.Text)}</text>";
+    }
+
+    private static string ExportMultilineText(
+        CadDocument document,
+        MultilineTextEntity text,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        TextFormat format = ResolveTextFormat(
+            document,
+            text);
+
+        Point2D point = ToSvgPoint(
+            text.InsertionPoint,
+            bounds,
+            svgHeight,
+            margin);
+
+        double svgRotation = -text.RotationDegrees;
+        string fontWeight = format.IsBold ? "bold" : "normal";
+        string fontStyle = format.IsItalic ? "italic" : "normal";
+        double lineHeight = format.Height * 1.2;
+
+        var builder = new System.Text.StringBuilder();
+        builder.Append($"  <text x=\"{Format(point.X)}\" y=\"{Format(point.Y)}\" font-family=\"{Escape(format.FontFamily)}\" font-size=\"{Format(format.Height)}\" font-weight=\"{fontWeight}\" font-style=\"{fontStyle}\" fill=\"{ToHex(format.Color)}\" transform=\"rotate({Format(svgRotation)} {Format(point.X)} {Format(point.Y)})\">");
+
+        IReadOnlyList<string> lines = text.Lines;
+        for (int index = 0; index < lines.Count; index++)
+        {
+            string dy = index == 0 ? "0" : Format(lineHeight);
+            builder.Append($"<tspan x=\"{Format(point.X)}\" dy=\"{dy}\">{Escape(lines[index])}</tspan>");
+        }
+
+        builder.Append("</text>");
+        return builder.ToString();
     }
 
     private static string ExportPoint(
@@ -725,8 +768,26 @@ public sealed class SvgExporter : ISvgExporter
         CadDocument document,
         TextEntity text)
     {
+        return ResolveTextFormat(
+            document,
+            text.TextFormatId);
+    }
+
+    private static TextFormat ResolveTextFormat(
+        CadDocument document,
+        MultilineTextEntity text)
+    {
+        return ResolveTextFormat(
+            document,
+            text.TextFormatId);
+    }
+
+    private static TextFormat ResolveTextFormat(
+        CadDocument document,
+        TextFormatId textFormatId)
+    {
         if (document.TextFormats.TryGetById(
-                text.TextFormatId,
+                textFormatId,
                 out TextFormat? format) &&
             format is not null)
         {

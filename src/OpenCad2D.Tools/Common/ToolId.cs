@@ -9,6 +9,7 @@ public enum ToolId
     ZoomWindow,
     Point,
     Text,
+    MultilineText,
     Line,
     Rectangle,
     RectangleBySides,

@@ -281,6 +281,14 @@ public sealed class PdfExporter : IPdfExporter
                     context);
                 break;
 
+            case MultilineTextEntity multilineText:
+                WriteMultilineText(
+                    builder,
+                    document,
+                    multilineText,
+                    context);
+                break;
+
             case LinearDimensionEntity linearDimension:
                 WriteDimension(
                     builder,
@@ -606,6 +614,46 @@ public sealed class PdfExporter : IPdfExporter
         builder.AppendLine("ET");
     }
 
+    private static void WriteMultilineText(
+        StringBuilder builder,
+        CadDocument document,
+        MultilineTextEntity text,
+        PdfExportContext context)
+    {
+        TextFormat format = ResolveTextFormat(
+            document,
+            text);
+        CadColor color = GetExportColor(
+            format.Color,
+            context.UsePrintFriendlyColors);
+        Point2D point = ToPdfPoint(
+            text.InsertionPoint,
+            context);
+        double fontSize = Math.Max(1.0, format.Height * context.Scale);
+        double lineHeight = fontSize * 1.2;
+        double radians = -text.RotationDegrees * Math.PI / 180.0;
+        double cos = Math.Cos(radians);
+        double sin = Math.Sin(radians);
+
+        builder.AppendLine("BT");
+        builder.AppendLine($"{Format(color.R / 255.0)} {Format(color.G / 255.0)} {Format(color.B / 255.0)} rg");
+        builder.AppendLine($"/F1 {Format(fontSize)} Tf");
+        builder.AppendLine($"{Format(cos)} {Format(sin)} {Format(-sin)} {Format(cos)} {Format(point.X)} {Format(point.Y)} Tm");
+
+        IReadOnlyList<string> lines = text.Lines;
+        for (int index = 0; index < lines.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.AppendLine($"0 -{Format(lineHeight)} Td");
+            }
+
+            builder.AppendLine($"({EscapePdfString(lines[index])}) Tj");
+        }
+
+        builder.AppendLine("ET");
+    }
+
     private static void WriteText(
         StringBuilder builder,
         CadDocument document,
@@ -695,8 +743,26 @@ public sealed class PdfExporter : IPdfExporter
         CadDocument document,
         TextEntity text)
     {
+        return ResolveTextFormat(
+            document,
+            text.TextFormatId);
+    }
+
+    private static TextFormat ResolveTextFormat(
+        CadDocument document,
+        MultilineTextEntity text)
+    {
+        return ResolveTextFormat(
+            document,
+            text.TextFormatId);
+    }
+
+    private static TextFormat ResolveTextFormat(
+        CadDocument document,
+        TextFormatId textFormatId)
+    {
         if (document.TextFormats.TryGetById(
-            text.TextFormatId,
+            textFormatId,
             out TextFormat? format) &&
             format is not null)
         {

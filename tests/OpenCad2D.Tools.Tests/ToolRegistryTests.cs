@@ -19,6 +19,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.ZoomWindow));
         Assert.True(registry.Contains(ToolId.Point));
         Assert.True(registry.Contains(ToolId.Text));
+        Assert.True(registry.Contains(ToolId.MultilineText));
         Assert.True(registry.Contains(ToolId.Line));
         Assert.True(registry.Contains(ToolId.Rectangle));
         Assert.True(registry.Contains(ToolId.RectangleBySides));
@@ -60,7 +61,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(36, tools.Count);
+        Assert.Equal(37, tools.Count);
 
         Assert.Contains(
             tools,
@@ -77,6 +78,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Text);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.MultilineText);
 
         Assert.Contains(
             tools,
@@ -227,9 +232,10 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
 
-        Assert.Equal(11, tools.Count);
+        Assert.Equal(12, tools.Count);
         Assert.Contains(tools, tool => tool.Id == ToolId.Point);
         Assert.Contains(tools, tool => tool.Id == ToolId.Text);
+        Assert.Contains(tools, tool => tool.Id == ToolId.MultilineText);
         Assert.Contains(tools, tool => tool.Id == ToolId.Line);
         Assert.Contains(tools, tool => tool.Id == ToolId.Rectangle);
         Assert.Contains(tools, tool => tool.Id == ToolId.RectangleBySides);
@@ -363,6 +369,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<TextTool>(tool);
         Assert.Equal("Text", tool.Name);
+    }
+
+    [Fact]
+    public void Create_MultilineText_ShouldReturnMultilineTextTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.MultilineText);
+
+        Assert.IsType<MultilineTextTool>(tool);
+        Assert.Equal("Multiline Text", tool.Name);
     }
 
     [Fact]
@@ -708,9 +725,10 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
 
-        Assert.Equal(11, tools.Count);
+        Assert.Equal(12, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Point);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Text);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.MultilineText);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Rectangle);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.RectangleBySides);

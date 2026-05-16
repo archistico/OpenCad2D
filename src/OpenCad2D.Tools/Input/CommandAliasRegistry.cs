@@ -84,6 +84,8 @@ public sealed class CommandAliasRegistry
 
         yield return new CommandAlias("TEXT", ToolId.Text);
         yield return new CommandAlias("T", ToolId.Text);
+        yield return new CommandAlias("MTEXT", ToolId.MultilineText);
+        yield return new CommandAlias("MT", ToolId.MultilineText);
 
         yield return new CommandAlias("LINE", ToolId.Line);
         yield return new CommandAlias("L", ToolId.Line);

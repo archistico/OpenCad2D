@@ -42,6 +42,10 @@ public sealed class EndpointSnapProvider : ISnapProvider
                 yield return text.InsertionPoint;
                 break;
 
+            case MultilineTextEntity multilineText:
+                yield return multilineText.InsertionPoint;
+                break;
+
             case LineEntity line:
                 yield return line.Start;
                 yield return line.End;

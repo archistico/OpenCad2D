@@ -47,6 +47,7 @@ Aliases are case-insensitive.
 |---|---|
 | Point | `POINT`, `PT` |
 | Text | `TEXT`, `T` |
+| Multiline text | `MTEXT`, `MT` |
 | Line | `LINE`, `L` |
 | Rectangle | `RECTANGLE`, `RECT` |
 | Rectangle by sides | `RECTSIDES`, `RS` |

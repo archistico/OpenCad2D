@@ -358,6 +358,12 @@
                                     ToolTip.Tip="Place a text entity"
                                     Click="Text_Click" />
 
+                            <Button x:Name="MultilineTextButton"
+                                    Classes="tool-button"
+                                    Content="MText"
+                                    ToolTip.Tip="Place a multiline text entity"
+                                    Click="MultilineText_Click" />
+
                             <Button x:Name="LineButton"
                                     Classes="tool-button"
                                     Content="Line"

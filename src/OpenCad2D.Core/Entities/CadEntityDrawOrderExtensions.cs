@@ -79,6 +79,18 @@ public static class CadEntityDrawOrderExtensions
                 text.IsLocked,
                 drawOrder),
 
+            MultilineTextEntity multilineText => new MultilineTextEntity(
+                multilineText.InsertionPoint,
+                multilineText.Text,
+                multilineText.RotationDegrees,
+                multilineText.TextFormatId,
+                multilineText.Id,
+                multilineText.LayerId,
+                multilineText.Style,
+                multilineText.IsVisible,
+                multilineText.IsLocked,
+                drawOrder),
+
             LinearDimensionEntity linear => new LinearDimensionEntity(
                 linear.FirstPoint,
                 linear.SecondPoint,

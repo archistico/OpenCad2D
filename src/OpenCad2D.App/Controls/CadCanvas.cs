@@ -1899,6 +1899,14 @@ public sealed class CadCanvas : Control
                     isSelected);
                 break;
 
+            case MultilineTextEntity multilineText:
+                DrawMultilineText(
+                    context,
+                    multilineText,
+                    pen,
+                    isSelected);
+                break;
+
             case LinearDimensionEntity linearDimension:
                 DrawDimension(
                     context,
@@ -2191,11 +2199,76 @@ public sealed class CadCanvas : Control
         }
     }
 
+    private void DrawMultilineText(
+        DrawingContext context,
+        MultilineTextEntity text,
+        Pen pen,
+        bool isSelected)
+    {
+        if (Workspace is null)
+        {
+            return;
+        }
+
+        TextFormat format = ResolveTextFormat(text);
+        Point insertionPoint = ToScreenPoint(text.InsertionPoint);
+        double fontSize = Math.Max(1.0, _viewport.ModelLengthToScreen(format.Height));
+        double lineHeight = fontSize * 1.2;
+
+        IBrush brush = isSelected && pen.Brush is not null
+            ? pen.Brush
+            : new SolidColorBrush(
+                Color.FromRgb(
+                    format.Color.R,
+                    format.Color.G,
+                    format.Color.B));
+
+        var typeface = new Typeface(
+            new FontFamily(format.FontFamily),
+            format.IsItalic ? FontStyle.Italic : FontStyle.Normal,
+            format.IsBold ? FontWeight.Bold : FontWeight.Normal);
+
+        using (context.PushTransform(CadTextTransform.CreateCadRotationAt(
+                   text.RotationDegrees,
+                   insertionPoint.X,
+                   insertionPoint.Y)))
+        {
+            IReadOnlyList<string> lines = text.Lines;
+
+            for (int index = 0; index < lines.Count; index++)
+            {
+                var formattedText = new FormattedText(
+                    lines[index],
+                    CultureInfo.CurrentCulture,
+                    FlowDirection.LeftToRight,
+                    typeface,
+                    fontSize,
+                    brush);
+
+                context.DrawText(
+                    formattedText,
+                    new Point(
+                        insertionPoint.X,
+                        insertionPoint.Y + index * lineHeight));
+            }
+        }
+    }
+
     private TextFormat ResolveTextFormat(TextEntity text)
+    {
+        return ResolveTextFormat(text.TextFormatId);
+    }
+
+    private TextFormat ResolveTextFormat(MultilineTextEntity text)
+    {
+        return ResolveTextFormat(text.TextFormatId);
+    }
+
+    private TextFormat ResolveTextFormat(TextFormatId textFormatId)
     {
         if (Workspace is not null &&
             Workspace.Document.TextFormats.TryGetById(
-                text.TextFormatId,
+                textFormatId,
                 out TextFormat? format) &&
             format is not null)
         {
