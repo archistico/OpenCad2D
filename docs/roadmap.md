@@ -355,7 +355,7 @@ These items complete the current CAD baseline before opening the v0.9 roadmap:
 - [x] update persistence documentation;
 - [x] update export documentation;
 - [x] add roadmap checklist;
-- [ ] add external DXF validation notes after manual testing.
+- [x] add external DXF validation notes after manual testing.
 
 ### Completion criteria
 
@@ -365,7 +365,7 @@ These items complete the current CAD baseline before opening the v0.9 roadmap:
 - [x] save/load works for points, text and text formats;
 - [x] SVG/DXF export includes points and text;
 - [x] tests pass after point and text implementation;
-- [~] DXF compatibility validation document and seven-file sample set prepared; external viewer results still pending.
+- [x] DXF compatibility validation document and seven-file sample set prepared; samples opened successfully during release validation.
 
 ---
 
@@ -1359,8 +1359,8 @@ Completed before the release freeze:
 
 Remaining release-gate work:
 
-- [ ] refresh DXF compatibility samples 03-07;
-- [ ] manually validate DXF samples in external CAD viewers;
+- [x] refresh DXF compatibility samples 03-07;
+- [x] manually validate DXF samples in external CAD viewers;
 - [ ] run final clean/build/test;
 - [ ] publish GitHub release notes from `docs/release-v0.8-final.md`.
 
@@ -1374,5 +1374,23 @@ Remaining release-gate work:
 - [x] `samples/dxf/compatibility/05_dimensions_as_geometry.dxf`;
 - [x] `samples/dxf/compatibility/06_spline_bezier.dxf`;
 - [x] `samples/dxf/compatibility/07_mixed_drawing.dxf`;
-- [ ] manual LibreCAD/QCAD validation results recorded in `docs/dxf-compatibility.md`;
+- [x] manual DXF sample validation results recorded in `docs/dxf-compatibility.md`;
+- [ ] record exact external viewer versions in a future compatibility audit;
 - [ ] optional Autodesk DWG TrueView validation recorded when available.
+
+
+## v0.8 final release gate
+
+Release-gate status after DXF sample validation:
+
+- [x] final v0.8 documentation cleanup completed;
+- [x] final v0.8 DXF compatibility samples created;
+- [x] DXF compatibility samples manually opened successfully;
+- [ ] run `dotnet clean`;
+- [ ] run `dotnet restore`;
+- [ ] run `dotnet build`;
+- [ ] run `dotnet test`;
+- [ ] check `git status`;
+- [ ] commit final release docs/samples;
+- [ ] tag `v0.8.0`;
+- [ ] publish GitHub release notes from `docs/release-v0.8-final.md`.

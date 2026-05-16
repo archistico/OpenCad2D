@@ -1,79 +1,161 @@
-# OpenCad2D v0.8.x Final - GitHub Release Draft
+# OpenCad2D v0.8 — Final Release Notes
 
-This release consolidates the v0.8 line before the v0.9 roadmap. It combines the CAD-style command input milestone with the final baseline drawing tools and modify-tool stabilization.
+OpenCad2D v0.8 is a major stabilization and feature release focused on completing the core 2D drawing set, improving modify tools, strengthening DXF interoperability, and preparing the project for a more stable public release cycle.
 
 ## Highlights
 
-- CAD-style guided command input with aliases, contextual prompts, coordinates, relative coordinates, polar input and direct distances.
-- Native save/load using `.opencad2d.json`, including document settings and partial recovery for readable but partially invalid files.
-- Export to SVG, DXF and PDF, with dimension export coverage across the current non-associative dimension types.
-- DXF import for the practical 2D subset, including `MTEXT`, `LWPOLYLINE` bulge arcs, full `ELLIPSE` entities and readable `SPLINE` control/fit point data.
-- Final v0.8.x drawing tools: Polygon, Ellipse, MTEXT and Bezier Spline.
-- Modify workflow stabilization for Trim, Break and Offset across the supported entity set, plus Fillet live preview and Trim/NoTrim modes.
+- New Ellipse drawing workflow with rendering, persistence, export, snap/grip support and modify-tool compatibility.
+- New multiline text workflow through `MTEXT` / `MT`, including multiline dialog, persistence, SVG/PDF/DXF export and DXF MTEXT import.
+- New Bezier-based `SPLINE` workflow with control points, `Undo`, `Close`, preview, rendering, persistence and export.
+- Trim, Break and Offset now work on the newly introduced curved entities through controlled polyline approximation where needed.
+- Fillet now has live preview and supports `Trim` / `NoTrim` mode.
+- Offset now limits excessive miter spikes on sharp polyline turns.
+- Command input now supports command history navigation with Up/Down and first-pass autocomplete with Tab.
+- Non-associative dimensions can now be marked as potentially stale after geometry-changing operations.
+- DXF import/export compatibility has been significantly improved and documented.
+- Initial architectural cleanup reduced duplication in `MainWindow` and split entity/tool-preview rendering out of `CadCanvas`.
 
-## New drawing tools
+## New drawing entities and tools
 
-- `POLYGON` / `PG`: regular polygons stored as closed polylines.
-- `ELLIPSE` / `EL`: ellipse from center, major axis and minor radius.
-- `MTEXT` / `MT`: multiline annotation text through the multiline text dialog.
-- `SPLINE` / `SPL`: Bezier spline from control points, with `Undo`, `Close` and Enter-to-finish workflow.
+### Ellipse
 
-## Modify tools
+The new `ELLIPSE` / `EL` tool supports:
 
-- `TRIM` supports `All`, additional cutting edges and in-command `Undo`.
-- `BREAKPOINT` and `BREAK` support lines/arcs/circles where applicable, ellipses, polylines, polygons and sampled Bezier splines.
-- `OFFSET` supports lines, circles, arcs, straight-segment polylines and sampled Bezier splines, with miter-limit fallback on sharp polyline corners.
-- Ellipse and spline modify results currently become polyline approximations when a partial curve is produced.
-- `FILLET` supports Line-Line with live preview, Radius and Trim/NoTrim modes.
+- center point;
+- major axis definition;
+- minor radius definition;
+- canvas rendering and preview;
+- SVG, PDF and DXF export;
+- JSON persistence;
+- snap and grip integration;
+- Trim/Break support through approximation where required.
 
-## Export/import
+### Multiline text
 
-- SVG/PDF/DXF export for ellipses, multiline text and Bezier splines.
-- DXF `MTEXT` import maps paragraph separators to OpenCad2D multiline text.
-- DXF `LWPOLYLINE` bulge segments import as native line/arc geometry.
-- Full DXF `ELLIPSE` entities import as native `EllipseEntity`; partial ellipses import as open polyline approximations.
-- Readable DXF `SPLINE` control points import as `BezierSplineEntity`; fit-point-only splines import as polyline approximations.
+The new `MTEXT` / `MT` workflow supports:
 
-## DXF compatibility samples
+- insertion point;
+- multiline dialog;
+- canvas rendering with multiple lines;
+- SVG `<text>/<tspan>` export;
+- PDF multiline export;
+- DXF `MTEXT` export/import;
+- JSON persistence;
+- text format integration.
 
-The release includes a manual validation sample set under:
+### Spline
 
-```text
-samples/dxf/compatibility/
-```
+The new `SPLINE` / `SPL` workflow introduces a Bezier-based spline entity:
 
-The sample set covers basic lines/layers, TEXT/MTEXT, arcs/circles/ellipses, polylines/polygons with bulge arcs, graphical dimensions, SPLINE records and a mixed v0.8 smoke drawing. Record external viewer results in `docs/dxf-compatibility.md` before tagging the public release.
+- control point input;
+- `Undo` / `U` while drawing;
+- `Close` / `C` while drawing;
+- canvas preview and rendering;
+- SVG, PDF and DXF export;
+- JSON persistence;
+- Trim/Break/Offset support via polyline approximation.
 
-## Validation before publishing
+## Modify tools improvements
 
-Run:
+### Trim and Break
 
-```bash
-dotnet build OpenCad2D.sln
-dotnet test OpenCad2D.sln --no-build
-```
+Trim and Break were consolidated across:
 
-Recommended manual smoke test:
+- open polylines;
+- closed polylines and polygons;
+- ellipses;
+- Bezier splines;
+- approximated curved entities where a native partial entity is not yet available.
 
-```text
-LINE -> 100,100 -> @100<45
-POLYLINE -> 0,0 -> @100,0 -> @50<90 -> C
-POLYGON -> sides -> center -> radius/vertex
-ELLIPSE -> center -> major axis -> minor radius
-MTEXT -> insertion point -> multiline dialog
-SPLINE -> point -> point -> point -> U/C/Enter
-TRIM -> All -> line/polyline/ellipse/spline side -> Undo
-BREAK -> line/circle/ellipse/polyline/spline -> first point -> second point
-OFFSET -> line/circle/arc/polyline/spline -> side point
-EXPORT -> SVG/DXF/PDF
-IMPORT DXF -> file with LINE/LWPOLYLINE bulge/TEXT/MTEXT/ELLIPSE/SPLINE
-```
+When a modified result cannot currently be represented by the original native entity type, OpenCad2D returns a `PolylineEntity` approximation. This is intentional for v0.8 and avoids introducing unstable partial-ellipse or partial-spline entity models before they are mature.
+
+### Fillet
+
+Fillet now includes:
+
+- live preview while selecting the second line;
+- `Trim` mode, preserving the existing behavior;
+- `NoTrim` mode, which adds only the tangent arc while keeping original lines intact;
+- safer rejection of near-degenerate or almost-collinear cases.
+
+### Offset
+
+Offset now includes a conservative miter limit. Normal miter joins are preserved, but very sharp turns fall back to a bevel-style join to avoid excessive spikes.
+
+## Command line UX
+
+The command input now supports:
+
+- Up/Down command history navigation;
+- Tab autocomplete for known commands, aliases and action commands;
+- filtering so coordinates, distances and tool option values are not treated as global commands.
+
+## Dimension safety
+
+Dimensions remain non-associative in v0.8, but geometry-changing operations can now mark dimensions as potentially stale.
+
+The property panel displays the dimension status, and stale dimensions are visually distinguished in the canvas. This provides a safer workflow until fully associative dimensions are implemented in a later release.
+
+## DXF interoperability
+
+DXF support was improved in several areas:
+
+- `LWPOLYLINE` bulge import now preserves curved geometry by converting bulge segments to line/arc entities instead of flattening them into straight segments.
+- full DXF `ELLIPSE` entities import as `EllipseEntity`;
+- partial DXF ellipses import as open polyline approximations;
+- readable DXF `SPLINE` control-point data imports as `BezierSplineEntity`;
+- fit-point-only splines import as polyline approximations;
+- `MTEXT` import/export is supported;
+- compatibility sample files were added under `samples/dxf/compatibility/`.
+
+Manual validation for the v0.8 DXF compatibility samples was completed successfully before release.
+
+## Architecture and stabilization
+
+This release starts the v0.9 stabilization path while still closing the v0.8 feature set:
+
+- `MainWindow` document-change refresh logic was centralized;
+- entity rendering was extracted from `CadCanvas` into `CadEntityRenderer`;
+- active-tool preview rendering was extracted into `CadToolPreviewRenderer`;
+- active-tool keyboard behavior was delegated through a dedicated interface;
+- pointer handling and text-dialog reentrancy were made safer.
+
+## Testing
+
+The release expands coverage with:
+
+- end-to-end save/reopen tests;
+- end-to-end draw/annotate/export tests;
+- DXF import/modify/export tests;
+- focused tests for Ellipse, MTEXT and SPLINE;
+- Trim/Break/Offset regression tests;
+- command history and autocomplete tests;
+- dimension stale persistence and command integration tests;
+- DXF bulge/ellipse/spline import tests.
 
 ## Known limitations
 
-- Fillet is currently Line-Line only, even though it now has live preview and Trim/NoTrim modes.
-- Advanced Trim modes such as Fence, Crossing, Edge, Project and Erase are not implemented yet.
-- Native partial ellipse/spline entities are not implemented; partial results are polyline approximations.
-- Partial DXF ellipses import as polyline approximations.
-- DXF SPLINE import does not yet evaluate full external NURBS knot/weight data.
-- Native associative dimensions remain future work; v0.8 uses stale markers after geometry changes.
+The following limitations remain intentionally documented for v0.8:
+
+- DWG is not supported.
+- Binary DXF is not supported.
+- `BLOCK` / `INSERT` are not yet supported.
+- `HATCH`, `IMAGE` and `LEADER` are not yet supported.
+- Native DXF `DIMENSION` import/export is not yet implemented; dimensions are exported as drawable geometry where applicable.
+- Dimensions are still non-associative, although stale marking now reduces silent-risk workflows.
+- Partial DXF ellipses are approximated as polylines.
+- Full NURBS fidelity for external DXF SPLINE data is not guaranteed yet.
+- PNG export is not yet implemented.
+- Autosave/recovery is not yet implemented.
+
+## Suggested Git tag
+
+```text
+v0.8.0
+```
+
+## Suggested GitHub release title
+
+```text
+OpenCad2D v0.8.0 — Ellipse, MTEXT, SPLINE and DXF interoperability
+```

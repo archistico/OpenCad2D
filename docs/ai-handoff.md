@@ -1883,10 +1883,10 @@ Added:
 
 Important current state:
 
-- Automated DXF structure tests exist, but external viewer validation is still pending.
+- Automated DXF structure tests exist, and the v0.8 compatibility samples have been opened successfully during release validation.
 - Dimensions are intentionally exported as graphic primitives, not native DXF `DIMENSION` entities.
 - `ELLIPSE` and first-pass `SPLINE` import now exist; external NURBS fidelity remains future work.
-- `LWPOLYLINE` bulge import remains a high-value DXF compatibility improvement.
+- `LWPOLYLINE` bulge import has since been implemented by converting bulge segments to native line/arc geometry.
 
 Recommended next step:
 
@@ -2071,23 +2071,33 @@ Important documentation corrections:
 - `release-v0.8-final.md` now reflects DXF bulge, ELLIPSE and SPLINE import support instead of listing them as future work.
 - `README.md` now mentions command history/autocomplete, dimension stale markers, Fillet Trim/NoTrim, Offset miter-limit fallback and the expanded DXF import subset.
 
-Remaining pre-release tasks:
-
-- generate/refresh DXF compatibility samples 03-07;
-- manually validate the samples in LibreCAD/QCAD and, if available, Autodesk DWG TrueView;
-- run final `dotnet clean`, `dotnet restore`, `dotnet build`, `dotnet test`;
-- prepare the GitHub release notes from `docs/release-v0.8-final.md`.
+Remaining pre-release tasks after this documentation cleanup were moved to the DXF compatibility block and final release gate.
 
 
 ## 2026-05-17 — v0.8 final DXF compatibility samples
 
 Prepared the v0.8 manual DXF compatibility sample set under `samples/dxf/compatibility/`. The set now includes seven ASCII DXF files covering lines/layers, TEXT/MTEXT, arcs/circles/ellipses, polylines/polygons with bulge arcs, dimensions as graphical primitives, SPLINE control points and a mixed v0.8 smoke drawing.
 
-Updated `docs/dxf-compatibility.md` with the sample matrix and manual validation checklist. External viewer statuses remain `Pending` until tested in LibreCAD/QCAD and optionally Autodesk DWG TrueView.
+Updated `docs/dxf-compatibility.md` with the sample matrix and manual validation checklist. The seven v0.8 sample files were manually opened successfully by Emilie before the final release gate. Viewer versions were not recorded in this pass and should be added in a future compatibility audit when available.
 
 Remaining pre-release tasks:
 
-- manually open the seven samples in LibreCAD and QCAD;
-- record viewer versions and notes in `docs/dxf-compatibility.md`;
 - run the final clean/build/test release gate;
-- prepare the GitHub release text from `docs/release-v0.8-final.md`.
+- verify the working tree is clean;
+- tag `v0.8.0`;
+- publish the GitHub release text from `docs/release-v0.8-final.md`.
+
+
+## 2026-05-17 — v0.8 final release gate cleanup
+
+Consolidated the final release documents after the DXF compatibility samples were manually validated successfully. Updated the roadmap/stabilization plan to mark DXF sample validation as complete for v0.8, while keeping a note that exact external viewer versions should be recorded in a future audit.
+
+Final pre-tag gate:
+
+- `dotnet clean`;
+- `dotnet restore`;
+- `dotnet build`;
+- `dotnet test`;
+- `git status`;
+- commit release docs/samples if needed;
+- tag and push `v0.8.0`.
