@@ -542,6 +542,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return RepeatLastCommand();
         }
 
+        if (TryExecuteActionCommand(normalizedInput, out ToolResult actionResult))
+        {
+            _commandLineHistory.Add(normalizedInput);
+            NotifyCommandInputStateChanged();
+            return actionResult;
+        }
+
         if (_commandAliasRegistry.TryResolve(normalizedInput, out ToolId toolId))
         {
             _commandLineHistory.Add(normalizedInput);
@@ -888,6 +895,55 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+    public ToolResult SelectAll()
+    {
+        ToolResult result = Workspace.ActionController.SelectAll();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifySelectionStateChanged();
+
+        return result;
+    }
+
+    public ToolResult SelectLast()
+    {
+        ToolResult result = Workspace.ActionController.SelectLast();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifySelectionStateChanged();
+
+        return result;
+    }
+
+    private bool TryExecuteActionCommand(
+        string input,
+        out ToolResult result)
+    {
+        result = ToolResult.None();
+
+        string normalized = input.Trim().ToUpperInvariant();
+
+        switch (normalized)
+        {
+            case "SELECTALL":
+            case "SA":
+            case "ALL":
+                result = SelectAll();
+                return true;
+
+            case "SELECTLAST":
+            case "SL":
+            case "LAST":
+                result = SelectLast();
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
     public ToolResult SetTool(ToolId toolId)
     {
         return SetTool(
@@ -1148,6 +1204,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(FileStatusText),
             nameof(CurrentFilePath),
             nameof(CurrentFileName));
+    }
+
+    private void NotifySelectionStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(SelectedCount),
+            nameof(PropertyPanel),
+            nameof(LastMessage),
+            nameof(StatusText));
     }
 
     private void NotifyCommandInputStateChanged()

@@ -1,3 +1,4 @@
+using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Tools.Editing;
@@ -60,6 +61,40 @@ public sealed class CadActionController
         var deleteTool = new DeleteTool();
 
         return deleteTool.Execute(_context);
+    }
+
+    public ToolResult SelectAll()
+    {
+        var selectableIds = _context.Document.GetSelectableEntities()
+            .Select(entity => entity.Id)
+            .ToList();
+
+        if (selectableIds.Count == 0)
+        {
+            _context.SelectionSet.Clear();
+            return ToolResult.None("No selectable entities found.");
+        }
+
+        _context.SelectionSet.ReplaceWith(selectableIds);
+
+        return ToolResult.Completed($"Selected {selectableIds.Count} entities.");
+    }
+
+    public ToolResult SelectLast()
+    {
+        CadEntity? lastSelectableEntity = _context.Document.Entities.All
+            .Reverse()
+            .FirstOrDefault(_context.Document.IsEntitySelectable);
+
+        if (lastSelectableEntity is null)
+        {
+            _context.SelectionSet.Clear();
+            return ToolResult.None("No selectable last entity found.");
+        }
+
+        _context.SelectionSet.ReplaceWith(lastSelectableEntity.Id);
+
+        return ToolResult.Completed("Selected last entity.");
     }
 
     private void EnsureCurrentLayerIsUsable()

@@ -1131,3 +1131,30 @@ Arc grip editing now follows a 3-point construction rule:
 - Moving the center grip still translates the whole arc rigidly.
 
 The implementation is in `ArcGripProvider` and uses `ArcCreationService.TryCreateFromThreePoints`. If the three resulting points are duplicate or collinear, the original arc is preserved.
+
+
+## Select All / Select Last status
+
+Implemented selection actions:
+
+```text
+SELECTALL / SA / ALL
+SELECTLAST / SL / LAST
+```
+
+The left SELECT tool group includes buttons for Select, Select All and Select Last. Both actions replace the current selection and do not modify the document dirty state.
+
+Layer rules:
+
+- hidden-layer entities are skipped;
+- locked-layer entities are skipped;
+- Select Last searches backwards through document insertion order and chooses the newest selectable entity.
+
+Regression coverage lives in `CadActionControllerTests` and `MainWindowViewModelCommandLineTests`.
+
+
+### Nullable warning fix after Select All / Select Last
+
+- `MainWindowViewModel.TryExecuteActionCommand` now uses a non-null `ToolResult` out parameter.
+- The default unmatched-command result is initialized with `ToolResult.None()` so `SubmitCommandInput` can return it without CS8603 nullable warnings.
+- No behavior change was intended.

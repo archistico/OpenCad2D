@@ -1,6 +1,8 @@
 ﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Layers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
@@ -260,6 +262,149 @@ public sealed class CadActionControllerTests
 
         Assert.Equal(1, document.Entities.Count);
         Assert.True(document.Entities.Contains(line.Id));
+    }
+
+
+    [Fact]
+    public void SelectAll_ShouldSelectOnlySelectableEntities()
+    {
+        CadDocument document = new();
+        document.Layers.Add(Layer.Walls);
+        document.Layers.Add(Layer.Axis.WithVisibility(false));
+        document.Layers.Add(Layer.ConstructionLines.WithLocked(true));
+
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var defaultLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var wallsLine = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1),
+            layerId: LayerId.Walls);
+        var hiddenLine = new LineEntity(
+            new Point2D(0, 2),
+            new Point2D(10, 2),
+            layerId: LayerId.Axis);
+        var lockedLine = new LineEntity(
+            new Point2D(0, 3),
+            new Point2D(10, 3),
+            layerId: LayerId.ConstructionLines);
+
+        document.AddEntities(new[]
+        {
+            defaultLine,
+            wallsLine,
+            hiddenLine,
+            lockedLine
+        });
+
+        ToolContext context = CreateContext(
+            document,
+            history,
+            selectionSet);
+
+        var toolController = new ToolController(
+            context,
+            new SelectionTool());
+
+        var actionController = new CadActionController(
+            context,
+            toolController);
+
+        ToolResult result = actionController.SelectAll();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(2, selectionSet.Count);
+        Assert.True(selectionSet.Contains(defaultLine.Id));
+        Assert.True(selectionSet.Contains(wallsLine.Id));
+        Assert.False(selectionSet.Contains(hiddenLine.Id));
+        Assert.False(selectionSet.Contains(lockedLine.Id));
+    }
+
+    [Fact]
+    public void SelectLast_ShouldSelectLastSelectableEntity()
+    {
+        CadDocument document = new();
+        document.Layers.Add(Layer.Axis.WithVisibility(false));
+
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var firstLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var lastSelectableLine = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1));
+        var hiddenLine = new LineEntity(
+            new Point2D(0, 2),
+            new Point2D(10, 2),
+            layerId: LayerId.Axis);
+
+        document.AddEntities(new[]
+        {
+            firstLine,
+            lastSelectableLine,
+            hiddenLine
+        });
+
+        ToolContext context = CreateContext(
+            document,
+            history,
+            selectionSet);
+
+        var toolController = new ToolController(
+            context,
+            new SelectionTool());
+
+        var actionController = new CadActionController(
+            context,
+            toolController);
+
+        ToolResult result = actionController.SelectLast();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Single(selectionSet.SelectedIds);
+        Assert.True(selectionSet.Contains(lastSelectableLine.Id));
+        Assert.False(selectionSet.Contains(firstLine.Id));
+        Assert.False(selectionSet.Contains(hiddenLine.Id));
+    }
+
+    [Fact]
+    public void SelectLast_WithNoSelectableEntities_ShouldClearSelection()
+    {
+        CadDocument document = new();
+        document.Layers.Replace(Layer.Default.WithLocked(true));
+
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+        selectionSet.Select(line.Id);
+
+        ToolContext context = CreateContext(
+            document,
+            history,
+            selectionSet);
+
+        var toolController = new ToolController(
+            context,
+            new SelectionTool());
+
+        var actionController = new CadActionController(
+            context,
+            toolController);
+
+        ToolResult result = actionController.SelectLast();
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.True(selectionSet.IsEmpty);
     }
 
     [Fact]

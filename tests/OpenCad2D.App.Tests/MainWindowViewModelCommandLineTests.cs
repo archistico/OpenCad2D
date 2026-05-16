@@ -29,6 +29,63 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.NotNull(result);
     }
 
+
+    [Theory]
+    [InlineData("SELECTALL")]
+    [InlineData("SA")]
+    [InlineData("ALL")]
+    public void SubmitCommandInput_WithSelectAllAction_ShouldSelectAllSelectableEntities(string input)
+    {
+        var viewModel = new MainWindowViewModel();
+
+        var firstLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var secondLine = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1));
+
+        viewModel.Workspace.Document.AddEntity(firstLine);
+        viewModel.Workspace.Document.AddEntity(secondLine);
+
+        var result = viewModel.SubmitCommandInput(input);
+
+        Assert.Equal(2, viewModel.SelectedCount);
+        Assert.True(viewModel.Workspace.SelectionSet.Contains(firstLine.Id));
+        Assert.True(viewModel.Workspace.SelectionSet.Contains(secondLine.Id));
+        Assert.Equal("Selected 2 entities.", viewModel.LastMessage);
+        Assert.Contains(input, viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
+    [Theory]
+    [InlineData("SELECTLAST")]
+    [InlineData("SL")]
+    [InlineData("LAST")]
+    public void SubmitCommandInput_WithSelectLastAction_ShouldSelectLastSelectableEntity(string input)
+    {
+        var viewModel = new MainWindowViewModel();
+
+        var firstLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var secondLine = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1));
+
+        viewModel.Workspace.Document.AddEntity(firstLine);
+        viewModel.Workspace.Document.AddEntity(secondLine);
+
+        var result = viewModel.SubmitCommandInput(input);
+
+        Assert.Equal(1, viewModel.SelectedCount);
+        Assert.True(viewModel.Workspace.SelectionSet.Contains(secondLine.Id));
+        Assert.False(viewModel.Workspace.SelectionSet.Contains(firstLine.Id));
+        Assert.Equal("Selected last entity.", viewModel.LastMessage);
+        Assert.Contains(input, viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
     [Fact]
     public void SubmitCommandInput_WithUnknownCommand_ShouldKeepCurrentTool()
     {

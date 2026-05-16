@@ -324,6 +324,15 @@ visible and unlocked entities
 
 Hidden entities and locked-layer entities are not selectable.
 
+Selection actions are also available from the SELECT group and the command line:
+
+```text
+SELECTALL / SA / ALL   -> select every selectable entity
+SELECTLAST / SL / LAST -> select the last selectable entity in insertion order
+```
+
+`Select All` skips hidden-layer and locked-layer entities. `Select Last` searches backwards through the document and selects the newest entity that is still selectable.
+
 While `SelectionTool` is active, only `SnapKind.Entity` is enabled. This keeps the snap marker focused on selectable entities and avoids showing endpoint/midpoint/grid snaps while the user is trying to pick objects.
 
 ---

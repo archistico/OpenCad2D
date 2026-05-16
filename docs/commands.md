@@ -525,3 +525,16 @@ Supported editable properties include:
 The panel validates input before applying edits. Invalid numeric values, invalid radii, empty text values and invalid geometry are rejected before a command is executed.
 
 All successful edits are applied through command history, normally by replacing the selected entity with a modified copy. This keeps undo/redo, dirty-state tracking and spatial-index updates consistent.
+
+## Selection commands
+
+OpenCad2D supports direct selection actions from the command line:
+
+```text
+SELECTALL / SA / ALL
+SELECTLAST / SL / LAST
+```
+
+`Select All` replaces the current selection with all selectable entities. Entities on hidden or locked layers are skipped.
+
+`Select Last` replaces the current selection with the last selectable entity in document insertion order. If the newest entity is hidden or on a locked layer, the command walks backwards until it finds a selectable entity.

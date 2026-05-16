@@ -87,7 +87,7 @@ Pending in this phase:
 - [x] update About with `info@opencad2d.org` and `www.opencad2d.org`;
 - [x] center all secondary modal windows on their owner;
 - [x] improve the save changes dialog styling;
-- [ ] add Select All and Select Last;
+- [x] add Select All and Select Last;
 - [ ] add Zoom Window;
 - [ ] add document recovery options for partially invalid native files.
 

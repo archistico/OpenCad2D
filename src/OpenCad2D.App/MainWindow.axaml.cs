@@ -699,6 +699,32 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void SelectAll_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SelectAll();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void SelectLast_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SelectLast();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
     private void Point_Click(
         object? sender,
         RoutedEventArgs e)

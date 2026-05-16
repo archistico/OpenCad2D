@@ -321,6 +321,16 @@
                                     Content="Select"
                                     Click="Select_Click" />
 
+                            <Button x:Name="SelectAllButton"
+                                    Classes="tool-button"
+                                    Content="Select All"
+                                    Click="SelectAll_Click" />
+
+                            <Button x:Name="SelectLastButton"
+                                    Classes="tool-button"
+                                    Content="Select Last"
+                                    Click="SelectLast_Click" />
+
                             <TextBlock Classes="panel-section-label"
                                        Text="DRAW" />
 
