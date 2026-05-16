@@ -23,8 +23,9 @@ Before the first stable release, OpenCad2D should prioritize user trust and pred
 - [x] open the main window maximized by default;
 - [x] implement draw order / Z-order independent from layers;
 - [ ] validate DXF import/export in external CAD viewers;
-- [ ] add end-to-end workflow tests for save/reopen and import/modify/export;
+- [~] add end-to-end workflow tests for save/reopen and import/modify/export;
 - [ ] keep current limitations visible in the README and user documentation.
+- [x] maintain a v0.9 stabilization plan for post-v0.8 hardening (`docs/stabilization-v0.9-plan.md`).
 
 ## Current implemented foundations
 
@@ -357,7 +358,7 @@ These items complete the current CAD baseline before opening the v0.9 roadmap:
 - [x] save/load works for points, text and text formats;
 - [x] SVG/DXF export includes points and text;
 - [x] tests pass after point and text implementation;
-- [ ] DXF compatibility validated externally with documented viewer versions.
+- [~] DXF compatibility validation document and sample folder prepared; external viewer results still pending.
 
 ---
 
@@ -934,10 +935,10 @@ These remain useful but are intentionally deferred beyond v0.8:
 
 ### Stability & Test
 
-- [ ] end-to-end workflow: draw -> save -> reopen;
-- [ ] end-to-end workflow: draw -> annotate -> export DXF;
-- [ ] end-to-end workflow: draw -> annotate -> export SVG/PDF;
-- [ ] end-to-end workflow: import DXF -> modify -> export;
+- [~] end-to-end workflow: draw -> save -> reopen;
+- [~] end-to-end workflow: draw -> annotate -> export DXF;
+- [~] end-to-end workflow: draw -> annotate -> export SVG/PDF;
+- [~] end-to-end workflow: import DXF -> modify -> export;
 - [ ] performance review for rendering;
 - [ ] performance review for large files;
 - [ ] performance review for snap and hit testing;
@@ -969,10 +970,10 @@ These remain useful but are intentionally deferred beyond v0.8:
 - [ ] DXF import/export externally validated in LibreCAD, QCAD and Autodesk DWG TrueView;
 - [ ] application/session settings persistence;
 - [ ] draw order / Z-order independent from layers;
-- [ ] end-to-end workflow: draw -> save -> reopen;
-- [ ] end-to-end workflow: import DXF -> modify -> export;
+- [~] end-to-end workflow: draw -> save -> reopen;
+- [~] end-to-end workflow: import DXF -> modify -> export;
 - [ ] stable undo/redo on all primary tools;
-- [ ] reliable `.opencad2d.json` persistence under end-to-end workflow tests;
+- [~] reliable `.opencad2d.json` persistence under end-to-end workflow tests;
 - [ ] no known crash in common operations;
 - [ ] complete user documentation;
 - [ ] updated developer documentation;

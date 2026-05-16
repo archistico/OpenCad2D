@@ -83,7 +83,7 @@ public sealed class CadCanvas : Control
         double Scale);
     private const double GridLineDetectionTolerance = 1e-6;
     private bool _isPanning;
-    private bool _isTextInputDialogOpen;
+    private readonly AsyncReentrancyGuard _textInputDialogGuard = new();
     private Point _lastPanScreenPoint;
     private readonly Pen _crosshairPen = new(
         new SolidColorBrush(Color.FromArgb(160, 220, 220, 220)),
@@ -2433,6 +2433,18 @@ public sealed class CadCanvas : Control
         object? sender,
         PointerPressedEventArgs e)
     {
+        try
+        {
+            await OnPointerPressedAsync(e).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            HandlePointerPressedException(e, exception);
+        }
+    }
+
+    private async Task OnPointerPressedAsync(PointerPressedEventArgs e)
+    {
         if (Workspace is null)
         {
             return;
@@ -2464,16 +2476,14 @@ public sealed class CadCanvas : Control
         Point2D modelPoint = ToModelPoint(position);
         UpdateCurrentSnapCandidate(modelPoint);
 
-        if (_isTextInputDialogOpen)
-        {
-            return;
-        }
-
         ToolResult result;
 
         if (Workspace.ToolController.ActiveTool is IAsyncCadTool)
         {
-            _isTextInputDialogOpen = true;
+            if (!_textInputDialogGuard.TryEnter(out IDisposable dialogLease))
+            {
+                return;
+            }
 
             try
             {
@@ -2484,7 +2494,7 @@ public sealed class CadCanvas : Control
             }
             finally
             {
-                _isTextInputDialogOpen = false;
+                dialogLease.Dispose();
                 Focus();
             }
         }
@@ -2500,6 +2510,20 @@ public sealed class CadCanvas : Control
 
         NotifyWorkspaceChanged(
             result,
+            modelPoint);
+
+        InvalidateVisual();
+    }
+
+    private void HandlePointerPressedException(
+        PointerPressedEventArgs e,
+        Exception exception)
+    {
+        Point position = e.GetPosition(this);
+        Point2D modelPoint = ToModelPoint(position);
+
+        NotifyWorkspaceChanged(
+            ToolResult.Cancelled("Tool input failed: " + exception.Message),
             modelPoint);
 
         InvalidateVisual();

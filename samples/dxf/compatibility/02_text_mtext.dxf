@@ -1,0 +1,32 @@
+0
+SECTION
+2
+ENTITIES
+0
+TEXT
+8
+Notes
+10
+0
+20
+0
+40
+2.5
+1
+Single line note
+0
+MTEXT
+8
+Notes
+10
+0
+20
+10
+40
+2.5
+1
+First line\PSecond line
+0
+ENDSEC
+0
+EOF

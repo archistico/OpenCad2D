@@ -1845,3 +1845,43 @@ Implemented `SplineTool` with `SPLINE` / `SPL` aliases. Workflow: specify contro
 Export/persistence status: JSON round-trip includes `BezierSplineEntityDto`; SVG/PDF export use sampled polyline/polygon approximations; DXF export writes a `SPLINE` entity with control points. DXF import is still deferred.
 
 Modify support: Trim, Break Point, Break Segment and Offset accept splines by converting them to sampled `PolylineEntity` geometry. Result fragments are currently polylines, not partial spline entities. This is intentional for phase 1 and avoids introducing a partial spline model before the core curve behavior stabilizes.
+
+## v0.8.1 stabilization kickoff
+
+Started the v0.9 stabilization track after the post-v0.8 critical review.
+
+Scope for this first stabilization pass:
+
+- Added `docs/stabilization-v0.9-plan.md` to triage the critical review into actionable milestones.
+- Protected `CadCanvas.OnPointerPressed` with a top-level exception boundary by moving the awaited logic into `OnPointerPressedAsync` and reporting failures via `ToolResult.Cancelled` instead of letting `async void` exceptions escape silently.
+- Replaced the old `_isTextInputDialogOpen` boolean gate with `AsyncReentrancyGuard`, a small non-blocking semaphore-based guard used while async tools such as TEXT/MTEXT open modal input dialogs.
+- Added an end-to-end persistence workflow test covering draw/annotate/save/reopen for the current primary entity set: line, circle, arc, closed polyline/polygon, ellipse, Bezier spline, text, MTEXT and horizontal dimension.
+
+This pass intentionally avoids the large `CadCanvas` renderer/preview refactor. That should be handled next as a separate low-risk milestone after runtime safety and workflow tests are green.
+---
+
+## Latest update — v0.8.2 export/interop stabilization kickoff
+
+Implemented the next stabilization step after the v0.8.1 runtime-safety pass.
+
+Added:
+
+- `EndToEndExportWorkflowTests` covering draw -> annotate -> export to SVG/PDF/DXF.
+- A first import DXF -> trim -> export regression test using simple imported LINE/TEXT/MTEXT entities.
+- `docs/dxf-compatibility.md` to track manual viewer validation.
+- `samples/dxf/compatibility/` with initial ASCII DXF smoke-test files.
+
+Important current state:
+
+- Automated DXF structure tests exist, but external viewer validation is still pending.
+- Dimensions are intentionally exported as graphic primitives, not native DXF `DIMENSION` entities.
+- `ELLIPSE` and `SPLINE` export exist; import is still future work.
+- `LWPOLYLINE` bulge import remains a high-value DXF compatibility improvement.
+
+Recommended next step:
+
+1. Run the full test suite.
+2. Open the initial DXF samples in LibreCAD and QCAD.
+3. Record results in `docs/dxf-compatibility.md`.
+4. Then continue with v0.8.3: small `MainWindow.axaml.cs` cleanup before the larger `CadCanvas` renderer extraction.
+
