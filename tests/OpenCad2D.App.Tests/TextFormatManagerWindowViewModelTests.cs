@@ -1,4 +1,5 @@
 using System.Linq;
+using Avalonia.Media;
 using OpenCad2D.App.ViewModels.TextFormats;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
@@ -112,6 +113,30 @@ public sealed class TextFormatManagerWindowViewModelTests
         Assert.Equal(0x33, edited.Color.B);
         Assert.True(edited.IsBold);
         Assert.True(edited.IsItalic);
+    }
+
+    [Fact]
+    public void EditableFormat_ColorPickerColor_ShouldUpdateColorHex()
+    {
+        var document = new CadDocument();
+        var viewModel = new TextFormatManagerWindowViewModel(document);
+        EditableTextFormatViewModel standard = viewModel.Formats.Single(format => format.Id == TextFormatId.Standard);
+
+        standard.Color = Color.FromRgb(0x44, 0x55, 0x66);
+
+        Assert.Equal("#445566", standard.ColorHex);
+    }
+
+    [Fact]
+    public void EditableFormat_ColorHex_ShouldUpdateColorPickerColor()
+    {
+        var document = new CadDocument();
+        var viewModel = new TextFormatManagerWindowViewModel(document);
+        EditableTextFormatViewModel standard = viewModel.Formats.Single(format => format.Id == TextFormatId.Standard);
+
+        standard.ColorHex = "#112233";
+
+        Assert.Equal(Color.FromRgb(0x11, 0x22, 0x33), standard.Color);
     }
 
     [Fact]

@@ -120,8 +120,26 @@ public sealed class EditableTextFormatViewModel : INotifyPropertyChanged
 
             _colorHex = normalized;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(Color));
             OnPropertyChanged(nameof(ColorBrush));
             OnPropertyChanged(nameof(DisplayText));
+        }
+    }
+
+    public Color Color
+    {
+        get
+        {
+            if (!TryParseColor(ColorHex, out CadColor color))
+            {
+                color = CadColor.FromRgb(80, 80, 80);
+            }
+
+            return Color.FromRgb(color.R, color.G, color.B);
+        }
+        set
+        {
+            ColorHex = ToHex(CadColor.FromRgb(value.R, value.G, value.B));
         }
     }
 

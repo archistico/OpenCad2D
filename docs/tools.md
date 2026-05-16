@@ -944,3 +944,9 @@ NoTrim fillet mode
 Trim Fence / Crossing / Edge / Project / Erase modes
 Shift-click Extend inside Trim
 ```
+
+## v0.8.x color picker improvements
+
+The line and text format managers now use compact row-level `ColorPicker` controls. The picker is intended for fast visual color selection, while the existing `#RRGGBB` fields remain available for precise input and validation.
+
+Layer appearance remains format-driven: a layer references a line format, and the line format defines color, weight and dash style. Users change layer appearance by assigning or editing the referenced line format.

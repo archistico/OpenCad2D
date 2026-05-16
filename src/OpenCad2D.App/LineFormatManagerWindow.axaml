@@ -5,9 +5,9 @@
         x:DataType="lineFormats:LineFormatManagerWindowViewModel"
         Title="Line Format Manager"
         Icon="/Assets/app-icon.ico"
-        Width="940"
+        Width="980"
         Height="500"
-        MinWidth="820"
+        MinWidth="860"
         MinHeight="420"
         WindowStartupLocation="CenterOwner"
         Background="#1E1E1E">
@@ -84,7 +84,7 @@
                 <Border Grid.Row="0"
                         Background="#2D2D30"
                         Padding="7,5">
-                    <Grid ColumnDefinitions="60,210,110,110,140,130,120"
+                    <Grid ColumnDefinitions="78,205,110,110,140,130,120"
                           ColumnSpacing="6">
                         <TextBlock Grid.Column="0" Classes="header-cell" Text="Color" />
                         <TextBlock Grid.Column="1" Classes="header-cell" Text="Name" />
@@ -104,16 +104,14 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="lineFormats:EditableLineFormatViewModel">
                             <Border Padding="7,4">
-                                <Grid ColumnDefinitions="60,210,110,110,140,130,120"
+                                <Grid ColumnDefinitions="78,205,110,110,140,130,120"
                                       ColumnSpacing="6">
-                                    <Border Grid.Column="0"
-                                            Width="28"
-                                            Height="14"
-                                            Background="{Binding ColorBrush}"
-                                            BorderBrush="#666666"
-                                            BorderThickness="1"
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="Center" />
+                                    <ColorPicker Grid.Column="0"
+                                                 Width="54"
+                                                 Height="26"
+                                                 Color="{Binding Color, Mode=TwoWay}"
+                                                 HorizontalAlignment="Left"
+                                                 VerticalAlignment="Center" />
 
                                     <TextBox Grid.Column="1"
                                              Classes="format-input"

@@ -117,6 +117,8 @@ The current layer must remain visible and unlocked.
 
 The Line Format Manager is opened from the main top bar through `Line formats...`.
 
+The manager uses a compact row-level color picker for visual color selection and keeps the `#RRGGBB` text field for precise/manual input. Both controls update the same line format color.
+
 It allows the user to:
 
 - add a user-defined line format;

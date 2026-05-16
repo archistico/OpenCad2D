@@ -1523,3 +1523,31 @@ TRIM -> All -> target side -> Undo
 MOVE/COPY -> selection -> base point -> @50,0
 BREAK -> entity -> first point -> second point
 ```
+
+## 2026-05-16 - v0.8.x Block A color picker improvements
+
+Implemented the first post-v0.8 usability stabilization block.
+
+Decisions confirmed:
+
+- use compact `ColorPicker` controls directly inside manager rows;
+- store project settings later in `.opencad2d.json`;
+- future Z-order hit testing must select the topmost entity;
+- future align tools use the global selection bounding box;
+- future distribute tools use center-based distribution.
+
+Changes in this block:
+
+- added `Avalonia.Controls.ColorPicker` to `OpenCad2D.App` using the same version as the other Avalonia packages;
+- added the Fluent ColorPicker style include to `App.axaml`;
+- Line Format Manager rows now expose a compact `ColorPicker` bound to the line format color;
+- Text Format Manager rows now expose a compact `ColorPicker` bound to the text format color;
+- existing `#RRGGBB` fields remain as precise/manual input and remain the serialization/validation source;
+- layer appearance remains line-format driven, so the Layer Manager still assigns line formats rather than direct layer colors.
+
+Next planned blocks before v0.9:
+
+1. persist document/editor settings in `.opencad2d.json`;
+2. implement Draw order / Z-order independent from layers;
+3. add Align Top/Right/Left/Bottom tools;
+4. add Distribute Horizontal/Vertical tools based on entity centers.

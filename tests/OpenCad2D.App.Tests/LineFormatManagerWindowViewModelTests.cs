@@ -1,4 +1,5 @@
 using System.Linq;
+using Avalonia.Media;
 using OpenCad2D.App.ViewModels.LineFormats;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Identifiers;
@@ -105,6 +106,30 @@ public sealed class LineFormatManagerWindowViewModelTests
         Assert.Equal(0x33, edited.Color.B);
         Assert.Equal(2.5, edited.LineWeight.Millimeters);
         Assert.Equal(LineStyle.Dashed, edited.LineStyle);
+    }
+
+    [Fact]
+    public void EditableFormat_ColorPickerColor_ShouldUpdateColorHex()
+    {
+        var document = new CadDocument();
+        var viewModel = new LineFormatManagerWindowViewModel(document);
+        EditableLineFormatViewModel continuous = viewModel.Formats.Single(format => format.Id == LineFormatId.Continuous);
+
+        continuous.Color = Color.FromRgb(0x44, 0x55, 0x66);
+
+        Assert.Equal("#445566", continuous.ColorHex);
+    }
+
+    [Fact]
+    public void EditableFormat_ColorHex_ShouldUpdateColorPickerColor()
+    {
+        var document = new CadDocument();
+        var viewModel = new LineFormatManagerWindowViewModel(document);
+        EditableLineFormatViewModel continuous = viewModel.Formats.Single(format => format.Id == LineFormatId.Continuous);
+
+        continuous.ColorHex = "#112233";
+
+        Assert.Equal(Color.FromRgb(0x11, 0x22, 0x33), continuous.Color);
     }
 
     [Fact]

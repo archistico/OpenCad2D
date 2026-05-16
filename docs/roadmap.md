@@ -888,7 +888,7 @@ docs/command-input.md
 
 These remain useful but are intentionally deferred beyond v0.8:
 
-- [ ] color picker improvements for layer and formats;
+- [x] color picker improvements for line and text format managers;
 - [ ] application settings;
 - [ ] shortcuts persistence;
 - [ ] last file persistence;
@@ -1154,3 +1154,15 @@ Deferred:
 - fillet whole polyline;
 - no-trim mode;
 - multiple fillet mode.
+
+### v0.8.x Block A - Color picker improvements
+
+Completed before the v0.9 planning work:
+
+- [x] add `Avalonia.Controls.ColorPicker` with the same version as the other Avalonia packages;
+- [x] include the Fluent ColorPicker theme in `App.axaml`;
+- [x] replace passive color swatches in the Line Format Manager with compact row-level `ColorPicker` controls;
+- [x] replace passive color swatches in the Text Format Manager with compact row-level `ColorPicker` controls;
+- [x] keep the existing `#RRGGBB` text fields as precise/manual input and persistence validation source.
+
+The Layer Manager still assigns appearance through line format references. Direct per-layer color editing remains intentionally indirect: users edit the referenced line format color in the Line Format Manager.
