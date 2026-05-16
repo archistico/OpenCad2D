@@ -63,7 +63,7 @@ public sealed class MainWindowViewModelCommandLineTests
     [InlineData("SELECTLAST")]
     [InlineData("SL")]
     [InlineData("LAST")]
-    public void SubmitCommandInput_WithSelectLastAction_ShouldSelectLastSelectableEntity(string input)
+    public void SubmitCommandInput_WithSelectLastAction_ShouldRestorePreviousSelection(string input)
     {
         var viewModel = new MainWindowViewModel();
 
@@ -76,13 +76,19 @@ public sealed class MainWindowViewModelCommandLineTests
 
         viewModel.Workspace.Document.AddEntity(firstLine);
         viewModel.Workspace.Document.AddEntity(secondLine);
+        viewModel.Workspace.SelectionSet.ReplaceWith(new[]
+        {
+            firstLine.Id,
+            secondLine.Id
+        });
+        viewModel.Workspace.SelectionSet.Clear();
 
         var result = viewModel.SubmitCommandInput(input);
 
-        Assert.Equal(1, viewModel.SelectedCount);
+        Assert.Equal(2, viewModel.SelectedCount);
+        Assert.True(viewModel.Workspace.SelectionSet.Contains(firstLine.Id));
         Assert.True(viewModel.Workspace.SelectionSet.Contains(secondLine.Id));
-        Assert.False(viewModel.Workspace.SelectionSet.Contains(firstLine.Id));
-        Assert.Equal("Selected last entity.", viewModel.LastMessage);
+        Assert.Equal("Restored previous selection: 2 entities.", viewModel.LastMessage);
         Assert.Contains(input, viewModel.CommandLineHistory);
         Assert.NotNull(result);
     }

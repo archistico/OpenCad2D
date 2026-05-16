@@ -324,31 +324,27 @@ public sealed class CadActionControllerTests
     }
 
     [Fact]
-    public void SelectLast_ShouldSelectLastSelectableEntity()
+    public void SelectLast_ShouldRestorePreviousSingleEntitySelection()
     {
         CadDocument document = new();
-        document.Layers.Add(Layer.Axis.WithVisibility(false));
-
         CommandHistory history = new();
         SelectionSet selectionSet = new();
 
         var firstLine = new LineEntity(
             new Point2D(0, 0),
             new Point2D(10, 0));
-        var lastSelectableLine = new LineEntity(
+        var secondLine = new LineEntity(
             new Point2D(0, 1),
             new Point2D(10, 1));
-        var hiddenLine = new LineEntity(
-            new Point2D(0, 2),
-            new Point2D(10, 2),
-            layerId: LayerId.Axis);
 
         document.AddEntities(new[]
         {
             firstLine,
-            lastSelectableLine,
-            hiddenLine
+            secondLine
         });
+
+        selectionSet.ReplaceWith(firstLine.Id);
+        selectionSet.Clear();
 
         ToolContext context = CreateContext(
             document,
@@ -367,17 +363,120 @@ public sealed class CadActionControllerTests
 
         Assert.Equal(ToolResultKind.Completed, result.Kind);
         Assert.Single(selectionSet.SelectedIds);
-        Assert.True(selectionSet.Contains(lastSelectableLine.Id));
-        Assert.False(selectionSet.Contains(firstLine.Id));
+        Assert.True(selectionSet.Contains(firstLine.Id));
+        Assert.False(selectionSet.Contains(secondLine.Id));
+        Assert.Equal("Restored previous selection: 1 entity.", result.Message);
+    }
+
+    [Fact]
+    public void SelectLast_ShouldRestorePreviousMultipleEntitySelection()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var firstLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var secondLine = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1));
+        var thirdLine = new LineEntity(
+            new Point2D(0, 2),
+            new Point2D(10, 2));
+
+        document.AddEntities(new[]
+        {
+            firstLine,
+            secondLine,
+            thirdLine
+        });
+
+        selectionSet.ReplaceWith(new[]
+        {
+            firstLine.Id,
+            thirdLine.Id
+        });
+        selectionSet.Clear();
+
+        ToolContext context = CreateContext(
+            document,
+            history,
+            selectionSet);
+
+        var toolController = new ToolController(
+            context,
+            new SelectionTool());
+
+        var actionController = new CadActionController(
+            context,
+            toolController);
+
+        ToolResult result = actionController.SelectLast();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(2, selectionSet.Count);
+        Assert.True(selectionSet.Contains(firstLine.Id));
+        Assert.True(selectionSet.Contains(thirdLine.Id));
+        Assert.False(selectionSet.Contains(secondLine.Id));
+        Assert.Equal("Restored previous selection: 2 entities.", result.Message);
+    }
+
+    [Fact]
+    public void SelectLast_ShouldSkipPreviouslySelectedEntitiesThatAreNoLongerSelectable()
+    {
+        CadDocument document = new();
+        document.Layers.Add(Layer.Axis.WithVisibility(false));
+
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var selectableLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var hiddenLine = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1),
+            layerId: LayerId.Axis);
+
+        document.AddEntities(new[]
+        {
+            selectableLine,
+            hiddenLine
+        });
+
+        selectionSet.ReplaceWith(new[]
+        {
+            selectableLine.Id,
+            hiddenLine.Id
+        });
+        selectionSet.Clear();
+
+        ToolContext context = CreateContext(
+            document,
+            history,
+            selectionSet);
+
+        var toolController = new ToolController(
+            context,
+            new SelectionTool());
+
+        var actionController = new CadActionController(
+            context,
+            toolController);
+
+        ToolResult result = actionController.SelectLast();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Single(selectionSet.SelectedIds);
+        Assert.True(selectionSet.Contains(selectableLine.Id));
         Assert.False(selectionSet.Contains(hiddenLine.Id));
     }
 
     [Fact]
-    public void SelectLast_WithNoSelectableEntities_ShouldClearSelection()
+    public void SelectLast_WithNoPreviousSelection_ShouldLeaveCurrentSelectionUnchanged()
     {
         CadDocument document = new();
-        document.Layers.Replace(Layer.Default.WithLocked(true));
-
         CommandHistory history = new();
         SelectionSet selectionSet = new();
 
@@ -404,7 +503,8 @@ public sealed class CadActionControllerTests
         ToolResult result = actionController.SelectLast();
 
         Assert.Equal(ToolResultKind.None, result.Kind);
-        Assert.True(selectionSet.IsEmpty);
+        Assert.True(selectionSet.Contains(line.Id));
+        Assert.Equal("No previous selectable selection found.", result.Message);
     }
 
     [Fact]

@@ -88,7 +88,9 @@ Pending in this phase:
 - [x] center all secondary modal windows on their owner;
 - [x] improve the save changes dialog styling;
 - [x] add Select All and Select Last;
+- [x] update Select Last to restore the last cleared selection instead of the newest created entity;
 - [x] add Zoom Window;
+- [x] expose Zoom Extents in the left Navigate tool panel;
 - [ ] add document recovery options for partially invalid native files.
 
 ---

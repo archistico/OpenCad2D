@@ -1142,13 +1142,13 @@ SELECTALL / SA / ALL
 SELECTLAST / SL / LAST
 ```
 
-The left SELECT tool group includes buttons for Select, Select All and Select Last. Both actions replace the current selection and do not modify the document dirty state.
+The left SELECT tool group includes buttons for Select, Select All and Select Last. Select All replaces the current selection and does not modify the document dirty state. Select Last restores the last effective selection that was explicitly cleared.
 
 Layer rules:
 
 - hidden-layer entities are skipped;
 - locked-layer entities are skipped;
-- Select Last searches backwards through document insertion order and chooses the newest selectable entity.
+- Select Last restores the previous cleared selection, including multi-entity selections, and skips any remembered entity that is no longer selectable.
 
 Regression coverage lives in `CadActionControllerTests` and `MainWindowViewModelCommandLineTests`.
 
@@ -1178,3 +1178,15 @@ Implementation notes:
 - `ZoomWindowTool` lives in `OpenCad2D.Tools.Navigation`.
 - The left tool panel has a `NAVIGATE` section with a `Zoom Window` button.
 - `CadCanvas.ZoomToWindow` applies the viewport fit because viewport state belongs to the UI layer, not to `OpenCad2D.Tools`.
+
+### 2026-05-16 - Navigate panel Zoom Extents and Select Last semantics
+
+Updated the left tool panel `NAVIGATE` section so it now exposes both `Zoom Window` and the already existing `Zoom Extents` command. The top-bar `Extents` button remains available and both UI buttons share the same click handler.
+
+Changed `Select Last` semantics. It no longer selects the newest entity in document insertion order. It now restores the most recent effective selection that was explicitly cleared, preserving multi-entity selections. `SelectionSet` stores the last non-empty cleared selection and `CadActionController.SelectLast()` filters that snapshot against the current document so deleted, hidden-layer or locked-layer entities are not restored. `CadWorkspace.LoadDocument()` resets both current and remembered selection state when replacing a document.
+
+
+### 2026-05-16 - Select Last nullable warning cleanup
+
+- Removed the nullable warning in `CadActionController.SelectLast()` by adding an explicit `entity is not null` guard after `Entities.TryGet(...)`.
+- No behavior change: Select Last still restores the last deselected selection and filters out entities that are no longer selectable.

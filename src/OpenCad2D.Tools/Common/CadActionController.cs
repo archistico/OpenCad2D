@@ -82,19 +82,25 @@ public sealed class CadActionController
 
     public ToolResult SelectLast()
     {
-        CadEntity? lastSelectableEntity = _context.Document.Entities.All
-            .Reverse()
-            .FirstOrDefault(_context.Document.IsEntitySelectable);
+        List<EntityId> previousSelectionIds = _context.SelectionSet.LastDeselectedSelectionIds
+            .Where(id =>
+            {
+                return _context.Document.Entities.TryGet(id, out CadEntity? entity) &&
+                       entity is not null &&
+                       _context.Document.IsEntitySelectable(entity);
+            })
+            .ToList();
 
-        if (lastSelectableEntity is null)
+        if (previousSelectionIds.Count == 0)
         {
-            _context.SelectionSet.Clear();
-            return ToolResult.None("No selectable last entity found.");
+            return ToolResult.None("No previous selectable selection found.");
         }
 
-        _context.SelectionSet.ReplaceWith(lastSelectableEntity.Id);
+        _context.SelectionSet.ReplaceWith(previousSelectionIds);
 
-        return ToolResult.Completed("Selected last entity.");
+        return ToolResult.Completed(previousSelectionIds.Count == 1
+            ? "Restored previous selection: 1 entity."
+            : $"Restored previous selection: {previousSelectionIds.Count} entities.");
     }
 
     private void EnsureCurrentLayerIsUsable()

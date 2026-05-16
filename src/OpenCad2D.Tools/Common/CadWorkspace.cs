@@ -158,7 +158,7 @@ public sealed class CadWorkspace
         Context.Document = document;
 
         CommandHistory.Clear();
-        SelectionSet.Clear();
+        SelectionSet.Reset();
         Context.CurrentBasePoint = null;
 
         CurrentLayerId = document.Layers.Contains(currentLayerId)

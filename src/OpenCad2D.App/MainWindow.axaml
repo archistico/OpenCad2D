@@ -447,6 +447,11 @@
                                     Content="Zoom Window"
                                     Click="ZoomWindow_Click" />
 
+                            <Button x:Name="ZoomExtentsPanelButton"
+                                    Classes="tool-button"
+                                    Content="Zoom Extents"
+                                    Click="ZoomExtents_Click" />
+
                             <TextBlock Classes="panel-section-label"
                                        Text="EDIT" />
 

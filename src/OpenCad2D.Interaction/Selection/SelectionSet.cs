@@ -10,8 +10,15 @@ public sealed class SelectionSet
 {
     private readonly HashSet<EntityId> _selectedIds = new();
     private readonly List<EntityId> _selectionOrder = new();
+    private readonly List<EntityId> _lastDeselectedSelectionOrder = new();
 
     public IReadOnlyCollection<EntityId> SelectedIds => _selectionOrder;
+
+    /// <summary>
+    /// Gets the most recent non-empty selection that was explicitly cleared.
+    /// This is used by Select Last to restore the last effective user selection.
+    /// </summary>
+    public IReadOnlyCollection<EntityId> LastDeselectedSelectionIds => _lastDeselectedSelectionOrder;
 
     public int Count => _selectedIds.Count;
 
@@ -52,11 +59,17 @@ public sealed class SelectionSet
 
     public void Deselect(EntityId entityId)
     {
-        if (!_selectedIds.Remove(entityId))
+        if (!_selectedIds.Contains(entityId))
         {
             return;
         }
 
+        if (_selectedIds.Count == 1)
+        {
+            RememberCurrentSelection();
+        }
+
+        _selectedIds.Remove(entityId);
         _selectionOrder.Remove(entityId);
     }
 
@@ -73,21 +86,51 @@ public sealed class SelectionSet
 
     public void ReplaceWith(EntityId entityId)
     {
-        Clear();
-        Select(entityId);
+        ReplaceWith(new[] { entityId });
     }
 
     public void ReplaceWith(IEnumerable<EntityId> entityIds)
     {
         ArgumentNullException.ThrowIfNull(entityIds);
 
-        Clear();
-        SelectMany(entityIds);
+        List<EntityId> replacement = entityIds
+            .Distinct()
+            .ToList();
+
+        if (replacement.Count == 0)
+        {
+            Clear();
+            return;
+        }
+
+        _selectedIds.Clear();
+        _selectionOrder.Clear();
+        SelectMany(replacement);
     }
 
     public void Clear()
     {
+        RememberCurrentSelection();
+
         _selectedIds.Clear();
         _selectionOrder.Clear();
+    }
+
+    public void Reset()
+    {
+        _selectedIds.Clear();
+        _selectionOrder.Clear();
+        _lastDeselectedSelectionOrder.Clear();
+    }
+
+    private void RememberCurrentSelection()
+    {
+        if (_selectionOrder.Count == 0)
+        {
+            return;
+        }
+
+        _lastDeselectedSelectionOrder.Clear();
+        _lastDeselectedSelectionOrder.AddRange(_selectionOrder);
     }
 }

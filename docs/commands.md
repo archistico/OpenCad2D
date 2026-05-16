@@ -535,7 +535,7 @@ OpenCad2D supports viewport navigation from the command line:
 ZOOMWINDOW / ZW
 ```
 
-`Zoom Window` asks for two opposite corners and fits the viewport to the selected rectangular model area. Very small windows are ignored to avoid accidental extreme zooms.
+`Zoom Window` asks for two opposite corners and fits the viewport to the selected rectangular model area. Very small windows are ignored to avoid accidental extreme zooms. `Zoom Extents` is also available in the left Navigate panel and fits the viewport to all visible geometry.
 
 ## Selection commands
 
@@ -548,4 +548,4 @@ SELECTLAST / SL / LAST
 
 `Select All` replaces the current selection with all selectable entities. Entities on hidden or locked layers are skipped.
 
-`Select Last` replaces the current selection with the last selectable entity in document insertion order. If the newest entity is hidden or on a locked layer, the command walks backwards until it finds a selectable entity.
+`Select Last` restores the last effective selection that was explicitly cleared. It can restore either one entity or a multi-entity selection. Entities that are no longer selectable, for example because their layer is hidden or locked, are skipped.

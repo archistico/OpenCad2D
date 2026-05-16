@@ -103,3 +103,66 @@ public sealed class SelectionSetTests
         Assert.True(selection.IsEmpty);
     }
 }
+public sealed class SelectionSetLastDeselectedSelectionTests
+{
+    [Fact]
+    public void Clear_WhenSelectionIsNotEmpty_ShouldRememberLastDeselectedSelection()
+    {
+        var selection = new SelectionSet();
+        EntityId first = EntityId.New();
+        EntityId second = EntityId.New();
+
+        selection.ReplaceWith(new[]
+        {
+            first,
+            second
+        });
+
+        selection.Clear();
+
+        Assert.True(selection.IsEmpty);
+        Assert.Equal(new[]
+        {
+            first,
+            second
+        }, selection.LastDeselectedSelectionIds);
+    }
+
+    [Fact]
+    public void ReplaceWith_WhenReplacementIsNotEmpty_ShouldNotOverwriteLastDeselectedSelection()
+    {
+        var selection = new SelectionSet();
+        EntityId first = EntityId.New();
+        EntityId second = EntityId.New();
+        EntityId third = EntityId.New();
+
+        selection.ReplaceWith(new[]
+        {
+            first,
+            second
+        });
+        selection.Clear();
+        selection.ReplaceWith(third);
+
+        Assert.Equal(new[]
+        {
+            first,
+            second
+        }, selection.LastDeselectedSelectionIds);
+        Assert.True(selection.Contains(third));
+    }
+
+    [Fact]
+    public void Reset_ShouldClearCurrentAndLastDeselectedSelection()
+    {
+        var selection = new SelectionSet();
+        EntityId id = EntityId.New();
+
+        selection.Select(id);
+        selection.Clear();
+        selection.Reset();
+
+        Assert.True(selection.IsEmpty);
+        Assert.Empty(selection.LastDeselectedSelectionIds);
+    }
+}

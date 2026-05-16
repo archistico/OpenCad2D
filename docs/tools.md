@@ -328,10 +328,10 @@ Selection actions are also available from the SELECT group and the command line:
 
 ```text
 SELECTALL / SA / ALL   -> select every selectable entity
-SELECTLAST / SL / LAST -> select the last selectable entity in insertion order
+SELECTLAST / SL / LAST -> restore the last effective selection that was cleared
 ```
 
-`Select All` skips hidden-layer and locked-layer entities. `Select Last` searches backwards through the document and selects the newest entity that is still selectable.
+`Select All` skips hidden-layer and locked-layer entities. `Select Last` restores the last effective selection that was cleared, including multi-entity selections. Previously selected entities that are no longer selectable are skipped.
 
 While `SelectionTool` is active, only `SnapKind.Entity` is enabled. This keeps the snap marker focused on selectable entities and avoids showing endpoint/midpoint/grid snaps while the user is trying to pick objects.
 
@@ -341,7 +341,7 @@ While `SelectionTool` is active, only `SnapKind.Entity` is enabled. This keeps t
 
 ### Zoom Window
 
-`Zoom Window` is an interactive two-corner viewport tool. Pick the first corner, then pick or drag to the opposite corner. The viewport fits the selected model-space rectangle.
+`Zoom Window` is an interactive two-corner viewport tool. Pick the first corner, then pick or drag to the opposite corner. The viewport fits the selected model-space rectangle. The same Navigate section also exposes `Zoom Extents`, matching the existing top-bar command.
 
 Command aliases:
 
