@@ -15,7 +15,10 @@ namespace OpenCad2D.Tools.Editing;
 /// </summary>
 public sealed class FilletTool : ICadTool, ICommandDrivenTool
 {
+    private const double MinimumPracticalFilletAngleRadians = 1e-6;
+
     private double _radius;
+    private bool _trimEnabled = true;
     private ToolPickedEntityInput? _firstPick;
     private IReadOnlyList<CadEntity> _previewEntities = Array.Empty<CadEntity>();
 
@@ -24,6 +27,8 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
     public FilletToolState State { get; private set; } = FilletToolState.WaitingForFirstEntityOrRadius;
 
     public double Radius => _radius;
+
+    public bool TrimEnabled => _trimEnabled;
 
     public EntityId? FirstEntityId => _firstPick?.EntityId;
 
@@ -40,19 +45,32 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
         {
             FilletToolState.WaitingForFirstEntityOrRadius => new CommandPromptState(
                 "FILLET",
-                $"Select first line or [Radius] <{_radius:0.###}>",
+                $"Select first line or [Radius/Trim] <{_radius:0.###}> ({FormatTrimMode()})",
                 CommandInputKind.SelectionOrOption,
                 new[]
                 {
-                    new CommandOption("Radius", "R", "Set fillet radius")
+                    new CommandOption("Radius", "R", "Set fillet radius"),
+                    new CommandOption("Trim", "T", "Set whether source lines are trimmed")
                 },
-                placeholder: "Click first line or type R"),
+                placeholder: "Click first line or type R/T"),
 
             FilletToolState.WaitingForRadius => new CommandPromptState(
                 "FILLET",
                 "Specify fillet radius",
                 CommandInputKind.Number,
                 placeholder: "Radius, for example 10 or 0"),
+
+            FilletToolState.WaitingForTrimMode => new CommandPromptState(
+                "FILLET",
+                $"Specify trim mode <{FormatTrimMode()}>",
+                CommandInputKind.Option,
+                new[]
+                {
+                    new CommandOption("Trim", "T", "Trim source lines"),
+                    new CommandOption("NoTrim", "N", "Keep source lines and add only the fillet arc")
+                },
+                acceptsEmptyEnter: true,
+                placeholder: "Trim or NoTrim"),
 
             FilletToolState.WaitingForSecondEntity => new CommandPromptState(
                 "FILLET",
@@ -80,6 +98,15 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
             return ToolResult.Started("Specify fillet radius.");
         }
 
+        if (State == FilletToolState.WaitingForFirstEntityOrRadius &&
+            input.Kind == CommandInputSubmissionKind.Option &&
+            string.Equals(input.OptionKeyword, "Trim", StringComparison.OrdinalIgnoreCase))
+        {
+            State = FilletToolState.WaitingForTrimMode;
+            context.CurrentBasePoint = null;
+            return ToolResult.Started($"Specify trim mode <{FormatTrimMode()}>.");
+        }
+
         if (State == FilletToolState.WaitingForRadius &&
             input.Kind == CommandInputSubmissionKind.Number &&
             input.Number is not null)
@@ -87,10 +114,25 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
             return AcceptRadius(context, input.Number.Value);
         }
 
+        if (State == FilletToolState.WaitingForTrimMode)
+        {
+            if (input.Kind == CommandInputSubmissionKind.Confirm)
+            {
+                State = FilletToolState.WaitingForFirstEntityOrRadius;
+                return ToolResult.Started($"Fillet trim mode remains {FormatTrimMode()}. Select first line.");
+            }
+
+            if (input.Kind == CommandInputSubmissionKind.Option && input.OptionKeyword is not null)
+            {
+                return AcceptTrimMode(context, input.OptionKeyword);
+            }
+        }
+
         return State switch
         {
             FilletToolState.WaitingForFirstEntityOrRadius => ToolResult.None("Select the first line from the drawing canvas or type Radius."),
             FilletToolState.WaitingForRadius => ToolResult.None("Specify a non-negative fillet radius."),
+            FilletToolState.WaitingForTrimMode => ToolResult.None("Specify Trim or NoTrim."),
             FilletToolState.WaitingForSecondEntity => ToolResult.None("Select the second line from the drawing canvas."),
             _ => ToolResult.None()
         };
@@ -107,6 +149,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
         {
             FilletToolState.WaitingForFirstEntityOrRadius => AcceptFirstLine(context, pointer.ModelPoint),
             FilletToolState.WaitingForRadius => ToolResult.None("Type the fillet radius in the command input."),
+            FilletToolState.WaitingForTrimMode => ToolResult.None("Type Trim or NoTrim in the command input."),
             FilletToolState.WaitingForSecondEntity => AcceptSecondLine(context, pointer.ModelPoint),
             _ => ToolResult.None()
         };
@@ -142,6 +185,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
                 second,
                 secondPick.PickPoint,
                 _radius,
+                _trimEnabled,
                 context.GeometryTolerance,
                 out IReadOnlyList<CadEntity>? resultEntities,
                 out _))
@@ -185,6 +229,29 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
         context.CurrentBasePoint = null;
 
         return ToolResult.Started($"Fillet radius set to {_radius:0.###}. Select first line.");
+    }
+
+    private ToolResult AcceptTrimMode(
+        ToolContext context,
+        string optionKeyword)
+    {
+        if (string.Equals(optionKeyword, "Trim", StringComparison.OrdinalIgnoreCase))
+        {
+            _trimEnabled = true;
+        }
+        else if (string.Equals(optionKeyword, "NoTrim", StringComparison.OrdinalIgnoreCase))
+        {
+            _trimEnabled = false;
+        }
+        else
+        {
+            return ToolResult.None("Specify Trim or NoTrim.");
+        }
+
+        State = FilletToolState.WaitingForFirstEntityOrRadius;
+        context.CurrentBasePoint = null;
+
+        return ToolResult.Started($"Fillet trim mode set to {FormatTrimMode()}. Select first line.");
     }
 
     private ToolResult AcceptFirstLine(
@@ -237,6 +304,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
                 second,
                 secondPick.PickPoint,
                 _radius,
+                _trimEnabled,
                 context.GeometryTolerance,
                 out IReadOnlyList<CadEntity>? resultEntities,
                 out string? errorMessage))
@@ -249,21 +317,26 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
             return ToolResult.None(errorMessage ?? "Cannot create fillet for the selected lines.");
         }
 
-        context.Commands.Execute(
-            context.Document,
-            new ModifyEntitiesCommand(
+        ICadCommand command = _trimEnabled
+            ? new ModifyEntitiesCommand(
                 new[] { first, second },
                 resultEntities,
                 _radius <= context.GeometryTolerance.Distance
                     ? "Fillet lines with zero radius"
-                    : "Fillet lines"));
+                    : "Fillet lines")
+            : new AddEntityCommand(
+                resultEntities);
+
+        context.Commands.Execute(
+            context.Document,
+            command);
 
         _firstPick = null;
         _previewEntities = Array.Empty<CadEntity>();
         State = FilletToolState.WaitingForFirstEntityOrRadius;
         context.CurrentBasePoint = null;
 
-        return ToolResult.Completed("Fillet created. Select first line or type Radius.");
+        return ToolResult.Completed("Fillet created. Select first line or type Radius/Trim.");
     }
 
     internal static bool TryCreateLineLineFillet(
@@ -272,6 +345,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
         LineEntity second,
         Point2D secondPickPoint,
         double radius,
+        bool trimSourceLines,
         GeometryTolerance tolerance,
         out IReadOnlyList<CadEntity>? resultEntities,
         out string? errorMessage)
@@ -316,14 +390,22 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
         double branchDot = Math.Clamp(firstBranch.Dot(secondBranch), -1.0, 1.0);
         double angle = Math.Acos(branchDot);
 
-        if (angle <= tolerance.Angle || Math.Abs(Math.PI - angle) <= tolerance.Angle)
+        double minimumAngle = Math.Max(tolerance.Angle, MinimumPracticalFilletAngleRadians);
+
+        if (angle <= minimumAngle || Math.Abs(Math.PI - angle) <= minimumAngle)
         {
-            errorMessage = "Cannot fillet lines with an invalid corner angle.";
+            errorMessage = "Cannot fillet lines with an invalid or nearly collinear corner angle.";
             return false;
         }
 
         if (radius <= tolerance.Distance)
         {
+            if (!trimSourceLines)
+            {
+                errorMessage = "Zero-radius fillet requires Trim mode because NoTrim would not create new geometry.";
+                return false;
+            }
+
             resultEntities = new CadEntity[]
             {
                 CreateTrimmedLineToPoint(first, firstBranch, intersectionPoint),
@@ -375,12 +457,17 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
             isLocked: first.IsLocked,
             drawOrder: Math.Max(first.DrawOrder, second.DrawOrder) + 1);
 
-        resultEntities = new CadEntity[]
-        {
-            CreateTrimmedLineToPoint(first, firstBranch, firstTangent),
-            CreateTrimmedLineToPoint(second, secondBranch, secondTangent),
-            filletArc
-        };
+        resultEntities = trimSourceLines
+            ? new CadEntity[]
+            {
+                CreateTrimmedLineToPoint(first, firstBranch, firstTangent),
+                CreateTrimmedLineToPoint(second, secondBranch, secondTangent),
+                filletArc
+            }
+            : new CadEntity[]
+            {
+                filletArc
+            };
         return true;
     }
 
@@ -452,6 +539,11 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
             pickPoint,
             entity.GetClosestPoint(pickPoint),
             entity);
+    }
+
+    private string FormatTrimMode()
+    {
+        return _trimEnabled ? "Trim" : "NoTrim";
     }
 
     private void Reset(ToolContext context)

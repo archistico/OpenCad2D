@@ -156,8 +156,9 @@ Future work:
 Workflow:
 
 ```text
-FILLET: Select first line or [Radius] <r>:
+FILLET: Select first line or [Radius/Trim] <r> (Trim):
 FILLET: Specify fillet radius:
+FILLET: Specify trim mode <Trim>:
 FILLET: Select second line:
 ```
 
@@ -170,12 +171,13 @@ Rules:
 - Radius option sets the active fillet radius;
 - radius `0` creates a sharp-corner join;
 - radius greater than `0` creates a tangent arc;
-- while selecting the second line, Fillet shows a live preview of the trimmed line result and tangent arc;
-- trim mode is always on.
+- while selecting the second line, Fillet shows a live preview of the final result;
+- `Trim` mode trims/replaces the source lines and adds the tangent arc;
+- `NoTrim` mode keeps the source lines unchanged and adds only the tangent arc;
+- radius `0` requires `Trim` mode because `NoTrim` would not create new geometry.
 
 Future work:
 
 - Line-Arc;
 - Arc-Arc;
-- polyline fillet;
-- NoTrim option.
+- polyline fillet.

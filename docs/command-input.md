@@ -33,6 +33,8 @@ Mouse input and typed input feed the same tool state machine.
 | `U`, `Undo` | option when exposed by the active prompt |
 | `A`, `All` | option when exposed by the active prompt |
 | `R`, `Radius` | Fillet radius option |
+| `T`, `Trim` | Fillet trim mode option |
+| `N`, `NoTrim` | Fillet no-trim mode option |
 
 Angles are user-facing degrees:
 
@@ -162,7 +164,7 @@ pick first line
 pick second line
 ```
 
-Radius `0` creates a sharp-corner join. With a positive radius, the canvas shows a live preview while the second line is being selected.
+Radius `0` creates a sharp-corner join in Trim mode. With a positive radius, the canvas shows a live preview while the second line is being selected. Use `T` / `Trim` and then `N` / `NoTrim` to keep the original lines and add only the tangent fillet arc.
 
 ---
 

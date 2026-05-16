@@ -84,7 +84,7 @@ Implemented:
 | Extend | line/arc/open-polyline target support |
 | Trim | cutting edges including ellipses, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
-| Fillet | line-line, Radius option, radius 0 sharp join |
+| Fillet | line-line, Radius and Trim/NoTrim options, radius 0 sharp join |
 | Mirror | two-point mirror axis, keeps source by default, optional source deletion |
 
 ---
@@ -118,8 +118,9 @@ The side preview must use the same geometry method as final creation.
 Workflow:
 
 ```text
-FILLET: Select first line or [Radius] <r>:
+FILLET: Select first line or [Radius/Trim] <r> (Trim):
 FILLET: Specify fillet radius:
+FILLET: Specify trim mode <Trim>:
 FILLET: Select second line:
 ```
 
@@ -129,8 +130,10 @@ Supported targets:
 
 Rules:
 
-- Radius `0` creates a sharp-corner join;
+- Radius `0` creates a sharp-corner join in Trim mode;
 - radius greater than zero creates a tangent arc;
+- `Trim` replaces the source lines with trimmed line segments plus the fillet arc;
+- `NoTrim` keeps the source lines and adds only the fillet arc;
 - a live preview is shown while choosing the second line;
 - trim mode is always on;
 - Line-Arc, Arc-Arc, polyline fillet and NoTrim are future work.

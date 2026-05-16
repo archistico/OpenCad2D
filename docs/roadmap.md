@@ -929,6 +929,7 @@ These remain useful but are intentionally deferred beyond v0.8:
 - [ ] polyline offset;
 - [ ] advanced Fillet variants;
 - [x] Fillet live preview for Line-Line;
+- [x] Fillet Trim/NoTrim mode for Line-Line;
 - [ ] advanced Trim Fence/Crossing/Edge/Project/Erase modes.
 
 ---

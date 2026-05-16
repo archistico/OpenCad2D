@@ -4,5 +4,6 @@ public enum FilletToolState
 {
     WaitingForFirstEntityOrRadius,
     WaitingForRadius,
+    WaitingForTrimMode,
     WaitingForSecondEntity
 }

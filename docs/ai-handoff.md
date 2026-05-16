@@ -2005,3 +2005,12 @@ Implemented the first Fillet refinement pass. `FilletTool` now keeps transient p
 The preview is cleared when the tool is cancelled, deactivated, reset, completed or when the hovered second entity is invalid. The Line-Line fillet geometry also gained an explicit degenerate-bisector guard before normalizing the angle bisector, making near-opposite branch cases safer.
 
 Added Tool tests covering live preview generation without changing the document and preview cleanup after committing the fillet. Remaining v0.8.5 work: NoTrim option, additional near-collinear edge-case tests, then Offset miter-limit/join-style refinement.
+
+
+## 2026-05-16 - v0.8.5 Fillet Trim/NoTrim refinement
+
+Implemented the next Fillet refinement pass. `FilletTool` now supports a command-driven `Trim` option with `Trim` and `NoTrim` modes. Trim remains the default and preserves the existing behavior: the two source lines are replaced by trimmed line segments plus the fillet arc. NoTrim keeps both source lines unchanged and adds only the tangent arc for positive-radius fillets.
+
+Radius `0` intentionally remains Trim-only because NoTrim with zero radius would not create any new geometry. The tool returns a non-mutating result in that case. The live preview uses the same trim mode as final creation, so NoTrim previews only the future arc while Trim previews the trimmed source lines plus the arc.
+
+Added tests for trim-mode command input, NoTrim creation, NoTrim preview, zero-radius NoTrim rejection, and near-parallel line safety.
