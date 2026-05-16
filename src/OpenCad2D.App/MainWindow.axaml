@@ -400,6 +400,12 @@
                                     ToolTip.Tip="Draw a polyline with multiple vertices"
                                     Click="Polyline_Click" />
 
+                            <Button x:Name="PolygonButton"
+                                    Classes="tool-button"
+                                    Content="Polygon"
+                                    ToolTip.Tip="Draw a regular polygon from side count, center and vertex"
+                                    Click="Polygon_Click" />
+
                             <TextBlock Classes="panel-section-label"
                                        Text="DIMENSION" />
 

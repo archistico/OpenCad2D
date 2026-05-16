@@ -125,3 +125,11 @@ The command input supports:
 ```
 
 Empty Enter repeats the last command only when no command is active.
+
+
+## Polygon
+
+- `POLYGON` / `PG` starts the regular polygon tool.
+- Workflow: number of sides, center point, vertex point or radius.
+- The tool creates a closed `PolylineEntity`, so existing selection, offset, export and edit logic applies.
+- Supported command input: absolute coordinates, relative coordinates, polar input and direct distance for the radius/vertex step.

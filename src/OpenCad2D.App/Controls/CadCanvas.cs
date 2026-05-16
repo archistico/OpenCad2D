@@ -1078,6 +1078,10 @@ public sealed class CadCanvas : Control
                 DrawPolylinePreview(context, polylineTool);
                 break;
 
+            case PolygonTool polygonTool:
+                DrawPolygonPreview(context, polygonTool);
+                break;
+
             case HorizontalDimensionTool horizontalDimensionTool:
                 DrawEntitiesPreview(
                     context,
@@ -1650,6 +1654,21 @@ public sealed class CadCanvas : Control
     private void DrawPolylinePreview(
         DrawingContext context,
         PolylineTool tool)
+    {
+        PolylineEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
+    private void DrawPolygonPreview(
+        DrawingContext context,
+        PolygonTool tool)
     {
         PolylineEntity? preview = tool.GetPreviewEntity();
 

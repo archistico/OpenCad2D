@@ -1269,3 +1269,13 @@ The manager also shows a compact textual preview of the resulting pattern.
 
 The Mirror tool now draws the mirror axis while the user is choosing the second axis point. The preview also keeps showing the mirrored entities so the user can verify the axis direction before confirming whether source objects should be deleted.
 
+
+
+## v0.8.x final drawing tools before v0.9
+
+- [x] Dimension export check and PDF dimension export support.
+- [x] Mirror tool with axis preview.
+- [x] Polygon tool (`POLYGON` / `PG`) creating closed polylines.
+- [ ] Ellipse tool.
+- [ ] Multiline text tool.
+- [ ] Spline tool.

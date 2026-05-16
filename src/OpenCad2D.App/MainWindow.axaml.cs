@@ -822,6 +822,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Polygon_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Polygon);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
 
     private void HorizontalDimension_Click(
         object? sender,
@@ -1907,6 +1918,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             PolylineButton,
             activeToolName.Equals("Polyline", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            PolygonButton,
+            activeToolName.Equals("Polygon", StringComparison.OrdinalIgnoreCase));
 
 
         SetActiveToolButton(

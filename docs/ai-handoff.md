@@ -1775,3 +1775,12 @@ The manager also shows a compact textual preview of the resulting pattern.
 
 The Mirror tool now draws the mirror axis while the user is choosing the second axis point. The preview also keeps showing the mirrored entities so the user can verify the axis direction before confirming whether source objects should be deleted.
 
+
+
+## Latest update - Polygon tool
+
+Added the command-driven regular polygon tool before v0.9. `POLYGON` / `PG` asks for side count, center point, then vertex point or radius. It creates a closed `PolylineEntity`, includes preview support, button integration, aliases and tests. Next planned drawing tools: ellipse, multiline text, spline.
+
+## Polygon tool test alignment
+
+The Polygon tool is part of the Draw category. ToolRegistry draw-category tests must expect 10 draw tools and include `ToolId.Polygon` in both normal and case-insensitive category checks.

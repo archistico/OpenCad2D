@@ -26,6 +26,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Arc));
         Assert.True(registry.Contains(ToolId.ArcThreePoints));
         Assert.True(registry.Contains(ToolId.Polyline));
+        Assert.True(registry.Contains(ToolId.Polygon));
         Assert.True(registry.Contains(ToolId.HorizontalDimension));
         Assert.True(registry.Contains(ToolId.VerticalDimension));
         Assert.True(registry.Contains(ToolId.AlignedDimension));
@@ -58,7 +59,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(34, tools.Count);
+        Assert.Equal(35, tools.Count);
 
         Assert.Contains(
             tools,
@@ -158,6 +159,10 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.Polygon);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.HorizontalDimension);
 
         Assert.Contains(
@@ -217,7 +222,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Draw");
 
-        Assert.Equal(9, tools.Count);
+        Assert.Equal(10, tools.Count);
         Assert.Contains(tools, tool => tool.Id == ToolId.Point);
         Assert.Contains(tools, tool => tool.Id == ToolId.Text);
         Assert.Contains(tools, tool => tool.Id == ToolId.Line);
@@ -227,6 +232,7 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, tool => tool.Id == ToolId.Arc);
         Assert.Contains(tools, tool => tool.Id == ToolId.ArcThreePoints);
         Assert.Contains(tools, tool => tool.Id == ToolId.Polyline);
+        Assert.Contains(tools, tool => tool.Id == ToolId.Polygon);
     }
 
     [Fact]
@@ -685,7 +691,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("draw");
 
-        Assert.Equal(9, tools.Count);
+        Assert.Equal(10, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Point);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Text);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Line);
@@ -695,6 +701,7 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Arc);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.ArcThreePoints);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Polyline);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Polygon);
     }
 
     [Fact]

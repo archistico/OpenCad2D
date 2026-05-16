@@ -19,6 +19,8 @@ public sealed class CommandAliasRegistryTests
     [InlineData("HDIM", ToolId.HorizontalDimension)]
     [InlineData("ANG", ToolId.AngularDimension)]
     [InlineData("  pl  ", ToolId.Polyline)]
+    [InlineData("PG", ToolId.Polygon)]
+    [InlineData("polygon", ToolId.Polygon)]
     public void TryResolve_WithKnownAlias_ShouldReturnTool(
         string alias,
         ToolId expectedToolId)

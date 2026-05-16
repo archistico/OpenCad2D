@@ -210,3 +210,8 @@ Grip editing is available for supported entities. Arc 3-point grip behavior is i
 
 The Mirror tool now draws the mirror axis while the user is choosing the second axis point. The preview also keeps showing the mirrored entities so the user can verify the axis direction before confirming whether source objects should be deleted.
 
+
+
+## Polygon tool
+
+The `Polygon` tool draws regular polygons as closed polylines. It is command-driven and supports `POLYGON` / `PG`. The first step asks for the side count, Enter accepts the default of 6, then the user specifies the center point and a vertex point or radius. The generated entity is a closed `PolylineEntity`.

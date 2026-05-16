@@ -108,6 +108,14 @@ public sealed class ToolRegistry
                 "Draw"),
             () => new PolylineTool());
 
+        Register(
+            new ToolDescriptor(
+                ToolId.Polygon,
+                "Polygon",
+                "Polygon",
+                "Draw"),
+            () => new PolygonTool());
+
 
         Register(
             new ToolDescriptor(
