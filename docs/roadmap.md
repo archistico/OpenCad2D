@@ -84,9 +84,9 @@ OpenCad2D currently includes:
 Pending in this phase:
 
 - [ ] fix arc endpoint grip behavior so moving one endpoint does not move the other endpoint;
-- [ ] update About with `info@opencad2d.org` and `www.opencad2d.org`;
-- [ ] center all secondary modal windows on their owner;
-- [ ] improve the save changes dialog styling;
+- [x] update About with `info@opencad2d.org` and `www.opencad2d.org`;
+- [x] center all secondary modal windows on their owner;
+- [x] improve the save changes dialog styling;
 - [ ] add Select All and Select Last;
 - [ ] add Zoom Window;
 - [ ] add document recovery options for partially invalid native files.

@@ -4,10 +4,11 @@
         Title="About OpenCad2D"
         Icon="/Assets/app-icon.ico"
         Width="520"
-        Height="430"
+        Height="460"
         MinWidth="460"
-        MinHeight="380"
+        MinHeight="410"
         CanResize="False"
+        WindowStartupLocation="CenterOwner"
         Background="#1E1E1E">
 
     <Window.Styles>
@@ -108,7 +109,17 @@
                                Text="Contact" />
                     <TextBlock Grid.Column="1"
                                Classes="about-value"
-                               Text="info@archistico.com" />
+                               Text="info@opencad2d.org" />
+                </Grid>
+
+                <Grid ColumnDefinitions="112,*"
+                      ColumnSpacing="12">
+                    <TextBlock Grid.Column="0"
+                               Classes="about-label"
+                               Text="Website" />
+                    <TextBlock Grid.Column="1"
+                               Classes="about-value"
+                               Text="www.opencad2d.org" />
                 </Grid>
 
                 <Border Background="#1E1E1E"

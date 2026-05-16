@@ -9,6 +9,7 @@
         Height="560"
         MinWidth="620"
         MinHeight="460"
+        WindowStartupLocation="CenterOwner"
         Background="#1E1E1E">
 
     <Window.Styles>

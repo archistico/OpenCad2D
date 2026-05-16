@@ -1,0 +1,103 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OpenCad2D.App.SaveChangesWindow"
+        Title="Save changes?"
+        Icon="/Assets/app-icon.ico"
+        Width="500"
+        Height="250"
+        MinWidth="460"
+        MinHeight="230"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.dialog-title">
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="FontSize" Value="20" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+
+        <Style Selector="TextBlock.dialog-message">
+            <Setter Property="Foreground" Value="#D4D4D4" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style Selector="TextBlock.dialog-detail">
+            <Setter Property="Foreground" Value="#9CDCFE" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="BorderBrush" Value="#555555" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="14,6" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="96" />
+        </Style>
+
+        <Style Selector="Button.primary-button">
+            <Setter Property="Background" Value="#0E639C" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+            <Setter Property="BorderBrush" Value="#1177BB" />
+        </Style>
+    </Window.Styles>
+
+    <Border Margin="16"
+            Background="#232323"
+            BorderBrush="#3A3A3A"
+            BorderThickness="1"
+            CornerRadius="12">
+
+        <Grid RowDefinitions="*,Auto">
+            <StackPanel Grid.Row="0"
+                        Margin="18,16"
+                        Spacing="12">
+                <TextBlock Classes="dialog-title"
+                           Text="Save changes before continuing?" />
+
+                <TextBlock Classes="dialog-message"
+                           Text="The current drawing contains unsaved changes." />
+
+                <Border Background="#1E1E1E"
+                        BorderBrush="#333333"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12">
+                    <TextBlock x:Name="FileNameTextBlock"
+                               Classes="dialog-detail"
+                               Text="Untitled" />
+                </Border>
+            </StackPanel>
+
+            <Border Grid.Row="1"
+                    Background="#252526"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="0,1,0,0"
+                    CornerRadius="0,0,12,12"
+                    Padding="12">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Right"
+                            Spacing="8">
+                    <Button Classes="dialog-button primary-button"
+                            Content="Save"
+                            IsDefault="True"
+                            Click="Save_Click" />
+
+                    <Button Classes="dialog-button"
+                            Content="Don't Save"
+                            Click="DontSave_Click" />
+
+                    <Button Classes="dialog-button"
+                            Content="Cancel"
+                            IsCancel="True"
+                            Click="Cancel_Click" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Border>
+</Window>

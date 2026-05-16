@@ -1077,3 +1077,32 @@ Follow-up fix after the startup template phase:
 - The DXF import view-model test now asserts the new clean startup state before import, then verifies that import marks the document dirty.
 
 This keeps startup/template/native file loading clean while ensuring imported DXF files still require a native save.
+
+### 2026-05-16 - Modal polish and About contact update
+
+The second stabilization pass updated the user-facing modal behavior:
+
+- `AboutWindow` now shows `info@opencad2d.org` as the contact email.
+- `AboutWindow` now shows `www.opencad2d.org` as the project website.
+- Secondary modal windows are configured with `WindowStartupLocation="CenterOwner"` where applicable.
+- The inline save-changes confirmation built in `MainWindow.axaml.cs` was replaced by a dedicated `SaveChangesWindow`.
+- `SaveChangesChoice` is now a small app-level enum used by the save confirmation window and `MainWindow`.
+
+Files involved:
+
+```text
+src/OpenCad2D.App/AboutWindow.axaml
+src/OpenCad2D.App/DxfImportReportWindow.axaml
+src/OpenCad2D.App/LayerManagerWindow.axaml
+src/OpenCad2D.App/LineFormatManagerWindow.axaml
+src/OpenCad2D.App/PdfExportSettingsWindow.axaml
+src/OpenCad2D.App/SaveChangesChoice.cs
+src/OpenCad2D.App/SaveChangesWindow.axaml
+src/OpenCad2D.App/SaveChangesWindow.axaml.cs
+src/OpenCad2D.App/SvgExportSettingsWindow.axaml
+src/OpenCad2D.App/TextFormatManagerWindow.axaml
+src/OpenCad2D.App/MainWindow.axaml.cs
+```
+
+Next recommended implementation step: fix arc endpoint grip behavior so moving start/end grips preserves the opposite endpoint and keeps the radius unchanged.
+

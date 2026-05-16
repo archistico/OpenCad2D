@@ -489,13 +489,6 @@ public partial class MainWindow : Window
         }
     }
 
-    private enum SaveChangesChoice
-    {
-        Cancel,
-        Save,
-        DontSave
-    }
-
     private async Task<bool> ConfirmProceedWithUnsavedChangesAsync()
     {
         if (!_viewModel.IsDirty)
@@ -520,60 +513,7 @@ public partial class MainWindow : Window
 
     private async Task<SaveChangesChoice> ShowSaveChangesDialogAsync()
     {
-        var saveButton = new Button
-        {
-            Content = "Save",
-            MinWidth = 92
-        };
-
-        var dontSaveButton = new Button
-        {
-            Content = "Don't Save",
-            MinWidth = 92
-        };
-
-        var cancelButton = new Button
-        {
-            Content = "Cancel",
-            MinWidth = 92
-        };
-
-        var dialog = new Window
-        {
-            Title = "Save changes?",
-            Width = 460,
-            Height = 190,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Content = new StackPanel
-            {
-                Margin = new Avalonia.Thickness(18),
-                Spacing = 16,
-                Children =
-                {
-                    new TextBlock
-                    {
-                        Text = $"Save changes to '{_viewModel.CurrentFileName}' before continuing?",
-                        TextWrapping = Avalonia.Media.TextWrapping.Wrap
-                    },
-                    new StackPanel
-                    {
-                        Orientation = Orientation.Horizontal,
-                        HorizontalAlignment = HorizontalAlignment.Right,
-                        Spacing = 8,
-                        Children =
-                        {
-                            saveButton,
-                            dontSaveButton,
-                            cancelButton
-                        }
-                    }
-                }
-            }
-        };
-
-        saveButton.Click += (_, _) => dialog.Close(SaveChangesChoice.Save);
-        dontSaveButton.Click += (_, _) => dialog.Close(SaveChangesChoice.DontSave);
-        cancelButton.Click += (_, _) => dialog.Close(SaveChangesChoice.Cancel);
+        var dialog = new SaveChangesWindow(_viewModel.CurrentFileName);
 
         return await dialog.ShowDialog<SaveChangesChoice>(this);
     }
