@@ -1013,3 +1013,13 @@ Current Offset support:
 - straight-segment polylines with miter joins.
 
 The tool rejects unsafe cases such as zero-length lines, collapsing circle/arc radii and degenerate polyline offsets.
+
+### Command input row layout
+
+The active command/tool indicator now appears next to the command input instead of in the top toolbar. The command row is intentionally compact:
+
+```text
+[Active tool] [Prompt] [Input]
+```
+
+The earlier always-visible history panel above the command input was removed from the default UI to keep more vertical space available for drawing.

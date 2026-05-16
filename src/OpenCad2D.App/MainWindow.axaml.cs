@@ -1995,7 +1995,6 @@ public partial class MainWindow : Window
             MeasureAreaButton,
             activeToolName.Equals("Measure Area", StringComparison.OrdinalIgnoreCase));
 
-        ActiveCommandTextBlock.Text = $"Comando attivo: {activeToolName}";
     }
 
     private static void SetActiveToolButton(

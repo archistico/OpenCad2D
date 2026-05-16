@@ -1669,3 +1669,23 @@ Current limitations are intentional: no rounded joins, no bulge/arc polyline off
 - Preview uses the same `TryCreateOffsetEntity` geometry path as the final click, so the displayed result and committed result stay aligned.
 - Offset tests were expanded for invalid distances, zero-length lines, circle/arc inner offsets that would collapse the radius, collinear polyline joins, too-few-vertex polylines, and preview behavior.
 - Polyline offset remains miter-only for straight-segment polylines; rounded joins and bulge/arc polyline offsets remain future work.
+
+### v0.8.x command input layout cleanup
+
+The command input area was simplified after user testing:
+
+- The active tool / command indicator was moved from the top toolbar to the command input row.
+- The command prompt now sits inline immediately before the input box.
+- The visible multi-line command history panel above the input was removed from the default layout because it consumed vertical space without adding enough value during normal drafting.
+- The underlying command history data can remain in the view model for future use, but the default UI should stay compact.
+
+Current command row layout:
+
+```text
+[Active tool] [Prompt text] [Command input]
+```
+
+
+### Command input compact layout compile fix
+
+Removed the stale `ActiveCommandTextBlock` code-behind update from `MainWindow.axaml.cs`. The compact command input layout now binds the active tool name directly in XAML next to the command prompt, so no named `ActiveCommandTextBlock` control exists anymore.

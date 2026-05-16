@@ -843,3 +843,13 @@ Final v0.8 documentation is tracked in:
 ```text
 docs/release-v0.8.md
 ```
+
+## Compact command input layout
+
+The default v0.8.x command input layout is compact and inline:
+
+```text
+[Active tool] [Current prompt] [Input box]
+```
+
+The active tool indicator is displayed immediately before the command prompt and the command input box. The previous multi-line visible history area was removed from the default layout to avoid wasting vertical drawing space during normal CAD work. The command history can still be reintroduced later as an optional expandable console if needed.

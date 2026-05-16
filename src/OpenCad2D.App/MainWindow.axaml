@@ -297,11 +297,6 @@
                             ToolTip.Tip="Show or hide the selection property panel"
                             Click="Properties_Click" />
 
-                    <Separator Margin="5,0" />
-
-                    <TextBlock x:Name="ActiveCommandTextBlock"
-                               Classes="active-command-label"
-                               Text="{Binding ActiveToolName}" />
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -807,40 +802,21 @@
                 BorderThickness="0,1,0,0"
                 Padding="7,5">
 
-            <Grid RowDefinitions="Auto,Auto"
-                  ColumnDefinitions="Auto,*"
-                  RowSpacing="4"
+            <Grid ColumnDefinitions="Auto,Auto,*"
                   ColumnSpacing="8">
 
-                <Border Grid.Row="0"
-                        Grid.ColumnSpan="2"
-                        Background="#141414"
-                        BorderBrush="#303030"
-                        BorderThickness="1"
-                        Padding="6,3"
-                        MinHeight="44">
-                    <ItemsControl ItemsSource="{Binding VisibleCommandHistory}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding}"
-                                           Foreground="#9CDCFE"
-                                           FontFamily="Consolas"
-                                           FontSize="11" />
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </Border>
+                <TextBlock Grid.Column="0"
+                           Classes="active-command-label"
+                           Text="{Binding ActiveToolName}" />
 
-                <TextBlock Grid.Row="1"
-                           Grid.Column="0"
+                <TextBlock Grid.Column="1"
                            Text="{Binding CommandPromptText}"
                            Foreground="#CCCCCC"
                            VerticalAlignment="Center"
                            FontFamily="Consolas"
                            FontSize="12" />
 
-                <TextBox Grid.Row="1"
-                         Grid.Column="1"
+                <TextBox Grid.Column="2"
                          x:Name="CommandInputTextBox"
                          Background="#111111"
                          Foreground="#FFFFFF"
