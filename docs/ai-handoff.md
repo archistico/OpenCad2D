@@ -1885,3 +1885,19 @@ Recommended next step:
 3. Record results in `docs/dxf-compatibility.md`.
 4. Then continue with v0.8.3: small `MainWindow.axaml.cs` cleanup before the larger `CadCanvas` renderer extraction.
 
+## Latest update — v0.8.3 MainWindow refresh cleanup
+
+Started the architecture-cleanup part of the v0.9 stabilization track with a deliberately small `MainWindow.axaml.cs` change.
+
+Implemented:
+
+- Added `RefreshAllUiAfterDocumentChange(bool clearSnapMarker = true, bool focusCanvas = true)`.
+- Replaced duplicated document-replacement refresh blocks after New, Open and Import DXF with the helper.
+- Kept layer-manager refresh paths separate because they update layer controls without replacing the whole document.
+- Did not start the larger `CadCanvas` renderer/preview extraction in this pass.
+
+Recommended next step:
+
+1. Run the full test suite.
+2. Manually check New, Open and Import DXF to confirm layer combo, polar tracking combo, status bar, snap marker and canvas focus still refresh correctly.
+3. Continue v0.8.3 by extracting entity rendering from `CadCanvas` into a renderer class, without changing tool behavior.

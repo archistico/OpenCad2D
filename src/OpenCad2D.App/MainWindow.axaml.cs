@@ -64,12 +64,31 @@ public partial class MainWindow : Window
 
         DataContext = _viewModel;
 
+        RefreshAllUiAfterDocumentChange(clearSnapMarker: false, focusCanvas: false);
+
+        Closing += Window_Closing;
+    }
+
+    private void RefreshAllUiAfterDocumentChange(
+        bool clearSnapMarker = true,
+        bool focusCanvas = true)
+    {
         InitializeLayerComboBox();
         InitializePolarTrackingComboBox();
         RefreshLayerControls();
         RefreshStatus();
 
-        Closing += Window_Closing;
+        if (clearSnapMarker)
+        {
+            CadCanvas.ClearSnapMarker();
+        }
+
+        CadCanvas.InvalidateVisual();
+
+        if (focusCanvas)
+        {
+            CadCanvas.Focus();
+        }
     }
 
 
@@ -85,13 +104,7 @@ public partial class MainWindow : Window
         _viewModel.NewDocument();
 
         CadCanvas.ResetViewport();
-        InitializeLayerComboBox();
-        InitializePolarTrackingComboBox();
-        RefreshLayerControls();
-        RefreshStatus();
-        CadCanvas.ClearSnapMarker();
-        CadCanvas.InvalidateVisual();
-        CadCanvas.Focus();
+        RefreshAllUiAfterDocumentChange();
     }
 
     private async void Open_Click(
@@ -131,13 +144,7 @@ public partial class MainWindow : Window
             var viewportState = _viewModel.OpenFromFile(filePath);
 
             CadCanvas.ApplyViewportState(viewportState);
-            InitializeLayerComboBox();
-            InitializePolarTrackingComboBox();
-            RefreshLayerControls();
-            RefreshStatus();
-            CadCanvas.ClearSnapMarker();
-            CadCanvas.InvalidateVisual();
-            CadCanvas.Focus();
+            RefreshAllUiAfterDocumentChange();
         }
         catch (DocumentLoadException exception)
         {
@@ -197,13 +204,7 @@ public partial class MainWindow : Window
             }
 
             CadCanvas.ResetViewport();
-            InitializeLayerComboBox();
-            InitializePolarTrackingComboBox();
-            RefreshLayerControls();
-            RefreshStatus();
-            CadCanvas.ClearSnapMarker();
-            CadCanvas.InvalidateVisual();
-            CadCanvas.Focus();
+            RefreshAllUiAfterDocumentChange();
 
             if (result.HasWarnings)
             {

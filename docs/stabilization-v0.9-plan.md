@@ -10,15 +10,15 @@ The goal is not to stop feature development permanently. The goal is to make the
 
 | Area | Issue | Status | Target milestone | Notes |
 |---|---|---|---|---|
-| Runtime safety | `CadCanvas.OnPointerPressed` is `async void` without a top-level exception boundary | In progress | v0.8.1 | Add a guarded async body and report failures through the normal canvas status path. |
-| Runtime safety | Text/MTEXT modal dialog uses a boolean reentrancy flag | In progress | v0.8.1 | Replace the boolean gate with a non-blocking semaphore-based guard. |
-| Testing | No end-to-end save/reopen workflow test | In progress | v0.8.1 | Add a persistence-level workflow covering geometry, annotation and current v0.8.x entities. |
+| Runtime safety | `CadCanvas.OnPointerPressed` is `async void` without a top-level exception boundary | Completed | v0.8.1 | Added a guarded async body and reports failures through the normal canvas status path. |
+| Runtime safety | Text/MTEXT modal dialog uses a boolean reentrancy flag | Completed | v0.8.1 | Replaced the boolean gate with a non-blocking semaphore-based guard. |
+| Testing | No end-to-end save/reopen workflow test | Completed | v0.8.1 | Added a persistence-level workflow covering geometry, annotation and current v0.8.x entities. |
 | Documentation | Critical review contains outdated entity status | In progress | v0.8.1 | Ellipse, MTEXT and Bezier spline are now implemented and should be tracked as stabilization/import follow-up work. |
 | Documentation | Roadmap needs explicit stabilization track | In progress | v0.8.1 | Keep v0.9 stabilization separate from future feature backlog. |
 | Interop | DXF export/import not externally validated | In progress | v0.8.2 | Compatibility sample folder and validation document have been added; external viewer results are still pending. |
-| Testing | No import DXF -> modify -> export workflow test | In progress | v0.8.2 | Added a first simple DXF import -> trim -> export regression test. |
+| Testing | No import DXF -> modify -> export workflow test | Completed | v0.8.2 | Added a first simple DXF import -> trim -> export regression test. |
 | Architecture | `CadCanvas` is too large and knows concrete tools | Planned | v0.8.3 | Refactor incrementally: entity renderer first, preview abstraction second, keyboard delegation later. |
-| Architecture | `MainWindow.axaml.cs` duplicates full UI refresh after document replacement | Planned | v0.8.3 | Introduce a single `RefreshAllUiAfterDocumentChange()` helper. |
+| Architecture | `MainWindow.axaml.cs` duplicates full UI refresh after document replacement | Completed | v0.8.3 | Introduced `RefreshAllUiAfterDocumentChange()` for document replacement refresh paths. |
 | UX correctness | Non-associative dimensions can become stale silently | Planned | v0.8.4 | Add a conservative stale marker before attempting associative dimensions. |
 | Command UX | Command history navigation with up/down is missing | Planned | v0.8.4 | Reuse existing command history where possible. |
 | Command UX | Command autocomplete is missing | Planned | v0.8.4 | Start with simple Tab completion before a visual dropdown. |
@@ -63,10 +63,12 @@ Focus on test and DXF validation:
 
 Start architectural cleanup without changing behavior:
 
-- add `RefreshAllUiAfterDocumentChange()` in `MainWindow.axaml.cs`;
-- extract entity rendering from `CadCanvas` into a dedicated renderer;
-- keep tool behavior unchanged;
-- defer preview abstraction until entity rendering is stable.
+- [x] add `RefreshAllUiAfterDocumentChange()` in `MainWindow.axaml.cs` for New/Open/Import DXF document replacement paths;
+- [ ] extract entity rendering from `CadCanvas` into a dedicated renderer;
+- [ ] keep tool behavior unchanged;
+- [ ] defer preview abstraction until entity rendering is stable.
+
+The first v0.8.3 pass intentionally limits itself to the low-risk `MainWindow` cleanup. The larger `CadCanvas` renderer extraction should remain a separate step with focused manual checks.
 
 ---
 
