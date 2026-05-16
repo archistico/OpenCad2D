@@ -1439,6 +1439,11 @@ public partial class MainWindow : Window
         object? sender,
         KeyEventArgs e)
     {
+        if (TryHandleCommandHistoryNavigationKey(e))
+        {
+            return;
+        }
+
         if (TryHandleAlignScaleConfirmationKey(e))
         {
             return;
@@ -1510,6 +1515,11 @@ public partial class MainWindow : Window
         }
 
         if (e.Source is TextBox)
+        {
+            return;
+        }
+
+        if (TryHandleCommandHistoryNavigationKey(e))
         {
             return;
         }
@@ -1733,10 +1743,26 @@ public partial class MainWindow : Window
         return true;
     }
 
+    private bool TryHandleCommandHistoryNavigationKey(KeyEventArgs e)
+    {
+        if (e.Key != Key.Up && e.Key != Key.Down)
+        {
+            return false;
+        }
+
+        string commandText = e.Key == Key.Up
+            ? _viewModel.NavigateCommandHistoryPrevious()
+            : _viewModel.NavigateCommandHistoryNext();
+
+        SetCommandInputText(commandText);
+        CommandInputTextBox.Focus();
+        e.Handled = true;
+        return true;
+    }
+
     private void AppendTextToCommandInput(string text)
     {
-        CommandInputTextBox.Text = (CommandInputTextBox.Text ?? string.Empty) + text;
-        CommandInputTextBox.CaretIndex = CommandInputTextBox.Text.Length;
+        SetCommandInputText((CommandInputTextBox.Text ?? string.Empty) + text);
         CommandInputTextBox.Focus();
     }
 
@@ -1749,15 +1775,19 @@ public partial class MainWindow : Window
             return;
         }
 
-        CommandInputTextBox.Text = text[..^1];
-        CommandInputTextBox.CaretIndex = CommandInputTextBox.Text.Length;
+        SetCommandInputText(text[..^1]);
         CommandInputTextBox.Focus();
     }
 
     private void ClearCommandInputText()
     {
-        CommandInputTextBox.Text = string.Empty;
-        CommandInputTextBox.CaretIndex = 0;
+        SetCommandInputText(string.Empty);
+    }
+
+    private void SetCommandInputText(string text)
+    {
+        CommandInputTextBox.Text = text;
+        CommandInputTextBox.CaretIndex = text.Length;
     }
 
     private static bool IsCommandInputText(string text)

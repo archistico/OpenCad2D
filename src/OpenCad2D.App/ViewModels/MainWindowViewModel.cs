@@ -41,6 +41,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private const int MaxVisibleCommandHistoryEntries = 8;
     private ToolId? _lastCommandToolId;
     private string? _lastCommandInput;
+    private int? _commandHistoryNavigationIndex;
     private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
     private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
     private readonly ISvgExporter _svgExporter = new SvgExporter();
@@ -86,6 +87,44 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool CanRepeatLastCommand => _lastCommandToolId is not null;
 
     public string LastCommandText => _lastCommandInput ?? string.Empty;
+
+    public string NavigateCommandHistoryPrevious()
+    {
+        if (_commandLineHistory.Count == 0)
+        {
+            _commandHistoryNavigationIndex = null;
+            return string.Empty;
+        }
+
+        _commandHistoryNavigationIndex = _commandHistoryNavigationIndex is null
+            ? _commandLineHistory.Count - 1
+            : Math.Max(0, _commandHistoryNavigationIndex.Value - 1);
+
+        return _commandLineHistory[_commandHistoryNavigationIndex.Value];
+    }
+
+    public string NavigateCommandHistoryNext()
+    {
+        if (_commandLineHistory.Count == 0 || _commandHistoryNavigationIndex is null)
+        {
+            _commandHistoryNavigationIndex = null;
+            return string.Empty;
+        }
+
+        if (_commandHistoryNavigationIndex.Value >= _commandLineHistory.Count - 1)
+        {
+            _commandHistoryNavigationIndex = null;
+            return string.Empty;
+        }
+
+        _commandHistoryNavigationIndex++;
+        return _commandLineHistory[_commandHistoryNavigationIndex.Value];
+    }
+
+    public void ResetCommandHistoryNavigation()
+    {
+        _commandHistoryNavigationIndex = null;
+    }
 
     public string CurrentFileName => string.IsNullOrWhiteSpace(_currentFilePath)
         ? "Untitled"
@@ -573,6 +612,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ToolResult SubmitCommandInput(string? input)
     {
+        ResetCommandHistoryNavigation();
+
         string normalizedInput = input?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(normalizedInput))

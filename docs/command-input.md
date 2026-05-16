@@ -61,6 +61,19 @@ Escape cancels the active command. A following Escape can clear selection accord
 
 ---
 
+## Command history navigation
+
+The command input supports CAD-style history navigation:
+
+| Key | Behavior |
+|---|---|
+| `↑` | recalls the previous command/action from command history |
+| `↓` | moves forward through recalled commands; after the newest entry it clears the input |
+
+Only command/action submissions are stored in this navigable history. Point, distance and option input used inside an active command remains visible in the compact command log but is not recalled as a standalone command. This keeps `↑` focused on reusable commands such as `LINE`, `CIRCLE`, `TRIM`, `OFFSET`, `SELECTALL` and similar actions.
+
+---
+
 ## Command-driven tools
 
 Implemented command-driven tools include:

@@ -716,6 +716,66 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Equal(expectedPrompt, viewModel.CommandPromptText);
     }
 
+
+    [Fact]
+    public void NavigateCommandHistoryPrevious_ShouldReturnMostRecentCommandFirst()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.Escape();
+        viewModel.SubmitCommandInput("C");
+        viewModel.Escape();
+        viewModel.SubmitCommandInput("REC");
+
+        Assert.Equal("REC", viewModel.NavigateCommandHistoryPrevious());
+        Assert.Equal("C", viewModel.NavigateCommandHistoryPrevious());
+        Assert.Equal("L", viewModel.NavigateCommandHistoryPrevious());
+        Assert.Equal("L", viewModel.NavigateCommandHistoryPrevious());
+    }
+
+    [Fact]
+    public void NavigateCommandHistoryNext_ShouldReturnNewerCommandsAndThenEmptyInput()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.Escape();
+        viewModel.SubmitCommandInput("C");
+
+        Assert.Equal("C", viewModel.NavigateCommandHistoryPrevious());
+        Assert.Equal("L", viewModel.NavigateCommandHistoryPrevious());
+        Assert.Equal("C", viewModel.NavigateCommandHistoryNext());
+        Assert.Equal(string.Empty, viewModel.NavigateCommandHistoryNext());
+        Assert.Equal(string.Empty, viewModel.NavigateCommandHistoryNext());
+    }
+
+    [Fact]
+    public void SubmitCommandInput_ShouldResetCommandHistoryNavigation()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.Escape();
+        viewModel.SubmitCommandInput("C");
+
+        Assert.Equal("C", viewModel.NavigateCommandHistoryPrevious());
+
+        viewModel.Escape();
+        viewModel.SubmitCommandInput("REC");
+
+        Assert.Equal("REC", viewModel.NavigateCommandHistoryPrevious());
+    }
+
+    [Fact]
+    public void NavigateCommandHistoryPrevious_WhenHistoryIsEmpty_ShouldReturnEmptyInput()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        Assert.Equal(string.Empty, viewModel.NavigateCommandHistoryPrevious());
+        Assert.Equal(string.Empty, viewModel.NavigateCommandHistoryNext());
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,

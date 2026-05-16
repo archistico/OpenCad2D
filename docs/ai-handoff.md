@@ -1973,3 +1973,10 @@ Recommended validation:
 1. Run the full test suite.
 2. Manually verify ALIGN Enter/S, MOVE Enter after selecting entities, COPY Enter after selecting entities, POLYLINE Enter/C and Grip Edit Delete.
 3. Continue v0.8.3 with preview descriptors so `CadToolPreviewRenderer` can stop switching over concrete tool types.
+
+## 2026-05-16 - v0.8.4 command history navigation
+
+Implemented CAD-style Up/Down navigation for the command input. `MainWindowViewModel` now exposes `NavigateCommandHistoryPrevious()`, `NavigateCommandHistoryNext()` and `ResetCommandHistoryNavigation()` so the UI can recall stored command/action submissions without exposing coordinate/point input as reusable commands. `MainWindow.axaml.cs` handles `Key.Up` and `Key.Down` for the command input and canvas-focused workflow, places recalled text in the command box and keeps the caret at the end.
+
+Added App tests covering most-recent-first navigation, next navigation back to an empty input, reset after command submission and empty-history behavior. Updated `docs/command-input.md`, `docs/stabilization-v0.9-plan.md` and `docs/roadmap.md`.
+

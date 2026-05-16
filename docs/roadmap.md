@@ -791,6 +791,7 @@ Core decisions implemented for v0.8:
 - [x] empty Enter while idle repeats the last valid command;
 - [x] empty Enter inside an active command confirms the current phase only when that phase allows it;
 - [x] a compact visible command history is available near the command input;
+- [x] Up/Down command-history navigation for stored command/action input;
 - [x] Trim has a first advanced base workflow with `All`, in-command `Undo` and repeated trimming;
 - [x] Offset and Fillet were added before release stabilization because they are fundamental modify tools.
 
@@ -820,6 +821,7 @@ docs/command-input.md
 
 - [x] add current command prompt text to the view-model;
 - [x] add a compact visible command history;
+- [x] add Up/Down navigation through command/action history;
 - [x] keep existing command aliases working;
 - [x] keep existing action commands working: Select All, Select Last, Zoom Window, Zoom Extents;
 - [x] route active command input to command-driven tools;

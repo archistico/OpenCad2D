@@ -20,7 +20,7 @@ The goal is not to stop feature development permanently. The goal is to make the
 | Architecture | `CadCanvas` is too large and knows concrete tools | In progress | v0.8.3 | Entity rendering has been extracted to `CadEntityRenderer`; active-tool preview rendering has been moved to `CadToolPreviewRenderer`; keyboard delegation is still pending. |
 | Architecture | `MainWindow.axaml.cs` duplicates full UI refresh after document replacement | Completed | v0.8.3 | Introduced `RefreshAllUiAfterDocumentChange()` for document replacement refresh paths. |
 | UX correctness | Non-associative dimensions can become stale silently | Planned | v0.8.4 | Add a conservative stale marker before attempting associative dimensions. |
-| Command UX | Command history navigation with up/down is missing | Planned | v0.8.4 | Reuse existing command history where possible. |
+| Command UX | Command history navigation with up/down is missing | Completed | v0.8.4 | Up/down now navigates stored command/action history without recalling coordinate input. |
 | Command UX | Command autocomplete is missing | Planned | v0.8.4 | Start with simple Tab completion before a visual dropdown. |
 | Modify tools | Fillet lacks preview and NoTrim | Planned | v0.8.5 | Preview first, NoTrim second, Line-Arc/Arc-Arc later. |
 | Modify tools | Offset lacks miter limit / round join | Planned | v0.8.5 | Introduce join-style planning and miter limit before advanced curve offset. |
@@ -81,7 +81,7 @@ UX correctness and command line improvements:
 - add a conservative dimension stale marker;
 - render stale dimensions distinctly;
 - add a way to mark dimensions as checked;
-- implement command history navigation with up/down;
+- command history navigation with up/down is implemented;
 - implement first-pass command autocomplete.
 
 ---
