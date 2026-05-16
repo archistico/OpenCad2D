@@ -1,4 +1,4 @@
-﻿# Latest handoff note
+# Latest handoff note
 
 ## Startup template stabilization
 
@@ -1325,3 +1325,23 @@ Next planned block: migrate `PolylineTool` to the command-driven model with `Clo
 - Fixed contextual parsing for prompts that accept both points and direct distances.
 - Invalid point-like text now keeps the point parser's clear message instead of falling through to a generic distance error.
 - Numeric input can still be accepted as a direct distance when the active prompt supports `PointOrDistance`.
+
+## 2026-05-16 - v0.8 command input block 4: POLYLINE command-driven
+
+Migrated `PolylineTool` to the new command-driven input model.
+
+- `PolylineTool` now implements `ICommandDrivenTool`.
+- Initial prompt: `POLYLINE: Specify first point:`.
+- Collection prompt: `POLYLINE: Specify next point or [Close/Undo]:`.
+- Point input supports mouse clicks, absolute coordinates, relative coordinates, relative polar coordinates and direct distance input through the existing parser/view-model routing.
+- Empty Enter while a polyline is collecting vertices completes an open polyline.
+- `C` / `Close` completes a closed polyline when at least three vertices are available.
+- `U` / `Undo` removes the last collected vertex and keeps the command active.
+- Text-submitted points are treated as resolved points and are not re-snapped. Mouse input continues to use the existing snap and angle constraint path.
+
+Next planned block: migrate the remaining basic draw tools (`Rectangle`, `Circle`, `Arc 3P`) to the command-driven model.
+
+
+### 2026-05-16 - v0.8 command input block 4 compile fix
+
+Fixed a C# local-variable shadowing issue in `MainWindowViewModel.SubmitCommandInput` introduced while routing empty Enter to command-driven tools. The non-empty active command result variable was renamed so the polyline command-driven patch compiles without changing behavior.

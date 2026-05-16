@@ -566,6 +566,79 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Equal("LINE: Specify first point:", viewModel.CommandPromptText);
     }
 
+    [Fact]
+    public void SubmitCommandInput_WithPolylineCoordinatesAndEnter_ShouldCreateOpenPolyline()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("PL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("@10,0");
+        var result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Polyline created.", viewModel.LastMessage);
+        PolylineEntity polyline = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.False(polyline.IsClosed);
+        Assert.Equal(new[] { new Point2D(0, 0), new Point2D(10, 0) }, polyline.Vertices);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithPolylineCloseOption_ShouldCreateClosedPolyline()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("PL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("@10,0");
+        viewModel.SubmitCommandInput("@0,10");
+        var result = viewModel.SubmitCommandInput("C");
+
+        Assert.Equal("Polyline", viewModel.ActiveToolName);
+        Assert.Equal("Closed polyline created.", viewModel.LastMessage);
+        PolylineEntity polyline = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.True(polyline.IsClosed);
+        Assert.Equal(3, polyline.Vertices.Count);
+        Assert.DoesNotContain("C", viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithPolylineUndoOption_ShouldRemoveLastVertex()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("PL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("@10,0");
+        var result = viewModel.SubmitCommandInput("U");
+
+        Assert.Equal("Polyline", viewModel.ActiveToolName);
+        Assert.Equal("Specify next polyline point, press Enter to finish, or C to close.", viewModel.LastMessage);
+        Assert.DoesNotContain("U", viewModel.CommandLineHistory);
+        Assert.Equal(0, viewModel.Workspace.Document.Entities.Count);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WhenPolylineIsActive_ShouldShowCommandDrivenPrompt()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("PL");
+
+        Assert.Equal("POLYLINE: Specify first point:", viewModel.CommandPromptText);
+
+        viewModel.SubmitCommandInput("0,0");
+
+        Assert.Equal("POLYLINE: Specify next point or [Close/Undo]:", viewModel.CommandPromptText);
+    }
+
+
 
     private static bool ArePointsNear(
         Point2D expected,

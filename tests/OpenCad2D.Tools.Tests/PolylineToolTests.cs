@@ -8,6 +8,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -245,6 +246,94 @@ public sealed class PolylineToolTests
         Assert.Null(context.CurrentBasePoint);
     }
 
+
+    [Fact]
+    public void GetPromptState_WaitingForFirstPoint_ShouldRequestPoint()
+    {
+        var context = CreateContext();
+        var tool = new PolylineTool();
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+
+        Assert.Equal("POLYLINE", prompt.CommandName);
+        Assert.Equal("Specify first point", prompt.Prompt);
+        Assert.Equal(CommandInputKind.Point, prompt.ExpectedInput);
+        Assert.False(prompt.AcceptsEmptyEnter);
+    }
+
+    [Fact]
+    public void GetPromptState_CollectingVertices_ShouldExposeCloseAndUndoOptions()
+    {
+        var context = CreateContext();
+        var tool = new PolylineTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("0,0", new Point2D(0, 0)),
+            context);
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+
+        Assert.Equal(CommandInputKind.PointOrDistanceOrOption, prompt.ExpectedInput);
+        Assert.True(prompt.AcceptsEmptyEnter);
+        Assert.Contains(prompt.Options, option => option.Keyword == "Close" && option.Shortcut == "C");
+        Assert.Contains(prompt.Options, option => option.Keyword == "Undo" && option.Shortcut == "U");
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithPointsAndConfirm_ShouldCreateOpenPolyline()
+    {
+        var context = CreateContext();
+        var tool = new PolylineTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("0,0", new Point2D(0, 0)),
+            context);
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("10,0", new Point2D(10, 0)),
+            context);
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Confirm(string.Empty),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity polyline = Assert.Single(context.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.False(polyline.IsClosed);
+        Assert.Equal(new[] { new Point2D(0, 0), new Point2D(10, 0) }, polyline.Vertices);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithCloseOption_ShouldCreateClosedPolyline()
+    {
+        var context = CreateContext();
+        var tool = new PolylineTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromPoint("0,0", new Point2D(0, 0)), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromPoint("10,0", new Point2D(10, 0)), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromPoint("10,10", new Point2D(10, 10)), context);
+        ToolResult result = tool.HandleCommandInput(CommandInputSubmission.Option("C", "Close"), context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity polyline = Assert.Single(context.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.True(polyline.IsClosed);
+        Assert.Equal(3, polyline.Vertices.Count);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithUndoOption_ShouldRemoveLastVertex()
+    {
+        var context = CreateContext();
+        var tool = new PolylineTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromPoint("0,0", new Point2D(0, 0)), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromPoint("10,0", new Point2D(10, 0)), context);
+        ToolResult result = tool.HandleCommandInput(CommandInputSubmission.Option("U", "Undo"), context);
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Single(tool.Vertices);
+        Assert.Equal(new Point2D(0, 0), tool.Vertices[0]);
+        Assert.Equal(new Point2D(0, 0), context.CurrentBasePoint);
+        Assert.Equal(0, context.Document.Entities.Count);
+    }
     private static ToolContext CreateContext(
         CadDocument? document = null)
     {

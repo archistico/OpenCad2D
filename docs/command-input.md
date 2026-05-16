@@ -638,3 +638,39 @@ Supported text input:
 ```
 
 Mouse clicks continue to work as before. Command-line points are resolved explicitly and submitted to the tool without snap re-resolution so typed coordinates remain exact.
+
+
+## Implemented v0.8 command-driven tools
+
+### LINE
+
+`LINE` is implemented as a command-driven two-point tool. It remains a single-segment command:
+
+```text
+LINE: Specify first point:
+LINE: Specify second point:
+Line created.
+```
+
+The second point accepts absolute coordinates, relative coordinates, relative polar coordinates and direct distance input.
+
+### POLYLINE
+
+`POLYLINE` is implemented as a command-driven multi-point tool:
+
+```text
+POLYLINE: Specify first point:
+POLYLINE: Specify next point or [Close/Undo]:
+```
+
+Supported input while collecting vertices:
+
+- `100,50` for an absolute point;
+- `@50,0` for a relative point from the previous vertex;
+- `@100<45` for a relative polar point from the previous vertex;
+- a direct distance value using the current cursor direction;
+- `C` / `Close` to close the polyline;
+- `U` / `Undo` to remove the last vertex;
+- empty Enter to finish an open polyline.
+
+Mouse input and text input share the same command state. Mouse input still resolves snaps and angle constraints; typed coordinates are submitted as already resolved points.

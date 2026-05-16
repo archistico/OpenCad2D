@@ -608,3 +608,34 @@ Supported input while `LINE` is active:
 ```
 
 The plain distance form uses the current cursor direction and therefore requires a first/base point and a meaningful cursor direction.
+
+
+## v0.8 command-driven input notes
+
+`LINE` and `POLYLINE` now use the guided command input flow. Both tools can receive points from either the mouse/canvas or the command input.
+
+### LINE
+
+Aliases: `LINE`, `L`
+
+```text
+LINE: Specify first point:
+LINE: Specify second point:
+```
+
+The second point supports `x,y`, `@dx,dy`, `@distance<angle` and direct distance input.
+
+### POLYLINE
+
+Aliases: `POLYLINE`, `PL`
+
+```text
+POLYLINE: Specify first point:
+POLYLINE: Specify next point or [Close/Undo]:
+```
+
+Options while collecting vertices:
+
+- `C` / `Close` closes the polyline;
+- `U` / `Undo` removes the last vertex;
+- empty Enter finishes an open polyline.

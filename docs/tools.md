@@ -830,3 +830,13 @@ Completed UI plumbing for the CAD-style command input refactor:
 ### Line tool command-driven input
 
 The Line tool now exposes a `CommandPromptState` and can consume parsed `CommandInputSubmission` values. Mouse clicks continue to work through the same two-point workflow, while typed points are submitted as already-resolved points so exact coordinates are not snapped again.
+
+
+## v0.8 command-driven drawing tools
+
+The first command-driven drawing tools are now `Line` and `Polyline`.
+
+- `Line` remains a single-segment two-point command.
+- `Polyline` collects multiple vertices and supports `Close`, `Undo` and empty-Enter completion.
+- For both tools, mouse clicks and command-input coordinates update the same tool state.
+- Typed coordinates are treated as resolved model points, while mouse input still uses snapping and active drawing constraints.

@@ -1044,3 +1044,19 @@ Completed first command-driven tool migration:
 Next:
 
 - [ ] Migrate `POLYLINE` with `Close` and `Undo` options.
+
+
+### v0.8 progress - Command input refactor
+
+Completed in the current v0.8 path:
+
+- [x] Command input specification and parser infrastructure.
+- [x] Visible command history and contextual prompt text.
+- [x] `LINE` as a command-driven tool with absolute, relative, polar and direct-distance input.
+- [x] `POLYLINE` as a command-driven tool with `Close`, `Undo` and empty-Enter completion.
+
+Next planned steps:
+
+- [ ] Convert `Rectangle`, `Circle` and `Arc 3P` to the command-driven model.
+- [ ] Convert `Move`, `Copy` and `Break`.
+- [ ] Design and implement the advanced Trim workflow with picked-entity input.

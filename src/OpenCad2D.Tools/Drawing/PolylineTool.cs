@@ -4,13 +4,14 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Drawing;
 
 /// <summary>
 /// Interactive tool used to draw open or closed polylines.
 /// </summary>
-public sealed class PolylineTool : ICadTool
+public sealed class PolylineTool : ICadTool, ICommandDrivenTool
 {
     private readonly List<Point2D> _vertices = new();
     private Point2D? _currentPoint;
@@ -23,6 +24,57 @@ public sealed class PolylineTool : ICadTool
     public IReadOnlyList<Point2D> Vertices => _vertices;
 
     public Point2D? CurrentPoint => _currentPoint;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (State == PolylineToolState.WaitingForFirstPoint)
+        {
+            return new CommandPromptState(
+                "POLYLINE",
+                "Specify first point",
+                CommandInputKind.Point,
+                placeholder: "100,50");
+        }
+
+        return new CommandPromptState(
+            "POLYLINE",
+            "Specify next point",
+            CommandInputKind.PointOrDistanceOrOption,
+            new[]
+            {
+                new CommandOption("Close", "C", "Close the polyline"),
+                new CommandOption("Undo", "U", "Remove the last polyline vertex")
+            },
+            acceptsEmptyEnter: true,
+            placeholder: "100,50   |   @50,0   |   @100<45   |   distance   |   C   |   U");
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            return CompleteOpen(context);
+        }
+
+        if (input.Kind == CommandInputSubmissionKind.Option)
+        {
+            return HandleOption(input.OptionKeyword, context);
+        }
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "POLYLINE expects a point input.");
+        }
+
+        return SubmitResolvedPoint(context, input.Point.Value);
+    }
 
     public bool HasPreview =>
         State == PolylineToolState.CollectingVertices &&
@@ -61,32 +113,7 @@ public sealed class PolylineTool : ICadTool
 
         Point2D point = ResolvePoint(context, pointer.ModelPoint);
 
-        if (State == PolylineToolState.WaitingForFirstPoint)
-        {
-            _vertices.Add(point);
-            _currentPoint = point;
-            State = PolylineToolState.CollectingVertices;
-            context.CurrentBasePoint = point;
-
-            return ToolResult.Started("Specify next polyline point, press Enter to finish, or C to close.");
-        }
-
-        if (State == PolylineToolState.CollectingVertices)
-        {
-            if (_vertices.Count > 0 &&
-                AreSamePoint(_vertices[^1], point, context.GeometryTolerance))
-            {
-                return ToolResult.None("Polyline point must be different from previous point.");
-            }
-
-            _vertices.Add(point);
-            _currentPoint = point;
-            context.CurrentBasePoint = point;
-
-            return ToolResult.Updated("Specify next polyline point, press Enter to finish, or C to close.");
-        }
-
-        return ToolResult.None();
+        return SubmitResolvedPoint(context, point);
     }
 
     public ToolResult OnPointerMoved(
@@ -147,6 +174,29 @@ public sealed class PolylineTool : ICadTool
             message: "Closed polyline created.");
     }
 
+    public ToolResult UndoLastVertex(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (State != PolylineToolState.CollectingVertices || _vertices.Count == 0)
+        {
+            return ToolResult.None("Nothing to undo.");
+        }
+
+        _vertices.RemoveAt(_vertices.Count - 1);
+
+        if (_vertices.Count == 0)
+        {
+            Reset(context);
+            return ToolResult.Updated("Specify first polyline point.");
+        }
+
+        _currentPoint = _vertices[^1];
+        context.CurrentBasePoint = _vertices[^1];
+
+        return ToolResult.Updated("Specify next polyline point, press Enter to finish, or C to close.");
+    }
+
     public ToolResult Cancel(ToolContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -163,6 +213,52 @@ public sealed class PolylineTool : ICadTool
         Reset(context);
 
         return ToolResult.None("Polyline tool deactivated.");
+    }
+
+    private ToolResult HandleOption(
+        string? optionKeyword,
+        ToolContext context)
+    {
+        return optionKeyword?.ToUpperInvariant() switch
+        {
+            "CLOSE" => CompleteClosed(context),
+            "UNDO" => UndoLastVertex(context),
+            _ => ToolResult.None("Unknown polyline option.")
+        };
+    }
+
+    private ToolResult SubmitResolvedPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (State == PolylineToolState.WaitingForFirstPoint)
+        {
+            _vertices.Add(point);
+            _currentPoint = point;
+            State = PolylineToolState.CollectingVertices;
+            context.CurrentBasePoint = point;
+
+            return ToolResult.Started("Specify next polyline point, press Enter to finish, or C to close.");
+        }
+
+        if (State == PolylineToolState.CollectingVertices)
+        {
+            if (_vertices.Count > 0 &&
+                AreSamePoint(_vertices[^1], point, context.GeometryTolerance))
+            {
+                return ToolResult.None("Polyline point must be different from previous point.");
+            }
+
+            _vertices.Add(point);
+            _currentPoint = point;
+            context.CurrentBasePoint = point;
+
+            return ToolResult.Updated("Specify next polyline point, press Enter to finish, or C to close.");
+        }
+
+        return ToolResult.None();
     }
 
     private ToolResult Commit(

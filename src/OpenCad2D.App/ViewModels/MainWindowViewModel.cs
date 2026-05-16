@@ -576,6 +576,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(normalizedInput))
         {
             AppendVisibleCommandHistoryLine("> Enter");
+
+            if (Workspace.Context.CurrentBasePoint is not null &&
+                TrySubmitCommandDrivenInput(normalizedInput, out ToolResult activeCommandResult))
+            {
+                return activeCommandResult;
+            }
+
             ToolResult repeatResult = RepeatLastCommand();
             AppendToolResultToVisibleHistory(repeatResult);
             return repeatResult;
@@ -584,9 +591,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         AppendVisibleCommandHistoryLine($"> {normalizedInput}");
 
         if (Workspace.Context.CurrentBasePoint is not null &&
-            TrySubmitCommandDrivenInput(normalizedInput, out ToolResult activeCommandResult))
+            TrySubmitCommandDrivenInput(normalizedInput, out ToolResult activeTextCommandResult))
         {
-            return activeCommandResult;
+            return activeTextCommandResult;
         }
 
         if (TryExecuteActionCommand(normalizedInput, out ToolResult actionResult))
