@@ -17,11 +17,11 @@ The goal is not to stop feature development permanently. The goal is to make the
 | Documentation | Roadmap needs explicit stabilization track | In progress | v0.8.1 | Keep v0.9 stabilization separate from future feature backlog. |
 | Interop | DXF export/import not externally validated | In progress | v0.8.2 | Compatibility sample folder and validation document have been added; external viewer results are still pending. |
 | Testing | No import DXF -> modify -> export workflow test | Completed | v0.8.2 | Added a first simple DXF import -> trim -> export regression test. |
-| Architecture | `CadCanvas` is too large and knows concrete tools | In progress | v0.8.3 | Entity rendering has been extracted to `CadEntityRenderer`; active-tool preview rendering has been moved to `CadToolPreviewRenderer`; keyboard delegation is still pending. |
+| Architecture | `CadCanvas` is too large and knows concrete tools | In progress | v0.8.3 | Entity rendering, active-tool preview rendering and active-tool keyboard delegation have been extracted/delegated; preview descriptors remain future work. |
 | Architecture | `MainWindow.axaml.cs` duplicates full UI refresh after document replacement | Completed | v0.8.3 | Introduced `RefreshAllUiAfterDocumentChange()` for document replacement refresh paths. |
 | UX correctness | Non-associative dimensions can become stale silently | Completed | v0.8.4 | Added a conservative `DimensionEntity.IsStale` marker, persistence support, property-panel status and distinct canvas rendering. |
 | Command UX | Command history navigation with up/down is missing | Completed | v0.8.4 | Up/down now navigates stored command/action history without recalling coordinate input. |
-| Command UX | Command autocomplete is missing | Planned | v0.8.4 | Start with simple Tab completion before a visual dropdown. |
+| Command UX | Command autocomplete is missing | Completed | v0.8.4 | Added simple Tab completion for known command/action prefixes; visual dropdown remains future work. |
 | Modify tools | Fillet lacks preview and NoTrim | Planned | v0.8.5 | Preview first, NoTrim second, Line-Arc/Arc-Arc later. |
 | Modify tools | Offset lacks miter limit / round join | Planned | v0.8.5 | Introduce join-style planning and miter limit before advanced curve offset. |
 | DXF import | LWPOLYLINE bulge is not converted to arcs | Planned | v0.9+ | High-value import improvement after stabilization. |
@@ -83,7 +83,7 @@ UX correctness and command line improvements:
 - [x] persist dimension stale status through `.opencad2d.json`;
 - [ ] add a way to mark dimensions as checked;
 - [x] command history navigation with up/down is implemented;
-- [ ] implement first-pass command autocomplete.
+- [x] implement first-pass command autocomplete.
 
 ---
 

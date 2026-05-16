@@ -776,6 +776,37 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Equal(string.Empty, viewModel.NavigateCommandHistoryNext());
     }
 
+
+    [Theory]
+    [InlineData("li", "LINE")]
+    [InlineData("mt", "MTEXT")]
+    [InlineData("m", "MOVE")]
+    [InlineData("selecta", "SELECTALL")]
+    [InlineData("distributeh", "DISTRIBUTEHORIZONTAL")]
+    public void GetCommandAutocompleteSuggestion_ShouldCompleteKnownCommands(
+        string input,
+        string expectedSuggestion)
+    {
+        var viewModel = new MainWindowViewModel();
+
+        string? suggestion = viewModel.GetCommandAutocompleteSuggestion(input);
+
+        Assert.Equal(expectedSuggestion, suggestion);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("10,20")]
+    [InlineData("unknowncommand")]
+    [InlineData("LINE")]
+    public void GetCommandAutocompleteSuggestion_WhenNoCompletionExists_ShouldReturnNull(string input)
+    {
+        var viewModel = new MainWindowViewModel();
+
+        Assert.Null(viewModel.GetCommandAutocompleteSuggestion(input));
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,

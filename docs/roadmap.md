@@ -1302,4 +1302,4 @@ The Mirror tool now draws the mirror axis while the user is choosing the second 
 - [x] Show stale status in the Property Panel.
 - [x] Render stale dimensions with a distinct dashed canvas style.
 - [ ] Add a user-facing action to mark dimensions as checked.
-- [ ] Add first-pass command autocomplete.
+- [x] Add first-pass command autocomplete.

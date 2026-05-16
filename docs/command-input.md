@@ -74,6 +74,27 @@ Only command/action submissions are stored in this navigable history. Point, dis
 
 ---
 
+## Command autocomplete
+
+The command input supports a first-pass autocomplete workflow:
+
+| Key | Behavior |
+|---|---|
+| `Tab` | completes the current command prefix when a known command/action match exists |
+
+Examples:
+
+```text
+LI  + Tab -> LINE
+MT  + Tab -> MTEXT
+M   + Tab -> MOVE
+SELECTA + Tab -> SELECTALL
+```
+
+Autocomplete only targets command/action names. It intentionally ignores point and distance syntax such as `100,50`, `@25,0` or `25`, so Tab does not interfere with numeric CAD input. When the command input is empty, Tab keeps its canvas behavior and can still enter grip editing for the current selection.
+
+---
+
 ## Command-driven tools
 
 Implemented command-driven tools include:

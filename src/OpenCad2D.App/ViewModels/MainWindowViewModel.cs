@@ -42,6 +42,41 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private ToolId? _lastCommandToolId;
     private string? _lastCommandInput;
     private int? _commandHistoryNavigationIndex;
+    private static readonly string[] ActionCommandNames =
+    {
+        "SELECTALL",
+        "SA",
+        "ALL",
+        "SELECTLAST",
+        "SL",
+        "LAST",
+        "BRINGTOFRONT",
+        "BTF",
+        "FRONT",
+        "SENDTOBACK",
+        "STB",
+        "BACK",
+        "BRINGFORWARD",
+        "BF",
+        "FORWARD",
+        "SENDBACKWARD",
+        "SB",
+        "BACKWARD",
+        "ALIGNLEFT",
+        "ALEFT",
+        "ALIGNRIGHT",
+        "ARIGHT",
+        "ALIGNTOP",
+        "ATOP",
+        "ALIGNBOTTOM",
+        "ABOTTOM",
+        "DISTRIBUTEHORIZONTAL",
+        "DISTRIBUTEHORIZONTALLY",
+        "DH",
+        "DISTRIBUTEVERTICAL",
+        "DISTRIBUTEVERTICALLY",
+        "DV"
+    };
     private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
     private readonly IDocumentSerializer _documentSerializer = new JsonDocumentSerializer();
     private readonly ISvgExporter _svgExporter = new SvgExporter();
@@ -124,6 +159,81 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public void ResetCommandHistoryNavigation()
     {
         _commandHistoryNavigationIndex = null;
+    }
+
+    public string? GetCommandAutocompleteSuggestion(string? input)
+    {
+        string normalized = input?.Trim().ToUpperInvariant() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(normalized) ||
+            !IsLikelyCommandAlias(normalized))
+        {
+            return null;
+        }
+
+        if (normalized.Length <= 2 &&
+            _commandAliasRegistry.Aliases.TryGetValue(normalized, out ToolId exactAliasToolId))
+        {
+            string? preferredAlias = GetPreferredAutocompleteAlias(exactAliasToolId);
+
+            if (preferredAlias is not null &&
+                preferredAlias.StartsWith(normalized, StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(preferredAlias, normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                return preferredAlias;
+            }
+        }
+
+        string? suggestion = GetCommandAutocompleteCandidates()
+            .Where(candidate =>
+                candidate.StartsWith(
+                    normalized,
+                    StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(
+                    candidate,
+                    normalized,
+                    StringComparison.OrdinalIgnoreCase))
+            .OrderBy(candidate => GetAutocompleteCandidateRank(normalized, candidate))
+            .ThenBy(candidate => candidate.Length)
+            .ThenBy(candidate => candidate, StringComparer.OrdinalIgnoreCase)
+            .FirstOrDefault();
+
+        return suggestion;
+    }
+
+    private string? GetPreferredAutocompleteAlias(ToolId toolId)
+    {
+        return _commandAliasRegistry.Aliases
+            .Where(pair => pair.Value == toolId && pair.Key.Length >= 3)
+            .OrderBy(pair => pair.Key.Length)
+            .ThenBy(pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+            .Select(pair => pair.Key)
+            .FirstOrDefault();
+    }
+
+    private IEnumerable<string> GetCommandAutocompleteCandidates()
+    {
+        return _commandAliasRegistry.Aliases.Keys
+            .Where(alias => alias.Length >= 3)
+            .Concat(ActionCommandNames)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static int GetAutocompleteCandidateRank(
+        string normalizedInput,
+        string candidate)
+    {
+        if (candidate.Length <= 2)
+        {
+            return 2;
+        }
+
+        if (candidate.Length <= 4)
+        {
+            return 0;
+        }
+
+        return normalizedInput.Length <= 2 ? 1 : 0;
     }
 
     public string CurrentFileName => string.IsNullOrWhiteSpace(_currentFilePath)

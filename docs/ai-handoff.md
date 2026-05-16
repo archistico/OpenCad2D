@@ -1989,3 +1989,12 @@ Implemented the first non-associative dimension safety pass. `DimensionEntity` n
 The stale flag is serialized through the JSON DTOs and is shown in the Property Panel as `Status: Checked` or `Status: Potentially stale`. Canvas rendering now draws stale dimensions with a distinct dashed amber pen when they are not selected.
 
 Added tests for move/modify/replace stale marking and undo restoration, and extended the persistence end-to-end workflow to preserve a stale dimension. The next v0.8.4 task should add a user-facing command/action to mark stale dimensions as checked, then continue with first-pass command autocomplete.
+
+## 2026-05-16 - v0.8.4 first-pass command autocomplete
+
+Implemented a lightweight command autocomplete workflow for the command input. `MainWindowViewModel.GetCommandAutocompleteSuggestion()` now completes known command/action prefixes using registered aliases plus action commands, while intentionally ignoring coordinate/distance syntax. `MainWindow.axaml.cs` handles Tab in the command input and in canvas-focused workflows only when there is non-empty command text and a valid suggestion; empty Tab remains available for canvas grip edit behavior.
+
+Added App tests for command completions such as `li -> LINE`, `mt -> MTEXT`, `m -> MOVE`, action completion such as `selecta -> SELECTALL`, and no-suggestion cases for empty input, coordinates, unknown commands and already-complete commands. Updated `docs/command-input.md`, `docs/stabilization-v0.9-plan.md` and `docs/roadmap.md`.
+
+Next recommended v0.8.4 task: add a user-facing command/action to mark stale dimensions as checked, then move to Fillet/Offset refinement.
+

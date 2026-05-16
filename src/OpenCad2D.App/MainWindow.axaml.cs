@@ -1439,6 +1439,11 @@ public partial class MainWindow : Window
         object? sender,
         KeyEventArgs e)
     {
+        if (TryHandleCommandAutocompleteKey(e))
+        {
+            return;
+        }
+
         if (TryHandleCommandHistoryNavigationKey(e))
         {
             return;
@@ -1515,6 +1520,11 @@ public partial class MainWindow : Window
         }
 
         if (e.Source is TextBox)
+        {
+            return;
+        }
+
+        if (TryHandleCommandAutocompleteKey(e))
         {
             return;
         }
@@ -1740,6 +1750,33 @@ public partial class MainWindow : Window
 
         ClearCommandInputText();
         CommandInputTextBox.Focus();
+        return true;
+    }
+
+    private bool TryHandleCommandAutocompleteKey(KeyEventArgs e)
+    {
+        if (e.Key != Key.Tab)
+        {
+            return false;
+        }
+
+        string currentText = CommandInputTextBox.Text ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(currentText))
+        {
+            return false;
+        }
+
+        string? suggestion = _viewModel.GetCommandAutocompleteSuggestion(currentText);
+
+        if (string.IsNullOrWhiteSpace(suggestion))
+        {
+            return false;
+        }
+
+        SetCommandInputText(suggestion);
+        CommandInputTextBox.Focus();
+        e.Handled = true;
         return true;
     }
 
