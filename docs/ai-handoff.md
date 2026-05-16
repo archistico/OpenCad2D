@@ -2014,3 +2014,19 @@ Implemented the next Fillet refinement pass. `FilletTool` now supports a command
 Radius `0` intentionally remains Trim-only because NoTrim with zero radius would not create any new geometry. The tool returns a non-mutating result in that case. The live preview uses the same trim mode as final creation, so NoTrim previews only the future arc while Trim previews the trimmed source lines plus the arc.
 
 Added tests for trim-mode command input, NoTrim creation, NoTrim preview, zero-radius NoTrim rejection, and near-parallel line safety.
+
+## v0.8.5 Offset miter-limit refinement
+
+Offset polyline/sampled-spline joins now keep the existing miter behavior for normal corners, but apply a conservative miter limit (`distance * 4.0`). If the infinite-line miter intersection would create a spike beyond that limit, the join falls back to two bevel-style vertices (`previous.End` and `current.Start`). This prevents acute polyline corners from generating very distant offset vertices while preserving the existing rectangle/L-shape behavior.
+
+Updated files:
+
+- `src/OpenCad2D.Tools/Editing/OffsetTool.cs`;
+- `tests/OpenCad2D.Tools.Tests/OffsetToolTests.cs`;
+- `docs/modify-tools.md`;
+- `docs/tools.md`;
+- `docs/stabilization-v0.9-plan.md`;
+- `docs/roadmap.md`;
+- `docs/ai-handoff.md`.
+
+Remaining Offset work: configurable join styles (`Miter`, `Bevel`, `Round`), true round joins, better curve/bulge offset, and self-intersection cleanup for complex polylines.

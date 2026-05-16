@@ -264,6 +264,39 @@ public sealed class OffsetToolTests
         AssertPointNear(new Point2D(10, 2), offset.Vertices[2]);
     }
 
+
+    [Fact]
+    public void OffsetPolyline_OpenSharpTurn_ShouldUseBevelFallbackWhenMiterWouldBeTooLong()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(0.1, 0.1)
+            });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("1", 1), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 1)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity offset = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All.Where(entity => !entity.Id.Equals(polyline.Id))));
+        Assert.False(offset.IsClosed);
+        Assert.Equal(4, offset.Vertices.Count);
+        Assert.All(offset.Vertices, vertex =>
+        {
+            Assert.True(
+                vertex.DistanceTo(new Point2D(10, 0)) < 20,
+                $"Offset vertex {vertex} should not be a long miter spike.");
+        });
+    }
+
     [Fact]
     public void OnPointerMoved_WhenWaitingForSidePoint_ShouldExposePreviewWithoutCreatingEntity()
     {

@@ -1305,3 +1305,13 @@ The Mirror tool now draws the mirror axis while the user is choosing the second 
 - [x] Render stale dimensions with a distinct dashed canvas style.
 - [ ] Add a user-facing action to mark dimensions as checked.
 - [x] Add first-pass command autocomplete.
+
+### v0.8.5 - Offset miter-limit refinement
+
+Implemented during stabilization:
+
+- [x] polyline/sampled-spline Offset now applies a conservative miter limit;
+- [x] very sharp offset joins fall back to bevel-style corner vertices instead of long spikes;
+- [x] added regression coverage for sharp open-polyline offset joins;
+- [ ] configurable Offset join style (`Miter`, `Bevel`, `Round`);
+- [ ] round joins and richer curve-offset behavior.

@@ -14,6 +14,8 @@ namespace OpenCad2D.Tools.Editing;
 /// </summary>
 public sealed class OffsetTool : ICadTool, ICommandDrivenTool
 {
+    private const double MiterLimitRatio = 4.0;
+
     private double? _distance;
     private ToolPickedEntityInput? _pickedEntity;
     private CadEntity? _previewEntity;
@@ -394,8 +396,8 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool
         }
 
         var offsetVertices = polyline.IsClosed
-            ? BuildClosedOffsetVertices(offsetSegments, tolerance)
-            : BuildOpenOffsetVertices(offsetSegments, tolerance);
+            ? BuildClosedOffsetVertices(originalSegments, offsetSegments, distance, tolerance)
+            : BuildOpenOffsetVertices(originalSegments, offsetSegments, distance, tolerance);
 
         if (offsetVertices.Count < 2)
         {
@@ -450,7 +452,9 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool
     }
 
     private static List<Point2D> BuildOpenOffsetVertices(
+        IReadOnlyList<LineSegment2D> originalSegments,
         IReadOnlyList<LineSegment2D> offsetSegments,
+        double distance,
         GeometryTolerance tolerance)
     {
         var vertices = new List<Point2D>
@@ -460,10 +464,13 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool
 
         for (int index = 1; index < offsetSegments.Count; index++)
         {
-            vertices.Add(IntersectOffsetSegments(
+            AddOffsetJoinVertices(
+                vertices,
+                originalSegments[index - 1].End,
                 offsetSegments[index - 1],
                 offsetSegments[index],
-                tolerance));
+                distance,
+                tolerance);
         }
 
         vertices.Add(offsetSegments[^1].End);
@@ -471,39 +478,107 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool
     }
 
     private static List<Point2D> BuildClosedOffsetVertices(
+        IReadOnlyList<LineSegment2D> originalSegments,
         IReadOnlyList<LineSegment2D> offsetSegments,
+        double distance,
         GeometryTolerance tolerance)
     {
         var vertices = new List<Point2D>(offsetSegments.Count);
 
         for (int index = 0; index < offsetSegments.Count; index++)
         {
-            LineSegment2D previous = offsetSegments[(index - 1 + offsetSegments.Count) % offsetSegments.Count];
+            int previousIndex = (index - 1 + offsetSegments.Count) % offsetSegments.Count;
+            LineSegment2D previous = offsetSegments[previousIndex];
             LineSegment2D current = offsetSegments[index];
-            vertices.Add(IntersectOffsetSegments(previous, current, tolerance));
+            AddOffsetJoinVertices(
+                vertices,
+                originalSegments[index].Start,
+                previous,
+                current,
+                distance,
+                tolerance);
         }
 
         return vertices;
     }
 
-    private static Point2D IntersectOffsetSegments(
+    private static void AddOffsetJoinVertices(
+        List<Point2D> vertices,
+        Point2D originalJoint,
         LineSegment2D previous,
         LineSegment2D current,
+        double distance,
         GeometryTolerance tolerance)
     {
+        if (TryCreateMiterJoin(
+                originalJoint,
+                previous,
+                current,
+                distance,
+                tolerance,
+                out Point2D miterVertex))
+        {
+            AddVertexIfDistinct(vertices, miterVertex, tolerance);
+            return;
+        }
+
+        AddVertexIfDistinct(vertices, previous.End, tolerance);
+        AddVertexIfDistinct(vertices, current.Start, tolerance);
+    }
+
+    private static bool TryCreateMiterJoin(
+        Point2D originalJoint,
+        LineSegment2D previous,
+        LineSegment2D current,
+        double distance,
+        GeometryTolerance tolerance,
+        out Point2D miterVertex)
+    {
+        miterVertex = Point2D.Origin;
+
         if (TryIntersectInfiniteLines(previous, current, tolerance, out Point2D intersection))
         {
-            return intersection;
+            double miterLength = originalJoint.DistanceTo(intersection);
+            double maxMiterLength = Math.Max(distance * MiterLimitRatio, tolerance.Distance);
+            if (miterLength <= maxMiterLength)
+            {
+                miterVertex = intersection;
+                return true;
+            }
+
+            return false;
         }
 
         if (tolerance.ArePointsEqual(previous.End, current.Start))
         {
-            return previous.End;
+            miterVertex = previous.End;
+            return true;
         }
 
-        return new Point2D(
+        Point2D midpoint = new(
             (previous.End.X + current.Start.X) / 2.0,
             (previous.End.Y + current.Start.Y) / 2.0);
+
+        double midpointMiterLength = originalJoint.DistanceTo(midpoint);
+        double midpointMaxMiterLength = Math.Max(distance * MiterLimitRatio, tolerance.Distance);
+        if (midpointMiterLength <= midpointMaxMiterLength)
+        {
+            miterVertex = midpoint;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static void AddVertexIfDistinct(
+        List<Point2D> vertices,
+        Point2D vertex,
+        GeometryTolerance tolerance)
+    {
+        if (vertices.Count == 0 || !tolerance.ArePointsEqual(vertices[^1], vertex))
+        {
+            vertices.Add(vertex);
+        }
     }
 
     private static bool TryIntersectInfiniteLines(

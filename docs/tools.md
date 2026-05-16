@@ -107,7 +107,7 @@ Supported targets:
 - straight-segment open/closed Polyline;
 - Bezier Spline through sampled polyline approximation.
 
-Polyline and sampled spline offset use miter joins. Rounded joins, bulge/arc polyline segments and advanced self-intersection cleanup are future work.
+Polyline and sampled spline offset use miter joins with a conservative miter limit. Very sharp joins fall back to a bevel-style corner instead of producing long miter spikes. Rounded joins, configurable join styles, bulge/arc polyline segments and advanced self-intersection cleanup are future work.
 
 The side preview must use the same geometry method as final creation.
 

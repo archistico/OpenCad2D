@@ -23,7 +23,7 @@ The goal is not to stop feature development permanently. The goal is to make the
 | Command UX | Command history navigation with up/down is missing | Completed | v0.8.4 | Up/down now navigates stored command/action history without recalling coordinate input. |
 | Command UX | Command autocomplete is missing | Completed | v0.8.4 | Added simple Tab completion for known command/action prefixes; visual dropdown remains future work. |
 | Modify tools | Fillet lacks NoTrim and advanced entity pairs | Partially complete | v0.8.5 | Line-Line live preview and Trim/NoTrim mode added; Line-Arc/Arc-Arc remain future work. |
-| Modify tools | Offset lacks miter limit / round join | Planned | v0.8.5 | Introduce join-style planning and miter limit before advanced curve offset. |
+| Modify tools | Offset lacks miter limit / round join | Partially complete | v0.8.5 | Added a conservative miter limit with bevel fallback for sharp corners; configurable/round joins remain future work. |
 | DXF import | LWPOLYLINE bulge is not converted to arcs | Planned | v0.9+ | High-value import improvement after stabilization. |
 | DXF import | ELLIPSE/SPLINE import is deferred | Planned | v0.9+ | Export exists; import should be added after compatibility validation. |
 | Future feature | Hatch/campiture | Deferred | post-v0.9 | Requires a dedicated entity and render/export strategy. |
@@ -94,8 +94,8 @@ Modify-tool refinement:
 - [x] Fillet preview;
 - [x] Fillet NoTrim;
 - [x] stronger Fillet degenerate-bisector guard;
-- Offset miter limit;
-- plan for bevel/round join style.
+- [x] Offset miter limit with bevel fallback for sharp corners;
+- [ ] plan/configure bevel/round join styles.
 
 ---
 

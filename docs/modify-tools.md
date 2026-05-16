@@ -138,12 +138,14 @@ Rules:
 
 - line offset creates a parallel line;
 - circle/arc offset changes radius based on picked side;
-- polyline/spline approximation offset uses miter joins;
+- polyline/spline approximation offset uses miter joins with a conservative miter limit;
+- very sharp joins fall back to a bevel-style corner instead of creating long spikes;
 - invalid or degenerate results are rejected;
 - live preview is shown while choosing the side.
 
 Future work:
 
+- configurable join style;
 - rounded joins;
 - advanced self-intersection cleanup;
 - polyline bulge/arc segment support;
