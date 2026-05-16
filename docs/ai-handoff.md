@@ -1427,3 +1427,15 @@ During the v0.8 command-input migration, empty Enter is intentionally context-se
 - when a command-driven tool is active and the current prompt requires input, empty Enter stays inside the active command and reports `Input is required for the current command step.`.
 
 This means aliases typed while a command is actively waiting for a point or selection are treated as input for that active command, not as new commands. To start another command, the current command should be completed or cancelled first.
+
+### v0.8 command input - Trim advanced base
+
+Implemented a first advanced Trim workflow while preserving existing pointer behavior:
+
+- `TRIM` now exposes command prompt options.
+- Initial prompt supports `All` / `A` to use all visible supported entities as cutting edges.
+- Target prompt supports `Undo` / `U` to undo the last trim operation performed inside the current Trim command.
+- Target prompt accepts empty Enter to finish/reset the current Trim command.
+- Ctrl-click can add more than one cutting edge while trimming.
+- The existing single-boundary and two-boundary pointer workflow remains compatible.
+- In `All` mode, the picked target entity is excluded from the effective cutting-edge list so an entity can still be trimmed even though all visible entities were selected as cutting edges.

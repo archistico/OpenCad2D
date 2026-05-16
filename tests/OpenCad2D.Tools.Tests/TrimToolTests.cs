@@ -5,6 +5,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -413,6 +414,113 @@ public sealed class TrimToolTwoBoundaryTests
 
         Assert.Equal(new Point2D(0, 0), restored.Start);
         Assert.Equal(new Point2D(10, 0), restored.End);
+    }
+
+    private static ToolContext CreateContext()
+    {
+        return new ToolContext(
+            new CadDocument(),
+            new CommandHistory(),
+            new SnapService(),
+            selectionTolerance: 0.5);
+    }
+
+    private static ToolContext CreateContextWithTwoBoundariesAndTarget(
+        out LineEntity leftBoundary,
+        out LineEntity rightBoundary,
+        out LineEntity target)
+    {
+        ToolContext context = CreateContext();
+
+        leftBoundary = new LineEntity(
+            new Point2D(3, -5),
+            new Point2D(3, 5));
+
+        rightBoundary = new LineEntity(
+            new Point2D(7, -5),
+            new Point2D(7, 5));
+
+        target = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        context.Document.AddEntity(leftBoundary);
+        context.Document.AddEntity(rightBoundary);
+        context.Document.AddEntity(target);
+
+        return context;
+    }
+}
+
+public sealed class TrimToolAdvancedCommandInputTests
+{
+    [Fact]
+    public void HandleCommandInput_All_ShouldUseAllVisibleSupportedEntitiesAsCuttingEdges()
+    {
+        ToolContext context = CreateContextWithTwoBoundariesAndTarget(
+            out _,
+            out _,
+            out _);
+        var tool = new TrimTool();
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Option("A", "All"),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(TrimToolState.WaitingForTargetEntity, tool.State);
+        Assert.NotNull(tool.BoundaryEntityId);
+        Assert.NotNull(tool.SecondBoundaryEntityId);
+    }
+
+    [Fact]
+    public void HandleCommandInput_Undo_ShouldUndoLastTrimInsideCurrentCommand()
+    {
+        ToolContext context = CreateContextWithTwoBoundariesAndTarget(
+            out LineEntity leftBoundary,
+            out LineEntity rightBoundary,
+            out LineEntity target);
+        var tool = new TrimTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("A", "All"),
+            context);
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.False(context.Document.Entities.Contains(target.Id));
+
+        ToolResult undoResult = tool.HandleCommandInput(
+            CommandInputSubmission.Option("U", "Undo"),
+            context);
+
+        Assert.Equal(ToolResultKind.Updated, undoResult.Kind);
+        Assert.True(context.Document.Entities.Contains(target.Id));
+        Assert.True(context.Document.Entities.Contains(leftBoundary.Id));
+        Assert.True(context.Document.Entities.Contains(rightBoundary.Id));
+    }
+
+    [Fact]
+    public void HandleCommandInput_ConfirmWhileTrimming_ShouldFinishAndResetCommand()
+    {
+        ToolContext context = CreateContextWithTwoBoundariesAndTarget(
+            out _,
+            out _,
+            out _);
+        var tool = new TrimTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("A", "All"),
+            context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Confirm(string.Empty),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(TrimToolState.WaitingForBoundaryEntity, tool.State);
+        Assert.Null(tool.BoundaryEntityId);
     }
 
     private static ToolContext CreateContext()

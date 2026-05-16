@@ -738,3 +738,26 @@ Typed point formats remain the same:
 ```
 
 For Rotate, a plain number in the final phase is interpreted as an angle in degrees. For Scale, a plain number in the final phase is interpreted as a scale factor.
+
+## Trim advanced base in v0.8
+
+`TRIM` is the first command that uses a richer guided workflow.
+
+```text
+TRIM: Select cutting edge or [All]:
+TRIM: Select entity side to trim or [All/Undo]:
+```
+
+Supported v0.8 behavior:
+
+- click a cutting edge to start trimming;
+- Ctrl-click while trimming to add further cutting edges;
+- type `A` or `All` to use all visible supported entities as cutting edges;
+- click the side of the target entity to remove;
+- type `U` or `Undo` to undo the last trim operation made during the current Trim command;
+- press Enter while trimming to finish/reset the Trim command;
+- press Escape to cancel.
+
+When `All` is used, the picked target entity is removed from the effective cutting-edge list for that trim operation. This allows CAD-style all-edge trimming without preventing the target from being picked.
+
+Future versions can extend this workflow with Fence, Crossing, Edge, Project and Shift-to-Extend behavior.

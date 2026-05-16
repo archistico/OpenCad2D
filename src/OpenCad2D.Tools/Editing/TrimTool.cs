@@ -20,6 +20,8 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
     private CadEntity? _boundaryEntity;
     private IReadOnlyList<CadEntity> _previewEntities = Array.Empty<CadEntity>();
     private IReadOnlyList<CadEntity> _highlightPreviewEntities = Array.Empty<CadEntity>();
+    private int _trimOperationsExecuted;
+    private bool _usesAllVisibleCuttingEdges;
 
     public string Name => "Trim";
 
@@ -47,14 +49,24 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
             TrimToolState.WaitingForBoundaryEntity => new CommandPromptState(
                 "TRIM",
                 "Select cutting edge",
-                CommandInputKind.Selection,
-                placeholder: "Click a line, circle, arc or polyline cutting edge"),
+                CommandInputKind.SelectionOrOption,
+                new[]
+                {
+                    new CommandOption("All", "A", "Use all visible supported entities as cutting edges")
+                },
+                placeholder: "Click a cutting edge or type All"),
 
             TrimToolState.WaitingForTargetEntity => new CommandPromptState(
                 "TRIM",
                 "Select entity side to trim",
-                CommandInputKind.Selection,
-                placeholder: "Click the side to remove, Ctrl-click for second cutting edge"),
+                CommandInputKind.SelectionOrOption,
+                new[]
+                {
+                    new CommandOption("All", "A", "Use all visible supported entities as cutting edges"),
+                    new CommandOption("Undo", "U", "Undo the last trim made by this command")
+                },
+                acceptsEmptyEnter: true,
+                placeholder: "Click side to remove, Ctrl-click to add cutting edge, U to undo"),
 
             _ => CommandPromptState.Idle
         };
@@ -67,9 +79,29 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
 
+        if (input.Kind == CommandInputSubmissionKind.Option &&
+            string.Equals(input.OptionKeyword, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            return UseAllVisibleCuttingEdges(context);
+        }
+
+        if (State == TrimToolState.WaitingForTargetEntity &&
+            input.Kind == CommandInputSubmissionKind.Option &&
+            string.Equals(input.OptionKeyword, "Undo", StringComparison.OrdinalIgnoreCase))
+        {
+            return UndoLastTrim(context);
+        }
+
+        if (State == TrimToolState.WaitingForTargetEntity &&
+            input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            Reset(context);
+            return ToolResult.Completed("Trim command finished.");
+        }
+
         return State == TrimToolState.WaitingForBoundaryEntity
-            ? ToolResult.None("Select a cutting edge from the drawing canvas.")
-            : ToolResult.None("Select an entity side to trim from the drawing canvas.");
+            ? ToolResult.None("Select a cutting edge from the drawing canvas or type All.")
+            : ToolResult.None("Select an entity side to trim from the drawing canvas, Ctrl-click to add cutting edges, or type Undo.");
     }
 
     public ToolResult OnPointerPressed(
@@ -99,7 +131,7 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
         ArgumentNullException.ThrowIfNull(pointer);
 
         if (State != TrimToolState.WaitingForTargetEntity ||
-            _boundaryEntity is null)
+            _boundaryEntities.Count == 0)
         {
             return ToolResult.None();
         }
@@ -171,6 +203,7 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
         _boundaryEntity = entity;
         _boundaryEntities.Clear();
         _boundaryEntities.Add(entity);
+        _usesAllVisibleCuttingEdges = false;
         _secondBoundaryEntityId = null;
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
@@ -185,13 +218,13 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
         ToolContext context,
         PointerInfo pointer)
     {
-        if (_boundaryEntity is null)
+        if (_boundaryEntities.Count == 0)
         {
             throw new InvalidOperationException(
                 "Cannot trim before selecting a boundary entity.");
         }
 
-        if (pointer.IsControlPressed && _boundaryEntities.Count == 1)
+        if (pointer.IsControlPressed)
         {
             EntityId? visibleBoundaryId = SelectVisibleEntityByPoint(
                 context,
@@ -216,7 +249,8 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
             return ToolResult.None("Select an editable entity to trim.");
         }
 
-        if (_boundaryEntities.Any(boundary => selectedId.Value.Equals(boundary.Id)))
+        if (!_usesAllVisibleCuttingEdges &&
+            _boundaryEntities.Any(boundary => selectedId.Value.Equals(boundary.Id)))
         {
             return ToolResult.None("Target entity must be different from the selected cutting edge.");
         }
@@ -233,9 +267,16 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
             return ToolResult.None("Target entity is not editable.");
         }
 
+        IReadOnlyList<CadEntity> effectiveBoundaries = GetEffectiveBoundariesForTarget(entity);
+
+        if (effectiveBoundaries.Count == 0)
+        {
+            return ToolResult.None("No cutting edge is available for the selected target entity.");
+        }
+
         IReadOnlyList<CadEntity> trimmedEntities = CadTrimService.TrimByBoundaries(
             entity,
-            _boundaryEntities,
+            effectiveBoundaries,
             pointer.ModelPoint,
             context.GeometryTolerance);
 
@@ -253,13 +294,14 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
                 new[] { entity },
                 trimmedEntities,
                 "Trim entity"));
+        _trimOperationsExecuted++;
 
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Completed(
-            "Entity trimmed. Select another entity to trim, or press Escape.");
+            "Entity trimmed. Select another entity to trim, type Undo, or press Enter/Escape to finish.");
     }
 
     private ToolResult AcceptSecondBoundaryEntity(
@@ -269,7 +311,7 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
     {
         if (_boundaryEntities.Any(boundary => boundary.Id.Equals(entity.Id)))
         {
-            return ToolResult.None("Second cutting edge must be different from the first cutting edge.");
+            return ToolResult.None("Cutting edge is already selected.");
         }
 
         if (!IsSupportedEntity(entity))
@@ -283,13 +325,64 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
         }
 
         _boundaryEntities.Add(entity);
+        _usesAllVisibleCuttingEdges = false;
         _secondBoundaryEntityId = entity.Id;
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Started(
-            "Second cutting edge selected. Select the target portion to trim.");
+            $"Cutting edge selected ({_boundaryEntities.Count}). Select the target portion to trim or Ctrl-click another cutting edge.");
+    }
+
+    private ToolResult UseAllVisibleCuttingEdges(ToolContext context)
+    {
+        List<CadEntity> cuttingEdges = context.Document.GetVisibleEntities()
+            .Where(IsSupportedEntity)
+            .ToList();
+
+        if (cuttingEdges.Count == 0)
+        {
+            return ToolResult.None("No visible supported cutting edges found.");
+        }
+
+        _boundaryEntities.Clear();
+        _boundaryEntities.AddRange(cuttingEdges);
+        _usesAllVisibleCuttingEdges = true;
+        _boundaryEntity = cuttingEdges[0];
+        _boundaryEntityId = cuttingEdges[0].Id;
+        _secondBoundaryEntityId = cuttingEdges.Count > 1
+            ? cuttingEdges[1].Id
+            : null;
+        _previewEntities = Array.Empty<CadEntity>();
+        _highlightPreviewEntities = Array.Empty<CadEntity>();
+        State = TrimToolState.WaitingForTargetEntity;
+        context.CurrentBasePoint = null;
+
+        return ToolResult.Started(
+            $"Using all visible supported entities as cutting edges ({cuttingEdges.Count}). Select an entity side to trim.");
+    }
+
+    private ToolResult UndoLastTrim(ToolContext context)
+    {
+        if (_trimOperationsExecuted <= 0)
+        {
+            return ToolResult.None("No trim operation to undo in the current command.");
+        }
+
+        if (!context.Commands.History.CanUndo)
+        {
+            _trimOperationsExecuted = 0;
+            return ToolResult.None("No undoable trim operation is available.");
+        }
+
+        context.Commands.History.Undo(context.Document);
+        _trimOperationsExecuted--;
+        _previewEntities = Array.Empty<CadEntity>();
+        _highlightPreviewEntities = Array.Empty<CadEntity>();
+        context.CurrentBasePoint = null;
+
+        return ToolResult.Updated("Last trim operation undone. Select another entity side to trim.");
     }
 
     private void UpdatePreview(
@@ -308,7 +401,8 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
             point);
 
         if (selectedId is null ||
-            _boundaryEntities.Any(boundary => selectedId.Value.Equals(boundary.Id)))
+            (!_usesAllVisibleCuttingEdges &&
+                _boundaryEntities.Any(boundary => selectedId.Value.Equals(boundary.Id))))
         {
             _previewEntities = Array.Empty<CadEntity>();
             _highlightPreviewEntities = Array.Empty<CadEntity>();
@@ -325,15 +419,34 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
             return;
         }
 
+        IReadOnlyList<CadEntity> effectiveBoundaries = GetEffectiveBoundariesForTarget(entity);
+
+        if (effectiveBoundaries.Count == 0)
+        {
+            _previewEntities = Array.Empty<CadEntity>();
+            _highlightPreviewEntities = Array.Empty<CadEntity>();
+            return;
+        }
+
         _previewEntities = CadTrimService.TrimByBoundaries(
             entity,
-            _boundaryEntities,
+            effectiveBoundaries,
             point,
             context.GeometryTolerance);
         _highlightPreviewEntities = CreateTrimHighlightEntities(
             entity,
             _previewEntities,
             context.GeometryTolerance);
+    }
+
+
+    private IReadOnlyList<CadEntity> GetEffectiveBoundariesForTarget(CadEntity target)
+    {
+        return _usesAllVisibleCuttingEdges
+            ? _boundaryEntities
+                .Where(boundary => !boundary.Id.Equals(target.Id))
+                .ToList()
+            : _boundaryEntities;
     }
 
 
@@ -476,6 +589,8 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
         _boundaryEntities.Clear();
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
+        _trimOperationsExecuted = 0;
+        _usesAllVisibleCuttingEdges = false;
         State = TrimToolState.WaitingForBoundaryEntity;
 
         if (context is not null)

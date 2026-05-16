@@ -695,3 +695,8 @@ DELETE: Press Enter to delete selected entities:
 ```
 
 Rotate interprets a plain number in the final phase as an angle in degrees. Scale interprets a plain number in the final phase as a scale factor.
+
+
+### Trim advanced base
+
+The v0.8 command-input work adds a first advanced `TRIM` workflow with `All`, in-command `Undo`, repeated target trimming, Ctrl-click additional cutting edges and Enter-to-finish behavior. More advanced options such as Fence, Crossing, Edge, Project and Shift-to-Extend remain future work.
