@@ -773,17 +773,17 @@ public sealed class CadActionControllerTests
     }
 
     [Fact]
-    public void AlignSelectionTop_ShouldMoveEntitiesToSelectionMaxY()
+    public void AlignSelectionTop_ShouldMoveEntitiesToVisualTopSelectionMinY()
     {
         CadDocument document = new();
         CommandHistory history = new();
         SelectionSet selectionSet = new();
 
-        var bottom = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
-        var top = new LineEntity(new Point2D(20, 10), new Point2D(30, 10));
+        var upper = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var lower = new LineEntity(new Point2D(20, 10), new Point2D(30, 10));
 
-        document.AddEntities(new[] { bottom, top });
-        selectionSet.ReplaceWith(new[] { bottom.Id, top.Id });
+        document.AddEntities(new[] { upper, lower });
+        selectionSet.ReplaceWith(new[] { upper.Id, lower.Id });
 
         CadActionController actionController = CreateActionController(
             document,
@@ -793,22 +793,22 @@ public sealed class CadActionControllerTests
         ToolResult result = actionController.AlignSelectionTop();
 
         Assert.Equal(ToolResultKind.Completed, result.Kind);
-        Assert.Equal(10, document.Entities.GetRequired(bottom.Id).GetBoundingBox().MaxY);
-        Assert.Equal(10, document.Entities.GetRequired(top.Id).GetBoundingBox().MaxY);
+        Assert.Equal(0, document.Entities.GetRequired(upper.Id).GetBoundingBox().MinY);
+        Assert.Equal(0, document.Entities.GetRequired(lower.Id).GetBoundingBox().MinY);
     }
 
     [Fact]
-    public void AlignSelectionBottom_ShouldMoveEntitiesToSelectionMinY()
+    public void AlignSelectionBottom_ShouldMoveEntitiesToVisualBottomSelectionMaxY()
     {
         CadDocument document = new();
         CommandHistory history = new();
         SelectionSet selectionSet = new();
 
-        var bottom = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
-        var top = new LineEntity(new Point2D(20, 10), new Point2D(30, 10));
+        var upper = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var lower = new LineEntity(new Point2D(20, 10), new Point2D(30, 10));
 
-        document.AddEntities(new[] { bottom, top });
-        selectionSet.ReplaceWith(new[] { bottom.Id, top.Id });
+        document.AddEntities(new[] { upper, lower });
+        selectionSet.ReplaceWith(new[] { upper.Id, lower.Id });
 
         CadActionController actionController = CreateActionController(
             document,
@@ -818,8 +818,8 @@ public sealed class CadActionControllerTests
         ToolResult result = actionController.AlignSelectionBottom();
 
         Assert.Equal(ToolResultKind.Completed, result.Kind);
-        Assert.Equal(0, document.Entities.GetRequired(bottom.Id).GetBoundingBox().MinY);
-        Assert.Equal(0, document.Entities.GetRequired(top.Id).GetBoundingBox().MinY);
+        Assert.Equal(10, document.Entities.GetRequired(upper.Id).GetBoundingBox().MaxY);
+        Assert.Equal(10, document.Entities.GetRequired(lower.Id).GetBoundingBox().MaxY);
     }
 
     [Fact]

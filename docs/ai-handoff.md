@@ -1623,8 +1623,8 @@ Implemented/expected behavior:
 - The reference is the combined bounding box of the selected entities.
 - Align Left moves each entity so its `Bounds.MinX` matches the selection `MinX`.
 - Align Right moves each entity so its `Bounds.MaxX` matches the selection `MaxX`.
-- Align Top moves each entity so its `Bounds.MaxY` matches the selection `MaxY`.
-- Align Bottom moves each entity so its `Bounds.MinY` matches the selection `MinY`.
+- Align Top follows the visual canvas convention and moves each entity so its `Bounds.MinY` matches the selection `MinY`.
+- Align Bottom follows the visual canvas convention and moves each entity so its `Bounds.MaxY` matches the selection `MaxY`.
 - The operation preserves the other axis.
 - At least two selectable entities are required.
 - Operations are undoable via `ReplaceEntitiesCommand`.

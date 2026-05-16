@@ -59,11 +59,11 @@ public sealed class AlignmentService
                     break;
 
                 case AlignmentOperation.Top:
-                    dy = selectionBounds.MaxY - bounds.MaxY;
+                    dy = selectionBounds.MinY - bounds.MinY;
                     break;
 
                 case AlignmentOperation.Bottom:
-                    dy = selectionBounds.MinY - bounds.MinY;
+                    dy = selectionBounds.MaxY - bounds.MaxY;
                     break;
 
                 default:
