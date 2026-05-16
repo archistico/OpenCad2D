@@ -1,0 +1,163 @@
+{
+  "version": 1,
+  "savedAt": "2026-05-16T00:00:00.0000000+00:00",
+  "settings": {
+    "currentLayerId": "0"
+  },
+  "viewport": {
+    "panX": 0,
+    "panY": 0,
+    "zoom": 1
+  },
+  "lineFormats": [
+    {
+      "id": "Continuous",
+      "name": "Continua",
+      "color": "#FFFFFF",
+      "lineWeight": 1,
+      "lineStyle": "Continuous"
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "color": "#A0A0A0",
+      "lineWeight": 0.8,
+      "lineStyle": "Continuous"
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "color": "#FFFFFF",
+      "lineWeight": 2,
+      "lineStyle": "Continuous"
+    },
+    {
+      "id": "Axis",
+      "name": "Asse",
+      "color": "#FF0000",
+      "lineWeight": 0.75,
+      "lineStyle": "DashDot"
+    },
+    {
+      "id": "Dashed",
+      "name": "Tratteggiata",
+      "color": "#FFFF00",
+      "lineWeight": 0.75,
+      "lineStyle": "Dashed"
+    },
+    {
+      "id": "DashDotDot",
+      "name": "Tratto due punti",
+      "color": "#00C8FF",
+      "lineWeight": 0.5,
+      "lineStyle": "DashDotDot"
+    },
+    {
+      "id": "DashDot",
+      "name": "Tratto e punto",
+      "color": "#00FF00",
+      "lineWeight": 0.75,
+      "lineStyle": "DashDot"
+    }
+  ],
+  "textFormats": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "fontFamily": "Arial",
+      "height": 10,
+      "color": "#FFFFFF",
+      "isBold": false,
+      "isItalic": false
+    },
+    {
+      "id": "Title",
+      "name": "Title",
+      "fontFamily": "Arial",
+      "height": 18,
+      "color": "#FFFFFF",
+      "isBold": true,
+      "isItalic": false
+    },
+    {
+      "id": "Annotation",
+      "name": "Annotation",
+      "fontFamily": "Arial",
+      "height": 8,
+      "color": "#FFFF00",
+      "isBold": false,
+      "isItalic": false
+    },
+    {
+      "id": "Small",
+      "name": "Small",
+      "fontFamily": "Arial",
+      "height": 6,
+      "color": "#B4B4B4",
+      "isBold": false,
+      "isItalic": false
+    }
+  ],
+  "dimensionStyles": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "textFormatId": "Annotation",
+      "arrowSize": 4,
+      "textOffset": 2,
+      "extensionLineOffset": 1.5,
+      "extensionLineOvershoot": 2,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "suffix": ""
+    }
+  ],
+  "layers": [
+    {
+      "id": "0",
+      "name": "0",
+      "lineFormatId": "Continuous",
+      "color": "#FFFFFF",
+      "lineWeight": 1,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "lineFormatId": "Annotations",
+      "color": "#A0A0A0",
+      "lineWeight": 0.8,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "lineFormatId": "Walls",
+      "color": "#FFFFFF",
+      "lineWeight": 2,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Axis",
+      "name": "Axis",
+      "lineFormatId": "Axis",
+      "color": "#FF0000",
+      "lineWeight": 0.75,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Construction lines",
+      "name": "Construction lines",
+      "lineFormatId": "Dashed",
+      "color": "#FFFF00",
+      "lineWeight": 0.75,
+      "isVisible": true,
+      "isLocked": false
+    }
+  ],
+  "entities": []
+}

@@ -9,6 +9,7 @@
         Icon="/Assets/app-icon.ico"
         Width="1600"
         Height="960"
+        WindowState="Maximized"
         Background="#1E1E1E"
         KeyDown="Window_KeyDown"
         TextInput="Window_TextInput">

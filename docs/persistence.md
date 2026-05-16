@@ -325,3 +325,39 @@ SVG/DXF export does not:
 - participate in native document loading.
 
 SVG export belongs to `OpenCad2D.Export`, while native document save/load belongs to `OpenCad2D.Persistence`.
+
+---
+
+## Startup default template
+
+Normal application startup uses a native OpenCad2D template file instead of seeding a demo drawing in code.
+
+Template path in the app project:
+
+```text
+src/OpenCad2D.App/Templates/default.opencad2d.json
+```
+
+Build behavior:
+
+```text
+Templates/** -> copied to the application output directory
+```
+
+Runtime behavior:
+
+1. `MainWindowViewModel` tries to load `Templates/default.opencad2d.json` from `AppContext.BaseDirectory`.
+2. The loaded document becomes the initial untitled drawing.
+3. The current file path remains empty, so the title still shows `Untitled`.
+4. The document is marked as saved/clean after loading the template.
+5. If the template is missing, unreadable or invalid, the app creates an empty internal fallback document with the built-in CAD layers.
+
+The default template currently stores:
+
+- default line formats;
+- default text formats;
+- default dimension style;
+- default CAD layers;
+- an empty entity list.
+
+Design rule: the default startup drawing must remain empty. Demo/sample drawings should be separate files, not constructor behavior.

@@ -35,7 +35,8 @@ EOF
         {
             var viewModel = new MainWindowViewModel();
 
-            Assert.True(viewModel.EntityCount > 1);
+            Assert.Empty(viewModel.Workspace.Document.Entities.All);
+            Assert.False(viewModel.IsDirty);
 
             var result = viewModel.ImportDxfFromFile(filePath);
 

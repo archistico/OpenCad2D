@@ -1,6 +1,4 @@
-using System.Linq;
 using OpenCad2D.App.ViewModels;
-using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
@@ -42,27 +40,13 @@ public sealed class MainWindowViewModelDefaultDrawingTests
     }
 
     [Fact]
-    public void Constructor_ShouldSeedSampleDrawingWithEveryEntityKind()
+    public void Constructor_ShouldStartWithEmptyDrawing()
     {
         var viewModel = new MainWindowViewModel();
 
-        EntityKind[] kinds = viewModel.Workspace.Document.Entities.All
-            .Select(entity => entity.Kind)
-            .Distinct()
-            .ToArray();
-
-        Assert.Contains(EntityKind.Line, kinds);
-        Assert.Contains(EntityKind.Circle, kinds);
-        Assert.Contains(EntityKind.Arc, kinds);
-        Assert.Contains(EntityKind.Polyline, kinds);
-        Assert.Contains(EntityKind.Point, kinds);
-        Assert.Contains(EntityKind.Text, kinds);
-        Assert.Contains(EntityKind.HorizontalDimension, kinds);
-        Assert.Contains(EntityKind.VerticalDimension, kinds);
-        Assert.Contains(EntityKind.AlignedDimension, kinds);
-        Assert.Contains(EntityKind.RadiusDimension, kinds);
-        Assert.Contains(EntityKind.DiameterDimension, kinds);
-        Assert.Contains(EntityKind.AngularDimension, kinds);
+        Assert.Empty(viewModel.Workspace.Document.Entities.All);
+        Assert.Equal("Untitled", viewModel.CurrentFileName);
+        Assert.False(viewModel.IsDirty);
     }
 
     [Fact]

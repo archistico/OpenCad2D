@@ -1,3 +1,23 @@
+# Latest handoff note
+
+## Startup template stabilization
+
+The app now starts from a clean native template instead of seeding a sample drawing in `MainWindowViewModel`.
+
+Implemented changes:
+
+- `MainWindow.axaml` opens maximized by default through `WindowState="Maximized"`.
+- `MainWindowViewModel` calls `LoadDefaultTemplate()` during construction and in `NewDocument()`.
+- The template is `src/OpenCad2D.App/Templates/default.opencad2d.json`.
+- `OpenCad2D.App.csproj` copies `Templates/**` to the output directory.
+- The default template contains line formats, text formats, one dimension style and the default CAD layers, with no entities.
+- If the template cannot be loaded, the view-model falls back to an internal empty document with the built-in layers.
+- `MainWindowViewModelDefaultDrawingTests` now verifies that startup is empty instead of expecting the old sample drawing.
+
+Validation note: the current environment used for this handoff does not provide the `dotnet` command, so build/tests must be run locally in Visual Studio or with `dotnet test OpenCad2D.sln`.
+
+---
+
 # OpenCad2D - AI Handoff Document
 
 This document describes the current state, architecture and development rules of OpenCad2D. It is intended for future AI-assisted development sessions and contributors.
@@ -1028,3 +1048,32 @@ Detailed docs:
 ```text
 docs/pdf-export.md
 ```
+
+### DXF import dirty-state fix
+
+DXF import now loads the imported document as an unsaved native OpenCad2D drawing. `CadWorkspace.LoadDocument` supports an explicit `markAsSaved` flag; normal native/template loads remain clean, while DXF import uses `markAsSaved: false` so `IsDirty` is immediately true after a successful import.
+
+
+
+## 2026-05-16 - DXF import dirty-state stabilization
+
+After introducing startup template loading, DXF import must still create an unsaved native drawing.
+`MainWindowViewModel.ImportDxfFromFile` now explicitly registers the imported document as changed after replacing the current document, so `IsDirty` remains true even though the native file path is cleared.
+
+Expected behavior:
+
+- opening/loading a native `.opencad2d.json` can mark the workspace as saved;
+- loading the default startup template is clean;
+- importing a DXF replaces the document, clears `CurrentFilePath`, shows `Untitled`, and marks the document dirty because it still needs to be saved as a native OpenCad2D document.
+
+### 2026-05-16 - DXF import dirty-state stabilization
+
+Follow-up fix after the startup template phase:
+
+- DXF import now leaves the native OpenCad2D document explicitly dirty.
+- `CadWorkspace` now tracks external unsaved changes separately from command-history generation.
+- `MarkSaved()` clears the external dirty flag.
+- `LoadDocument(..., markAsSaved: false)` marks the loaded document as unsaved without relying on generation arithmetic.
+- The DXF import view-model test now asserts the new clean startup state before import, then verifies that import marks the document dirty.
+
+This keeps startup/template/native file loading clean while ensuring imported DXF files still require a native save.

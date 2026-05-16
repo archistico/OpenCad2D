@@ -1,6 +1,4 @@
-using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
-using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
@@ -30,6 +28,8 @@ namespace OpenCad2D.App.ViewModels;
 
 public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
+    private const string DefaultTemplateRelativePath = "Templates/default.opencad2d.json";
+
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
@@ -68,8 +68,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             selectionTolerance: 6,
             selectionDragThreshold: 4);
 
-        EnsureDemoLayers();
-        SeedDemoDrawing();
+        LoadDefaultTemplate();
         RefreshPropertyPanel();
     }
 
@@ -316,10 +315,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public void NewDocument()
     {
-        Workspace.NewDocument();
-        EnsureDemoLayers();
+        LoadDefaultTemplate();
         _currentFilePath = null;
-        SetMessage("New document created.");
+        SetMessage("New document created from default template.");
         NotifyDocumentStateChanged();
         NotifyFileStateChanged();
     }
@@ -449,9 +447,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         Workspace.LoadDocument(
             result.Document,
-            LayerId.Default);
-        Workspace.EnsureCurrentLayerIsUsable();
+            LayerId.Default,
+            markAsSaved: false);
         Workspace.MarkDocumentChanged();
+        Workspace.EnsureCurrentLayerIsUsable();
 
         _currentFilePath = null;
 
@@ -1206,7 +1205,53 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         };
     }
 
-    private void EnsureDemoLayers()
+    private void LoadDefaultTemplate()
+    {
+        string templatePath = GetDefaultTemplatePath();
+
+        try
+        {
+            DocumentDto dto = _documentSerializer.LoadFromFile(templatePath);
+
+            CadDocument document = _documentSerializer.Deserialize(
+                dto,
+                out string currentLayerId,
+                out _);
+
+            Workspace.LoadDocument(
+                document,
+                new LayerId(currentLayerId));
+
+            _currentFilePath = null;
+            SetMessage("Default template loaded.");
+        }
+        catch (DocumentLoadException)
+        {
+            LoadInternalDefaultDocument();
+        }
+        catch (InvalidOperationException)
+        {
+            LoadInternalDefaultDocument();
+        }
+    }
+
+    private static string GetDefaultTemplatePath()
+    {
+        return Path.Combine(
+            AppContext.BaseDirectory,
+            DefaultTemplateRelativePath);
+    }
+
+    private void LoadInternalDefaultDocument()
+    {
+        Workspace.NewDocument();
+        EnsureDefaultCadLayers();
+        Workspace.MarkSaved();
+        _currentFilePath = null;
+        SetMessage("Default template unavailable; using internal defaults.");
+    }
+
+    private void EnsureDefaultCadLayers()
     {
         AddLayerIfMissing(Layer.Default);
         AddLayerIfMissing(Layer.Annotations);
@@ -1223,116 +1268,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         Workspace.Document.Layers.Add(layer);
-    }
-
-    private void SeedDemoDrawing()
-    {
-        Workspace.Document.AddEntity(
-            new LineEntity(
-                new Point2D(40, 40),
-                new Point2D(300, 40),
-                layerId: LayerId.ConstructionLines));
-
-        Workspace.Document.AddEntity(
-            new LineEntity(
-                new Point2D(40, 40),
-                new Point2D(40, 240),
-                layerId: LayerId.ConstructionLines));
-
-        Workspace.Document.AddEntity(
-            new LineEntity(
-                new Point2D(40, 140),
-                new Point2D(300, 140),
-                layerId: LayerId.Axis));
-
-        Workspace.Document.AddEntity(
-            new LineEntity(
-                new Point2D(170, 40),
-                new Point2D(170, 240),
-                layerId: LayerId.Axis));
-
-        Workspace.Document.AddEntity(
-            new PolylineEntity(
-                new[]
-                {
-                    new Point2D(70, 70),
-                    new Point2D(270, 70),
-                    new Point2D(270, 210),
-                    new Point2D(70, 210)
-                },
-                isClosed: true,
-                layerId: LayerId.Walls));
-
-        Workspace.Document.AddEntity(
-            new CircleEntity(
-                new Point2D(420, 150),
-                55,
-                layerId: LayerId.Default));
-
-        Workspace.Document.AddEntity(
-            new ArcEntity(
-                new Point2D(420, 150),
-                85,
-                Angle.FromDegrees(30),
-                Angle.FromDegrees(145),
-                layerId: LayerId.Default));
-
-        Workspace.Document.AddEntity(
-            new PointEntity(
-                new Point2D(420, 150),
-                layerId: LayerId.Axis));
-
-        Workspace.Document.AddEntity(
-            new TextEntity(
-                new Point2D(70, 260),
-                "OpenCad2D sample drawing",
-                layerId: LayerId.Annotations));
-
-        Workspace.Document.AddEntity(
-            new LinearDimensionEntity(
-                new Point2D(70, 70),
-                new Point2D(270, 70),
-                new Point2D(170, 40),
-                DimensionOrientation.Horizontal,
-                layerId: LayerId.Annotations));
-
-        Workspace.Document.AddEntity(
-            new LinearDimensionEntity(
-                new Point2D(270, 70),
-                new Point2D(270, 210),
-                new Point2D(310, 140),
-                DimensionOrientation.Vertical,
-                layerId: LayerId.Annotations));
-
-        Workspace.Document.AddEntity(
-            new AlignedDimensionEntity(
-                new Point2D(70, 70),
-                new Point2D(270, 210),
-                new Point2D(180, 245),
-                layerId: LayerId.Annotations));
-
-        Workspace.Document.AddEntity(
-            new RadiusDimensionEntity(
-                new Point2D(420, 150),
-                new Point2D(475, 150),
-                new Point2D(500, 175),
-                layerId: LayerId.Annotations));
-
-        Workspace.Document.AddEntity(
-            new DiameterDimensionEntity(
-                new Point2D(420, 150),
-                new Point2D(420, 205),
-                new Point2D(455, 230),
-                layerId: LayerId.Annotations));
-
-        Workspace.Document.AddEntity(
-            new AngularDimensionEntity(
-                new Point2D(420, 150),
-                new Point2D(505, 150),
-                new Point2D(420, 235),
-                new Point2D(480, 210),
-                isCounterClockwise: true,
-                layerId: LayerId.Annotations));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

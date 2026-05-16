@@ -20,6 +20,7 @@ namespace OpenCad2D.Tools.Common;
 public sealed class CadWorkspace
 {
     private int _savedGeneration;
+    private bool _hasExternalUnsavedChange;
 
     public CadWorkspace(
         CadDocument? document = null,
@@ -97,7 +98,7 @@ public sealed class CadWorkspace
 
     public CadActionController ActionController { get; }
 
-    public bool IsDirty => CommandHistory.CurrentGeneration != _savedGeneration;
+    public bool IsDirty => _hasExternalUnsavedChange || CommandHistory.CurrentGeneration != _savedGeneration;
 
     public LayerId CurrentLayerId
     {
@@ -127,16 +128,29 @@ public sealed class CadWorkspace
     public void MarkSaved()
     {
         _savedGeneration = CommandHistory.CurrentGeneration;
+        _hasExternalUnsavedChange = false;
     }
 
     public void MarkDocumentChanged()
     {
+        _hasExternalUnsavedChange = true;
         CommandHistory.RegisterExternalChange();
     }
 
     public void LoadDocument(
         CadDocument document,
         LayerId currentLayerId)
+    {
+        LoadDocument(
+            document,
+            currentLayerId,
+            markAsSaved: true);
+    }
+
+    public void LoadDocument(
+        CadDocument document,
+        LayerId currentLayerId,
+        bool markAsSaved)
     {
         ArgumentNullException.ThrowIfNull(document);
 
@@ -154,7 +168,14 @@ public sealed class CadWorkspace
         ToolController.SetActiveToolWithoutDeactivating(
             new SelectionTool());
 
-        MarkSaved();
+        if (markAsSaved)
+        {
+            MarkSaved();
+        }
+        else
+        {
+            _savedGeneration = -1;
+        }
     }
 
     public void NewDocument()

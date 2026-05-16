@@ -18,7 +18,9 @@ Legend:
 
 Before the first stable release, OpenCad2D should prioritize user trust and predictable workflows over new advanced geometry features:
 
-- [ ] persist application/session settings;
+- [~] persist application/session settings;
+- [x] start with a clean drawing loaded from `Templates/default.opencad2d.json`;
+- [x] open the main window maximized by default;
 - [ ] implement draw order / Z-order independent from layers;
 - [ ] validate DXF import/export in external CAD viewers;
 - [ ] add end-to-end workflow tests for save/reopen and import/modify/export;
@@ -46,6 +48,7 @@ OpenCad2D currently includes:
 - [x] composite commands;
 - [x] undo/redo;
 - [x] persistence;
+- [x] startup default template file;
 - [x] SVG export;
 - [x] DXF export;
 - [x] automated DXF structure and compatibility tests;
@@ -65,6 +68,28 @@ OpenCad2D currently includes:
 - [x] real command line with aliases, command history, absolute/relative coordinates, direct distance and distance-angle input;
 - [x] Ortho mode;
 - [x] Polar Tracking with Off/90°/45°/30°/15°.
+
+---
+
+## Current stabilization phase
+
+### Startup and default template
+
+- [x] normal startup no longer seeds the sample drawing;
+- [x] the main window opens maximized by default;
+- [x] startup defaults are loaded from `src/OpenCad2D.App/Templates/default.opencad2d.json`;
+- [x] the template contains the default line formats, text formats, dimension style and layers;
+- [x] if the template is missing or invalid, the app falls back to a safe internal empty document with the built-in CAD layers.
+
+Pending in this phase:
+
+- [ ] fix arc endpoint grip behavior so moving one endpoint does not move the other endpoint;
+- [ ] update About with `info@opencad2d.org` and `www.opencad2d.org`;
+- [ ] center all secondary modal windows on their owner;
+- [ ] improve the save changes dialog styling;
+- [ ] add Select All and Select Last;
+- [ ] add Zoom Window;
+- [ ] add document recovery options for partially invalid native files.
 
 ---
 
