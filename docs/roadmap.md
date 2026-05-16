@@ -1166,3 +1166,14 @@ Completed before the v0.9 planning work:
 - [x] keep the existing `#RRGGBB` text fields as precise/manual input and persistence validation source.
 
 The Layer Manager still assigns appearance through line format references. Direct per-layer color editing remains intentionally indirect: users edit the referenced line format color in the Line Format Manager.
+
+### v0.8.x stabilization - document drafting settings persistence
+
+Implemented/planned in the pre-v0.9 stabilization pass:
+
+- store grid settings in `.opencad2d.json`;
+- store active snap modes and snap tolerance in `.opencad2d.json`;
+- store Ortho and Polar Tracking settings in `.opencad2d.json`;
+- store current layer and current text format in `.opencad2d.json`;
+- keep older files compatible through default settings fallback;
+- keep local UI/session preferences out of the drawing file.

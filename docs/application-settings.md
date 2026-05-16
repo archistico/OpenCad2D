@@ -107,7 +107,7 @@ Off  -> no polar angular constraint
 15°  -> directions at 0°, 15°, 30°, 45°, ...
 ```
 
-Polar Tracking is not stored in the drawing file. It is a user/session aid, like snap toggles and viewport interaction state.
+Polar Tracking is stored in the drawing file as a document-level drafting setting, together with snap toggles and grid settings. Purely local UI/session state remains in the user settings file.
 
 When Polar Tracking is enabled, it has priority over legacy Ortho. If Polar Tracking is `Off`, legacy Ortho can still provide horizontal/vertical constraint.
 
@@ -312,3 +312,32 @@ Session settings (application)
 ```
 
 When document-level settings are implemented, a document opened on a different machine should use the same `DrawingSettings`. Each machine still uses its own session settings, such as window position and shortcuts.
+
+---
+
+## Document-level drafting settings
+
+OpenCad2D distinguishes local application preferences from portable document drafting settings.
+
+The following settings are now stored in `.opencad2d.json` because they describe how the drawing should reopen and continue:
+
+```text
+grid settings
+snap modes and snap tolerance
+Ortho mode
+Polar Tracking mode
+current layer
+current text format
+```
+
+The following remain user-local application settings and should not be saved into the drawing file:
+
+```text
+window position and size
+theme / appearance
+recent files
+last used directories
+panel widths and other purely local UI layout preferences
+```
+
+This keeps project files portable without mixing them with personal workstation state.

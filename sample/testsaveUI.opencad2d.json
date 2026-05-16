@@ -1,14 +1,14 @@
 {
   "version": 1,
-  "savedAt": "2026-05-16T00:00:00.0000000+00:00",
+  "savedAt": "2026-05-16T14:42:35.4377603\u002B00:00",
   "settings": {
     "currentLayerId": "0",
     "currentTextFormatId": "Standard",
     "grid": {
-      "kind": "Rectangular",
+      "kind": "Isometric",
       "isVisible": true,
-      "minorStep": 10,
-      "majorStep": 50,
+      "minorStep": 5,
+      "majorStep": 20,
       "originX": 0,
       "originY": 0,
       "minimumScreenSpacing": 8,
@@ -19,9 +19,6 @@
       "isEnabled": true,
       "enabledModes": [
         "Endpoint",
-        "Midpoint",
-        "Center",
-        "Quadrant",
         "Intersection",
         "Perpendicular",
         "Tangent",
@@ -38,9 +35,9 @@
     }
   },
   "viewport": {
-    "panX": 0,
-    "panY": 0,
-    "zoom": 1
+    "panX": 439.6055567640652,
+    "panY": 358.8673314762112,
+    "zoom": 3.059022862539061
   },
   "lineFormats": [
     {
@@ -150,8 +147,8 @@
       "id": "0",
       "name": "0",
       "lineFormatId": "Continuous",
-      "color": "#FFFFFF",
-      "lineWeight": 1,
+      "color": null,
+      "lineWeight": null,
       "isVisible": true,
       "isLocked": false
     },
@@ -159,8 +156,8 @@
       "id": "Annotations",
       "name": "Annotations",
       "lineFormatId": "Annotations",
-      "color": "#A0A0A0",
-      "lineWeight": 0.8,
+      "color": null,
+      "lineWeight": null,
       "isVisible": true,
       "isLocked": false
     },
@@ -168,8 +165,8 @@
       "id": "Walls",
       "name": "Walls",
       "lineFormatId": "Walls",
-      "color": "#FFFFFF",
-      "lineWeight": 2,
+      "color": null,
+      "lineWeight": null,
       "isVisible": true,
       "isLocked": false
     },
@@ -177,8 +174,8 @@
       "id": "Axis",
       "name": "Axis",
       "lineFormatId": "Axis",
-      "color": "#FF0000",
-      "lineWeight": 0.75,
+      "color": null,
+      "lineWeight": null,
       "isVisible": true,
       "isLocked": false
     },
@@ -186,11 +183,48 @@
       "id": "Construction lines",
       "name": "Construction lines",
       "lineFormatId": "Dashed",
-      "color": "#FFFF00",
-      "lineWeight": 0.75,
+      "color": null,
+      "lineWeight": null,
       "isVisible": true,
       "isLocked": false
     }
   ],
-  "entities": []
+  "entities": [
+    {
+      "startX": 17.320508075688775,
+      "startY": 30,
+      "endX": 51.96152422706632,
+      "endY": 50,
+      "type": "Line",
+      "id": "58608e9b-46b7-4c2f-b4ed-452788e2a795",
+      "layerId": "0"
+    },
+    {
+      "startX": 86.60254037844388,
+      "startY": 30,
+      "endX": 51.96152422706632,
+      "endY": 50,
+      "type": "Line",
+      "id": "1570c29d-fef3-4bec-b37d-592704772759",
+      "layerId": "0"
+    },
+    {
+      "startX": 17.320508075688775,
+      "startY": 30,
+      "endX": 51.96152422706632,
+      "endY": 10,
+      "type": "Line",
+      "id": "d1d61641-5a03-4577-b290-95c8a5d1157d",
+      "layerId": "0"
+    },
+    {
+      "startX": 51.96152422706632,
+      "startY": 10,
+      "endX": 86.60254037844388,
+      "endY": 30,
+      "type": "Line",
+      "id": "0cf4f577-a323-4094-b403-e0f85df44238",
+      "layerId": "0"
+    }
+  ]
 }

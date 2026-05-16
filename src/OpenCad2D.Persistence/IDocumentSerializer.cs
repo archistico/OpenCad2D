@@ -11,7 +11,8 @@ public interface IDocumentSerializer
     DocumentDto Serialize(
         CadDocument document,
         string currentLayerId,
-        ViewportStateDto viewport);
+        ViewportStateDto viewport,
+        DocumentSettingsDto? settings = null);
 
     CadDocument Deserialize(
         DocumentDto dto,

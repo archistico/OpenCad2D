@@ -368,7 +368,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         DocumentDto dto = _documentSerializer.Serialize(
             Workspace.Document,
             Workspace.CurrentLayerId.Value,
-            viewportState);
+            viewportState,
+            BuildCurrentDocumentSettings());
 
         _documentSerializer.SaveToFile(
             dto,
@@ -398,6 +399,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         Workspace.LoadDocument(
             recovery.Document,
             new LayerId(recovery.CurrentLayerId));
+        ApplyDocumentSettings(recovery.Settings);
 
         _currentFilePath = filePath;
 
@@ -978,10 +980,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         Workspace.CurrentLayerId = layer.Id;
+        Workspace.MarkDocumentChanged();
 
         SetMessage($"Current layer changed to '{layer.Name}'.");
 
         NotifyLayerStateChanged();
+        NotifyFileStateChanged();
     }
 
     public void SetCurrentLayerByName(string layerName)
@@ -1259,11 +1263,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Workspace.Context.EnabledSnaps &= ~snapKind;
         }
 
+        Workspace.MarkDocumentChanged();
+
         SetMessage($"Snap settings updated: {Workspace.Context.EnabledSnaps}");
 
         OnPropertiesChanged(
             nameof(SnapText),
-            nameof(StatusText));
+            nameof(StatusText),
+            nameof(IsDirty),
+            nameof(TitleText),
+            nameof(FileStatusText));
     }
 
 
@@ -1294,11 +1303,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public ToolResult ApplyGridSettings(GridSettings gridSettings)
     {
         ToolResult result = Workspace.SetGridSettings(gridSettings);
+        Workspace.MarkDocumentChanged();
 
         SetLastResult(result);
         OnPropertiesChanged(
             nameof(StatusText),
-            nameof(SnapText));
+            nameof(SnapText),
+            nameof(IsDirty),
+            nameof(TitleText),
+            nameof(FileStatusText));
 
         return result;
     }
@@ -1313,6 +1326,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             _selectedPolarTrackingOption = PolarTrackingOptions[0];
         }
 
+        Workspace.MarkDocumentChanged();
+
         SetMessage(isEnabled
             ? "Ortho mode enabled."
             : "Ortho mode disabled.");
@@ -1322,7 +1337,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(SelectedPolarTrackingOption),
             nameof(PolarTrackingText),
             nameof(MeasurementText),
-            nameof(StatusText));
+            nameof(StatusText),
+            nameof(IsDirty),
+            nameof(TitleText),
+            nameof(FileStatusText));
     }
 
     public void SetPolarTracking(PolarTrackingOptionViewModel option)
@@ -1332,6 +1350,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         _selectedPolarTrackingOption = option;
         Workspace.Context.IsOrthoEnabled = false;
         Workspace.AngleConstraintSettings = option.Settings;
+        Workspace.MarkDocumentChanged();
 
         SetMessage(option.IsOff
             ? "Polar tracking disabled."
@@ -1342,7 +1361,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(SelectedPolarTrackingOption),
             nameof(PolarTrackingText),
             nameof(MeasurementText),
-            nameof(StatusText));
+            nameof(StatusText),
+            nameof(IsDirty),
+            nameof(TitleText),
+            nameof(FileStatusText));
     }
 
     public void NotifyDocumentStateChanged()
@@ -1455,6 +1477,193 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(StatusText));
     }
 
+    private DocumentSettingsDto BuildCurrentDocumentSettings()
+    {
+        GridSettings grid = Workspace.GridSettings;
+        AngleConstraintSettings polar = Workspace.AngleConstraintSettings;
+
+        return new DocumentSettingsDto
+        {
+            CurrentLayerId = Workspace.CurrentLayerId.Value,
+            CurrentTextFormatId = Workspace.Context.Creation.CurrentTextFormatId.Value,
+            Grid = new DocumentGridSettingsDto
+            {
+                Kind = grid.Kind.ToString(),
+                IsVisible = grid.IsVisible,
+                MinorStep = grid.MinorStep,
+                MajorStep = grid.MajorStep,
+                OriginX = grid.OriginX,
+                OriginY = grid.OriginY,
+                MinimumScreenSpacing = grid.MinimumScreenSpacing,
+                MaximumScreenSpacing = grid.MaximumScreenSpacing,
+                IsometricAngleDegrees = grid.IsometricAngleDegrees
+            },
+            Snapping = new DocumentSnapSettingsDto
+            {
+                IsEnabled = Workspace.Context.EnabledSnaps != SnapKind.None,
+                EnabledModes = GetEnabledSnapModeNames(Workspace.Context.EnabledSnaps).ToList(),
+                Tolerance = Workspace.Context.SnapTolerance
+            },
+            Drafting = new DocumentDraftingSettingsDto
+            {
+                IsOrthoEnabled = Workspace.Context.IsOrthoEnabled,
+                PolarTracking = new DocumentPolarTrackingSettingsDto
+                {
+                    IsEnabled = polar.IsEnabled,
+                    StepDegrees = polar.StepDegrees
+                }
+            }
+        };
+    }
+
+    private void ApplyDocumentSettings(DocumentSettingsDto? settings)
+    {
+        if (settings is null)
+        {
+            return;
+        }
+
+        Workspace.SetGridSettings(CreateGridSettings(settings.Grid));
+        Workspace.Context.EnabledSnaps = CreateSnapKind(settings.Snapping);
+        Workspace.Context.SnapTolerance = GetPositiveOrDefault(settings.Snapping?.Tolerance, Workspace.Context.SnapTolerance);
+        Workspace.Context.IsOrthoEnabled = settings.Drafting?.IsOrthoEnabled == true;
+        Workspace.AngleConstraintSettings = CreateAngleConstraintSettings(settings.Drafting?.PolarTracking);
+        _selectedPolarTrackingOption = ResolvePolarTrackingOption(Workspace.AngleConstraintSettings);
+
+        if (!string.IsNullOrWhiteSpace(settings.CurrentTextFormatId))
+        {
+            var textFormatId = new TextFormatId(settings.CurrentTextFormatId);
+            if (Workspace.Document.TextFormats.Contains(textFormatId))
+            {
+                Workspace.Context.Creation.CurrentTextFormatId = textFormatId;
+            }
+        }
+    }
+
+    private static GridSettings CreateGridSettings(DocumentGridSettingsDto? dto)
+    {
+        if (dto is null)
+        {
+            return new GridSettings();
+        }
+
+        GridKind kind = Enum.TryParse(dto.Kind, ignoreCase: true, out GridKind parsedKind)
+            ? parsedKind
+            : GridKind.Rectangular;
+
+        try
+        {
+            return new GridSettings(
+                step: GetPositiveOrDefault(dto.MinorStep, 10),
+                originX: dto.OriginX,
+                originY: dto.OriginY,
+                isVisible: dto.IsVisible,
+                majorStep: GetPositiveOrDefault(dto.MajorStep, Math.Max(dto.MinorStep, 10)),
+                minimumScreenSpacing: GetPositiveOrDefault(dto.MinimumScreenSpacing, 8),
+                maximumScreenSpacing: GetPositiveOrDefault(dto.MaximumScreenSpacing, 220),
+                kind: kind,
+                isometricAngleDegrees: GetPositiveOrDefault(dto.IsometricAngleDegrees, 30));
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return new GridSettings();
+        }
+    }
+
+    private static SnapKind CreateSnapKind(DocumentSnapSettingsDto? dto)
+    {
+        if (dto is null)
+        {
+            return SnapKind.Endpoint |
+                   SnapKind.Midpoint |
+                   SnapKind.Center |
+                   SnapKind.Quadrant |
+                   SnapKind.Intersection |
+                   SnapKind.Perpendicular |
+                   SnapKind.Tangent |
+                   SnapKind.Grid;
+        }
+
+        if (!dto.IsEnabled)
+        {
+            return SnapKind.None;
+        }
+
+        SnapKind result = SnapKind.None;
+
+        foreach (string mode in dto.EnabledModes ?? Enumerable.Empty<string>())
+        {
+            if (Enum.TryParse(mode, ignoreCase: true, out SnapKind parsed) &&
+                parsed != SnapKind.Entity &&
+                parsed != SnapKind.EntityOnly)
+            {
+                result |= parsed;
+            }
+        }
+
+        return result;
+    }
+
+    private static IEnumerable<string> GetEnabledSnapModeNames(SnapKind snapKind)
+    {
+        SnapKind[] modes =
+        {
+            SnapKind.Endpoint,
+            SnapKind.Midpoint,
+            SnapKind.Center,
+            SnapKind.Quadrant,
+            SnapKind.Intersection,
+            SnapKind.Nearest,
+            SnapKind.Perpendicular,
+            SnapKind.Tangent,
+            SnapKind.Grid
+        };
+
+        foreach (SnapKind mode in modes)
+        {
+            if (snapKind.HasFlag(mode))
+            {
+                yield return mode.ToString();
+            }
+        }
+    }
+
+    private static AngleConstraintSettings CreateAngleConstraintSettings(DocumentPolarTrackingSettingsDto? dto)
+    {
+        if (dto is null || !dto.IsEnabled)
+        {
+            return AngleConstraintSettings.Off;
+        }
+
+        try
+        {
+            return AngleConstraintSettings.FromStep(dto.StepDegrees);
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return AngleConstraintSettings.Off;
+        }
+    }
+
+    private PolarTrackingOptionViewModel ResolvePolarTrackingOption(AngleConstraintSettings settings)
+    {
+        PolarTrackingOptionViewModel? matching = PolarTrackingOptions.FirstOrDefault(option =>
+            option.Settings.IsEnabled == settings.IsEnabled &&
+            Math.Abs(option.Settings.StepDegrees - settings.StepDegrees) < 0.000001);
+
+        return matching ?? PolarTrackingOptions[0];
+    }
+
+    private static double GetPositiveOrDefault(
+        double? value,
+        double fallback)
+    {
+        return value is > 0 && double.IsFinite(value.Value)
+            ? value.Value
+            : fallback;
+    }
+
+
     private static IReadOnlyList<PolarTrackingOptionViewModel> CreatePolarTrackingOptions()
     {
         return new[]
@@ -1483,6 +1692,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Workspace.LoadDocument(
                 document,
                 new LayerId(currentLayerId));
+            ApplyDocumentSettings(dto.Settings);
 
             _currentFilePath = null;
             SetMessage("Default template loaded.");

@@ -376,3 +376,57 @@ Current recovery behavior:
 - recovery reports how many entities were recovered and skipped.
 
 Malformed JSON cannot be recovered safely and still produces an open error.
+
+---
+
+## Document settings persistence
+
+Starting with the v0.8.x stabilization phase, `.opencad2d.json` stores portable document drafting settings in the `settings` object.
+
+These settings belong to the drawing file because they affect how the drawing is reopened and continued by the next user:
+
+```text
+current layer
+current text format
+grid visibility/type/spacing/origin/render thresholds
+active snap modes and snap tolerance
+Ortho mode
+Polar Tracking enabled state and angle step
+```
+
+Conceptual DTO shape:
+
+```text
+DocumentDto
+  Settings
+    CurrentLayerId
+    CurrentTextFormatId
+    Grid
+      Kind
+      IsVisible
+      MinorStep
+      MajorStep
+      OriginX
+      OriginY
+      MinimumScreenSpacing
+      MaximumScreenSpacing
+      IsometricAngleDegrees
+    Snapping
+      IsEnabled
+      EnabledModes[]
+      Tolerance
+    Drafting
+      IsOrthoEnabled
+      PolarTracking
+        IsEnabled
+        StepDegrees
+```
+
+Compatibility rules:
+
+- older files without `settings` still load;
+- missing nested settings fall back to safe defaults;
+- invalid grid/polar values are ignored by the app-level apply step and replaced by defaults;
+- user-local UI state such as window position, theme and recent files remains outside `.opencad2d.json`.
+
+Changing document drafting settings marks the document dirty, because those settings are now saved with the drawing.

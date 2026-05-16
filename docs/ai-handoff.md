@@ -1551,3 +1551,22 @@ Next planned blocks before v0.9:
 2. implement Draw order / Z-order independent from layers;
 3. add Align Top/Right/Left/Bottom tools;
 4. add Distribute Horizontal/Vertical tools based on entity centers.
+
+## v0.8.x stabilization - document settings persistence
+
+The native `.opencad2d.json` format now persists document-level drafting settings under `settings`:
+
+- `currentLayerId`;
+- `currentTextFormatId`;
+- grid settings: kind, visibility, minor/major step, origin, screen spacing thresholds and isometric angle;
+- snapping settings: enabled state, active snap modes and snap tolerance;
+- drafting settings: Ortho and Polar Tracking.
+
+Important rule: settings that affect continuing the drawing are document data and mark the document dirty when changed. Local UI state such as window size, theme, recent files or panel widths must remain in user-local settings, not in `.opencad2d.json`.
+
+Compatibility: old files without `settings` or with partial settings must still load using defaults. App-level loading applies settings after the document is loaded so the serializer stays independent from `OpenCad2D.App`, `OpenCad2D.Tools` and `OpenCad2D.Interaction`.
+
+### 2026-05-16 - Document settings persistence round-trip fix
+
+Fixed `JsonDocumentSerializer.NormalizeSettings` so legacy `Serialize(document, currentLayerId, viewport)` calls preserve the provided current layer when no explicit `DocumentSettingsDto` is supplied. The new settings DTO defaulted `CurrentLayerId` to `"0"`, which caused older round-trip tests to restore layer `0` instead of the caller-provided current layer such as `Details`. Explicit settings passed by the app are still preserved.
+

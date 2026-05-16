@@ -464,4 +464,80 @@ public sealed class JsonDocumentSerializerTests
         Assert.Contains(result.Issues, issue => issue.Code == "ENTITY_SKIPPED");
     }
 
+
+    [Fact]
+    public void Serialize_ShouldIncludeDocumentSettings()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var document = new CadDocument();
+
+        var settings = new DocumentSettingsDto
+        {
+            CurrentLayerId = LayerId.Default.Value,
+            CurrentTextFormatId = TextFormatId.Title.Value,
+            Grid = new DocumentGridSettingsDto
+            {
+                Kind = "Isometric",
+                IsVisible = false,
+                MinorStep = 5,
+                MajorStep = 25,
+                OriginX = 1,
+                OriginY = 2,
+                MinimumScreenSpacing = 9,
+                MaximumScreenSpacing = 180,
+                IsometricAngleDegrees = 30
+            },
+            Snapping = new DocumentSnapSettingsDto
+            {
+                IsEnabled = true,
+                EnabledModes = new List<string> { "Endpoint", "Grid" },
+                Tolerance = 12
+            },
+            Drafting = new DocumentDraftingSettingsDto
+            {
+                IsOrthoEnabled = true,
+                PolarTracking = new DocumentPolarTrackingSettingsDto
+                {
+                    IsEnabled = false,
+                    StepDegrees = 90
+                }
+            }
+        };
+
+        DocumentDto dto = serializer.Serialize(
+            document,
+            LayerId.Default.Value,
+            new ViewportStateDto(),
+            settings);
+
+        Assert.Equal("Isometric", dto.Settings.Grid.Kind);
+        Assert.False(dto.Settings.Grid.IsVisible);
+        Assert.Equal(5, dto.Settings.Grid.MinorStep);
+        Assert.Equal(25, dto.Settings.Grid.MajorStep);
+        Assert.Equal(new[] { "Endpoint", "Grid" }, dto.Settings.Snapping.EnabledModes);
+        Assert.Equal(12, dto.Settings.Snapping.Tolerance);
+        Assert.True(dto.Settings.Drafting.IsOrthoEnabled);
+        Assert.False(dto.Settings.Drafting.PolarTracking.IsEnabled);
+        Assert.Equal(TextFormatId.Title.Value, dto.Settings.CurrentTextFormatId);
+    }
+
+    [Fact]
+    public void DeserializeWithRecovery_WhenSettingsAreMissing_ShouldUseDefaultSettings()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = null!
+        };
+
+        DocumentRecoveryResult result = serializer.DeserializeWithRecovery(dto);
+
+        Assert.Equal(LayerId.Default.Value, result.Settings.CurrentLayerId);
+        Assert.Equal(TextFormatId.Standard.Value, result.Settings.CurrentTextFormatId);
+        Assert.True(result.Settings.Grid.IsVisible);
+        Assert.Contains("Endpoint", result.Settings.Snapping.EnabledModes);
+        Assert.False(result.Settings.Drafting.IsOrthoEnabled);
+    }
+
 }

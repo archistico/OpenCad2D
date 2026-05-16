@@ -12,6 +12,7 @@ public sealed class DocumentRecoveryResult
         CadDocument document,
         string currentLayerId,
         ViewportStateDto viewport,
+        DocumentSettingsDto settings,
         IReadOnlyList<DocumentRecoveryIssue> issues,
         int recoveredEntityCount,
         int skippedEntityCount)
@@ -19,6 +20,7 @@ public sealed class DocumentRecoveryResult
         Document = document;
         CurrentLayerId = currentLayerId;
         Viewport = viewport;
+        Settings = settings;
         Issues = issues;
         RecoveredEntityCount = recoveredEntityCount;
         SkippedEntityCount = skippedEntityCount;
@@ -29,6 +31,8 @@ public sealed class DocumentRecoveryResult
     public string CurrentLayerId { get; }
 
     public ViewportStateDto Viewport { get; }
+
+    public DocumentSettingsDto Settings { get; }
 
     public IReadOnlyList<DocumentRecoveryIssue> Issues { get; }
 

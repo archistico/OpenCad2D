@@ -23,7 +23,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
     public DocumentDto Serialize(
         CadDocument document,
         string currentLayerId,
-        ViewportStateDto viewport)
+        ViewportStateDto viewport,
+        DocumentSettingsDto? settings = null)
     {
         ArgumentNullException.ThrowIfNull(document);
         ArgumentNullException.ThrowIfNull(viewport);
@@ -32,10 +33,7 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         {
             Version = CurrentVersion,
             SavedAt = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
-            Settings = new DocumentSettingsDto
-            {
-                CurrentLayerId = currentLayerId
-            },
+            Settings = NormalizeSettings(settings, currentLayerId),
             Viewport = new ViewportStateDto
             {
                 PanX = viewport.PanX,
@@ -73,6 +71,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         {
             throw new UnsupportedDocumentVersionException(dto.Version);
         }
+
+        dto.Settings ??= new DocumentSettingsDto();
 
         CadDocument document = new();
         LineFormatCollection lineFormats = FromLineFormatDtos(dto.LineFormats);
@@ -137,6 +137,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         {
             throw new UnsupportedDocumentVersionException(dto.Version);
         }
+
+        dto.Settings ??= new DocumentSettingsDto();
 
         var issues = new List<DocumentRecoveryIssue>();
         CadDocument document = new();
@@ -259,6 +261,7 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             document,
             currentLayerId,
             viewport,
+            dto.Settings,
             issues,
             recoveredEntityCount,
             skippedEntityCount);
@@ -948,6 +951,33 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         {
             return CadColor.FromRgb(255, 255, 255);
         }
+    }
+
+    private static DocumentSettingsDto NormalizeSettings(
+        DocumentSettingsDto? settings,
+        string currentLayerId)
+    {
+        DocumentSettingsDto normalized = settings ?? new DocumentSettingsDto
+        {
+            CurrentLayerId = currentLayerId
+        };
+
+        if (string.IsNullOrWhiteSpace(normalized.CurrentLayerId))
+        {
+            normalized.CurrentLayerId = currentLayerId;
+        }
+
+        normalized.Grid ??= new DocumentGridSettingsDto();
+        normalized.Snapping ??= new DocumentSnapSettingsDto();
+        normalized.Drafting ??= new DocumentDraftingSettingsDto();
+        normalized.Drafting.PolarTracking ??= new DocumentPolarTrackingSettingsDto();
+
+        if (string.IsNullOrWhiteSpace(normalized.CurrentTextFormatId))
+        {
+            normalized.CurrentTextFormatId = TextFormatId.Standard.Value;
+        }
+
+        return normalized;
     }
 
     private static JsonSerializerOptions CreateJsonOptions()
