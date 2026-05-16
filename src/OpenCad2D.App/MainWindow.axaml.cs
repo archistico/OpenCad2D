@@ -1021,6 +1021,59 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+
+    private void AlignLeft_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.AlignSelectionLeft();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void AlignRight_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.AlignSelectionRight();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void AlignTop_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.AlignSelectionTop();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void AlignBottom_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.AlignSelectionBottom();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
     private void BringToFront_Click(
         object? sender,
         RoutedEventArgs e)

@@ -781,3 +781,14 @@ Implemented in the pre-v0.9 stabilization phase:
   - `BRINGFORWARD`, `BF`, `FORWARD`
   - `SENDBACKWARD`, `SB`, `BACKWARD`
 - Draw-order changes are undoable and keep the current selection.
+
+## Align object action commands
+
+These commands operate immediately on the current selection and are separate from the geometric `ALIGN` tool.
+
+| Command | Alias | Behavior |
+| --- | --- | --- |
+| `ALIGNLEFT` | `ALEFT` | Align selected entities to the left edge of the selection bounds. |
+| `ALIGNRIGHT` | `ARIGHT` | Align selected entities to the right edge of the selection bounds. |
+| `ALIGNTOP` | `ATOP` | Align selected entities to the top edge of the selection bounds. |
+| `ALIGNBOTTOM` | `ABOTTOM` | Align selected entities to the bottom edge of the selection bounds. |

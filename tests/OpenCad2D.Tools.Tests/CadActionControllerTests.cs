@@ -719,6 +719,132 @@ public sealed class CadActionControllerTests
         Assert.Equal(2, document.Entities.GetRequired(front.Id).DrawOrder);
     }
 
+
+    [Fact]
+    public void AlignSelectionLeft_ShouldMoveEntitiesToSelectionMinX()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var left = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var right = new LineEntity(new Point2D(20, 10), new Point2D(30, 10));
+
+        document.AddEntities(new[] { left, right });
+        selectionSet.ReplaceWith(new[] { left.Id, right.Id });
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.AlignSelectionLeft();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(0, document.Entities.GetRequired(left.Id).GetBoundingBox().MinX);
+        Assert.Equal(0, document.Entities.GetRequired(right.Id).GetBoundingBox().MinX);
+        Assert.Equal(10, document.Entities.GetRequired(right.Id).GetBoundingBox().MinY);
+        Assert.True(actionController.CanUndo);
+    }
+
+    [Fact]
+    public void AlignSelectionRight_ShouldMoveEntitiesToSelectionMaxX()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var left = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var right = new LineEntity(new Point2D(20, 10), new Point2D(30, 10));
+
+        document.AddEntities(new[] { left, right });
+        selectionSet.ReplaceWith(new[] { left.Id, right.Id });
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.AlignSelectionRight();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(30, document.Entities.GetRequired(left.Id).GetBoundingBox().MaxX);
+        Assert.Equal(30, document.Entities.GetRequired(right.Id).GetBoundingBox().MaxX);
+    }
+
+    [Fact]
+    public void AlignSelectionTop_ShouldMoveEntitiesToSelectionMaxY()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var bottom = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var top = new LineEntity(new Point2D(20, 10), new Point2D(30, 10));
+
+        document.AddEntities(new[] { bottom, top });
+        selectionSet.ReplaceWith(new[] { bottom.Id, top.Id });
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.AlignSelectionTop();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(10, document.Entities.GetRequired(bottom.Id).GetBoundingBox().MaxY);
+        Assert.Equal(10, document.Entities.GetRequired(top.Id).GetBoundingBox().MaxY);
+    }
+
+    [Fact]
+    public void AlignSelectionBottom_ShouldMoveEntitiesToSelectionMinY()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var bottom = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var top = new LineEntity(new Point2D(20, 10), new Point2D(30, 10));
+
+        document.AddEntities(new[] { bottom, top });
+        selectionSet.ReplaceWith(new[] { bottom.Id, top.Id });
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.AlignSelectionBottom();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(0, document.Entities.GetRequired(bottom.Id).GetBoundingBox().MinY);
+        Assert.Equal(0, document.Entities.GetRequired(top.Id).GetBoundingBox().MinY);
+    }
+
+    [Fact]
+    public void AlignSelectionLeft_WithSingleSelection_ShouldReturnNone()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var line = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+
+        document.AddEntity(line);
+        selectionSet.Select(line.Id);
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.AlignSelectionLeft();
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.False(actionController.CanUndo);
+    }
+
     private static CadActionController CreateActionController(
         CadDocument document,
         CommandHistory history,

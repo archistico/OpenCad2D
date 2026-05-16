@@ -565,6 +565,29 @@
                                     Click="Delete_Click" />
 
                             <TextBlock Classes="panel-section-label"
+                                       Text="ALIGN OBJECTS" />
+
+                            <Button Classes="tool-button"
+                                    Content="Align Left"
+                                    ToolTip.Tip="Align selected entities to the left edge of the selection bounds"
+                                    Click="AlignLeft_Click" />
+
+                            <Button Classes="tool-button"
+                                    Content="Align Right"
+                                    ToolTip.Tip="Align selected entities to the right edge of the selection bounds"
+                                    Click="AlignRight_Click" />
+
+                            <Button Classes="tool-button"
+                                    Content="Align Top"
+                                    ToolTip.Tip="Align selected entities to the top edge of the selection bounds"
+                                    Click="AlignTop_Click" />
+
+                            <Button Classes="tool-button"
+                                    Content="Align Bottom"
+                                    ToolTip.Tip="Align selected entities to the bottom edge of the selection bounds"
+                                    Click="AlignBottom_Click" />
+
+                            <TextBlock Classes="panel-section-label"
                                        Text="ORDER" />
 
                             <Button Classes="tool-button"

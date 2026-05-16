@@ -1612,3 +1612,28 @@ Next planned blocks remain:
 - Added a read-only `Draw order` row to the single-selection property panel.
 - This helps verify Z-order changes after `To Front`, `To Back`, `Forward`, and `Backward`.
 - Confirmed intended behavior: `To Front` moves the selected entity to the highest draw order range, visible entities are rendered in increasing draw order, so the entity is drawn last and appears above overlapping entities. Hit testing also prefers the higher draw-order entity.
+
+## v0.8.x - Align object tools
+
+Added a pre-v0.9 CAD usability block for object alignment actions.
+
+Implemented/expected behavior:
+
+- Align Left, Align Right, Align Top and Align Bottom operate on the current selection.
+- The reference is the combined bounding box of the selected entities.
+- Align Left moves each entity so its `Bounds.MinX` matches the selection `MinX`.
+- Align Right moves each entity so its `Bounds.MaxX` matches the selection `MaxX`.
+- Align Top moves each entity so its `Bounds.MaxY` matches the selection `MaxY`.
+- Align Bottom moves each entity so its `Bounds.MinY` matches the selection `MinY`.
+- The operation preserves the other axis.
+- At least two selectable entities are required.
+- Operations are undoable via `ReplaceEntitiesCommand`.
+- The current selection is preserved after the operation.
+- UI buttons live in the left tool panel under `ALIGN OBJECTS`.
+- Command aliases are action commands, not modal tools:
+  - `ALIGNLEFT`, `ALEFT`
+  - `ALIGNRIGHT`, `ARIGHT`
+  - `ALIGNTOP`, `ATOP`
+  - `ALIGNBOTTOM`, `ABOTTOM`
+
+Next planned block: distribute selected entities horizontally/vertically by center points.

@@ -969,3 +969,15 @@ Implemented in the pre-v0.9 stabilization phase:
   - `BRINGFORWARD`, `BF`, `FORWARD`
   - `SENDBACKWARD`, `SB`, `BACKWARD`
 - Draw-order changes are undoable and keep the current selection.
+
+## Align object tools
+
+The left tool panel includes object alignment actions for the current selection:
+
+- **Align Left** aligns every selected entity to the selection bounding box `MinX`.
+- **Align Right** aligns every selected entity to the selection bounding box `MaxX`.
+- **Align Top** aligns every selected entity to the selection bounding box `MaxY`.
+- **Align Bottom** aligns every selected entity to the selection bounding box `MinY`.
+
+These actions require at least two selected entities. They are undoable and preserve the selection.
+They are separate from the geometric **Align** tool, which aligns selected entities using source and destination points.

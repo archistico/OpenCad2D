@@ -1196,3 +1196,19 @@ Implemented in the pre-v0.9 stabilization phase:
   - `BRINGFORWARD`, `BF`, `FORWARD`
   - `SENDBACKWARD`, `SB`, `BACKWARD`
 - Draw-order changes are undoable and keep the current selection.
+
+### v0.8.x CAD usability stabilization - align object tools
+
+Completed:
+
+- [x] Align Left using the combined selection bounding box.
+- [x] Align Right using the combined selection bounding box.
+- [x] Align Top using the combined selection bounding box.
+- [x] Align Bottom using the combined selection bounding box.
+- [x] Add left panel buttons and command aliases.
+- [x] Make align actions undoable and preserve selection.
+
+Next:
+
+- [ ] Distribute horizontally by entity centers.
+- [ ] Distribute vertically by entity centers.

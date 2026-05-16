@@ -161,6 +161,62 @@ public sealed class CadActionController
         return ToolResult.Completed(successMessage);
     }
 
+
+    public ToolResult AlignSelectionLeft()
+    {
+        return ApplyAlignment(AlignmentOperation.Left, "Aligned selected entities left.");
+    }
+
+    public ToolResult AlignSelectionRight()
+    {
+        return ApplyAlignment(AlignmentOperation.Right, "Aligned selected entities right.");
+    }
+
+    public ToolResult AlignSelectionTop()
+    {
+        return ApplyAlignment(AlignmentOperation.Top, "Aligned selected entities top.");
+    }
+
+    public ToolResult AlignSelectionBottom()
+    {
+        return ApplyAlignment(AlignmentOperation.Bottom, "Aligned selected entities bottom.");
+    }
+
+    private ToolResult ApplyAlignment(
+        AlignmentOperation operation,
+        string successMessage)
+    {
+        if (_context.SelectionSet.IsEmpty)
+        {
+            return ToolResult.None("Select at least two entities to align.");
+        }
+
+        List<EntityId> selectedIds = _context.SelectionSet.SelectedIds.ToList();
+
+        var service = new AlignmentService();
+        IReadOnlyList<CadEntity> replacements = service.CreateAlignedEntities(
+            _context.Document,
+            selectedIds,
+            operation);
+
+        if (replacements.Count == 0)
+        {
+            return ToolResult.None("Select at least two movable entities to align.");
+        }
+
+        _context.CommandHistory.Execute(
+            _context.Document,
+            new ReplaceEntitiesCommand(replacements));
+
+        _context.SelectionSet.ReplaceWith(
+            selectedIds.Where(id =>
+                _context.Document.Entities.TryGet(id, out CadEntity? entity) &&
+                entity is not null &&
+                _context.Document.IsEntitySelectable(entity)));
+
+        return ToolResult.Completed(successMessage);
+    }
+
     private void EnsureCurrentLayerIsUsable()
     {
         if (!_context.Document.Layers.Contains(_context.CurrentLayerId))

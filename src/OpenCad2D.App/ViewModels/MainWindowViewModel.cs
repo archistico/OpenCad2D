@@ -1130,6 +1130,51 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+
+    public ToolResult AlignSelectionLeft()
+    {
+        ToolResult result = Workspace.ActionController.AlignSelectionLeft();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult AlignSelectionRight()
+    {
+        ToolResult result = Workspace.ActionController.AlignSelectionRight();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult AlignSelectionTop()
+    {
+        ToolResult result = Workspace.ActionController.AlignSelectionTop();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult AlignSelectionBottom()
+    {
+        ToolResult result = Workspace.ActionController.AlignSelectionBottom();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     private bool TryExecuteActionCommand(
         string input,
         out ToolResult result)
@@ -1174,6 +1219,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             case "SB":
             case "BACKWARD":
                 result = SendSelectionBackward();
+                return true;
+
+            case "ALIGNLEFT":
+            case "ALEFT":
+                result = AlignSelectionLeft();
+                return true;
+
+            case "ALIGNRIGHT":
+            case "ARIGHT":
+                result = AlignSelectionRight();
+                return true;
+
+            case "ALIGNTOP":
+            case "ATOP":
+                result = AlignSelectionTop();
+                return true;
+
+            case "ALIGNBOTTOM":
+            case "ABOTTOM":
+                result = AlignSelectionBottom();
                 return true;
 
             default:
