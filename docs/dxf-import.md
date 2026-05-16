@@ -30,7 +30,6 @@ native DIMENSION entities
 HATCH
 SPLINE
 ELLIPSE
-MTEXT
 IMAGE
 LEADER / MLEADER
 3D entities
@@ -49,11 +48,12 @@ Unsupported records do not stop the import. They are skipped and reported in the
 | `ARC` | `ArcEntity` | angles are read from DXF degrees |
 | `POINT` | `PointEntity` | missing coordinates are skipped |
 | `LWPOLYLINE` | `PolylineEntity` | straight segments are supported |
-| `TEXT` | `TextEntity` | single-line text only |
+| `TEXT` | `TextEntity` | single-line text |
+| `MTEXT` | `MultilineTextEntity` | `\P` paragraph separators are converted to internal line breaks |
 
 `LWPOLYLINE` bulge values are detected but not converted to arcs yet. When bulge values are present, the polyline is imported as straight segments and the import report shows a warning.
 
-`TEXT` currently imports the text value, insertion point and optional rotation. Imported text uses `TextFormatId.Standard`.
+`TEXT` currently imports the text value, insertion point and optional rotation. `MTEXT` imports multiline content and maps DXF paragraph separators to internal line breaks. Imported text uses `TextFormatId.Standard`.
 
 ---
 
@@ -145,7 +145,6 @@ errors                   -> keep current document and show report
 - no native DXF `DIMENSION` import;
 - no block insertion support;
 - no hatches;
-- no multiline `MTEXT`;
 - no spline/ellipse reconstruction;
 - no curved `LWPOLYLINE` bulge-to-arc conversion yet;
 - no paper-space or layout reconstruction.

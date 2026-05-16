@@ -153,9 +153,9 @@ Text content must be XML-escaped.
 
 ## DXF export rules
 
-DXF export writes single-line text as native `TEXT`.
+DXF export writes single-line text as native `TEXT` and multiline text as native `MTEXT`.
 
-The exported entity uses:
+The single-line exported entity uses:
 
 ```text
 TEXT
@@ -167,7 +167,7 @@ rotation angle
 text format/style name
 ```
 
-The current export intentionally does not use `MTEXT` because OpenCad2D currently supports only single-line text.
+Multiline text is exported as `MTEXT`; internal line breaks are written as DXF paragraph separators.
 
 ---
 

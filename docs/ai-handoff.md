@@ -1,5 +1,28 @@
 # Latest handoff note
 
+## v0.8.x final documentation and release consolidation
+
+The v0.8.x baseline is now ready for final local validation and GitHub release preparation. Polygon, Ellipse, MTEXT and Bezier Spline are complete in the current baseline, including command aliases, rendering/preview, persistence, export coverage and focused tests.
+
+Important implementation notes for future work:
+
+- regular polygons are stored as closed `PolylineEntity` instances;
+- ellipse partial edit results currently become open `PolylineEntity` approximations because there is no `EllipseArcEntity`;
+- Bezier spline Trim/Break/Offset workflows use sampled polyline approximation, so edited fragments currently become `PolylineEntity` results;
+- DXF import supports `MTEXT`, but native DXF `ELLIPSE` and `SPLINE` import is still deferred;
+- release notes are consolidated in `docs/release-v0.8.md`, with a GitHub-ready draft in `docs/release-v0.8-final.md`.
+
+Recommended final validation before publishing:
+
+```bash
+dotnet build OpenCad2D.sln
+dotnet test OpenCad2D.sln --no-build
+```
+
+---
+
+# Latest handoff note
+
 ## Mirror tool
 
 Implemented `MirrorTool` as a command-driven modify tool before the v0.9 roadmap. The workflow is:
@@ -13,7 +36,7 @@ MIRROR: Delete source objects? [Yes/No] <No>:
 
 The tool supports preselection or select-first workflow, typed coordinates for the two mirror-axis points, a live mirrored preview while choosing the second axis point, and the final `Yes`/`No` option. Empty Enter defaults to `No`, so the source entities are kept and mirrored copies are added. `Yes` mirrors the selected source entities in place through `MirrorEntitiesCommand`. The UI has a `Mirror` button in the Modify/Edit group and command aliases are `MIRROR` and `MI`.
 
-Roadmap status: dimension export and Mirror are now complete; remaining pre-v0.9 items are Polygon, Ellipse, multiline text, Spline and final documentation/release cleanup.
+Roadmap status: dimension export, Mirror, Polygon, Ellipse, multiline text, Spline and final documentation/release cleanup are complete for the v0.8.x baseline.
 
 ---
 
@@ -30,7 +53,7 @@ PDF export now supports all current dimension entities as graphical primitives p
 
 SVG and DXF dimension coverage already existed and remains based on graphical primitives. PDF export now mirrors that approach and includes tests for each dimension type. PDF text escaping now writes WinAnsi octal escapes for non-ASCII dimension symbols such as degree (`°`) and diameter (`Ø`), and the PDF font resource declares `/Encoding /WinAnsiEncoding`.
 
-Roadmap reminder before v0.9: after dimension export stabilization, implement Mirror, Polygon, Ellipse, multiline text and Spline, then perform final v0.8.x documentation/release cleanup.
+Roadmap status before v0.9: Mirror, Polygon, Ellipse, multiline text, Spline and final v0.8.x documentation/release cleanup are complete.
 
 ---
 
@@ -1810,7 +1833,7 @@ Verified and strengthened modification coverage for polylines and polygon-like c
 
 Operational note: regular polygons are stored as closed `PolylineEntity`, so the same Trim/Break rules apply to both manually drawn closed polylines and polygons created by the Polygon tool.
 
-Next planned block: multiline text (`MTEXT`) with insertion point, multiline dialog, persistence and export.
+Next planned block after this historical note was completed: multiline text (`MTEXT`) with insertion point, multiline dialog, persistence and export.
 
 
 ### Block 6 — SPLINE phase 1

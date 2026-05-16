@@ -32,11 +32,12 @@ OpenCad2D currently supports a complete early CAD workflow:
 - CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input and direct distances;
 - object snapping, grid snapping, Ortho mode and Polar Tracking;
 - selection, Select All and Select Last;
-- drawing tools for points, text, lines, rectangles, circles, arcs and polylines;
+- drawing tools for points, single-line text, multiline text, lines, rectangles, circles, ellipses, arcs, polylines, polygons and Bezier splines;
 - dimension tools for horizontal, vertical, aligned, radius, diameter and angular dimensions;
 - transform tools: move, copy, rotate, scale and point-based align;
 - modify tools: delete, break point, break segment, trim, extend, offset and fillet;
-- offset for lines, circles, arcs and straight-segment polylines, including preview;
+- trim and break support for lines, arcs, circles where applicable, ellipses, polylines, polygons and sampled Bezier splines;
+- offset for lines, circles, arcs, straight-segment polylines and sampled Bezier splines, including preview;
 - line-line fillet with radius option and radius `0` sharp-corner join;
 - align object tools: left, right, top and bottom;
 - distribute object tools: horizontal and vertical distribution by centers;
@@ -157,6 +158,7 @@ Important documents:
 | `docs/draw-order.md` | Z-order behavior |
 | `docs/persistence.md` | native file format and recovery rules |
 | `docs/release-v0.8.md` | current release notes |
+| `docs/release-v0.8-final.md` | GitHub-ready v0.8.x final release draft |
 | `docs/ai-handoff.md` | current handoff for future development |
 
 Historical milestone notes before v0.8 are no longer needed in the active documentation set.

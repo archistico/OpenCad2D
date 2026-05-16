@@ -1,6 +1,6 @@
 # OpenCad2D v0.8 Release Notes
 
-OpenCad2D v0.8 focuses on CAD-style command input, guided tool workflows and essential modify tools.
+OpenCad2D v0.8 focuses on CAD-style command input, guided tool workflows, essential modify tools and the final v0.8.x drawing baseline before v0.9.
 
 This release is a major usability milestone: the command line now helps the user understand the active command phase and can drive tools with exact typed input while preserving mouse-based workflows.
 
@@ -19,6 +19,9 @@ This release is a major usability milestone: the command line now helps the user
 - New `OFFSET` / `O` command.
 - New `FILLET` / `F` command.
 - First advanced `TRIM` workflow with `All`, Ctrl-click additional cutting edges and in-command `Undo`.
+- Final v0.8.x drawing tools: `POLYGON`, `ELLIPSE`, `MTEXT` and `SPLINE`.
+- Ellipse, polyline/polygon and spline modify support for Trim/Break where applicable.
+- Offset support for straight-segment polylines and sampled Bezier splines.
 
 ---
 
@@ -64,9 +67,13 @@ The following tools now expose guided command phases:
 
 - Line
 - Polyline
+- Polygon
 - Rectangle
 - Circle
+- Ellipse
 - Arc 3P
+- Multiline text
+- Spline
 - Move
 - Copy
 - Rotate
@@ -121,15 +128,18 @@ OFFSET: Select object to offset:
 OFFSET: Specify side to offset:
 ```
 
-Supported entities in v0.8:
+Supported entities in v0.8.x:
 
 - Line
 - Circle
 - Arc
+- straight-segment open/closed Polyline
+- regular Polygon, through its closed-polyline representation
+- Bezier Spline, through sampled polyline approximation
 
 After creating one offset, the command stays active and returns to object selection while keeping the current distance.
 
-Polyline offset is intentionally deferred until a robust offset/join service is introduced.
+Polyline and sampled spline offsets use the current miter-join implementation. Rounded joins and advanced self-intersection cleanup remain future work.
 
 ---
 
@@ -158,6 +168,33 @@ Supported in v0.8:
 - trim mode always enabled
 
 Line-Arc, Arc-Arc, polyline fillet, multiple fillet and NoTrim mode are deferred.
+
+---
+
+## Final v0.8.x drawing baseline
+
+The final v0.8.x stabilization pass adds the missing baseline drawing tools needed before opening the v0.9 roadmap.
+
+Implemented tools:
+
+- `POLYGON` / `PG` creates regular polygons as closed `PolylineEntity` geometry;
+- `ELLIPSE` / `EL` creates full ellipses from center, major axis and minor radius;
+- `MTEXT` / `MT` creates multiline annotation text using the shared text dialog in multiline mode;
+- `SPLINE` / `SPL` creates open or closed Bezier splines from control points, with `Undo`, `Close` and Enter-to-finish flow.
+
+Export and persistence coverage:
+
+- native JSON round-trip for polygon/closed polyline, ellipse, multiline text and Bezier spline entities;
+- SVG/PDF/DXF export for ellipse, MTEXT and SPLINE;
+- DXF import for MTEXT;
+- spline SVG/PDF export uses sampled curve geometry, while DXF writes a native `SPLINE` entity.
+
+Modify-tool coverage:
+
+- Trim and Break support open polylines, closed polylines and regular polygons;
+- Trim and Break support ellipses through sampled polyline fragments;
+- Trim, Break and Offset support Bezier splines through sampled polyline approximation;
+- modified ellipse/spline fragments currently become `PolylineEntity` results rather than partial ellipse/spline entities.
 
 ---
 
@@ -215,10 +252,11 @@ Syntax-invalid JSON still fails explicitly because there is no reliable document
 
 ## Known limitations
 
-- Offset does not yet support polylines.
 - Fillet is limited to Line-Line.
 - Trim does not yet support Fence/Crossing/Edge/Project/Erase modes.
 - Shift-click Extend inside Trim is not implemented yet.
+- Ellipse and Bezier spline Trim/Break/Offset results are approximated as polylines; native partial ellipse/spline entities are future work.
+- DXF import does not yet reconstruct native ELLIPSE or SPLINE entities.
 - The command history is compact and visible, but not yet a full docked CAD console.
 
 ---
@@ -237,8 +275,11 @@ Manual smoke checks:
 ```text
 LINE -> 100,100 -> @100<45
 POLYLINE -> 0,0 -> @100,0 -> @50<90 -> C
-OFFSET -> distance -> line/circle/arc -> side point
+OFFSET -> distance -> line/circle/arc/polyline/spline -> side point
 FILLET -> R -> 10 -> first line -> second line
+ELLIPSE -> center -> major axis -> minor radius
+MTEXT -> insertion point -> multiline dialog
+SPLINE -> point -> point -> point -> U/C/Enter
 TRIM -> All -> target side -> Undo
 MOVE/COPY -> selection -> base point -> @50,0
 BREAK -> entity -> first point -> second point

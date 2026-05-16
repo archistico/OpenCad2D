@@ -93,7 +93,7 @@ Pending in this phase:
 - [x] update Select Last to restore the last cleared selection instead of the newest created entity;
 - [x] add Zoom Window;
 - [x] expose Zoom Extents in the left Navigate tool panel;
-- [ ] add document recovery options for partially invalid native files.
+- [x] add document recovery options for partially invalid native files.
 
 ---
 
@@ -102,13 +102,15 @@ Pending in this phase:
 
 These items complete the current CAD baseline before opening the v0.9 roadmap:
 
+**Final v0.8.x status: complete.** The baseline drawing set now includes polygon, ellipse, MTEXT and Bezier spline support, with export/persistence and modify-tool coverage where applicable.
+
 - [x] check and stabilize export of all current dimension types across SVG, DXF and PDF;
 - [x] add Mirror tool based on a two-point mirror axis;
-- [ ] add Polygon drawing tool;
-- [ ] add Ellipse drawing tool;
-- [ ] add multiline text tool;
-- [ ] add Spline drawing tool;
-- [ ] consolidate documentation and release notes after the final v0.8.x tools.
+- [x] add Polygon drawing tool;
+- [x] add Ellipse drawing tool;
+- [x] add multiline text tool;
+- [x] add Spline drawing tool;
+- [x] consolidate documentation and release notes after the final v0.8.x tools.
 
 ## Recently completed work
 
@@ -1276,6 +1278,7 @@ The Mirror tool now draws the mirror axis while the user is choosing the second 
 - [x] Dimension export check and PDF dimension export support.
 - [x] Mirror tool with axis preview.
 - [x] Polygon tool (`POLYGON` / `PG`) creating closed polylines.
-- [ ] Ellipse tool.
-- [ ] Multiline text tool.
-- [ ] Spline tool.
+- [x] Ellipse tool.
+- [x] Multiline text tool.
+- [x] Spline tool.
+- [x] Final documentation and release notes consolidation.

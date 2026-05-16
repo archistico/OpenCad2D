@@ -144,10 +144,13 @@ Current supported entities:
 ```text
 PointEntity               -> POINT
 TextEntity                -> TEXT
+MultilineTextEntity       -> MTEXT
 LineEntity                -> LINE
 CircleEntity              -> CIRCLE
+EllipseEntity             -> ELLIPSE
 ArcEntity                 -> ARC
 PolylineEntity            -> LWPOLYLINE
+BezierSplineEntity        -> SPLINE
 Horizontal dimension      -> LINE + TEXT graphical primitives
 Vertical dimension        -> LINE + TEXT graphical primitives
 Aligned dimension         -> LINE + TEXT graphical primitives
@@ -304,7 +307,7 @@ TextEntity.TextFormatId
 -> TextFormat.IsBold / IsItalic
 ```
 
-The current implementation intentionally does not export multiline text because the model currently supports only single-line `TextEntity`. A future multiline text feature should be designed separately and may map to DXF `MTEXT`.
+`MultilineTextEntity` is exported as multiline SVG text with `<tspan>` lines, PDF text lines and DXF `MTEXT` with paragraph separators.
 
 ---
 
