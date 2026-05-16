@@ -376,6 +376,16 @@ public sealed class DxfDocumentImporter : IDxfImporter
                 continue;
             }
 
+            if (entityRecord.Type == "ELLIPSE")
+            {
+                ImportEllipse(
+                    entityRecord,
+                    document,
+                    log);
+
+                continue;
+            }
+
             log.Add(new DxfImportLogEntry(
                 DxfImportLogSeverity.Warning,
                 $"Skipped unsupported DXF entity: {entityRecord.Type}.",
@@ -911,6 +921,203 @@ public sealed class DxfDocumentImporter : IDxfImporter
         }
 
         return (flags & 1) == 1;
+    }
+
+    private static void ImportEllipse(
+        DxfEntityRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        if (!TryReadPoint(
+                record,
+                xCode: 10,
+                yCode: 20,
+                pointName: "center point",
+                log,
+                out Point2D center) ||
+            !TryReadDouble(
+                record,
+                code: 11,
+                fieldName: "ELLIPSE major axis X coordinate",
+                log,
+                out double majorAxisX) ||
+            !TryReadDouble(
+                record,
+                code: 21,
+                fieldName: "ELLIPSE major axis Y coordinate",
+                log,
+                out double majorAxisY) ||
+            !TryReadDouble(
+                record,
+                code: 40,
+                fieldName: "ELLIPSE minor-to-major axis ratio",
+                log,
+                out double axisRatio))
+        {
+            return;
+        }
+
+        var majorAxis = new Vector2D(majorAxisX, majorAxisY);
+
+        if (majorAxis.Length <= Tolerance.Default)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped ELLIPSE entity because its major axis vector is zero-length.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        if (axisRatio <= 0 || double.IsNaN(axisRatio) || double.IsInfinity(axisRatio))
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped ELLIPSE entity because its minor-to-major axis ratio is invalid.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        double minorRadius = majorAxis.Length * axisRatio;
+
+        if (minorRadius <= Tolerance.Default)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped ELLIPSE entity because its minor radius is zero-length.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        double startParameter = 0.0;
+        double endParameter = Math.Tau;
+
+        if (!TryReadOptionalDouble(
+                record,
+                code: 41,
+                fieldName: "ELLIPSE start parameter",
+                log,
+                out double? parsedStartParameter) ||
+            !TryReadOptionalDouble(
+                record,
+                code: 42,
+                fieldName: "ELLIPSE end parameter",
+                log,
+                out double? parsedEndParameter))
+        {
+            return;
+        }
+
+        if (parsedStartParameter.HasValue)
+        {
+            startParameter = parsedStartParameter.Value;
+        }
+
+        if (parsedEndParameter.HasValue)
+        {
+            endParameter = parsedEndParameter.Value;
+        }
+
+        LayerId layerId = EnsureLayer(
+            document,
+            GetLayerName(record));
+
+        if (IsFullEllipseParameterRange(
+                startParameter,
+                endParameter))
+        {
+            document.AddEntity(new EllipseEntity(
+                center,
+                majorAxis,
+                minorRadius,
+                layerId: layerId));
+
+            return;
+        }
+
+        IReadOnlyList<Point2D> points = SampleEllipseArc(
+            center,
+            majorAxis,
+            minorRadius,
+            startParameter,
+            endParameter);
+
+        if (points.Count < 2)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped ELLIPSE entity because its parameter range is too small to import.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        document.AddEntity(new PolylineEntity(
+            points,
+            isClosed: false,
+            layerId: layerId));
+
+        log.Add(new DxfImportLogEntry(
+            DxfImportLogSeverity.Info,
+            "Imported partial ELLIPSE entity as an approximated open polyline.",
+            record.StartLineNumber));
+    }
+
+    private static bool IsFullEllipseParameterRange(
+        double startParameter,
+        double endParameter)
+    {
+        double span = NormalizePositiveRadians(endParameter - startParameter);
+
+        return Math.Abs(span) <= Tolerance.Default ||
+            Math.Abs(span - Math.Tau) <= Tolerance.Default;
+    }
+
+    private static IReadOnlyList<Point2D> SampleEllipseArc(
+        Point2D center,
+        Vector2D majorAxis,
+        double minorRadius,
+        double startParameter,
+        double endParameter)
+    {
+        double span = NormalizePositiveRadians(endParameter - startParameter);
+
+        if (span <= Tolerance.Default)
+        {
+            span = Math.Tau;
+        }
+
+        int segmentCount = Math.Clamp(
+            (int)Math.Ceiling(64.0 * span / Math.Tau),
+            8,
+            96);
+
+        Vector2D minorAxis = majorAxis.Normalize().PerpendicularLeft() * minorRadius;
+        var points = new List<Point2D>(segmentCount + 1);
+
+        for (int index = 0; index <= segmentCount; index++)
+        {
+            double parameter = startParameter + (span * index / segmentCount);
+            points.Add(center +
+                majorAxis * Math.Cos(parameter) +
+                minorAxis * Math.Sin(parameter));
+        }
+
+        return points;
+    }
+
+    private static double NormalizePositiveRadians(double radians)
+    {
+        double normalized = radians % Math.Tau;
+
+        if (normalized < 0)
+        {
+            normalized += Math.Tau;
+        }
+
+        return normalized;
     }
 
     private static void ImportMultilineText(

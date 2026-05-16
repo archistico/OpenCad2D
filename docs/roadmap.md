@@ -1331,3 +1331,17 @@ Implemented during stabilization:
 - [x] added regression coverage for sharp open-polyline offset joins;
 - [ ] configurable Offset join style (`Miter`, `Bevel`, `Round`);
 - [ ] round joins and richer curve-offset behavior.
+
+### v0.8.5 DXF import compatibility - ELLIPSE
+
+Completed:
+
+- [x] import full DXF `ELLIPSE` entities as native `EllipseEntity`;
+- [x] import partial DXF `ELLIPSE` parameter ranges as open `PolylineEntity` approximations;
+- [x] validate missing/invalid major axis and minor-axis ratio handling;
+- [x] document current partial-ellipse approximation limitation.
+
+Future work:
+
+- [ ] introduce a native ellipse-arc entity if partial ellipse editability becomes required;
+- [ ] implement DXF `SPLINE` import as the next interoperability target.

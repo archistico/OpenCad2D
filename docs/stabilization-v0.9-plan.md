@@ -110,3 +110,10 @@ Before tagging v0.9, the project should have:
 - documented DXF compatibility checks;
 - roadmap and known limitations aligned with the current code;
 - explicit known limitation notes for non-associative dimensions and DXF import gaps.
+
+
+## v0.8.5 DXF ELLIPSE import
+
+- Added native import for full DXF `ELLIPSE` entities.
+- Added open-polyline approximation for partial DXF elliptical arcs.
+- Kept `SPLINE` import as the next DXF interoperability target.

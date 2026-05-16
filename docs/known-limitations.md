@@ -76,3 +76,8 @@ The command input supports coordinate and option workflows, but future improveme
 ## Export formats
 
 SVG, DXF and PDF are implemented. PNG export is planned.
+
+
+## DXF ellipse import
+
+Full DXF `ELLIPSE` entities import as native `EllipseEntity` instances. Partial DXF `ELLIPSE` entities are currently approximated as open polylines because OpenCad2D does not yet have a dedicated ellipse-arc entity.

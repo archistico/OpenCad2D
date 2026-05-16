@@ -29,7 +29,6 @@ BLOCK / INSERT workflows
 native DIMENSION entities
 HATCH
 SPLINE
-ELLIPSE
 IMAGE
 LEADER / MLEADER
 3D entities
@@ -50,10 +49,13 @@ Unsupported records do not stop the import. They are skipped and reported in the
 | `LWPOLYLINE` | `PolylineEntity`, or `LineEntity`/`ArcEntity` when bulge is present | straight segments stay editable as polylines; bulge segments are converted to separate native arcs |
 | `TEXT` | `TextEntity` | single-line text |
 | `MTEXT` | `MultilineTextEntity` | `\P` paragraph separators are converted to internal line breaks |
+| `ELLIPSE` | `EllipseEntity`, or `PolylineEntity` for partial elliptical arcs | full ellipse imports as a native entity; partial parameter ranges are approximated as open polylines |
 
 `LWPOLYLINE` bulge values are now converted to native arc geometry. When a lightweight polyline contains any bulge segment, OpenCad2D imports the polyline as separate `LineEntity` and `ArcEntity` segments. This preserves the curved geometry but does not yet preserve the original polyline as a single compound entity.
 
 `TEXT` currently imports the text value, insertion point and optional rotation. `MTEXT` imports multiline content and maps DXF paragraph separators to internal line breaks. Imported text uses `TextFormatId.Standard`.
+
+`ELLIPSE` imports full ellipse parameter ranges as native `EllipseEntity` instances. Partial DXF elliptical arcs are currently approximated as open `PolylineEntity` instances because OpenCad2D does not yet have a dedicated ellipse-arc entity.
 
 ---
 

@@ -2044,3 +2044,8 @@ Behavior:
 - the import log records an informational message explaining that bulge geometry was imported as separate line/arc entities.
 
 This preserves curved geometry from external DXF files without introducing a curved-polyline model yet. Future work: preserve original LWPOLYLINE topology as a compound entity if/when OpenCad2D gains polyline arc segments/bulge support.
+
+
+## Latest update - v0.8.5 DXF ELLIPSE import
+
+Implemented DXF `ELLIPSE` import. Full ellipse parameter ranges are mapped to native `EllipseEntity`; partial elliptical arcs are approximated as open `PolylineEntity` instances. Added importer tests for full ellipses, omitted parameters, partial ranges, invalid major axis and invalid ratio. Next DXF target: `SPLINE` import.
