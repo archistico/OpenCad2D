@@ -21,7 +21,7 @@ Before the first stable release, OpenCad2D should prioritize user trust and pred
 - [~] persist application/session settings;
 - [x] start with a clean drawing loaded from `Templates/default.opencad2d.json`;
 - [x] open the main window maximized by default;
-- [ ] implement draw order / Z-order independent from layers;
+- [x] implement draw order / Z-order independent from layers;
 - [ ] validate DXF import/export in external CAD viewers;
 - [ ] add end-to-end workflow tests for save/reopen and import/modify/export;
 - [ ] keep current limitations visible in the README and user documentation.
@@ -34,6 +34,7 @@ OpenCad2D currently includes:
 - [x] coordinate systems / UCS foundation;
 - [x] numeric tolerance strategy;
 - [x] CAD entities;
+- [x] Align and distribute tools;
 - [x] layers;
 - [x] Layer Manager with line format selection;
 - [x] Line Format Manager;

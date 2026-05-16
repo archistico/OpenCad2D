@@ -1175,6 +1175,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+
+
+    public ToolResult DistributeSelectionHorizontally()
+    {
+        ToolResult result = Workspace.ActionController.DistributeSelectionHorizontally();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult DistributeSelectionVertically()
+    {
+        ToolResult result = Workspace.ActionController.DistributeSelectionVertically();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     private bool TryExecuteActionCommand(
         string input,
         out ToolResult result)
@@ -1239,6 +1263,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             case "ALIGNBOTTOM":
             case "ABOTTOM":
                 result = AlignSelectionBottom();
+                return true;
+
+            case "DISTRIBUTEHORIZONTAL":
+            case "DISTRIBUTEHORIZONTALLY":
+            case "DH":
+                result = DistributeSelectionHorizontally();
+                return true;
+
+            case "DISTRIBUTEVERTICAL":
+            case "DISTRIBUTEVERTICALLY":
+            case "DV":
+                result = DistributeSelectionVertically();
                 return true;
 
             default:

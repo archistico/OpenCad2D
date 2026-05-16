@@ -792,3 +792,14 @@ These commands operate immediately on the current selection and are separate fro
 | `ALIGNRIGHT` | `ARIGHT` | Align selected entities to the right edge of the selection bounds. |
 | `ALIGNTOP` | `ATOP` | Align selected entities to the top edge of the selection bounds. |
 | `ALIGNBOTTOM` | `ABOTTOM` | Align selected entities to the bottom edge of the selection bounds. |
+
+## v0.8.x distribution commands
+
+The distribution commands are undoable selection actions. They operate on the current selection and keep the first and last selected entities fixed according to their ordered center positions.
+
+| Command | Aliases | Behavior |
+| --- | --- | --- |
+| `DISTRIBUTEHORIZONTAL` | `DISTRIBUTEHORIZONTALLY`, `DH` | Distributes selected entities horizontally by bounding-box center. Requires at least three selectable entities. |
+| `DISTRIBUTEVERTICAL` | `DISTRIBUTEVERTICALLY`, `DV` | Distributes selected entities vertically by bounding-box center. Requires at least three selectable entities. |
+
+Distribution currently uses center spacing, not equal gaps between bounding boxes. This is intentional for the first implementation because it is stable for mixed CAD entities.

@@ -1074,6 +1074,34 @@ public partial class MainWindow : Window
         CadCanvas.Focus();
     }
 
+
+
+    private void DistributeHorizontal_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.DistributeSelectionHorizontally();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void DistributeVertical_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.DistributeSelectionVertically();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
     private void BringToFront_Click(
         object? sender,
         RoutedEventArgs e)

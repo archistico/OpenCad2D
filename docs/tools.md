@@ -981,3 +981,21 @@ The left tool panel includes object alignment actions for the current selection:
 
 These actions require at least two selected entities. They are undoable and preserve the selection.
 They are separate from the geometric **Align** tool, which aligns selected entities using source and destination points.
+
+## Align and distribute tools
+
+The object alignment tools operate on the current selection and are undoable.
+
+Alignment uses the combined bounding box of the selected entities:
+
+- Align Left -> selection visual/geometry left edge;
+- Align Right -> selection right edge;
+- Align Top -> visual top edge;
+- Align Bottom -> visual bottom edge.
+
+Distribution uses entity bounding-box centers:
+
+- Distribute H -> evenly spaces center X values, keeping the leftmost and rightmost entities fixed;
+- Distribute V -> evenly spaces center Y values, keeping the first and last vertical center positions fixed.
+
+The first implementation intentionally distributes by centers rather than by equal gaps. Gap-based distribution can be added later as separate commands.

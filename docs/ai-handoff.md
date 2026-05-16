@@ -1637,3 +1637,22 @@ Implemented/expected behavior:
   - `ALIGNBOTTOM`, `ABOTTOM`
 
 Next planned block: distribute selected entities horizontally/vertically by center points.
+
+---
+
+## v0.8.x distribute tools
+
+Implemented object distribution tools after the Align tools:
+
+- `DistributionOperation` with `Horizontal` and `Vertical`.
+- `DistributionService` creates transformed replacements for selected entities.
+- Distribution requires at least three selectable entities.
+- Horizontal distribution sorts entities by bounding-box center X, keeps the first and last fixed, and spaces intermediate center X values evenly.
+- Vertical distribution sorts entities by bounding-box center Y, keeps the first and last fixed, and spaces intermediate center Y values evenly.
+- Operations are undoable through `ReplaceEntitiesCommand` and preserve selection.
+- UI buttons added to the `ALIGN OBJECTS` group: `Distribute H` and `Distribute V`.
+- Command aliases:
+  - `DISTRIBUTEHORIZONTAL`, `DISTRIBUTEHORIZONTALLY`, `DH`;
+  - `DISTRIBUTEVERTICAL`, `DISTRIBUTEVERTICALLY`, `DV`.
+
+Design decision: distribution is by centers for now, not by equal gaps between bounding boxes.

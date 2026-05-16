@@ -845,6 +845,90 @@ public sealed class CadActionControllerTests
         Assert.False(actionController.CanUndo);
     }
 
+
+
+    [Fact]
+    public void DistributeSelectionHorizontally_ShouldEvenlySpaceCentersAndKeepEndsFixed()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var left = new LineEntity(new Point2D(-5, 0), new Point2D(5, 0));
+        var middle = new LineEntity(new Point2D(65, 10), new Point2D(75, 10));
+        var right = new LineEntity(new Point2D(95, 20), new Point2D(105, 20));
+
+        document.AddEntities(new[] { left, middle, right });
+        selectionSet.ReplaceWith(new[] { left.Id, middle.Id, right.Id });
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.DistributeSelectionHorizontally();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(0, document.Entities.GetRequired(left.Id).GetBoundingBox().Center.X);
+        Assert.Equal(50, document.Entities.GetRequired(middle.Id).GetBoundingBox().Center.X);
+        Assert.Equal(100, document.Entities.GetRequired(right.Id).GetBoundingBox().Center.X);
+        Assert.Equal(10, document.Entities.GetRequired(middle.Id).GetBoundingBox().Center.Y);
+        Assert.True(actionController.CanUndo);
+    }
+
+    [Fact]
+    public void DistributeSelectionVertically_ShouldEvenlySpaceCentersAndKeepEndsFixed()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var top = new LineEntity(new Point2D(0, -5), new Point2D(10, -5));
+        var middle = new LineEntity(new Point2D(20, 65), new Point2D(30, 65));
+        var bottom = new LineEntity(new Point2D(40, 95), new Point2D(50, 95));
+
+        document.AddEntities(new[] { top, middle, bottom });
+        selectionSet.ReplaceWith(new[] { top.Id, middle.Id, bottom.Id });
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.DistributeSelectionVertically();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(-5, document.Entities.GetRequired(top.Id).GetBoundingBox().Center.Y);
+        Assert.Equal(45, document.Entities.GetRequired(middle.Id).GetBoundingBox().Center.Y);
+        Assert.Equal(95, document.Entities.GetRequired(bottom.Id).GetBoundingBox().Center.Y);
+        Assert.Equal(25, document.Entities.GetRequired(middle.Id).GetBoundingBox().Center.X);
+        Assert.True(actionController.CanUndo);
+    }
+
+    [Fact]
+    public void DistributeSelectionHorizontally_WithTwoEntities_ShouldReturnNone()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var first = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var second = new LineEntity(new Point2D(20, 0), new Point2D(30, 0));
+
+        document.AddEntities(new[] { first, second });
+        selectionSet.ReplaceWith(new[] { first.Id, second.Id });
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.DistributeSelectionHorizontally();
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.False(actionController.CanUndo);
+    }
+
     private static CadActionController CreateActionController(
         CadDocument document,
         CommandHistory history,

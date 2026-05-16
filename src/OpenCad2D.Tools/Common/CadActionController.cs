@@ -217,6 +217,57 @@ public sealed class CadActionController
         return ToolResult.Completed(successMessage);
     }
 
+
+
+    public ToolResult DistributeSelectionHorizontally()
+    {
+        return ApplyDistribution(
+            DistributionOperation.Horizontal,
+            "Distributed selected entities horizontally.");
+    }
+
+    public ToolResult DistributeSelectionVertically()
+    {
+        return ApplyDistribution(
+            DistributionOperation.Vertical,
+            "Distributed selected entities vertically.");
+    }
+
+    private ToolResult ApplyDistribution(
+        DistributionOperation operation,
+        string successMessage)
+    {
+        if (_context.SelectionSet.IsEmpty)
+        {
+            return ToolResult.None("Select at least three entities to distribute.");
+        }
+
+        List<EntityId> selectedIds = _context.SelectionSet.SelectedIds.ToList();
+
+        var service = new DistributionService();
+        IReadOnlyList<CadEntity> replacements = service.CreateDistributedEntities(
+            _context.Document,
+            selectedIds,
+            operation);
+
+        if (replacements.Count == 0)
+        {
+            return ToolResult.None("Select at least three movable entities to distribute.");
+        }
+
+        _context.CommandHistory.Execute(
+            _context.Document,
+            new ReplaceEntitiesCommand(replacements));
+
+        _context.SelectionSet.ReplaceWith(
+            selectedIds.Where(id =>
+                _context.Document.Entities.TryGet(id, out CadEntity? entity) &&
+                entity is not null &&
+                _context.Document.IsEntitySelectable(entity)));
+
+        return ToolResult.Completed(successMessage);
+    }
+
     private void EnsureCurrentLayerIsUsable()
     {
         if (!_context.Document.Layers.Contains(_context.CurrentLayerId))

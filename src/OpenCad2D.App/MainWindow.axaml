@@ -587,6 +587,16 @@
                                     ToolTip.Tip="Align selected entities to the bottom edge of the selection bounds"
                                     Click="AlignBottom_Click" />
 
+                            <Button Classes="tool-button"
+                                    Content="Distribute H"
+                                    ToolTip.Tip="Distribute selected entities horizontally by center, keeping first and last fixed"
+                                    Click="DistributeHorizontal_Click" />
+
+                            <Button Classes="tool-button"
+                                    Content="Distribute V"
+                                    ToolTip.Tip="Distribute selected entities vertically by center, keeping first and last fixed"
+                                    Click="DistributeVertical_Click" />
+
                             <TextBlock Classes="panel-section-label"
                                        Text="ORDER" />
 
