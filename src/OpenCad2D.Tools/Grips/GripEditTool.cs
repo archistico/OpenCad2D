@@ -117,7 +117,7 @@ public sealed class GripEditTool : ICadTool, IKeyboardAwareTool
 
         context.Commands.Execute(
             context.Document,
-            new ReplaceEntitiesCommand(replacement));
+            new ReplaceEntitiesCommand(replacement, markDimensionsStale: true));
 
         _entity = context.Document.Entities.GetRequired(_entityId);
         _warmGripIndex = null;
@@ -366,7 +366,7 @@ public sealed class GripEditTool : ICadTool, IKeyboardAwareTool
 
         context.Commands.Execute(
             context.Document,
-            new ReplaceEntitiesCommand(replacement));
+            new ReplaceEntitiesCommand(replacement, markDimensionsStale: true));
 
         _entity = context.Document.Entities.GetRequired(_entityId);
         _warmGripIndex = null;

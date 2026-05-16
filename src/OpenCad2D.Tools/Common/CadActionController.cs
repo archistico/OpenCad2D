@@ -206,7 +206,7 @@ public sealed class CadActionController
 
         _context.CommandHistory.Execute(
             _context.Document,
-            new ReplaceEntitiesCommand(replacements));
+            new ReplaceEntitiesCommand(replacements, markDimensionsStale: true));
 
         _context.SelectionSet.ReplaceWith(
             selectedIds.Where(id =>
@@ -257,7 +257,7 @@ public sealed class CadActionController
 
         _context.CommandHistory.Execute(
             _context.Document,
-            new ReplaceEntitiesCommand(replacements));
+            new ReplaceEntitiesCommand(replacements, markDimensionsStale: true));
 
         _context.SelectionSet.ReplaceWith(
             selectedIds.Where(id =>

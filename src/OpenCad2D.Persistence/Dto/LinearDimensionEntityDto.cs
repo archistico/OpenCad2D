@@ -27,4 +27,6 @@ public sealed class LinearDimensionEntityDto : EntityDto
     public string DimensionStyleId { get; set; } = "Standard";
 
     public string? TextOverride { get; set; }
+
+    public bool IsStale { get; set; }
 }

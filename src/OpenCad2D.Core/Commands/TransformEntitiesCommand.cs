@@ -15,6 +15,7 @@ public class TransformEntitiesCommand : ICadCommand
 
     private List<CadEntity>? _oldEntities;
     private List<CadEntity>? _newEntities;
+    private List<DimensionEntity>? _oldDimensions;
 
     public TransformEntitiesCommand(
         IEnumerable<EntityId> entityIds,
@@ -43,12 +44,14 @@ public class TransformEntitiesCommand : ICadCommand
         _oldEntities = document.Entities
             .GetByIds(_entityIds)
             .ToList();
+        _oldDimensions = DimensionStaleStateHelper.Capture(document);
 
         _newEntities = _oldEntities
             .Select(entity => entity.Transform(_matrix))
             .ToList();
 
         document.ReplaceEntities(_newEntities);
+        DimensionStaleStateHelper.MarkAllStale(document);
     }
 
     public void Undo(CadDocument document)
@@ -62,5 +65,6 @@ public class TransformEntitiesCommand : ICadCommand
         }
 
         document.ReplaceEntities(_oldEntities);
+        DimensionStaleStateHelper.Restore(document, _oldDimensions);
     }
 }

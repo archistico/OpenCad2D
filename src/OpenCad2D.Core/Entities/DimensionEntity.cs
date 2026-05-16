@@ -16,7 +16,8 @@ public abstract class DimensionEntity : CadEntity
         EntityStyle style,
         bool isVisible,
         bool isLocked,
-        int drawOrder)
+        int drawOrder,
+        bool isStale)
         : base(
             id,
             layerId,
@@ -38,13 +39,21 @@ public abstract class DimensionEntity : CadEntity
         TextOverride = string.IsNullOrWhiteSpace(textOverride)
             ? null
             : textOverride.Trim();
+        IsStale = isStale;
     }
 
     public DimensionStyleId DimensionStyleId { get; }
 
     public string? TextOverride { get; }
 
+    /// <summary>
+    /// Indicates that this non-associative dimension may no longer match the edited geometry.
+    /// </summary>
+    public bool IsStale { get; }
+
     public abstract double MeasurementValue { get; }
+
+    public abstract DimensionEntity WithStaleState(bool isStale);
 
     public string GetDisplayText(int decimalPlaces = 2, string decimalSeparator = ".", string suffix = "")
     {

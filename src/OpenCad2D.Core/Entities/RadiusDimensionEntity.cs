@@ -22,7 +22,8 @@ public sealed class RadiusDimensionEntity : DimensionEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        bool isStale = false)
         : base(
             dimensionStyleId,
             textOverride,
@@ -31,7 +32,8 @@ public sealed class RadiusDimensionEntity : DimensionEntity
             style ?? EntityStyle.ByLayer,
             isVisible,
             isLocked,
-            drawOrder)
+            drawOrder,
+            isStale)
     {
         if (center.DistanceTo(pointOnCircle) <= double.Epsilon)
         {
@@ -92,7 +94,8 @@ public sealed class RadiusDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
 
     public override CadEntity WithId(EntityId id)
@@ -108,7 +111,8 @@ public sealed class RadiusDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -124,6 +128,25 @@ public sealed class RadiusDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
+
+    public override DimensionEntity WithStaleState(bool isStale)
+    {
+        return new RadiusDimensionEntity(
+            Center,
+            PointOnCircle,
+            TextPoint,
+            DimensionStyleId,
+            TextOverride,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder,
+            isStale);
+    }
+
 }

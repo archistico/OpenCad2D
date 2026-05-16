@@ -339,6 +339,9 @@ public sealed class SelectionPropertyPanelBuilder
         Action<string>? setMessage,
         Action? refresh)
     {
+        rows.Add(Row(
+            "Status",
+            dimension.IsStale ? "Potentially stale" : "Checked"));
         rows.Add(EditableRow(
             "Dimension style",
             dimension.DimensionStyleId.Value,
@@ -845,11 +848,11 @@ public sealed class SelectionPropertyPanelBuilder
     {
         return dimension switch
         {
-            LinearDimensionEntity linear => new LinearDimensionEntity(linear.FirstPoint, linear.SecondPoint, linear.DimensionLinePoint, linear.Orientation, dimensionStyleId, textOverride, linear.Id, linear.LayerId, linear.Style, linear.IsVisible, linear.IsLocked, linear.DrawOrder),
-            AlignedDimensionEntity aligned => new AlignedDimensionEntity(aligned.FirstPoint, aligned.SecondPoint, aligned.DimensionLinePoint, dimensionStyleId, textOverride, aligned.Id, aligned.LayerId, aligned.Style, aligned.IsVisible, aligned.IsLocked, aligned.DrawOrder),
-            RadiusDimensionEntity radius => new RadiusDimensionEntity(radius.Center, radius.PointOnCircle, radius.TextPoint, dimensionStyleId, textOverride, radius.Id, radius.LayerId, radius.Style, radius.IsVisible, radius.IsLocked, radius.DrawOrder),
-            DiameterDimensionEntity diameter => new DiameterDimensionEntity(diameter.Center, diameter.PointOnCircle, diameter.TextPoint, dimensionStyleId, textOverride, diameter.Id, diameter.LayerId, diameter.Style, diameter.IsVisible, diameter.IsLocked, diameter.DrawOrder),
-            AngularDimensionEntity angular => new AngularDimensionEntity(angular.Center, angular.FirstRayPoint, angular.SecondRayPoint, angular.ArcPoint, angular.IsCounterClockwise, dimensionStyleId, textOverride, angular.Id, angular.LayerId, angular.Style, angular.IsVisible, angular.IsLocked, angular.DrawOrder),
+            LinearDimensionEntity linear => new LinearDimensionEntity(linear.FirstPoint, linear.SecondPoint, linear.DimensionLinePoint, linear.Orientation, dimensionStyleId, textOverride, linear.Id, linear.LayerId, linear.Style, linear.IsVisible, linear.IsLocked, linear.DrawOrder, linear.IsStale),
+            AlignedDimensionEntity aligned => new AlignedDimensionEntity(aligned.FirstPoint, aligned.SecondPoint, aligned.DimensionLinePoint, dimensionStyleId, textOverride, aligned.Id, aligned.LayerId, aligned.Style, aligned.IsVisible, aligned.IsLocked, aligned.DrawOrder, aligned.IsStale),
+            RadiusDimensionEntity radius => new RadiusDimensionEntity(radius.Center, radius.PointOnCircle, radius.TextPoint, dimensionStyleId, textOverride, radius.Id, radius.LayerId, radius.Style, radius.IsVisible, radius.IsLocked, radius.DrawOrder, radius.IsStale),
+            DiameterDimensionEntity diameter => new DiameterDimensionEntity(diameter.Center, diameter.PointOnCircle, diameter.TextPoint, dimensionStyleId, textOverride, diameter.Id, diameter.LayerId, diameter.Style, diameter.IsVisible, diameter.IsLocked, diameter.DrawOrder, diameter.IsStale),
+            AngularDimensionEntity angular => new AngularDimensionEntity(angular.Center, angular.FirstRayPoint, angular.SecondRayPoint, angular.ArcPoint, angular.IsCounterClockwise, dimensionStyleId, textOverride, angular.Id, angular.LayerId, angular.Style, angular.IsVisible, angular.IsLocked, angular.DrawOrder, angular.IsStale),
             _ => throw new ArgumentException("Unsupported dimension entity.", nameof(dimension))
         };
     }

@@ -1,4 +1,5 @@
 ﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
@@ -66,4 +67,43 @@ public sealed class ReplaceEntitiesCommandTests
         Assert.Throws<ArgumentException>(() =>
             new ReplaceEntitiesCommand(Array.Empty<CadEntity>()));
     }
+
+    [Fact]
+    public void Execute_WhenRequested_ShouldMarkDimensionsAsStaleAndUndoShouldRestoreStatus()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var replacement = new LineEntity(
+            new Point2D(0, 2),
+            new Point2D(10, 2),
+            id: line.Id);
+        var dimension = new LinearDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(5, -2),
+            DimensionOrientation.Horizontal);
+
+        document.AddEntity(line);
+        document.AddEntity(dimension);
+
+        var command = new ReplaceEntitiesCommand(
+            replacement,
+            markDimensionsStale: true);
+
+        command.Execute(document);
+
+        var staleDimension = Assert.IsType<LinearDimensionEntity>(
+            document.Entities.GetRequired(dimension.Id));
+        Assert.True(staleDimension.IsStale);
+
+        command.Undo(document);
+
+        var restoredDimension = Assert.IsType<LinearDimensionEntity>(
+            document.Entities.GetRequired(dimension.Id));
+        Assert.False(restoredDimension.IsStale);
+    }
+
 }

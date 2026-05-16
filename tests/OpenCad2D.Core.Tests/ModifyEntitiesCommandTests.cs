@@ -1,4 +1,5 @@
 using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
@@ -79,4 +80,46 @@ public sealed class ModifyEntitiesCommandTests
                 Array.Empty<CadEntity>(),
                 Array.Empty<CadEntity>()));
     }
+
+    [Fact]
+    public void Execute_WhenGeometryIsTopologicallyModified_ShouldMarkDimensionsAsStaleAndUndoShouldRestoreStatus()
+    {
+        var document = new CadDocument();
+
+        var original = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var first = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(4, 0));
+        var second = new LineEntity(
+            new Point2D(6, 0),
+            new Point2D(10, 0));
+        var dimension = new LinearDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(5, -2),
+            DimensionOrientation.Horizontal);
+
+        document.AddEntity(original);
+        document.AddEntity(dimension);
+
+        var command = new ModifyEntitiesCommand(
+            new[] { original },
+            new[] { first, second },
+            "Break line");
+
+        command.Execute(document);
+
+        var staleDimension = Assert.IsType<LinearDimensionEntity>(
+            document.Entities.GetRequired(dimension.Id));
+        Assert.True(staleDimension.IsStale);
+
+        command.Undo(document);
+
+        var restoredDimension = Assert.IsType<LinearDimensionEntity>(
+            document.Entities.GetRequired(dimension.Id));
+        Assert.False(restoredDimension.IsStale);
+    }
+
 }

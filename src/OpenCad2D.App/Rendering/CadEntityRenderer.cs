@@ -172,6 +172,10 @@ public sealed class CadEntityRenderer
         Pen pen,
         bool isSelected)
     {
+        Pen dimensionPen = dimension.IsStale && !isSelected
+            ? CreateStaleDimensionPen(pen)
+            : pen;
+
         DimensionStyle style = ResolveDimensionStyle(
             workspace,
             dimension);
@@ -182,7 +186,7 @@ public sealed class CadEntityRenderer
         foreach (DimensionLinePrimitive line in model.Lines)
         {
             context.DrawLine(
-                pen,
+                dimensionPen,
                 ToScreenPoint(line.Start),
                 ToScreenPoint(line.End));
         }
@@ -192,13 +196,13 @@ public sealed class CadEntityRenderer
             DrawDimensionArc(
                 context,
                 arc,
-                pen);
+                dimensionPen);
         }
 
         foreach (DimensionLinePrimitive arrow in model.Arrows)
         {
             context.DrawLine(
-                pen,
+                dimensionPen,
                 ToScreenPoint(arrow.Start),
                 ToScreenPoint(arrow.End));
         }
@@ -208,8 +212,19 @@ public sealed class CadEntityRenderer
             workspace,
             model.Text,
             style,
-            pen,
+            dimensionPen,
             isSelected);
+    }
+
+    private static Pen CreateStaleDimensionPen(Pen sourcePen)
+    {
+        double thickness = sourcePen.Thickness;
+        var brush = new SolidColorBrush(Color.FromRgb(255, 183, 77));
+
+        return new Pen(
+            brush,
+            thickness,
+            new DashStyle(new double[] { 6, 4 }, 0));
     }
 
     private void DrawDimensionArc(

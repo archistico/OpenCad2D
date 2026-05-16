@@ -1292,3 +1292,14 @@ The Mirror tool now draws the mirror axis while the user is choosing the second 
 - [x] Multiline text tool.
 - [x] Spline tool.
 - [x] Final documentation and release notes consolidation.
+
+
+## v0.8.4 stabilization update - dimension stale marker
+
+- [x] Add conservative `DimensionEntity.IsStale` marker for non-associative dimensions.
+- [x] Mark dimensions as potentially stale after transform/topological geometry edits.
+- [x] Preserve stale state through undo/redo and JSON persistence.
+- [x] Show stale status in the Property Panel.
+- [x] Render stale dimensions with a distinct dashed canvas style.
+- [ ] Add a user-facing action to mark dimensions as checked.
+- [ ] Add first-pass command autocomplete.

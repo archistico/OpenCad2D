@@ -16,6 +16,7 @@ public sealed class ModifyEntitiesCommand : ICadCommand
 {
     private readonly IReadOnlyList<CadEntity> _removedEntities;
     private readonly IReadOnlyList<CadEntity> _addedEntities;
+    private List<DimensionEntity>? _oldDimensions;
 
     public ModifyEntitiesCommand(
         IEnumerable<CadEntity> removedEntities,
@@ -46,6 +47,8 @@ public sealed class ModifyEntitiesCommand : ICadCommand
     {
         ArgumentNullException.ThrowIfNull(document);
 
+        _oldDimensions = DimensionStaleStateHelper.Capture(document);
+
         if (_removedEntities.Count > 0)
         {
             document.RemoveEntities(_removedEntities.Select(entity => entity.Id));
@@ -55,6 +58,8 @@ public sealed class ModifyEntitiesCommand : ICadCommand
         {
             document.AddEntities(_addedEntities);
         }
+
+        DimensionStaleStateHelper.MarkAllStale(document);
     }
 
     public void Undo(CadDocument document)
@@ -70,5 +75,7 @@ public sealed class ModifyEntitiesCommand : ICadCommand
         {
             document.AddEntities(_removedEntities);
         }
+
+        DimensionStaleStateHelper.Restore(document, _oldDimensions);
     }
 }

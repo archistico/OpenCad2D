@@ -22,7 +22,8 @@ public sealed class AlignedDimensionEntity : DimensionEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        bool isStale = false)
         : base(
             dimensionStyleId,
             textOverride,
@@ -31,7 +32,8 @@ public sealed class AlignedDimensionEntity : DimensionEntity
             style ?? EntityStyle.ByLayer,
             isVisible,
             isLocked,
-            drawOrder)
+            drawOrder,
+            isStale)
     {
         if (firstPoint.DistanceTo(secondPoint) <= double.Epsilon)
         {
@@ -108,7 +110,8 @@ public sealed class AlignedDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
 
     public override CadEntity WithId(EntityId id)
@@ -124,7 +127,8 @@ public sealed class AlignedDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -140,7 +144,26 @@ public sealed class AlignedDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
+    }
+
+
+    public override DimensionEntity WithStaleState(bool isStale)
+    {
+        return new AlignedDimensionEntity(
+            FirstPoint,
+            SecondPoint,
+            DimensionLinePoint,
+            DimensionStyleId,
+            TextOverride,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder,
+            isStale);
     }
 
     private (Point2D FirstProjection, Point2D SecondProjection) GetDimensionLineEndpoints()

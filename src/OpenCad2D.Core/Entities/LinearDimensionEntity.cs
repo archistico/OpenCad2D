@@ -24,7 +24,8 @@ public sealed class LinearDimensionEntity : DimensionEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        bool isStale = false)
         : base(
             dimensionStyleId,
             textOverride,
@@ -33,7 +34,8 @@ public sealed class LinearDimensionEntity : DimensionEntity
             style ?? EntityStyle.ByLayer,
             isVisible,
             isLocked,
-            drawOrder)
+            drawOrder,
+            isStale)
     {
         if (orientation == DimensionOrientation.Horizontal && Math.Abs(firstPoint.X - secondPoint.X) <= double.Epsilon)
         {
@@ -141,7 +143,8 @@ public sealed class LinearDimensionEntity : DimensionEntity
                 Style,
                 IsVisible,
                 IsLocked,
-                DrawOrder);
+                DrawOrder,
+                IsStale);
         }
 
         if (AreNearlyEqual(
@@ -160,7 +163,8 @@ public sealed class LinearDimensionEntity : DimensionEntity
                 Style,
                 IsVisible,
                 IsLocked,
-                DrawOrder);
+                DrawOrder,
+                IsStale);
         }
 
         return new AlignedDimensionEntity(
@@ -174,7 +178,27 @@ public sealed class LinearDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
+    }
+
+
+    public override DimensionEntity WithStaleState(bool isStale)
+    {
+        return new LinearDimensionEntity(
+            FirstPoint,
+            SecondPoint,
+            DimensionLinePoint,
+            Orientation,
+            DimensionStyleId,
+            TextOverride,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder,
+            isStale);
     }
 
     private static bool AreNearlyEqual(
@@ -198,7 +222,8 @@ public sealed class LinearDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -215,6 +240,7 @@ public sealed class LinearDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
 }

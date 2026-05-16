@@ -9,16 +9,22 @@ namespace OpenCad2D.Core.Commands;
 public sealed class ReplaceEntitiesCommand : ICadCommand
 {
     private readonly IReadOnlyList<CadEntity> _newEntities;
+    private readonly bool _markDimensionsStale;
     private List<CadEntity>? _oldEntities;
+    private List<DimensionEntity>? _oldDimensions;
 
-    public ReplaceEntitiesCommand(CadEntity entity)
-        : this(new[] { entity })
+    public ReplaceEntitiesCommand(CadEntity entity, bool markDimensionsStale = false)
+        : this(new[] { entity }, markDimensionsStale)
     {
     }
 
-    public ReplaceEntitiesCommand(IEnumerable<CadEntity> newEntities)
+    public ReplaceEntitiesCommand(
+        IEnumerable<CadEntity> newEntities,
+        bool markDimensionsStale = false)
     {
         ArgumentNullException.ThrowIfNull(newEntities);
+
+        _markDimensionsStale = markDimensionsStale;
 
         _newEntities = newEntities.ToList();
 
@@ -39,8 +45,16 @@ public sealed class ReplaceEntitiesCommand : ICadCommand
         _oldEntities = document.Entities
             .GetByIds(_newEntities.Select(entity => entity.Id))
             .ToList();
+        _oldDimensions = _markDimensionsStale
+            ? DimensionStaleStateHelper.Capture(document)
+            : null;
 
         document.ReplaceEntities(_newEntities);
+
+        if (_markDimensionsStale)
+        {
+            DimensionStaleStateHelper.MarkAllStale(document);
+        }
     }
 
     public void Undo(CadDocument document)
@@ -54,5 +68,10 @@ public sealed class ReplaceEntitiesCommand : ICadCommand
         }
 
         document.ReplaceEntities(_oldEntities);
+
+        if (_markDimensionsStale)
+        {
+            DimensionStaleStateHelper.Restore(document, _oldDimensions);
+        }
     }
 }

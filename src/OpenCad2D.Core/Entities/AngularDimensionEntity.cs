@@ -24,7 +24,8 @@ public sealed class AngularDimensionEntity : DimensionEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        bool isStale = false)
         : base(
             dimensionStyleId,
             textOverride,
@@ -33,7 +34,8 @@ public sealed class AngularDimensionEntity : DimensionEntity
             style ?? EntityStyle.ByLayer,
             isVisible,
             isLocked,
-            drawOrder)
+            drawOrder,
+            isStale)
     {
         if (center.DistanceTo(firstRayPoint) <= double.Epsilon)
         {
@@ -150,7 +152,28 @@ public sealed class AngularDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
+    }
+
+
+    public override DimensionEntity WithStaleState(bool isStale)
+    {
+        return new AngularDimensionEntity(
+            Center,
+            FirstRayPoint,
+            SecondRayPoint,
+            ArcPoint,
+            IsCounterClockwise,
+            DimensionStyleId,
+            TextOverride,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder,
+            isStale);
     }
 
     private static bool HasNegativeDeterminant(Matrix2D matrix)
@@ -175,7 +198,8 @@ public sealed class AngularDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -193,7 +217,8 @@ public sealed class AngularDimensionEntity : DimensionEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsStale);
     }
 
     public Arc2D GetArcGeometry()

@@ -496,7 +496,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 DimensionLineY = linearDimension.DimensionLinePoint.Y,
                 Orientation = linearDimension.Orientation.ToString(),
                 DimensionStyleId = linearDimension.DimensionStyleId.Value,
-                TextOverride = linearDimension.TextOverride
+                TextOverride = linearDimension.TextOverride,
+                IsStale = linearDimension.IsStale
             },
 
             AlignedDimensionEntity alignedDimension => new AlignedDimensionEntityDto
@@ -510,7 +511,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 DimensionLineX = alignedDimension.DimensionLinePoint.X,
                 DimensionLineY = alignedDimension.DimensionLinePoint.Y,
                 DimensionStyleId = alignedDimension.DimensionStyleId.Value,
-                TextOverride = alignedDimension.TextOverride
+                TextOverride = alignedDimension.TextOverride,
+                IsStale = alignedDimension.IsStale
             },
 
             RadiusDimensionEntity radiusDimension => new RadiusDimensionEntityDto
@@ -524,7 +526,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 TextX = radiusDimension.TextPoint.X,
                 TextY = radiusDimension.TextPoint.Y,
                 DimensionStyleId = radiusDimension.DimensionStyleId.Value,
-                TextOverride = radiusDimension.TextOverride
+                TextOverride = radiusDimension.TextOverride,
+                IsStale = radiusDimension.IsStale
             },
 
             DiameterDimensionEntity diameterDimension => new DiameterDimensionEntityDto
@@ -538,7 +541,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 TextX = diameterDimension.TextPoint.X,
                 TextY = diameterDimension.TextPoint.Y,
                 DimensionStyleId = diameterDimension.DimensionStyleId.Value,
-                TextOverride = diameterDimension.TextOverride
+                TextOverride = diameterDimension.TextOverride,
+                IsStale = diameterDimension.IsStale
             },
 
             AngularDimensionEntity angularDimension => new AngularDimensionEntityDto
@@ -555,7 +559,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 ArcY = angularDimension.ArcPoint.Y,
                 IsCounterClockwise = angularDimension.IsCounterClockwise,
                 DimensionStyleId = angularDimension.DimensionStyleId.Value,
-                TextOverride = angularDimension.TextOverride
+                TextOverride = angularDimension.TextOverride,
+                IsStale = angularDimension.IsStale
             },
 
             LineEntity line => new LineEntityDto
@@ -878,7 +883,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     : new DimensionStyleId(linearDimension.DimensionStyleId),
                 linearDimension.TextOverride,
                 id,
-                layerId),
+                layerId,
+                isStale: linearDimension.IsStale),
 
             AlignedDimensionEntityDto alignedDimension => new AlignedDimensionEntity(
                 new Point2D(alignedDimension.FirstX, alignedDimension.FirstY),
@@ -889,7 +895,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     : new DimensionStyleId(alignedDimension.DimensionStyleId),
                 alignedDimension.TextOverride,
                 id,
-                layerId),
+                layerId,
+                isStale: alignedDimension.IsStale),
 
             RadiusDimensionEntityDto radiusDimension => new RadiusDimensionEntity(
                 new Point2D(radiusDimension.CenterX, radiusDimension.CenterY),
@@ -900,7 +907,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     : new DimensionStyleId(radiusDimension.DimensionStyleId),
                 radiusDimension.TextOverride,
                 id,
-                layerId),
+                layerId,
+                isStale: radiusDimension.IsStale),
 
             DiameterDimensionEntityDto diameterDimension => new DiameterDimensionEntity(
                 new Point2D(diameterDimension.CenterX, diameterDimension.CenterY),
@@ -911,7 +919,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     : new DimensionStyleId(diameterDimension.DimensionStyleId),
                 diameterDimension.TextOverride,
                 id,
-                layerId),
+                layerId,
+                isStale: diameterDimension.IsStale),
 
             AngularDimensionEntityDto angularDimension => new AngularDimensionEntity(
                 new Point2D(angularDimension.CenterX, angularDimension.CenterY),
@@ -924,7 +933,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     : new DimensionStyleId(angularDimension.DimensionStyleId),
                 angularDimension.TextOverride,
                 id,
-                layerId),
+                layerId,
+                isStale: angularDimension.IsStale),
 
             LineEntityDto line => new LineEntity(
                 new Point2D(line.StartX, line.StartY),

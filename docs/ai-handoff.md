@@ -1980,3 +1980,12 @@ Implemented CAD-style Up/Down navigation for the command input. `MainWindowViewM
 
 Added App tests covering most-recent-first navigation, next navigation back to an empty input, reset after command submission and empty-history behavior. Updated `docs/command-input.md`, `docs/stabilization-v0.9-plan.md` and `docs/roadmap.md`.
 
+
+
+## 2026-05-16 - v0.8.4 conservative dimension stale marker
+
+Implemented the first non-associative dimension safety pass. `DimensionEntity` now has an `IsStale` flag and all dimension subclasses preserve it through id/layer/transform/recreate flows. Transform and topology-modify commands conservatively mark dimensions as stale after geometry changes, while undo restores the previous dimension stale states. `ReplaceEntitiesCommand` gained an opt-in `markDimensionsStale` mode used by grip edits, alignment and distribution, while layer/style/property-only replacement paths remain unchanged.
+
+The stale flag is serialized through the JSON DTOs and is shown in the Property Panel as `Status: Checked` or `Status: Potentially stale`. Canvas rendering now draws stale dimensions with a distinct dashed amber pen when they are not selected.
+
+Added tests for move/modify/replace stale marking and undo restoration, and extended the persistence end-to-end workflow to preserve a stale dimension. The next v0.8.4 task should add a user-facing command/action to mark stale dimensions as checked, then continue with first-pass command autocomplete.

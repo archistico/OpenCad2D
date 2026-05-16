@@ -83,7 +83,8 @@ public sealed class EndToEndWorkflowTests
             new Point2D(100, 0),
             new Point2D(50, -12),
             DimensionOrientation.Horizontal,
-            layerId: annotationLayerId);
+            layerId: annotationLayerId,
+            isStale: true);
 
         document.AddEntities(new CadEntity[]
         {
@@ -130,6 +131,10 @@ public sealed class EndToEndWorkflowTests
         Assert.Contains(restored.Entities.All, entity => entity.Kind == EntityKind.Text);
         Assert.Contains(restored.Entities.All, entity => entity.Kind == EntityKind.MultilineText);
         Assert.Contains(restored.Entities.All, entity => entity.Kind == EntityKind.HorizontalDimension);
+
+        var restoredDimension = Assert.IsType<LinearDimensionEntity>(
+            restored.Entities.GetRequired(dimension.Id));
+        Assert.True(restoredDimension.IsStale);
 
         var restoredMText = Assert.IsType<MultilineTextEntity>(
             restored.Entities.GetRequired(multilineText.Id));
