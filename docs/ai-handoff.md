@@ -2077,3 +2077,17 @@ Remaining pre-release tasks:
 - manually validate the samples in LibreCAD/QCAD and, if available, Autodesk DWG TrueView;
 - run final `dotnet clean`, `dotnet restore`, `dotnet build`, `dotnet test`;
 - prepare the GitHub release notes from `docs/release-v0.8-final.md`.
+
+
+## 2026-05-17 — v0.8 final DXF compatibility samples
+
+Prepared the v0.8 manual DXF compatibility sample set under `samples/dxf/compatibility/`. The set now includes seven ASCII DXF files covering lines/layers, TEXT/MTEXT, arcs/circles/ellipses, polylines/polygons with bulge arcs, dimensions as graphical primitives, SPLINE control points and a mixed v0.8 smoke drawing.
+
+Updated `docs/dxf-compatibility.md` with the sample matrix and manual validation checklist. External viewer statuses remain `Pending` until tested in LibreCAD/QCAD and optionally Autodesk DWG TrueView.
+
+Remaining pre-release tasks:
+
+- manually open the seven samples in LibreCAD and QCAD;
+- record viewer versions and notes in `docs/dxf-compatibility.md`;
+- run the final clean/build/test release gate;
+- prepare the GitHub release text from `docs/release-v0.8-final.md`.

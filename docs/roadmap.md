@@ -365,7 +365,7 @@ These items complete the current CAD baseline before opening the v0.9 roadmap:
 - [x] save/load works for points, text and text formats;
 - [x] SVG/DXF export includes points and text;
 - [x] tests pass after point and text implementation;
-- [~] DXF compatibility validation document and sample folder prepared; external viewer results still pending.
+- [~] DXF compatibility validation document and seven-file sample set prepared; external viewer results still pending.
 
 ---
 
@@ -1363,3 +1363,16 @@ Remaining release-gate work:
 - [ ] manually validate DXF samples in external CAD viewers;
 - [ ] run final clean/build/test;
 - [ ] publish GitHub release notes from `docs/release-v0.8-final.md`.
+
+
+## v0.8 final DXF compatibility sample set
+
+- [x] `samples/dxf/compatibility/01_basic_lines_layers.dxf`;
+- [x] `samples/dxf/compatibility/02_text_mtext.dxf`;
+- [x] `samples/dxf/compatibility/03_arcs_circles_ellipses.dxf`;
+- [x] `samples/dxf/compatibility/04_polylines_polygons.dxf`;
+- [x] `samples/dxf/compatibility/05_dimensions_as_geometry.dxf`;
+- [x] `samples/dxf/compatibility/06_spline_bezier.dxf`;
+- [x] `samples/dxf/compatibility/07_mixed_drawing.dxf`;
+- [ ] manual LibreCAD/QCAD validation results recorded in `docs/dxf-compatibility.md`;
+- [ ] optional Autodesk DWG TrueView validation recorded when available.

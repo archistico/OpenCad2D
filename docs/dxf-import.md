@@ -149,6 +149,6 @@ errors                   -> keep current document and show report
 - no native DXF `DIMENSION` import;
 - no block insertion support;
 - no hatches;
-- no spline/ellipse reconstruction;
+- full `ELLIPSE` import and readable `SPLINE` import are implemented, but partial ellipses and external NURBS-level spline fidelity are still approximated;
 - `LWPOLYLINE` bulge segments are converted to separate line/arc entities, not preserved as one compound polyline;
 - no paper-space or layout reconstruction.

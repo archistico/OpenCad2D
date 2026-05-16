@@ -34,6 +34,16 @@ This release consolidates the v0.8 line before the v0.9 roadmap. It combines the
 - Full DXF `ELLIPSE` entities import as native `EllipseEntity`; partial ellipses import as open polyline approximations.
 - Readable DXF `SPLINE` control points import as `BezierSplineEntity`; fit-point-only splines import as polyline approximations.
 
+## DXF compatibility samples
+
+The release includes a manual validation sample set under:
+
+```text
+samples/dxf/compatibility/
+```
+
+The sample set covers basic lines/layers, TEXT/MTEXT, arcs/circles/ellipses, polylines/polygons with bulge arcs, graphical dimensions, SPLINE records and a mixed v0.8 smoke drawing. Record external viewer results in `docs/dxf-compatibility.md` before tagging the public release.
+
 ## Validation before publishing
 
 Run:
