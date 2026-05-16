@@ -2373,6 +2373,14 @@ public sealed class CadCanvas : Control
             ClearSnapMarker();
             e.Handled = result.Changed;
         }
+        else if (Workspace.ToolController.ActiveTool is CopyTool copyTool &&
+                 copyTool.CopyState == MoveToolState.WaitingForEntitySelection &&
+                 e.Key == Key.Enter)
+        {
+            result = copyTool.ConfirmEntitySelection(Workspace.Context);
+            ClearSnapMarker();
+            e.Handled = result.Changed;
+        }
         else if (Workspace.ToolController.ActiveTool is PolylineTool polylineTool &&
                  polylineTool.State == PolylineToolState.CollectingVertices &&
                  e.Key == Key.Enter)

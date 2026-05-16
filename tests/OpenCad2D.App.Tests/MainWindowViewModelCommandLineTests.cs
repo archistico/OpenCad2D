@@ -371,7 +371,7 @@ public sealed class MainWindowViewModelCommandLineTests
 
 
     [Fact]
-    public void SubmitCommandInput_WithEmptyInputAfterCommand_ShouldRepeatLastCommand()
+    public void SubmitCommandInput_WithEmptyInputDuringRequiredCommandStep_ShouldKeepActiveCommand()
     {
         var viewModel = new MainWindowViewModel();
 
@@ -379,11 +379,12 @@ public sealed class MainWindowViewModelCommandLineTests
         viewModel.SubmitCommandInput("C");
         var result = viewModel.SubmitCommandInput(" ");
 
-        Assert.Equal("Circle", viewModel.ActiveToolName);
-        Assert.Equal("Repeated command: Circle.", viewModel.LastMessage);
-        Assert.Equal(new[] { "L", "C" }, viewModel.CommandLineHistory);
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Equal("Input is required for the current command step.", viewModel.LastMessage);
+        Assert.Single(viewModel.CommandLineHistory);
+        Assert.Equal("L", viewModel.CommandLineHistory[0]);
         Assert.True(viewModel.CanRepeatLastCommand);
-        Assert.Equal("C", viewModel.LastCommandText);
+        Assert.Equal("L", viewModel.LastCommandText);
         Assert.NotNull(result);
     }
 
@@ -439,7 +440,7 @@ public sealed class MainWindowViewModelCommandLineTests
 
 
     [Fact]
-    public void SubmitCommandInput_WithInvalidCommand_ShouldNotReplaceRepeatableCommand()
+    public void SubmitCommandInput_WithInvalidTextDuringActiveCommand_ShouldNotReplaceRepeatableCommand()
     {
         var viewModel = new MainWindowViewModel();
 
@@ -448,7 +449,7 @@ public sealed class MainWindowViewModelCommandLineTests
         var result = viewModel.SubmitCommandInput(string.Empty);
 
         Assert.Equal("Line", viewModel.ActiveToolName);
-        Assert.Equal("Repeated command: Line.", viewModel.LastMessage);
+        Assert.Equal("Input is required for the current command step.", viewModel.LastMessage);
         Assert.Single(viewModel.CommandLineHistory);
         Assert.Equal("L", viewModel.CommandLineHistory[0]);
         Assert.Equal("L", viewModel.LastCommandText);
@@ -497,7 +498,7 @@ public sealed class MainWindowViewModelCommandLineTests
     }
 
     [Fact]
-    public void SubmitCommandInput_WithEmptyInput_ShouldAppendEnterToVisibleCommandHistory()
+    public void SubmitCommandInput_WithEmptyInputDuringRequiredCommandStep_ShouldAppendEnterToVisibleCommandHistory()
     {
         var viewModel = new MainWindowViewModel();
 
@@ -505,7 +506,7 @@ public sealed class MainWindowViewModelCommandLineTests
         viewModel.SubmitCommandInput(string.Empty);
 
         Assert.Contains("> Enter", viewModel.VisibleCommandHistory);
-        Assert.Contains("Repeated command: Circle.", viewModel.VisibleCommandHistory);
+        Assert.Contains("Input is required for the current command step.", viewModel.VisibleCommandHistory);
     }
 
     [Fact]

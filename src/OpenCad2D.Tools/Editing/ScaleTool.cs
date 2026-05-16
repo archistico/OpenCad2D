@@ -6,13 +6,14 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Geometry.Transformations;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Interactive tool used to uniformly scale the current selection around a base point.
 /// </summary>
-public sealed class ScaleTool : ICadTool
+public sealed class ScaleTool : ICadTool, ICommandDrivenTool
 {
     private Point2D? _basePoint;
     private Point2D? _referencePoint;
@@ -38,6 +39,78 @@ public sealed class ScaleTool : ICadTool
         _referencePoint.HasValue &&
         _currentDestinationPoint.HasValue &&
         _currentFactor > 0;
+
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!context.Selection.HasSelection)
+        {
+            return new CommandPromptState(
+                "SCALE",
+                "Select objects before scaling",
+                CommandInputKind.Selection,
+                acceptsEmptyEnter: true,
+                placeholder: "Select objects, then run SCALE again");
+        }
+
+        return State switch
+        {
+            ScaleToolState.WaitingForBasePoint => new CommandPromptState(
+                "SCALE",
+                "Specify base point",
+                CommandInputKind.Point,
+                placeholder: "100,50"),
+
+            ScaleToolState.WaitingForReferencePoint => new CommandPromptState(
+                "SCALE",
+                "Specify reference point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0   |   @100<45"),
+
+            ScaleToolState.WaitingForDestinationPoint => new CommandPromptState(
+                "SCALE",
+                "Specify destination point or type scale factor",
+                CommandInputKind.PointOrNumber,
+                placeholder: "point or factor, e.g. @100,0 or 2"),
+
+            _ => CommandPromptState.Idle
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!context.Selection.HasSelection)
+        {
+            return ToolResult.None("Select entities before running Scale.");
+        }
+
+        if (State == ScaleToolState.WaitingForDestinationPoint &&
+            input.Kind == CommandInputSubmissionKind.Number &&
+            input.Number is not null)
+        {
+            return AcceptScaleFactor(context, input.Number.Value);
+        }
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "SCALE expects a point or scale factor input.");
+        }
+
+        return State switch
+        {
+            ScaleToolState.WaitingForBasePoint => AcceptBasePoint(context, input.Point.Value),
+            ScaleToolState.WaitingForReferencePoint => AcceptReferencePoint(context, input.Point.Value),
+            ScaleToolState.WaitingForDestinationPoint => AcceptDestinationPoint(context, input.Point.Value),
+            _ => ToolResult.None()
+        };
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,
@@ -217,6 +290,36 @@ public sealed class ScaleTool : ICadTool
 
         return ToolResult.Completed(
             $"Entities scaled by {committedFactor:0.###}.");
+    }
+
+
+    private ToolResult AcceptScaleFactor(
+        ToolContext context,
+        double factor)
+    {
+        if (_basePoint is null || _referencePoint is null)
+        {
+            return ToolResult.None("Specify base and reference points before typing a scale factor.");
+        }
+
+        if (factor <= 0 || Tolerance.IsZero(factor))
+        {
+            return ToolResult.None("Scale factor must be greater than zero.");
+        }
+
+        IReadOnlyList<EntityId> selectedIds = context.Selection.SelectedIds.ToList();
+
+        context.Commands.Execute(
+            context.Document,
+            new ScaleEntitiesCommand(
+                selectedIds,
+                _basePoint.Value,
+                factor));
+
+        Reset(context);
+
+        return ToolResult.Completed(
+            $"Entities scaled by {factor:0.###}.");
     }
 
     private bool UpdateCurrentDestination(

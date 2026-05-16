@@ -18,5 +18,9 @@ public enum CommandInputKind
     DistanceOrOption = 10,
     SelectionOrOption = 11,
     PointOrDistance = 12,
-    PointOrDistanceOrOption = 13
+    PointOrDistanceOrOption = 13,
+    PointOrAngle = 14,
+    PointOrAngleOrOption = 15,
+    PointOrNumber = 16,
+    PointOrNumberOrOption = 17
 }

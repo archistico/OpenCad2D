@@ -6,13 +6,14 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Breaks a supported entity by removing the segment between two picked break points.
 /// </summary>
-public sealed class BreakBetweenPointsTool : ICadTool
+public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool
 {
     private EntityId? _targetEntityId;
     private CadEntity? _targetEntity;
@@ -34,6 +35,57 @@ public sealed class BreakBetweenPointsTool : ICadTool
     public bool HasPreview =>
         State == BreakBetweenPointsToolState.WaitingForSecondBreakPoint &&
         _previewSegments.Count > 0;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            BreakBetweenPointsToolState.WaitingForTargetEntity => new CommandPromptState(
+                "BREAK",
+                "Select entity",
+                CommandInputKind.Selection,
+                placeholder: "Click a line, arc, circle or polyline"),
+
+            BreakBetweenPointsToolState.WaitingForFirstBreakPoint => new CommandPromptState(
+                "BREAK",
+                "Specify first break point",
+                CommandInputKind.Point,
+                placeholder: "100,50"),
+
+            BreakBetweenPointsToolState.WaitingForSecondBreakPoint => new CommandPromptState(
+                "BREAK",
+                "Specify second break point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   @100<45   |   distance"),
+
+            _ => CommandPromptState.Idle
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return State == BreakBetweenPointsToolState.WaitingForTargetEntity
+                ? ToolResult.None("Select an entity to break from the drawing canvas.")
+                : ToolResult.None(input.ErrorMessage ?? "BREAK expects a point input.");
+        }
+
+        return State switch
+        {
+            BreakBetweenPointsToolState.WaitingForFirstBreakPoint => AcceptFirstBreakPoint(context, input.Point.Value),
+            BreakBetweenPointsToolState.WaitingForSecondBreakPoint => AcceptSecondBreakPoint(context, input.Point.Value),
+            BreakBetweenPointsToolState.WaitingForTargetEntity => ToolResult.None("Select an entity to break from the drawing canvas."),
+            _ => ToolResult.None()
+        };
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,
@@ -147,15 +199,22 @@ public sealed class BreakBetweenPointsTool : ICadTool
         ToolContext context,
         PointerInfo pointer)
     {
+        Point2D point = ResolvePoint(
+            context,
+            pointer.ModelPoint);
+
+        return AcceptFirstBreakPoint(context, point);
+    }
+
+    private ToolResult AcceptFirstBreakPoint(
+        ToolContext context,
+        Point2D point)
+    {
         if (_targetEntity is null)
         {
             throw new InvalidOperationException(
                 "Cannot accept first break point before selecting a target entity.");
         }
-
-        Point2D point = ResolvePoint(
-            context,
-            pointer.ModelPoint);
 
         Point2D projectedPoint = _targetEntity.GetClosestPoint(point);
 
@@ -178,16 +237,23 @@ public sealed class BreakBetweenPointsTool : ICadTool
         ToolContext context,
         PointerInfo pointer)
     {
+        Point2D point = ResolvePoint(
+            context,
+            pointer.ModelPoint);
+
+        return AcceptSecondBreakPoint(context, point);
+    }
+
+    private ToolResult AcceptSecondBreakPoint(
+        ToolContext context,
+        Point2D point)
+    {
         if (_targetEntity is null ||
             _firstBreakPoint is null)
         {
             throw new InvalidOperationException(
                 "Cannot accept second break point before selecting a target entity and first break point.");
         }
-
-        Point2D point = ResolvePoint(
-            context,
-            pointer.ModelPoint);
 
         IReadOnlyList<CadEntity> segments = CadBreakService.BreakBetweenPoints(
             _targetEntity,

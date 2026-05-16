@@ -674,3 +674,67 @@ Supported input while collecting vertices:
 - empty Enter to finish an open polyline.
 
 Mouse input and text input share the same command state. Mouse input still resolves snaps and angle constraints; typed coordinates are submitted as already resolved points.
+
+## v0.8 block 6 - Edit tools
+
+The first edit tools now participate in the command-driven model.
+
+### MOVE
+
+```text
+MOVE: Select objects to move:
+MOVE: Specify base point:
+MOVE: Specify destination point:
+```
+
+If objects are already selected, the command starts from the base point phase. If no objects are selected, the user selects them on the canvas and presses Enter. Destination input accepts absolute coordinates, relative coordinates, relative polar coordinates and direct distance.
+
+### COPY
+
+```text
+COPY: Select objects to copy:
+COPY: Specify base point:
+COPY: Specify destination point:
+```
+
+`COPY` mirrors the `MOVE` workflow but creates translated copies of the selected entities.
+
+### BREAK
+
+```text
+BREAK: Select entity:
+BREAK: Specify first break point:
+BREAK: Specify second break point:
+```
+
+The target entity is selected from the drawing canvas because breaking requires an entity pick. The two break points can be supplied either by mouse or by command input.
+
+## v0.8 command coverage pass before advanced Trim
+
+The following edit/modify commands are now part of the CAD-style prompt system:
+
+| Command | Prompt/input behavior |
+| --- | --- |
+| `ROTATE` | Requires a preselection, then asks for base point, reference point, and destination point or typed angle in degrees. |
+| `SCALE` | Requires a preselection, then asks for base point, reference point, and destination point or typed scale factor. |
+| `ALIGN` | Requires a preselection, then asks for source/destination point pairs and a final scale confirmation. Enter or `N` means no scale; `Y` applies scale. |
+| `BREAKPOINT` / `BP` | Select the entity on the canvas, then type or click the break point. |
+| `BREAKSEGMENT` / `BREAK` / `BR` / `BS` | Already command-driven: select the entity on the canvas, then type or click the two break points. |
+| `EXTEND` | Exposes selection prompts for boundary and target entity selection. Entity picking remains canvas-based. |
+| `TRIM` | Exposes selection prompts for cutting edge and target side selection. This is the baseline before the advanced Trim redesign. |
+| `DELETE` / `DEL` | Press Enter to delete the current selection; otherwise select objects first. |
+
+Additional parser prompt kinds were introduced for edit tools:
+
+- `PointOrAngle`: used by Rotate destination input.
+- `PointOrNumber`: used by Scale destination input.
+
+Typed point formats remain the same:
+
+```text
+100,50
+@50,0
+@100<45
+```
+
+For Rotate, a plain number in the final phase is interpreted as an angle in degrees. For Scale, a plain number in the final phase is interpreted as a scale factor.

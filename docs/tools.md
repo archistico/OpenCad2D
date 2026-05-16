@@ -847,3 +847,26 @@ The first command-driven drawing tools are now `Line` and `Polyline`.
 `Line`, `Polyline`, `Rectangle`, `Circle` and `Arc 3P` are now command-driven tools. They expose their current phase to the command input and accept both mouse clicks and typed coordinate input for point acquisition.
 
 The remaining modify tools will be migrated in later v0.8 blocks, starting with Move, Copy and Break.
+
+## v0.8 command-driven edit tools
+
+The following edit tools have guided command prompts:
+
+- `MOVE`: select objects, base point, destination point.
+- `COPY`: select objects, base point, destination point.
+- `BREAK` / `Break Segment`: select target entity, first break point, second break point.
+
+Typed points are resolved by the command input parser and submitted without re-snapping. Mouse input keeps the normal snap workflow.
+
+## Command-driven edit/modify tools in v0.8
+
+The command input system now covers the main edit/modify commands before the advanced Trim redesign:
+
+- Rotate: base point, reference point, destination point or typed angle.
+- Scale: base point, reference point, destination point or typed factor.
+- Align: two source/destination point pairs plus scale confirmation.
+- Break Point: canvas entity selection plus typed/clicked break point.
+- Break Segment: canvas entity selection plus typed/clicked first and second break points.
+- Extend: explicit prompts for boundary and target selection.
+- Trim: explicit prompts for cutting edge and target side selection.
+- Delete: Enter confirms deletion of the current selection.

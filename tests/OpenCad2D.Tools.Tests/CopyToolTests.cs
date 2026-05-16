@@ -6,6 +6,7 @@ using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -337,6 +338,42 @@ public sealed class CopyToolTests
         Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
         Assert.Equal(1, document.Entities.Count);
         Assert.True(document.Entities.Contains(line.Id));
+    }
+
+
+    [Fact]
+    public void CommandInput_ShouldCopySelectedEntityWithResolvedPoints()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+        selection.Select(line.Id);
+
+        var context = CreateContext(document, selection);
+        var tool = new CopyTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("0,0", new Point2D(0, 0)),
+            context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("@5,2", new Point2D(5, 2)),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(2, document.Entities.Count);
+
+        var copied = document.Entities.All
+            .OfType<LineEntity>()
+            .Single(entity => entity.Id != line.Id);
+
+        Assert.Equal(new Point2D(5, 2), copied.Start);
+        Assert.Equal(new Point2D(15, 2), copied.End);
     }
 
     private static ToolContext CreateContext(

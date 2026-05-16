@@ -161,6 +161,8 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("BP", ToolId.BreakAtPoint);
 
         yield return new CommandAlias("BREAKSEGMENT", ToolId.BreakBetweenPoints);
+        yield return new CommandAlias("BREAK", ToolId.BreakBetweenPoints);
+        yield return new CommandAlias("BR", ToolId.BreakBetweenPoints);
         yield return new CommandAlias("BS", ToolId.BreakBetweenPoints);
 
         yield return new CommandAlias("DELETE", ToolId.Delete);

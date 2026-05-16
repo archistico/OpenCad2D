@@ -6,6 +6,7 @@ using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -482,6 +483,39 @@ public sealed class MoveToolTests
 
         Assert.Equal(new Point2D(0, 0), unchanged.Start);
         Assert.Equal(new Point2D(10, 0), unchanged.End);
+    }
+
+
+    [Fact]
+    public void CommandInput_ShouldMoveSelectedEntityWithResolvedPoints()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+        selection.Select(line.Id);
+
+        var context = CreateContext(document, selection);
+        var tool = new MoveTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("0,0", new Point2D(0, 0)),
+            context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("@5,2", new Point2D(5, 2)),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        var moved = (LineEntity)document.Entities.GetRequired(line.Id);
+
+        Assert.Equal(new Point2D(5, 2), moved.Start);
+        Assert.Equal(new Point2D(15, 2), moved.End);
     }
 
     private static ToolContext CreateContext(

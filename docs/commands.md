@@ -650,3 +650,48 @@ The command input now guides the basic drawing tools with contextual prompts:
 - `ARC3P` / `A3P`: start point, point on arc, then end point.
 
 For point prompts the user can either click in the canvas or type coordinates such as `100,50`, `@50,0` or `@100<45`.
+
+## v0.8 command-driven edit aliases
+
+Additional edit command aliases:
+
+```text
+MOVE / M
+COPY / CP
+BREAK / BR / BREAKSEGMENT / BS
+```
+
+`MOVE` and `COPY` support typed base/destination points, including `@x,y` and `@distance<angle`. `BREAK` supports typed first and second break points after the target entity has been selected from the canvas.
+
+## v0.8 edit command input notes
+
+The edit commands now expose CAD-style command prompts:
+
+```text
+ROTATE: Specify base point:
+ROTATE: Specify reference point:
+ROTATE: Specify destination point or type angle:
+
+SCALE: Specify base point:
+SCALE: Specify reference point:
+SCALE: Specify destination point or type scale factor:
+
+ALIGN: Specify first source point:
+ALIGN: Specify first destination point:
+ALIGN: Specify second source point:
+ALIGN: Specify second destination point:
+ALIGN: Apply scale or [Yes/No]:
+
+BREAKPOINT: Select entity:
+BREAKPOINT: Specify break point:
+
+EXTEND: Select boundary entity:
+EXTEND: Select entity to extend:
+
+TRIM: Select cutting edge:
+TRIM: Select entity side to trim:
+
+DELETE: Press Enter to delete selected entities:
+```
+
+Rotate interprets a plain number in the final phase as an angle in degrees. Scale interprets a plain number in the final phase as a scale factor.

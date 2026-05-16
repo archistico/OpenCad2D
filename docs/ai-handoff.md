@@ -1366,3 +1366,64 @@ Migrated the remaining basic draw tools to the command-driven input model.
 - Added tests for direct tool command input and ViewModel command-line creation for Circle, Rectangle and Arc 3P.
 
 Next planned block: migrate `Move`, `Copy` and `Break` to guided selection/base-point/destination-point workflows.
+
+## 2026-05-16 - v0.8 command input block 6: Move, Copy and Break command-driven
+
+Migrated the first edit tools to the command-driven workflow.
+
+- `MoveTool` now implements `ICommandDrivenTool`.
+  - Selection phase: `MOVE: Select objects to move:`.
+  - Base point phase: `MOVE: Specify base point:`.
+  - Destination phase: `MOVE: Specify destination point:`.
+  - The destination point accepts absolute, relative, relative polar and direct-distance input.
+- `CopyTool` now implements `ICommandDrivenTool` and has a guided selection/base/destination workflow matching `MoveTool`.
+  - If nothing is selected, mouse clicks can select entities before pressing Enter.
+  - If entities are already selected, the command starts from the base point phase.
+- `BreakBetweenPointsTool` now implements `ICommandDrivenTool`.
+  - Target entity is still selected from the drawing canvas.
+  - First and second break points can be provided by mouse or command input.
+  - The second break point supports absolute, relative, relative polar and direct-distance input.
+- Added `BREAK` and `BR` aliases for `BreakBetweenPoints` while keeping existing `BREAKSEGMENT` and `BS` aliases.
+- `MainWindowViewModel` now routes Enter/text to active command-driven selection phases, not only to commands that already have a base point.
+
+Next planned block: evaluate and implement a first advanced `TRIM` command workflow with cutting-edge selection, `All`, trim-object picking and local `Undo`.
+
+## 2026-05-16 - v0.8 command input block 6b
+
+Completed a command-input coverage pass before the advanced Trim redesign.
+
+Updated command-driven coverage:
+
+- `RotateTool` implements `ICommandDrivenTool`.
+  - Prompts: select objects before rotating, base point, reference point, destination point or typed angle.
+  - Destination phase accepts either a point or an angle in degrees.
+- `ScaleTool` implements `ICommandDrivenTool`.
+  - Prompts: select objects before scaling, base point, reference point, destination point or typed scale factor.
+  - Destination phase accepts either a point or a numeric scale factor.
+- `AlignTool` implements `ICommandDrivenTool`.
+  - Prompts: first source point, first destination point, second source point, second destination point, scale confirmation.
+  - Scale confirmation accepts Enter/N for no scale and Y for scale.
+- `BreakAtPointTool` implements `ICommandDrivenTool`.
+  - Entity selection still comes from the canvas.
+  - Break point can now be typed with absolute/relative/polar coordinate input after the entity is selected.
+- `ExtendTool` and `TrimTool` now expose command-driven prompt states for their canvas-selection phases.
+  - This prepares Trim for the upcoming advanced redesign with richer picked-entity input.
+- `DeleteTool` implements `ICommandDrivenTool`.
+  - Press Enter to delete the current selection.
+  - If there is no selection, the prompt explains that objects must be selected first.
+
+Parser additions:
+
+- Added `PointOrAngle` / `PointOrAngleOrOption` prompt kinds.
+- Added `PointOrNumber` / `PointOrNumberOrOption` prompt kinds.
+- Updated command input routing so active command-driven tools receive text while they are waiting for any non-idle command input phase, not only when a base point exists.
+
+### v0.8 command input note - active required steps and Enter
+
+During the v0.8 command-input migration, empty Enter is intentionally context-sensitive:
+
+- when no command-driven tool is active, empty Enter repeats the last repeatable command;
+- when a command-driven tool is active and the current prompt accepts empty Enter, empty Enter confirms/completes the current step;
+- when a command-driven tool is active and the current prompt requires input, empty Enter stays inside the active command and reports `Input is required for the current command step.`.
+
+This means aliases typed while a command is actively waiting for a point or selection are treated as input for that active command, not as new commands. To start another command, the current command should be completed or cancelled first.

@@ -5,6 +5,7 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Editing;
 
@@ -12,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Interactive tool used to move selected entities.
 /// If no entity is selected when the tool starts, the first phase lets the user select entities to move.
 /// </summary>
-public sealed class MoveTool : ICadTool, ISnapModeProvider
+public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
 {
     private Point2D? _basePoint;
     private Point2D? _currentPoint;
@@ -43,6 +44,65 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
         _basePoint.HasValue &&
         _currentPoint.HasValue &&
         _state == MoveToolState.WaitingForDestinationPoint;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        return _state switch
+        {
+            MoveToolState.WaitingForEntitySelection => new CommandPromptState(
+                "MOVE",
+                "Select objects to move",
+                CommandInputKind.Selection,
+                acceptsEmptyEnter: true,
+                placeholder: "Click objects, then press Enter"),
+
+            MoveToolState.WaitingForBasePoint => new CommandPromptState(
+                "MOVE",
+                "Specify base point",
+                CommandInputKind.Point,
+                placeholder: "100,50"),
+
+            MoveToolState.WaitingForDestinationPoint => new CommandPromptState(
+                "MOVE",
+                "Specify destination point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   @100<45   |   distance"),
+
+            _ => CommandPromptState.Idle
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        if (input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            return ConfirmEntitySelection(context);
+        }
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "MOVE expects a point input.");
+        }
+
+        return _state switch
+        {
+            MoveToolState.WaitingForBasePoint => AcceptBasePoint(context, input.Point.Value),
+            MoveToolState.WaitingForDestinationPoint => AcceptDestinationPoint(context, input.Point.Value),
+            MoveToolState.WaitingForEntitySelection => ToolResult.None("Select entities to move, then press Enter."),
+            _ => ToolResult.None()
+        };
+    }
 
     public SnapKind GetActiveSnapKind(ToolContext context)
     {
@@ -197,17 +257,24 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
         ToolContext context,
         PointerInfo pointer)
     {
+        Point2D point = ApplyGeometricSnap(
+            context,
+            pointer.ModelPoint,
+            null);
+
+        return AcceptBasePoint(context, point);
+    }
+
+    private ToolResult AcceptBasePoint(
+        ToolContext context,
+        Point2D point)
+    {
         if (!context.Selection.HasSelection)
         {
             _state = MoveToolState.WaitingForEntitySelection;
 
             return ToolResult.Started("Select entities to move.");
         }
-
-        Point2D point = ApplyGeometricSnap(
-            context,
-            pointer.ModelPoint,
-            null);
 
         _basePoint = point;
         _currentPoint = point;
@@ -221,13 +288,6 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
         ToolContext context,
         PointerInfo pointer)
     {
-        if (!context.Selection.HasSelection)
-        {
-            Reset(context);
-
-            return ToolResult.None("No entities selected.");
-        }
-
         if (_basePoint is null)
         {
             throw new InvalidOperationException(
@@ -243,6 +303,26 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider
             context,
             _basePoint.Value,
             point);
+
+        return AcceptDestinationPoint(context, point);
+    }
+
+    private ToolResult AcceptDestinationPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        if (!context.Selection.HasSelection)
+        {
+            Reset(context);
+
+            return ToolResult.None("No entities selected.");
+        }
+
+        if (_basePoint is null)
+        {
+            throw new InvalidOperationException(
+                "Move tool is waiting for destination point but base point is missing.");
+        }
 
         if (context.GeometryTolerance.ArePointsEqual(_basePoint.Value, point))
         {

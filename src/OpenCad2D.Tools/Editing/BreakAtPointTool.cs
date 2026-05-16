@@ -6,13 +6,14 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Breaks a supported entity at a picked point.
 /// </summary>
-public sealed class BreakAtPointTool : ICadTool
+public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool
 {
     private EntityId? _targetEntityId;
     private CadEntity? _targetEntity;
@@ -31,6 +32,49 @@ public sealed class BreakAtPointTool : ICadTool
     public bool HasPreview =>
         State == BreakAtPointToolState.WaitingForBreakPoint &&
         _previewSegments.Count > 0;
+
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            BreakAtPointToolState.WaitingForTargetEntity => new CommandPromptState(
+                "BREAKPOINT",
+                "Select entity",
+                CommandInputKind.Selection,
+                placeholder: "Click a line, arc or polyline"),
+
+            BreakAtPointToolState.WaitingForBreakPoint => new CommandPromptState(
+                "BREAKPOINT",
+                "Specify break point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0   |   @100<45"),
+
+            _ => CommandPromptState.Idle
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (State == BreakAtPointToolState.WaitingForTargetEntity)
+        {
+            return ToolResult.None("Select an entity to break from the drawing canvas.");
+        }
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "BREAKPOINT expects a point input.");
+        }
+
+        return AcceptBreakPoint(context, input.Point.Value);
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,
@@ -148,15 +192,22 @@ public sealed class BreakAtPointTool : ICadTool
         ToolContext context,
         PointerInfo pointer)
     {
+        Point2D point = ResolvePoint(
+            context,
+            pointer.ModelPoint);
+
+        return AcceptBreakPoint(context, point);
+    }
+
+    private ToolResult AcceptBreakPoint(
+        ToolContext context,
+        Point2D point)
+    {
         if (_targetEntity is null)
         {
             throw new InvalidOperationException(
                 "Cannot accept break point before selecting a target entity.");
         }
-
-        Point2D point = ResolvePoint(
-            context,
-            pointer.ModelPoint);
 
         IReadOnlyList<CadEntity> segments = CadBreakService.BreakAtPoint(
             _targetEntity,

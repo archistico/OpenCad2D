@@ -5,13 +5,14 @@ using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Trims editable entities against a selected boundary entity.
 /// </summary>
-public sealed class TrimTool : ICadTool
+public sealed class TrimTool : ICadTool, ICommandDrivenTool
 {
     private readonly List<CadEntity> _boundaryEntities = new();
     private EntityId? _boundaryEntityId;
@@ -35,6 +36,41 @@ public sealed class TrimTool : ICadTool
     public bool HasPreview =>
         State == TrimToolState.WaitingForTargetEntity &&
         _previewEntities.Count > 0;
+
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            TrimToolState.WaitingForBoundaryEntity => new CommandPromptState(
+                "TRIM",
+                "Select cutting edge",
+                CommandInputKind.Selection,
+                placeholder: "Click a line, circle, arc or polyline cutting edge"),
+
+            TrimToolState.WaitingForTargetEntity => new CommandPromptState(
+                "TRIM",
+                "Select entity side to trim",
+                CommandInputKind.Selection,
+                placeholder: "Click the side to remove, Ctrl-click for second cutting edge"),
+
+            _ => CommandPromptState.Idle
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State == TrimToolState.WaitingForBoundaryEntity
+            ? ToolResult.None("Select a cutting edge from the drawing canvas.")
+            : ToolResult.None("Select an entity side to trim from the drawing canvas.");
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,

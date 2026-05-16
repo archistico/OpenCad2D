@@ -1074,3 +1074,34 @@ Completed command-driven migration for the remaining basic drawing tools:
 Next:
 
 - [ ] Convert `Move`, `Copy` and `Break` to guided command input.
+
+### v0.8 command input progress - block 6
+
+Completed:
+
+- [x] command-driven `MOVE` with guided selection/base/destination phases.
+- [x] command-driven `COPY` with guided selection/base/destination phases.
+- [x] command-driven `BREAK` / `Break Segment` with target entity, first point and second point phases.
+- [x] command input routing now supports active selection phases, not only active base-point phases.
+- [x] `BREAK` and `BR` aliases added for `BreakBetweenPoints`.
+
+Next:
+
+- [ ] design and implement advanced `TRIM` workflow for v0.8.
+
+### v0.8 command input coverage pass
+
+Completed before the advanced Trim redesign:
+
+- [x] Rotate command-driven prompts and typed angle input.
+- [x] Scale command-driven prompts and typed factor input.
+- [x] Align command-driven prompts and scale confirmation options.
+- [x] Break Point command-driven prompt and typed break point.
+- [x] Break Segment remains command-driven and covered by the shared command input flow.
+- [x] Extend prompt integration for boundary/target canvas selection.
+- [x] Trim prompt integration for cutting-edge/target canvas selection.
+- [x] Delete prompt integration with Enter confirmation.
+
+Next planned item:
+
+- [ ] Advanced Trim v0.8 with richer picked-entity input (`EntityId` + pick point), multiple cutting edges, `All`, `Undo`, and repeat trimming until Escape.

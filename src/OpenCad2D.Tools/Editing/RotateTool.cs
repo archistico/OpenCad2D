@@ -6,13 +6,14 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Geometry.Transformations;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Interactive tool used to rotate the current selection around a base point.
 /// </summary>
-public sealed class RotateTool : ICadTool
+public sealed class RotateTool : ICadTool, ICommandDrivenTool
 {
     private Point2D? _basePoint;
     private Point2D? _referencePoint;
@@ -37,6 +38,78 @@ public sealed class RotateTool : ICadTool
         _basePoint.HasValue &&
         _referencePoint.HasValue &&
         _currentDestinationPoint.HasValue;
+
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!context.Selection.HasSelection)
+        {
+            return new CommandPromptState(
+                "ROTATE",
+                "Select objects before rotating",
+                CommandInputKind.Selection,
+                acceptsEmptyEnter: true,
+                placeholder: "Select objects, then run ROTATE again");
+        }
+
+        return State switch
+        {
+            RotateToolState.WaitingForBasePoint => new CommandPromptState(
+                "ROTATE",
+                "Specify base point",
+                CommandInputKind.Point,
+                placeholder: "100,50"),
+
+            RotateToolState.WaitingForReferencePoint => new CommandPromptState(
+                "ROTATE",
+                "Specify reference point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0   |   @100<45"),
+
+            RotateToolState.WaitingForDestinationPoint => new CommandPromptState(
+                "ROTATE",
+                "Specify destination point or type angle",
+                CommandInputKind.PointOrAngle,
+                placeholder: "point or angle, e.g. @100<45 or 90"),
+
+            _ => CommandPromptState.Idle
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!context.Selection.HasSelection)
+        {
+            return ToolResult.None("Select entities before running Rotate.");
+        }
+
+        if (State == RotateToolState.WaitingForDestinationPoint &&
+            input.Kind == CommandInputSubmissionKind.Angle &&
+            input.AngleDegrees is not null)
+        {
+            return AcceptAngle(context, input.AngleDegrees.Value);
+        }
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "ROTATE expects a point or angle input.");
+        }
+
+        return State switch
+        {
+            RotateToolState.WaitingForBasePoint => AcceptBasePoint(context, input.Point.Value),
+            RotateToolState.WaitingForReferencePoint => AcceptReferencePoint(context, input.Point.Value),
+            RotateToolState.WaitingForDestinationPoint => AcceptDestinationPoint(context, input.Point.Value),
+            _ => ToolResult.None()
+        };
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,
@@ -207,6 +280,32 @@ public sealed class RotateTool : ICadTool
 
         return ToolResult.Completed(
             $"Entities rotated by {_currentAngle.Degrees:0.##}°.");
+    }
+
+
+    private ToolResult AcceptAngle(
+        ToolContext context,
+        double angleDegrees)
+    {
+        if (_basePoint is null || _referencePoint is null)
+        {
+            return ToolResult.None("Specify base and reference points before typing an angle.");
+        }
+
+        IReadOnlyList<EntityId> selectedIds = context.Selection.SelectedIds.ToList();
+        Angle angle = Angle.FromDegrees(angleDegrees);
+
+        context.Commands.Execute(
+            context.Document,
+            new RotateEntitiesCommand(
+                selectedIds,
+                _basePoint.Value,
+                angle));
+
+        Reset(context);
+
+        return ToolResult.Completed(
+            $"Entities rotated by {angle.Degrees:0.##}°.");
     }
 
     private void UpdateCurrentDestination(

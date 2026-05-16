@@ -5,6 +5,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -316,6 +317,40 @@ public sealed class BreakBetweenPointsToolTests
         Assert.Equal(90, preview.StartAngle.Degrees, precision: 10);
     }
 
+
+
+    [Fact]
+    public void CommandInput_ShouldAcceptBreakPointsAfterTargetSelection()
+    {
+        var context = CreateContextWithLine(out LineEntity originalLine);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("3,0", new Point2D(3, 0)),
+            context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("7,0", new Point2D(7, 0)),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(context.Document.Entities.Contains(originalLine.Id));
+
+        IReadOnlyList<LineEntity> lines = context.Document.Entities.All
+            .OfType<LineEntity>()
+            .OrderBy(line => line.Start.X)
+            .ToList();
+
+        Assert.Equal(2, lines.Count);
+        Assert.Equal(new Point2D(0, 0), lines[0].Start);
+        Assert.Equal(new Point2D(3, 0), lines[0].End);
+        Assert.Equal(new Point2D(7, 0), lines[1].Start);
+        Assert.Equal(new Point2D(10, 0), lines[1].End);
+    }
 
     private static ToolContext CreateContext()
     {

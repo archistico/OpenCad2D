@@ -5,13 +5,14 @@ using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Extends editable entities until they reach a selected boundary entity.
 /// </summary>
-public sealed class ExtendTool : ICadTool
+public sealed class ExtendTool : ICadTool, ICommandDrivenTool
 {
     private EntityId? _boundaryEntityId;
     private CadEntity? _boundaryEntity;
@@ -29,6 +30,41 @@ public sealed class ExtendTool : ICadTool
     public bool HasPreview =>
         State == ExtendToolState.WaitingForTargetEntity &&
         _previewEntity is not null;
+
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            ExtendToolState.WaitingForBoundaryEntity => new CommandPromptState(
+                "EXTEND",
+                "Select boundary entity",
+                CommandInputKind.Selection,
+                placeholder: "Click a line, circle, arc or polyline boundary"),
+
+            ExtendToolState.WaitingForTargetEntity => new CommandPromptState(
+                "EXTEND",
+                "Select entity to extend",
+                CommandInputKind.Selection,
+                placeholder: "Click the endpoint side to extend"),
+
+            _ => CommandPromptState.Idle
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State == ExtendToolState.WaitingForBoundaryEntity
+            ? ToolResult.None("Select a boundary entity from the drawing canvas.")
+            : ToolResult.None("Select an entity to extend from the drawing canvas.");
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,

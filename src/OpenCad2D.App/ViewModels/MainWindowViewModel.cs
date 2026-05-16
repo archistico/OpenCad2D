@@ -577,7 +577,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             AppendVisibleCommandHistoryLine("> Enter");
 
-            if (Workspace.Context.CurrentBasePoint is not null &&
+            if (ShouldRouteInputToActiveCommand(normalizedInput) &&
                 TrySubmitCommandDrivenInput(normalizedInput, out ToolResult activeCommandResult))
             {
                 return activeCommandResult;
@@ -590,7 +590,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         AppendVisibleCommandHistoryLine($"> {normalizedInput}");
 
-        if (Workspace.Context.CurrentBasePoint is not null &&
+        if (ShouldRouteInputToActiveCommand(normalizedInput) &&
             TrySubmitCommandDrivenInput(normalizedInput, out ToolResult activeTextCommandResult))
         {
             return activeTextCommandResult;
@@ -654,6 +654,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         NotifyCommandInputStateChanged();
 
         return pointResult;
+    }
+
+    private bool ShouldRouteInputToActiveCommand(string normalizedInput)
+    {
+        if (Workspace.ToolController.ActiveTool is not ICommandDrivenTool commandDrivenTool)
+        {
+            return false;
+        }
+
+        CommandPromptState promptState = commandDrivenTool.GetPromptState(Workspace.Context);
+
+        if (promptState.ExpectedInput != CommandInputKind.CommandName)
+        {
+            return true;
+        }
+
+        return string.IsNullOrWhiteSpace(normalizedInput) && promptState.AcceptsEmptyEnter;
     }
 
     private bool TrySubmitCommandDrivenInput(

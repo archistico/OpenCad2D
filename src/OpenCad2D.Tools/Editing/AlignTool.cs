@@ -7,6 +7,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Geometry.Transformations;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Editing;
 
@@ -14,7 +15,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Interactive tool used to align the current selection by mapping two source
 /// points to two destination points.
 /// </summary>
-public sealed class AlignTool : ICadTool
+public sealed class AlignTool : ICadTool, ICommandDrivenTool
 {
     private readonly AlignTransformService _alignTransformService;
     private Point2D? _sourcePoint1;
@@ -52,6 +53,106 @@ public sealed class AlignTool : ICadTool
         (State == AlignToolState.WaitingForDestinationPoint2 ||
          State == AlignToolState.WaitingForScaleConfirmation) &&
         _currentTransform is not null;
+
+
+    private static readonly CommandOption YesOption = new("Yes", "Y", "Apply scale while aligning");
+    private static readonly CommandOption NoOption = new("No", "N", "Align without scale");
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!context.Selection.HasSelection)
+        {
+            return new CommandPromptState(
+                "ALIGN",
+                "Select objects before aligning",
+                CommandInputKind.Selection,
+                acceptsEmptyEnter: true,
+                placeholder: "Select objects, then run ALIGN again");
+        }
+
+        return State switch
+        {
+            AlignToolState.WaitingForSourcePoint1 => new CommandPromptState(
+                "ALIGN",
+                "Specify first source point",
+                CommandInputKind.Point,
+                placeholder: "100,50"),
+
+            AlignToolState.WaitingForDestinationPoint1 => new CommandPromptState(
+                "ALIGN",
+                "Specify first destination point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0   |   @100<45"),
+
+            AlignToolState.WaitingForSourcePoint2 => new CommandPromptState(
+                "ALIGN",
+                "Specify second source point",
+                CommandInputKind.Point,
+                placeholder: "100,50"),
+
+            AlignToolState.WaitingForDestinationPoint2 => new CommandPromptState(
+                "ALIGN",
+                "Specify second destination point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0   |   @100<45"),
+
+            AlignToolState.WaitingForScaleConfirmation => new CommandPromptState(
+                "ALIGN",
+                "Apply scale",
+                CommandInputKind.Option,
+                new[] { YesOption, NoOption },
+                acceptsEmptyEnter: true,
+                placeholder: "Y or N"),
+
+            _ => CommandPromptState.Idle
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!context.Selection.HasSelection)
+        {
+            return ToolResult.None("Select entities before running Align.");
+        }
+
+        if (State == AlignToolState.WaitingForScaleConfirmation)
+        {
+            if (input.Kind == CommandInputSubmissionKind.Confirm)
+            {
+                return ConfirmWithoutScale(context);
+            }
+
+            if (input.Kind == CommandInputSubmissionKind.Option)
+            {
+                return string.Equals(input.OptionKeyword, "Yes", StringComparison.OrdinalIgnoreCase)
+                    ? ConfirmWithScale(context)
+                    : ConfirmWithoutScale(context);
+            }
+
+            return ToolResult.None(input.ErrorMessage ?? "ALIGN expects Y, N or Enter.");
+        }
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "ALIGN expects a point input.");
+        }
+
+        return State switch
+        {
+            AlignToolState.WaitingForSourcePoint1 => AcceptSourcePoint1(context, input.Point.Value),
+            AlignToolState.WaitingForDestinationPoint1 => AcceptDestinationPoint1(context, input.Point.Value),
+            AlignToolState.WaitingForSourcePoint2 => AcceptSourcePoint2(context, input.Point.Value),
+            AlignToolState.WaitingForDestinationPoint2 => AcceptDestinationPoint2(context, input.Point.Value),
+            _ => ToolResult.None()
+        };
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,
