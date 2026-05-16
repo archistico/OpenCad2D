@@ -2,822 +2,167 @@
 
 **OpenCad2D** is an experimental open-source 2D CAD application built with **C#**, **.NET 8** and **Avalonia UI**.
 
-The project explores how to build a small but serious 2D CAD system from the ground up, with a clean separation between geometry, document modeling, interaction logic, tools, persistence and the graphical user interface.
+The project explores how to build a small but serious 2D CAD system from the ground up, with a clean separation between geometry, document modeling, interaction logic, tools, persistence, export and the graphical user interface.
 
-The long-term goal is not only to create a usable CAD application, but also to keep the codebase understandable, testable and extensible.
+OpenCad2D is not intended to replace mature CAD applications yet. The current goal is to create a precise, fast, testable and understandable 2D CAD foundation.
 
 ![OpenCad2D screenshot](screenshot/screenshot_UI_1.png)
 
 ---
 
-## Project status
+## Current status
 
-OpenCad2D is currently an early prototype. It is **not** intended to replace mature CAD software yet.
+OpenCad2D currently supports a complete early CAD workflow:
 
-See also: `docs/release-v0.8.md`.
-
-The current focus is to build strong foundations: geometry, entities, layers, commands, undo/redo, snapping, selection, tools, coordinate systems, spatial queries, CAD-style numeric input, persistence, interoperability and a first cross-platform UI.
-
-The application already supports a functional CAD workflow:
-
-- drawing points;
-- drawing single-line text annotations;
-- drawing lines;
-- drawing rectangles by opposite corners;
-- drawing rectangles by first side and second side (`Rect Sides`);
-- drawing circles;
-- drawing arcs by center/start/end;
-- drawing arcs through three points (`Arc 3P`);
-- drawing open and closed polylines;
-- creating horizontal, vertical, aligned, radius, diameter and angular dimensions;
-- selecting entities by point, window and crossing selection;
-- moving, copying, rotating, scaling, aligning and deleting selected entities;
-- break point for lines, arcs and polylines, with clear non-applicable feedback for circles;
-- break segment for lines, arcs, circles and polylines;
-- trim with one cutting edge, Ctrl-click additional cutting edges, `All` cutting-edge mode and in-command `Undo`;
-- extend for lines, arcs and open polylines where supported by the current geometry services;
-- offset for lines, circles and arcs;
-- line-line fillet with `Radius` option and radius `0` sharp-corner join;
-- grip editing for supported entities;
-- undo and redo;
-- internal JSON save/load using `.opencad2d.json`;
-- New, Open, Save and Save As file commands;
-- SVG export using `.svg`, including points, single-line text, basic dimensions, layer grouping and selectable background modes;
-- DXF import using ASCII `.dxf` for base 2D entities and layer tables, with diagnostics for unsupported records;
-- DXF export using AutoCAD 2000 ASCII `.dxf`, including `POINT`, `TEXT`, base geometry and basic dimensions as graphical primitives;
-- PDF export using `.pdf`, with page size, orientation, margins, fit-to-page and print-friendly colors;
-- dirty-state tracking and “Save changes?” confirmation;
-- object snapping, including geometric snaps and entity snap for selection-oriented tools;
-- configurable rectangular and isometric grid display and grid snapping;
-- Grid Settings dialog for visibility, spacing, origin, screen spacing thresholds and isometric angle;
-- layer visibility and locked layer behavior;
-- assigning selected entities to the current layer from the top CAD bar;
-- reusable line formats for layer stroke color, weight and style;
-- reusable text formats for single-line annotation appearance;
-- Line Format Manager;
-- Text Format Manager;
-- Layer Manager with line format selection;
-- editable Property Panel v2 with undoable edits for supported entity properties;
-- CAD-style guided command input with contextual prompts, visible command history, tool aliases, absolute coordinates, relative coordinates, relative polar input and direct distance entry;
-- non-mutating measure tools for distance, entity properties, angles and closed-polyline areas;
-- Ortho mode and Polar Tracking with selectable angle steps (`Off`, `90°`, `45°`, `30°`, `15°`);
-- zoom, pan, view reset and Zoom Extents;
-- viewport culling for rendering only visible entities;
+- clean startup from `Templates/default.opencad2d.json`;
+- maximized main window on startup;
+- native save/load using `.opencad2d.json`;
+- document-level settings persistence for grid, snap, ortho, polar tracking and current drawing settings;
+- document recovery for partially invalid native files;
+- New, Open, Save and Save As;
+- SVG, DXF and PDF export;
+- ASCII DXF import for core 2D entities and layer tables;
+- layers with visibility and locking;
+- reusable line formats with color, lineweight, line style and custom dash pattern values;
+- reusable text formats;
+- Layer Manager, Line Format Manager and Text Format Manager;
+- compact ColorPicker support in line/text format managers;
+- editable Property Panel for supported entities, including read-only draw order display;
+- independent draw order / Z-order, separate from layers;
+- CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input and direct distances;
+- object snapping, grid snapping, Ortho mode and Polar Tracking;
+- selection, Select All and Select Last;
+- drawing tools for points, text, lines, rectangles, circles, arcs and polylines;
+- dimension tools for horizontal, vertical, aligned, radius, diameter and angular dimensions;
+- transform tools: move, copy, rotate, scale and point-based align;
+- modify tools: delete, break point, break segment, trim, extend, offset and fillet;
+- offset for lines, circles, arcs and straight-segment polylines, including preview;
+- line-line fillet with radius option and radius `0` sharp-corner join;
+- align object tools: left, right, top and bottom;
+- distribute object tools: horizontal and vertical distribution by centers;
+- measure tools for distance, entity properties, angles and closed-polyline areas;
+- Zoom Window, Zoom Extents, pan and reset view;
 - CAD-style crosshair cursor;
-- visual feedback for active command, current layer, snap type, rendered entity count and temporary measurements;
-- application icon and in-app logo assets created and owned by Emilie Rollandin;
-- two-column left tool panel grouping Select/Draw/Dimension/Measure separately from Edit tools;
-- v0.5 advanced modify-tool behavior for Break, Trim and Extend with locked/hidden-layer regression coverage.
+- undo/redo for document mutations.
+
+See `docs/release-v0.8.md` for the current release notes.
 
 ---
 
 ## User interface
 
-The desktop application is built with **Avalonia UI**.
-
-The current UI layout is intentionally divided into stable areas:
+The UI is organized into stable zones:
 
 ```text
-File command bar     New / Open / Save / Save As / current file name / dirty marker
-Top CAD bar          layer selector, layer state, Layers..., Line formats..., Text formats..., Grid..., Polar selector, Undo/Redo, Extents, Props, active command
-Left tool panel      two columns: Select / Draw / Dimension / Measure and Edit
-Center canvas        drawing area
-Right panel          optional editable Property Panel v2
-Bottom snap bar      object snapping and legacy Ortho controls
-Command line         typed point, distance and command input
+File command bar     New / Open / Save / Save As / export buttons / file name / dirty marker
+Top CAD bar          layer selector, layer state, managers, grid, polar tracking, undo/redo, view commands
+Left tool panel      Select, Draw, Dimension, Measure, Edit, Order, Align/Distribute and Navigate groups
+Center canvas        drawing area with CAD crosshair and previews
+Right panel          editable Property Panel
+Bottom snap bar      snap toggles and drafting toggles
+Command row          active tool, contextual prompt and command input
 Status bar           coordinates, snap state, measurements, rendered count and messages
 ```
 
-The file command bar is deliberately kept in the highest, separate row so it is not accidentally removed when toolbars or CAD controls evolve.
-
-The standard mouse cursor is hidden over the canvas and replaced by a large crosshair. A small rectangle around the intersection identifies the exact picking point. Entity snapping uses a simple rectangular marker so selection-oriented snapping remains visually distinct from geometric point snapping.
-
-While tools are active, the UI can show temporary construction feedback:
-
-- accepted base point;
-- vector line from base point to cursor or snap point;
-- preview geometry;
-- `L`, `DX` and `DY` measurement values;
-- transform previews;
-- grip markers and grip edit previews.
+The command row is intentionally compact. The active tool and current prompt are shown next to the command input so the user knows which phase is active without losing drawing space.
 
 ---
 
-## File commands and persistence
+## Command input
 
-OpenCad2D saves drawings in an internal JSON format using the extension:
+OpenCad2D includes a CAD-style guided command input.
+
+Examples:
+
+```text
+L
+100,100
+@100,0
+```
+
+```text
+PL
+0,0
+@100,0
+@100<90
+C
+```
+
+Supported input forms:
+
+| Input | Meaning |
+|---|---|
+| `100,50` | absolute point |
+| `@50,0` | relative cartesian point |
+| `@100<45` | relative polar point |
+| `25` | distance, angle or factor when the active command expects it |
+| `C`, `Close`, `U`, `Undo`, `All`, `Radius` | command options when exposed by the active prompt |
+| empty Enter while idle | repeat the last valid command |
+| empty Enter inside a command | confirm only if the current phase accepts confirmation |
+
+Mouse input and typed input feed the same tool state machine. When a tool asks for a point, the user can either click on the canvas or type coordinates.
+
+---
+
+## Native file format
+
+OpenCad2D saves native drawings as:
 
 ```text
 .opencad2d.json
 ```
 
-The format is intended for reliable save/reopen inside OpenCad2D. It is not a DXF or DWG interoperability format.
+The native file stores:
 
-The UI supports:
+- entities;
+- layers;
+- line formats;
+- text formats;
+- dimension styles;
+- viewport state;
+- document-level settings such as grid, snap, ortho and polar tracking.
 
-| Command | Shortcut |
-|---|---|
-| New | `Ctrl+N` |
-| Open | `Ctrl+O` |
-| Save | `Ctrl+S` |
-| Save As | `Ctrl+Shift+S` |
-| Export SVG | button in file bar |
-| Export DXF | button in file bar |
-
-The application tracks dirty state using command history generation. When the drawing has unsaved changes, the title/file bar shows `*`.
-
-Before New, Open or window close, if the drawing is dirty, the application asks whether to save changes:
-
-```text
-Save       -> save, then continue
-Don't Save -> discard changes, then continue
-Cancel     -> abort the operation
-```
-
-Viewport state is saved and restored with the drawing. This includes pan and zoom.
+The native format is for OpenCad2D save/reopen reliability. Use DXF/SVG/PDF for interchange/export.
 
 ---
 
+## Build and test
 
-## Command line
-
-OpenCad2D includes a CAD-style command line for tool activation and precise point input.
-
-Supported command-line behavior:
-
-- tool activation by command name or alias, for example `LINE`, `L`, `CIRCLE`, `C`, `TRIM`, `TR`, `OFFSET`, `O`, `FILLET` and `F`;
-- case-insensitive alias resolution through `CommandAliasRegistry`;
-- contextual prompts that show the active command phase;
-- a compact visible command history;
-- absolute point input, for example `100,50`;
-- relative point input from the current tool base point, for example `@100,0`;
-- relative polar input, for example `@100<45`;
-- direct distance input in the current cursor/constrained direction, for example `50`;
-- `Enter` on an empty command line repeats the last valid command when the workspace is idle;
-- empty Enter inside an active command is routed to that command and confirms only phases that allow confirmation;
-- right-click on the canvas repeats the last valid command when the workspace is idle;
-- `Esc` cancels the active tool when the command input is empty.
-
-The decimal separator is always `.`. The comma is reserved for separating X/Y coordinates.
-
-Relative polar input uses CAD orientation:
-
-```text
-0°   = right
-90°  = up
-180° = left
-270° = down
+```bash
+dotnet build OpenCad2D.sln
+dotnet test OpenCad2D.sln --no-build
 ```
 
-Typed coordinate input is submitted to the same tools used by mouse input. It is also protected from accidental snap/ortho/polar alteration so exact numeric values remain exact.
+Or use the repository workflow:
 
----
-
-## Property Panel v2
-
-The right Property Panel is now editable for the supported properties of selected entities.
-
-Supported edit groups include:
-
-- point position;
-- line start/end coordinates;
-- circle center/radius;
-- arc center/radius/start/end angles;
-- text value, insertion point, rotation and text format;
-- common polyline state such as `Closed`;
-- layer assignment;
-- dimension style and dimension text override.
-
-Detailed polyline vertex editing remains intentionally handled by grip editing instead of a vertex table in the Property Panel.
-
-All Property Panel edits are committed through undoable commands, primarily `ReplaceEntitiesCommand`, so undo/redo, dirty-state tracking and spatial-index consistency remain intact.
-
----
-
-## SVG export
-
-OpenCad2D can export the current visible drawing to SVG.
-
-Current SVG export behavior:
-
-- exports visible `PointEntity`, `TextEntity`, geometric entities and basic dimensions;
-- ignores entities on hidden layers by default;
-- can optionally include hidden layers;
-- includes entities on locked layers when their layer is visible;
-- uses stroke color, line weight and dash style from the line format assigned to the entity layer;
-- uses text format font, height, color, bold and italic for single-line text;
-- computes an automatic `viewBox` from visible drawing bounds;
-- preserves the same visual Y orientation as the canvas;
-- supports selectable background modes: canvas dark, white or transparent;
-- can group output by layer using SVG `<g>` elements with `data-layer-name` attributes;
-- writes standard `.svg` files that can be opened in a browser or vector editor.
-
-Exporting SVG is not the same as saving the drawing. Export commands create external files, but they do not save the editable native OpenCad2D project. Use **Save** or **Save As** to save the `.opencad2d.json` drawing.
-
-```text
-Export SVG does not change CurrentFilePath.
-Export SVG does not call MarkSaved().
-Export SVG does not clear the dirty marker.
-```
-
-The SVG exporter lives in `OpenCad2D.Export` and does not depend on Avalonia, App or Tools.
-
-See also:
-
-```text
-docs/svg-export.md
-docs/export.md
+```bash
+make check
 ```
 
 ---
-
-## DXF import
-
-OpenCad2D can import a focused subset of ASCII DXF files.
-
-Supported DXF import entities:
-
-```text
-LINE
-CIRCLE
-ARC
-POINT
-LWPOLYLINE
-TEXT
-```
-
-The importer also reads the DXF `TABLES/LAYER` table where available and maps common layer properties:
-
-- layer name;
-- basic ACI color;
-- common linetypes;
-- lineweight group code `370`;
-- negative ACI color and frozen state as hidden;
-- locked state as locked.
-
-Unsupported DXF records are skipped with readable diagnostics rather than stopping the whole import. The dedicated DXF Import Report window shows imported entity counts, layer counts, warnings, errors and skipped records.
-
-Importing DXF replaces the current document after the normal unsaved-changes confirmation. The imported drawing is treated as a new unsaved OpenCad2D document: `CurrentFilePath` is cleared and the document is marked dirty so it can be saved as `.opencad2d.json`.
-
-See also:
-
-```text
-docs/dxf-import.md
-docs/v0.7-interoperability-plan.md
-```
-
----
-
-## DXF export
-
-OpenCad2D can export the visible model-space drawing to AutoCAD 2000 ASCII DXF (`AC1015`).
-
-Current DXF export behavior:
-
-- writes `HEADER`, `TABLES`, `LTYPE`, `LAYER`, `ENTITIES` and `EOF` sections;
-- exports `PointEntity` as `POINT`;
-- exports `TextEntity` as `TEXT`;
-- exports `LineEntity` as `LINE`;
-- exports `CircleEntity` as `CIRCLE`;
-- exports `ArcEntity` as `ARC`;
-- exports `PolylineEntity` as `LWPOLYLINE`;
-- exports dimensions as graphical primitives (`LINE`, `ARC` and `TEXT`), not native DXF `DIMENSION` records;
-- writes all document layers to the DXF `LAYER` table;
-- writes common linetypes to the DXF `LTYPE` table;
-- derives layer color, true color, lineweight and linetype from the layer's `LineFormat`;
-- writes entity appearance as `BYLAYER`;
-- ignores entities on hidden layers by default;
-- exports visible locked-layer entities;
-- keeps a viewer-friendly Y orientation for normal DXF export.
-
-DXF export/import round-trip tests cover the supported base entity subset using a deterministic model-coordinate option. External compatibility validation in LibreCAD, QCAD and Autodesk DWG TrueView is still part of the pre-1.0 work.
-
-Exporting DXF is not the same as saving the drawing. It creates an external interchange file, but it does not change the current `.opencad2d.json` file path and does not clear dirty state.
-
-See also:
-
-```text
-docs/dxf-export.md
-docs/dxf-import.md
-```
-
----
-
-## PDF export
-
-OpenCad2D can export the current visible drawing to a single-page vector PDF.
-
-Current PDF export behavior:
-
-- exports visible base geometry and single-line text;
-- supports A4, A3, A2, A1 and A0 page sizes;
-- supports portrait and landscape orientation;
-- supports margins in millimeters;
-- uses fit-to-page scaling;
-- exports visible layers by default;
-- can optionally include hidden layers;
-- uses print-friendly colors by default so very light screen colors remain visible on a white page;
-- preserves the visual top/bottom orientation of the canvas.
-
-The `Export PDF` command opens a settings window before the save-file picker.
-
-PDF export creates an external print/share file. It does not save the native OpenCad2D drawing and does not clear dirty state.
-
-See also:
-
-```text
-docs/pdf-export.md
-docs/export.md
-```
-
----
-
-## Drawing tools
-
-Implemented drawing tools:
-
-- `PointTool` — one picked position;
-- `TextTool` — insertion point plus single-line text dialog;
-- `LineTool` — two points;
-- `RectangleTool` — opposite corners, stored as closed polyline;
-- `RectangleBySidesTool` / `Rect Sides` — first point, first side, second side;
-- `CircleTool` — center and radius point or direct distance radius;
-- `ArcTool` — center, start point, end direction;
-- `ArcThreePointsTool` / `Arc 3P` — start point, point on arc, end point;
-- `PolylineTool` — multi-point open or closed polyline.
-
-Implemented dimension tools:
-
-- `HorizontalDimensionTool` — horizontal distance between two measured points;
-- `VerticalDimensionTool` — vertical distance between two measured points;
-- `AlignedDimensionTool` — true distance aligned to the two measured points;
-- `RadiusDimensionTool` — radius label using `R`;
-- `DiameterDimensionTool` — diameter label using `Ø`;
-- `AngularDimensionTool` — angular label in degrees, including reflex angles greater than 180°.
-
-`PolylineTool` supports:
-
-```text
-click / coordinates / relative coordinates / direct distance / snap / Ortho / Polar Tracking
-Enter -> finish open polyline
-C     -> close polyline
-Esc   -> cancel
-```
-
-Example:
-
-```text
-Polyline
-100,100
-@100,0
-@0,50
-@-100,0
-C
-```
-
-This creates a closed rectangular polyline.
-
----
-
-
-## Measure tools
-
-Implemented non-mutating measure tools:
-
-- `MeasureDistanceTool` / `Distance` — two points; reports distance, ΔX, ΔY and angle;
-- `MeasureEntityTool` / `Entity` — click an entity; reports length, radius, diameter, circumference, sweep, area or vertex information depending on entity type;
-- `MeasureAngleTool` / `Angle` — three points; reports angle and supplementary angle;
-- `MeasureAreaTool` / `Area` — click a closed polyline; reports area, perimeter/length and vertex count.
-
-Measure tools do not create geometry, do not execute undoable commands and do not mark the drawing dirty. They use snap and Polar Tracking where appropriate. Entity-based measure tools use entity snap and support `Ctrl+click` cycling through overlapping entities.
-
----
-
-## Editing and transform tools
-
-Implemented editing tools:
-
-- `MoveTool`;
-- `CopyTool`;
-- `DeleteTool`;
-- `RotateTool`;
-- `ScaleTool`;
-- `AlignTool`.
-
-`RotateTool` uses base point, reference point and destination point. With Ortho enabled, interactive rotation is constrained to 90-degree directions. Polar Tracking is currently applied to point-placement workflows such as line, polyline and move; explicit rotate-angle computation is separate and does not yet use the Polar Tracking angle step.
-
-`ScaleTool` uses base point, reference point and destination point. The scale factor is calculated as:
-
-```text
-factor = distance(base, destination) / distance(base, reference)
-```
-
-`AlignTool` maps two source points to two destination points. After the fourth point, the tool asks whether scaling should be applied:
-
-```text
-Enter or N -> align without scale
-Y          -> align with uniform scale
-```
-
-All edit and transform tools create undoable commands and modify the document through `CadDocument`.
-
-`MoveTool` can now start even when no entity is selected. In that case it first enters an entity-selection phase, then moves to the usual base-point/destination-point workflow. During this first phase only entity snap is active; after confirmation, the tool returns to the normal geometric snaps.
-
-### Modify tools
-
-Implemented modify tools:
-
-- `Break Point` — splits a `LineEntity` into two lines at one picked point;
-- `Break Segment` — removes the segment between two picked break points on a `LineEntity`;
-- `Extend` — extends supported open entities to a picked boundary;
-- `Trim` — trims supported entities against a picked cutting edge.
-
-Current `Trim`/`Extend` geometry support includes lines, arcs, circles and polylines where the operation is well-defined. Circles can be trimmed into arcs, but they are not extended because they are closed entities. These tools use geometric services in Core and commit through `ModifyEntitiesCommand`, so undo/redo and locked-layer protection remain consistent.
-
----
-
-## Grip editing
-
-Grip editing allows direct geometry modification through visible grip points.
-
-Current behavior:
-
-- `Tab` enters grip edit mode;
-- if one entity is selected, that entity is edited;
-- if multiple entities are selected, the last selected entity is edited;
-- grips show cold, hot and active visual states;
-- moving a grip shows a preview;
-- committing a grip edit uses an undoable replacement command;
-- `Esc` cancels the active grip or exits grip edit mode.
-
-Grip editing does not bypass locked-layer protection because final modifications still go through document mutation APIs.
-
----
-
-## Layers
-
-Layers control visibility, lock state and the line format used by rendering.
-
-Current behavior:
-
-- hidden layer entities are not rendered, selected or snapped to;
-- locked layer entities remain visible;
-- locked layer entities are not selectable;
-- locked layer entities can still be used for snapping;
-- locked layer entities cannot be removed, replaced, moved or transformed.
-
-The current layer must always remain:
-
-```text
-visible
-unlocked
-```
-
-This avoids ambiguous drawing behavior when creating new entities.
-
-### Layer Manager
-
-The Layer Manager is a dedicated window opened from the `Layers...` button. It avoids cluttering the main CAD screen.
-
-Current Layer Manager features:
-
-- create layer;
-- delete layer if empty and not current;
-- rename layer;
-- set current layer;
-- toggle visible/locked for non-current layers;
-- choose the line format used by each layer;
-- apply changes only with OK;
-- discard changes with Cancel;
-- apply layer changes through one undoable command.
-
-Rules:
-
-- layer `0` is protected;
-- layer `0` cannot be deleted or renamed;
-- the current layer cannot be hidden or locked;
-- layer names must be non-empty and unique;
-- layers with entities cannot be deleted.
-
-### Line Format Manager
-
-The Line Format Manager is opened from `Line formats...`.
-
-It manages reusable stroke definitions used by layers:
-
-- format name;
-- color;
-- line weight;
-- line style;
-- built-in formats, editable but not deletable;
-- user-defined formats;
-- undoable application through `UpdateLineFormatsCommand`.
-
-Default formats are `Continua`, `Asse`, `Tratteggiata`, `Tratto due punti` and `Tratto e punto`.
-
-### Text Format Manager
-
-The Text Format Manager is opened from `Text formats...`.
-
-It manages reusable appearance definitions for single-line text annotations:
-
-- format name;
-- font family;
-- text height in model units;
-- color;
-- bold;
-- italic;
-- preview;
-- built-in formats, editable but not deletable;
-- user-defined formats;
-- undoable application through `UpdateTextFormatsCommand`.
-
-Default text formats are `Standard`, `Title`, `Annotation` and `Small`.
-
----
-
-## Property Panel v2
-
-The Property Panel is a right-side optional editable panel. It shows document/selection information and allows undoable edits for the supported properties of primary entities.
-
-It shows:
-
-- document state when nothing is selected;
-- line properties: start, end, length, `DX`, `DY`, angle and bounds;
-- circle properties: center, radius, diameter, area, circumference and bounds;
-- point properties: position and bounds;
-- text properties: text content, insertion point, rotation, text format and bounds;
-- polyline properties: vertices, closed/open state, length, area when closed and bounds;
-- dimension style and dimension text override where supported;
-- multiple-selection summary: count, entity types, layers and combined bounding box.
-
-Editable changes are committed through undoable commands, so undo/redo, dirty-state tracking and spatial-index consistency remain intact. Detailed polyline vertex coordinate editing is not yet available in the panel; polyline vertices are currently edited through grip editing.
-
----
-
-## Command line input
-
-OpenCad2D supports CAD-style command line point input.
-
-While a tool is waiting for a point, the user can type directly without first focusing the command input box.
-
-Supported formats:
-
-| Input | Meaning |
-|---|---|
-| `100,50` | absolute UCS coordinates |
-| `@50,0` | relative UCS offset from the current base point |
-| `5` | direct distance entry from the current base point along the cursor direction |
-
-The command line does not create entities directly. It resolves typed input to a CAD point and forwards it to the active tool exactly like a mouse click.
-
----
-
-## Ortho mode and Polar Tracking
-
-OpenCad2D supports two related input constraints:
-
-```text
-Ortho            legacy horizontal/vertical constraint
-Polar Tracking   configurable angular step: Off, 90°, 45°, 30° or 15°
-```
-
-Polar Tracking constrains interactive point input to the nearest multiple of the selected angle from the current base point. For example, `45°` allows directions at `0°`, `45°`, `90°`, `135°` and so on.
-
-Input resolution order is intentionally:
-
-```text
-raw cursor -> snap candidate -> Polar/Ortho angular constraint
-```
-
-This means a snapped point may then be projected onto the active polar direction. Explicit coordinate input remains exact. Direct distance input uses the effective constrained direction when Polar Tracking or Ortho is active.
-
----
-
-## Grid and viewport performance
-
-The grid supports:
-
-- separate visual grid display and grid snapping;
-- rectangular and isometric layouts;
-- major and minor grid spacing;
-- configurable origin;
-- zoom-based minimum/maximum screen spacing thresholds;
-- a `Grid...` settings window in the top CAD bar.
-
-The isometric grid is rendered with vertical lines plus two diagonal families at `+angle` and `-angle`. With the default `30°` angle, vertical lines are spaced so that major/minor verticals pass through the vertices created by diagonal intersections.
-
-Viewport culling is applied during rendering. The canvas renders only visible entities whose bounding boxes intersect the visible world area, with a small safety margin.
-
-The status bar shows:
-
-```text
-Rendered: visible-on-screen / total-visible
-```
-
-Grid, preview, grips, snap marker and crosshair are not culled as normal entities.
-
----
-
-## Architecture
-
-OpenCad2D is split into focused projects:
-
-```text
-src/
-  OpenCad2D.Geometry/
-  OpenCad2D.Core/
-  OpenCad2D.Interaction/
-  OpenCad2D.Tools/
-  OpenCad2D.Persistence/
-  OpenCad2D.Export/
-  OpenCad2D.App/
-
-tests/
-  OpenCad2D.Geometry.Tests/
-  OpenCad2D.Core.Tests/
-  OpenCad2D.Interaction.Tests/
-  OpenCad2D.Tools.Tests/
-  OpenCad2D.Persistence.Tests/
-```
-
-The dependency direction is intentional:
-
-```text
-App -> Persistence -> Core -> Geometry
-App -> Export -> Core -> Geometry
-App -> Tools -> Interaction -> Core -> Geometry
-```
-
-`OpenCad2D.Geometry` contains geometric primitives, operations, transformations, tolerance handling and coordinate systems.
-
-`OpenCad2D.Core` contains CAD entities, layers, styles, document model, spatial indexing, commands and command history.
-
-`OpenCad2D.Interaction` contains hit testing, selection and snapping.
-
-`OpenCad2D.Tools` contains UI-independent CAD tools, controllers and workspace logic.
-
-`OpenCad2D.Persistence` contains the internal document serializer.
-
-`OpenCad2D.Export` contains export services such as SVG export. It is independent from Avalonia and Tools.
-
-`OpenCad2D.App` is the Avalonia desktop application. It handles presentation, input, file dialogs, viewport navigation and rendering.
-
-The main architectural rule is that CAD behavior should remain outside the UI.
-
----
-
-## Current limitations
-
-OpenCad2D is still an experimental CAD prototype. The most important current limitations are:
-
-- dimensions are non-associative: they do not automatically update when measured geometry is moved, edited or deleted;
-- export commands create SVG, DXF or PDF files, but they do not save the native `.opencad2d.json` project and do not clear the dirty marker;
-- DXF import/export supports a focused 2D subset and still needs systematic external validation in LibreCAD, QCAD and Autodesk DWG TrueView before v1.0;
-- Polar Tracking is applied to point-placement workflows, not yet to explicit `RotateTool` angle computation;
-- two-cutting-edge Trim is currently supported for line targets; broader multi-boundary Trim behavior is planned for future geometry refinement;
-- detailed numeric editing of individual polyline vertices is currently done through grip editing, not through a Property Panel vertex table;
-- application/session settings are not yet fully persisted between sessions;
-- draw order / Z-order independent from layers is planned before v1.0.
-
-See also [Known limitations](docs/known-limitations.md).
 
 ## Documentation
 
-Technical documentation lives in the [`docs`](docs/) folder.
+Important documents:
 
-Recommended reading:
+| Document | Purpose |
+|---|---|
+| `docs/architecture.md` | project structure and dependency rules |
+| `docs/roadmap.md` | current roadmap and next milestones |
+| `docs/commands.md` | commands, aliases and undoable command rules |
+| `docs/command-input.md` | command input syntax and tool workflow |
+| `docs/tools.md` | tool behavior and workflow rules |
+| `docs/line-formats.md` | line format and line style pattern rules |
+| `docs/application-settings.md` | document settings and local settings separation |
+| `docs/draw-order.md` | Z-order behavior |
+| `docs/persistence.md` | native file format and recovery rules |
+| `docs/release-v0.8.md` | current release notes |
+| `docs/ai-handoff.md` | current handoff for future development |
 
-- [Architecture](docs/architecture.md)
-- [Commands](docs/commands.md)
-- [Tools](docs/tools.md)
-- [Snapping](docs/snapping.md)
-- [Polar Tracking](docs/polar-tracking.md)
-- [Roadmap](docs/roadmap.md)
-- [Transform Tools](docs/transform-tools.md)
-- [Modify Tools](docs/modify-tools.md)
-- [Export](docs/export.md)
-- [Layer Appearance](docs/layer-appearance.md)
-- [Line Formats](docs/line-formats.md)
-- [Text Formats](docs/text-formats.md)
-- [Text and Dimensions](docs/text-and-dimensions.md)
-- [Known Limitations](docs/known-limitations.md)
-- [AI Handoff Document](docs/ai-handoff.md)
-
----
-
-## Build and run
-
-OpenCad2D targets **.NET 8**.
-
-Build:
-
-```bash
-dotnet build
-```
-
-Run:
-
-```bash
-dotnet run --project src/OpenCad2D.App
-```
-
-Run tests:
-
-```bash
-dotnet test
-```
-
-If you use the included `Makefile`:
-
-```bash
-make run
-make build
-make test
-make check
-make clean
-```
-
----
-
-## Development principles
-
-OpenCad2D follows a few practical rules:
-
-- CAD logic should remain independent from Avalonia.
-- Geometry should not depend on the document model or the UI.
-- User-facing document changes should go through commands.
-- Commands should modify the document through the `CadDocument` API.
-- Tools should work in model/user coordinates, not screen pixels.
-- The UI should convert input and render output, not own CAD behavior.
-- The command line should resolve input to points and forward them to the active tool, not create entities directly.
-- Geometric snapping should query visible spatial candidates.
-- Entity snapping should query selectable candidates, meaning visible entities that are not on locked layers.
-- Selection should query selectable entities, meaning visible entities that are not on locked layers.
-- Rendering should use viewport culling for normal entities.
-- Numeric comparisons in geometry should use `GeometryTolerance`.
-- New tools should be testable without launching the desktop application.
-- Stable UI areas such as the file command bar should not be mixed into tool-specific layout regions.
-
----
-
-## Roadmap summary
-
-Recently completed:
-
-1. persistence and stable file command bar;
-2. grid configuration with `Grid...` dialog and rectangular/isometric layouts;
-3. viewport culling;
-4. editable Property Panel v2 for supported primary properties;
-5. layer manager, line formats and text formats;
-6. CAD-style guided command input with aliases, visible history, coordinates, direct distance and relative polar input;
-7. rotate, scale and align tools;
-8. polyline tool and grip editing;
-9. arc tools, rectangle by sides and broader Break/Trim/Extend geometry support;
-10. Offset and Line-Line Fillet as command-driven modify tools;
-11. text and non-associative dimension tools;
-12. measure tools;
-13. SVG, DXF and PDF export;
-14. DXF import for a focused 2D subset;
-15. application icon and initial branding assets.
-
-Next planned areas before v1.0:
-
-1. application/session settings persistence;
-2. draw order / Z-order independent from layers;
-3. external DXF validation in LibreCAD, QCAD and Autodesk DWG TrueView;
-4. end-to-end workflow tests: draw -> save -> reopen and import DXF -> modify -> export;
-5. clearer UX feedback for partially supported operations;
-6. first-use, import/export and shortcuts documentation.
+Historical milestone notes before v0.8 are no longer needed in the active documentation set.
 
 ---
 
 ## License
 
-OpenCad2D source code is released under the **GNU General Public License v3.0 or later**.
-
-See the [`LICENSE`](LICENSE) file for details.
-
-Third-party dependencies and notices are listed in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).
-
----
-
-## Branding and trademarks
-
-The OpenCad2D name, logo and application icon are original branding assets created and owned by **Emilie Rollandin**.
-
-They may be used to identify the official OpenCad2D project, documentation, builds and releases. They may not be used to misrepresent modified versions, forks or unrelated products as official OpenCad2D releases.
-
-OpenCad2D is an independent project. It is not affiliated with, endorsed by, sponsored by or approved by Autodesk, Inc., Dassault Systèmes, LibreCAD, QCAD, FreeCAD or any other CAD vendor/project.
-
-AutoCAD, Autodesk, DWG and DWG TrueView are trademarks or registered trademarks of Autodesk, Inc. and/or its affiliates. DXF support is implemented for interoperability purposes.
-
-Additional legal notes are available in [`docs/legal.md`](docs/legal.md).
-
----
-
-## Author
-
-Created by **Emilie Rollandin**.
-
-GitHub: [archistico](https://github.com/archistico)
+OpenCad2D is released under the GPL-3.0-or-later license. See `LICENSE`.

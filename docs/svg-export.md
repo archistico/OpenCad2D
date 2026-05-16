@@ -26,23 +26,19 @@ The SVG exporter uses layer line formats for stroke color, line weight and dash 
 
 ## Background modes
 
-v0.7 adds selectable SVG background modes through `SvgBackgroundMode`:
+Selectable SVG background modes:
 
 ```text
-CanvasDark   -> preserves the previous OpenCad2D dark canvas look
+CanvasDark   -> preserves the OpenCad2D dark canvas look
 White        -> useful for print-friendly diagrams and vector editors
 Transparent  -> useful for websites, documentation and compositing
 ```
-
-The previous dark-background behavior remains the exporter default for compatibility.
 
 ---
 
 ## Layer grouping
 
-v0.7 adds optional grouping by layer.
-
-When enabled, entities are wrapped in SVG groups like:
+Optional grouping by layer wraps entities in SVG groups:
 
 ```xml
 <g id="layer-Walls" data-layer-name="Walls">
@@ -50,9 +46,7 @@ When enabled, entities are wrapped in SVG groups like:
 </g>
 ```
 
-This makes the SVG easier to inspect or edit in tools such as Inkscape, Illustrator or browser-based workflows.
-
-The generated `id` is sanitized for SVG compatibility. The `data-layer-name` attribute preserves the original layer name.
+This makes the SVG easier to inspect or edit in external vector tools.
 
 ---
 
@@ -70,65 +64,22 @@ The settings window exposes an option to include hidden layers when explicitly r
 
 ---
 
+## Line formats
+
+SVG export uses the effective `LineFormat.DashPattern`.
+
+Example:
+
+```xml
+stroke-dasharray="8 4"
+```
+
+Continuous lines omit `stroke-dasharray`.
+
+---
+
 ## Coordinate orientation
 
 SVG export preserves the same visual Y orientation as the OpenCad2D canvas.
 
 A shape that appears near the top of the OpenCad2D canvas should also appear near the top of the exported SVG.
-
----
-
-## UI command
-
-The UI command is:
-
-```text
-Export SVG
-```
-
-The command opens an SVG settings window before the save-file picker.
-
-Available settings:
-
-```text
-background mode
-margin
-include hidden layers
-group by layer
-include metadata
-```
-
-Layer grouping is enabled by default in the settings dialog.
-
----
-
-## Main implementation files
-
-```text
-src/OpenCad2D.Export/Svg/ISvgExporter.cs
-src/OpenCad2D.Export/Svg/SvgExporter.cs
-src/OpenCad2D.Export/Svg/SvgExportOptions.cs
-src/OpenCad2D.Export/Svg/SvgExportResult.cs
-src/OpenCad2D.Export/Svg/SvgBackgroundMode.cs
-src/OpenCad2D.App/SvgExportSettingsWindow.axaml
-src/OpenCad2D.App/ViewModels/Svg/SvgExportSettingsWindowViewModel.cs
-```
-
----
-
-## Test coverage
-
-SVG tests cover:
-
-```text
-basic SVG output
-entity export
-line-format export
-text export
-dimension export
-hidden-layer behavior
-white background
-transparent background
-layer grouping
-settings view-model validation
-```

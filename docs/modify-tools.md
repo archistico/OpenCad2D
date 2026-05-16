@@ -1,353 +1,168 @@
 # Modify Tools
 
-Modify tools change existing geometry by splitting, shortening or extending entities.
-
-The current implementation keeps the interaction simple while moving the geometric logic into Core services. Tools own only the workflow state; Core owns the calculations; document mutations go through undoable commands.
-
----
-
-## Implemented infrastructure
-
-Core services include:
-
-```text
-CadEntityIntersectionService
-CadTrimService
-CadExtendService
-LineParameterService
-LineIntersectionService
-LineBreakService
-```
-
-Command:
-
-```text
-ModifyEntitiesCommand
-```
-
-`ModifyEntitiesCommand` can replace one or more original entities with zero, one or more resulting entities. This is necessary because modify operations may split one entity into pieces, remove a piece entirely or replace a closed entity with one or more open pieces.
+Modify tools change existing geometry. Tools own workflow state; geometry calculations should be delegated to focused services; mutations must be undoable.
 
 ---
 
 ## Break Point
 
-Current scope:
+Targets:
 
-```text
-Targets: LineEntity, ArcEntity, PolylineEntity
-CircleEntity: not applicable, with a clear message
-```
+- Line;
+- Arc;
+- Polyline.
+
+Circle is not applicable; use Break Segment for circles.
 
 Workflow:
 
 ```text
-activate Break Point
-pick target entity
-pick break point
-project point onto the selected entity
-replace original entity with the resulting pieces
+BREAKPOINT: Select entity:
+BREAKPOINT: Specify break point:
 ```
 
-Supported behavior:
-
-```text
-LineEntity       -> two line segments
-ArcEntity        -> two arcs preserving the original direction
-Open Polyline    -> two open polylines
-Closed Polyline  -> one open polyline cut at the break point
-CircleEntity     -> not applicable; use Break Segment instead
-```
-
-The tool rejects break points too close to non-useful endpoints to avoid degenerate pieces.
+The picked point is projected onto the target entity. Degenerate pieces are rejected.
 
 ---
 
 ## Break Segment
 
-Current scope:
+Targets:
 
-```text
-Targets: LineEntity, ArcEntity, CircleEntity, PolylineEntity
-```
+- Line;
+- Arc;
+- Circle;
+- Polyline.
 
 Workflow:
 
 ```text
-activate Break Segment
-pick target entity
-pick first break point
-pick second break point
-project both points onto the selected entity
-remove the segment between the two projected points
-replace the original entity with the remaining valid pieces
+BREAK: Select entity:
+BREAK: Specify first break point:
+BREAK: Specify second break point:
 ```
 
-Supported behavior:
-
-```text
-LineEntity       -> zero, one or two remaining line segments
-ArcEntity        -> zero, one or two remaining arcs preserving the original direction
-CircleEntity     -> one remaining major arc after removing the minor arc between the picked points
-Open Polyline    -> zero, one or two open polylines
-Closed Polyline  -> one open polyline after removing the shortest path between the picked points
-```
-
-The two break points are internally projected onto the target entity. For lines, arcs and open polylines, the path order is normalized so click order does not matter. For circles, the minor arc between the two points is removed. For closed polylines, the shortest path between the two points is removed. Degenerate results are discarded.
+For circles, the minor arc between the two projected points is removed. For closed polylines, the shortest path between points is removed.
 
 ---
 
 ## Extend
 
-Current boundary support:
+Boundary support:
 
-```text
-LineEntity
-CircleEntity
-ArcEntity
-PolylineEntity
-```
+- Line;
+- Circle;
+- Arc;
+- Polyline.
 
-Current target support:
+Target support:
 
-```text
-LineEntity
-ArcEntity
-open PolylineEntity
-```
-
-`CircleEntity` is intentionally not extended because it is already closed.
+- Line;
+- Arc;
+- open Polyline.
 
 Workflow:
 
 ```text
-activate Extend
-pick boundary entity
-pick target entity near the endpoint to extend
-extend the nearest valid endpoint until it reaches the boundary
+EXTEND: Select boundary entity:
+EXTEND: Select target entity:
 ```
 
-The tool remains active with the same boundary until `Esc`.
-
-Preview behavior:
-
-- the full resulting entity is shown with the normal preview style;
-- for line targets, the newly added extension segment is highlighted separately;
-- for arc targets, the newly added arc portion is highlighted separately;
-- for open polyline targets, the newly added endpoint segment is highlighted separately.
-
-The operation is ignored if there is no valid extension intersection or if the target cannot be extended in a meaningful way. The status message explains that no valid endpoint-to-boundary extension was found from the picked side. Closed polylines, circles, points, text and dimensions are not valid Extend targets.
+The target endpoint nearest the picked side is extended to the boundary when a valid extension exists.
 
 ---
 
 ## Trim
 
-Current cutting-edge support:
+Cutting-edge support:
 
-```text
-LineEntity
-CircleEntity
-ArcEntity
-PolylineEntity
-```
+- Line;
+- Circle;
+- Arc;
+- Polyline.
 
-Current target support:
+Target support:
 
-```text
-LineEntity
-CircleEntity
-ArcEntity
-PolylineEntity
-```
-
-Important behavior:
-
-- trimming a line may shorten it or split it depending on the picked side and intersections;
-- trimming a circle can replace it with one or more arcs;
-- trimming an arc keeps the remaining valid arc portion;
-- trimming a polyline works on its component segments where supported by the current service.
+- Line;
+- Circle;
+- Arc;
+- Polyline.
 
 Workflow:
 
 ```text
-activate Trim
-pick cutting edge
-pick target entity on the side/portion to remove
-replace the target with the remaining geometry
+TRIM: Select cutting edge or [All]:
+TRIM: Select entity side to trim or [All/Undo]:
 ```
 
-Optional two-cutting-edge workflow for line targets:
+Features:
 
-```text
-activate Trim
-pick first cutting edge
-Ctrl-click second cutting edge
-pick target line portion to remove
-replace the target with the remaining line fragment(s)
-```
-
-The Ctrl-click step keeps the existing single-boundary workflow compatible. With two cutting edges, a line target can remove the middle interval or one of the external intervals depending on where the target is picked. Adjacent remaining intervals are merged when the removed portion is external.
-
-The tool remains active with the selected cutting edge(s) until `Esc`.
-
-Preview behavior:
-
-- the remaining geometry is shown with the normal preview style;
-- for line targets, the portion that will be removed is highlighted separately;
-- with two cutting edges, the highlighted preview shows the interval selected by the target pick.
-
-The operation is ignored if the cutting edge(s) do not produce a valid trim result. The status message explains that the picked side cannot be trimmed by the selected boundary or cutting edges.
+- `All` uses all visible supported entities as cutting edges;
+- target entity is excluded from its own cutting-edge set in All mode;
+- additional cutting edges can be selected;
+- `Undo` reverses the last trim inside the active Trim command;
+- command remains active for repeated trims until cancelled or confirmed.
 
 ---
 
-## Design rules
-
-```text
-Geometry calculation belongs in Core services.
-Tools own interaction state only.
-Document mutations go through ModifyEntitiesCommand.
-CadDocument remains the final mutation boundary.
-Locked-layer rules must not be bypassed.
-Preview must not modify the document.
-Closed entities such as circles are trimmable but not extendable.
-```
-
----
-
-## Current limitations and follow-up work
-
-Recommended next refinements after v0.5:
-
-- broaden highlighted previews for Trim on arcs, circles and polylines;
-- broaden two-cutting-edge Trim beyond line targets only after the core geometry remains stable;
-- add optional user control for minor/major arc removal in Break Segment on circles;
-- add command-line variants after v0.6 command input is introduced;
-- integrate editable modify-related properties after Property Panel v2.
-
----
-
-## v0.5 completion summary
-
-The v0.5 milestone completed the planned advanced editing refinement pass. Detailed release notes are available in:
-
-```text
-docs/release-v0.5.md
-```
-
-Final v0.5 scope:
-
-```text
-Break Point    LineEntity, ArcEntity and PolylineEntity; CircleEntity returns a not-applicable message
-Break Segment  LineEntity, ArcEntity, CircleEntity and PolylineEntity
-Trim           One cutting edge for supported targets; two cutting edges for LineEntity targets
-Extend         LineEntity, ArcEntity and open PolylineEntity targets to visible boundaries
-```
-
-Main v0.5 implementation decisions:
-
-```text
-Break Point on CircleEntity: not applicable with clear message
-Break Segment on CircleEntity: remove minor arc between two picked points
-Trim with two cutting edges: edge 1 -> Ctrl-click edge 2 -> target portion
-Locked visible references: usable as boundary/cutting edge, not editable as targets
-Hidden entities: ignored entirely by modify tools
-```
-
-Layer behavior is covered by regression tests:
-
-```text
-Break Point / Break Segment:
-    hidden or locked targets are ignored.
-
-Trim:
-    hidden cutting edges are ignored;
-    locked visible cutting edges can be used as references;
-    locked targets are not modified.
-
-Extend:
-    hidden boundaries are ignored;
-    locked visible boundaries can be used as references;
-    locked targets are not modified.
-```
-
-The recommended v0.5 implementation order has been completed:
-
-```text
-1. Break Point advanced        done
-2. Break Segment advanced      done
-3. Trim with two cutting edges done
-4. Extend consolidation        done
-5. Layer rules                 done
-6. v0.5 closure docs           done
-```
-
----
-
-## v0.8 modify-tool additions
-
-v0.8 adds command-driven Offset and Fillet and improves Trim workflow guidance.
-
-### Offset
-
-Current scope:
-
-```text
-Targets: LineEntity, CircleEntity, ArcEntity
-PolylineEntity: deferred
-```
+## Offset
 
 Workflow:
 
 ```text
-activate Offset
-specify offset distance
-pick object to offset
-pick side point
-create offset entity
-return to object selection with the same distance
+OFFSET: Specify offset distance:
+OFFSET: Select object to offset:
+OFFSET: Specify side to offset:
 ```
 
-Behavior:
+Targets:
 
-- line offset creates a parallel line at the specified distance;
-- circle offset increases or decreases radius based on the side point;
-- arc offset increases or decreases radius while preserving center, angles and direction;
-- offsets that would create a zero or negative radius are rejected with a clear message.
+- Line;
+- Circle;
+- Arc;
+- straight-segment open/closed Polyline.
 
-### Fillet
+Rules:
 
-Current scope:
+- line offset creates a parallel line;
+- circle/arc offset changes radius based on picked side;
+- polyline offset uses miter joins;
+- invalid or degenerate results are rejected;
+- live preview is shown while choosing the side.
 
-```text
-Targets: LineEntity + LineEntity
-```
+Future work:
+
+- rounded joins;
+- advanced self-intersection cleanup;
+- polyline bulge/arc segment support;
+- Multiple/Through/Erase/Layer options.
+
+---
+
+## Fillet
 
 Workflow:
 
 ```text
-activate Fillet
-optionally set Radius / R
-pick first line
-pick second line
-replace the original lines with trimmed/extended result geometry
-add tangent fillet arc when radius is greater than zero
+FILLET: Select first line or [Radius] <r>:
+FILLET: Specify fillet radius:
+FILLET: Select second line:
 ```
 
-Behavior:
+Targets:
 
-- radius `0` creates a sharp-corner join at the theoretical line intersection;
-- positive radius creates a tangent arc and trims/extends both lines;
-- parallel lines are rejected with a clear message;
-- trim mode is always enabled in v0.8.
+- Line-Line.
 
-### Picked entity input
+Rules:
 
-`ToolPickedEntityInput` was introduced for side-sensitive modify commands. It preserves:
+- Radius option sets the active fillet radius;
+- radius `0` creates a sharp-corner join;
+- radius greater than `0` creates a tangent arc;
+- trim mode is always on.
 
-```text
-EntityId
-PickPoint
-ClosestPoint
-Entity
-```
+Future work:
 
-This foundation is needed by Offset, Fillet and future improvements to Trim, Extend, Break and Chamfer.
+- Line-Arc;
+- Arc-Arc;
+- polyline fillet;
+- NoTrim option.

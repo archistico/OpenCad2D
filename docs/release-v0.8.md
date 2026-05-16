@@ -1,245 +1,182 @@
-# OpenCad2D v0.8 Release Notes
+# OpenCad2D v0.8.x Release Notes
 
-OpenCad2D v0.8 focuses on CAD-style command input, guided tool workflows and essential modify tools.
-
-This release is a major usability milestone: the command line now helps the user understand the active command phase and can drive tools with exact typed input while preserving mouse-based workflows.
+This is the current consolidated release note for the v0.8/v0.8.x line. Older milestone release notes are obsolete and can be removed from the active documentation tree.
 
 ---
 
 ## Highlights
 
-- CAD-style guided command input with contextual prompts.
-- Compact visible command history near the command input.
-- Absolute coordinate input, for example `100,100`.
-- Relative cartesian coordinate input, for example `@100,0`.
-- Relative polar input, for example `@100<45`.
-- Direct distance input where the active prompt can resolve a distance from the current cursor direction.
-- Empty Enter repeats the last valid command when the workspace is idle.
-- Empty Enter confirms or completes active command phases only when that phase allows it.
-- New `OFFSET` / `O` command.
-- New `FILLET` / `F` command.
-- First advanced `TRIM` workflow with `All`, Ctrl-click additional cutting edges and in-command `Undo`.
+- CAD-style guided command input;
+- command-driven drawing, edit and modify tools;
+- native document settings persistence;
+- document recovery improvements;
+- advanced base Trim;
+- Offset with polyline support and live preview;
+- line-line Fillet;
+- independent draw order / Z-order;
+- align and distribute object tools;
+- custom line style dash patterns;
+- improved Line Format Manager and Text Format Manager with compact ColorPicker;
+- UI cleanup and improved tooltips.
 
 ---
 
 ## Command input
 
-The command input is now a guided CAD-style workflow instead of only a command launcher.
+The command input now supports:
 
-Examples:
+- contextual prompts;
+- command aliases;
+- absolute point input: `100,50`;
+- relative point input: `@50,0`;
+- relative polar input: `@100<45`;
+- direct distance/angle/factor input when expected;
+- options such as `Close`, `Undo`, `All` and `Radius`;
+- empty Enter repeat-last-command when idle.
 
-```text
-LINE: Specify first point:
-LINE: Specify second point:
-
-POLYLINE: Specify first point:
-POLYLINE: Specify next point or [Close/Undo]:
-
-OFFSET: Specify offset distance:
-OFFSET: Select object to offset:
-OFFSET: Specify side to offset:
-
-FILLET: Select first line or [Radius] <0>:
-FILLET: Specify fillet radius:
-FILLET: Select second line:
-```
-
-Typed input and mouse input share the same tool state for migrated commands. A point request can be satisfied either by clicking on the canvas or by typing coordinates.
-
-Supported typed point formats:
-
-```text
-100,50      absolute point
-@100,0      relative cartesian point
-@100<45     relative polar point
-```
-
-The decimal separator is always `.`. The comma is reserved for separating X/Y coordinates.
+The command row is compact and shows active tool + prompt + input box.
 
 ---
 
-## Command-driven tools
+## Drawing and editing tools
 
-The following tools now expose guided command phases:
+Command-driven workflows were added or consolidated for:
 
-- Line
-- Polyline
-- Rectangle
-- Circle
-- Arc 3P
-- Move
-- Copy
-- Rotate
-- Scale
-- Align
-- Break Point
-- Break Segment
-- Extend
-- Trim
-- Delete
-- Offset
-- Fillet
-
----
-
-## Trim advanced base
-
-`TRIM` now supports a first advanced workflow:
-
-```text
-TRIM: Select cutting edge or [All]:
-TRIM: Select entity side to trim or [All/Undo]:
-```
-
-Implemented behavior:
-
-- click a cutting edge to begin trimming;
-- Ctrl-click while trimming to add further cutting edges;
-- type `A` or `All` to use all visible supported entities as cutting edges;
-- click the side of the target entity to remove;
-- type `U` or `Undo` to undo the last trim operation inside the current Trim session;
-- press Enter while trimming to finish/reset the current Trim command.
-
-Advanced modes such as Fence, Crossing, Edge, Project, Erase and Shift-to-Extend remain future work.
+- Line;
+- Polyline;
+- Rectangle;
+- Circle;
+- Arc 3P;
+- Move;
+- Copy;
+- Rotate;
+- Scale;
+- Align;
+- Break Point;
+- Break Segment;
+- Extend;
+- Trim;
+- Offset;
+- Fillet;
+- Delete.
 
 ---
 
-## Offset
+## Modify tools
 
-Aliases:
+### Trim
 
-```text
-OFFSET
-O
-```
+Trim supports cutting edges, All mode, repeated trimming and in-command Undo.
 
-Workflow:
+### Offset
 
-```text
-OFFSET: Specify offset distance:
-OFFSET: Select object to offset:
-OFFSET: Specify side to offset:
-```
+Offset supports:
 
-Supported entities in v0.8:
+- Line;
+- Circle;
+- Arc;
+- straight-segment open/closed Polyline.
 
-- Line
-- Circle
-- Arc
+Polyline offset uses miter joins. Offset preview is shown before confirmation.
 
-After creating one offset, the command stays active and returns to object selection while keeping the current distance.
+### Fillet
 
-Polyline offset is intentionally deferred until a robust offset/join service is introduced.
+Fillet supports Line-Line fillets with Radius option. Radius `0` creates a sharp-corner join.
 
 ---
 
-## Fillet
+## Appearance and line formats
 
-Aliases:
-
-```text
-FILLET
-F
-```
-
-Workflow:
+Line formats now distinguish:
 
 ```text
-FILLET: Select first line or [Radius] <0>:
-FILLET: Specify fillet radius:
-FILLET: Select second line:
+LineStyle  = pattern category/style
+LineFormat = color + weight + style + effective dash pattern
 ```
 
-Supported in v0.8:
+Dash patterns are stored as numeric lists in drawing units.
 
-- Line-Line fillet
-- `Radius` / `R` option
-- radius `0` for sharp-corner joins
-- trim mode always enabled
+The Line Format Manager includes:
 
-Line-Arc, Arc-Arc, polyline fillet, multiple fillet and NoTrim mode are deferred.
+- compact ColorPicker;
+- pattern value editor;
+- dash preview;
+- automatic Custom style when editing pattern manually.
 
 ---
 
-## Startup and template improvements
+## Document settings and persistence
 
-v0.8 also stabilizes startup behavior:
+Native `.opencad2d.json` files now persist document-level settings such as:
 
-- the application starts maximized;
-- normal startup no longer seeds a sample drawing;
-- the default document is loaded from `src/OpenCad2D.App/Templates/default.opencad2d.json`;
-- the template contains default layers, line formats, text formats and dimension style definitions;
-- an internal fallback is used if the template cannot be loaded.
+- grid;
+- snap modes;
+- snap tolerance;
+- Ortho;
+- Polar Tracking;
+- current layer;
+- current text/dimension settings where supported.
+
+Old files remain supported through defaults and recovery behavior.
 
 ---
 
-## Selection and navigation improvements
+## Draw order and arrangement
 
-- Select All.
-- Select Last restores the last real selection before deselection.
-- Zoom Window.
-- Zoom Extents is also available in the Navigate group of the left tool panel.
+Draw order is independent from layers.
+
+Added:
+
+- To Front;
+- To Back;
+- Forward;
+- Backward;
+- draw order display in Property Panel;
+- Align Left / Right / Top / Bottom;
+- Distribute Horizontally / Vertically by centers.
+
+Hit testing follows draw order when entities overlap.
 
 ---
 
 ## UI refinements
 
-- About dialog updated with `info@opencad2d.org` and `www.opencad2d.org`.
-- Modal dialogs open centered on their owner.
-- Save-changes confirmation has a dedicated styled window.
-
----
-
-## Grip editing
-
-Arc grip behavior was refined:
-
-- moving a start/end grip in the 3-point arc workflow preserves the other two construction points;
-- moving the point-on-arc grip preserves the two endpoints and recalculates the arc center/radius;
-- moving the center grip moves the whole arc.
-
----
-
-## File recovery
-
-The native JSON loader now has a partial recovery path for readable but partially invalid `.opencad2d.json` documents:
-
-- valid entities are preserved;
-- invalid entities can be skipped;
-- missing layer references can be reassigned to `Layer 0`;
-- the loader reports recovered and skipped counts.
-
-Syntax-invalid JSON still fails explicitly because there is no reliable document structure to recover from.
-
----
-
-## Known limitations
-
-- Offset does not yet support polylines.
-- Fillet is limited to Line-Line.
-- Trim does not yet support Fence/Crossing/Edge/Project/Erase modes.
-- Shift-click Extend inside Trim is not implemented yet.
-- The command history is compact and visible, but not yet a full docked CAD console.
+- main window starts maximized;
+- startup loads `default.opencad2d.json` with no demo entities;
+- modal dialogs open centered on owner;
+- save-changes dialog improved;
+- About dialog uses `info@opencad2d.org` and `www.opencad2d.org`;
+- Delete moved to the Edit group;
+- tooltips added to main UI buttons;
+- command input layout made compact.
 
 ---
 
 ## Suggested validation before publishing
-
-Run:
 
 ```bash
 dotnet build OpenCad2D.sln
 dotnet test OpenCad2D.sln --no-build
 ```
 
-Manual smoke checks:
+Manual checks:
 
-```text
-LINE -> 100,100 -> @100<45
-POLYLINE -> 0,0 -> @100,0 -> @50<90 -> C
-OFFSET -> distance -> line/circle/arc -> side point
-FILLET -> R -> 10 -> first line -> second line
-TRIM -> All -> target side -> Undo
-MOVE/COPY -> selection -> base point -> @50,0
-BREAK -> entity -> first point -> second point
-```
+- save/reopen `.opencad2d.json` with grid/snap/polar settings;
+- edit line format pattern, save/reopen and export SVG;
+- offset line/circle/arc/polyline and verify preview;
+- fillet two lines with radius `0` and positive radius;
+- draw overlapping entities and verify draw order + hit testing;
+- align and distribute objects with Undo;
+- export SVG/DXF/PDF from a mixed drawing.
+
+---
+
+## Known limitations
+
+- not production CAD software yet;
+- DXF custom linetype definitions for arbitrary custom dash patterns are future work;
+- polyline offset uses miter joins only;
+- Fillet is Line-Line only;
+- dimensions are non-associative;
+- advanced Trim modes such as Fence/Crossing/Project/Edge are future work;
+- PNG export is still planned.

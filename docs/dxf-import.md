@@ -8,8 +8,6 @@ DXF import is an interoperability feature. It is not the native save format. Aft
 
 ## Supported DXF scope
 
-The v0.7 importer is intentionally focused on simple, robust ASCII DXF input.
-
 Supported scope:
 
 ```text
@@ -55,7 +53,7 @@ Unsupported records do not stop the import. They are skipped and reported in the
 
 `LWPOLYLINE` bulge values are detected but not converted to arcs yet. When bulge values are present, the polyline is imported as straight segments and the import report shows a warning.
 
-`TEXT` currently imports the text value, insertion point and optional rotation. DXF text height and text style are tolerated but not mapped to dedicated OpenCad2D text formats yet. Imported text uses `TextFormatId.Standard`.
+`TEXT` currently imports the text value, insertion point and optional rotation. Imported text uses `TextFormatId.Standard`.
 
 ---
 
@@ -75,9 +73,7 @@ frozen state as hidden
 locked state as locked
 ```
 
-If an entity references a layer that is not declared in the DXF layer table, OpenCad2D creates that layer automatically. This keeps import permissive for simplified or non-standard DXF files.
-
-Layer `0` is preserved as the base default layer. If the DXF declares layer `0`, its imported appearance can replace the default appearance.
+If an entity references a layer that is not declared in the DXF layer table, OpenCad2D creates that layer automatically.
 
 ---
 
@@ -93,11 +89,11 @@ The importer maps common DXF linetype names to built-in OpenCad2D line formats:
 | `DASHDOTDOT` | `LineFormatId.DashDotDot` |
 | `CENTER` / `CENTER2` / `CENTERX2` | `LineFormatId.Axis` |
 
-Custom DXF linetype-table definitions are not expanded into new OpenCad2D line formats in v0.7.
+Custom DXF linetype-table definitions are not expanded into custom OpenCad2D line formats yet.
 
 ---
 
-## Import command behavior
+## Import behavior
 
 The UI command is:
 
@@ -124,33 +120,13 @@ viewport is reset
 layer controls are refreshed
 ```
 
-This is intentional. The imported DXF is not considered the native OpenCad2D file. The user should save as `.opencad2d.json` to preserve the editable project.
+This is intentional. The imported DXF is not considered the native OpenCad2D file.
 
 ---
 
 ## Import diagnostics
 
-The importer returns a `DxfImportResult` with:
-
-```text
-CadDocument
-log entries
-warning/error state
-DxfImportStatistics
-```
-
-Statistics include:
-
-```text
-imported entity count
-imported entity count by EntityKind
-imported layer count
-warning count
-error count
-skipped record count
-```
-
-The UI shows a dedicated DXF Import Report window when warnings or errors exist.
+The importer returns diagnostics and statistics. The UI shows a DXF Import Report window when warnings or errors exist.
 
 Behavior:
 
@@ -158,45 +134,6 @@ Behavior:
 success without warnings -> import silently
 success with warnings    -> import and show report
 errors                   -> keep current document and show report
-```
-
----
-
-## Main implementation files
-
-```text
-src/OpenCad2D.Export/Dxf/Import/DxfCodePair.cs
-src/OpenCad2D.Export/Dxf/Import/DxfReader.cs
-src/OpenCad2D.Export/Dxf/Import/DxfSectionReader.cs
-src/OpenCad2D.Export/Dxf/Import/DxfDocumentImporter.cs
-src/OpenCad2D.Export/Dxf/Import/DxfImportResult.cs
-src/OpenCad2D.Export/Dxf/Import/DxfImportStatistics.cs
-src/OpenCad2D.App/DxfImportReportWindow.axaml
-src/OpenCad2D.App/ViewModels/DxfImport/DxfImportReportWindowViewModel.cs
-```
-
----
-
-## Test coverage
-
-DXF import tests cover:
-
-```text
-low-level group-code reading
-section splitting
-malformed input handling
-LINE import
-CIRCLE import
-POINT import
-ARC import
-LWPOLYLINE import
-TEXT import
-layer-table import
-unsupported entity warnings
-import statistics
-export -> import round-trip validation
-UI view-model import behavior
-DXF import report view-model
 ```
 
 ---
@@ -212,5 +149,3 @@ DXF import report view-model
 - no spline/ellipse reconstruction;
 - no curved `LWPOLYLINE` bulge-to-arc conversion yet;
 - no paper-space or layout reconstruction.
-
-These limitations are deliberate for v0.7. The importer should first stay predictable and safe for the supported 2D subset.
