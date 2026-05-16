@@ -1901,3 +1901,26 @@ Recommended next step:
 1. Run the full test suite.
 2. Manually check New, Open and Import DXF to confirm layer combo, polar tracking combo, status bar, snap marker and canvas focus still refresh correctly.
 3. Continue v0.8.3 by extracting entity rendering from `CadCanvas` into a renderer class, without changing tool behavior.
+
+## Latest update — v0.8.3 CadCanvas entity renderer extraction
+
+Continued the architecture-cleanup track by extracting CAD entity drawing from `CadCanvas` into `OpenCad2D.App.Rendering.CadEntityRenderer`.
+
+Implemented:
+
+- Added `CadEntityRenderer` in the App rendering layer.
+- Moved entity drawing for points, lines, circles, arcs, polylines, ellipses, Bezier splines, single-line text, MTEXT and dimension entities into the renderer.
+- Kept `CadCanvas` responsible for viewport state, visible-entity selection, pen/style resolution, grid/UCS overlays, snap markers, active-tool previews, crosshair and input handling.
+- Left active tool preview rendering in `CadCanvas` for now to avoid mixing preview abstraction with entity-render extraction.
+
+Important design note:
+
+This is intentionally an extraction-only refactor. It should not change CAD behavior, entity geometry, selection, snapping, export or persistence. Tool-specific preview switch removal remains the next `CadCanvas` refactor target.
+
+Recommended validation:
+
+1. Run the full test suite.
+2. Manually open a drawing containing line, circle, arc, polyline/polygon, ellipse, spline, TEXT, MTEXT and dimensions.
+3. Check selected-entity highlight color and lineweights.
+4. Check that dimension text, rotated text and multiline text still render correctly.
+5. Then continue with preview extraction using a geometry-preview abstraction rather than another large canvas rewrite.

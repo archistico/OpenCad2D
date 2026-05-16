@@ -17,7 +17,7 @@ The goal is not to stop feature development permanently. The goal is to make the
 | Documentation | Roadmap needs explicit stabilization track | In progress | v0.8.1 | Keep v0.9 stabilization separate from future feature backlog. |
 | Interop | DXF export/import not externally validated | In progress | v0.8.2 | Compatibility sample folder and validation document have been added; external viewer results are still pending. |
 | Testing | No import DXF -> modify -> export workflow test | Completed | v0.8.2 | Added a first simple DXF import -> trim -> export regression test. |
-| Architecture | `CadCanvas` is too large and knows concrete tools | Planned | v0.8.3 | Refactor incrementally: entity renderer first, preview abstraction second, keyboard delegation later. |
+| Architecture | `CadCanvas` is too large and knows concrete tools | In progress | v0.8.3 | Entity rendering has been extracted to `CadEntityRenderer`; preview abstraction and keyboard delegation are still pending. |
 | Architecture | `MainWindow.axaml.cs` duplicates full UI refresh after document replacement | Completed | v0.8.3 | Introduced `RefreshAllUiAfterDocumentChange()` for document replacement refresh paths. |
 | UX correctness | Non-associative dimensions can become stale silently | Planned | v0.8.4 | Add a conservative stale marker before attempting associative dimensions. |
 | Command UX | Command history navigation with up/down is missing | Planned | v0.8.4 | Reuse existing command history where possible. |
@@ -64,11 +64,11 @@ Focus on test and DXF validation:
 Start architectural cleanup without changing behavior:
 
 - [x] add `RefreshAllUiAfterDocumentChange()` in `MainWindow.axaml.cs` for New/Open/Import DXF document replacement paths;
-- [ ] extract entity rendering from `CadCanvas` into a dedicated renderer;
-- [ ] keep tool behavior unchanged;
+- [x] extract entity rendering from `CadCanvas` into a dedicated renderer;
+- [x] keep tool behavior unchanged during entity-render extraction;
 - [ ] defer preview abstraction until entity rendering is stable.
 
-The first v0.8.3 pass intentionally limits itself to the low-risk `MainWindow` cleanup. The larger `CadCanvas` renderer extraction should remain a separate step with focused manual checks.
+The second v0.8.3 pass moves entity drawing, text drawing and dimension drawing into `CadEntityRenderer`. `CadCanvas` still owns grid, UCS, snap overlays, active-tool previews, crosshair and input handling. The next architecture pass should focus on preview extraction, not another broad canvas rewrite.
 
 ---
 
