@@ -1,5 +1,5 @@
 using OpenCad2D.Core.Entities;
-using OpenCad2D.Geometry;
+using OpenCad2D.Geometry.Operations;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Tools.Grips;
@@ -28,7 +28,7 @@ public sealed class ArcGripProvider : IGripProvider
 
             new GripPoint(
                 GetMidPoint(arc),
-                GripKind.ResizeRadius,
+                GripKind.MoveVertex,
                 arc.Id,
                 1),
 
@@ -55,9 +55,24 @@ public sealed class ArcGripProvider : IGripProvider
 
         return gripIndex switch
         {
-            0 => MoveEndpoint(arc, destination, moveStart: true),
-            1 => ResizeRadius(arc, destination),
-            2 => MoveEndpoint(arc, destination, moveStart: false),
+            0 => RebuildFromThreePoints(
+                arc,
+                destination,
+                GetMidPoint(arc),
+                arc.Geometry.EndPoint),
+
+            1 => RebuildFromThreePoints(
+                arc,
+                arc.Geometry.StartPoint,
+                destination,
+                arc.Geometry.EndPoint),
+
+            2 => RebuildFromThreePoints(
+                arc,
+                arc.Geometry.StartPoint,
+                GetMidPoint(arc),
+                destination),
+
             3 => MoveWholeArc(arc, destination),
             _ => throw new ArgumentOutOfRangeException(
                 nameof(gripIndex),
@@ -66,68 +81,28 @@ public sealed class ArcGripProvider : IGripProvider
         };
     }
 
-    private static ArcEntity MoveEndpoint(
+    private static ArcEntity RebuildFromThreePoints(
         ArcEntity arc,
-        Point2D destination,
-        bool moveStart)
+        Point2D startPoint,
+        Point2D pointOnArc,
+        Point2D endPoint)
     {
-        double radius = arc.Center.DistanceTo(destination);
-
-        if (Tolerance.IsZero(radius))
+        if (!ArcCreationService.TryCreateFromThreePoints(
+                startPoint,
+                pointOnArc,
+                endPoint,
+                out Arc2D rebuiltArc))
         {
             return arc;
         }
 
-        Angle angle = Angle.FromRadians(
-            Math.Atan2(
-                destination.Y - arc.Center.Y,
-                destination.X - arc.Center.X));
-
-        return new ArcEntity(
-            arc.Center,
-            radius,
-            moveStart ? angle : arc.StartAngle,
-            moveStart ? arc.EndAngle : angle,
-            arc.IsCounterClockwise,
-            arc.Id,
-            arc.LayerId,
-            arc.Style,
-            arc.IsVisible,
-            arc.IsLocked,
-            arc.DrawOrder);
-    }
-
-    private static ArcEntity ResizeRadius(
-        ArcEntity arc,
-        Point2D destination)
-    {
-        double radius = arc.Center.DistanceTo(destination);
-
-        if (Tolerance.IsZero(radius))
-        {
-            return arc;
-        }
-
-        return new ArcEntity(
-            arc.Center,
-            radius,
-            arc.StartAngle,
-            arc.EndAngle,
-            arc.IsCounterClockwise,
-            arc.Id,
-            arc.LayerId,
-            arc.Style,
-            arc.IsVisible,
-            arc.IsLocked,
-            arc.DrawOrder);
+        return CreateLike(arc, rebuiltArc);
     }
 
     private static ArcEntity MoveWholeArc(
         ArcEntity arc,
         Point2D destination)
     {
-        Vector2D vector = arc.Center.VectorTo(destination);
-
         return new ArcEntity(
             destination,
             arc.Radius,
@@ -140,6 +115,25 @@ public sealed class ArcGripProvider : IGripProvider
             arc.IsVisible,
             arc.IsLocked,
             arc.DrawOrder);
+    }
+
+
+    private static ArcEntity CreateLike(
+        ArcEntity source,
+        Arc2D geometry)
+    {
+        return new ArcEntity(
+            geometry.Center,
+            geometry.Radius,
+            geometry.StartAngle,
+            geometry.EndAngle,
+            geometry.IsCounterClockwise,
+            source.Id,
+            source.LayerId,
+            source.Style,
+            source.IsVisible,
+            source.IsLocked,
+            source.DrawOrder);
     }
 
     private static Point2D GetMidPoint(ArcEntity arc)

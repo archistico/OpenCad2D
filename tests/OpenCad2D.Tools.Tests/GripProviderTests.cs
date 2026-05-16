@@ -155,7 +155,7 @@ public sealed class ExtendedGripProviderTests
         AssertPointNear(new Point2D(10, 0), grips[0].Position);
         Assert.Equal(GripKind.MoveVertex, grips[0].Kind);
         AssertPointNear(new Point2D(Math.Sqrt(50), Math.Sqrt(50)), grips[1].Position);
-        Assert.Equal(GripKind.ResizeRadius, grips[1].Kind);
+        Assert.Equal(GripKind.MoveVertex, grips[1].Kind);
         AssertPointNear(new Point2D(0, 10), grips[2].Position);
         Assert.Equal(GripKind.MoveVertex, grips[2].Kind);
         Assert.Equal(Point2D.Origin, grips[3].Position);
@@ -185,7 +185,7 @@ public sealed class ExtendedGripProviderTests
     }
 
     [Fact]
-    public void ArcGripProvider_ApplyGripMove_StartGrip_ShouldUpdateStartAngleAndRadius()
+    public void ArcGripProvider_ApplyGripMove_StartGrip_ShouldKeepPointOnArcAndEndFixed()
     {
         var provider = new ArcGripProvider();
         var arc = new ArcEntity(
@@ -193,20 +193,24 @@ public sealed class ExtendedGripProviderTests
             10,
             Angle.FromDegrees(0),
             Angle.FromDegrees(90));
+
+        Point2D originalPointOnArc = provider.GetGrips(arc)[1].Position;
+        Point2D originalEndPoint = arc.Geometry.EndPoint;
+        var newStartPoint = new Point2D(0, -5);
 
         var result = (ArcEntity)provider.ApplyGripMove(
             arc,
             0,
-            new Point2D(0, -5));
+            newStartPoint);
 
         Assert.Equal(arc.Id, result.Id);
-        Assert.Equal(5, result.Radius);
-        AssertNear(-90, result.StartAngle.Degrees);
-        AssertNear(90, result.EndAngle.Degrees);
+        AssertPointNear(newStartPoint, result.Geometry.StartPoint);
+        AssertPointNear(originalEndPoint, result.Geometry.EndPoint);
+        Assert.True(result.Geometry.ContainsPoint(originalPointOnArc));
     }
 
     [Fact]
-    public void ArcGripProvider_ApplyGripMove_MidGrip_ShouldResizeRadiusOnly()
+    public void ArcGripProvider_ApplyGripMove_EndGrip_ShouldKeepStartAndPointOnArcFixed()
     {
         var provider = new ArcGripProvider();
         var arc = new ArcEntity(
@@ -215,14 +219,45 @@ public sealed class ExtendedGripProviderTests
             Angle.FromDegrees(0),
             Angle.FromDegrees(90));
 
+        Point2D originalStartPoint = arc.Geometry.StartPoint;
+        Point2D originalPointOnArc = provider.GetGrips(arc)[1].Position;
+        var newEndPoint = new Point2D(0, -5);
+
+        var result = (ArcEntity)provider.ApplyGripMove(
+            arc,
+            2,
+            newEndPoint);
+
+        Assert.Equal(arc.Id, result.Id);
+        AssertPointNear(originalStartPoint, result.Geometry.StartPoint);
+        AssertPointNear(newEndPoint, result.Geometry.EndPoint);
+        Assert.True(result.Geometry.ContainsPoint(originalPointOnArc));
+    }
+
+    [Fact]
+    public void ArcGripProvider_ApplyGripMove_PointOnArcGrip_ShouldKeepStartAndEndFixedAndRebuildCenter()
+    {
+        var provider = new ArcGripProvider();
+        var arc = new ArcEntity(
+            Point2D.Origin,
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+
+        Point2D originalStartPoint = arc.Geometry.StartPoint;
+        Point2D originalEndPoint = arc.Geometry.EndPoint;
+        var newPointOnArc = new Point2D(8, 3);
+
         var result = (ArcEntity)provider.ApplyGripMove(
             arc,
             1,
-            new Point2D(20, 0));
+            newPointOnArc);
 
-        Assert.Equal(20, result.Radius);
-        Assert.Equal(arc.StartAngle, result.StartAngle);
-        Assert.Equal(arc.EndAngle, result.EndAngle);
+        Assert.Equal(arc.Id, result.Id);
+        AssertPointNear(originalStartPoint, result.Geometry.StartPoint);
+        AssertPointNear(originalEndPoint, result.Geometry.EndPoint);
+        Assert.True(result.Geometry.ContainsPoint(newPointOnArc));
+        Assert.False(result.Center.Equals(arc.Center));
     }
 
     [Fact]

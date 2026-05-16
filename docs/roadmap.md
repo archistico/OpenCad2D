@@ -83,7 +83,7 @@ OpenCad2D currently includes:
 
 Pending in this phase:
 
-- [ ] fix arc endpoint grip behavior so moving one endpoint does not move the other endpoint;
+- [x] fix arc 3-point grip behavior so moving one construction grip keeps the other two construction points fixed;
 - [x] update About with `info@opencad2d.org` and `www.opencad2d.org`;
 - [x] center all secondary modal windows on their owner;
 - [x] improve the save changes dialog styling;
@@ -878,3 +878,17 @@ Release notes:
 ```text
 docs/release-v0.7.md
 ```
+
+### Completed stabilization: arc endpoint grips
+
+Implemented:
+
+- Arc start grip updates only the start angle.
+- Arc end grip updates only the end angle.
+- Endpoint grip moves preserve center, radius and the opposite endpoint.
+- Tests cover start and end endpoint-grip behavior.
+
+
+### Completed: arc 3-point grip behavior
+
+Arc grip editing now uses 3-point reconstruction for start, point-on-arc and end grips. Moving one construction grip keeps the other two construction points fixed and recalculates the arc center/radius/sweep.

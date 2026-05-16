@@ -549,3 +549,16 @@ Angular constraints apply to vertex and move grips, not to resize grips.
 GripProviderRegistry decouples tool logic from entity types.
 Preview does not modify the document.
 ```
+
+### Arc 3-point grip rule
+
+Arc grips behave like a 3-point arc editor. The three construction points are the start point, a point on the arc and the end point.
+
+```text
+Start grip -> rebuild the arc through new start + current point-on-arc + current end
+Point-on-arc grip -> rebuild the arc through current start + new point-on-arc + current end
+End grip -> rebuild the arc through current start + current point-on-arc + new end
+Center grip -> move the whole arc rigidly
+```
+
+This means moving one of the three arc construction grips keeps the other two construction points fixed and recalculates center, radius and sweep from the resulting three points. The center grip remains a pure translation grip.

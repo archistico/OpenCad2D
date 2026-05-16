@@ -1106,3 +1106,28 @@ src/OpenCad2D.App/MainWindow.axaml.cs
 
 Next recommended implementation step: fix arc endpoint grip behavior so moving start/end grips preserves the opposite endpoint and keeps the radius unchanged.
 
+
+### 2026-05-16 - Arc endpoint grip behavior
+
+Arc endpoint grip editing was corrected so endpoint grips only change the corresponding angle:
+
+- Moving the start grip updates `StartAngle` only.
+- Moving the end grip updates `EndAngle` only.
+- `Center` remains unchanged.
+- `Radius` remains unchanged.
+- The opposite endpoint remains fixed.
+- The midpoint radius grip still changes the radius.
+
+The key implementation point is that `ArcGripProvider.MoveEndpoint()` must keep `arc.Radius` and use the destination only to compute the new polar angle around the existing center.
+
+
+### 2026-05-16 - Arc 3-point grip behavior
+
+Arc grip editing now follows a 3-point construction rule:
+
+- Moving the start grip rebuilds the arc through the new start point, the current point-on-arc grip and the current end point.
+- Moving the point-on-arc grip rebuilds the arc through the current start point, the new point-on-arc and the current end point.
+- Moving the end grip rebuilds the arc through the current start point, the current point-on-arc grip and the new end point.
+- Moving the center grip still translates the whole arc rigidly.
+
+The implementation is in `ArcGripProvider` and uses `ArcCreationService.TryCreateFromThreePoints`. If the three resulting points are duplicate or collinear, the original arc is preserved.
