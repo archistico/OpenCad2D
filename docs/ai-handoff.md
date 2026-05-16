@@ -1924,3 +1924,26 @@ Recommended validation:
 3. Check selected-entity highlight color and lineweights.
 4. Check that dimension text, rotated text and multiline text still render correctly.
 5. Then continue with preview extraction using a geometry-preview abstraction rather than another large canvas rewrite.
+
+## Latest update — v0.8.3 CadCanvas active-tool preview renderer extraction
+
+Continued the architecture-cleanup track by extracting transient active-tool preview drawing from `CadCanvas` into `OpenCad2D.App.Rendering.CadToolPreviewRenderer`.
+
+Implemented:
+
+- Added `CadToolPreviewRenderer` in the App rendering layer.
+- Moved active-tool preview drawing for draw tools, dimension tools, modify tools, measure tools, selection window, zoom window and grip-edit overlays out of `CadCanvas`.
+- Reused the existing `CadEntityRenderer` for preview entities so entity rendering remains centralized.
+- Kept `CadCanvas` responsible for viewport state, grid/UCS overlays, snap markers, crosshair, workspace events and pointer/keyboard input.
+- Did not change tool behavior, command handling, geometry, export, import or persistence.
+
+Important design note:
+
+This is still an extraction-only refactor. `CadToolPreviewRenderer` intentionally preserves the current concrete-tool dispatch so this pass stays low-risk. The next architecture step should not move more drawing by copy/paste; it should introduce a small preview descriptor/protocol so tools can provide preview geometry without `CadToolPreviewRenderer` knowing every concrete tool type.
+
+Recommended validation:
+
+1. Run the full test suite.
+2. Manually verify preview rendering for Line, Rectangle, Circle, Arc, Polyline, Polygon, Ellipse, Spline, Move, Copy, Rotate, Scale, Align, Trim, Extend, Break, Offset, Mirror, Measure Distance, Measure Angle, Selection Window, Zoom Window and Grip Edit.
+3. Check that base-point markers, measurement vectors, highlighted trim/extend entities and grip hot/warm/cold markers still render correctly.
+4. Continue with keyboard/input delegation only after preview rendering is stable.
