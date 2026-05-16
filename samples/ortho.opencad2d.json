@@ -1,0 +1,827 @@
+{
+  "version": 1,
+  "savedAt": "2026-05-11T14:45:50.7898916\u002B00:00",
+  "settings": {
+    "currentLayerId": "0"
+  },
+  "viewport": {
+    "panX": 737.052638781669,
+    "panY": 401.33688251845524,
+    "zoom": 0.3269017738461677
+  },
+  "layers": [
+    {
+      "id": "0",
+      "name": "0",
+      "color": "#FFFFFF",
+      "lineWeight": 0.25,
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Annotations",
+      "name": "Assi",
+      "color": "#78AAF0",
+      "lineWeight": 0.25,
+      "isVisible": true,
+      "isLocked": false
+    }
+  ],
+  "entities": [
+    {
+      "startX": -420,
+      "startY": -10,
+      "endX": -420,
+      "endY": -610,
+      "type": "Line",
+      "id": "913f38e8-6503-4f7b-9367-84b910835285",
+      "layerId": "0"
+    },
+    {
+      "startX": -120,
+      "startY": -10,
+      "endX": -420,
+      "endY": -10,
+      "type": "Line",
+      "id": "6fa3bbd2-ca48-4394-891e-a9f57371a825",
+      "layerId": "0"
+    },
+    {
+      "startX": -120,
+      "startY": -610,
+      "endX": -120,
+      "endY": -10,
+      "type": "Line",
+      "id": "34110bc9-76d9-4eab-94d9-237020623ae5",
+      "layerId": "0"
+    },
+    {
+      "startX": -420,
+      "startY": -610,
+      "endX": -120,
+      "endY": -610,
+      "type": "Line",
+      "id": "b301ccd6-4c5e-4d28-b711-ab21e54143dd",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -410,
+          "y": -600
+        },
+        {
+          "x": -130,
+          "y": -600
+        },
+        {
+          "x": -130,
+          "y": -20
+        },
+        {
+          "x": -410,
+          "y": -20
+        }
+      ],
+      "type": "Polyline",
+      "id": "8865e86e-1d40-40ee-89e3-e626d7bf952c",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -400,
+          "y": -590
+        },
+        {
+          "x": -140,
+          "y": -590
+        },
+        {
+          "x": -140,
+          "y": -30
+        },
+        {
+          "x": -400,
+          "y": -30
+        }
+      ],
+      "type": "Polyline",
+      "id": "c3957a75-7be0-4029-8604-2fc0c34009f4",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -410,
+          "y": -10
+        },
+        {
+          "x": -390,
+          "y": -10
+        },
+        {
+          "x": -390,
+          "y": 0
+        },
+        {
+          "x": -410,
+          "y": 0
+        }
+      ],
+      "type": "Polyline",
+      "id": "66965de9-0a7f-4eca-9ee6-5ea995b02270",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -130,
+          "y": -10
+        },
+        {
+          "x": -150,
+          "y": -10
+        },
+        {
+          "x": -150,
+          "y": 0
+        },
+        {
+          "x": -130,
+          "y": 0
+        }
+      ],
+      "type": "Polyline",
+      "id": "515d8c14-712d-4edd-add3-893d99573147",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -410,
+          "y": -310
+        },
+        {
+          "x": -130,
+          "y": -310
+        },
+        {
+          "x": -130,
+          "y": -300
+        },
+        {
+          "x": -410,
+          "y": -300
+        }
+      ],
+      "type": "Polyline",
+      "id": "bd93516a-6212-4cb7-b080-6aea9ef36776",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -410,
+          "y": -300
+        },
+        {
+          "x": -390,
+          "y": -300
+        },
+        {
+          "x": -390,
+          "y": -280
+        },
+        {
+          "x": -410,
+          "y": -280
+        }
+      ],
+      "type": "Polyline",
+      "id": "471eb14d-df54-4ddb-a895-a7b44cf809d3",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -130,
+          "y": -300
+        },
+        {
+          "x": -150,
+          "y": -300
+        },
+        {
+          "x": -150,
+          "y": -280
+        },
+        {
+          "x": -130,
+          "y": -280
+        }
+      ],
+      "type": "Polyline",
+      "id": "64ca5749-2467-4bf6-8efe-29c5478fb924",
+      "layerId": "0"
+    },
+    {
+      "startX": -130,
+      "startY": -600,
+      "endX": -410,
+      "endY": -300,
+      "type": "Line",
+      "id": "5b59caae-94b7-430d-b782-59bdc41a6ac5",
+      "layerId": "0"
+    },
+    {
+      "startX": -130,
+      "startY": -20,
+      "endX": -410,
+      "endY": -300,
+      "type": "Line",
+      "id": "21a1fff9-caf4-41d2-bfdc-731dcc4a00ff",
+      "layerId": "0"
+    },
+    {
+      "startX": 140,
+      "startY": -610,
+      "endX": 490,
+      "endY": -610,
+      "type": "Line",
+      "id": "e4754c66-3fae-499b-a1bf-b60ce232e4f3",
+      "layerId": "0"
+    },
+    {
+      "startX": 140,
+      "startY": -610,
+      "endX": 140,
+      "endY": -10,
+      "type": "Line",
+      "id": "047f98a5-7745-42e7-b1d6-1521e036ec89",
+      "layerId": "0"
+    },
+    {
+      "startX": 140,
+      "startY": -10,
+      "endX": 490,
+      "endY": -10,
+      "type": "Line",
+      "id": "33db5113-0367-4d81-9896-2323697b119f",
+      "layerId": "0"
+    },
+    {
+      "startX": 490,
+      "startY": -10,
+      "endX": 490,
+      "endY": -610,
+      "type": "Line",
+      "id": "6fc092be-9e32-4c96-951c-2787a54cbe73",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 150,
+          "y": -10
+        },
+        {
+          "x": 170,
+          "y": -10
+        },
+        {
+          "x": 170,
+          "y": 0
+        },
+        {
+          "x": 150,
+          "y": 0
+        }
+      ],
+      "type": "Polyline",
+      "id": "cfb3f18c-3725-4e14-9729-a3ec3b6bdedf",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 480,
+          "y": -10
+        },
+        {
+          "x": 460,
+          "y": -10
+        },
+        {
+          "x": 460,
+          "y": 0
+        },
+        {
+          "x": 480,
+          "y": 0
+        }
+      ],
+      "type": "Polyline",
+      "id": "b3a73b21-2e27-43ff-9ff8-8950c23db2a1",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 490,
+          "y": -30
+        },
+        {
+          "x": 160,
+          "y": -30
+        },
+        {
+          "x": 160,
+          "y": -590
+        },
+        {
+          "x": 490,
+          "y": -590
+        }
+      ],
+      "type": "Polyline",
+      "id": "3f0896b4-24e4-4345-9582-8798ae2b8e85",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 490,
+          "y": -600
+        },
+        {
+          "x": 500,
+          "y": -600
+        },
+        {
+          "x": 500,
+          "y": -20
+        },
+        {
+          "x": 490,
+          "y": -20
+        }
+      ],
+      "type": "Polyline",
+      "id": "cea9a1fd-7371-46b9-a5ce-bacbe1c03cdb",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 160,
+          "y": -310
+        },
+        {
+          "x": 490,
+          "y": -310
+        },
+        {
+          "x": 490,
+          "y": -300
+        },
+        {
+          "x": 160,
+          "y": -300
+        }
+      ],
+      "type": "Polyline",
+      "id": "ac69cd38-20b8-4062-8bb1-29bf753406d8",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 160,
+          "y": -300
+        },
+        {
+          "x": 180,
+          "y": -300
+        },
+        {
+          "x": 180,
+          "y": -280
+        },
+        {
+          "x": 160,
+          "y": -280
+        }
+      ],
+      "type": "Polyline",
+      "id": "ddaf6659-45d8-4271-a08c-792097524b7e",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": 490,
+          "y": -300
+        },
+        {
+          "x": 470,
+          "y": -300
+        },
+        {
+          "x": 470,
+          "y": -280
+        },
+        {
+          "x": 490,
+          "y": -280
+        }
+      ],
+      "type": "Polyline",
+      "id": "5413097c-ddc8-4d54-a8e6-4840e709c024",
+      "layerId": "0"
+    },
+    {
+      "startX": -130,
+      "startY": -300,
+      "endX": 160,
+      "endY": -300,
+      "type": "Line",
+      "id": "69f65a00-7a19-4d6a-88fc-dde5a416bf9b",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -130,
+      "startY": -310,
+      "endX": 160,
+      "endY": -310,
+      "type": "Line",
+      "id": "be7d988e-e1bc-41b2-ab92-3dd00ed5d5f5",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -140,
+      "startY": -590,
+      "endX": 160,
+      "endY": -590,
+      "type": "Line",
+      "id": "223a798a-a4bf-47ef-854d-1a97a3fb647d",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -130,
+      "startY": -600,
+      "endX": 500,
+      "endY": -600,
+      "type": "Line",
+      "id": "00723dc7-7ade-4f86-baf2-28cfffeea94b",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -120,
+      "startY": -610,
+      "endX": 140,
+      "endY": -610,
+      "type": "Line",
+      "id": "ec520ad9-4d39-4326-9998-7709aa8cbcec",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -130,
+      "startY": -280,
+      "endX": 160,
+      "endY": -280,
+      "type": "Line",
+      "id": "70ca6fbb-35b1-4f10-abf5-69ba97cbd2bf",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -120,
+      "startY": -10,
+      "endX": 140,
+      "endY": -10,
+      "type": "Line",
+      "id": "e4cd4aaa-f57e-4de1-8ebe-ca5cbe170cc3",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -140,
+      "startY": -30,
+      "endX": 160,
+      "endY": -30,
+      "type": "Line",
+      "id": "247e793e-99a7-4de3-bfd5-a92b3aad06ce",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -130,
+      "startY": -20,
+      "endX": 490,
+      "endY": -20,
+      "type": "Line",
+      "id": "d9edb202-b797-4649-b4ba-443d1db248e4",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -420,
+      "startY": -10,
+      "endX": -420,
+      "endY": 754.9178226476354,
+      "type": "Line",
+      "id": "e52c4022-24c9-4e5a-b655-bd39cad82c4d",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -120,
+      "startY": -10,
+      "endX": -120,
+      "endY": 707.0374647991979,
+      "type": "Line",
+      "id": "c1330878-d153-4eb0-a9e0-d177566d94b9",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -390,
+      "startY": 0,
+      "endX": -390,
+      "endY": 663.252500139823,
+      "type": "Line",
+      "id": "1f3c78ad-82e6-4f23-89c7-4dc9dfa9ff7c",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -410,
+      "startY": 0,
+      "endX": -410,
+      "endY": 666.294250139823,
+      "type": "Line",
+      "id": "2ebfbae8-1bb6-493d-a81f-4b57e394788a",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -150,
+      "startY": 0,
+      "endX": -150,
+      "endY": 663.252500139823,
+      "type": "Line",
+      "id": "7baaea60-b968-4b82-9eec-8a33bc0efac8",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": -130,
+      "startY": 0,
+      "endX": -130,
+      "endY": 681.503000139823,
+      "type": "Line",
+      "id": "816595bc-7eae-400b-a7a3-ca922dc79af2",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 140.06867151993984,
+      "endX": 140.14637134707047,
+      "endY": -0.07769982713062973,
+      "type": "Line",
+      "id": "78706b2a-1db5-4808-bb37-40bff390a2ce",
+      "layerId": "Annotations"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -420,
+          "y": 140.06867151993984
+        },
+        {
+          "x": -120,
+          "y": 140.06867151993984
+        },
+        {
+          "x": -120,
+          "y": 490
+        },
+        {
+          "x": -420,
+          "y": 490
+        }
+      ],
+      "type": "Polyline",
+      "id": "fc42166c-09b4-470c-bc44-4ff669154c07",
+      "layerId": "0"
+    },
+    {
+      "startX": 140,
+      "startY": -10,
+      "endX": 140.14637134707047,
+      "endY": -0.07769982713063318,
+      "type": "Line",
+      "id": "011215de-50cd-4e9c-bddd-08cdb3f3eeb3",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 490,
+      "startY": -10,
+      "endX": 490,
+      "endY": 0,
+      "type": "Line",
+      "id": "d0475098-2da0-4c43-95d1-7d0959560e93",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 500,
+      "startY": -20,
+      "endX": 500,
+      "endY": 0,
+      "type": "Line",
+      "id": "39af018c-89c1-4da2-a866-01adc42001c7",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 150,
+      "endX": 150,
+      "endY": 3.4555691641457997E-15,
+      "type": "Line",
+      "id": "53cee7fc-24d6-464c-a63d-3def5571e87a",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 170.06867151993984,
+      "endX": 170.14637134707047,
+      "endY": -0.07769982713063318,
+      "type": "Line",
+      "id": "339cb67e-3fff-4eef-8aba-4fae9b5da6f4",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 460,
+      "endX": 460,
+      "endY": 3.4555691641457997E-15,
+      "type": "Line",
+      "id": "e3a30b80-6e10-4571-8411-cace27ad7b0c",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 480,
+      "endX": 480,
+      "endY": 3.4555691641457997E-15,
+      "type": "Line",
+      "id": "7326ae6d-bb81-41b9-874f-68ea90a58c55",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 490,
+      "endX": 490,
+      "endY": 3.4555691641457997E-15,
+      "type": "Line",
+      "id": "5ce978ca-1f7d-46de-8733-c35b0aa6bbf6",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 500,
+      "endX": 500,
+      "endY": 3.4555691641457997E-15,
+      "type": "Line",
+      "id": "0050dedf-c21b-4995-a4ca-a7af73ccd671",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 50,
+      "endX": 0,
+      "endY": 760,
+      "type": "Line",
+      "id": "b23eb535-b6c5-4ce9-a9c3-796819e7c9e4",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 500,
+      "endX": -510,
+      "endY": 500,
+      "type": "Line",
+      "id": "aa10a6ff-5b05-46b5-b869-e5fa4fb41498",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 490,
+      "endX": -480,
+      "endY": 490,
+      "type": "Line",
+      "id": "14376617-8652-49bc-8b47-922d57662713",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 480,
+      "endX": -480,
+      "endY": 480,
+      "type": "Line",
+      "id": "875c4505-8e46-4d2c-a886-5998782efd7a",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 460,
+      "endX": -460,
+      "endY": 460,
+      "type": "Line",
+      "id": "f5aa62fb-3817-45c2-b625-3b46187f5172",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 140.06867151993984,
+      "endX": -440,
+      "endY": 140.06867151993984,
+      "type": "Line",
+      "id": "e421c04b-92d3-49c4-98ca-2b9b9cc4bc3f",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 150,
+      "endX": -440,
+      "endY": 150,
+      "type": "Line",
+      "id": "d4db2262-27c3-42f9-94aa-ef44512bc87b",
+      "layerId": "Annotations"
+    },
+    {
+      "startX": 0,
+      "startY": 170.06867151993984,
+      "endX": -490,
+      "endY": 170.06867151993984,
+      "type": "Line",
+      "id": "2ad5b599-86bc-49bd-85f9-ef8d79dd035c",
+      "layerId": "Annotations"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -400,
+          "y": 160
+        },
+        {
+          "x": -140,
+          "y": 160
+        },
+        {
+          "x": -140,
+          "y": 490
+        },
+        {
+          "x": -400,
+          "y": 490
+        }
+      ],
+      "type": "Polyline",
+      "id": "a65c52e2-3a1d-4238-9eca-4244874e6943",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "vertices": [
+        {
+          "x": -410,
+          "y": 490.00000000000006
+        },
+        {
+          "x": -130,
+          "y": 490.00000000000006
+        },
+        {
+          "x": -130,
+          "y": 499.99999999999994
+        },
+        {
+          "x": -410,
+          "y": 499.99999999999994
+        }
+      ],
+      "type": "Polyline",
+      "id": "b7d4efee-de6a-47de-8bea-487ec18adf65",
+      "layerId": "0"
+    }
+  ]
+}
