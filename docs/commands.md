@@ -803,3 +803,8 @@ The distribution commands are undoable selection actions. They operate on the cu
 | `DISTRIBUTEVERTICAL` | `DISTRIBUTEVERTICALLY`, `DV` | Distributes selected entities vertically by bounding-box center. Requires at least three selectable entities. |
 
 Distribution currently uses center spacing, not equal gaps between bounding boxes. This is intentional for the first implementation because it is stable for mixed CAD entities.
+
+
+## v0.8.x Custom line style pattern foundation
+
+OpenCad2D now distinguishes clearly between `LineStyle` and `LineFormat`: the style identifies the semantic stroke family, while the line format stores the full reusable appearance including color, weight and `DashPattern`. Dash patterns are numeric dash/gap lists expressed in drawing units, persisted in `.opencad2d.json`, and defaulted from the selected style for legacy files. UI pattern editing, preview refinement and export/rendering follow-up work remain tracked as the next line-format blocks.

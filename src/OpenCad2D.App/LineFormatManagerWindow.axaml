@@ -5,9 +5,9 @@
         x:DataType="lineFormats:LineFormatManagerWindowViewModel"
         Title="Line Format Manager"
         Icon="/Assets/app-icon.ico"
-        Width="980"
+        Width="1120"
         Height="500"
-        MinWidth="860"
+        MinWidth="980"
         MinHeight="420"
         WindowStartupLocation="CenterOwner"
         Background="#1E1E1E">
@@ -84,15 +84,16 @@
                 <Border Grid.Row="0"
                         Background="#2D2D30"
                         Padding="7,5">
-                    <Grid ColumnDefinitions="78,205,110,110,140,130,120"
+                    <Grid ColumnDefinitions="78,185,110,90,125,165,130,95"
                           ColumnSpacing="6">
                         <TextBlock Grid.Column="0" Classes="header-cell" Text="Color" />
                         <TextBlock Grid.Column="1" Classes="header-cell" Text="Name" />
                         <TextBlock Grid.Column="2" Classes="header-cell" Text="Color hex" />
                         <TextBlock Grid.Column="3" Classes="header-cell" Text="Weight" />
                         <TextBlock Grid.Column="4" Classes="header-cell" Text="Style" />
-                        <TextBlock Grid.Column="5" Classes="header-cell" Text="Preview" />
-                        <TextBlock Grid.Column="6" Classes="header-cell" Text="Type" />
+                        <TextBlock Grid.Column="5" Classes="header-cell" Text="Pattern" />
+                        <TextBlock Grid.Column="6" Classes="header-cell" Text="Preview" />
+                        <TextBlock Grid.Column="7" Classes="header-cell" Text="Type" />
                     </Grid>
                 </Border>
 
@@ -104,7 +105,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="lineFormats:EditableLineFormatViewModel">
                             <Border Padding="7,4">
-                                <Grid ColumnDefinitions="78,205,110,110,140,130,120"
+                                <Grid ColumnDefinitions="78,185,110,90,125,165,130,95"
                                       ColumnSpacing="6">
                                     <ColorPicker Grid.Column="0"
                                                  Width="54"
@@ -130,14 +131,20 @@
                                               ItemsSource="{Binding AvailableLineStyles}"
                                               SelectedItem="{Binding LineStyle, Mode=TwoWay}" />
 
-                                    <TextBlock Grid.Column="5"
+                                    <TextBox Grid.Column="5"
+                                             Classes="format-input"
+                                             Text="{Binding PatternText, Mode=TwoWay}"
+                                             PlaceholderText="8,4 or 12,4,1,4"
+                                             ToolTip.Tip="Dash/gap values in drawing units. Leave empty for continuous." />
+
+                                    <TextBlock Grid.Column="6"
                                                Classes="cell-label"
                                                Text="{Binding PreviewText}"
                                                Foreground="{Binding ColorBrush}"
                                                FontFamily="Consolas"
                                                FontSize="14" />
 
-                                    <TextBlock Grid.Column="6"
+                                    <TextBlock Grid.Column="7"
                                                Classes="cell-label"
                                                Text="{Binding BuiltInText}" />
                                 </Grid>

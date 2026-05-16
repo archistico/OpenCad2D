@@ -270,7 +270,7 @@ public sealed class SvgExporterTests
 
         SvgExportResult result = exporter.Export(document);
 
-        Assert.Contains("stroke-dasharray=\"6 3\"", result.Content);
+        Assert.Contains("stroke-dasharray=\"8 4\"", result.Content);
     }
 
     [Fact]

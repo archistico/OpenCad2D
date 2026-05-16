@@ -1023,3 +1023,20 @@ The active command/tool indicator now appears next to the command input instead 
 ```
 
 The earlier always-visible history panel above the command input was removed from the default UI to keep more vertical space available for drawing.
+
+
+## v0.8.x Custom line style pattern foundation
+
+OpenCad2D now distinguishes clearly between `LineStyle` and `LineFormat`: the style identifies the semantic stroke family, while the line format stores the full reusable appearance including color, weight and `DashPattern`. Dash patterns are numeric dash/gap lists expressed in drawing units, persisted in `.opencad2d.json`, and defaulted from the selected style for legacy files. UI pattern editing, preview refinement and export/rendering follow-up work remain tracked as the next line-format blocks.
+
+## v0.8.x line style pattern editor
+
+The Line Format Manager now exposes the effective dash pattern of each line format.
+The distinction is:
+
+- `LineStyle` describes the stroke style/pattern category, including `Custom`.
+- `LineFormat` remains the complete reusable appearance: color, line weight, style and effective dash pattern.
+
+Dash patterns are edited as comma-separated dash/gap pairs in drawing units, for example `8,4` or `12,4,1,4`.
+Changing a preset style applies its default pattern. Editing the pattern manually marks the style as `Custom`.
+The manager also shows a compact textual preview of the resulting pattern.

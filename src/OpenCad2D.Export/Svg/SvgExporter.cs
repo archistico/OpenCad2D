@@ -729,9 +729,9 @@ public sealed class SvgExporter : ISvgExporter
         attributes.Append($"stroke-width=\"{Format(lineFormat.LineWeight.Millimeters)}\" ");
         attributes.Append("fill=\"none\" vector-effect=\"non-scaling-stroke\"");
 
-        double[]? dashPattern = LineStyleDashPattern.Get(lineFormat.LineStyle);
+        IReadOnlyList<double> dashPattern = lineFormat.DashPattern;
 
-        if (dashPattern is not null && dashPattern.Length > 0)
+        if (dashPattern.Count > 0)
         {
             attributes.Append($" stroke-dasharray=\"{FormatDashArray(dashPattern)}\"");
         }

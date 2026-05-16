@@ -1689,3 +1689,48 @@ Current command row layout:
 ### Command input compact layout compile fix
 
 Removed the stale `ActiveCommandTextBlock` code-behind update from `MainWindow.axaml.cs`. The compact command input layout now binds the active tool name directly in XAML next to the command prompt, so no named `ActiveCommandTextBlock` control exists anymore.
+
+
+### v0.8.x Custom line style pattern foundation
+
+User clarified the naming model: `LineStyle` is the stroke style/pattern family; `LineFormat` remains the full reusable format with color, weight and style. Implemented the model/persistence foundation for custom line style patterns:
+
+- `LineStyle.Custom` added.
+- `LineFormat` now stores `DashPattern` as dash/gap values in drawing units.
+- Default style patterns are now `Dashed = [8,4]`, `DashDot = [12,4,1,4]`, `DashDotDot = [12,4,1,4,1,4]`, `Continuous = []`.
+- `.opencad2d.json` line format DTOs now include `dashPattern`.
+- Legacy files with missing `dashPattern` are rebuilt from `lineStyle`.
+- Invalid persisted patterns fall back to style defaults on load.
+- `default.opencad2d.json` includes explicit `dashPattern` values.
+
+Next planned line-format blocks: Line Format Manager pattern editor + preview, then canvas/SVG rendering from `LineFormat.DashPattern` instead of only `LineStyle`. DXF custom LTYPE generation can remain a later refinement.
+
+
+### v0.8.x line style dash pattern SVG export fix
+
+- SVG export now uses the effective `LineFormat.DashPattern` instead of recomputing the pattern only from `LineStyle`.
+- The dashed SVG export test now expects the new default dashed pattern `8 4` expressed in drawing units.
+- This keeps the distinction clear: `LineStyle` is the style category/preset, while `LineFormat` stores the actual color, weight, style and dash pattern.
+
+
+## 2026-05-16 - SVG dashed pattern test alignment
+
+Aligned `SvgExporterTests.Export_ShouldWriteStrokeDashArray_ForDashedLineFormat` with the new line style pattern foundation. The default `Dashed` pattern is now `8,4` drawing units, so SVG export should contain `stroke-dasharray="8 4"` instead of the old legacy `6 3`.
+
+## v0.8.x line style pattern editor
+
+The Line Format Manager now exposes the effective dash pattern of each line format.
+The distinction is:
+
+- `LineStyle` describes the stroke style/pattern category, including `Custom`.
+- `LineFormat` remains the complete reusable appearance: color, line weight, style and effective dash pattern.
+
+Dash patterns are edited as comma-separated dash/gap pairs in drawing units, for example `8,4` or `12,4,1,4`.
+Changing a preset style applies its default pattern. Editing the pattern manually marks the style as `Custom`.
+The manager also shows a compact textual preview of the resulting pattern.
+
+
+## 2026-05-16 - Line format pattern editor warning fix
+
+- Replaced obsolete Avalonia `TextBox.Watermark` usage in `LineFormatManagerWindow.axaml` with `PlaceholderText`.
+- No functional changes to line format pattern editing, validation, preview, or persistence.

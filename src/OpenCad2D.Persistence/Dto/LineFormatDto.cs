@@ -14,4 +14,10 @@ public sealed class LineFormatDto
     public double LineWeight { get; set; } = 1.0;
 
     public string LineStyle { get; set; } = "Continuous";
+
+    /// <summary>
+    /// Dash/gap pattern expressed in model/drawing units.
+    /// Empty or null means the style default is used during load.
+    /// </summary>
+    public List<double>? DashPattern { get; set; }
 }

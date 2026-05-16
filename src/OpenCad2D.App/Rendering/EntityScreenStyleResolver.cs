@@ -33,7 +33,8 @@ public static class EntityScreenStyleResolver
         return new EntityScreenStyle(
             color,
             Math.Max(0, lineFormat.LineWeight.Millimeters),
-            lineFormat.LineStyle);
+            lineFormat.LineStyle,
+            lineFormat.DashPattern);
     }
 
     private static LineFormat ResolveLineFormat(

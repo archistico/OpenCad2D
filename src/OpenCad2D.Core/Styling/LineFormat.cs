@@ -12,7 +12,8 @@ public sealed class LineFormat
         string name,
         CadColor color,
         LineWeight lineWeight,
-        LineStyle lineStyle)
+        LineStyle lineStyle,
+        IEnumerable<double>? dashPattern = null)
     {
         if (string.IsNullOrWhiteSpace(id.Value))
         {
@@ -28,11 +29,16 @@ public sealed class LineFormat
                 nameof(name));
         }
 
+        List<double> normalizedDashPattern = NormalizeDashPattern(
+            lineStyle,
+            dashPattern);
+
         Id = id;
         Name = name.Trim();
         Color = color;
         LineWeight = lineWeight;
         LineStyle = lineStyle;
+        DashPattern = normalizedDashPattern;
     }
 
     public LineFormatId Id { get; }
@@ -44,6 +50,12 @@ public sealed class LineFormat
     public LineWeight LineWeight { get; }
 
     public LineStyle LineStyle { get; }
+
+    /// <summary>
+    /// Gets the dash pattern expressed in model/drawing units.
+    /// Empty means a continuous stroke.
+    /// </summary>
+    public IReadOnlyList<double> DashPattern { get; }
 
     /// <summary>
     /// Gets whether the format is a built-in format that cannot be deleted.
@@ -65,19 +77,45 @@ public sealed class LineFormat
             name,
             Color,
             LineWeight,
-            LineStyle);
+            LineStyle,
+            DashPattern);
     }
 
     public LineFormat WithAppearance(
         CadColor color,
         LineWeight lineWeight,
-        LineStyle lineStyle)
+        LineStyle lineStyle,
+        IEnumerable<double>? dashPattern = null)
     {
         return new LineFormat(
             Id,
             Name,
             color,
             lineWeight,
-            lineStyle);
+            lineStyle,
+            dashPattern ?? LineStyleDashPattern.Get(lineStyle));
+    }
+
+    private static List<double> NormalizeDashPattern(
+        LineStyle lineStyle,
+        IEnumerable<double>? dashPattern)
+    {
+        IReadOnlyList<double>? pattern = dashPattern?.ToList();
+
+        if (pattern is null)
+        {
+            pattern = LineStyleDashPattern.Get(lineStyle);
+        }
+
+        if (!LineStyleDashPattern.IsValid(pattern))
+        {
+            throw new ArgumentException(
+                "Dash pattern values must be positive dash/gap pairs expressed in drawing units.",
+                nameof(dashPattern));
+        }
+
+        return pattern is null
+            ? []
+            : pattern.ToList();
     }
 }

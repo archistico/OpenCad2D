@@ -79,7 +79,7 @@ public sealed class CadCanvas : Control
         byte G,
         byte B,
         double Thickness,
-        LineStyle LineStyle,
+        string DashPatternKey,
         double Scale);
     private const double GridLineDetectionTolerance = 1e-6;
     private bool _isPanning;
@@ -281,7 +281,7 @@ public sealed class CadCanvas : Control
             color.G,
             color.B,
             thickness,
-            screenStyle.LineStyle,
+            FormatDashPatternKey(screenStyle.DashPattern),
             _viewport.Scale);
 
         if (_penCache.TryGetValue(key, out Pen? cachedPen))
@@ -295,7 +295,7 @@ public sealed class CadCanvas : Control
                 color.G,
                 color.B));
 
-        DashStyle? dashStyle = CreateDashStyle(screenStyle.LineStyle);
+        DashStyle? dashStyle = CreateDashStyle(screenStyle.DashPattern);
 
         var pen = new Pen(
             brush,
@@ -307,11 +307,9 @@ public sealed class CadCanvas : Control
         return pen;
     }
 
-    private DashStyle? CreateDashStyle(LineStyle lineStyle)
+    private DashStyle? CreateDashStyle(IReadOnlyList<double> modelPattern)
     {
-        double[]? modelPattern = LineStyleDashPattern.Get(lineStyle);
-
-        if (modelPattern is null || modelPattern.Length == 0)
+        if (modelPattern.Count == 0)
         {
             return null;
         }
@@ -324,6 +322,13 @@ public sealed class CadCanvas : Control
         return new DashStyle(
             screenPattern,
             0);
+    }
+
+    private static string FormatDashPatternKey(IReadOnlyList<double> values)
+    {
+        return values.Count == 0
+            ? string.Empty
+            : string.Join(";", values.Select(value => value.ToString("G17", CultureInfo.InvariantCulture)));
     }
 
     private void DrawSnapMarker(DrawingContext context)

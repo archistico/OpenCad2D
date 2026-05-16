@@ -40,6 +40,7 @@ public sealed class LineFormatManagerWindowViewModelTests
         Assert.Equal("#FFFFFF", added.ColorHex);
         Assert.Equal("1", added.LineWeightText);
         Assert.Equal(LineStyle.Continuous, added.LineStyle);
+        Assert.Equal(string.Empty, added.PatternText);
     }
 
     [Fact]
@@ -106,6 +107,7 @@ public sealed class LineFormatManagerWindowViewModelTests
         Assert.Equal(0x33, edited.Color.B);
         Assert.Equal(2.5, edited.LineWeight.Millimeters);
         Assert.Equal(LineStyle.Dashed, edited.LineStyle);
+        Assert.Equal(new[] { 8.0, 4.0 }, edited.DashPattern);
     }
 
     [Fact]
@@ -130,6 +132,64 @@ public sealed class LineFormatManagerWindowViewModelTests
         continuous.ColorHex = "#112233";
 
         Assert.Equal(Color.FromRgb(0x11, 0x22, 0x33), continuous.Color);
+    }
+
+    [Fact]
+    public void EditableFormat_WhenLineStylePresetChanges_ShouldApplyDefaultPattern()
+    {
+        var document = new CadDocument();
+        var viewModel = new LineFormatManagerWindowViewModel(document);
+        EditableLineFormatViewModel continuous = viewModel.Formats.Single(format => format.Id == LineFormatId.Continuous);
+
+        continuous.LineStyle = LineStyle.DashDot;
+
+        Assert.Equal("12,4,1,4", continuous.PatternText);
+        Assert.Equal(LineStyle.DashDot, continuous.LineStyle);
+    }
+
+    [Fact]
+    public void EditableFormat_WhenPatternIsEditedManually_ShouldBecomeCustom()
+    {
+        var document = new CadDocument();
+        var viewModel = new LineFormatManagerWindowViewModel(document);
+        EditableLineFormatViewModel dashed = viewModel.Formats.Single(format => format.Id == LineFormatId.Dashed);
+
+        dashed.PatternText = "10,5";
+
+        Assert.Equal(LineStyle.Custom, dashed.LineStyle);
+        Assert.Equal("10,5", dashed.PatternText);
+    }
+
+    [Fact]
+    public void TryBuildResult_ShouldPersistCustomPattern()
+    {
+        var document = new CadDocument();
+        var viewModel = new LineFormatManagerWindowViewModel(document);
+        EditableLineFormatViewModel dashed = viewModel.Formats.Single(format => format.Id == LineFormatId.Dashed);
+
+        dashed.PatternText = "10,5,2,5";
+
+        bool success = viewModel.TryBuildResult(out LineFormatManagerResult result);
+
+        LineFormat edited = result.LineFormats.Single(format => format.Id == LineFormatId.Dashed);
+        Assert.True(success);
+        Assert.Equal(LineStyle.Custom, edited.LineStyle);
+        Assert.Equal(new[] { 10.0, 5.0, 2.0, 5.0 }, edited.DashPattern);
+    }
+
+    [Fact]
+    public void TryBuildResult_WithInvalidPattern_ShouldReject()
+    {
+        var document = new CadDocument();
+        var viewModel = new LineFormatManagerWindowViewModel(document);
+        EditableLineFormatViewModel dashed = viewModel.Formats.Single(format => format.Id == LineFormatId.Dashed);
+
+        dashed.PatternText = "10,-5";
+
+        bool success = viewModel.TryBuildResult(out _);
+
+        Assert.False(success);
+        Assert.True(viewModel.HasValidationMessage);
     }
 
     [Fact]

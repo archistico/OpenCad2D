@@ -48,49 +48,76 @@
       "name": "Continua",
       "color": "#FFFFFF",
       "lineWeight": 1,
-      "lineStyle": "Continuous"
+      "lineStyle": "Continuous",
+      "dashPattern": []
     },
     {
       "id": "Annotations",
       "name": "Annotations",
       "color": "#A0A0A0",
       "lineWeight": 0.8,
-      "lineStyle": "Continuous"
+      "lineStyle": "Continuous",
+      "dashPattern": []
     },
     {
       "id": "Walls",
       "name": "Walls",
       "color": "#FFFFFF",
       "lineWeight": 2,
-      "lineStyle": "Continuous"
+      "lineStyle": "Continuous",
+      "dashPattern": []
     },
     {
       "id": "Axis",
       "name": "Asse",
       "color": "#FF0000",
       "lineWeight": 0.75,
-      "lineStyle": "DashDot"
+      "lineStyle": "DashDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4
+      ]
     },
     {
       "id": "Dashed",
       "name": "Tratteggiata",
       "color": "#FFFF00",
       "lineWeight": 0.75,
-      "lineStyle": "Dashed"
+      "lineStyle": "Dashed",
+      "dashPattern": [
+        8,
+        4
+      ]
     },
     {
       "id": "DashDotDot",
       "name": "Tratto due punti",
       "color": "#00C8FF",
       "lineWeight": 0.5,
-      "lineStyle": "DashDotDot"
+      "lineStyle": "DashDotDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4,
+        1,
+        4
+      ]
     },
     {
       "id": "DashDot",
       "name": "Tratto e punto",
       "color": "#00FF00",
       "lineWeight": 0.75,
-      "lineStyle": "DashDot"
+      "lineStyle": "DashDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4
+      ]
     }
   ],
   "textFormats": [

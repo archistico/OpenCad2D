@@ -541,3 +541,203 @@ public sealed class JsonDocumentSerializerTests
     }
 
 }
+
+public sealed class JsonDocumentSerializerLineFormatDashPatternTests
+{
+    [Fact]
+    public void Serialize_ShouldPersistLineFormatDashPattern()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var document = new CadDocument();
+        LineFormatId formatId = new("CustomPattern");
+
+        var customFormat = new LineFormat(
+            formatId,
+            "Custom pattern",
+            CadColor.FromRgb(17, 34, 51),
+            LineWeight.FromMillimeters(0.75),
+            LineStyle.Custom,
+            new[] { 10.0, 5.0, 1.0, 5.0 });
+
+        document.ReplaceLineFormats(
+            document.LineFormats.WithFormats(
+                document.LineFormats.All.Concat(new[] { customFormat })));
+
+        DocumentDto dto = serializer.Serialize(
+            document,
+            LayerId.Default.Value,
+            new ViewportStateDto());
+
+        LineFormatDto formatDto = Assert.Single(
+            dto.LineFormats,
+            format => format.Id == formatId.Value);
+
+        Assert.Equal(nameof(LineStyle.Custom), formatDto.LineStyle);
+        Assert.Equal(new[] { 10.0, 5.0, 1.0, 5.0 }, formatDto.DashPattern);
+    }
+
+    [Fact]
+    public void Deserialize_ShouldRestoreLineFormatDashPattern()
+    {
+        var serializer = new JsonDocumentSerializer();
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = "0"
+            },
+            LineFormats =
+            {
+                new LineFormatDto
+                {
+                    Id = "Continuous",
+                    Name = "Continua",
+                    Color = "#FFFFFF",
+                    LineWeight = 1.0,
+                    LineStyle = "Continuous"
+                },
+                new LineFormatDto
+                {
+                    Id = "CustomPattern",
+                    Name = "Custom pattern",
+                    Color = "#112233",
+                    LineWeight = 0.75,
+                    LineStyle = "Custom",
+                    DashPattern = new List<double> { 10.0, 5.0, 1.0, 5.0 }
+                }
+            },
+            Layers =
+            {
+                new LayerDto
+                {
+                    Id = "0",
+                    Name = "0",
+                    LineFormatId = "Continuous",
+                    IsVisible = true,
+                    IsLocked = false
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        LineFormat format = document.LineFormats.GetById(new LineFormatId("CustomPattern"));
+
+        Assert.Equal(LineStyle.Custom, format.LineStyle);
+        Assert.Equal(new[] { 10.0, 5.0, 1.0, 5.0 }, format.DashPattern);
+    }
+
+    [Fact]
+    public void Deserialize_WhenDashPatternIsMissing_ShouldUseStyleDefaultPattern()
+    {
+        var serializer = new JsonDocumentSerializer();
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = "0"
+            },
+            LineFormats =
+            {
+                new LineFormatDto
+                {
+                    Id = "Continuous",
+                    Name = "Continua",
+                    Color = "#FFFFFF",
+                    LineWeight = 1.0,
+                    LineStyle = "Continuous"
+                },
+                new LineFormatDto
+                {
+                    Id = "LegacyDashed",
+                    Name = "Legacy dashed",
+                    Color = "#FFFF00",
+                    LineWeight = 0.75,
+                    LineStyle = "Dashed"
+                }
+            },
+            Layers =
+            {
+                new LayerDto
+                {
+                    Id = "0",
+                    Name = "0",
+                    LineFormatId = "Continuous",
+                    IsVisible = true,
+                    IsLocked = false
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        LineFormat format = document.LineFormats.GetById(new LineFormatId("LegacyDashed"));
+
+        Assert.Equal(new[] { 8.0, 4.0 }, format.DashPattern);
+    }
+
+    [Fact]
+    public void Deserialize_WhenDashPatternIsInvalid_ShouldFallbackToStyleDefaultPattern()
+    {
+        var serializer = new JsonDocumentSerializer();
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = "0"
+            },
+            LineFormats =
+            {
+                new LineFormatDto
+                {
+                    Id = "Continuous",
+                    Name = "Continua",
+                    Color = "#FFFFFF",
+                    LineWeight = 1.0,
+                    LineStyle = "Continuous"
+                },
+                new LineFormatDto
+                {
+                    Id = "BrokenDashed",
+                    Name = "Broken dashed",
+                    Color = "#FFFF00",
+                    LineWeight = 0.75,
+                    LineStyle = "Dashed",
+                    DashPattern = new List<double> { 8.0, -4.0 }
+                }
+            },
+            Layers =
+            {
+                new LayerDto
+                {
+                    Id = "0",
+                    Name = "0",
+                    LineFormatId = "Continuous",
+                    IsVisible = true,
+                    IsLocked = false
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        LineFormat format = document.LineFormats.GetById(new LineFormatId("BrokenDashed"));
+
+        Assert.Equal(new[] { 8.0, 4.0 }, format.DashPattern);
+    }
+}

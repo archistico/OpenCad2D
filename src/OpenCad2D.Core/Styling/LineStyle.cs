@@ -1,7 +1,7 @@
 namespace OpenCad2D.Core.Styling;
 
 /// <summary>
-/// Defines how a stroke is rendered along its path.
+/// Defines the semantic line style associated with a reusable line format.
 /// </summary>
 public enum LineStyle
 {
@@ -24,4 +24,9 @@ public enum LineStyle
     /// Long dash, short gap, dot, short gap, dot, short gap, repeat.
     /// </summary>
     DashDotDot,
+
+    /// <summary>
+    /// User-defined dash pattern stored on the line format.
+    /// </summary>
+    Custom,
 }

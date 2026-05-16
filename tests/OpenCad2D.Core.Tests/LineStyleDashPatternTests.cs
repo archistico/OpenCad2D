@@ -11,9 +11,9 @@ public sealed class LineStyleDashPatternTests
     }
 
     [Theory]
-    [InlineData(LineStyle.Dashed, new[] { 6.0, 3.0 })]
-    [InlineData(LineStyle.DashDot, new[] { 12.0, 4.0, 2.0, 4.0 })]
-    [InlineData(LineStyle.DashDotDot, new[] { 12.0, 4.0, 2.0, 4.0, 2.0, 4.0 })]
+    [InlineData(LineStyle.Dashed, new[] { 8.0, 4.0 })]
+    [InlineData(LineStyle.DashDot, new[] { 12.0, 4.0, 1.0, 4.0 })]
+    [InlineData(LineStyle.DashDotDot, new[] { 12.0, 4.0, 1.0, 4.0, 1.0, 4.0 })]
     public void Get_ForNonContinuousStyle_ShouldReturnExpectedPattern(
         LineStyle style,
         double[] expected)
@@ -22,5 +22,20 @@ public sealed class LineStyleDashPatternTests
 
         Assert.NotNull(pattern);
         Assert.Equal(expected, pattern);
+    }
+
+    [Fact]
+    public void IsValid_WithPositiveDashGapPairs_ShouldReturnTrue()
+    {
+        Assert.True(LineStyleDashPattern.IsValid(new[] { 10.0, 5.0, 1.0, 5.0 }));
+    }
+
+    [Theory]
+    [InlineData(new[] { 10.0 })]
+    [InlineData(new[] { 10.0, 0.0 })]
+    [InlineData(new[] { 10.0, -1.0 })]
+    public void IsValid_WithInvalidPattern_ShouldReturnFalse(double[] pattern)
+    {
+        Assert.False(LineStyleDashPattern.IsValid(pattern));
     }
 }

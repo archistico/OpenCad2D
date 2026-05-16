@@ -10,6 +10,7 @@ Name
 Color
 LineWeight
 LineStyle
+DashPattern
 ```
 
 Layers do not directly decide their stroke color, stroke thickness or dash pattern. A layer references one line format through `LineFormatId`; rendering, SVG export and persistence resolve the actual appearance through the document's `LineFormatCollection`.
@@ -73,24 +74,46 @@ Continuous
 Dashed
 DashDot
 DashDotDot
+Custom
 ```
 
-Dash patterns are expressed in model units. OpenCad2D does not assume that model space means millimetres, metres or another physical unit.
+`LineStyle` is the semantic style name. `LineFormat` is the complete reusable appearance object. The actual dash/gap values are stored in `LineFormat.DashPattern`, expressed as a numeric list in drawing/model units.
 
-Current dash patterns:
+Current default dash patterns:
 
-| LineStyle | Pattern | Meaning |
+| LineStyle | Default pattern | Meaning |
 |---|---:|---|
-| Continuous | none | solid line |
-| Dashed | `6, 3` | dash, gap |
-| DashDot | `6, 2, 1, 2` | dash, gap, dot, gap |
-| DashDotDot | `6, 2, 1, 2, 1, 2` | dash, gap, dot, gap, dot, gap |
+| Continuous | none / `[]` | solid line |
+| Dashed | `8, 4` | dash, gap |
+| DashDot | `12, 4, 1, 4` | dash, gap, dot, gap |
+| DashDotDot | `12, 4, 1, 4, 1, 4` | dash, gap, dot, gap, dot, gap |
+| Custom | user-defined | dash/gap pairs |
 
-The canvas converts these model-space dash lengths to screen-space values using the current viewport scale. Therefore dash patterns zoom together with the drawing.
+Pattern values must be positive dash/gap pairs. Missing legacy patterns are reconstructed from the style default during load. Invalid persisted patterns fall back to the style default instead of breaking file loading.
 
-SVG export writes the same logical dash pattern to `stroke-dasharray`.
+The intended rendering model is that dash patterns are drawing-unit values. The canvas converts model-space dash lengths to screen-space values using the current viewport scale, so dash patterns zoom together with the drawing.
+
+SVG export should write the line format dash pattern to `stroke-dasharray`. DXF currently keeps stable preset style mapping; custom DXF linetype definitions are planned as a later refinement.
 
 ---
+
+
+### Custom pattern persistence
+
+The `.opencad2d.json` format stores line format patterns explicitly:
+
+```json
+{
+  "id": "Dashed",
+  "name": "Tratteggiata",
+  "color": "#FFFF00",
+  "lineWeight": 0.75,
+  "lineStyle": "Dashed",
+  "dashPattern": [8, 4]
+}
+```
+
+A missing `dashPattern` keeps backward compatibility with older files. The loader rebuilds the default pattern from `lineStyle`.
 
 ## Layer Manager
 
@@ -206,3 +229,15 @@ Out of scope for this phase:
 - fill formats;
 - text formats;
 - dimension formats.
+
+## v0.8.x line style pattern editor
+
+The Line Format Manager now exposes the effective dash pattern of each line format.
+The distinction is:
+
+- `LineStyle` describes the stroke style/pattern category, including `Custom`.
+- `LineFormat` remains the complete reusable appearance: color, line weight, style and effective dash pattern.
+
+Dash patterns are edited as comma-separated dash/gap pairs in drawing units, for example `8,4` or `12,4,1,4`.
+Changing a preset style applies its default pattern. Editing the pattern manually marks the style as `Custom`.
+The manager also shows a compact textual preview of the resulting pattern.

@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.Json;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
@@ -402,7 +402,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             Name = format.Name,
             Color = ToHex(format.Color),
             LineWeight = format.LineWeight.Millimeters,
-            LineStyle = format.LineStyle.ToString()
+            LineStyle = format.LineStyle.ToString(),
+            DashPattern = format.DashPattern.ToList()
         };
     }
 
@@ -615,12 +616,18 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 ? dto.Id
                 : dto.Name;
 
+            LineStyle lineStyle = ParseLineStyle(dto.LineStyle);
+            IReadOnlyList<double>? dashPattern = NormalizeDashPatternForLoad(
+                lineStyle,
+                dto.DashPattern);
+
             formats.Add(new LineFormat(
                 new LineFormatId(dto.Id),
                 name,
                 FromHex(dto.Color),
                 LineWeight.FromMillimeters(Math.Max(0, dto.LineWeight)),
-                ParseLineStyle(dto.LineStyle)));
+                lineStyle,
+                dashPattern));
         }
 
         if (formats.Count == 0)
@@ -636,6 +643,24 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         }
 
         return new LineFormatCollection(formats);
+    }
+
+
+    private static IReadOnlyList<double>? NormalizeDashPatternForLoad(
+        LineStyle lineStyle,
+        IReadOnlyList<double>? dashPattern)
+    {
+        if (dashPattern is null || dashPattern.Count == 0)
+        {
+            return LineStyleDashPattern.Get(lineStyle);
+        }
+
+        if (!LineStyleDashPattern.IsValid(dashPattern))
+        {
+            return LineStyleDashPattern.Get(lineStyle);
+        }
+
+        return dashPattern;
     }
 
     private static TextFormatCollection FromTextFormatDtos(IReadOnlyCollection<TextFormatDto>? dtos)

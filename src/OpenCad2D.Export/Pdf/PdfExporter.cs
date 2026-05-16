@@ -258,9 +258,9 @@ public sealed class PdfExporter : IPdfExporter
         builder.AppendLine($"{Format(color.R / 255.0)} {Format(color.G / 255.0)} {Format(color.B / 255.0)} RG");
         builder.AppendLine($"{Format(Math.Max(MinimumStrokeWidth, lineFormat.LineWeight.Millimeters * PointsPerMillimeter))} w");
 
-        double[]? pattern = LineStyleDashPattern.Get(lineFormat.LineStyle);
+        IReadOnlyList<double> pattern = lineFormat.DashPattern;
 
-        if (pattern is null || pattern.Length == 0)
+        if (pattern.Count == 0)
         {
             builder.AppendLine("[] 0 d");
             return;

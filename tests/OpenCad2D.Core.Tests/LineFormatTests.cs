@@ -96,3 +96,62 @@ public sealed class LineFormatTests
         Assert.Equal(LineStyle.DashDot, changed.LineStyle);
     }
 }
+
+public sealed class LineFormatDashPatternTests
+{
+    [Fact]
+    public void Constructor_WithDashedStyle_ShouldUseDefaultDashPattern()
+    {
+        var format = new LineFormat(
+            new LineFormatId("DashedCustom"),
+            "Dashed custom",
+            CadColor.FromRgb(255, 255, 255),
+            LineWeight.FromMillimeters(0.25),
+            LineStyle.Dashed);
+
+        Assert.Equal(new[] { 8.0, 4.0 }, format.DashPattern);
+    }
+
+    [Fact]
+    public void Constructor_WithExplicitDashPattern_ShouldStoreDrawingUnitPattern()
+    {
+        var format = new LineFormat(
+            new LineFormatId("Custom"),
+            "Custom",
+            CadColor.FromRgb(255, 255, 255),
+            LineWeight.FromMillimeters(0.25),
+            LineStyle.Custom,
+            new[] { 10.0, 5.0, 1.0, 5.0 });
+
+        Assert.Equal(new[] { 10.0, 5.0, 1.0, 5.0 }, format.DashPattern);
+    }
+
+    [Fact]
+    public void Constructor_WithInvalidDashPattern_ShouldThrow()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            new LineFormat(
+                new LineFormatId("Invalid"),
+                "Invalid",
+                CadColor.FromRgb(255, 255, 255),
+                LineWeight.FromMillimeters(0.25),
+                LineStyle.Custom,
+                new[] { 10.0, -5.0 }));
+    }
+
+    [Fact]
+    public void WithName_ShouldKeepDashPattern()
+    {
+        var original = new LineFormat(
+            new LineFormatId("Custom"),
+            "Old",
+            CadColor.FromRgb(255, 255, 255),
+            LineWeight.FromMillimeters(0.25),
+            LineStyle.Custom,
+            new[] { 10.0, 5.0 });
+
+        LineFormat changed = original.WithName("New");
+
+        Assert.Equal(new[] { 10.0, 5.0 }, changed.DashPattern);
+    }
+}
