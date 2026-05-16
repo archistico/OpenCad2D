@@ -4,19 +4,67 @@ using OpenCad2D.Geometry.Operations;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Drawing;
 
 /// <summary>
 /// Interactive tool used to draw circular arc entities through three points.
 /// </summary>
-public sealed class ArcThreePointsTool : ICadTool
+public sealed class ArcThreePointsTool : ICadTool, ICommandDrivenTool
 {
     private Point2D? _startPoint;
     private Point2D? _pointOnArc;
     private Point2D? _currentPoint;
 
     public string Name => "Arc 3P";
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            ArcThreePointsToolState.WaitingForStartPoint => new CommandPromptState(
+                "ARC3P",
+                "Specify start point",
+                CommandInputKind.Point,
+                placeholder: "100,50"),
+
+            ArcThreePointsToolState.WaitingForPointOnArc => new CommandPromptState(
+                "ARC3P",
+                "Specify point on arc",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   @100<45   |   distance"),
+
+            ArcThreePointsToolState.WaitingForEndPoint => new CommandPromptState(
+                "ARC3P",
+                "Specify end point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   @100<45   |   distance"),
+
+            _ => new CommandPromptState(
+                "ARC3P",
+                "Specify point",
+                CommandInputKind.Point,
+                placeholder: "100,50")
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "ARC3P expects a point input.");
+        }
+
+        return SubmitResolvedPoint(context, input.Point.Value);
+    }
 
     public ArcThreePointsToolState State { get; private set; } =
         ArcThreePointsToolState.WaitingForStartPoint;
@@ -132,6 +180,19 @@ public sealed class ArcThreePointsTool : ICadTool
             arc.IsCounterClockwise);
     }
 
+    private ToolResult SubmitResolvedPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        return State switch
+        {
+            ArcThreePointsToolState.WaitingForStartPoint => SelectStartPoint(context, point),
+            ArcThreePointsToolState.WaitingForPointOnArc => SelectPointOnArc(context, point),
+            ArcThreePointsToolState.WaitingForEndPoint => SelectEndPoint(context, point),
+            _ => ToolResult.None()
+        };
+    }
+
     private ToolResult SelectStartPoint(
         ToolContext context,
         PointerInfo pointer)
@@ -141,6 +202,13 @@ public sealed class ArcThreePointsTool : ICadTool
             pointer.ModelPoint,
             basePoint: null);
 
+        return SelectStartPoint(context, point);
+    }
+
+    private ToolResult SelectStartPoint(
+        ToolContext context,
+        Point2D point)
+    {
         _startPoint = point;
         _currentPoint = point;
         context.CurrentBasePoint = point;
@@ -163,6 +231,19 @@ public sealed class ArcThreePointsTool : ICadTool
             context,
             pointer.ModelPoint,
             _startPoint);
+
+        return SelectPointOnArc(context, point);
+    }
+
+    private ToolResult SelectPointOnArc(
+        ToolContext context,
+        Point2D point)
+    {
+        if (_startPoint is null)
+        {
+            throw new InvalidOperationException(
+                "Arc 3P tool is waiting for a point on arc but start point is missing.");
+        }
 
         if (context.GeometryTolerance.ArePointsEqual(
                 _startPoint.Value,
@@ -194,6 +275,19 @@ public sealed class ArcThreePointsTool : ICadTool
             context,
             pointer.ModelPoint,
             _pointOnArc);
+
+        return SelectEndPoint(context, point);
+    }
+
+    private ToolResult SelectEndPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        if (_startPoint is null || _pointOnArc is null)
+        {
+            throw new InvalidOperationException(
+                "Arc 3P tool is waiting for an end point but previous points are missing.");
+        }
 
         if (!ArcCreationService.TryCreateFromThreePoints(
                 _startPoint.Value,

@@ -5,6 +5,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Input;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 
@@ -343,6 +344,51 @@ public sealed class RectangleToolTests
 
         Assert.Equal(layerId, rectangle.LayerId);
         Assert.True(rectangle.IsClosed);
+    }
+
+
+    [Fact]
+    public void CommandInput_ShouldCreateRectangleFromTwoCorners()
+    {
+        var context = CreateContext();
+        var tool = new RectangleTool();
+
+        ToolResult firstResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("1,2", new Point2D(1, 2)),
+            context);
+        ToolResult secondResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("@9,18", new Point2D(10, 20)),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, firstResult.Kind);
+        Assert.Equal(ToolResultKind.Completed, secondResult.Kind);
+        Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
+
+        var rectangle = Assert.Single(context.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.True(rectangle.IsClosed);
+        Assert.Equal(new Point2D(1, 2), rectangle.Vertices[0]);
+        Assert.Equal(new Point2D(10, 20), rectangle.Vertices[2]);
+    }
+
+    [Fact]
+    public void GetPromptState_ShouldExposeRectangleCommandSteps()
+    {
+        var context = CreateContext();
+        var tool = new RectangleTool();
+
+        CommandPromptState firstPrompt = tool.GetPromptState(context);
+
+        Assert.Equal("RECTANGLE", firstPrompt.CommandName);
+        Assert.Equal(CommandInputKind.Point, firstPrompt.ExpectedInput);
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("1,2", new Point2D(1, 2)),
+            context);
+
+        CommandPromptState secondPrompt = tool.GetPromptState(context);
+
+        Assert.Equal("RECTANGLE", secondPrompt.CommandName);
+        Assert.Equal(CommandInputKind.PointOrDistance, secondPrompt.ExpectedInput);
     }
 
     private static ToolContext CreateContext(

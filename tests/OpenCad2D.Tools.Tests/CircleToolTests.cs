@@ -8,6 +8,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -187,6 +188,50 @@ public sealed class CircleToolTests
 
         Assert.NotNull(preview);
         Assert.Equal(10, preview.Radius);
+    }
+
+
+    [Fact]
+    public void CommandInput_ShouldCreateCircleFromCenterAndRadiusPoint()
+    {
+        var context = CreateContext();
+        var tool = new CircleTool();
+
+        ToolResult firstResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("0,0", new Point2D(0, 0)),
+            context);
+        ToolResult secondResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("@10,0", new Point2D(10, 0)),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, firstResult.Kind);
+        Assert.Equal(ToolResultKind.Completed, secondResult.Kind);
+        Assert.Equal(TwoPointToolState.WaitingForFirstPoint, tool.State);
+
+        var circle = Assert.Single(context.Document.Entities.All.OfType<CircleEntity>());
+        Assert.Equal(new Point2D(0, 0), circle.Center);
+        Assert.Equal(10, circle.Radius);
+    }
+
+    [Fact]
+    public void GetPromptState_ShouldExposeCircleCommandSteps()
+    {
+        var context = CreateContext();
+        var tool = new CircleTool();
+
+        CommandPromptState firstPrompt = tool.GetPromptState(context);
+
+        Assert.Equal("CIRCLE", firstPrompt.CommandName);
+        Assert.Equal(CommandInputKind.Point, firstPrompt.ExpectedInput);
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("0,0", new Point2D(0, 0)),
+            context);
+
+        CommandPromptState secondPrompt = tool.GetPromptState(context);
+
+        Assert.Equal("CIRCLE", secondPrompt.CommandName);
+        Assert.Equal(CommandInputKind.PointOrDistance, secondPrompt.ExpectedInput);
     }
 
     private static ToolContext CreateContext(

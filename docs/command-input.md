@@ -518,9 +518,9 @@ This will also be useful for:
 
 ### Block 5 - Convert base drawing tools
 
-- Rectangle.
-- Circle.
-- Arc 3P.
+- Rectangle exposes guided first-corner/opposite-corner prompts and accepts typed points.
+- Circle exposes guided center/radius prompts and accepts typed points/direct radius-style input through the shared point/distance path.
+- Arc 3P exposes guided start/point-on-arc/end prompts and accepts typed points.
 
 ### Block 6 - Convert Move, Copy and Break
 

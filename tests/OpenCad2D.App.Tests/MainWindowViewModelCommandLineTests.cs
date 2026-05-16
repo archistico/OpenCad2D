@@ -640,6 +640,81 @@ public sealed class MainWindowViewModelCommandLineTests
 
 
 
+
+    [Fact]
+    public void SubmitCommandInput_WithCircleCoordinates_ShouldCreateCircle()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("C");
+        viewModel.SubmitCommandInput("0,0");
+        var result = viewModel.SubmitCommandInput("@10,0");
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Circle created.", viewModel.LastMessage);
+        CircleEntity circle = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<CircleEntity>());
+        Assert.Equal(new Point2D(0, 0), circle.Center);
+        Assert.Equal(10, circle.Radius);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithRectangleCoordinates_ShouldCreateRectangle()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("REC");
+        viewModel.SubmitCommandInput("1,2");
+        var result = viewModel.SubmitCommandInput("@9,18");
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Rectangle created.", viewModel.LastMessage);
+        PolylineEntity rectangle = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.True(rectangle.IsClosed);
+        Assert.Equal(new Point2D(1, 2), rectangle.Vertices[0]);
+        Assert.Equal(new Point2D(10, 20), rectangle.Vertices[2]);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithArc3PCoordinates_ShouldCreateArc()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("A3P");
+        viewModel.SubmitCommandInput("10,0");
+        viewModel.SubmitCommandInput("0,10");
+        var result = viewModel.SubmitCommandInput("-10,0");
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Arc 3P created.", viewModel.LastMessage);
+        ArcEntity arc = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>());
+        Assert.Equal(new Point2D(0, 0), arc.Center);
+        Assert.Equal(10, arc.Radius, precision: 10);
+        Assert.NotNull(result);
+    }
+
+    [Theory]
+    [InlineData("C", "CIRCLE: Specify center point:")]
+    [InlineData("REC", "RECTANGLE: Specify first corner:")]
+    [InlineData("A3P", "ARC3P: Specify start point:")]
+    public void SubmitCommandInput_WhenBaseDrawToolIsActive_ShouldShowCommandDrivenPrompt(
+        string command,
+        string expectedPrompt)
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput(command);
+
+        Assert.Equal(expectedPrompt, viewModel.CommandPromptText);
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,

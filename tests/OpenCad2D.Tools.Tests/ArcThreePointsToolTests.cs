@@ -8,6 +8,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -297,6 +298,63 @@ public sealed class ArcThreePointsToolTests
         Assert.Null(tool.CurrentPoint);
         Assert.Null(context.CurrentBasePoint);
         Assert.False(tool.HasPreview);
+    }
+
+
+    [Fact]
+    public void CommandInput_ShouldCreateArcFromThreePoints()
+    {
+        var context = CreateContext();
+        var tool = new ArcThreePointsTool();
+
+        ToolResult firstResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("10,0", new Point2D(10, 0)),
+            context);
+        ToolResult secondResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("0,10", new Point2D(0, 10)),
+            context);
+        ToolResult thirdResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("-10,0", new Point2D(-10, 0)),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, firstResult.Kind);
+        Assert.Equal(ToolResultKind.Started, secondResult.Kind);
+        Assert.Equal(ToolResultKind.Completed, thirdResult.Kind);
+        Assert.Equal(ArcThreePointsToolState.WaitingForStartPoint, tool.State);
+
+        var arc = Assert.Single(context.Document.Entities.All.OfType<ArcEntity>());
+        Assert.Equal(new Point2D(0, 0), arc.Center);
+        Assert.Equal(10, arc.Radius, precision: 10);
+    }
+
+    [Fact]
+    public void GetPromptState_ShouldExposeArc3PCommandSteps()
+    {
+        var context = CreateContext();
+        var tool = new ArcThreePointsTool();
+
+        CommandPromptState firstPrompt = tool.GetPromptState(context);
+
+        Assert.Equal("ARC3P", firstPrompt.CommandName);
+        Assert.Equal(CommandInputKind.Point, firstPrompt.ExpectedInput);
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("10,0", new Point2D(10, 0)),
+            context);
+
+        CommandPromptState secondPrompt = tool.GetPromptState(context);
+
+        Assert.Equal("ARC3P", secondPrompt.CommandName);
+        Assert.Equal(CommandInputKind.PointOrDistance, secondPrompt.ExpectedInput);
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("0,10", new Point2D(0, 10)),
+            context);
+
+        CommandPromptState thirdPrompt = tool.GetPromptState(context);
+
+        Assert.Equal("ARC3P", thirdPrompt.CommandName);
+        Assert.Equal(CommandInputKind.PointOrDistance, thirdPrompt.ExpectedInput);
     }
 
     private static ToolContext CreateContext(

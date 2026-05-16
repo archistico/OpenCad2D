@@ -1345,3 +1345,24 @@ Next planned block: migrate the remaining basic draw tools (`Rectangle`, `Circle
 ### 2026-05-16 - v0.8 command input block 4 compile fix
 
 Fixed a C# local-variable shadowing issue in `MainWindowViewModel.SubmitCommandInput` introduced while routing empty Enter to command-driven tools. The non-empty active command result variable was renamed so the polyline command-driven patch compiles without changing behavior.
+
+
+## 2026-05-16 - v0.8 command input block 5: base draw tools command-driven
+
+Migrated the remaining basic draw tools to the command-driven input model.
+
+- `RectangleTool` now implements `ICommandDrivenTool`.
+  - Prompt 1: `RECTANGLE: Specify first corner:`.
+  - Prompt 2: `RECTANGLE: Specify opposite corner:`.
+- `CircleTool` now implements `ICommandDrivenTool`.
+  - Prompt 1: `CIRCLE: Specify center point:`.
+  - Prompt 2: `CIRCLE: Specify radius point or type radius:`.
+- `ArcThreePointsTool` now implements `ICommandDrivenTool`.
+  - Prompt 1: `ARC3P: Specify start point:`.
+  - Prompt 2: `ARC3P: Specify point on arc:`.
+  - Prompt 3: `ARC3P: Specify end point:`.
+- Mouse workflows continue to use the existing snapping and angle-constraint logic.
+- Typed coordinates are submitted as resolved points and share the same command phases as mouse clicks.
+- Added tests for direct tool command input and ViewModel command-line creation for Circle, Rectangle and Arc 3P.
+
+Next planned block: migrate `Move`, `Copy` and `Break` to guided selection/base-point/destination-point workflows.

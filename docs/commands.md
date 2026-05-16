@@ -639,3 +639,14 @@ Options while collecting vertices:
 - `C` / `Close` closes the polyline;
 - `U` / `Undo` removes the last vertex;
 - empty Enter finishes an open polyline.
+
+
+## v0.8 base drawing command input
+
+The command input now guides the basic drawing tools with contextual prompts:
+
+- `CIRCLE` / `C`: center point, then radius point or radius-style input.
+- `RECTANGLE` / `REC`: first corner, then opposite corner.
+- `ARC3P` / `A3P`: start point, point on arc, then end point.
+
+For point prompts the user can either click in the canvas or type coordinates such as `100,50`, `@50,0` or `@100<45`.

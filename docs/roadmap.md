@@ -1057,6 +1057,20 @@ Completed in the current v0.8 path:
 
 Next planned steps:
 
-- [ ] Convert `Rectangle`, `Circle` and `Arc 3P` to the command-driven model.
+- [x] Convert `Rectangle`, `Circle` and `Arc 3P` to the command-driven model.
 - [ ] Convert `Move`, `Copy` and `Break`.
 - [ ] Design and implement the advanced Trim workflow with picked-entity input.
+
+
+### v0.8 command input progress - block 5
+
+Completed command-driven migration for the remaining basic drawing tools:
+
+- [x] `Rectangle` supports guided first-corner and opposite-corner prompts.
+- [x] `Circle` supports guided center and radius-point/radius prompts.
+- [x] `Arc 3P` supports guided start, point-on-arc and end-point prompts.
+- [x] Mouse input and typed coordinate input now share the same tool phases for these tools.
+
+Next:
+
+- [ ] Convert `Move`, `Copy` and `Break` to guided command input.

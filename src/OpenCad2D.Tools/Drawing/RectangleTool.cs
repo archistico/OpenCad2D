@@ -1,8 +1,9 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 using OpenCad2D.Core.Identifiers;
 
 namespace OpenCad2D.Tools.Drawing;
@@ -10,9 +11,41 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw rectangular closed polylines.
 /// </summary>
-public sealed class RectangleTool : TwoPointToolBase
+public sealed class RectangleTool : TwoPointToolBase, ICommandDrivenTool
 {
     public override string Name => "Rectangle";
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State == TwoPointToolState.WaitingForFirstPoint
+            ? new CommandPromptState(
+                "RECTANGLE",
+                "Specify first corner",
+                CommandInputKind.Point,
+                placeholder: "100,50")
+            : new CommandPromptState(
+                "RECTANGLE",
+                "Specify opposite corner",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   @100<45   |   distance");
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "RECTANGLE expects a point input.");
+        }
+
+        return SubmitResolvedPoint(context, input.Point.Value);
+    }
 
     public PolylineEntity? GetPreviewEntity()
     {

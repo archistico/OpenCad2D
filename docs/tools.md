@@ -840,3 +840,10 @@ The first command-driven drawing tools are now `Line` and `Polyline`.
 - `Polyline` collects multiple vertices and supports `Close`, `Undo` and empty-Enter completion.
 - For both tools, mouse clicks and command-input coordinates update the same tool state.
 - Typed coordinates are treated as resolved model points, while mouse input still uses snapping and active drawing constraints.
+
+
+## v0.8 guided base draw tools
+
+`Line`, `Polyline`, `Rectangle`, `Circle` and `Arc 3P` are now command-driven tools. They expose their current phase to the command input and accept both mouse clicks and typed coordinate input for point acquisition.
+
+The remaining modify tools will be migrated in later v0.8 blocks, starting with Move, Copy and Break.
