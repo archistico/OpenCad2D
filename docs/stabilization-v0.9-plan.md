@@ -22,7 +22,7 @@ The goal is not to stop feature development permanently. The goal is to make the
 | UX correctness | Non-associative dimensions can become stale silently | Completed | v0.8.4 | Added a conservative `DimensionEntity.IsStale` marker, persistence support, property-panel status and distinct canvas rendering. |
 | Command UX | Command history navigation with up/down is missing | Completed | v0.8.4 | Up/down now navigates stored command/action history without recalling coordinate input. |
 | Command UX | Command autocomplete is missing | Completed | v0.8.4 | Added simple Tab completion for known command/action prefixes; visual dropdown remains future work. |
-| Modify tools | Fillet lacks preview and NoTrim | Planned | v0.8.5 | Preview first, NoTrim second, Line-Arc/Arc-Arc later. |
+| Modify tools | Fillet lacks NoTrim and advanced entity pairs | Partially complete | v0.8.5 | Line-Line live preview added; NoTrim and Line-Arc/Arc-Arc remain future work. |
 | Modify tools | Offset lacks miter limit / round join | Planned | v0.8.5 | Introduce join-style planning and miter limit before advanced curve offset. |
 | DXF import | LWPOLYLINE bulge is not converted to arcs | Planned | v0.9+ | High-value import improvement after stabilization. |
 | DXF import | ELLIPSE/SPLINE import is deferred | Planned | v0.9+ | Export exists; import should be added after compatibility validation. |
@@ -91,9 +91,9 @@ UX correctness and command line improvements:
 
 Modify-tool refinement:
 
-- Fillet preview;
-- Fillet NoTrim;
-- stronger near-collinear Fillet tests;
+- [x] Fillet preview;
+- [ ] Fillet NoTrim;
+- [x] stronger Fillet degenerate-bisector guard;
 - Offset miter limit;
 - plan for bevel/round join style.
 

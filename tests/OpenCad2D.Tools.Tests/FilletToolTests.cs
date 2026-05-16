@@ -49,6 +49,52 @@ public sealed class FilletToolTests
         Assert.All(document.Entities.All, entity => Assert.IsType<LineEntity>(entity));
     }
 
+    [Fact]
+    public void OnPointerMoved_AfterFirstLine_ShouldExposeFilletPreviewWithoutChangingDocument()
+    {
+        CadDocument document = new();
+        var horizontal = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var vertical = new LineEntity(new Point2D(10, 0), new Point2D(10, 10));
+        document.AddEntity(horizontal);
+        document.AddEntity(vertical);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerMoved(context, new PointerInfo(new Point2D(10, 5)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        IReadOnlyList<CadEntity> preview = tool.GetPreviewEntities();
+        Assert.Equal(3, preview.Count);
+        Assert.Contains(preview, entity => entity is ArcEntity);
+        Assert.Equal(2, document.Entities.All.Count());
+    }
+
+    [Fact]
+    public void CompletedFillet_ShouldClearPreviewEntities()
+    {
+        CadDocument document = new();
+        var horizontal = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var vertical = new LineEntity(new Point2D(10, 0), new Point2D(10, 10));
+        document.AddEntity(horizontal);
+        document.AddEntity(vertical);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerMoved(context, new PointerInfo(new Point2D(10, 5)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 5)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Empty(tool.GetPreviewEntities());
+    }
+
     private static ToolContext CreateContext(CadDocument? document = null)
     {
         return new ToolContext(

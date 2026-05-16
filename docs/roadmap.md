@@ -928,6 +928,7 @@ These remain useful but are intentionally deferred beyond v0.8:
 - [ ] draw order / Z-order tests;
 - [ ] polyline offset;
 - [ ] advanced Fillet variants;
+- [x] Fillet live preview for Line-Line;
 - [ ] advanced Trim Fence/Crossing/Edge/Project/Erase modes.
 
 ---

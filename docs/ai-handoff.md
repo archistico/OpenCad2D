@@ -1998,3 +1998,10 @@ Added App tests for command completions such as `li -> LINE`, `mt -> MTEXT`, `m 
 
 Next recommended v0.8.4 task: add a user-facing command/action to mark stale dimensions as checked, then move to Fillet/Offset refinement.
 
+## 2026-05-16 - v0.8.5 Fillet live preview kickoff
+
+Implemented the first Fillet refinement pass. `FilletTool` now keeps transient preview entities while the command is waiting for the second line; `OnPointerMoved` evaluates the same Line-Line fillet geometry used by final creation and exposes the result through `GetPreviewEntities()`. `CadToolPreviewRenderer` renders those preview entities with the standard preview pen, so users can see the trimmed line result and tangent arc before committing the second pick.
+
+The preview is cleared when the tool is cancelled, deactivated, reset, completed or when the hovered second entity is invalid. The Line-Line fillet geometry also gained an explicit degenerate-bisector guard before normalizing the angle bisector, making near-opposite branch cases safer.
+
+Added Tool tests covering live preview generation without changing the document and preview cleanup after committing the fillet. Remaining v0.8.5 work: NoTrim option, additional near-collinear edge-case tests, then Offset miter-limit/join-style refinement.

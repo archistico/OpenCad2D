@@ -162,7 +162,7 @@ pick first line
 pick second line
 ```
 
-Radius `0` creates a sharp-corner join.
+Radius `0` creates a sharp-corner join. With a positive radius, the canvas shows a live preview while the second line is being selected.
 
 ---
 

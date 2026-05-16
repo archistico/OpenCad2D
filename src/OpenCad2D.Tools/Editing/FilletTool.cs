@@ -17,6 +17,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
 {
     private double _radius;
     private ToolPickedEntityInput? _firstPick;
+    private IReadOnlyList<CadEntity> _previewEntities = Array.Empty<CadEntity>();
 
     public string Name => "Fillet";
 
@@ -25,6 +26,11 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
     public double Radius => _radius;
 
     public EntityId? FirstEntityId => _firstPick?.EntityId;
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities()
+    {
+        return _previewEntities;
+    }
 
     public CommandPromptState GetPromptState(ToolContext context)
     {
@@ -113,7 +119,42 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
-        return ToolResult.None();
+        if (State != FilletToolState.WaitingForSecondEntity || _firstPick is null)
+        {
+            _previewEntities = Array.Empty<CadEntity>();
+            return ToolResult.None();
+        }
+
+        ToolPickedEntityInput? secondPick = PickSelectableLine(context, pointer.ModelPoint);
+
+        if (secondPick is null || secondPick.EntityId.Equals(_firstPick.EntityId))
+        {
+            _previewEntities = Array.Empty<CadEntity>();
+            return ToolResult.None();
+        }
+
+        LineEntity first = (LineEntity)_firstPick.Entity;
+        LineEntity second = (LineEntity)secondPick.Entity;
+
+        if (!TryCreateLineLineFillet(
+                first,
+                _firstPick.PickPoint,
+                second,
+                secondPick.PickPoint,
+                _radius,
+                context.GeometryTolerance,
+                out IReadOnlyList<CadEntity>? resultEntities,
+                out _))
+        {
+            _previewEntities = Array.Empty<CadEntity>();
+            return ToolResult.None();
+        }
+
+        _previewEntities = resultEntities ?? Array.Empty<CadEntity>();
+
+        return _previewEntities.Count > 0
+            ? ToolResult.Updated("Fillet preview updated.")
+            : ToolResult.None();
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -158,6 +199,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
         }
 
         _firstPick = pick;
+        _previewEntities = Array.Empty<CadEntity>();
         State = FilletToolState.WaitingForSecondEntity;
         context.CurrentBasePoint = pick.ClosestPoint;
 
@@ -217,13 +259,14 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
                     : "Fillet lines"));
 
         _firstPick = null;
+        _previewEntities = Array.Empty<CadEntity>();
         State = FilletToolState.WaitingForFirstEntityOrRadius;
         context.CurrentBasePoint = null;
 
         return ToolResult.Completed("Fillet created. Select first line or type Radius.");
     }
 
-    private static bool TryCreateLineLineFillet(
+    internal static bool TryCreateLineLineFillet(
         LineEntity first,
         Point2D firstPickPoint,
         LineEntity second,
@@ -299,7 +342,15 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
 
         Point2D firstTangent = intersectionPoint + firstBranch * tangentDistance;
         Point2D secondTangent = intersectionPoint + secondBranch * tangentDistance;
-        Vector2D bisector = (firstBranch + secondBranch).Normalize();
+        Vector2D bisectorVector = firstBranch + secondBranch;
+
+        if (tolerance.IsVectorLengthZero(bisectorVector.Length))
+        {
+            errorMessage = "Cannot fillet lines with a degenerate corner bisector.";
+            return false;
+        }
+
+        Vector2D bisector = bisectorVector.Normalize();
         Point2D center = intersectionPoint + bisector * (radius / Math.Sin(angle / 2.0));
 
         Angle startAngle = Angle.FromRadians(
@@ -406,6 +457,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
     private void Reset(ToolContext context)
     {
         _firstPick = null;
+        _previewEntities = Array.Empty<CadEntity>();
         State = FilletToolState.WaitingForFirstEntityOrRadius;
         context.CurrentBasePoint = null;
     }

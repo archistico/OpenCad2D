@@ -228,6 +228,12 @@ public sealed class CadToolPreviewRenderer
                     _modifyPreviewHighlightPen);
                 break;
 
+            case FilletTool filletTool:
+                DrawEntitiesPreview(
+                    context,
+                    filletTool.GetPreviewEntities());
+                break;
+
             case OffsetTool offsetTool:
                 DrawOffsetPreview(context, offsetTool);
                 break;

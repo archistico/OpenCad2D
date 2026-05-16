@@ -131,6 +131,7 @@ Rules:
 
 - Radius `0` creates a sharp-corner join;
 - radius greater than zero creates a tangent arc;
+- a live preview is shown while choosing the second line;
 - trim mode is always on;
 - Line-Arc, Arc-Arc, polyline fillet and NoTrim are future work.
 

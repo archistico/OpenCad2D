@@ -170,6 +170,7 @@ Rules:
 - Radius option sets the active fillet radius;
 - radius `0` creates a sharp-corner join;
 - radius greater than `0` creates a tangent arc;
+- while selecting the second line, Fillet shows a live preview of the trimmed line result and tangent arc;
 - trim mode is always on.
 
 Future work:
