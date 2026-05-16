@@ -166,3 +166,9 @@ Historical milestone notes before v0.8 are no longer needed in the active docume
 ## License
 
 OpenCad2D is released under the GPL-3.0-or-later license. See `LICENSE`.
+
+---
+
+## Credits
+
+Created with love by Emilie Rollandin.
