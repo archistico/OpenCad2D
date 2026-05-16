@@ -2,6 +2,7 @@ using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Measurements;
+using OpenCad2D.Tools.Navigation;
 using OpenCad2D.Tools.Selection;
 
 namespace OpenCad2D.Tools.Common;
@@ -26,6 +27,14 @@ public sealed class ToolRegistry
                 "Selection",
                 "Modify"),
             () => new SelectionTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.ZoomWindow,
+                "ZoomWindow",
+                "Zoom Window",
+                "Navigation"),
+            () => new ZoomWindowTool());
 
         Register(
             new ToolDescriptor(

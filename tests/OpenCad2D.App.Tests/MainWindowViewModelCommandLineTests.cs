@@ -13,6 +13,7 @@ public sealed class MainWindowViewModelCommandLineTests
     [InlineData("line", "Line")]
     [InlineData("C", "Circle")]
     [InlineData("TR", "Trim")]
+    [InlineData("ZW", "ZoomWindow")]
     [InlineData("HDIM", "Horizontal Dimension")]
     [InlineData("ANG", "Angular Dimension")]
     public void SubmitCommandInput_WithToolAlias_ShouldActivateTool(

@@ -526,6 +526,17 @@ The panel validates input before applying edits. Invalid numeric values, invalid
 
 All successful edits are applied through command history, normally by replacing the selected entity with a modified copy. This keeps undo/redo, dirty-state tracking and spatial-index updates consistent.
 
+
+## Navigation commands
+
+OpenCad2D supports viewport navigation from the command line:
+
+```text
+ZOOMWINDOW / ZW
+```
+
+`Zoom Window` asks for two opposite corners and fits the viewport to the selected rectangular model area. Very small windows are ignored to avoid accidental extreme zooms.
+
 ## Selection commands
 
 OpenCad2D supports direct selection actions from the command line:

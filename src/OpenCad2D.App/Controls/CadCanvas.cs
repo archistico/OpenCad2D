@@ -21,6 +21,7 @@ using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Grips;
 using OpenCad2D.Tools.Measurements;
+using OpenCad2D.Tools.Navigation;
 using OpenCad2D.Tools.Selection;
 using System;
 using System.Collections.Generic;
@@ -45,6 +46,7 @@ public sealed class CadCanvas : Control
     private readonly IBrush _basePointMarkerFill = new SolidColorBrush(
         Color.FromArgb(80, 255, 190, 70));
     private readonly Pen _selectionWindowPen = new(Brushes.LightGreen, 1);
+    private readonly Pen _zoomWindowPen = new(Brushes.LightSkyBlue, 1.2);
     private readonly Pen _gripColdPen = new(
         new SolidColorBrush(Color.FromRgb(80, 210, 255)),
         1.5);
@@ -66,6 +68,7 @@ public sealed class CadCanvas : Control
         1.5);
     private readonly IBrush _backgroundBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30));
     private readonly IBrush _selectionWindowFill = new SolidColorBrush(Color.FromArgb(35, 80, 180, 255));
+    private readonly IBrush _zoomWindowFill = new SolidColorBrush(Color.FromArgb(30, 80, 210, 255));
     private readonly ViewportTransform _viewport = new();
     private readonly DimensionGeometryBuilder _dimensionGeometryBuilder = new();
     private Point? _pointerScreenPoint;
@@ -1180,6 +1183,10 @@ public sealed class CadCanvas : Control
                 DrawSelectionPreview(context, selectionTool);
                 break;
 
+            case ZoomWindowTool zoomWindowTool:
+                DrawZoomWindowPreview(context, zoomWindowTool);
+                break;
+
             case GripEditTool gripEditTool:
                 DrawGripEditPreview(context, gripEditTool);
                 break;
@@ -1736,6 +1743,25 @@ public sealed class CadCanvas : Control
             rect);
     }
 
+    private void DrawZoomWindowPreview(
+        DrawingContext context,
+        ZoomWindowTool tool)
+    {
+        BoundingBox2D? window = tool.GetPreviewWindow();
+
+        if (window is null)
+        {
+            return;
+        }
+
+        Rect rect = ToScreenRect(window.Value);
+
+        context.DrawRectangle(
+            _zoomWindowFill,
+            _zoomWindowPen,
+            rect);
+    }
+
     private void DrawEntity(
         DrawingContext context,
         CadEntity entity,
@@ -2207,6 +2233,8 @@ public sealed class CadCanvas : Control
                     e.KeyModifiers));
         }
 
+        result = ApplyZoomWindowIfCompleted(result);
+
         NotifyWorkspaceChanged(
             result,
             modelPoint);
@@ -2292,6 +2320,8 @@ public sealed class CadCanvas : Control
             CreatePointerInfo(
                 position,
                 e.KeyModifiers));
+
+        result = ApplyZoomWindowIfCompleted(result);
 
         NotifyWorkspaceChanged(
             result,
@@ -2502,6 +2532,44 @@ public sealed class CadCanvas : Control
         return new Rect(
             topLeft,
             bottomRight);
+    }
+
+    private ToolResult ApplyZoomWindowIfCompleted(ToolResult toolResult)
+    {
+        if (Workspace?.ToolController.ActiveTool is not ZoomWindowTool zoomWindowTool ||
+            zoomWindowTool.CompletedWindow is not BoundingBox2D window)
+        {
+            return toolResult;
+        }
+
+        zoomWindowTool.ClearCompletedWindow();
+
+        return ZoomToWindow(window);
+    }
+
+    public ToolResult ZoomToWindow(BoundingBox2D window)
+    {
+        if (Bounds.Width <= 0 || Bounds.Height <= 0)
+        {
+            return ToolResult.None("Cannot zoom window because the canvas has no size yet.");
+        }
+
+        double minimumModelSize = _viewport.ScreenLengthToModel(4);
+
+        if (window.Width < minimumModelSize ||
+            window.Height < minimumModelSize)
+        {
+            return ToolResult.None("Zoom window ignored because the selected window is too small.");
+        }
+
+        _viewport.ZoomToFit(
+            window,
+            new Size(Bounds.Width, Bounds.Height),
+            screenPadding: 0);
+
+        InvalidateVisual();
+
+        return ToolResult.Updated("Zoom window applied.");
     }
 
     public ToolResult ZoomExtents()

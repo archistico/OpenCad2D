@@ -76,6 +76,9 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("SELECT", ToolId.Selection);
         yield return new CommandAlias("SEL", ToolId.Selection);
 
+        yield return new CommandAlias("ZOOMWINDOW", ToolId.ZoomWindow);
+        yield return new CommandAlias("ZW", ToolId.ZoomWindow);
+
         yield return new CommandAlias("POINT", ToolId.Point);
         yield return new CommandAlias("PO", ToolId.Point);
 

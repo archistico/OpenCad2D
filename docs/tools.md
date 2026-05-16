@@ -337,6 +337,22 @@ While `SelectionTool` is active, only `SnapKind.Entity` is enabled. This keeps t
 
 ---
 
+## Navigation tools
+
+### Zoom Window
+
+`Zoom Window` is an interactive two-corner viewport tool. Pick the first corner, then pick or drag to the opposite corner. The viewport fits the selected model-space rectangle.
+
+Command aliases:
+
+```text
+ZOOMWINDOW / ZW
+```
+
+The command changes only the viewport and does not modify the drawing or dirty state.
+
+---
+
 ## Basic edit tools
 
 ### MoveTool

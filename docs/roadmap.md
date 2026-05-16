@@ -88,7 +88,7 @@ Pending in this phase:
 - [x] center all secondary modal windows on their owner;
 - [x] improve the save changes dialog styling;
 - [x] add Select All and Select Last;
-- [ ] add Zoom Window;
+- [x] add Zoom Window;
 - [ ] add document recovery options for partially invalid native files.
 
 ---

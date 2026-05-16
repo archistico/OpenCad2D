@@ -889,6 +889,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void ZoomWindow_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.ZoomWindow);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Move_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1761,6 +1772,11 @@ public partial class MainWindow : Window
             AngularDimensionButton,
             activeToolName.Equals("Angular Dimension", StringComparison.OrdinalIgnoreCase) ||
             activeToolName.Equals("AngularDimension", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            ZoomWindowButton,
+            activeToolName.Equals("ZoomWindow", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("Zoom Window", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MoveButton,

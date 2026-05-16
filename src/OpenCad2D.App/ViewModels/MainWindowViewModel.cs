@@ -9,6 +9,7 @@ using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Input;
 using OpenCad2D.Tools.Measurements;
+using OpenCad2D.Tools.Navigation;
 using OpenCad2D.App.ViewModels.Properties;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using System.IO;
@@ -254,6 +255,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     ArcThreePointsToolState.WaitingForEndPoint => "Arc 3P: specify end point or type coordinates:",
                     _ => "Arc 3P: specify point:"
                 };
+            }
+
+            if (Workspace.ToolController.ActiveTool is ZoomWindowTool zoomWindowTool)
+            {
+                return zoomWindowTool.FirstPoint is null
+                    ? "Zoom Window: specify first corner:"
+                    : "Zoom Window: specify opposite corner:";
             }
 
             if (Workspace.ToolController.ActiveTool is PointTool)

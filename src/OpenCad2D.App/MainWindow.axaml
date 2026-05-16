@@ -440,6 +440,14 @@
                                     Spacing="4">
 
                             <TextBlock Classes="panel-section-label"
+                                       Text="NAVIGATE" />
+
+                            <Button x:Name="ZoomWindowButton"
+                                    Classes="tool-button"
+                                    Content="Zoom Window"
+                                    Click="ZoomWindow_Click" />
+
+                            <TextBlock Classes="panel-section-label"
                                        Text="EDIT" />
 
                             <Button x:Name="MoveButton"

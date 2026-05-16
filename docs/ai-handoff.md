@@ -1158,3 +1158,23 @@ Regression coverage lives in `CadActionControllerTests` and `MainWindowViewModel
 - `MainWindowViewModel.TryExecuteActionCommand` now uses a non-null `ToolResult` out parameter.
 - The default unmatched-command result is initialized with `ToolResult.None()` so `SubmitCommandInput` can return it without CS8603 nullable warnings.
 - No behavior change was intended.
+
+
+### 2026-05-16 - Zoom Window navigation tool
+
+Implemented `Zoom Window` as an interactive viewport navigation tool.
+
+Command aliases:
+
+```text
+ZOOMWINDOW / ZW
+```
+
+The tool collects two opposite model-space corners, shows a blue preview rectangle and asks `CadCanvas` to fit the viewport to the selected rectangle. Degenerate windows smaller than a few screen pixels are ignored. The command changes only the viewport and does not dirty the document.
+
+Implementation notes:
+
+- `ToolId.ZoomWindow` is registered in `ToolRegistry` under the `Navigation` category.
+- `ZoomWindowTool` lives in `OpenCad2D.Tools.Navigation`.
+- The left tool panel has a `NAVIGATE` section with a `Zoom Window` button.
+- `CadCanvas.ZoomToWindow` applies the viewport fit because viewport state belongs to the UI layer, not to `OpenCad2D.Tools`.

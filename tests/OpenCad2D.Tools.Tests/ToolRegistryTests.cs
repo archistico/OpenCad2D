@@ -3,6 +3,7 @@ using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Measurements;
+using OpenCad2D.Tools.Navigation;
 using OpenCad2D.Tools.Selection;
 
 namespace OpenCad2D.Tools.Tests;
@@ -15,6 +16,7 @@ public sealed class ToolRegistryTests
         var registry = new ToolRegistry();
 
         Assert.True(registry.Contains(ToolId.Selection));
+        Assert.True(registry.Contains(ToolId.ZoomWindow));
         Assert.True(registry.Contains(ToolId.Point));
         Assert.True(registry.Contains(ToolId.Text));
         Assert.True(registry.Contains(ToolId.Line));
@@ -53,11 +55,15 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(30, tools.Count);
+        Assert.Equal(31, tools.Count);
 
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Selection);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.ZoomWindow);
 
         Assert.Contains(
             tools,
@@ -232,6 +238,19 @@ public sealed class ToolRegistryTests
 
 
     [Fact]
+    public void GetByCategory_Navigation_ShouldReturnNavigationTools()
+    {
+        var registry = new ToolRegistry();
+
+        IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Navigation");
+
+        Assert.Single(tools);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.ZoomWindow);
+    }
+
+
+
+    [Fact]
     public void GetByCategory_Dimension_ShouldReturnDimensionTools()
     {
         var registry = new ToolRegistry();
@@ -270,6 +289,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<DeleteTool>(tool);
         Assert.Equal("Delete", tool.Name);
+    }
+
+    [Fact]
+    public void Create_ZoomWindow_ShouldReturnZoomWindowTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.ZoomWindow);
+
+        Assert.IsType<ZoomWindowTool>(tool);
+        Assert.Equal("ZoomWindow", tool.Name);
     }
 
     [Fact]
