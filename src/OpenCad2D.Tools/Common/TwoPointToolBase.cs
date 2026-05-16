@@ -48,6 +48,16 @@ public abstract class TwoPointToolBase : ICadTool
                 point);
         }
 
+        return SubmitResolvedPoint(context, point);
+    }
+
+
+    protected ToolResult SubmitResolvedPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
         if (State == TwoPointToolState.WaitingForFirstPoint)
         {
             _firstPoint = point;

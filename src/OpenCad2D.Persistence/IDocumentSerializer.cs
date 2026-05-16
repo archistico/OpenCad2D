@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Documents;
+﻿using OpenCad2D.Core.Documents;
 using OpenCad2D.Persistence.Dto;
 
 namespace OpenCad2D.Persistence;
@@ -17,6 +17,8 @@ public interface IDocumentSerializer
         DocumentDto dto,
         out string currentLayerId,
         out ViewportStateDto viewport);
+
+    DocumentRecoveryResult DeserializeWithRecovery(DocumentDto dto);
 
     void SaveToFile(
         DocumentDto dto,

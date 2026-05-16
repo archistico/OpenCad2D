@@ -688,17 +688,40 @@
                 BorderThickness="0,1,0,0"
                 Padding="7,5">
 
-            <Grid ColumnDefinitions="Auto,*"
+            <Grid RowDefinitions="Auto,Auto"
+                  ColumnDefinitions="Auto,*"
+                  RowSpacing="4"
                   ColumnSpacing="8">
 
-                <TextBlock Grid.Column="0"
+                <Border Grid.Row="0"
+                        Grid.ColumnSpan="2"
+                        Background="#141414"
+                        BorderBrush="#303030"
+                        BorderThickness="1"
+                        Padding="6,3"
+                        MinHeight="44">
+                    <ItemsControl ItemsSource="{Binding VisibleCommandHistory}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"
+                                           Foreground="#9CDCFE"
+                                           FontFamily="Consolas"
+                                           FontSize="11" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+
+                <TextBlock Grid.Row="1"
+                           Grid.Column="0"
                            Text="{Binding CommandPromptText}"
                            Foreground="#CCCCCC"
                            VerticalAlignment="Center"
                            FontFamily="Consolas"
                            FontSize="12" />
 
-                <TextBox Grid.Column="1"
+                <TextBox Grid.Row="1"
+                         Grid.Column="1"
                          x:Name="CommandInputTextBox"
                          Background="#111111"
                          Foreground="#FFFFFF"
@@ -707,7 +730,7 @@
                          FontFamily="Consolas"
                          FontSize="13"
                          Padding="6,3"
-                         PlaceholderText="100,50   |   @50,0   |   5"
+                         PlaceholderText="{Binding CommandInputPlaceholderText}"
                          KeyDown="CommandInputTextBox_KeyDown" />
             </Grid>
         </Border>

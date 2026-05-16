@@ -549,3 +549,62 @@ SELECTLAST / SL / LAST
 `Select All` replaces the current selection with all selectable entities. Entities on hidden or locked layers are skipped.
 
 `Select Last` restores the last effective selection that was explicitly cleared. It can restore either one entity or a multi-entity selection. Entities that are no longer selectable, for example because their layer is hidden or locked, are skipped.
+
+---
+
+## Command input refactor plan for v0.8
+
+The v0.8 command input work is separate from document mutation commands such as `AddEntityCommand`, `MoveEntitiesCommand` and `ModifyEntitiesCommand`.
+
+Document commands remain responsible for undoable changes to `CadDocument`.
+
+The command input system is responsible for:
+
+- starting tools by command name or alias;
+- displaying the active command prompt;
+- parsing user text as command, point, distance, option or confirmation;
+- routing parsed input to the active tool;
+- maintaining compact visible command history;
+- repeating the last valid command when the workspace is idle and Enter is pressed.
+
+The detailed v0.8 design is in:
+
+```text
+docs/command-input.md
+```
+
+Important planned rules:
+
+- mouse clicks and typed points should feed the same tool state machine;
+- absolute point input uses `x,y`;
+- relative cartesian input uses `@dx,dy`;
+- relative polar input uses `@distance<angle`;
+- `LINE` remains a single-segment command;
+- `POLYLINE` should support `Close`/`C`, `Undo`/`U` and empty Enter to finish;
+- Trim should use a picked-entity input that includes both entity id and pick point.
+
+
+### v0.8 command input block 2
+
+Completed UI plumbing for the CAD-style command input refactor:
+
+- visible compact command history;
+- contextual command prompt remains visible above the input box;
+- contextual placeholder examples for absolute, relative and polar coordinates;
+- empty Enter can repeat the last command from the command line/canvas flow;
+- existing command alias history remains separate from the visible UI history.
+
+### LINE command input in v0.8
+
+`LINE` is the first command migrated to the guided command-input workflow.
+
+Supported input while `LINE` is active:
+
+```text
+100,50
+@50,0
+@100<45
+5
+```
+
+The plain distance form uses the current cursor direction and therefore requires a first/base point and a meaningful cursor direction.

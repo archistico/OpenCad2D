@@ -1315,7 +1315,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (e.Key == Key.Enter && !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
+        if (e.Key == Key.Enter)
         {
             SubmitCommandInputText();
             e.Handled = true;

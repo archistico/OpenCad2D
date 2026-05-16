@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Documents;
+﻿using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -388,4 +388,80 @@ public sealed class JsonDocumentSerializerTests
             }
         }
     }
+    [Fact]
+    public void DeserializeWithRecovery_WhenEntityLayerIsMissing_ShouldMoveEntityToDefaultLayer()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = "MissingLayer"
+            },
+            Entities =
+            {
+                new LineEntityDto
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    LayerId = "MissingLayer",
+                    StartX = 0,
+                    StartY = 0,
+                    EndX = 10,
+                    EndY = 0
+                }
+            }
+        };
+
+        DocumentRecoveryResult result = serializer.DeserializeWithRecovery(dto);
+
+        LineEntity line = Assert.IsType<LineEntity>(Assert.Single(result.Document.Entities.All));
+        Assert.Equal(LayerId.Default, line.LayerId);
+        Assert.Equal(LayerId.Default.Value, result.CurrentLayerId);
+        Assert.Equal(1, result.RecoveredEntityCount);
+        Assert.Equal(0, result.SkippedEntityCount);
+        Assert.Contains(result.Issues, issue => issue.Code == "ENTITY_LAYER_REPAIRED");
+        Assert.Contains(result.Issues, issue => issue.Code == "CURRENT_LAYER_REPAIRED");
+    }
+
+    [Fact]
+    public void DeserializeWithRecovery_WhenEntityIdIsInvalid_ShouldSkipOnlyInvalidEntity()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var validId = Guid.NewGuid().ToString();
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Entities =
+            {
+                new LineEntityDto
+                {
+                    Id = "not-a-guid",
+                    LayerId = LayerId.Default.Value,
+                    StartX = 0,
+                    StartY = 0,
+                    EndX = 10,
+                    EndY = 0
+                },
+                new LineEntityDto
+                {
+                    Id = validId,
+                    LayerId = LayerId.Default.Value,
+                    StartX = 1,
+                    StartY = 1,
+                    EndX = 2,
+                    EndY = 2
+                }
+            }
+        };
+
+        DocumentRecoveryResult result = serializer.DeserializeWithRecovery(dto);
+
+        LineEntity line = Assert.IsType<LineEntity>(Assert.Single(result.Document.Entities.All));
+        Assert.Equal(validId, line.Id.ToString());
+        Assert.Equal(1, result.RecoveredEntityCount);
+        Assert.Equal(1, result.SkippedEntityCount);
+        Assert.Contains(result.Issues, issue => issue.Code == "ENTITY_SKIPPED");
+    }
+
 }

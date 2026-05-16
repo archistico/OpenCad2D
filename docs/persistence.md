@@ -1,4 +1,4 @@
-# Persistence
+﻿# Persistence
 
 OpenCad2D uses an internal JSON persistence format for save and reopen.
 
@@ -361,3 +361,18 @@ The default template currently stores:
 - an empty entity list.
 
 Design rule: the default startup drawing must remain empty. Demo/sample drawings should be separate files, not constructor behavior.
+
+
+## Document recovery
+
+OpenCad2D now has a tolerant recovery path for valid `.opencad2d.json` files that contain partially invalid document data. The normal loader remains strict enough to reject unsupported file versions and malformed JSON, but the recovery path can keep usable content when individual entities are damaged.
+
+Current recovery behavior:
+
+- entities with invalid identifiers or invalid geometry are skipped;
+- unsupported or incomplete entities are skipped;
+- entities referencing missing layers are moved to `Layer 0`;
+- a missing current layer is reset to `Layer 0`;
+- recovery reports how many entities were recovered and skipped.
+
+Malformed JSON cannot be recovered safely and still produces an open error.

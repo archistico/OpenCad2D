@@ -65,7 +65,8 @@ OpenCad2D currently includes:
 - [x] grip editing;
 - [x] custom Avalonia canvas;
 - [x] CAD-style crosshair;
-- [x] real command line with aliases, command history, absolute/relative coordinates, direct distance and distance-angle input;
+- [x] basic command line with aliases and coordinate input for supported tools;
+- [ ] CAD-style guided command input with prompt phases, options, visible history, relative and polar input for v0.8;
 - [x] Ortho mode;
 - [x] Polar Tracking with Off/90°/45°/30°/15°.
 
@@ -748,24 +749,126 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 
 ---
 
-## v0.8 - UI, colors and settings
+## v0.8 - CAD-style command input and guided tool workflow
 
-### Feature & UX
+### Main goal
+
+The v0.8 milestone introduces a guided command input system. The command line should no longer be only a command launcher: it should show the active command, the current command phase, the expected input and the available options.
+
+Core decisions for v0.8:
+
+- [ ] mouse clicks and typed command input must feed the same tool state machine;
+- [ ] whenever a command asks for a point, the user can either click on the canvas or type a coordinate;
+- [ ] `LINE` remains a single-segment command: first point, second point, then command ends;
+- [ ] absolute coordinate input is supported, for example `100,100`;
+- [ ] relative cartesian input is supported, for example `@100,0`;
+- [ ] relative polar input is supported, for example `@100<45`;
+- [ ] empty Enter while idle repeats the last valid command;
+- [ ] empty Enter inside an active command confirms the current phase only when that phase allows it;
+- [ ] a compact visible command history is added near the command input;
+- [ ] Trim is planned as an advanced base workflow, not only a minimal trim command.
+
+Detailed design document:
+
+```text
+docs/command-input.md
+```
+
+### Block 1 - Specification and parser infrastructure
+
+- [ ] add `CommandPromptState`;
+- [ ] add `CommandOption`;
+- [ ] add `CommandInputKind`;
+- [ ] add `CommandInputSubmission`;
+- [ ] add `CommandInputSubmissionKind`;
+- [ ] add centralized parser for command text input;
+- [ ] parse absolute points: `x,y`;
+- [ ] parse relative cartesian points: `@dx,dy`;
+- [ ] parse relative polar points: `@distance<angle`;
+- [ ] parse distances/numbers when the prompt expects them;
+- [ ] parse options by keyword or shortcut;
+- [ ] parse empty input as Confirm/Repeat depending on active state;
+- [ ] add parser tests before changing tool behavior.
+
+### Block 2 - ViewModel and UI integration
+
+- [ ] add current command prompt text to the view-model;
+- [ ] add a compact visible command history;
+- [ ] keep existing command aliases working;
+- [ ] keep existing action commands working: Select All, Select Last, Zoom Window, Zoom Extents;
+- [ ] route active command input to command-driven tools;
+- [ ] implement idle Enter repeat-last-command;
+- [ ] ensure invalid commands do not become repeatable commands;
+- [ ] keep Escape behavior: first Esc cancels active tool, second Esc clears selection.
+
+### Block 3 - Convert `LINE`
+
+- [ ] show `LINE: Specify first point:`;
+- [ ] accept first point from mouse or typed coordinate;
+- [ ] show `LINE: Specify second point:`;
+- [ ] accept second point from mouse, absolute input, relative input or polar input;
+- [ ] create a single line segment;
+- [ ] finish the command after the second point;
+- [ ] add tests for absolute, relative and polar input.
+
+### Block 4 - Convert `POLYLINE`
+
+- [ ] show `POLYLINE: Specify start point:`;
+- [ ] show `POLYLINE: Specify next point or [Close/Undo]:`;
+- [ ] support absolute, relative and polar point input;
+- [ ] support `Close` / `C`;
+- [ ] support `Undo` / `U`;
+- [ ] use empty Enter to finish an open polyline;
+- [ ] add tests for options and mixed mouse/text input.
+
+### Block 5 - Convert base drawing tools
+
+- [ ] Rectangle: first corner, opposite corner;
+- [ ] Circle: center point, radius;
+- [ ] Arc 3P: start point, point on arc, end point;
+- [ ] add tests for typed point/distance input.
+
+### Block 6 - Convert Move, Copy and Break
+
+- [ ] Move: select objects, base point, destination point;
+- [ ] Copy: select objects, base point, destination point;
+- [ ] Break: select entity, first break point, second break point;
+- [ ] support relative and polar destination input for Move/Copy;
+- [ ] support mixed mouse/entity selection and typed point input for Break.
+
+### Block 7 - Trim advanced base
+
+- [ ] add `TRIM: Select cutting edges or [All]:`;
+- [ ] support multiple cutting-edge selection;
+- [ ] support `All` / `A`;
+- [ ] empty Enter confirms cutting-edge selection;
+- [ ] add `TRIM: Select object to trim or [Undo]:`;
+- [ ] keep Trim active after each trim operation;
+- [ ] support `Undo` / `U` inside the Trim session;
+- [ ] introduce picked-entity input with entity id and pick point;
+- [ ] defer Fence/Crossing/Edge/Project/Erase/Shift-Extend to later milestones.
+
+### Block 8 - Documentation and release stabilization
+
+- [ ] update `docs/commands.md`;
+- [ ] update `docs/tools.md`;
+- [ ] update `docs/ai-handoff.md`;
+- [ ] update README user-facing command input section if needed;
+- [ ] add release notes for v0.8;
+- [ ] ensure full solution build and tests pass.
+
+### Secondary v0.8 backlog
+
+These remain useful but are lower priority than the command input refactor:
 
 - [ ] color picker improvements for layer and formats;
-- [x] initial two-column left tool panel organization;
 - [ ] application settings;
 - [ ] shortcuts persistence;
 - [ ] last file persistence;
 - [ ] default grid settings;
-- [~] finalized visual identity;
-- [x] application icon;
 - [ ] favicon;
 - [ ] final XAML theme;
-- [ ] draw order / Z-order independent from layers before v1.0.
-
-### Stability & Test
-
+- [ ] draw order / Z-order independent from layers before v1.0;
 - [ ] snap icons: active / detected / disabled states;
 - [ ] dark theme regression tests;
 - [ ] settings persistence tests;
@@ -814,7 +917,8 @@ Detailed implementation plan: [`v0.7-interoperability-plan.md`](v0.7-interoperab
 
 - [x] text and basic dimensions operational;
 - [x] PDF export working;
-- [x] real command line with aliases, command history and coordinate input;
+- [x] basic command line with aliases and coordinate input;
+- [ ] guided CAD-style command input completed for v0.8;
 - [~] editable Property Panel for supported primary entity properties;
 - [~] DXF import/export covered by automated structural and round-trip tests;
 - [ ] DXF import/export externally validated in LibreCAD, QCAD and Autodesk DWG TrueView;
@@ -894,3 +998,49 @@ Implemented:
 ### Completed: arc 3-point grip behavior
 
 Arc grip editing now uses 3-point reconstruction for start, point-on-arc and end grips. Moving one construction grip keeps the other two construction points fixed and recalculates the arc center/radius/sweep.
+
+
+### Document loading robustness
+
+Implemented first recovery layer:
+
+- tolerant recovery for valid JSON documents with partially invalid entity data;
+- invalid entities are skipped while valid entities are preserved;
+- missing entity layers and current layer references are repaired to `Layer 0`;
+- recovery counts and issues are reported internally and surfaced in the status message.
+
+Remaining future work:
+
+- dedicated recovery dialog with issue list;
+- optional backup copy before repair/export;
+- broader automatic repair rules for style and format references.
+
+### v0.8 implementation note - Command input block 1
+
+Started the CAD-style command input refactor by adding the neutral parser/model infrastructure before changing tool behavior. The project now has prompt states, command options, contextual submissions and a parser capable of absolute, relative and polar point input. Existing tools still use the current command path; conversion starts in the next blocks.
+
+
+### v0.8 command input block 2
+
+Completed UI plumbing for the CAD-style command input refactor:
+
+- visible compact command history;
+- contextual command prompt remains visible above the input box;
+- contextual placeholder examples for absolute, relative and polar coordinates;
+- empty Enter can repeat the last command from the command line/canvas flow;
+- existing command alias history remains separate from the visible UI history.
+
+### v0.8 command input progress - block 3
+
+Completed first command-driven tool migration:
+
+- [x] `LINE` exposes `CommandPromptState`.
+- [x] `LINE` accepts absolute coordinate input.
+- [x] `LINE` accepts relative coordinate input.
+- [x] `LINE` accepts relative polar coordinate input.
+- [x] `LINE` keeps mouse input working through the existing two-point workflow.
+- [x] Legacy command input remains available for tools not yet migrated.
+
+Next:
+
+- [ ] Migrate `POLYLINE` with `Close` and `Undo` options.

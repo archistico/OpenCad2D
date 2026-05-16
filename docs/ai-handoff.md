@@ -1,4 +1,4 @@
-# Latest handoff note
+﻿# Latest handoff note
 
 ## Startup template stabilization
 
@@ -1190,3 +1190,138 @@ Changed `Select Last` semantics. It no longer selects the newest entity in docum
 
 - Removed the nullable warning in `CadActionController.SelectLast()` by adding an explicit `entity is not null` guard after `Entities.TryGet(...)`.
 - No behavior change: Select Last still restores the last deselected selection and filters out entities that are no longer selectable.
+
+
+## Latest handoff update
+
+Added the first document recovery layer for `.opencad2d.json` loading. The application now uses the tolerant recovery path when opening native files: valid entities are preserved, invalid entities are skipped, entities on missing layers are moved to `Layer 0`, and a missing current layer is reset to `Layer 0`. Malformed JSON and unsupported versions still fail explicitly.
+
+
+### 2026-05-16 - v0.8 command input planning decision
+
+The next major milestone is v0.8 and its primary focus is a CAD-style guided command input refactor.
+
+Important user decisions:
+
+- Every time a tool asks for a point, the user must be able to either click with the mouse or type coordinates in the command input.
+- Mouse point input and text point input should feed the same tool state machine.
+- `LINE` remains a single-segment command: first point, second point, then finish command.
+- Relative cartesian coordinate input is required in v0.8, for example `@100,0`.
+- Relative polar coordinate input is required in v0.8, for example `@100<45`.
+- User-facing polar angles are in degrees: 0 right, 90 up, 180 left, 270 down.
+- Empty Enter while no command is active should repeat the last valid command.
+- Empty Enter while a command is active confirms the current phase only if that phase explicitly allows confirmation.
+- A compact visible command history should be added near the command input.
+- Trim should be planned as an advanced base workflow, not merely a minimal one-shot command.
+
+New planning document:
+
+```text
+docs/command-input.md
+```
+
+Planned v0.8 implementation sequence:
+
+1. Add command input specification and parser infrastructure without changing existing tool behavior.
+2. Add prompt state and visible command history to the UI/view-model.
+3. Convert `LINE` first as the reference implementation.
+4. Convert `POLYLINE` with `Close`/`Undo` options and empty Enter to finish.
+5. Convert Rectangle, Circle and Arc 3P.
+6. Convert Move, Copy and Break.
+7. Implement advanced-base Trim with cutting-edge selection, `All`, trim-object phase, `Undo`, and picked-entity input carrying both `EntityId` and pick point.
+8. Stabilize docs/tests and prepare v0.8 release notes.
+
+Architectural direction:
+
+- Introduce `CommandPromptState`, `CommandOption`, `CommandInputKind`, `CommandInputSubmission` and `CommandInputSubmissionKind`.
+- Introduce a centralized `CommandInputParser` for absolute points, relative cartesian points, relative polar points, distances, options and empty confirmation.
+- Introduce an interface similar to `ICommandDrivenTool` so tools can expose their current prompt and handle typed command submissions.
+- Avoid splitting tool behavior into separate mouse-only and text-only paths.
+- For Trim and future tools, plan a richer picked-entity input model with entity id and pick point; a simple `EntityId` is not sufficient to decide which side of an entity should be trimmed.
+
+
+### 2026-05-16 - v0.8 command input parser infrastructure started
+
+Implemented the first technical block of the v0.8 CAD-style command input refactor without converting existing tools yet.
+
+Added the new command input infrastructure in `OpenCad2D.Tools.Input`:
+
+- `CommandPromptState` for the active command name, user-facing prompt, expected input kind, options and empty-Enter behavior.
+- `CommandOption` for keyword/shortcut options such as `Close/C`, `Undo/U` and `All/A`.
+- `CommandInputKind` for prompt expectations such as `CommandName`, `Point`, `Distance`, `PointOrOption` and `SelectionOrOption`.
+- `CommandInputSubmissionKind` and `CommandInputSubmission` for typed contextual submissions.
+- `ICommandDrivenTool` as the future contract for tools that expose a prompt and accept parsed command input.
+
+The existing low-level coordinate parser remains available through `CommandInputParser.Parse(string?)`, but its result enum has been renamed to `CommandInputParseKind` to free `CommandInputKind` for v0.8 prompt expectations. Existing behavior is preserved and `@distance<angle` is now also recognized by the legacy parser.
+
+The new contextual parser overload is:
+
+```csharp
+CommandInputSubmission Parse(
+    string? input,
+    CommandPromptState promptState,
+    Point2D? referencePoint = null)
+```
+
+It currently supports:
+
+- idle command-name parsing;
+- empty Enter confirmation when the prompt allows it;
+- option keyword/shortcut matching;
+- absolute points such as `100,50`;
+- relative points such as `@25,-10` resolved from a supplied reference point;
+- relative polar points such as `@100<45` resolved from a supplied reference point;
+- distance, angle, number and text submissions.
+
+No existing tool has been converted yet. The next block should integrate prompt/current history state into `MainWindowViewModel` and the UI while keeping old command aliases and tools working.
+
+### 2026-05-16 - v0.8 command input infrastructure compile fix
+
+Fixed the first compile issue found after the command input parser infrastructure patch.
+
+`CommandInputSubmission` exposed properties named `Point`, `Distance`, `Number` and `Text`, and also had static factory methods with the same names. C# does not allow a type member method and property to share the same identifier, so the factory methods were renamed to avoid the conflict:
+
+- `Point(...)` -> `FromPoint(...)`
+- `Distance(...)` -> `FromDistance(...)`
+- `Number(...)` -> `FromNumber(...)`
+- `Text(...)` -> `FromText(...)`
+
+`CommandInputParser` was updated to call the renamed factory methods. This is a compile-only fix and does not change parser behavior.
+
+## v0.8 command input block 2 - prompt and visible history
+
+Implemented the second command input refactor block:
+
+- Added a small visible command history surface in the command line UI.
+- Kept the existing `CommandLineHistory` as the logical command alias history used by tests and repeat logic.
+- Added `VisibleCommandHistory` in `MainWindowViewModel`, capped to the latest 8 entries.
+- Added `CommandInputPlaceholderText` so the input box can show contextual examples such as absolute, relative, and polar point input.
+- Updated command submission to append user input, command activation, prompts, results, and errors to the visible history.
+- Empty Enter is now submitted even when focus is on the canvas, so it can repeat the last command consistently.
+- No drawing tools have been converted to `ICommandDrivenTool` yet; this block only improves feedback and UI plumbing.
+
+Next recommended block: convert `LINE` to the new command-driven input flow while preserving mouse-click behavior.
+
+## 2026-05-16 - v0.8 command input block 3: LINE command-driven
+
+Implemented the first command-driven drawing tool for the v0.8 command input refactor.
+
+- `LineTool` now implements `ICommandDrivenTool`.
+- `LINE` exposes a contextual prompt state:
+  - `LINE: Specify first point:`
+  - `LINE: Specify second point:`
+- The second point accepts absolute coordinates, relative coordinates, polar coordinates, and direct distance input.
+- Text input and mouse input still share the same underlying two-point workflow.
+- `TwoPointToolBase` now has `SubmitResolvedPoint(...)` so command-line points can be submitted without re-snapping or re-applying pointer constraints.
+- `MainWindowViewModel.SubmitCommandInput(...)` now routes text to an active command-driven tool when appropriate.
+- While a two-point command is in progress, command text is interpreted as input for that active command before being treated as a new alias.
+- Existing legacy command input remains available for tools not yet migrated to `ICommandDrivenTool`.
+
+Next planned block: migrate `PolylineTool` to the command-driven model with `Close` and `Undo` options.
+
+
+### v0.8 command input block 3 compile/test refinement
+
+- Fixed contextual parsing for prompts that accept both points and direct distances.
+- Invalid point-like text now keeps the point parser's clear message instead of falling through to a generic distance error.
+- Numeric input can still be accepted as a direct distance when the active prompt supports `PointOrDistance`.

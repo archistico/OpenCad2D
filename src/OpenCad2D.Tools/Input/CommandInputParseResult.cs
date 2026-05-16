@@ -8,7 +8,7 @@ namespace OpenCad2D.Tools.Input;
 public sealed class CommandInputParseResult
 {
     private CommandInputParseResult(
-        CommandInputKind kind,
+        CommandInputParseKind kind,
         Point2D? point = null,
         Vector2D? offset = null,
         double? distance = null,
@@ -23,9 +23,9 @@ public sealed class CommandInputParseResult
         ErrorMessage = errorMessage;
     }
 
-    public CommandInputKind Kind { get; }
+    public CommandInputParseKind Kind { get; }
 
-    public bool IsValid => Kind != CommandInputKind.Invalid;
+    public bool IsValid => Kind != CommandInputParseKind.Invalid;
 
     public Point2D? Point { get; }
 
@@ -40,21 +40,21 @@ public sealed class CommandInputParseResult
     public static CommandInputParseResult AbsolutePoint(Point2D point)
     {
         return new CommandInputParseResult(
-            CommandInputKind.AbsolutePoint,
+            CommandInputParseKind.AbsolutePoint,
             point: point);
     }
 
     public static CommandInputParseResult RelativePoint(Vector2D offset)
     {
         return new CommandInputParseResult(
-            CommandInputKind.RelativePoint,
+            CommandInputParseKind.RelativePoint,
             offset: offset);
     }
 
     public static CommandInputParseResult DistanceValue(double distance)
     {
         return new CommandInputParseResult(
-            CommandInputKind.Distance,
+            CommandInputParseKind.Distance,
             distance: distance);
     }
 
@@ -63,7 +63,7 @@ public sealed class CommandInputParseResult
         double angleDegrees)
     {
         return new CommandInputParseResult(
-            CommandInputKind.DistanceAngle,
+            CommandInputParseKind.DistanceAngle,
             distance: distance,
             angleDegrees: angleDegrees);
     }
@@ -71,7 +71,7 @@ public sealed class CommandInputParseResult
     public static CommandInputParseResult Invalid(string errorMessage)
     {
         return new CommandInputParseResult(
-            CommandInputKind.Invalid,
+            CommandInputParseKind.Invalid,
             errorMessage: errorMessage);
     }
 }

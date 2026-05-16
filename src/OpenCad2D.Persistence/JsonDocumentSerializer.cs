@@ -129,6 +129,141 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         return document;
     }
 
+    public DocumentRecoveryResult DeserializeWithRecovery(DocumentDto dto)
+    {
+        ArgumentNullException.ThrowIfNull(dto);
+
+        if (dto.Version != CurrentVersion)
+        {
+            throw new UnsupportedDocumentVersionException(dto.Version);
+        }
+
+        var issues = new List<DocumentRecoveryIssue>();
+        CadDocument document = new();
+
+        LineFormatCollection lineFormats = FromLineFormatDtos(dto.LineFormats);
+        document.ReplaceLineFormats(lineFormats);
+
+        TextFormatCollection textFormats = FromTextFormatDtos(dto.TextFormats);
+        document.ReplaceTextFormats(textFormats);
+
+        DimensionStyleCollection dimensionStyles = FromDimensionStyleDtos(dto.DimensionStyles);
+        document.ReplaceDimensionStyles(dimensionStyles);
+
+        foreach (LayerDto layerDto in dto.Layers)
+        {
+            try
+            {
+                Layer layer = FromDto(layerDto, lineFormats);
+
+                if (document.Layers.Contains(layer.Id))
+                {
+                    document.Layers.Replace(layer);
+                }
+                else
+                {
+                    document.Layers.Add(layer);
+                }
+            }
+            catch (DocumentLoadException exception)
+            {
+                issues.Add(new DocumentRecoveryIssue(
+                    DocumentRecoverySeverity.Warning,
+                    "LAYER_SKIPPED",
+                    exception.Message));
+            }
+        }
+
+        int recoveredEntityCount = 0;
+        int skippedEntityCount = 0;
+
+        foreach (EntityDto entityDto in dto.Entities)
+        {
+            CadEntity? entity;
+
+            try
+            {
+                entity = FromDto(entityDto);
+            }
+            catch (DocumentLoadException exception)
+            {
+                skippedEntityCount++;
+                issues.Add(new DocumentRecoveryIssue(
+                    DocumentRecoverySeverity.Warning,
+                    "ENTITY_SKIPPED",
+                    exception.Message));
+                continue;
+            }
+            catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+            {
+                skippedEntityCount++;
+                issues.Add(new DocumentRecoveryIssue(
+                    DocumentRecoverySeverity.Warning,
+                    "ENTITY_SKIPPED",
+                    $"Skipped invalid entity '{entityDto.Id}': {exception.Message}"));
+                continue;
+            }
+
+            if (entity is null)
+            {
+                skippedEntityCount++;
+                issues.Add(new DocumentRecoveryIssue(
+                    DocumentRecoverySeverity.Warning,
+                    "ENTITY_SKIPPED",
+                    $"Skipped unsupported or incomplete entity '{entityDto.Id}'."));
+                continue;
+            }
+
+            if (!document.Layers.Contains(entity.LayerId))
+            {
+                issues.Add(new DocumentRecoveryIssue(
+                    DocumentRecoverySeverity.Warning,
+                    "ENTITY_LAYER_REPAIRED",
+                    $"Entity '{entity.Id}' referenced missing layer '{entity.LayerId}' and was moved to layer '{LayerId.Default.Value}'."));
+
+                entity = entity.WithLayer(LayerId.Default);
+            }
+
+            try
+            {
+                document.AddEntity(entity);
+                recoveredEntityCount++;
+            }
+            catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
+            {
+                skippedEntityCount++;
+                issues.Add(new DocumentRecoveryIssue(
+                    DocumentRecoverySeverity.Warning,
+                    "ENTITY_SKIPPED",
+                    $"Skipped entity '{entity.Id}': {exception.Message}"));
+            }
+        }
+
+        string currentLayerId = string.IsNullOrWhiteSpace(dto.Settings.CurrentLayerId)
+            ? LayerId.Default.Value
+            : dto.Settings.CurrentLayerId;
+
+        if (!document.Layers.Contains(new LayerId(currentLayerId)))
+        {
+            issues.Add(new DocumentRecoveryIssue(
+                DocumentRecoverySeverity.Warning,
+                "CURRENT_LAYER_REPAIRED",
+                $"Current layer '{currentLayerId}' was not found and was reset to '{LayerId.Default.Value}'."));
+
+            currentLayerId = LayerId.Default.Value;
+        }
+
+        ViewportStateDto viewport = dto.Viewport ?? new ViewportStateDto();
+
+        return new DocumentRecoveryResult(
+            document,
+            currentLayerId,
+            viewport,
+            issues,
+            recoveredEntityCount,
+            skippedEntityCount);
+    }
+
     public void SaveToFile(
         DocumentDto dto,
         string filePath)

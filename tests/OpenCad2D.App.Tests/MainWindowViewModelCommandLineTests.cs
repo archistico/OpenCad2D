@@ -234,7 +234,7 @@ public sealed class MainWindowViewModelCommandLineTests
         viewModel.SubmitCommandInput("L");
         var result = viewModel.SubmitCommandInput("@100,0");
 
-        Assert.Equal("Relative coordinates require a base point.", viewModel.LastMessage);
+        Assert.Equal("Relative coordinate input requires a reference point.", viewModel.LastMessage);
         Assert.Equal("Line", viewModel.ActiveToolName);
         Assert.Single(viewModel.CommandLineHistory);
         Assert.NotNull(result);
@@ -350,7 +350,7 @@ public sealed class MainWindowViewModelCommandLineTests
         viewModel.SubmitCommandInput("L");
         var result = viewModel.SubmitCommandInput("100<45");
 
-        Assert.Equal("Distance-angle input requires a base point.", viewModel.LastMessage);
+        Assert.Equal("Polar coordinate input requires a reference point.", viewModel.LastMessage);
         Assert.Equal("Line", viewModel.ActiveToolName);
         Assert.Single(viewModel.CommandLineHistory);
         Assert.NotNull(result);
@@ -483,6 +483,89 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Equal("C", viewModel.LastCommandText);
         Assert.NotNull(result);
     }
+
+    [Fact]
+    public void SubmitCommandInput_WithToolAlias_ShouldAppendVisibleCommandHistory()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+
+        Assert.Contains("> L", viewModel.VisibleCommandHistory);
+        Assert.Contains("Command: Line", viewModel.VisibleCommandHistory);
+        Assert.Contains(viewModel.CommandPromptText, viewModel.VisibleCommandHistory);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithEmptyInput_ShouldAppendEnterToVisibleCommandHistory()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("C");
+        viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.Contains("> Enter", viewModel.VisibleCommandHistory);
+        Assert.Contains("Repeated command: Circle.", viewModel.VisibleCommandHistory);
+    }
+
+    [Fact]
+    public void VisibleCommandHistory_ShouldKeepMostRecentEntriesOnly()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        for (int i = 0; i < 12; i++)
+        {
+            viewModel.SubmitCommandInput("UNKNOWN" + i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        }
+
+        Assert.True(viewModel.VisibleCommandHistory.Count <= 8);
+        Assert.Contains("> UNKNOWN11", viewModel.VisibleCommandHistory);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithRelativePolarCoordinatesForLine_ShouldCreateLineFromBasePoint()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("10,20");
+        var result = viewModel.SubmitCommandInput("@100<0");
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Line created.", viewModel.LastMessage);
+        Assert.Contains(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
+            line => line.Start == new Point2D(10, 20) &&
+                    ArePointsNear(new Point2D(110, 20), line.End));
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WhenLineIsWaitingForSecondPoint_ShouldRouteTextToActiveCommand()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        var result = viewModel.SubmitCommandInput("C");
+
+        Assert.Equal("Line", viewModel.ActiveToolName);
+        Assert.Equal("Invalid point format. Use x,y, @x,y or @distance<angle.", viewModel.LastMessage);
+        Assert.DoesNotContain("C", viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WhenLineIsActive_ShouldShowCommandDrivenPrompt()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+
+        Assert.Equal("LINE: Specify first point:", viewModel.CommandPromptText);
+    }
+
 
     private static bool ArePointsNear(
         Point2D expected,

@@ -785,3 +785,48 @@ Selection with no selected entities -> no operation
 The first `Esc` inside a drawing or modify command keeps the current selection. A second `Esc`, now in `SelectionTool`, clears that selection.
 
 `Enter` is reserved for confirming or advancing multi-step command phases, such as finishing a polyline or confirming the entity-selection phase of Move.
+
+---
+
+## v0.8 guided command input plan
+
+Tools should gradually move toward a guided command model where each active tool can expose:
+
+- command name;
+- current prompt;
+- expected input type;
+- available options;
+- whether empty Enter confirms the current phase.
+
+The full design is documented in:
+
+```text
+docs/command-input.md
+```
+
+Implementation should proceed incrementally:
+
+1. Parser and prompt models first, without changing tool behavior.
+2. UI prompt/history integration.
+3. `LINE` as the reference implementation.
+4. `POLYLINE` with `Close` and `Undo` options.
+5. Rectangle, Circle and Arc 3P.
+6. Move, Copy and Break.
+7. Trim advanced base.
+
+Do not create separate mouse-only and text-only logic paths inside tools. A clicked point and a typed coordinate should become equivalent tool input.
+
+
+### v0.8 command input block 2
+
+Completed UI plumbing for the CAD-style command input refactor:
+
+- visible compact command history;
+- contextual command prompt remains visible above the input box;
+- contextual placeholder examples for absolute, relative and polar coordinates;
+- empty Enter can repeat the last command from the command line/canvas flow;
+- existing command alias history remains separate from the visible UI history.
+
+### Line tool command-driven input
+
+The Line tool now exposes a `CommandPromptState` and can consume parsed `CommandInputSubmission` values. Mouse clicks continue to work through the same two-point workflow, while typed points are submitted as already-resolved points so exact coordinates are not snapped again.

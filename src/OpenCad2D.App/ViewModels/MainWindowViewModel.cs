@@ -37,6 +37,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly CommandInputParser _commandInputParser = new();
     private readonly CommandAliasRegistry _commandAliasRegistry = CommandAliasRegistry.CreateDefault();
     private readonly List<string> _commandLineHistory = new();
+    private readonly List<string> _visibleCommandHistory = new();
+    private const int MaxVisibleCommandHistoryEntries = 8;
     private ToolId? _lastCommandToolId;
     private string? _lastCommandInput;
     private readonly SelectionPropertyPanelBuilder _propertyPanelBuilder = new();
@@ -78,6 +80,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public string? CurrentFilePath => _currentFilePath;
 
     public IReadOnlyList<string> CommandLineHistory => _commandLineHistory;
+
+    public IReadOnlyList<string> VisibleCommandHistory => _visibleCommandHistory;
 
     public bool CanRepeatLastCommand => _lastCommandToolId is not null;
 
@@ -222,6 +226,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         get
         {
+            if (Workspace.ToolController.ActiveTool is ICommandDrivenTool commandDrivenTool)
+            {
+                return commandDrivenTool.GetPromptState(Workspace.Context).FormatPrompt();
+            }
+
             if (Workspace.ToolController.ActiveTool is AlignTool alignTool &&
                 alignTool.State == AlignToolState.WaitingForScaleConfirmation)
             {
@@ -308,6 +317,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+    public string CommandInputPlaceholderText
+    {
+        get
+        {
+            if (Workspace.ToolController.ActiveTool is ICommandDrivenTool commandDrivenTool)
+            {
+                return commandDrivenTool.GetPromptState(Workspace.Context).Placeholder ?? "Command input";
+            }
+
+            return Workspace.Context.CurrentBasePoint is null
+                ? "100,50   |   @50,0   |   @100<45"
+                : "100,50   |   @50,0   |   @100<45   |   distance";
+        }
+    }
+
     public string StatusText =>
         $"Tool: {ActiveToolName} | " +
         $"{CurrentLayerText} | " +
@@ -369,22 +393,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         DocumentDto dto = _documentSerializer.LoadFromFile(filePath);
 
-        CadDocument document = _documentSerializer.Deserialize(
-            dto,
-            out string currentLayerId,
-            out ViewportStateDto viewportState);
+        DocumentRecoveryResult recovery = _documentSerializer.DeserializeWithRecovery(dto);
 
         Workspace.LoadDocument(
-            document,
-            new LayerId(currentLayerId));
+            recovery.Document,
+            new LayerId(recovery.CurrentLayerId));
 
         _currentFilePath = filePath;
 
-        SetMessage($"Opened '{CurrentFileName}'.");
+        if (recovery.HasIssues)
+        {
+            SetMessage($"Opened '{CurrentFileName}' with recovery: {recovery.RecoveredEntityCount} recovered, {recovery.SkippedEntityCount} skipped.");
+        }
+        else
+        {
+            SetMessage($"Opened '{CurrentFileName}'.");
+        }
         NotifyDocumentStateChanged();
         NotifyFileStateChanged();
 
-        return viewportState;
+        return recovery.Viewport;
     }
 
     public SvgExportResult ExportSvgToFile(string filePath)
@@ -547,12 +575,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (string.IsNullOrWhiteSpace(normalizedInput))
         {
-            return RepeatLastCommand();
+            AppendVisibleCommandHistoryLine("> Enter");
+            ToolResult repeatResult = RepeatLastCommand();
+            AppendToolResultToVisibleHistory(repeatResult);
+            return repeatResult;
+        }
+
+        AppendVisibleCommandHistoryLine($"> {normalizedInput}");
+
+        if (Workspace.Context.CurrentBasePoint is not null &&
+            TrySubmitCommandDrivenInput(normalizedInput, out ToolResult activeCommandResult))
+        {
+            return activeCommandResult;
         }
 
         if (TryExecuteActionCommand(normalizedInput, out ToolResult actionResult))
         {
             _commandLineHistory.Add(normalizedInput);
+            AppendToolResultToVisibleHistory(actionResult);
             NotifyCommandInputStateChanged();
             return actionResult;
         }
@@ -570,6 +610,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return result;
         }
 
+        if (TrySubmitCommandDrivenInput(normalizedInput, out ToolResult commandDrivenResult))
+        {
+            return commandDrivenResult;
+        }
+
         CommandInputParseResult parseResult = _commandInputParser.Parse(normalizedInput);
 
         if (!parseResult.IsValid)
@@ -580,6 +625,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             ToolResult invalidResult = ToolResult.None(message);
             SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
             NotifyCommandInputStateChanged();
             return invalidResult;
         }
@@ -588,6 +634,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             ToolResult invalidResult = ToolResult.None(errorMessage);
             SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
             NotifyCommandInputStateChanged();
             return invalidResult;
         }
@@ -595,10 +642,87 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         ToolResult pointResult = Workspace.SubmitPointFromCommandLine(worldPoint);
 
         SetLastResult(pointResult);
+        AppendToolResultToVisibleHistory(pointResult);
         NotifyDocumentStateChanged();
         NotifyCommandInputStateChanged();
 
         return pointResult;
+    }
+
+    private bool TrySubmitCommandDrivenInput(
+        string normalizedInput,
+        out ToolResult result)
+    {
+        result = ToolResult.None();
+
+        if (Workspace.ToolController.ActiveTool is not ICommandDrivenTool commandDrivenTool)
+        {
+            return false;
+        }
+
+        CommandPromptState promptState = commandDrivenTool.GetPromptState(Workspace.Context);
+        Point2D? referenceUserPoint = Workspace.Context.CurrentBasePoint is null
+            ? null
+            : Workspace.CurrentUcs.WorldToUser(Workspace.Context.CurrentBasePoint.Value);
+
+        CommandInputSubmission submission = _commandInputParser.Parse(
+            normalizedInput,
+            promptState,
+            referenceUserPoint);
+
+        if (!submission.IsValid)
+        {
+            result = ToolResult.None(submission.ErrorMessage ?? "Invalid command input.");
+            SetLastResult(result);
+            AppendToolResultToVisibleHistory(result);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        CommandInputSubmission toolSubmission = submission;
+
+        if (submission.Kind == CommandInputSubmissionKind.Point && submission.Point is not null)
+        {
+            Point2D worldPoint = Workspace.CurrentUcs.UserToWorld(submission.Point.Value);
+            toolSubmission = CommandInputSubmission.FromPoint(
+                submission.RawText,
+                worldPoint,
+                offset: submission.Offset is null
+                    ? null
+                    : Workspace.CurrentUcs.UserVectorToWorld(submission.Offset.Value),
+                distance: submission.Distance,
+                angleDegrees: submission.AngleDegrees);
+        }
+        else if (submission.Kind == CommandInputSubmissionKind.Distance && submission.Distance is not null)
+        {
+            if (!TryResolveDirectDistancePoint(
+                    submission.Distance.Value,
+                    out Point2D directDistancePoint,
+                    out string? errorMessage))
+            {
+                result = ToolResult.None(errorMessage);
+                SetLastResult(result);
+                AppendToolResultToVisibleHistory(result);
+                NotifyCommandInputStateChanged();
+                return true;
+            }
+
+            toolSubmission = CommandInputSubmission.FromPoint(
+                submission.RawText,
+                directDistancePoint,
+                distance: submission.Distance);
+        }
+
+        result = commandDrivenTool.HandleCommandInput(
+            toolSubmission,
+            Workspace.Context);
+
+        SetLastResult(result);
+        AppendToolResultToVisibleHistory(result);
+        NotifyDocumentStateChanged();
+        NotifyCommandInputStateChanged();
+
+        return true;
     }
 
     private static bool IsLikelyCommandAlias(string input)
@@ -619,11 +743,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         switch (parseResult.Kind)
         {
-            case CommandInputKind.AbsolutePoint:
+            case CommandInputParseKind.AbsolutePoint:
                 worldPoint = Workspace.CurrentUcs.UserToWorld(parseResult.Point!.Value);
                 return true;
 
-            case CommandInputKind.RelativePoint:
+            case CommandInputParseKind.RelativePoint:
                 if (Workspace.Context.CurrentBasePoint is null)
                 {
                     errorMessage = "Relative coordinates require a base point.";
@@ -634,13 +758,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 worldPoint = Workspace.Context.CurrentBasePoint.Value + worldOffset;
                 return true;
 
-            case CommandInputKind.Distance:
+            case CommandInputParseKind.Distance:
                 return TryResolveDirectDistancePoint(
                     parseResult.Distance!.Value,
                     out worldPoint,
                     out errorMessage);
 
-            case CommandInputKind.DistanceAngle:
+            case CommandInputParseKind.DistanceAngle:
                 return TryResolveDistanceAnglePoint(
                     parseResult.Distance!.Value,
                     parseResult.AngleDegrees!.Value,
@@ -994,6 +1118,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             commandInput: null);
 
         SetMessage($"Repeated command: {Workspace.ToolController.ActiveToolName}.");
+        AppendVisibleCommandHistoryLine(LastMessage);
         NotifyCommandInputStateChanged();
 
         return repeated;
@@ -1016,9 +1141,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         SetLastResult(result);
         SetMessage($"Tool changed to {Workspace.ToolController.ActiveToolName}.");
+        AppendVisibleCommandHistoryLine($"Command: {Workspace.ToolController.ActiveToolName}");
+        AppendVisibleCommandHistoryLine(CommandPromptText);
 
         OnPropertiesChanged(
             nameof(ActiveToolName),
+            nameof(CommandPromptText),
+            nameof(CommandInputPlaceholderText),
+            nameof(VisibleCommandHistory),
             nameof(CanRepeatLastCommand),
             nameof(LastCommandText),
             nameof(StatusText));
@@ -1214,6 +1344,29 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentFileName));
     }
 
+    private void AppendToolResultToVisibleHistory(ToolResult result)
+    {
+        if (!string.IsNullOrWhiteSpace(result.Message))
+        {
+            AppendVisibleCommandHistoryLine(result.Message!);
+        }
+    }
+
+    private void AppendVisibleCommandHistoryLine(string? line)
+    {
+        if (string.IsNullOrWhiteSpace(line))
+        {
+            return;
+        }
+
+        _visibleCommandHistory.Add(line.Trim());
+
+        while (_visibleCommandHistory.Count > MaxVisibleCommandHistoryEntries)
+        {
+            _visibleCommandHistory.RemoveAt(0);
+        }
+    }
+
     private void NotifySelectionStateChanged()
     {
         OnPropertiesChanged(
@@ -1227,10 +1380,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         OnPropertiesChanged(
             nameof(CommandPromptText),
+            nameof(CommandInputPlaceholderText),
             nameof(MeasurementText),
             nameof(StatusText),
             nameof(LastMessage),
             nameof(CommandLineHistory),
+            nameof(VisibleCommandHistory),
             nameof(CanRepeatLastCommand),
             nameof(LastCommandText));
     }
@@ -1250,6 +1405,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(PolarTrackingText),
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
+            nameof(CommandInputPlaceholderText),
             nameof(MeasurementText),
             nameof(StatusText));
     }

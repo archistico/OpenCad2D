@@ -5,7 +5,8 @@ using System.Globalization;
 namespace OpenCad2D.Tools.Input;
 
 /// <summary>
-/// Parses the minimal CAD command-line point input supported by OpenCad2D.
+/// Parses CAD command-line input. The legacy <see cref="Parse(string?)" /> method is still
+/// used by the current tools; the contextual overload is the v0.8 foundation for guided commands.
 /// </summary>
 public sealed class CommandInputParser
 {
@@ -22,7 +23,14 @@ public sealed class CommandInputParser
 
         if (value.StartsWith('@'))
         {
-            return ParseRelativePoint(value[1..]);
+            string relativeValue = value[1..];
+
+            if (relativeValue.Contains('<'))
+            {
+                return ParseDistanceAngle(relativeValue);
+            }
+
+            return ParseRelativePoint(relativeValue);
         }
 
         if (value.Contains(','))
@@ -36,6 +44,242 @@ public sealed class CommandInputParser
         }
 
         return ParseDistance(value);
+    }
+
+    public CommandInputSubmission Parse(
+        string? input,
+        CommandPromptState promptState,
+        Point2D? referencePoint = null)
+    {
+        ArgumentNullException.ThrowIfNull(promptState);
+
+        string rawText = input ?? string.Empty;
+        string value = rawText.Trim();
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return promptState.AcceptsEmptyEnter
+                ? CommandInputSubmission.Confirm(rawText)
+                : CommandInputSubmission.Invalid(rawText, "Input is required for the current command step.");
+        }
+
+        if (PromptAcceptsOptions(promptState.ExpectedInput))
+        {
+            CommandOption? option = promptState.Options.FirstOrDefault(option => option.Matches(value));
+            if (option is not null)
+            {
+                return CommandInputSubmission.Option(rawText, option.Keyword);
+            }
+        }
+
+        if (promptState.ExpectedInput == CommandInputKind.CommandName)
+        {
+            return IsLikelyCommandName(value)
+                ? CommandInputSubmission.Command(rawText, value.ToUpperInvariant())
+                : CommandInputSubmission.Invalid(rawText, $"Invalid command name: {value}.");
+        }
+
+        CommandInputSubmission? pointSubmission = null;
+
+        if (PromptAcceptsPoint(promptState.ExpectedInput))
+        {
+            pointSubmission = ParsePointSubmission(
+                rawText,
+                value,
+                referencePoint);
+
+            if (pointSubmission.IsValid ||
+                !PromptAcceptsDistance(promptState.ExpectedInput) ||
+                value.StartsWith('@') ||
+                value.Contains('<'))
+            {
+                return pointSubmission;
+            }
+        }
+
+        if (PromptAcceptsDistance(promptState.ExpectedInput))
+        {
+            CommandInputParseResult distanceResult = Parse(value);
+
+            if (distanceResult.Kind == CommandInputParseKind.Distance && distanceResult.Distance is not null)
+            {
+                return CommandInputSubmission.FromDistance(rawText, distanceResult.Distance.Value);
+            }
+
+            if (pointSubmission is not null)
+            {
+                return pointSubmission;
+            }
+
+            return CommandInputSubmission.Invalid(rawText, "Expected a distance value.");
+        }
+
+        if (promptState.ExpectedInput == CommandInputKind.Angle)
+        {
+            if (!TryParseDouble(value, out double angleDegrees))
+            {
+                return CommandInputSubmission.Invalid(rawText, "Expected an angle value in degrees.");
+            }
+
+            return CommandInputSubmission.Angle(rawText, NormalizeAngle(angleDegrees));
+        }
+
+        if (promptState.ExpectedInput == CommandInputKind.Number)
+        {
+            if (!TryParseDouble(value, out double number))
+            {
+                return CommandInputSubmission.Invalid(rawText, "Expected a numeric value.");
+            }
+
+            return CommandInputSubmission.FromNumber(rawText, number);
+        }
+
+        if (promptState.ExpectedInput == CommandInputKind.Text)
+        {
+            return CommandInputSubmission.FromText(rawText, value);
+        }
+
+        if (promptState.ExpectedInput == CommandInputKind.Option)
+        {
+            return CommandInputSubmission.Invalid(rawText, BuildUnknownOptionMessage(value, promptState));
+        }
+
+        if (PromptAcceptsSelection(promptState.ExpectedInput))
+        {
+            return CommandInputSubmission.Invalid(rawText, "Selection input must come from the drawing canvas.");
+        }
+
+        return CommandInputSubmission.Invalid(rawText, "Unsupported command input for the current prompt.");
+    }
+
+    private static CommandInputSubmission ParsePointSubmission(
+        string rawText,
+        string value,
+        Point2D? referencePoint)
+    {
+        CommandInputParseResult result = ParsePointLikeValue(value);
+
+        switch (result.Kind)
+        {
+            case CommandInputParseKind.AbsolutePoint:
+                return CommandInputSubmission.FromPoint(rawText, result.Point!.Value);
+
+            case CommandInputParseKind.RelativePoint:
+                if (referencePoint is null)
+                {
+                    return CommandInputSubmission.Invalid(
+                        rawText,
+                        "Relative coordinate input requires a reference point.");
+                }
+
+                Vector2D offset = result.Offset!.Value;
+                return CommandInputSubmission.FromPoint(
+                    rawText,
+                    referencePoint.Value + offset,
+                    offset: offset);
+
+            case CommandInputParseKind.DistanceAngle:
+                if (referencePoint is null)
+                {
+                    return CommandInputSubmission.Invalid(
+                        rawText,
+                        "Polar coordinate input requires a reference point.");
+                }
+
+                double distance = result.Distance!.Value;
+                double angleDegrees = result.AngleDegrees!.Value;
+                double radians = angleDegrees * Math.PI / 180.0;
+                var polarOffset = new Vector2D(
+                    distance * Math.Cos(radians),
+                    distance * Math.Sin(radians));
+
+                return CommandInputSubmission.FromPoint(
+                    rawText,
+                    referencePoint.Value + polarOffset,
+                    offset: polarOffset,
+                    distance: distance,
+                    angleDegrees: angleDegrees);
+
+            default:
+                return CommandInputSubmission.Invalid(
+                    rawText,
+                    result.ErrorMessage ?? "Expected a point value.");
+        }
+    }
+
+    private static CommandInputParseResult ParsePointLikeValue(string value)
+    {
+        if (value.StartsWith('@'))
+        {
+            string relativeValue = value[1..];
+
+            if (relativeValue.Contains('<'))
+            {
+                return ParseDistanceAngle(relativeValue);
+            }
+
+            return ParseRelativePoint(relativeValue);
+        }
+
+        if (value.Contains(','))
+        {
+            return ParseAbsolutePoint(value);
+        }
+
+        if (value.Contains('<'))
+        {
+            return ParseDistanceAngle(value);
+        }
+
+        return CommandInputParseResult.Invalid(
+            "Invalid point format. Use x,y, @x,y or @distance<angle.");
+    }
+
+    private static bool PromptAcceptsPoint(CommandInputKind kind)
+    {
+        return kind is CommandInputKind.Point or CommandInputKind.PointOrOption or CommandInputKind.PointOrDistance or CommandInputKind.PointOrDistanceOrOption;
+    }
+
+    private static bool PromptAcceptsDistance(CommandInputKind kind)
+    {
+        return kind is CommandInputKind.Distance or CommandInputKind.DistanceOrOption or CommandInputKind.PointOrDistance or CommandInputKind.PointOrDistanceOrOption;
+    }
+
+    private static bool PromptAcceptsOptions(CommandInputKind kind)
+    {
+        return kind is CommandInputKind.Option or
+            CommandInputKind.PointOrOption or
+            CommandInputKind.DistanceOrOption or
+            CommandInputKind.PointOrDistanceOrOption or
+            CommandInputKind.SelectionOrOption;
+    }
+
+    private static bool PromptAcceptsSelection(CommandInputKind kind)
+    {
+        return kind is CommandInputKind.Selection or CommandInputKind.SelectionOrOption;
+    }
+
+    private static bool IsLikelyCommandName(string value)
+    {
+        return value.All(character =>
+            char.IsLetter(character) ||
+            char.IsDigit(character) ||
+            character == '_' ||
+            character == '-');
+    }
+
+    private static string BuildUnknownOptionMessage(
+        string value,
+        CommandPromptState promptState)
+    {
+        if (promptState.Options.Count == 0)
+        {
+            return $"Unknown option: {value}.";
+        }
+
+        return $"Unknown option: {value}. Available options: " +
+            string.Join(", ", promptState.Options.Select(option => option.Keyword)) +
+            ".";
     }
 
     private static CommandInputParseResult ParseAbsolutePoint(string input)
@@ -77,7 +321,6 @@ public sealed class CommandInputParser
 
         return CommandInputParseResult.DistanceValue(distance);
     }
-
 
     private static CommandInputParseResult ParseDistanceAngle(string input)
     {
