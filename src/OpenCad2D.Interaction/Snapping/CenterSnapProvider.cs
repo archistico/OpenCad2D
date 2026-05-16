@@ -17,6 +17,7 @@ public sealed class CenterSnapProvider : ISnapProvider
             Point2D? center = entity switch
             {
                 CircleEntity circle => circle.Center,
+                EllipseEntity ellipse => ellipse.Center,
                 ArcEntity arc => arc.Center,
                 _ => null
             };

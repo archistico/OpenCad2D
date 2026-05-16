@@ -62,6 +62,24 @@ public sealed class SvgExporterTests
     }
 
     [Fact]
+    public void Export_WhenDocumentContainsEllipse_ShouldWritePolygonApproximation()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new EllipseEntity(
+            new Point2D(50, 50),
+            new Vector2D(25, 0),
+            10));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Contains("<polygon ", result.Content);
+        Assert.Contains("points=\"", result.Content);
+    }
+
+    [Fact]
     public void Export_WhenDocumentContainsOpenPolyline_ShouldWritePolylineElement()
     {
         var document = new CadDocument();

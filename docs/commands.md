@@ -51,6 +51,7 @@ Aliases are case-insensitive.
 | Rectangle | `RECTANGLE`, `RECT` |
 | Rectangle by sides | `RECTSIDES`, `RS` |
 | Circle | `CIRCLE`, `C` |
+| Ellipse | `ELLIPSE`, `EL` |
 | Arc | `ARC`, `A` |
 | Arc 3P | `ARC3P`, `A3` |
 | Polyline | `POLYLINE`, `PL` |

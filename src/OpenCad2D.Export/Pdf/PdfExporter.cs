@@ -244,6 +244,13 @@ public sealed class PdfExporter : IPdfExporter
                     context);
                 break;
 
+            case EllipseEntity ellipse:
+                WriteEllipse(
+                    builder,
+                    ellipse,
+                    context);
+                break;
+
             case PointEntity point:
                 WriteCircle(
                     builder,
@@ -398,6 +405,34 @@ public sealed class PdfExporter : IPdfExporter
         builder.AppendLine($"{Format(c.X - k)} {Format(c.Y + r)} {Format(c.X - r)} {Format(c.Y + k)} {Format(c.X - r)} {Format(c.Y)} c");
         builder.AppendLine($"{Format(c.X - r)} {Format(c.Y - k)} {Format(c.X - k)} {Format(c.Y - r)} {Format(c.X)} {Format(c.Y - r)} c");
         builder.AppendLine($"{Format(c.X + k)} {Format(c.Y - r)} {Format(c.X + r)} {Format(c.Y - k)} {Format(c.X + r)} {Format(c.Y)} c");
+        builder.AppendLine("S");
+    }
+
+    private static void WriteEllipse(
+        StringBuilder builder,
+        EllipseEntity ellipse,
+        PdfExportContext context)
+    {
+        IReadOnlyList<Point2D> points = ellipse.GetSamplePoints();
+        if (points.Count == 0)
+        {
+            return;
+        }
+
+        Point2D first = ToPdfPoint(
+            points[0],
+            context);
+        builder.AppendLine($"{Format(first.X)} {Format(first.Y)} m");
+
+        foreach (Point2D modelPoint in points.Skip(1))
+        {
+            Point2D point = ToPdfPoint(
+                modelPoint,
+                context);
+            builder.AppendLine($"{Format(point.X)} {Format(point.Y)} l");
+        }
+
+        builder.AppendLine("h");
         builder.AppendLine("S");
     }
 

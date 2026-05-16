@@ -28,6 +28,7 @@ Implemented:
 - `RectangleTool`
 - `RectangleBySidesTool`
 - `CircleTool`
+- `EllipseTool`
 - `ArcTool`
 - `ArcThreePointsTool`
 - `PolylineTool`

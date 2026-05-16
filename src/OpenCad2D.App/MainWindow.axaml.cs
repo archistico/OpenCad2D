@@ -789,6 +789,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Ellipse_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Ellipse);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Arc_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1906,6 +1917,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             CircleButton,
             activeToolName.Equals("Circle", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            EllipseButton,
+            activeToolName.Equals("Ellipse", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             ArcButton,

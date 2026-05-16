@@ -104,6 +104,9 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("CIRCLE", ToolId.Circle);
         yield return new CommandAlias("C", ToolId.Circle);
 
+        yield return new CommandAlias("ELLIPSE", ToolId.Ellipse);
+        yield return new CommandAlias("EL", ToolId.Ellipse);
+
         yield return new CommandAlias("ARC", ToolId.Arc);
         yield return new CommandAlias("A", ToolId.Arc);
 

@@ -164,6 +164,27 @@ public sealed class DxfExporterTests
     }
 
     [Fact]
+    public void Export_WhenDocumentContainsEllipse_ShouldWriteEllipseEntity()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new EllipseEntity(
+            new Point2D(5, 6),
+            new Vector2D(10, 0),
+            4));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(document);
+        string content = Normalize(result.Content);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Contains("0\nELLIPSE", content);
+        Assert.Contains("10\n5\n20\n6", content);
+        Assert.Contains("11\n10", content);
+        Assert.Contains("40\n0.4", content);
+    }
+
+    [Fact]
     public void Export_WhenDocumentContainsCounterClockwiseArc_ShouldWriteArcEntity()
     {
         var document = new CadDocument();

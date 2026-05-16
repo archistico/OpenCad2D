@@ -327,6 +327,14 @@ public sealed class DxfExporter : IDxfExporter
                         contentBounds);
                     break;
 
+                case EllipseEntity ellipse:
+                    WriteEllipse(
+                        writer,
+                        layer.Name,
+                        ellipse,
+                        contentBounds);
+                    break;
+
                 case ArcEntity arc:
                     WriteArc(
                         writer,
@@ -565,6 +573,35 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(20, center.Y);
         writer.WriteGroup(30, 0.0);
         writer.WriteGroup(40, circle.Radius);
+    }
+
+    private static void WriteEllipse(
+        DxfDocumentWriter writer,
+        string layerName,
+        EllipseEntity ellipse,
+        BoundingBox2D? contentBounds)
+    {
+        Point2D center = ToDxfPoint(
+            ellipse.Center,
+            contentBounds);
+        Point2D majorEnd = ToDxfPoint(
+            ellipse.MajorAxisEndPoint,
+            contentBounds);
+        Vector2D dxfMajorAxis = center.VectorTo(majorEnd);
+
+        writer.WriteGroup(0, "ELLIPSE");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, center.X);
+        writer.WriteGroup(20, center.Y);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(11, dxfMajorAxis.X);
+        writer.WriteGroup(21, dxfMajorAxis.Y);
+        writer.WriteGroup(31, 0.0);
+        writer.WriteGroup(40, ellipse.MinorRadius / ellipse.MajorRadius);
+        writer.WriteGroup(41, 0.0);
+        writer.WriteGroup(42, Math.Tau);
     }
 
     private static void WriteArc(

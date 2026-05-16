@@ -13,6 +13,7 @@ public enum ToolId
     Rectangle,
     RectangleBySides,
     Circle,
+    Ellipse,
     Arc,
     ArcThreePoints,
     Polyline,

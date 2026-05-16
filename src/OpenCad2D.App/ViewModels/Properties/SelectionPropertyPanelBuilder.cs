@@ -159,6 +159,7 @@ public sealed class SelectionPropertyPanelBuilder
             AngularDimensionEntity angularDimension => BuildAngularDimensionGeometrySection(workspace, angularDimension, setMessage, refresh),
             LineEntity line => BuildLineGeometrySection(workspace, line, setMessage, refresh),
             CircleEntity circle => BuildCircleGeometrySection(workspace, circle, setMessage, refresh),
+            EllipseEntity ellipse => BuildEllipseGeometrySection(ellipse),
             PolylineEntity polyline => BuildPolylineGeometrySection(workspace, polyline, setMessage, refresh),
             ArcEntity arc => BuildArcGeometrySection(workspace, arc, setMessage, refresh),
             _ => new PropertySectionViewModel(
@@ -375,6 +376,20 @@ public sealed class SelectionPropertyPanelBuilder
                 Row("Diameter", PropertyValueFormatter.FormatLength(diameter)),
                 Row("Area", PropertyValueFormatter.FormatArea(area)),
                 Row("Circumference", PropertyValueFormatter.FormatLength(circumference))
+            });
+    }
+
+    private static PropertySectionViewModel BuildEllipseGeometrySection(EllipseEntity ellipse)
+    {
+        return new PropertySectionViewModel(
+            "Geometry",
+            new[]
+            {
+                Row("Center", PropertyValueFormatter.FormatPoint(ellipse.Center)),
+                Row("Major radius", PropertyValueFormatter.FormatLength(ellipse.MajorRadius)),
+                Row("Minor radius", PropertyValueFormatter.FormatLength(ellipse.MinorRadius)),
+                Row("Rotation", PropertyValueFormatter.FormatAngleDegrees(ellipse.RotationDegrees)),
+                Row("Bounds", $"{PropertyValueFormatter.FormatLength(ellipse.GetBoundingBox().Width)} × {PropertyValueFormatter.FormatLength(ellipse.GetBoundingBox().Height)}")
             });
     }
 
@@ -879,6 +894,7 @@ public sealed class SelectionPropertyPanelBuilder
             AngularDimensionEntity => "Angular Dimension",
             LineEntity => "Line",
             CircleEntity => "Circle",
+            EllipseEntity => "Ellipse",
             PolylineEntity => "Polyline",
             ArcEntity => "Arc",
             _ => entity.Kind.ToString()

@@ -15,6 +15,7 @@ public enum EntityKind
     AngularDimension,
     Line,
     Circle,
+    Ellipse,
     Arc,
     Polyline
 }

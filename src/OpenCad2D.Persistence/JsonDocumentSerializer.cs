@@ -566,6 +566,17 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 Radius = circle.Radius
             },
 
+            EllipseEntity ellipse => new EllipseEntityDto
+            {
+                Id = ellipse.Id.ToString(),
+                LayerId = ellipse.LayerId.Value,
+                CenterX = ellipse.Center.X,
+                CenterY = ellipse.Center.Y,
+                MajorAxisX = ellipse.MajorAxis.X,
+                MajorAxisY = ellipse.MajorAxis.Y,
+                MinorRadius = ellipse.MinorRadius
+            },
+
             ArcEntity arc => new ArcEntityDto
             {
                 Id = arc.Id.ToString(),
@@ -889,6 +900,15 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 circle.Radius,
                 id,
                 layerId),
+
+            EllipseEntityDto ellipse => ellipse.MinorRadius <= 0 || new Vector2D(ellipse.MajorAxisX, ellipse.MajorAxisY).Length <= 0
+                ? null
+                : new EllipseEntity(
+                    new Point2D(ellipse.CenterX, ellipse.CenterY),
+                    new Vector2D(ellipse.MajorAxisX, ellipse.MajorAxisY),
+                    ellipse.MinorRadius,
+                    id,
+                    layerId),
 
             ArcEntityDto arc => new ArcEntity(
                 new Point2D(arc.CenterX, arc.CenterY),

@@ -1066,6 +1066,10 @@ public sealed class CadCanvas : Control
                 DrawCirclePreview(context, circleTool);
                 break;
 
+            case EllipseTool ellipseTool:
+                DrawEllipsePreview(context, ellipseTool);
+                break;
+
             case ArcTool arcTool:
                 DrawArcPreview(context, arcTool);
                 break;
@@ -1621,6 +1625,21 @@ public sealed class CadCanvas : Control
         }
     }
 
+    private void DrawEllipsePreview(
+        DrawingContext context,
+        EllipseTool tool)
+    {
+        EllipseEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
     private void DrawArcPreview(
         DrawingContext context,
         ArcTool tool)
@@ -1936,6 +1955,13 @@ public sealed class CadCanvas : Control
                     _viewport.ModelLengthToScreen(circle.Radius));
                 break;
 
+            case EllipseEntity ellipse:
+                DrawEllipse(
+                    context,
+                    ellipse,
+                    pen);
+                break;
+
             case ArcEntity arc:
                 DrawArc(
                     context,
@@ -2196,6 +2222,25 @@ public sealed class CadCanvas : Control
             pen,
             new Point(center.X, center.Y - markerSize),
             new Point(center.X, center.Y + markerSize));
+    }
+
+    private void DrawEllipse(
+        DrawingContext context,
+        EllipseEntity ellipse,
+        Pen pen)
+    {
+        IReadOnlyList<Point2D> points = ellipse.GetSamplePoints();
+
+        for (int i = 0; i < points.Count; i++)
+        {
+            Point2D start = points[i];
+            Point2D end = points[(i + 1) % points.Count];
+
+            context.DrawLine(
+                pen,
+                ToScreenPoint(start),
+                ToScreenPoint(end));
+        }
     }
 
     private void DrawPolyline(

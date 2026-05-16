@@ -86,6 +86,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Ellipse,
+                "Ellipse",
+                "Ellipse",
+                "Draw"),
+            () => new EllipseTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Arc,
                 "Arc",
                 "Arc",

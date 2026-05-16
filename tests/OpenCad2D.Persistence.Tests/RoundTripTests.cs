@@ -43,6 +43,12 @@ public sealed class RoundTripTests
             Angle.FromDegrees(90),
             layerId: detailLayerId);
 
+        var ellipse = new EllipseEntity(
+            new Point2D(40, 40),
+            new Vector2D(12, 0),
+            4,
+            layerId: detailLayerId);
+
         var polyline = new PolylineEntity(
             new[]
             {
@@ -57,6 +63,7 @@ public sealed class RoundTripTests
         document.AddEntity(line);
         document.AddEntity(circle);
         document.AddEntity(arc);
+        document.AddEntity(ellipse);
         document.AddEntity(polyline);
 
         DocumentDto dto = serializer.Serialize(
@@ -78,7 +85,7 @@ public sealed class RoundTripTests
         Assert.Equal(11, viewport.PanX);
         Assert.Equal(22, viewport.PanY);
         Assert.Equal(2.5, viewport.Zoom);
-        Assert.Equal(5, restored.Entities.Count);
+        Assert.Equal(6, restored.Entities.Count);
 
         var restoredPoint = Assert.IsType<PointEntity>(restored.Entities.GetRequired(point.Id));
         Assert.Equal(point.Position, restoredPoint.Position);
@@ -98,6 +105,11 @@ public sealed class RoundTripTests
         Assert.Equal(arc.Radius, restoredArc.Radius);
         Assert.Equal(arc.StartAngle.Degrees, restoredArc.StartAngle.Degrees, 8);
         Assert.Equal(arc.EndAngle.Degrees, restoredArc.EndAngle.Degrees, 8);
+
+        var restoredEllipse = Assert.IsType<EllipseEntity>(restored.Entities.GetRequired(ellipse.Id));
+        Assert.Equal(ellipse.Center, restoredEllipse.Center);
+        Assert.Equal(ellipse.MajorAxis, restoredEllipse.MajorAxis);
+        Assert.Equal(ellipse.MinorRadius, restoredEllipse.MinorRadius);
 
         var restoredPolyline = Assert.IsType<PolylineEntity>(restored.Entities.GetRequired(polyline.Id));
         Assert.True(restoredPolyline.IsClosed);
@@ -124,6 +136,12 @@ public sealed class RoundTripTests
                 new Point2D(5, 5),
                 2));
 
+        document.AddEntity(
+            new EllipseEntity(
+                new Point2D(6, 6),
+                new Vector2D(3, 0),
+                1));
+
         DocumentDto dto = serializer.Serialize(
             document,
             LayerId.Default.Value,
@@ -135,5 +153,6 @@ public sealed class RoundTripTests
         Assert.Contains(loadedDto.Entities, entity => entity is PointEntityDto);
         Assert.Contains(loadedDto.Entities, entity => entity is LineEntityDto);
         Assert.Contains(loadedDto.Entities, entity => entity is CircleEntityDto);
+        Assert.Contains(loadedDto.Entities, entity => entity is EllipseEntityDto);
     }
 }

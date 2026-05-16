@@ -89,6 +89,7 @@ The project currently supports:
 - `RectangleTool`;
 - `RectangleBySidesTool`;
 - `CircleTool`;
+- `EllipseTool`;
 - `ArcTool`;
 - `ArcThreePointsTool`;
 - `PolylineTool` v1;
@@ -617,6 +618,7 @@ Current behavior:
 ```text
 LineEntity      -> <line>
 CircleEntity    -> <circle>
+EllipseEntity   -> sampled <polygon> / DXF ELLIPSE / PDF polyline approximation
 Polyline open   -> <polyline>
 Polyline closed -> <polygon>
 ArcEntity       -> <path>
@@ -1779,8 +1781,15 @@ The Mirror tool now draws the mirror axis while the user is choosing the second 
 
 ## Latest update - Polygon tool
 
-Added the command-driven regular polygon tool before v0.9. `POLYGON` / `PG` asks for side count, center point, then vertex point or radius. It creates a closed `PolylineEntity`, includes preview support, button integration, aliases and tests. Next planned drawing tools: ellipse, multiline text, spline.
+Added the command-driven regular polygon tool before v0.9. `POLYGON` / `PG` asks for side count, center point, then vertex point or radius. It creates a closed `PolylineEntity`, includes preview support, button integration, aliases and tests. Next planned drawing tools: multiline text, spline.
 
 ## Polygon tool test alignment
 
-The Polygon tool is part of the Draw category. ToolRegistry draw-category tests must expect 10 draw tools and include `ToolId.Polygon` in both normal and case-insensitive category checks.
+The Polygon tool is part of the Draw category. ToolRegistry draw-category tests must expect 11 draw tools and include `ToolId.Polygon` in both normal and case-insensitive category checks.
+
+
+## Latest update - Ellipse tool
+
+Added Block 4 Ellipse support. The draw category now includes `EllipseTool` with `ELLIPSE` / `EL` aliases. The workflow asks for center, major axis endpoint and minor radius point or typed radius. The implementation adds `EllipseEntity`, rendering preview/final drawing, SVG/PDF/DXF export, JSON persistence, center/quadrant snaps, grip editing, property panel readout, button integration and focused tests. ToolRegistry draw-category tests now expect 11 draw tools.
+
+Next planned block: multiline text (`MTEXT`) with insertion point, multiline dialog, persistence and export.

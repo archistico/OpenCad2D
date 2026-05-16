@@ -50,6 +50,13 @@ public sealed class QuadrantSnapProvider : ISnapProvider
 
                 break;
 
+            case EllipseEntity ellipse:
+                yield return ellipse.MajorAxisEndPoint;
+                yield return ellipse.MinorAxisEndPoint;
+                yield return ellipse.MajorAxisStartPoint;
+                yield return ellipse.MinorAxisStartPoint;
+                break;
+
             case ArcEntity arc:
                 foreach (Angle angle in quadrantAngles)
                 {

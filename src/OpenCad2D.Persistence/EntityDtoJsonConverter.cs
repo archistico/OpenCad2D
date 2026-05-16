@@ -30,6 +30,7 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
             EntityTypeNames.AngularDimension => root.Deserialize<AngularDimensionEntityDto>(options),
             EntityTypeNames.Line => root.Deserialize<LineEntityDto>(options),
             EntityTypeNames.Circle => root.Deserialize<CircleEntityDto>(options),
+            EntityTypeNames.Ellipse => root.Deserialize<EllipseEntityDto>(options),
             EntityTypeNames.Arc => root.Deserialize<ArcEntityDto>(options),
             EntityTypeNames.Polyline => root.Deserialize<PolylineEntityDto>(options),
             _ => new UnknownEntityDto
@@ -85,6 +86,10 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
 
             case CircleEntityDto circle:
                 JsonSerializer.Serialize(writer, circle, options);
+                break;
+
+            case EllipseEntityDto ellipse:
+                JsonSerializer.Serialize(writer, ellipse, options);
                 break;
 
             case ArcEntityDto arc:

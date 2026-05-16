@@ -15,6 +15,7 @@ public static class EntityTypeNames
     public const string AngularDimension = "AngularDimension";
     public const string Line = "Line";
     public const string Circle = "Circle";
+    public const string Ellipse = "Ellipse";
     public const string Arc = "Arc";
     public const string Polyline = "Polyline";
 }

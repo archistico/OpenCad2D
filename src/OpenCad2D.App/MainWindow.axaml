@@ -382,6 +382,12 @@
                                     ToolTip.Tip="Draw a circle by center and radius"
                                     Click="Circle_Click" />
 
+                            <Button x:Name="EllipseButton"
+                                    Classes="tool-button"
+                                    Content="Ellipse"
+                                    ToolTip.Tip="Draw an ellipse by center, major axis and minor radius"
+                                    Click="Ellipse_Click" />
+
                             <Button x:Name="ArcButton"
                                     Classes="tool-button"
                                     Content="Arc"

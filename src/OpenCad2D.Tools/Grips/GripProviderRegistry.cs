@@ -15,6 +15,7 @@ public sealed class GripProviderRegistry
         Register(new TextGripProvider());
         Register(new LineGripProvider());
         Register(new CircleGripProvider());
+        Register(new EllipseGripProvider());
         Register(new ArcGripProvider());
         Register(new PolylineGripProvider());
     }

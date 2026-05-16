@@ -373,6 +373,13 @@ public sealed class SvgExporter : ISvgExporter
                 height,
                 margin),
 
+            EllipseEntity ellipse => ExportEllipse(
+                ellipse,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
             PolylineEntity polyline => ExportPolyline(
                 polyline,
                 lineFormat,
@@ -564,6 +571,29 @@ public sealed class SvgExporter : ISvgExporter
             margin);
 
         return $"  <circle cx=\"{Format(center.X)}\" cy=\"{Format(center.Y)}\" r=\"{Format(circle.Radius)}\" {StrokeAttributes(lineFormat)} />";
+    }
+
+    private static string ExportEllipse(
+        EllipseEntity ellipse,
+        LineFormat lineFormat,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        string points = string.Join(
+            " ",
+            ellipse.GetSamplePoints().Select(point =>
+            {
+                Point2D svgPoint = ToSvgPoint(
+                    point,
+                    bounds,
+                    svgHeight,
+                    margin);
+
+                return $"{Format(svgPoint.X)},{Format(svgPoint.Y)}";
+            }));
+
+        return $"  <polygon points=\"{points}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static string ExportPolyline(

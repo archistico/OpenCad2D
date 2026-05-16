@@ -9,6 +9,8 @@ public sealed class CommandAliasRegistryTests
     [InlineData("L", ToolId.Line)]
     [InlineData("line", ToolId.Line)]
     [InlineData("C", ToolId.Circle)]
+    [InlineData("EL", ToolId.Ellipse)]
+    [InlineData("ellipse", ToolId.Ellipse)]
     [InlineData("TR", ToolId.Trim)]
     [InlineData("O", ToolId.Offset)]
     [InlineData("F", ToolId.Fillet)]
