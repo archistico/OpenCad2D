@@ -700,3 +700,15 @@ Rotate interprets a plain number in the final phase as an angle in degrees. Scal
 ### Trim advanced base
 
 The v0.8 command-input work adds a first advanced `TRIM` workflow with `All`, in-command `Undo`, repeated target trimming, Ctrl-click additional cutting edges and Enter-to-finish behavior. More advanced options such as Fence, Crossing, Edge, Project and Shift-to-Extend remain future work.
+
+### Offset
+
+Aliases: `OFFSET`, `O`.
+
+Creates a constant-distance copy of a line, circle or arc. The command asks for a distance, then an object, then the side point. After creating an offset, it stays active and asks for another object.
+
+### Fillet
+
+Aliases: `FILLET`, `F`.
+
+Creates a line-line fillet. Use `R` or `Radius` to set the radius. Radius `0` joins the two selected lines at their theoretical intersection without creating an arc.

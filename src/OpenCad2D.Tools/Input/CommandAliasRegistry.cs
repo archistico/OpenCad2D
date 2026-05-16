@@ -154,6 +154,12 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("TRIM", ToolId.Trim);
         yield return new CommandAlias("TR", ToolId.Trim);
 
+        yield return new CommandAlias("OFFSET", ToolId.Offset);
+        yield return new CommandAlias("O", ToolId.Offset);
+
+        yield return new CommandAlias("FILLET", ToolId.Fillet);
+        yield return new CommandAlias("F", ToolId.Fillet);
+
         yield return new CommandAlias("EXTEND", ToolId.Extend);
         yield return new CommandAlias("EX", ToolId.Extend);
 

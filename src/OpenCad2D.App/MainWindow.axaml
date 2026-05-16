@@ -500,6 +500,16 @@
                                     Content="Trim"
                                     Click="Trim_Click" />
 
+                            <Button x:Name="OffsetButton"
+                                    Classes="tool-button"
+                                    Content="Offset"
+                                    Click="Offset_Click" />
+
+                            <Button x:Name="FilletButton"
+                                    Classes="tool-button"
+                                    Content="Fillet"
+                                    Click="Fillet_Click" />
+
                             <Button Classes="tool-button"
                                     Content="Delete"
                                     Click="Delete_Click" />

@@ -1439,3 +1439,38 @@ Implemented a first advanced Trim workflow while preserving existing pointer beh
 - Ctrl-click can add more than one cutting edge while trimming.
 - The existing single-boundary and two-boundary pointer workflow remains compatible.
 - In `All` mode, the picked target entity is excluded from the effective cutting-edge list so an entity can still be trimmed even though all visible entities were selected as cutting edges.
+
+## v0.8 Block 7b - Offset and Fillet planning/implementation notes
+
+Decisions fixed before implementation:
+
+- Offset is a v0.8 modify tool and must be command-driven.
+- Initial Offset support is intentionally limited to `LineEntity`, `CircleEntity` and `ArcEntity`.
+- Polyline offset is deferred because robust parallel polylines require join/corner handling for convex and concave vertices.
+- Offset flow:
+  - `OFFSET`
+  - `Specify offset distance:`
+  - `Select object to offset:`
+  - `Specify side to offset:`
+- Offset keeps the distance active after each offset and returns to object selection, allowing repeated offsets until Escape.
+- Fillet is a v0.8 modify tool and must be command-driven.
+- Initial Fillet support is intentionally limited to Line-Line.
+- Fillet supports the `Radius` / `R` option.
+- Default fillet radius is `0`, so the command can also join two lines into a sharp corner.
+- Fillet uses trim mode only; NoTrim is deferred.
+- A picked entity must carry both entity id and pick point. This is now represented by `ToolPickedEntityInput` and is important for Offset, Fillet, Trim, Extend, Break and future Chamfer.
+
+Implemented in Block 7b:
+
+- Added `ToolId.Offset` and `ToolId.Fillet`.
+- Added default aliases `OFFSET` / `O` and `FILLET` / `F`.
+- Added left-panel buttons for Offset and Fillet.
+- Added `OffsetTool` with command-driven prompts and support for lines, circles and arcs.
+- Added `FilletTool` with command-driven prompts, Radius option and Line-Line support.
+- Updated command parser support for mixed point/scalar prompt kinds so commands can accept point-or-angle and point-or-number inputs correctly.
+
+### v0.8 Offset/Fillet follow-up
+
+Fixed a command-input routing issue introduced by the Offset/Fillet phase: pure distance prompts such as `OFFSET: Specify offset distance` must receive a `Distance` submission, while mixed point-or-distance prompts such as `LINE` second point or `CIRCLE` radius point may resolve a numeric distance into a point using the current cursor direction. Added an explicit `ShouldResolveDistanceAsPoint(...)` gate in `MainWindowViewModel` so Offset can move from distance input to entity selection correctly.
+
+Also tightened nullable guards in `OffsetTool` and `FilletTool` before constructing `AddEntityCommand` / `ModifyEntitiesCommand`.

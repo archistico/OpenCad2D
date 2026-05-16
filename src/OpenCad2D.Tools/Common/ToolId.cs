@@ -31,6 +31,8 @@ public enum ToolId
     BreakBetweenPoints,
     Extend,
     Trim,
+    Offset,
+    Fillet,
     Delete,
     MeasureDistance,
     MeasureEntity,

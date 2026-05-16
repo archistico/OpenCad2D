@@ -10,6 +10,8 @@ public sealed class CommandAliasRegistryTests
     [InlineData("line", ToolId.Line)]
     [InlineData("C", ToolId.Circle)]
     [InlineData("TR", ToolId.Trim)]
+    [InlineData("O", ToolId.Offset)]
+    [InlineData("F", ToolId.Fillet)]
     [InlineData("ZW", ToolId.ZoomWindow)]
     [InlineData("EX", ToolId.Extend)]
     [InlineData("HDIM", ToolId.HorizontalDimension)]

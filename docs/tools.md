@@ -870,3 +870,11 @@ The command input system now covers the main edit/modify commands before the adv
 - Extend: explicit prompts for boundary and target selection.
 - Trim: explicit prompts for cutting edge and target side selection.
 - Delete: Enter confirms deletion of the current selection.
+
+## Offset and Fillet v0.8
+
+`Offset` and `Fillet` are part of the v0.8 CAD-style command input work.
+
+- Offset currently supports Line, Circle and Arc.
+- Fillet currently supports Line-Line.
+- Both tools use picked entity input internally, preserving both the entity id and the pick point so the selected side can influence the resulting geometry.

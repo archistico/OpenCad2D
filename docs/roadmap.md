@@ -1105,3 +1105,23 @@ Completed before the advanced Trim redesign:
 Next planned item:
 
 - [ ] Advanced Trim v0.8 with richer picked-entity input (`EntityId` + pick point), multiple cutting edges, `All`, `Undo`, and repeat trimming until Escape.
+
+### v0.8 Block 7b - Offset and Fillet
+
+Implemented before release stabilization:
+
+- Add Offset command with command input support.
+- Support line, circle and arc offset.
+- Keep offset command active after creating one offset.
+- Add Fillet command with command input support.
+- Support Line-Line fillet and Radius option.
+- Support radius `0` for sharp-corner joins.
+- Introduce picked entity input foundation for side-sensitive modify commands.
+
+Deferred:
+
+- polyline offset;
+- line-arc and arc-arc fillet;
+- fillet whole polyline;
+- no-trim mode;
+- multiple fillet mode.

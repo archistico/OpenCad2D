@@ -999,6 +999,28 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Offset_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Offset);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void Fillet_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Fillet);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1815,6 +1837,14 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             TrimButton,
             activeToolName.Equals("Trim", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            OffsetButton,
+            activeToolName.Equals("Offset", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            FilletButton,
+            activeToolName.Equals("Fillet", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MeasureDistanceButton,

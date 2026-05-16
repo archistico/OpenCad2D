@@ -761,3 +761,48 @@ Supported v0.8 behavior:
 When `All` is used, the picked target entity is removed from the effective cutting-edge list for that trim operation. This allows CAD-style all-edge trimming without preventing the target from being picked.
 
 Future versions can extend this workflow with Fence, Crossing, Edge, Project and Shift-to-Extend behavior.
+
+## v0.8 Offset and Fillet commands
+
+### Offset
+
+`OFFSET` / `O` is command-driven.
+
+Flow:
+
+```text
+OFFSET: Specify offset distance:
+OFFSET: Select object to offset:
+OFFSET: Specify side to offset:
+```
+
+Supported in v0.8:
+
+- lines;
+- circles;
+- arcs.
+
+Polyline offset is deferred until the project has a dedicated robust offset/join service.
+
+After one offset is created, the command returns to object selection while keeping the same distance active.
+
+### Fillet
+
+`FILLET` / `F` is command-driven.
+
+Flow:
+
+```text
+FILLET: Select first line or [Radius] <0>:
+FILLET: Specify fillet radius:
+FILLET: Select second line:
+```
+
+Supported in v0.8:
+
+- line-line fillet;
+- `Radius` / `R` option;
+- radius `0` for sharp-corner join;
+- trim mode always enabled.
+
+Line-arc, arc-arc, polyline fillet, multiple fillet and no-trim mode are deferred.

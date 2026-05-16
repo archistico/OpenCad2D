@@ -717,7 +717,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 distance: submission.Distance,
                 angleDegrees: submission.AngleDegrees);
         }
-        else if (submission.Kind == CommandInputSubmissionKind.Distance && submission.Distance is not null)
+        else if (submission.Kind == CommandInputSubmissionKind.Distance &&
+                 submission.Distance is not null &&
+                 ShouldResolveDistanceAsPoint(promptState.ExpectedInput))
         {
             if (!TryResolveDirectDistancePoint(
                     submission.Distance.Value,
@@ -747,6 +749,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         NotifyCommandInputStateChanged();
 
         return true;
+    }
+
+    private static bool ShouldResolveDistanceAsPoint(CommandInputKind expectedInput)
+    {
+        return expectedInput is
+            CommandInputKind.PointOrDistance or
+            CommandInputKind.PointOrDistanceOrOption;
     }
 
     private static bool IsLikelyCommandAlias(string input)

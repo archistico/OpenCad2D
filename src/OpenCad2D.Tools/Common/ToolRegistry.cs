@@ -231,6 +231,22 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Offset,
+                "Offset",
+                "Offset",
+                "Modify"),
+            () => new OffsetTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Fillet,
+                "Fillet",
+                "Fillet",
+                "Modify"),
+            () => new FilletTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",
