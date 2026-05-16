@@ -1021,6 +1021,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Mirror_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Mirror);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
 
     private void AlignLeft_Click(
         object? sender,
@@ -1978,6 +1989,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             FilletButton,
             activeToolName.Equals("Fillet", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            MirrorButton,
+            activeToolName.Equals("Mirror", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MeasureDistanceButton,

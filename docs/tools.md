@@ -82,6 +82,7 @@ Implemented:
 | Trim | cutting edges, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
 | Fillet | line-line, Radius option, radius 0 sharp join |
+| Mirror | two-point mirror axis, keeps source by default, optional source deletion |
 
 ---
 
@@ -130,6 +131,26 @@ Rules:
 - Line-Arc, Arc-Arc, polyline fillet and NoTrim are future work.
 
 ---
+
+## Mirror
+
+Workflow:
+
+```text
+MIRROR: Select objects to mirror:
+MIRROR: Specify first point of mirror line:
+MIRROR: Specify second point of mirror line:
+MIRROR: Delete source objects? [Yes/No] <No>:
+```
+
+Rules:
+
+- works on the current selection, or enters a selection phase when no entities are selected;
+- the mirror axis is an infinite line defined by two points;
+- the default final Enter keeps the source entities and creates mirrored copies;
+- `Yes` deletes/replaces the source entities by mirroring them in place;
+- preview is shown while choosing the second axis point.
+
 
 ## Draw order
 
@@ -184,3 +205,8 @@ Grip editing is available for supported entities. Arc 3-point grip behavior is i
 - moving start keeps point-on-arc and end fixed;
 - moving end keeps start and point-on-arc fixed;
 - moving point-on-arc keeps start/end fixed and recomputes center/radius.
+
+### Mirror axis preview update
+
+The Mirror tool now draws the mirror axis while the user is choosing the second axis point. The preview also keeps showing the mirrored entities so the user can verify the axis direction before confirming whether source objects should be deleted.
+

@@ -33,6 +33,7 @@ public enum ToolId
     Trim,
     Offset,
     Fillet,
+    Mirror,
     Delete,
     MeasureDistance,
     MeasureEntity,

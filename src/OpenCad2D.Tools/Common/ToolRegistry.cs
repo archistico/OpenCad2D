@@ -247,6 +247,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Mirror,
+                "Mirror",
+                "Mirror",
+                "Modify"),
+            () => new MirrorTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",

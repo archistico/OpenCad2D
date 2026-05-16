@@ -1180,6 +1180,10 @@ public sealed class CadCanvas : Control
                 DrawOffsetPreview(context, offsetTool);
                 break;
 
+            case MirrorTool mirrorTool:
+                DrawMirrorPreview(context, mirrorTool);
+                break;
+
             case MeasureDistanceTool measureDistanceTool:
                 DrawMeasureDistancePreview(context, measureDistanceTool);
                 break;
@@ -1671,6 +1675,54 @@ public sealed class CadCanvas : Control
                 preview,
                 _previewPen);
         }
+    }
+
+    private void DrawMirrorPreview(
+        DrawingContext context,
+        MirrorTool tool)
+    {
+        if (Workspace is null)
+        {
+            return;
+        }
+
+        DrawEntitiesPreview(
+            context,
+            tool.GetPreviewEntities(Workspace.Context));
+
+        if (tool.FirstAxisPoint is null)
+        {
+            return;
+        }
+
+        const double markerRadius = 4;
+        Point first = ToScreenPoint(tool.FirstAxisPoint.Value);
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            first,
+            markerRadius,
+            markerRadius);
+
+        if (tool.SecondAxisPoint is null)
+        {
+            return;
+        }
+
+        Point second = ToScreenPoint(tool.SecondAxisPoint.Value);
+
+        context.DrawLine(
+            _measurementVectorPen,
+            first,
+            second);
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            second,
+            markerRadius,
+            markerRadius);
     }
 
     private void DrawEntitiesPreview(

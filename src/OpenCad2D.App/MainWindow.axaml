@@ -554,6 +554,12 @@
                                     ToolTip.Tip="Create a line-line fillet with the current radius"
                                     Click="Fillet_Click" />
 
+                            <Button x:Name="MirrorButton"
+                                    Classes="tool-button"
+                                    Content="Mirror"
+                                    ToolTip.Tip="Mirror selected entities across a two-point axis"
+                                    Click="Mirror_Click" />
+
                             <Button Classes="tool-button"
                                     Content="Delete"
                                     ToolTip.Tip="Delete the selected entities"

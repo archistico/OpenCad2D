@@ -1,5 +1,24 @@
 # Latest handoff note
 
+## Mirror tool
+
+Implemented `MirrorTool` as a command-driven modify tool before the v0.9 roadmap. The workflow is:
+
+```text
+MIRROR: Select objects to mirror:
+MIRROR: Specify first point of mirror line:
+MIRROR: Specify second point of mirror line:
+MIRROR: Delete source objects? [Yes/No] <No>:
+```
+
+The tool supports preselection or select-first workflow, typed coordinates for the two mirror-axis points, a live mirrored preview while choosing the second axis point, and the final `Yes`/`No` option. Empty Enter defaults to `No`, so the source entities are kept and mirrored copies are added. `Yes` mirrors the selected source entities in place through `MirrorEntitiesCommand`. The UI has a `Mirror` button in the Modify/Edit group and command aliases are `MIRROR` and `MI`.
+
+Roadmap status: dimension export and Mirror are now complete; remaining pre-v0.9 items are Polygon, Ellipse, multiline text, Spline and final documentation/release cleanup.
+
+---
+
+# Latest handoff note
+
 ## Dimension export stabilization
 
 PDF export now supports all current dimension entities as graphical primitives plus text:
@@ -1751,3 +1770,8 @@ The manager also shows a compact textual preview of the resulting pattern.
 
 - Replaced obsolete Avalonia `TextBox.Watermark` usage in `LineFormatManagerWindow.axaml` with `PlaceholderText`.
 - No functional changes to line format pattern editing, validation, preview, or persistence.
+
+### Mirror axis preview update
+
+The Mirror tool now draws the mirror axis while the user is choosing the second axis point. The preview also keeps showing the mirrored entities so the user can verify the axis direction before confirming whether source objects should be deleted.
+

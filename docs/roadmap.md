@@ -103,7 +103,7 @@ Pending in this phase:
 These items complete the current CAD baseline before opening the v0.9 roadmap:
 
 - [x] check and stabilize export of all current dimension types across SVG, DXF and PDF;
-- [ ] add Mirror tool based on a two-point mirror axis;
+- [x] add Mirror tool based on a two-point mirror axis;
 - [ ] add Polygon drawing tool;
 - [ ] add Ellipse drawing tool;
 - [ ] add multiline text tool;
@@ -1264,3 +1264,8 @@ The distinction is:
 Dash patterns are edited as comma-separated dash/gap pairs in drawing units, for example `8,4` or `12,4,1,4`.
 Changing a preset style applies its default pattern. Editing the pattern manually marks the style as `Custom`.
 The manager also shows a compact textual preview of the resulting pattern.
+
+### Mirror axis preview update
+
+The Mirror tool now draws the mirror axis while the user is choosing the second axis point. The preview also keeps showing the mirrored entities so the user can verify the axis direction before confirming whether source objects should be deleted.
+

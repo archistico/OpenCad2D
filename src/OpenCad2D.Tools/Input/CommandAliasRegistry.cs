@@ -160,6 +160,9 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("FILLET", ToolId.Fillet);
         yield return new CommandAlias("F", ToolId.Fillet);
 
+        yield return new CommandAlias("MIRROR", ToolId.Mirror);
+        yield return new CommandAlias("MI", ToolId.Mirror);
+
         yield return new CommandAlias("EXTEND", ToolId.Extend);
         yield return new CommandAlias("EX", ToolId.Extend);
 

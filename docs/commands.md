@@ -18,6 +18,7 @@ Common command types:
 - `RotateEntitiesCommand`
 - `ScaleEntitiesCommand`
 - `TransformEntitiesCommand`
+- `MirrorEntitiesCommand`
 - `ModifyEntitiesCommand`
 - `CompositeCommand`
 - `UpdateLayersCommand`
@@ -81,6 +82,7 @@ Aliases are case-insensitive.
 | Trim | `TRIM`, `TR` |
 | Offset | `OFFSET`, `O` |
 | Fillet | `FILLET`, `F` |
+| Mirror | `MIRROR`, `MI` |
 
 ### Draw order
 

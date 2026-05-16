@@ -86,18 +86,29 @@ public sealed class ArcEntity : CadEntity
                 transformedEnd.Y - transformedCenter.Y,
                 transformedEnd.X - transformedCenter.X));
 
+        bool transformedCounterClockwise = HasNegativeDeterminant(matrix)
+            ? !IsCounterClockwise
+            : IsCounterClockwise;
+
         return new ArcEntity(
             transformedCenter,
             transformedRadius,
             transformedStartAngle,
             transformedEndAngle,
-            IsCounterClockwise,
+            transformedCounterClockwise,
             Id,
             LayerId,
             Style,
             IsVisible,
             IsLocked,
             DrawOrder);
+    }
+
+    private static bool HasNegativeDeterminant(Matrix2D matrix)
+    {
+        double determinant = (matrix.M11 * matrix.M22) - (matrix.M12 * matrix.M21);
+
+        return determinant < 0;
     }
 
     public override CadEntity WithId(EntityId id)
