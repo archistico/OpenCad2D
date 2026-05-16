@@ -79,6 +79,122 @@ public sealed class CadTrimServiceTests
         Assert.Equal(new Point2D(0, 0), polyline.Vertices[0]);
         Assert.Equal(new Point2D(5, 0), polyline.Vertices[^1]);
     }
+
+
+    [Fact]
+    public void TrimOpenPolyline_ByLineBoundaryOnSecondSegment_ShouldCreatePolylineFragments()
+    {
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(10, 10)
+        });
+        var boundary = new LineEntity(new Point2D(5, 5), new Point2D(15, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(10, 8));
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
+        Assert.Contains(
+            result.OfType<PolylineEntity>(),
+            polyline => polyline.Vertices.SequenceEqual(new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            }));
+        Assert.Contains(
+            result.OfType<PolylineEntity>(),
+            polyline => polyline.Vertices.SequenceEqual(new[]
+            {
+                new Point2D(10, 0),
+                new Point2D(10, 5)
+            }));
+    }
+
+    [Fact]
+    public void TrimClosedPolylinePolygon_ByLineBoundary_ShouldCreateOpenPolylineFragments()
+    {
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(10, 10),
+            new Point2D(0, 10)
+        }, isClosed: true);
+        var boundary = new LineEntity(new Point2D(5, -5), new Point2D(5, 15));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(10, 5));
+
+        Assert.NotEmpty(result);
+        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
+        Assert.All(result.OfType<PolylineEntity>(), polyline => Assert.False(polyline.IsClosed));
+        Assert.Contains(result.OfType<PolylineEntity>(), polyline =>
+            polyline.Vertices.Contains(new Point2D(5, 0)));
+        Assert.Contains(result.OfType<PolylineEntity>(), polyline =>
+            polyline.Vertices.Contains(new Point2D(5, 10)));
+    }
+
+    [Fact]
+    public void TrimPolyline_ByTwoBoundariesOnSameSegment_ShouldRemovePickedInterval()
+    {
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(20, 0)
+        });
+        var leftBoundary = new LineEntity(new Point2D(5, -5), new Point2D(5, 5));
+        var rightBoundary = new LineEntity(new Point2D(15, -5), new Point2D(15, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundaries(
+            target,
+            new CadEntity[] { leftBoundary, rightBoundary },
+            new Point2D(10, 0));
+
+        Assert.Equal(2, result.Count);
+        Assert.Contains(
+            result.OfType<PolylineEntity>(),
+            polyline => polyline.Vertices.SequenceEqual(new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(5, 0)
+            }));
+        Assert.Contains(
+            result.OfType<PolylineEntity>(),
+            polyline => polyline.Vertices.SequenceEqual(new[]
+            {
+                new Point2D(15, 0),
+                new Point2D(20, 0)
+            }));
+    }
+
+    [Fact]
+    public void TrimEllipse_ByLineBoundary_ShouldCreatePolylineFragment()
+    {
+        var target = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+        var boundary = new LineEntity(new Point2D(0, -10), new Point2D(0, 10));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(10, 0));
+
+        PolylineEntity polyline = Assert.Single(result.OfType<PolylineEntity>());
+
+        Assert.False(polyline.IsClosed);
+        Assert.True(polyline.Vertices.Count > 2);
+        Assert.Contains(polyline.Vertices, point => Math.Abs(point.X) <= 1.0e-6 && Math.Abs(point.Y - 5) <= 1.0e-6);
+        Assert.Contains(polyline.Vertices, point => Math.Abs(point.X) <= 1.0e-6 && Math.Abs(point.Y + 5) <= 1.0e-6);
+    }
 }
 
 public sealed class CadTrimServiceTwoBoundaryTests

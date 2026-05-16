@@ -52,6 +52,24 @@ public static class CadTrimService
                 effectiveTolerance);
         }
 
+        if (target is EllipseEntity ellipse)
+        {
+            return TrimEllipseByBoundaries(
+                ellipse,
+                boundaries,
+                targetPickPoint,
+                effectiveTolerance);
+        }
+
+        if (target is PolylineEntity polyline)
+        {
+            return TrimPolylineByBoundaries(
+                polyline,
+                boundaries,
+                targetPickPoint,
+                effectiveTolerance);
+        }
+
         if (boundaries.Count > 1)
         {
             return Array.Empty<CadEntity>();
@@ -63,7 +81,6 @@ public static class CadTrimService
         {
             CircleEntity circle => TrimCircle(circle, boundary, targetPickPoint, effectiveTolerance),
             ArcEntity arc => TrimArc(arc, boundary, targetPickPoint, effectiveTolerance),
-            PolylineEntity polyline => TrimPolyline(polyline, boundary, targetPickPoint, effectiveTolerance),
             _ => Array.Empty<CadEntity>()
         };
     }
@@ -226,9 +243,42 @@ public static class CadTrimService
         return CreateArcFragments(target, cuts, pickParameter, tolerance);
     }
 
-    private static IReadOnlyList<CadEntity> TrimPolyline(
+    private static IReadOnlyList<CadEntity> TrimEllipseByBoundaries(
+        EllipseEntity target,
+        IReadOnlyList<CadEntity> boundaries,
+        Point2D pickPoint,
+        GeometryTolerance tolerance)
+    {
+        List<PathCut> cuts = new();
+
+        foreach (CadEntity boundary in boundaries)
+        {
+            foreach (Point2D point in CadEntityIntersectionService.Intersect(
+                         target,
+                         boundary,
+                         tolerance))
+            {
+                cuts.Add(new PathCut(
+                    GetEllipseParameter(target, point),
+                    point));
+            }
+        }
+
+        if (cuts.Count < 2)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        double pickParameter = GetEllipseParameter(
+            target,
+            target.GetClosestPoint(pickPoint));
+
+        return CreateEllipsePolylineFragments(target, cuts, pickParameter, tolerance);
+    }
+
+    private static IReadOnlyList<CadEntity> TrimPolylineByBoundaries(
         PolylineEntity target,
-        CadEntity boundary,
+        IReadOnlyList<CadEntity> boundaries,
         Point2D pickPoint,
         GeometryTolerance tolerance)
     {
@@ -245,28 +295,33 @@ public static class CadTrimService
 
         double accumulated = 0.0;
         double pickParameter = GetPolylinePathParameter(target, pickPoint, tolerance);
+        int intersectionCutCount = 0;
 
         for (int index = 0; index < segments.Count; index++)
         {
             LineSegment2D segment = segments[index];
             var segmentEntity = new LineEntity(segment.Start, segment.End);
 
-            foreach (Point2D point in CadEntityIntersectionService.Intersect(
-                         segmentEntity,
-                         boundary,
-                         tolerance))
+            foreach (CadEntity boundary in boundaries)
             {
-                double localParameter = LineParameterService.GetParameter(
-                    segment,
-                    point,
-                    tolerance);
-
-                if (localParameter > tolerance.Parameter &&
-                    localParameter < 1.0 - tolerance.Parameter)
+                foreach (Point2D point in CadEntityIntersectionService.Intersect(
+                             segmentEntity,
+                             boundary,
+                             tolerance))
                 {
-                    cuts.Add(new PathCut(
-                        accumulated + localParameter * segment.Length,
-                        point));
+                    double localParameter = LineParameterService.GetParameter(
+                        segment,
+                        point,
+                        tolerance);
+
+                    if (localParameter > tolerance.Parameter &&
+                        localParameter < 1.0 - tolerance.Parameter)
+                    {
+                        cuts.Add(new PathCut(
+                            accumulated + localParameter * segment.Length,
+                            point));
+                        intersectionCutCount++;
+                    }
                 }
             }
 
@@ -274,7 +329,7 @@ public static class CadTrimService
             cuts.Add(new PathCut(accumulated, segment.End));
         }
 
-        if (cuts.Count <= segments.Count + 1)
+        if (intersectionCutCount == 0)
         {
             return Array.Empty<CadEntity>();
         }
@@ -452,6 +507,92 @@ public static class CadTrimService
         return result;
     }
 
+    private static IReadOnlyList<CadEntity> CreateEllipsePolylineFragments(
+        EllipseEntity source,
+        List<PathCut> cuts,
+        double pickParameter,
+        GeometryTolerance tolerance)
+    {
+        var normalizedCuts = NormalizeCuts(cuts, tolerance);
+        var result = new List<CadEntity>();
+
+        for (int index = 0; index < normalizedCuts.Count; index++)
+        {
+            PathCut start = normalizedCuts[index];
+            PathCut end = normalizedCuts[(index + 1) % normalizedCuts.Count];
+            double startValue = start.Parameter;
+            double endValue = end.Parameter;
+
+            if (endValue <= startValue)
+            {
+                endValue += TwoPi;
+            }
+
+            double normalizedPick = pickParameter;
+            if (normalizedPick < startValue)
+            {
+                normalizedPick += TwoPi;
+            }
+
+            if (normalizedPick >= startValue - tolerance.Angle &&
+                normalizedPick <= endValue + tolerance.Angle)
+            {
+                continue;
+            }
+
+            AddEllipsePolylineFragmentIfValid(
+                result,
+                source,
+                startValue,
+                endValue,
+                tolerance);
+        }
+
+        return result;
+    }
+
+    private static void AddEllipsePolylineFragmentIfValid(
+        ICollection<CadEntity> result,
+        EllipseEntity source,
+        double startParameter,
+        double endParameter,
+        GeometryTolerance tolerance)
+    {
+        if (endParameter - startParameter <= tolerance.Angle)
+        {
+            return;
+        }
+
+        result.Add(new PolylineEntity(
+            CreateEllipsePolylineVertices(source, startParameter, endParameter),
+            isClosed: false,
+            layerId: source.LayerId,
+            style: source.Style,
+            isVisible: source.IsVisible,
+            isLocked: source.IsLocked,
+            drawOrder: source.DrawOrder));
+    }
+
+    private static IReadOnlyList<Point2D> CreateEllipsePolylineVertices(
+        EllipseEntity source,
+        double startParameter,
+        double endParameter)
+    {
+        double sweep = endParameter - startParameter;
+        int segmentCount = Math.Max(
+            2,
+            (int)Math.Ceiling(EllipseEntity.DefaultSampleCount * sweep / TwoPi));
+
+        var vertices = new List<Point2D>(segmentCount + 1);
+        for (int index = 0; index <= segmentCount; index++)
+        {
+            double parameter = startParameter + sweep * index / segmentCount;
+            vertices.Add(source.GetPointAt(parameter));
+        }
+
+        return vertices;
+    }
+
     private static IReadOnlyList<CadEntity> CreatePolylineFragments(
         PolylineEntity source,
         List<PathCut> cuts,
@@ -595,6 +736,18 @@ public static class CadTrimService
         return start >= value
             ? start - value
             : start + TwoPi - value;
+    }
+
+    private static double GetEllipseParameter(EllipseEntity ellipse, Point2D point)
+    {
+        Vector2D fromCenter = ellipse.Center.VectorTo(point);
+        Vector2D majorDirection = ellipse.MajorDirection;
+        Vector2D minorDirection = ellipse.MinorAxis.Normalize();
+
+        double localX = fromCenter.Dot(majorDirection) / ellipse.MajorRadius;
+        double localY = fromCenter.Dot(minorDirection) / ellipse.MinorRadius;
+
+        return NormalizeRadians(Math.Atan2(localY, localX));
     }
 
     private static Angle GetAngle(Point2D center, Point2D point)

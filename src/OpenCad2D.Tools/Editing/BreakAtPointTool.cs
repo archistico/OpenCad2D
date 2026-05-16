@@ -167,9 +167,9 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool
             return ToolResult.None("Break Point is not applicable to circles. Use Break Segment with two points instead.");
         }
 
-        if (entity is not LineEntity and not ArcEntity and not PolylineEntity)
+        if (entity is not LineEntity and not ArcEntity and not EllipseEntity and not PolylineEntity)
         {
-            return ToolResult.None("Break Point supports lines, arcs and polylines only.");
+            return ToolResult.None("Break Point supports lines, arcs, ellipses and polylines only.");
         }
 
         if (!context.Document.IsEntitySelectable(entity))

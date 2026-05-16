@@ -1792,4 +1792,20 @@ The Polygon tool is part of the Draw category. ToolRegistry draw-category tests 
 
 Added Block 4 Ellipse support. The draw category now includes `EllipseTool` with `ELLIPSE` / `EL` aliases. The workflow asks for center, major axis endpoint and minor radius point or typed radius. The implementation adds `EllipseEntity`, rendering preview/final drawing, SVG/PDF/DXF export, JSON persistence, center/quadrant snaps, grip editing, property panel readout, button integration and focused tests. ToolRegistry draw-category tests now expect 11 draw tools.
 
+Follow-up for Block 4: Trim and Break now accept ellipses. `CadEntityIntersectionService` approximates ellipse intersections with sampled line segments. `CadTrimService` can trim ellipse targets and use ellipses as cutting edges; resulting partial ellipse fragments are returned as open `PolylineEntity` approximations. `CadBreakService` supports Break Point and Break Segment on ellipses, also returning open polyline approximations because there is no partial ellipse-arc entity yet.
+
+
+
+## Latest update - Trim/Break polyline and polygon verification
+
+Verified and strengthened modification coverage for polylines and polygon-like closed polylines after the Ellipse block.
+
+- `CadBreakService` has focused tests for open polylines, closed polylines and regular-polygon-style closed `PolylineEntity` cases.
+- `Break Point` opens closed polylines at the picked point.
+- `Break Segment` removes the segment between two projected points on open polylines, and removes the shortest path on closed polylines/polygons.
+- `CadTrimService` now routes polyline targets through the same multi-boundary path used by lines and ellipses, so `TrimByBoundaries` supports polylines as targets too.
+- Added trim regression tests for open polylines, closed polygon-like polylines, and two-boundary trimming on a polyline segment.
+
+Operational note: regular polygons are stored as closed `PolylineEntity`, so the same Trim/Break rules apply to both manually drawn closed polylines and polygons created by the Polygon tool.
+
 Next planned block: multiline text (`MTEXT`) with insertion point, multiline dialog, persistence and export.

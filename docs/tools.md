@@ -77,10 +77,10 @@ Implemented:
 | Rotate | command-driven, typed angle support |
 | Scale | command-driven, typed factor support |
 | Align | point-based transform align |
-| Break Point | line/arc/polyline target support |
-| Break Segment | line/arc/circle/polyline target support |
+| Break Point | line/arc/ellipse/polyline target support |
+| Break Segment | line/arc/circle/ellipse/polyline target support |
 | Extend | line/arc/open-polyline target support |
-| Trim | cutting edges, `All`, in-command `Undo` |
+| Trim | cutting edges including ellipses, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
 | Fillet | line-line, Radius option, radius 0 sharp join |
 | Mirror | two-point mirror axis, keeps source by default, optional source deletion |

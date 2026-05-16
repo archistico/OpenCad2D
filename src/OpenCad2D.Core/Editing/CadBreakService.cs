@@ -32,6 +32,11 @@ public static class CadBreakService
                 breakPoint,
                 effectiveTolerance),
 
+            EllipseEntity ellipse => BreakEllipseAtPoint(
+                ellipse,
+                breakPoint,
+                effectiveTolerance),
+
             PolylineEntity polyline => BreakPolylineAtPoint(
                 polyline,
                 breakPoint,
@@ -70,6 +75,12 @@ public static class CadBreakService
 
             CircleEntity circle => BreakCircleBetweenPoints(
                 circle,
+                firstBreakPoint,
+                secondBreakPoint,
+                effectiveTolerance),
+
+            EllipseEntity ellipse => BreakEllipseBetweenPoints(
+                ellipse,
                 firstBreakPoint,
                 secondBreakPoint,
                 effectiveTolerance),
@@ -123,6 +134,28 @@ public static class CadBreakService
                 arc,
                 breakAngle,
                 arc.EndAngle)
+        };
+    }
+
+    private static IReadOnlyList<CadEntity> BreakEllipseAtPoint(
+        EllipseEntity ellipse,
+        Point2D breakPoint,
+        GeometryTolerance tolerance)
+    {
+        Point2D projectedPoint = ellipse.GetClosestPoint(breakPoint);
+
+        double parameter = GetEllipseParameter(ellipse, projectedPoint);
+
+        return new CadEntity[]
+        {
+            new PolylineEntity(
+                CreateEllipsePolylineVertices(ellipse, parameter, parameter + FullCircleRadians),
+                isClosed: false,
+                layerId: ellipse.LayerId,
+                style: ellipse.Style,
+                isVisible: ellipse.IsVisible,
+                isLocked: ellipse.IsLocked,
+                drawOrder: ellipse.DrawOrder)
         };
     }
 
@@ -414,6 +447,57 @@ public static class CadBreakService
         };
     }
 
+    private static IReadOnlyList<CadEntity> BreakEllipseBetweenPoints(
+        EllipseEntity ellipse,
+        Point2D firstBreakPoint,
+        Point2D secondBreakPoint,
+        GeometryTolerance tolerance)
+    {
+        Point2D firstProjectedPoint = ellipse.GetClosestPoint(firstBreakPoint);
+        Point2D secondProjectedPoint = ellipse.GetClosestPoint(secondBreakPoint);
+
+        if (firstProjectedPoint.DistanceTo(secondProjectedPoint) <= tolerance.Distance)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        double firstParameter = GetEllipseParameter(ellipse, firstProjectedPoint);
+        double secondParameter = GetEllipseParameter(ellipse, secondProjectedPoint);
+        double counterClockwiseSweep = secondParameter >= firstParameter
+            ? secondParameter - firstParameter
+            : secondParameter + FullCircleRadians - firstParameter;
+
+        double startParameter = firstParameter;
+        double endParameter = secondParameter;
+
+        if (counterClockwiseSweep <= Math.PI)
+        {
+            startParameter = secondParameter;
+            endParameter = firstParameter + FullCircleRadians;
+        }
+        else
+        {
+            endParameter = secondParameter;
+        }
+
+        if (endParameter <= startParameter)
+        {
+            endParameter += FullCircleRadians;
+        }
+
+        return new CadEntity[]
+        {
+            new PolylineEntity(
+                CreateEllipsePolylineVertices(ellipse, startParameter, endParameter),
+                isClosed: false,
+                layerId: ellipse.LayerId,
+                style: ellipse.Style,
+                isVisible: ellipse.IsVisible,
+                isLocked: ellipse.IsLocked,
+                drawOrder: ellipse.DrawOrder)
+        };
+    }
+
     private static IReadOnlyList<CadEntity> BreakPolylineBetweenPoints(
         PolylineEntity polyline,
         Point2D firstBreakPoint,
@@ -598,9 +682,13 @@ public static class CadBreakService
         var vertices = new List<Point2D>();
         AddIfDifferent(vertices, startPoint, tolerance);
 
+        int intermediateVertexCount = endPathParameter >= startPathParameter
+            ? endSegmentIndex - startSegmentIndex
+            : vertexCount - startSegmentIndex + endSegmentIndex;
+
         int vertexIndex = (startSegmentIndex + 1) % vertexCount;
 
-        while (vertexIndex != (endSegmentIndex + 1) % vertexCount)
+        for (int index = 0; index < intermediateVertexCount; index++)
         {
             AddIfDifferent(vertices, polyline.Vertices[vertexIndex], tolerance);
             vertexIndex = (vertexIndex + 1) % vertexCount;
@@ -755,6 +843,38 @@ public static class CadBreakService
             .Sum(segment => segment.Start.DistanceTo(segment.End));
     }
 
+    private static double GetEllipseParameter(EllipseEntity ellipse, Point2D point)
+    {
+        Vector2D fromCenter = ellipse.Center.VectorTo(point);
+        Vector2D majorDirection = ellipse.MajorDirection;
+        Vector2D minorDirection = ellipse.MinorAxis.Normalize();
+
+        double localX = fromCenter.Dot(majorDirection) / ellipse.MajorRadius;
+        double localY = fromCenter.Dot(minorDirection) / ellipse.MinorRadius;
+
+        return NormalizeRadians(Math.Atan2(localY, localX));
+    }
+
+    private static IReadOnlyList<Point2D> CreateEllipsePolylineVertices(
+        EllipseEntity ellipse,
+        double startParameter,
+        double endParameter)
+    {
+        double sweep = endParameter - startParameter;
+        int segmentCount = Math.Max(
+            2,
+            (int)Math.Ceiling(EllipseEntity.DefaultSampleCount * sweep / FullCircleRadians));
+
+        var vertices = new List<Point2D>(segmentCount + 1);
+        for (int index = 0; index <= segmentCount; index++)
+        {
+            double parameter = startParameter + sweep * index / segmentCount;
+            vertices.Add(ellipse.GetPointAt(parameter));
+        }
+
+        return vertices;
+    }
+
     private static ArcEntity CreateArcLike(
         ArcEntity source,
         Angle startAngle,
@@ -864,6 +984,12 @@ public static class CadBreakService
         }
 
         return value / sweep;
+    }
+
+    private static double NormalizeRadians(double radians)
+    {
+        double value = radians % FullCircleRadians;
+        return value < 0 ? value + FullCircleRadians : value;
     }
 
     private static double GetDirectedAngleDistance(

@@ -10,9 +10,10 @@ Targets:
 
 - Line;
 - Arc;
+- Ellipse;
 - Polyline.
 
-Circle is not applicable; use Break Segment for circles.
+Circle is not applicable; use Break Segment for circles. Ellipse Break Point opens the ellipse into an approximated open polyline starting and ending at the break point.
 
 Workflow:
 
@@ -32,6 +33,7 @@ Targets:
 - Line;
 - Arc;
 - Circle;
+- Ellipse;
 - Polyline.
 
 Workflow:
@@ -42,7 +44,7 @@ BREAK: Specify first break point:
 BREAK: Specify second break point:
 ```
 
-For circles, the minor arc between the two projected points is removed. For closed polylines, the shortest path between points is removed.
+For circles, the minor arc between the two projected points is removed. For ellipses, the removed portion is approximated and the remaining ellipse path is returned as an open polyline. Open polylines can be broken on internal segments. Closed polylines and regular polygons are opened and the shortest path between points is removed.
 
 ---
 
@@ -79,6 +81,7 @@ Cutting-edge support:
 - Line;
 - Circle;
 - Arc;
+- Ellipse;
 - Polyline.
 
 Target support:
@@ -86,6 +89,7 @@ Target support:
 - Line;
 - Circle;
 - Arc;
+- Ellipse;
 - Polyline.
 
 Workflow:
@@ -101,7 +105,10 @@ Features:
 - target entity is excluded from its own cutting-edge set in All mode;
 - additional cutting edges can be selected;
 - `Undo` reverses the last trim inside the active Trim command;
-- command remains active for repeated trims until cancelled or confirmed.
+- command remains active for repeated trims until cancelled or confirmed;
+- open and closed polylines, including regular polygons stored as closed `PolylineEntity`, can be trimmed;
+- trimmed polyline/polygon fragments are returned as open `PolylineEntity` fragments;
+- trimmed ellipse fragments are returned as open polyline approximations because the model currently has a full `EllipseEntity` but no partial ellipse-arc entity.
 
 ---
 

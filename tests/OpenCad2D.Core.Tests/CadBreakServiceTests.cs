@@ -299,6 +299,104 @@ public sealed class CadBreakServiceTests
             remaining.Vertices);
     }
 
+
+    [Fact]
+    public void BreakBetweenPoints_WithOpenPolylinePointsOnSameSegment_ShouldRemoveMiddleSegment()
+    {
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            });
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakBetweenPoints(
+            polyline,
+            new Point2D(2, 0),
+            new Point2D(7, 0));
+
+        Assert.Equal(2, result.Count);
+
+        var first = Assert.IsType<PolylineEntity>(result[0]);
+        var second = Assert.IsType<PolylineEntity>(result[1]);
+
+        Assert.Equal(
+            new[] { new Point2D(0, 0), new Point2D(2, 0) },
+            first.Vertices);
+        Assert.Equal(
+            new[] { new Point2D(7, 0), new Point2D(10, 0), new Point2D(10, 10) },
+            second.Vertices);
+    }
+
+    [Fact]
+    public void BreakBetweenPoints_WithClosedPolylinePolygonPointsOnSameSegment_ShouldRemoveShortestPath()
+    {
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10),
+                new Point2D(0, 10)
+            },
+            isClosed: true);
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakBetweenPoints(
+            polyline,
+            new Point2D(2, 0),
+            new Point2D(7, 0));
+
+        PolylineEntity remaining = Assert.IsType<PolylineEntity>(Assert.Single(result));
+
+        Assert.False(remaining.IsClosed);
+        Assert.Equal(new Point2D(7, 0), remaining.Vertices.First());
+        Assert.Equal(new Point2D(2, 0), remaining.Vertices.Last());
+        Assert.Contains(new Point2D(10, 10), remaining.Vertices);
+        Assert.Contains(new Point2D(0, 10), remaining.Vertices);
+    }
+
+    [Fact]
+    public void BreakAtPoint_WithEllipse_ShouldOpenEllipseAsPolyline()
+    {
+        var ellipse = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakAtPoint(
+            ellipse,
+            new Point2D(10, 0));
+
+        PolylineEntity opened = Assert.IsType<PolylineEntity>(Assert.Single(result));
+
+        Assert.False(opened.IsClosed);
+        Assert.True(opened.Vertices.Count > 8);
+        Assert.True(opened.Vertices.First().DistanceTo(new Point2D(10, 0)) <= 1.0e-6);
+        Assert.True(opened.Vertices.Last().DistanceTo(new Point2D(10, 0)) <= 1.0e-6);
+    }
+
+    [Fact]
+    public void BreakBetweenPoints_WithEllipse_ShouldRemoveMinorArcAndReturnPolyline()
+    {
+        var ellipse = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakBetweenPoints(
+            ellipse,
+            new Point2D(10, 0),
+            new Point2D(0, 5));
+
+        PolylineEntity remaining = Assert.IsType<PolylineEntity>(Assert.Single(result));
+
+        Assert.False(remaining.IsClosed);
+        Assert.True(remaining.Vertices.Count > 8);
+        Assert.True(remaining.Vertices.First().DistanceTo(new Point2D(0, 5)) <= 1.0e-6);
+        Assert.True(remaining.Vertices.Last().DistanceTo(new Point2D(10, 0)) <= 1.0e-6);
+    }
+
     [Fact]
     public void BreakBetweenPoints_WithSamePoint_ShouldReturnNoSegments()
     {

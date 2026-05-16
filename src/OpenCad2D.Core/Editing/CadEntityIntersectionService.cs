@@ -163,6 +163,18 @@ public static class CadEntityIntersectionService
                 }
 
                 break;
+
+            case EllipseEntity ellipse:
+                IReadOnlyList<Point2D> points = ellipse.GetSamplePoints();
+                for (int index = 0; index < points.Count; index++)
+                {
+                    yield return EntitySegment.FromLine(
+                        new LineSegment2D(
+                            points[index],
+                            points[(index + 1) % points.Count]));
+                }
+
+                break;
         }
     }
 
