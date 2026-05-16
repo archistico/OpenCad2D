@@ -11,6 +11,24 @@ namespace OpenCad2D.App.Tests;
 
 public sealed class PropertyPanelEditingTests
 {
+
+    [Fact]
+    public void PropertyPanel_ForSingleSelection_ShouldShowDrawOrder()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            drawOrder: 42);
+        viewModel.Workspace.Document.AddEntity(line);
+        SelectEntity(viewModel, line);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Draw order");
+
+        Assert.Equal("42", row.Value);
+        Assert.False(row.IsEditable);
+    }
+
     [Fact]
     public void ApplyCommand_ForPointX_ShouldReplaceEntityAndSupportUndo()
     {

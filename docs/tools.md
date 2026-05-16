@@ -950,3 +950,22 @@ Shift-click Extend inside Trim
 The line and text format managers now use compact row-level `ColorPicker` controls. The picker is intended for fast visual color selection, while the existing `#RRGGBB` fields remain available for precise input and validation.
 
 Layer appearance remains format-driven: a layer references a line format, and the line format defines color, weight and dash style. Users change layer appearance by assigning or editing the referenced line format.
+
+## Draw order / Z-order stabilization
+
+Implemented in the pre-v0.9 stabilization phase:
+
+- Draw order is independent from layers.
+- Higher `DrawOrder` entities render above lower `DrawOrder` entities.
+- Point hit-testing uses draw order as the topmost tie-breaker when overlapping entities are equally close.
+- The left tool panel includes an `ORDER` group with:
+  - `To Front`
+  - `To Back`
+  - `Forward`
+  - `Backward`
+- Command input action aliases:
+  - `BRINGTOFRONT`, `BTF`, `FRONT`
+  - `SENDTOBACK`, `STB`, `BACK`
+  - `BRINGFORWARD`, `BF`, `FORWARD`
+  - `SENDBACKWARD`, `SB`, `BACKWARD`
+- Draw-order changes are undoable and keep the current selection.

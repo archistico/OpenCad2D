@@ -150,10 +150,12 @@
 
                     <Button Classes="global-button"
                             Content="New"
+                            ToolTip.Tip="Create a new OpenCad2D document"
                             Click="New_Click" />
 
                     <Button Classes="global-button"
                             Content="Open"
+                            ToolTip.Tip="Open an existing .opencad2d.json drawing"
                             Click="Open_Click" />
 
                     <Button Classes="global-button"
@@ -163,20 +165,24 @@
 
                     <Button Classes="global-button"
                             Content="Save"
+                            ToolTip.Tip="Save the current drawing"
                             Click="Save_Click" />
 
                     <Button Classes="global-button"
                             Content="Save As"
+                            ToolTip.Tip="Save the current drawing to a new file"
                             Click="SaveAs_Click" />
 
                     <Separator Margin="5,0" />
 
                     <Button Classes="global-button"
                             Content="Export SVG"
+                            ToolTip.Tip="Export the drawing as SVG"
                             Click="ExportSvg_Click" />
 
                     <Button Classes="global-button"
                             Content="Export DXF"
+                            ToolTip.Tip="Export the drawing as DXF"
                             Click="ExportDxf_Click" />
 
                     <Button Classes="global-button"
@@ -238,18 +244,22 @@
 
                     <Button Classes="global-button"
                             Content="Layers..."
+                            ToolTip.Tip="Open the Layer Manager"
                             Click="Layers_Click" />
 
                     <Button Classes="global-button"
                             Content="Line formats..."
+                            ToolTip.Tip="Open the Line Format Manager"
                             Click="LineFormats_Click" />
 
                     <Button Classes="global-button"
                             Content="Text formats..."
+                            ToolTip.Tip="Open the Text Format Manager"
                             Click="TextFormats_Click" />
 
                     <Button Classes="global-button"
                             Content="Grid..."
+                            ToolTip.Tip="Configure grid display and spacing"
                             Click="Grid_Click" />
 
                     <Separator Margin="5,0" />
@@ -268,19 +278,23 @@
 
                     <Button Classes="global-button"
                             Content="Undo"
+                            ToolTip.Tip="Undo the last operation"
                             Click="Undo_Click" />
 
                     <Button Classes="global-button"
                             Content="Redo"
+                            ToolTip.Tip="Redo the last undone operation"
                             Click="Redo_Click" />
 
                     <Button Classes="global-button"
                             Content="Extents"
+                            ToolTip.Tip="Zoom to show the full drawing extents"
                             Click="ZoomExtents_Click" />
 
                     <Button x:Name="PropertiesButton"
                             Classes="global-button"
                             Content="Props"
+                            ToolTip.Tip="Show or hide the selection property panel"
                             Click="Properties_Click" />
 
                     <Separator Margin="5,0" />
@@ -319,16 +333,19 @@
                             <Button x:Name="SelectButton"
                                     Classes="tool-button"
                                     Content="Select"
+                                    ToolTip.Tip="Select entities in the drawing"
                                     Click="Select_Click" />
 
                             <Button x:Name="SelectAllButton"
                                     Classes="tool-button"
                                     Content="Select All"
+                                    ToolTip.Tip="Select all visible and unlocked entities"
                                     Click="SelectAll_Click" />
 
                             <Button x:Name="SelectLastButton"
                                     Classes="tool-button"
                                     Content="Select Last"
+                                    ToolTip.Tip="Restore the last effective selection"
                                     Click="SelectLast_Click" />
 
                             <TextBlock Classes="panel-section-label"
@@ -337,46 +354,55 @@
                             <Button x:Name="PointButton"
                                     Classes="tool-button"
                                     Content="Point"
+                                    ToolTip.Tip="Draw a point entity"
                                     Click="Point_Click" />
 
                             <Button x:Name="TextButton"
                                     Classes="tool-button"
                                     Content="Text"
+                                    ToolTip.Tip="Place a text entity"
                                     Click="Text_Click" />
 
                             <Button x:Name="LineButton"
                                     Classes="tool-button"
                                     Content="Line"
+                                    ToolTip.Tip="Draw a line from two points"
                                     Click="Line_Click" />
 
                             <Button x:Name="RectangleButton"
                                     Classes="tool-button"
                                     Content="Rectangle"
+                                    ToolTip.Tip="Draw a rectangle from two opposite corners"
                                     Click="Rectangle_Click" />
 
                             <Button x:Name="RectangleBySidesButton"
                                     Classes="tool-button"
                                     Content="Rect Sides"
+                                    ToolTip.Tip="Draw a rectangle by side dimensions"
                                     Click="RectangleBySides_Click" />
 
                             <Button x:Name="CircleButton"
                                     Classes="tool-button"
                                     Content="Circle"
+                                    ToolTip.Tip="Draw a circle by center and radius"
                                     Click="Circle_Click" />
 
                             <Button x:Name="ArcButton"
                                     Classes="tool-button"
                                     Content="Arc"
+                                    ToolTip.Tip="Draw an arc by center/start/end"
                                     Click="Arc_Click" />
 
                             <Button x:Name="ArcThreePointsButton"
                                     Classes="tool-button"
                                     Content="Arc 3P"
+                                    ToolTip.Tip="Draw an arc through three points"
                                     Click="ArcThreePoints_Click" />
 
                             <Button x:Name="PolylineButton"
                                     Classes="tool-button"
                                     Content="Polyline"
+                                    ToolTip.Tip="Draw a polyline with multiple vertices"
                                     Click="Polyline_Click" />
 
                             <TextBlock Classes="panel-section-label"
@@ -385,31 +411,37 @@
                             <Button x:Name="HorizontalDimensionButton"
                                     Classes="tool-button"
                                     Content="Horizontal Dim"
+                                    ToolTip.Tip="Add a horizontal dimension"
                                     Click="HorizontalDimension_Click" />
 
                             <Button x:Name="VerticalDimensionButton"
                                     Classes="tool-button"
                                     Content="Vertical Dim"
+                                    ToolTip.Tip="Add a vertical dimension"
                                     Click="VerticalDimension_Click" />
 
                             <Button x:Name="AlignedDimensionButton"
                                     Classes="tool-button"
                                     Content="Aligned Dim"
+                                    ToolTip.Tip="Add an aligned dimension"
                                     Click="AlignedDimension_Click" />
 
                             <Button x:Name="RadiusDimensionButton"
                                     Classes="tool-button"
                                     Content="Radius Dim"
+                                    ToolTip.Tip="Add a radius dimension"
                                     Click="RadiusDimension_Click" />
 
                             <Button x:Name="DiameterDimensionButton"
                                     Classes="tool-button"
                                     Content="Diameter Dim"
+                                    ToolTip.Tip="Add a diameter dimension"
                                     Click="DiameterDimension_Click" />
 
                             <Button x:Name="AngularDimensionButton"
                                     Classes="tool-button"
                                     Content="Angular Dim"
+                                    ToolTip.Tip="Add an angular dimension"
                                     Click="AngularDimension_Click" />
 
                             <TextBlock Classes="panel-section-label"
@@ -418,21 +450,25 @@
                             <Button x:Name="MeasureDistanceButton"
                                     Classes="tool-button"
                                     Content="Distance"
+                                    ToolTip.Tip="Measure the distance between two points"
                                     Click="MeasureDistance_Click" />
 
                             <Button x:Name="MeasureEntityButton"
                                     Classes="tool-button"
                                     Content="Entity"
+                                    ToolTip.Tip="Measure properties of a selected entity"
                                     Click="MeasureEntity_Click" />
 
                             <Button x:Name="MeasureAngleButton"
                                     Classes="tool-button"
                                     Content="Angle"
+                                    ToolTip.Tip="Measure an angle"
                                     Click="MeasureAngle_Click" />
 
                             <Button x:Name="MeasureAreaButton"
                                     Classes="tool-button"
                                     Content="Area"
+                                    ToolTip.Tip="Measure a closed area"
                                     Click="MeasureArea_Click" />
                         </StackPanel>
 
@@ -445,11 +481,13 @@
                             <Button x:Name="ZoomWindowButton"
                                     Classes="tool-button"
                                     Content="Zoom Window"
+                                    ToolTip.Tip="Zoom to a rectangular window"
                                     Click="ZoomWindow_Click" />
 
                             <Button x:Name="ZoomExtentsPanelButton"
                                     Classes="tool-button"
                                     Content="Zoom Extents"
+                                    ToolTip.Tip="Zoom to show the full drawing extents"
                                     Click="ZoomExtents_Click" />
 
                             <TextBlock Classes="panel-section-label"
@@ -458,61 +496,97 @@
                             <Button x:Name="MoveButton"
                                     Classes="tool-button"
                                     Content="Move"
+                                    ToolTip.Tip="Move selected entities by base and destination points"
                                     Click="Move_Click" />
 
                             <Button x:Name="CopyButton"
                                     Classes="tool-button"
                                     Content="Copy"
+                                    ToolTip.Tip="Copy selected entities by base and destination points"
                                     Click="Copy_Click" />
 
                             <Button x:Name="RotateButton"
                                     Classes="tool-button"
                                     Content="Rotate"
+                                    ToolTip.Tip="Rotate selected entities"
                                     Click="Rotate_Click" />
 
                             <Button x:Name="ScaleButton"
                                     Classes="tool-button"
                                     Content="Scale"
+                                    ToolTip.Tip="Scale selected entities"
                                     Click="Scale_Click" />
 
                             <Button x:Name="AlignButton"
                                     Classes="tool-button"
                                     Content="Align"
+                                    ToolTip.Tip="Align selected entities using source and destination points"
                                     Click="Align_Click" />
 
                             <Button x:Name="BreakAtPointButton"
                                     Classes="tool-button"
                                     Content="Break Pt"
+                                    ToolTip.Tip="Break an entity at a single point"
                                     Click="BreakAtPoint_Click" />
 
                             <Button x:Name="BreakBetweenPointsButton"
                                     Classes="tool-button"
                                     Content="Break Seg"
+                                    ToolTip.Tip="Remove a segment between two break points"
                                     Click="BreakBetweenPoints_Click" />
 
                             <Button x:Name="ExtendButton"
                                     Classes="tool-button"
                                     Content="Extend"
+                                    ToolTip.Tip="Extend an entity to a boundary"
                                     Click="Extend_Click" />
 
                             <Button x:Name="TrimButton"
                                     Classes="tool-button"
                                     Content="Trim"
+                                    ToolTip.Tip="Trim entities using cutting edges"
                                     Click="Trim_Click" />
 
                             <Button x:Name="OffsetButton"
                                     Classes="tool-button"
                                     Content="Offset"
+                                    ToolTip.Tip="Create an offset copy of a line, circle or arc"
                                     Click="Offset_Click" />
 
                             <Button x:Name="FilletButton"
                                     Classes="tool-button"
                                     Content="Fillet"
+                                    ToolTip.Tip="Create a line-line fillet with the current radius"
                                     Click="Fillet_Click" />
 
                             <Button Classes="tool-button"
                                     Content="Delete"
+                                    ToolTip.Tip="Delete the selected entities"
                                     Click="Delete_Click" />
+
+                            <TextBlock Classes="panel-section-label"
+                                       Text="ORDER" />
+
+                            <Button Classes="tool-button"
+                                    Content="To Front"
+                                    ToolTip.Tip="Bring selected entities to the top draw order"
+                                    Click="BringToFront_Click" />
+
+                            <Button Classes="tool-button"
+                                    Content="To Back"
+                                    ToolTip.Tip="Send selected entities to the bottom draw order"
+                                    Click="SendToBack_Click" />
+
+                            <Button Classes="tool-button"
+                                    Content="Forward"
+                                    ToolTip.Tip="Move selected entities one draw-order step up"
+                                    Click="BringForward_Click" />
+
+                            <Button Classes="tool-button"
+                                    Content="Backward"
+                                    ToolTip.Tip="Move selected entities one draw-order step down"
+                                    Click="SendBackward_Click" />
+
                         </StackPanel>
                     </Grid>
                 </ScrollViewer>
@@ -552,6 +626,7 @@
                             <Button Grid.Column="1"
                                     Classes="global-button"
                                     Content="×"
+                                    ToolTip.Tip="Close the property panel"
                                     MinWidth="34"
                                     Padding="5,1"
                                     Click="PropertyPanelClose_Click" />
@@ -598,6 +673,7 @@
                                                                 MinWidth="48"
                                                                 Padding="6,2"
                                                                 Content="Apply"
+                                                                ToolTip.Tip="Apply this property value"
                                                                 IsVisible="{Binding IsEditable}"
                                                                 Command="{Binding ApplyCommand}" />
                                                     </Grid>

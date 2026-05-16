@@ -1021,6 +1021,58 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void BringToFront_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.BringSelectionToFront();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void SendToBack_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SendSelectionToBack();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void BringForward_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.BringSelectionForward();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private void SendBackward_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SendSelectionBackward();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)

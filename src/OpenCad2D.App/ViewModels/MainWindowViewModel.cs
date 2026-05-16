@@ -1086,6 +1086,50 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+    public ToolResult BringSelectionToFront()
+    {
+        ToolResult result = Workspace.ActionController.BringSelectionToFront();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult SendSelectionToBack()
+    {
+        ToolResult result = Workspace.ActionController.SendSelectionToBack();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult BringSelectionForward()
+    {
+        ToolResult result = Workspace.ActionController.BringSelectionForward();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult SendSelectionBackward()
+    {
+        ToolResult result = Workspace.ActionController.SendSelectionBackward();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     private bool TryExecuteActionCommand(
         string input,
         out ToolResult result)
@@ -1106,6 +1150,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             case "SL":
             case "LAST":
                 result = SelectLast();
+                return true;
+
+            case "BRINGTOFRONT":
+            case "BTF":
+            case "FRONT":
+                result = BringSelectionToFront();
+                return true;
+
+            case "SENDTOBACK":
+            case "STB":
+            case "BACK":
+                result = SendSelectionToBack();
+                return true;
+
+            case "BRINGFORWARD":
+            case "BF":
+            case "FORWARD":
+                result = BringSelectionForward();
+                return true;
+
+            case "SENDBACKWARD":
+            case "SB":
+            case "BACKWARD":
+                result = SendSelectionBackward();
                 return true;
 
             default:

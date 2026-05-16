@@ -1177,3 +1177,22 @@ Implemented/planned in the pre-v0.9 stabilization pass:
 - store current layer and current text format in `.opencad2d.json`;
 - keep older files compatible through default settings fallback;
 - keep local UI/session preferences out of the drawing file.
+
+## Draw order / Z-order stabilization
+
+Implemented in the pre-v0.9 stabilization phase:
+
+- Draw order is independent from layers.
+- Higher `DrawOrder` entities render above lower `DrawOrder` entities.
+- Point hit-testing uses draw order as the topmost tie-breaker when overlapping entities are equally close.
+- The left tool panel includes an `ORDER` group with:
+  - `To Front`
+  - `To Back`
+  - `Forward`
+  - `Backward`
+- Command input action aliases:
+  - `BRINGTOFRONT`, `BTF`, `FRONT`
+  - `SENDTOBACK`, `STB`, `BACK`
+  - `BRINGFORWARD`, `BF`, `FORWARD`
+  - `SENDBACKWARD`, `SB`, `BACKWARD`
+- Draw-order changes are undoable and keep the current selection.

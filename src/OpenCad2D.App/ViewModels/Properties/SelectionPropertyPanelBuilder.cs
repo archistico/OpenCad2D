@@ -87,6 +87,7 @@ public sealed class SelectionPropertyPanelBuilder
                             setMessage,
                             refresh)),
                     Row("Id", entity.Id.ToString()),
+                    Row("Draw order", entity.DrawOrder.ToString(CultureInfo.InvariantCulture)),
                     Row("Visible", PropertyValueFormatter.FormatBoolean(workspace.Document.IsEntityVisible(entity))),
                     Row("Layer locked", PropertyValueFormatter.FormatBoolean(layer.IsLocked))
                 })

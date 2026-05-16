@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -574,6 +574,168 @@ public sealed class CadActionControllerTests
         Assert.Equal(ToolResultKind.Cancelled, result.Kind);
         Assert.True(selectionSet.IsEmpty);
         Assert.False(actionController.HasSelection);
+    }
+
+
+
+    [Fact]
+    public void BringSelectionToFront_ShouldPutSelectedEntityOnTop()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var back = new LineEntity(new Point2D(0, 0), new Point2D(10, 0), drawOrder: 0);
+        var selected = new LineEntity(new Point2D(0, 1), new Point2D(10, 1), drawOrder: 1);
+        var front = new LineEntity(new Point2D(0, 2), new Point2D(10, 2), drawOrder: 2);
+
+        document.AddEntities(new[] { back, selected, front });
+        selectionSet.Select(selected.Id);
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.BringSelectionToFront();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.True(document.Entities.GetRequired(selected.Id).DrawOrder >
+                    document.Entities.GetRequired(front.Id).DrawOrder);
+        Assert.True(actionController.CanUndo);
+    }
+
+    [Fact]
+    public void SendSelectionToBack_ShouldPutSelectedEntityAtBottom()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var back = new LineEntity(new Point2D(0, 0), new Point2D(10, 0), drawOrder: 0);
+        var selected = new LineEntity(new Point2D(0, 1), new Point2D(10, 1), drawOrder: 1);
+        var front = new LineEntity(new Point2D(0, 2), new Point2D(10, 2), drawOrder: 2);
+
+        document.AddEntities(new[] { back, selected, front });
+        selectionSet.Select(selected.Id);
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.SendSelectionToBack();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.True(document.Entities.GetRequired(selected.Id).DrawOrder <
+                    document.Entities.GetRequired(back.Id).DrawOrder);
+    }
+
+    [Fact]
+    public void BringSelectionForward_ShouldMoveSelectedEntityOneStepUp()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var first = new LineEntity(new Point2D(0, 0), new Point2D(10, 0), drawOrder: 0);
+        var selected = new LineEntity(new Point2D(0, 1), new Point2D(10, 1), drawOrder: 1);
+        var next = new LineEntity(new Point2D(0, 2), new Point2D(10, 2), drawOrder: 2);
+        var top = new LineEntity(new Point2D(0, 3), new Point2D(10, 3), drawOrder: 3);
+
+        document.AddEntities(new[] { first, selected, next, top });
+        selectionSet.Select(selected.Id);
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.BringSelectionForward();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.True(document.Entities.GetRequired(selected.Id).DrawOrder >
+                    document.Entities.GetRequired(next.Id).DrawOrder);
+        Assert.True(document.Entities.GetRequired(selected.Id).DrawOrder <
+                    document.Entities.GetRequired(top.Id).DrawOrder);
+    }
+
+    [Fact]
+    public void SendSelectionBackward_ShouldMoveSelectedEntityOneStepDown()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var bottom = new LineEntity(new Point2D(0, 0), new Point2D(10, 0), drawOrder: 0);
+        var previous = new LineEntity(new Point2D(0, 1), new Point2D(10, 1), drawOrder: 1);
+        var selected = new LineEntity(new Point2D(0, 2), new Point2D(10, 2), drawOrder: 2);
+        var top = new LineEntity(new Point2D(0, 3), new Point2D(10, 3), drawOrder: 3);
+
+        document.AddEntities(new[] { bottom, previous, selected, top });
+        selectionSet.Select(selected.Id);
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.SendSelectionBackward();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.True(document.Entities.GetRequired(selected.Id).DrawOrder <
+                    document.Entities.GetRequired(previous.Id).DrawOrder);
+        Assert.True(document.Entities.GetRequired(selected.Id).DrawOrder >
+                    document.Entities.GetRequired(bottom.Id).DrawOrder);
+    }
+
+    [Fact]
+    public void DrawOrderActions_ShouldBeUndoable()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var back = new LineEntity(new Point2D(0, 0), new Point2D(10, 0), drawOrder: 0);
+        var selected = new LineEntity(new Point2D(0, 1), new Point2D(10, 1), drawOrder: 1);
+        var front = new LineEntity(new Point2D(0, 2), new Point2D(10, 2), drawOrder: 2);
+
+        document.AddEntities(new[] { back, selected, front });
+        selectionSet.Select(selected.Id);
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        actionController.BringSelectionToFront();
+
+        Assert.True(document.Entities.GetRequired(selected.Id).DrawOrder >
+                    document.Entities.GetRequired(front.Id).DrawOrder);
+
+        actionController.Undo();
+
+        Assert.Equal(1, document.Entities.GetRequired(selected.Id).DrawOrder);
+        Assert.Equal(2, document.Entities.GetRequired(front.Id).DrawOrder);
+    }
+
+    private static CadActionController CreateActionController(
+        CadDocument document,
+        CommandHistory history,
+        SelectionSet selectionSet)
+    {
+        ToolContext context = CreateContext(
+            document,
+            history,
+            selectionSet);
+
+        var toolController = new ToolController(
+            context,
+            new SelectionTool());
+
+        return new CadActionController(
+            context,
+            toolController);
     }
 
     private static ToolContext CreateContext(

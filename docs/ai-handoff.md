@@ -1570,3 +1570,45 @@ Compatibility: old files without `settings` or with partial settings must still 
 
 Fixed `JsonDocumentSerializer.NormalizeSettings` so legacy `Serialize(document, currentLayerId, viewport)` calls preserve the provided current layer when no explicit `DocumentSettingsDto` is supplied. The new settings DTO defaulted `CurrentLayerId` to `"0"`, which caused older round-trip tests to restore layer `0` instead of the caller-provided current layer such as `Details`. Explicit settings passed by the app are still preserved.
 
+## Draw order / Z-order stabilization
+
+Implemented in the pre-v0.9 stabilization phase:
+
+- Draw order is independent from layers.
+- Higher `DrawOrder` entities render above lower `DrawOrder` entities.
+- Point hit-testing uses draw order as the topmost tie-breaker when overlapping entities are equally close.
+- The left tool panel includes an `ORDER` group with:
+  - `To Front`
+  - `To Back`
+  - `Forward`
+  - `Backward`
+- Command input action aliases:
+  - `BRINGTOFRONT`, `BTF`, `FRONT`
+  - `SENDTOBACK`, `STB`, `BACK`
+  - `BRINGFORWARD`, `BF`, `FORWARD`
+  - `SENDBACKWARD`, `SB`, `BACKWARD`
+- Draw-order changes are undoable and keep the current selection.
+
+### v0.8.x draw order one-step fix
+
+The draw-order service now handles `BringForward` and `SendBackward` as true one-step reorder operations in the ordered entity list. The selected entities swap across the nearest unselected neighbor, then the draw orders are normalized into a dense sequence. This avoids duplicate draw-order values and keeps `Forward`/`Backward` between adjacent entities instead of jumping over the next entity.
+
+## 2026-05-16 - UI cleanup before align/distribute phase
+
+Applied a small UI consistency cleanup after the draw-order/Z-order work:
+
+- Moved the `Delete` button from the `ORDER` group into the `EDIT` group, immediately after `Fillet`.
+- Added `ToolTip.Tip` text to all buttons in `MainWindow.axaml`, including file actions, global actions, left tool panel tools, draw-order actions, property panel buttons and command-related actions.
+- The `ORDER` group now contains only draw-order controls: `To Front`, `To Back`, `Forward`, `Backward`.
+
+Next planned blocks remain:
+
+1. Align tools: Align Left/Right/Top/Bottom using the global selection bounding box.
+2. Distribute tools: distribute selected entities horizontally/vertically by center positions.
+
+
+## 2026-05-16 - Property panel draw order value
+
+- Added a read-only `Draw order` row to the single-selection property panel.
+- This helps verify Z-order changes after `To Front`, `To Back`, `Forward`, and `Backward`.
+- Confirmed intended behavior: `To Front` moves the selected entity to the highest draw order range, visible entities are rendered in increasing draw order, so the entity is drawn last and appears above overlapping entities. Hit testing also prefers the higher draw-order entity.

@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Collections;
+using OpenCad2D.Core.Collections;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -159,22 +159,32 @@ public sealed class CadDocument
 
     public IEnumerable<CadEntity> GetVisibleEntities()
     {
-        return Entities.All.Where(IsEntityVisible);
+        return OrderByDrawOrder(
+            Entities.All.Where(IsEntityVisible));
     }
 
     public IEnumerable<CadEntity> GetVisibleEntities(BoundingBox2D area)
     {
-        return Entities.Query(area).Where(IsEntityVisible);
+        return OrderByDrawOrder(
+            Entities.Query(area).Where(IsEntityVisible));
     }
 
     public IEnumerable<CadEntity> GetSelectableEntities()
     {
-        return Entities.All.Where(IsEntitySelectable);
+        return OrderByDrawOrder(
+            Entities.All.Where(IsEntitySelectable));
     }
 
     public IEnumerable<CadEntity> GetSelectableEntities(BoundingBox2D area)
     {
-        return Entities.Query(area).Where(IsEntitySelectable);
+        return OrderByDrawOrder(
+            Entities.Query(area).Where(IsEntitySelectable));
+    }
+
+    private static IEnumerable<CadEntity> OrderByDrawOrder(IEnumerable<CadEntity> entities)
+    {
+        return entities
+            .OrderBy(entity => entity.DrawOrder);
     }
 
     private void EnsureEntityIsEditable(

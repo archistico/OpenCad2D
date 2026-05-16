@@ -2,6 +2,7 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Core.Commands;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -101,6 +102,63 @@ public sealed class CadActionController
         return ToolResult.Completed(previousSelectionIds.Count == 1
             ? "Restored previous selection: 1 entity."
             : $"Restored previous selection: {previousSelectionIds.Count} entities.");
+    }
+
+
+
+    public ToolResult BringSelectionToFront()
+    {
+        return ApplyDrawOrder(DrawOrderOperation.BringToFront, "Brought selected entities to front.");
+    }
+
+    public ToolResult SendSelectionToBack()
+    {
+        return ApplyDrawOrder(DrawOrderOperation.SendToBack, "Sent selected entities to back.");
+    }
+
+    public ToolResult BringSelectionForward()
+    {
+        return ApplyDrawOrder(DrawOrderOperation.BringForward, "Moved selected entities forward.");
+    }
+
+    public ToolResult SendSelectionBackward()
+    {
+        return ApplyDrawOrder(DrawOrderOperation.SendBackward, "Moved selected entities backward.");
+    }
+
+    private ToolResult ApplyDrawOrder(
+        DrawOrderOperation operation,
+        string successMessage)
+    {
+        if (_context.SelectionSet.IsEmpty)
+        {
+            return ToolResult.None("No selected entities to reorder.");
+        }
+
+        List<EntityId> selectedIds = _context.SelectionSet.SelectedIds.ToList();
+
+        var service = new DrawOrderService();
+        IReadOnlyList<CadEntity> replacements = service.CreateReorderedEntities(
+            _context.Document,
+            selectedIds,
+            operation);
+
+        if (replacements.Count == 0)
+        {
+            return ToolResult.None("Selected entities cannot be reordered.");
+        }
+
+        _context.CommandHistory.Execute(
+            _context.Document,
+            new ReplaceEntitiesCommand(replacements));
+
+        _context.SelectionSet.ReplaceWith(
+            selectedIds.Where(id =>
+                _context.Document.Entities.TryGet(id, out CadEntity? entity) &&
+                entity is not null &&
+                _context.Document.IsEntitySelectable(entity)));
+
+        return ToolResult.Completed(successMessage);
     }
 
     private void EnsureCurrentLayerIsUsable()
