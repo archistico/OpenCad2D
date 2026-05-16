@@ -14,7 +14,7 @@ namespace OpenCad2D.Tools.Editing;
 /// </summary>
 public sealed class OffsetTool : ICadTool, ICommandDrivenTool
 {
-    private const double MiterLimitRatio = 4.0;
+    private const double MiterLimitRatio = 10.0;
 
     private double? _distance;
     private ToolPickedEntityInput? _pickedEntity;

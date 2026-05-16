@@ -1263,6 +1263,22 @@ Completed:
 - documented current limitations for rounded polyline joins and advanced self-intersection cleanup.
 
 
+
+### v0.8.5 DXF import compatibility - LWPOLYLINE bulge
+
+Completed:
+
+- [x] detect non-zero `LWPOLYLINE` vertex bulge values during DXF import;
+- [x] convert bulged segments to native `ArcEntity` geometry;
+- [x] convert mixed straight/bulged polylines to separate `LineEntity` and `ArcEntity` segments;
+- [x] support closing bulge segments on closed lightweight polylines;
+- [x] document that compound curved-polyline topology is not preserved yet.
+
+Future work:
+
+- [ ] introduce true curved polyline segments or a compound import entity if OpenCad2D needs to preserve original DXF polyline topology exactly;
+- [ ] extend offset/trim semantics for future native curved-polyline segments.
+
 ## v0.8.x Custom line style pattern foundation
 
 OpenCad2D now distinguishes clearly between `LineStyle` and `LineFormat`: the style identifies the semantic stroke family, while the line format stores the full reusable appearance including color, weight and `DashPattern`. Dash patterns are numeric dash/gap lists expressed in drawing units, persisted in `.opencad2d.json`, and defaulted from the selected style for legacy files. UI pattern editing, preview refinement and export/rendering follow-up work remain tracked as the next line-format blocks.

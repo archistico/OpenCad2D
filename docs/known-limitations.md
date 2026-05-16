@@ -36,7 +36,7 @@ Known limits:
 
 - polyline offset uses miter joins only;
 - rounded joins are not implemented;
-- polyline bulge/arc segments are not implemented;
+- imported DXF `LWPOLYLINE` bulge segments are converted to separate line/arc entities rather than preserved as compound polyline segments;
 - advanced self-intersection cleanup is limited.
 
 ---

@@ -2030,3 +2030,17 @@ Updated files:
 - `docs/ai-handoff.md`.
 
 Remaining Offset work: configurable join styles (`Miter`, `Bevel`, `Round`), true round joins, better curve/bulge offset, and self-intersection cleanup for complex polylines.
+
+## 2026-05-16 — v0.8.5 DXF LWPOLYLINE bulge import
+
+Implemented the next DXF import compatibility improvement after Fillet/Offset refinement: `LWPOLYLINE` bulge segments are now converted to native `ArcEntity` geometry instead of being flattened to straight segments.
+
+Behavior:
+
+- straight `LWPOLYLINE` entities still import as `PolylineEntity`;
+- when any vertex has a non-zero bulge, the lightweight polyline is imported as separate `LineEntity` and `ArcEntity` segments;
+- open polylines convert segments from vertex `i` to `i+1`;
+- closed polylines also convert the closing segment from the last vertex back to the first vertex, using the last vertex bulge;
+- the import log records an informational message explaining that bulge geometry was imported as separate line/arc entities.
+
+This preserves curved geometry from external DXF files without introducing a curved-polyline model yet. Future work: preserve original LWPOLYLINE topology as a compound entity if/when OpenCad2D gains polyline arc segments/bulge support.

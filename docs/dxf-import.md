@@ -47,11 +47,11 @@ Unsupported records do not stop the import. They are skipped and reported in the
 | `CIRCLE` | `CircleEntity` | zero or negative radius is skipped |
 | `ARC` | `ArcEntity` | angles are read from DXF degrees |
 | `POINT` | `PointEntity` | missing coordinates are skipped |
-| `LWPOLYLINE` | `PolylineEntity` | straight segments are supported |
+| `LWPOLYLINE` | `PolylineEntity`, or `LineEntity`/`ArcEntity` when bulge is present | straight segments stay editable as polylines; bulge segments are converted to separate native arcs |
 | `TEXT` | `TextEntity` | single-line text |
 | `MTEXT` | `MultilineTextEntity` | `\P` paragraph separators are converted to internal line breaks |
 
-`LWPOLYLINE` bulge values are detected but not converted to arcs yet. When bulge values are present, the polyline is imported as straight segments and the import report shows a warning.
+`LWPOLYLINE` bulge values are now converted to native arc geometry. When a lightweight polyline contains any bulge segment, OpenCad2D imports the polyline as separate `LineEntity` and `ArcEntity` segments. This preserves the curved geometry but does not yet preserve the original polyline as a single compound entity.
 
 `TEXT` currently imports the text value, insertion point and optional rotation. `MTEXT` imports multiline content and maps DXF paragraph separators to internal line breaks. Imported text uses `TextFormatId.Standard`.
 
@@ -146,5 +146,5 @@ errors                   -> keep current document and show report
 - no block insertion support;
 - no hatches;
 - no spline/ellipse reconstruction;
-- no curved `LWPOLYLINE` bulge-to-arc conversion yet;
+- `LWPOLYLINE` bulge segments are converted to separate line/arc entities, not preserved as one compound polyline;
 - no paper-space or layout reconstruction.

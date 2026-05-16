@@ -13,6 +13,7 @@ The automated unit tests verify the structure emitted by the exporter, but DXF i
 | Arc | `ARC` | Native. |
 | Point | `POINT` | Native. |
 | Open polyline | `LWPOLYLINE` | Straight segments. |
+| Imported LWPOLYLINE bulge segments | `LineEntity` / `ArcEntity` | Curved DXF polyline segments are converted to separate native line/arc entities on import. |
 | Closed polyline / polygon | `LWPOLYLINE` closed | Polygon is stored as a closed polyline. |
 | Ellipse | `ELLIPSE` | Native export; import is still future work. |
 | Bezier spline | `SPLINE` | Native export; import is still future work. |
@@ -40,7 +41,7 @@ Fill this table during the release-candidate pass.
 - DWG is intentionally not supported.
 - `BLOCK` / `INSERT` are not supported yet.
 - `HATCH`, `IMAGE` and `LEADER` are not supported yet.
-- `LWPOLYLINE` bulge import is still pending, so curved polyline segments from external CAD files may lose curvature until that milestone is implemented.
+- `LWPOLYLINE` bulge import preserves curved geometry by converting bulge segments to separate line/arc entities; the original compound polyline topology is not preserved yet.
 - Native DXF `DIMENSION` import/export is still pending.
 - `ELLIPSE` and `SPLINE` export exists, while import is still future work.
 

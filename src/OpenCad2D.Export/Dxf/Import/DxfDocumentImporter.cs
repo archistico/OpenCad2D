@@ -623,26 +623,166 @@ public sealed class DxfDocumentImporter : IDxfImporter
             return;
         }
 
-        bool hasBulge = vertices.Any(vertex =>
-            !Tolerance.AreEqual(vertex.Bulge, 0));
-
-        if (hasBulge)
-        {
-            log.Add(new DxfImportLogEntry(
-                DxfImportLogSeverity.Warning,
-                "LWPOLYLINE bulge values are not supported yet; curved segments were imported as straight segments.",
-                record.StartLineNumber));
-        }
-
         bool isClosed = IsLightweightPolylineClosed(record);
         LayerId layerId = EnsureLayer(
             document,
             GetLayerName(record));
 
+        bool hasBulge = vertices.Any(vertex =>
+            !Tolerance.AreEqual(vertex.Bulge, 0));
+
+        if (hasBulge)
+        {
+            ImportLightweightPolylineWithBulges(
+                record,
+                vertices,
+                isClosed,
+                layerId,
+                document,
+                log);
+
+            return;
+        }
+
         document.AddEntity(new PolylineEntity(
             vertices.Select(vertex => vertex.Point),
             isClosed,
             layerId: layerId));
+    }
+
+
+    private static void ImportLightweightPolylineWithBulges(
+        DxfEntityRecord record,
+        IReadOnlyList<DxfPolylineVertex> vertices,
+        bool isClosed,
+        LayerId layerId,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        int segmentCount = isClosed
+            ? vertices.Count
+            : vertices.Count - 1;
+
+        int importedSegmentCount = 0;
+
+        for (int index = 0; index < segmentCount; index++)
+        {
+            DxfPolylineVertex current = vertices[index];
+            DxfPolylineVertex next = vertices[(index + 1) % vertices.Count];
+
+            if (Tolerance.ArePointsEqual(current.Point, next.Point))
+            {
+                log.Add(new DxfImportLogEntry(
+                    DxfImportLogSeverity.Warning,
+                    "Skipped zero-length LWPOLYLINE segment while converting bulge geometry.",
+                    record.StartLineNumber));
+
+                continue;
+            }
+
+            if (Tolerance.AreEqual(current.Bulge, 0))
+            {
+                document.AddEntity(new LineEntity(
+                    current.Point,
+                    next.Point,
+                    layerId: layerId));
+                importedSegmentCount++;
+                continue;
+            }
+
+            if (TryCreateArcFromBulge(
+                    current.Point,
+                    next.Point,
+                    current.Bulge,
+                    out ArcEntity? arc)
+                && arc is not null)
+            {
+                document.AddEntity(new ArcEntity(
+                    arc.Center,
+                    arc.Radius,
+                    arc.StartAngle,
+                    arc.EndAngle,
+                    arc.IsCounterClockwise,
+                    layerId: layerId));
+                importedSegmentCount++;
+                continue;
+            }
+
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped invalid LWPOLYLINE bulge segment because it could not be converted to an arc.",
+                record.StartLineNumber));
+        }
+
+        if (importedSegmentCount == 0)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                "Skipped LWPOLYLINE entity because no valid bulge segments could be imported.",
+                record.StartLineNumber));
+            return;
+        }
+
+        log.Add(new DxfImportLogEntry(
+            DxfImportLogSeverity.Info,
+            "Imported LWPOLYLINE bulge geometry as separate line and arc entities.",
+            record.StartLineNumber));
+    }
+
+    private static bool TryCreateArcFromBulge(
+        Point2D start,
+        Point2D end,
+        double bulge,
+        out ArcEntity? arc)
+    {
+        arc = null;
+
+        if (Tolerance.AreEqual(bulge, 0) ||
+            Tolerance.ArePointsEqual(start, end))
+        {
+            return false;
+        }
+
+        double chordLength = start.DistanceTo(end);
+        double radius = chordLength * (1 + (bulge * bulge)) / (4 * Math.Abs(bulge));
+
+        if (radius <= 0 || double.IsNaN(radius) || double.IsInfinity(radius))
+        {
+            return false;
+        }
+
+        double dx = end.X - start.X;
+        double dy = end.Y - start.Y;
+        double leftNormalX = -dy / chordLength;
+        double leftNormalY = dx / chordLength;
+        double centerOffset = chordLength * (1 - (bulge * bulge)) / (4 * bulge);
+
+        Point2D midpoint = new(
+            (start.X + end.X) / 2.0,
+            (start.Y + end.Y) / 2.0);
+
+        Point2D center = new(
+            midpoint.X + (leftNormalX * centerOffset),
+            midpoint.Y + (leftNormalY * centerOffset));
+
+        Angle startAngle = Angle.FromRadians(
+            Math.Atan2(
+                start.Y - center.Y,
+                start.X - center.X));
+
+        Angle endAngle = Angle.FromRadians(
+            Math.Atan2(
+                end.Y - center.Y,
+                end.X - center.X));
+
+        arc = new ArcEntity(
+            center,
+            radius,
+            startAngle,
+            endAngle,
+            isCounterClockwise: bulge > 0);
+
+        return true;
     }
 
     private static List<DxfPolylineVertex> ReadLightweightPolylineVertices(
