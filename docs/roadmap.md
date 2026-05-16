@@ -1213,3 +1213,24 @@ Next:
 
 - [ ] Distribute horizontally by entity centers.
 - [ ] Distribute vertically by entity centers.
+
+
+### v0.8.x - Polyline Offset
+
+Implemented after the initial Offset/Fillet phase:
+
+- [x] extend `OFFSET` to straight-segment `PolylineEntity`;
+- [x] support open polylines with mitered joins;
+- [x] support simple closed polylines with mitered joins;
+- [x] choose offset side from the side point relative to the nearest polyline segment;
+- [x] keep the existing command flow: distance, object, side point;
+- [x] keep advanced rounded joins, bulge/arc polyline segments and self-intersection cleanup deferred.
+
+### v0.8.x offset stabilization
+
+Completed:
+
+- expanded Offset tests for lines, circles, arcs and polylines;
+- added live Offset preview during side selection;
+- kept preview and commit geometry on the same code path;
+- documented current limitations for rounded polyline joins and advanced self-intersection cleanup.

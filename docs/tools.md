@@ -875,7 +875,7 @@ The command input system now covers the main edit/modify commands before the adv
 
 `Offset` and `Fillet` are part of the v0.8 CAD-style command input work.
 
-- Offset currently supports Line, Circle and Arc.
+- Offset currently supports Line, Circle, Arc and straight-segment Polyline.
 - Fillet currently supports Line-Line.
 - Both tools use picked entity input internally, preserving both the entity id and the pick point so the selected side can influence the resulting geometry.
 
@@ -912,9 +912,10 @@ Supported targets:
 LineEntity
 CircleEntity
 ArcEntity
+PolylineEntity
 ```
 
-Offset stays active after creating one offset and returns to object selection with the same distance.
+Offset stays active after creating one offset and returns to object selection with the same distance. Polyline offset uses mitered joins; advanced rounded joins, bulge/arc polyline segments and self-intersection cleanup are deferred.
 
 #### Fillet
 
@@ -999,3 +1000,16 @@ Distribution uses entity bounding-box centers:
 - Distribute V -> evenly spaces center Y values, keeping the first and last vertical center positions fixed.
 
 The first implementation intentionally distributes by centers rather than by equal gaps. Gap-based distribution can be added later as separate commands.
+
+### Offset preview and safety
+
+The Offset tool previews the candidate offset entity while the user is choosing the side. The preview is generated through the same geometry routine used by the final operation, so changing the mouse position shows the actual side/direction that will be committed.
+
+Current Offset support:
+
+- lines;
+- circles;
+- arcs;
+- straight-segment polylines with miter joins.
+
+The tool rejects unsafe cases such as zero-length lines, collapsing circle/arc radii and degenerate polyline offsets.

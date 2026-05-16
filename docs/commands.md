@@ -707,7 +707,7 @@ The v0.8 command-input work adds a first advanced `TRIM` workflow with `All`, in
 
 Aliases: `OFFSET`, `O`.
 
-Creates a constant-distance copy of a line, circle or arc. The command asks for a distance, then an object, then the side point. After creating an offset, it stays active and asks for another object.
+Creates a constant-distance copy of a line, circle, arc or straight-segment polyline. The command asks for a distance, then an object, then the side point. After creating an offset, it stays active and asks for another object.
 
 ### Fillet
 
@@ -749,7 +749,7 @@ The v0.8 command system supports guided prompts, visible command history and exa
 | Extend | `EXTEND`, `EX` | Boundary entity, target entity. |
 | Trim | `TRIM`, `TR` | Cutting edge or `All`, then repeated target side trimming with `Undo`. |
 | Delete | `DELETE`, `DEL` | Enter confirms deletion of the current selection. |
-| Offset | `OFFSET`, `O` | Distance, object, side point. Supports line/circle/arc. |
+| Offset | `OFFSET`, `O` | Distance, object, side point. Supports line/circle/arc/polyline. |
 | Fillet | `FILLET`, `F` | Line-Line fillet. Supports `Radius` / `R`; radius `0` joins at a sharp corner. |
 | Select All | `SELECTALL`, `SA`, `ALL` | Selects selectable visible/unlocked entities. |
 | Select Last | `SELECTLAST`, `SL`, `LAST` | Restores the last real selection before deselection. |

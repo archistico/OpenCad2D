@@ -1171,6 +1171,10 @@ public sealed class CadCanvas : Control
                     _modifyPreviewHighlightPen);
                 break;
 
+            case OffsetTool offsetTool:
+                DrawOffsetPreview(context, offsetTool);
+                break;
+
             case MeasureDistanceTool measureDistanceTool:
                 DrawMeasureDistancePreview(context, measureDistanceTool);
                 break;
@@ -1639,6 +1643,21 @@ public sealed class CadCanvas : Control
         PolylineTool tool)
     {
         PolylineEntity? preview = tool.GetPreviewEntity();
+
+        if (preview is not null)
+        {
+            DrawEntity(
+                context,
+                preview,
+                _previewPen);
+        }
+    }
+
+    private void DrawOffsetPreview(
+        DrawingContext context,
+        OffsetTool tool)
+    {
+        CadEntity? preview = tool.GetPreviewEntity();
 
         if (preview is not null)
         {

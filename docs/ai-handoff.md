@@ -1445,8 +1445,7 @@ Implemented a first advanced Trim workflow while preserving existing pointer beh
 Decisions fixed before implementation:
 
 - Offset is a v0.8 modify tool and must be command-driven.
-- Initial Offset support is intentionally limited to `LineEntity`, `CircleEntity` and `ArcEntity`.
-- Polyline offset is deferred because robust parallel polylines require join/corner handling for convex and concave vertices.
+- Initial Offset support started with `LineEntity`, `CircleEntity` and `ArcEntity`; it was later extended to straight-segment `PolylineEntity`.
 - Offset flow:
   - `OFFSET`
   - `Specify offset distance:`
@@ -1465,7 +1464,7 @@ Implemented in Block 7b:
 - Added `ToolId.Offset` and `ToolId.Fillet`.
 - Added default aliases `OFFSET` / `O` and `FILLET` / `F`.
 - Added left-panel buttons for Offset and Fillet.
-- Added `OffsetTool` with command-driven prompts and support for lines, circles and arcs.
+- Added `OffsetTool` with command-driven prompts and support for lines, circles, arcs and straight-segment polylines.
 - Added `FilletTool` with command-driven prompts, Radius option and Line-Line support.
 - Updated command parser support for mixed point/scalar prompt kinds so commands can accept point-or-angle and point-or-number inputs correctly.
 
@@ -1656,3 +1655,17 @@ Implemented object distribution tools after the Align tools:
   - `DISTRIBUTEVERTICAL`, `DISTRIBUTEVERTICALLY`, `DV`.
 
 Design decision: distribution is by centers for now, not by equal gaps between bounding boxes.
+
+
+### v0.8.x Polyline Offset follow-up
+
+Extended `OffsetTool` to support `PolylineEntity` made of straight segments. The command flow remains unchanged: specify distance, select object, specify side. For polylines, the side is determined by the nearest original segment to the side point; each segment is offset by the same signed normal and adjacent offset segments are joined with mitered infinite-line intersections. Open polylines keep translated start/end caps; closed polylines compute every corner from adjacent offset segment intersections.
+
+Current limitations are intentional: no rounded joins, no bulge/arc polyline offset, and no advanced self-intersection cleanup. Degenerate zero-length segments and duplicate resulting consecutive vertices are rejected with a clear warning.
+
+### v0.8.x Offset safety and preview
+
+- Offset now exposes a live preview while the command is in the side-selection phase.
+- Preview uses the same `TryCreateOffsetEntity` geometry path as the final click, so the displayed result and committed result stay aligned.
+- Offset tests were expanded for invalid distances, zero-length lines, circle/arc inner offsets that would collapse the radius, collinear polyline joins, too-few-vertex polylines, and preview behavior.
+- Polyline offset remains miter-only for straight-segment polylines; rounded joins and bulge/arc polyline offsets remain future work.
