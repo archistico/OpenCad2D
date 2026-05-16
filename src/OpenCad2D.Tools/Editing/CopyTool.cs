@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
@@ -14,7 +14,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Interactive tool used to copy selected entities.
 /// If no entity is selected when the tool starts, the first phase lets the user select entities to copy.
 /// </summary>
-public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
+public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, IKeyboardAwareTool
 {
     private Point2D? _basePoint;
     private Point2D? _currentPoint;
@@ -103,6 +103,26 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             MoveToolState.WaitingForEntitySelection => ToolResult.None("Select entities to copy, then press Enter."),
             _ => ToolResult.None()
         };
+    }
+
+    public bool TryHandleKey(
+        ToolContext context,
+        CadToolKey key,
+        out ToolResult result)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        if (_state == MoveToolState.WaitingForEntitySelection &&
+            key == CadToolKey.Enter)
+        {
+            result = ConfirmEntitySelection(context);
+            return result.Changed;
+        }
+
+        result = ToolResult.None();
+        return false;
     }
 
     public SnapKind GetActiveSnapKind(ToolContext context)

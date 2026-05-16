@@ -1947,3 +1947,29 @@ Recommended validation:
 2. Manually verify preview rendering for Line, Rectangle, Circle, Arc, Polyline, Polygon, Ellipse, Spline, Move, Copy, Rotate, Scale, Align, Trim, Extend, Break, Offset, Mirror, Measure Distance, Measure Angle, Selection Window, Zoom Window and Grip Edit.
 3. Check that base-point markers, measurement vectors, highlighted trim/extend entities and grip hot/warm/cold markers still render correctly.
 4. Continue with keyboard/input delegation only after preview rendering is stable.
+
+
+## Latest update — v0.8.3 active-tool keyboard delegation
+
+Continued the architecture-cleanup track by removing the remaining tool-specific keyboard branches from `CadCanvas.OnKeyDown`.
+
+Implemented:
+
+- Added `CadToolKey`, a UI-framework-independent key enum in `OpenCad2D.Tools.Common`.
+- Added `IKeyboardAwareTool` for tools that need active keyboard handling.
+- Implemented `IKeyboardAwareTool` in `AlignTool`, `MoveTool`, `CopyTool`, `PolylineTool` and `GripEditTool`.
+- Replaced concrete `is AlignTool`, `is MoveTool`, `is CopyTool`, `is PolylineTool` and `is GripEditTool` branches in `CadCanvas.OnKeyDown` with a single delegation path.
+- Kept global canvas shortcuts in `CadCanvas`: Escape, Delete selection fallback, Ctrl+Z, Ctrl+Y, Tab grip edit and Home zoom extents.
+
+Behavior preserved:
+
+- ALIGN Enter confirms without scale; S confirms with scale.
+- MOVE/COPY Enter confirms selection when the tool is in entity-selection mode.
+- POLYLINE Enter completes open; C completes closed.
+- Grip Edit Delete removes the current polyline vertex when supported.
+
+Recommended validation:
+
+1. Run the full test suite.
+2. Manually verify ALIGN Enter/S, MOVE Enter after selecting entities, COPY Enter after selecting entities, POLYLINE Enter/C and Grip Edit Delete.
+3. Continue v0.8.3 with preview descriptors so `CadToolPreviewRenderer` can stop switching over concrete tool types.

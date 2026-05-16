@@ -92,6 +92,7 @@ Pending in this phase:
 - [x] v0.8.3 `MainWindow.axaml.cs` document refresh helper;
 - [x] v0.8.3 `CadCanvas` entity-renderer extraction;
 - [x] v0.8.3 active-tool preview renderer extraction;
+- [x] v0.8.3 active-tool keyboard delegation;
 - [x] fix arc 3-point grip behavior so moving one construction grip keeps the other two construction points fixed;
 - [x] update About with `info@opencad2d.org` and `www.opencad2d.org`;
 - [x] center all secondary modal windows on their owner;

@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Grips;
 /// <summary>
 /// Edits the characteristic grips of one selected entity.
 /// </summary>
-public sealed class GripEditTool : ICadTool
+public sealed class GripEditTool : ICadTool, IKeyboardAwareTool
 {
     private readonly EntityId _entityId;
     private readonly GripProviderRegistry _registry;
@@ -57,6 +57,23 @@ public sealed class GripEditTool : ICadTool
     public GripKind? ActiveGripKind => _warmGripIndex is null
         ? null
         : _grips[_warmGripIndex.Value].Kind;
+
+    public bool TryHandleKey(
+        ToolContext context,
+        CadToolKey key,
+        out ToolResult result)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (key == CadToolKey.Delete)
+        {
+            result = DeleteCurrentVertex(context);
+            return true;
+        }
+
+        result = ToolResult.None();
+        return false;
+    }
 
     /// <summary>
     /// Deletes the currently active or highlighted polyline vertex when possible.

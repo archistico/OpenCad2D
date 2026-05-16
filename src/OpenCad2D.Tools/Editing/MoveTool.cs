@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Interactive tool used to move selected entities.
 /// If no entity is selected when the tool starts, the first phase lets the user select entities to move.
 /// </summary>
-public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
+public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, IKeyboardAwareTool
 {
     private Point2D? _basePoint;
     private Point2D? _currentPoint;
@@ -102,6 +102,26 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             MoveToolState.WaitingForEntitySelection => ToolResult.None("Select entities to move, then press Enter."),
             _ => ToolResult.None()
         };
+    }
+
+    public bool TryHandleKey(
+        ToolContext context,
+        CadToolKey key,
+        out ToolResult result)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        if (_state == MoveToolState.WaitingForEntitySelection &&
+            key == CadToolKey.Enter)
+        {
+            result = ConfirmEntitySelection(context);
+            return result.Changed;
+        }
+
+        result = ToolResult.None();
+        return false;
     }
 
     public SnapKind GetActiveSnapKind(ToolContext context)

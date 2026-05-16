@@ -1222,58 +1222,13 @@ public sealed class CadCanvas : Control
 
             e.Handled = true;
         }
-        else if (Workspace.ToolController.ActiveTool is AlignTool alignTool &&
-                 alignTool.State == AlignToolState.WaitingForScaleConfirmation &&
-                 e.Key == Key.Enter)
+        else if (TryHandleActiveToolKey(e.Key, out result))
         {
-            result = alignTool.ConfirmWithoutScale(Workspace.Context);
-            ClearSnapMarker();
-            e.Handled = true;
-        }
-        else if (Workspace.ToolController.ActiveTool is AlignTool alignToolWithScale &&
-                 alignToolWithScale.State == AlignToolState.WaitingForScaleConfirmation &&
-                 e.Key == Key.S)
-        {
-            result = alignToolWithScale.ConfirmWithScale(Workspace.Context);
-            ClearSnapMarker();
-            e.Handled = true;
-        }
-        else if (Workspace.ToolController.ActiveTool is MoveTool moveTool &&
-                 moveTool.MoveState == MoveToolState.WaitingForEntitySelection &&
-                 e.Key == Key.Enter)
-        {
-            result = moveTool.ConfirmEntitySelection(Workspace.Context);
-            ClearSnapMarker();
-            e.Handled = result.Changed;
-        }
-        else if (Workspace.ToolController.ActiveTool is CopyTool copyTool &&
-                 copyTool.CopyState == MoveToolState.WaitingForEntitySelection &&
-                 e.Key == Key.Enter)
-        {
-            result = copyTool.ConfirmEntitySelection(Workspace.Context);
-            ClearSnapMarker();
-            e.Handled = result.Changed;
-        }
-        else if (Workspace.ToolController.ActiveTool is PolylineTool polylineTool &&
-                 polylineTool.State == PolylineToolState.CollectingVertices &&
-                 e.Key == Key.Enter)
-        {
-            result = polylineTool.CompleteOpen(Workspace.Context);
-            ClearSnapMarker();
-            e.Handled = true;
-        }
-        else if (Workspace.ToolController.ActiveTool is PolylineTool closingPolylineTool &&
-                 closingPolylineTool.State == PolylineToolState.CollectingVertices &&
-                 e.Key == Key.C)
-        {
-            result = closingPolylineTool.CompleteClosed(Workspace.Context);
-            ClearSnapMarker();
-            e.Handled = true;
-        }
-        else if (Workspace.ToolController.ActiveTool is GripEditTool activeGripEditTool &&
-                 e.Key == Key.Delete)
-        {
-            result = activeGripEditTool.DeleteCurrentVertex(Workspace.Context);
+            if (e.Key != Key.Delete)
+            {
+                ClearSnapMarker();
+            }
+
             e.Handled = true;
         }
         else if (e.Key == Key.Delete)
@@ -1307,6 +1262,66 @@ public sealed class CadCanvas : Control
                 Point2D.Origin);
 
             InvalidateVisual();
+        }
+    }
+
+    private bool TryHandleActiveToolKey(
+        Key key,
+        out ToolResult? result)
+    {
+        result = null;
+
+        CadWorkspace? workspace = Workspace;
+
+        if (workspace?.ToolController.ActiveTool is not IKeyboardAwareTool keyboardAwareTool)
+        {
+            return false;
+        }
+
+        if (!TryMapKey(key, out CadToolKey toolKey))
+        {
+            return false;
+        }
+
+        bool handled = keyboardAwareTool.TryHandleKey(
+            workspace.Context,
+            toolKey,
+            out ToolResult toolResult);
+
+        if (!handled)
+        {
+            return false;
+        }
+
+        result = toolResult;
+        return true;
+    }
+
+    private static bool TryMapKey(
+        Key key,
+        out CadToolKey toolKey)
+    {
+        switch (key)
+        {
+            case Key.Enter:
+                toolKey = CadToolKey.Enter;
+                return true;
+
+            case Key.Delete:
+                toolKey = CadToolKey.Delete;
+                return true;
+
+            case Key.C:
+                toolKey = CadToolKey.C;
+                return true;
+
+            case Key.S:
+                toolKey = CadToolKey.S;
+                return true;
+
+            default:
+                toolKey = default;
+                return false;
         }
     }
 

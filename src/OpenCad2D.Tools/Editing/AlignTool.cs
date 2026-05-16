@@ -15,7 +15,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Interactive tool used to align the current selection by mapping two source
 /// points to two destination points.
 /// </summary>
-public sealed class AlignTool : ICadTool, ICommandDrivenTool
+public sealed class AlignTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool
 {
     private readonly AlignTransformService _alignTransformService;
     private Point2D? _sourcePoint1;
@@ -152,6 +152,31 @@ public sealed class AlignTool : ICadTool, ICommandDrivenTool
             AlignToolState.WaitingForDestinationPoint2 => AcceptDestinationPoint2(context, input.Point.Value),
             _ => ToolResult.None()
         };
+    }
+
+    public bool TryHandleKey(
+        ToolContext context,
+        CadToolKey key,
+        out ToolResult result)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (State == AlignToolState.WaitingForScaleConfirmation &&
+            key == CadToolKey.Enter)
+        {
+            result = ConfirmWithoutScale(context);
+            return true;
+        }
+
+        if (State == AlignToolState.WaitingForScaleConfirmation &&
+            key == CadToolKey.S)
+        {
+            result = ConfirmWithScale(context);
+            return true;
+        }
+
+        result = ToolResult.None();
+        return false;
     }
 
     public ToolResult OnPointerPressed(

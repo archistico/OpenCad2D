@@ -67,9 +67,10 @@ Start architectural cleanup without changing behavior:
 - [x] extract entity rendering from `CadCanvas` into a dedicated renderer;
 - [x] keep tool behavior unchanged during entity-render extraction;
 - [x] extract active-tool preview rendering from `CadCanvas` into `CadToolPreviewRenderer`;
+- [x] delegate active-tool keyboard handling through `IKeyboardAwareTool`;
 - [ ] replace concrete tool preview dispatch with tool-provided preview descriptors in a later pass.
 
-The second v0.8.3 pass moved entity drawing, text drawing and dimension drawing into `CadEntityRenderer`. The third v0.8.3 pass moved active-tool preview drawing into `CadToolPreviewRenderer`. `CadCanvas` still owns grid, UCS, snap overlays, crosshair and input handling. The next architecture pass should focus on keyboard delegation and then on replacing the remaining concrete preview dispatch with tool-provided preview descriptors.
+The second v0.8.3 pass moved entity drawing, text drawing and dimension drawing into `CadEntityRenderer`. The third v0.8.3 pass moved active-tool preview drawing into `CadToolPreviewRenderer`. This pass introduced `IKeyboardAwareTool` so active tools handle their own keyboard-specific actions without `CadCanvas` checking `AlignTool`, `MoveTool`, `CopyTool`, `PolylineTool` or `GripEditTool` directly. `CadCanvas` still owns grid, UCS, snap overlays, crosshair and pointer input. The next architecture pass should focus on replacing the remaining concrete preview dispatch with tool-provided preview descriptors.
 
 ---
 

@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw open or closed polylines.
 /// </summary>
-public sealed class PolylineTool : ICadTool, ICommandDrivenTool
+public sealed class PolylineTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool
 {
     private readonly List<Point2D> _vertices = new();
     private Point2D? _currentPoint;
@@ -142,6 +142,31 @@ public sealed class PolylineTool : ICadTool, ICommandDrivenTool
         ArgumentNullException.ThrowIfNull(pointer);
 
         return ToolResult.None();
+    }
+
+    public bool TryHandleKey(
+        ToolContext context,
+        CadToolKey key,
+        out ToolResult result)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (State == PolylineToolState.CollectingVertices &&
+            key == CadToolKey.Enter)
+        {
+            result = CompleteOpen(context);
+            return true;
+        }
+
+        if (State == PolylineToolState.CollectingVertices &&
+            key == CadToolKey.C)
+        {
+            result = CompleteClosed(context);
+            return true;
+        }
+
+        result = ToolResult.None();
+        return false;
     }
 
     public ToolResult CompleteOpen(ToolContext context)
