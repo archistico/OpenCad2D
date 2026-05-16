@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Text;
+using OpenCad2D.Core.Dimensions;
+using OpenCad2D.Core.Dimensions.Rendering;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -38,7 +40,9 @@ public sealed class PdfExporter : IPdfExporter
             document,
             actualOptions);
 
-        BoundingBox2D? contentBounds = GetContentBounds(entities);
+        BoundingBox2D? contentBounds = GetContentBounds(
+            document,
+            entities);
         (double pageWidth, double pageHeight) = GetPageSizeInPoints(
             actualOptions.PageSize,
             actualOptions.Orientation);
@@ -141,18 +145,24 @@ public sealed class PdfExporter : IPdfExporter
             .ToList();
     }
 
-    private static BoundingBox2D? GetContentBounds(IReadOnlyList<CadEntity> entities)
+    private static BoundingBox2D? GetContentBounds(
+        CadDocument document,
+        IReadOnlyList<CadEntity> entities)
     {
         if (entities.Count == 0)
         {
             return null;
         }
 
-        BoundingBox2D bounds = entities[0].GetBoundingBox();
+        BoundingBox2D bounds = GetEntityExportBounds(
+            document,
+            entities[0]);
 
         foreach (CadEntity entity in entities.Skip(1))
         {
-            BoundingBox2D current = entity.GetBoundingBox();
+            BoundingBox2D current = GetEntityExportBounds(
+                document,
+                entity);
             bounds = new BoundingBox2D(
                 Math.Min(bounds.MinX, current.MinX),
                 Math.Min(bounds.MinY, current.MinY),
@@ -161,6 +171,26 @@ public sealed class PdfExporter : IPdfExporter
         }
 
         return bounds;
+    }
+
+    private static BoundingBox2D GetEntityExportBounds(
+        CadDocument document,
+        CadEntity entity)
+    {
+        if (entity is DimensionEntity dimension)
+        {
+            DimensionStyle style = ResolveDimensionStyle(
+                document,
+                dimension);
+
+            return new DimensionGeometryBuilder()
+                .Build(
+                    dimension,
+                    style)
+                .Bounds;
+        }
+
+        return entity.GetBoundingBox();
     }
 
     private static double GetScale(
@@ -241,6 +271,51 @@ public sealed class PdfExporter : IPdfExporter
                     builder,
                     document,
                     text,
+                    context);
+                break;
+
+            case LinearDimensionEntity linearDimension:
+                WriteDimension(
+                    builder,
+                    document,
+                    linearDimension,
+                    lineFormat,
+                    context);
+                break;
+
+            case AlignedDimensionEntity alignedDimension:
+                WriteDimension(
+                    builder,
+                    document,
+                    alignedDimension,
+                    lineFormat,
+                    context);
+                break;
+
+            case RadiusDimensionEntity radiusDimension:
+                WriteDimension(
+                    builder,
+                    document,
+                    radiusDimension,
+                    lineFormat,
+                    context);
+                break;
+
+            case DiameterDimensionEntity diameterDimension:
+                WriteDimension(
+                    builder,
+                    document,
+                    diameterDimension,
+                    lineFormat,
+                    context);
+                break;
+
+            case AngularDimensionEntity angularDimension:
+                WriteDimension(
+                    builder,
+                    document,
+                    angularDimension,
+                    lineFormat,
                     context);
                 break;
         }
@@ -393,6 +468,109 @@ public sealed class PdfExporter : IPdfExporter
         builder.AppendLine("S");
     }
 
+    private static void WriteDimension(
+        StringBuilder builder,
+        CadDocument document,
+        DimensionEntity dimension,
+        LineFormat lineFormat,
+        PdfExportContext context)
+    {
+        DimensionStyle style = ResolveDimensionStyle(
+            document,
+            dimension);
+        TextFormat textFormat = ResolveDimensionTextFormat(
+            document,
+            style);
+        DimensionRenderModel model = new DimensionGeometryBuilder().Build(
+            dimension,
+            style);
+
+        foreach (DimensionLinePrimitive line in model.Lines.Concat(model.Arrows))
+        {
+            WriteLine(
+                builder,
+                line.Start,
+                line.End,
+                context);
+        }
+
+        foreach (DimensionArcPrimitive arc in model.Arcs)
+        {
+            WriteDimensionArc(
+                builder,
+                arc,
+                context);
+        }
+
+        WriteDimensionText(
+            builder,
+            model.Text,
+            textFormat,
+            context);
+    }
+
+    private static void WriteDimensionArc(
+        StringBuilder builder,
+        DimensionArcPrimitive arc,
+        PdfExportContext context)
+    {
+        double startRadians = arc.StartAngleDegrees * Math.PI / 180.0;
+        double endRadians = arc.EndAngleDegrees * Math.PI / 180.0;
+        double sweep = GetPositiveSweepRadians(
+            startRadians,
+            endRadians,
+            arc.IsCounterClockwise);
+        int segmentCount = Math.Max(
+            8,
+            (int)Math.Ceiling(sweep / (Math.PI / 24.0)));
+
+        for (int index = 0; index <= segmentCount; index++)
+        {
+            double t = index / (double)segmentCount;
+            double angle = arc.IsCounterClockwise
+                ? startRadians + sweep * t
+                : startRadians - sweep * t;
+
+            Point2D modelPoint = new(
+                arc.Center.X + Math.Cos(angle) * arc.Radius,
+                arc.Center.Y + Math.Sin(angle) * arc.Radius);
+            Point2D pdfPoint = ToPdfPoint(
+                modelPoint,
+                context);
+
+            builder.AppendLine(index == 0
+                ? $"{Format(pdfPoint.X)} {Format(pdfPoint.Y)} m"
+                : $"{Format(pdfPoint.X)} {Format(pdfPoint.Y)} l");
+        }
+
+        builder.AppendLine("S");
+    }
+
+    private static void WriteDimensionText(
+        StringBuilder builder,
+        DimensionTextPrimitive text,
+        TextFormat textFormat,
+        PdfExportContext context)
+    {
+        CadColor color = GetExportColor(
+            textFormat.Color,
+            context.UsePrintFriendlyColors);
+        Point2D point = ToPdfPoint(
+            text.Position,
+            context);
+        double fontSize = Math.Max(1.0, textFormat.Height * context.Scale);
+        double radians = -text.RotationDegrees * Math.PI / 180.0;
+        double cos = Math.Cos(radians);
+        double sin = Math.Sin(radians);
+
+        builder.AppendLine("BT");
+        builder.AppendLine($"{Format(color.R / 255.0)} {Format(color.G / 255.0)} {Format(color.B / 255.0)} rg");
+        builder.AppendLine($"/F1 {Format(fontSize)} Tf");
+        builder.AppendLine($"{Format(cos)} {Format(sin)} {Format(-sin)} {Format(cos)} {Format(point.X)} {Format(point.Y)} Tm");
+        builder.AppendLine($"({EscapePdfString(text.Text)}) Tj");
+        builder.AppendLine("ET");
+    }
+
     private static void WriteText(
         StringBuilder builder,
         CadDocument document,
@@ -493,6 +671,36 @@ public sealed class PdfExporter : IPdfExporter
         return document.TextFormats.GetById(TextFormatId.Standard);
     }
 
+    private static DimensionStyle ResolveDimensionStyle(
+        CadDocument document,
+        DimensionEntity dimension)
+    {
+        if (document.DimensionStyles.TryGetById(
+                dimension.DimensionStyleId,
+                out DimensionStyle? style) &&
+            style is not null)
+        {
+            return style;
+        }
+
+        return document.DimensionStyles.GetById(DimensionStyleId.Standard);
+    }
+
+    private static TextFormat ResolveDimensionTextFormat(
+        CadDocument document,
+        DimensionStyle style)
+    {
+        if (document.TextFormats.TryGetById(
+                style.TextFormatId,
+                out TextFormat? format) &&
+            format is not null)
+        {
+            return format;
+        }
+
+        return document.TextFormats.GetById(TextFormatId.Standard);
+    }
+
     private static (double Width, double Height) GetPageSizeInPoints(
         PdfPageSize pageSize,
         PdfPageOrientation orientation)
@@ -526,7 +734,7 @@ public sealed class PdfExporter : IPdfExporter
             "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
             $"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {Format(pageWidth)} {Format(pageHeight)}] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>",
             $"<< /Length {contentBytes.Length} >>\nstream\n{contentStream}endstream",
-            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"
+            "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>"
         };
 
         using var stream = new MemoryStream();
@@ -576,12 +784,56 @@ public sealed class PdfExporter : IPdfExporter
 
     private static string EscapePdfString(string value)
     {
-        return value
-            .Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("(", "\\(", StringComparison.Ordinal)
-            .Replace(")", "\\)", StringComparison.Ordinal)
-            .Replace("\r", string.Empty, StringComparison.Ordinal)
-            .Replace("\n", " ", StringComparison.Ordinal);
+        var builder = new StringBuilder();
+
+        foreach (char character in value)
+        {
+            switch (character)
+            {
+                case '\\':
+                    builder.Append("\\\\");
+                    break;
+
+                case '(':
+                    builder.Append("\\(");
+                    break;
+
+                case ')':
+                    builder.Append("\\)");
+                    break;
+
+                case '\r':
+                    break;
+
+                case '\n':
+                    builder.Append(' ');
+                    break;
+
+                default:
+                    if (character >= 32 && character <= 126)
+                    {
+                        builder.Append(character);
+                    }
+                    else if (character <= 255)
+                    {
+                        builder.Append('\\');
+                        builder.Append(Convert.ToString(
+                                (int)character,
+                                8)
+                            .PadLeft(
+                                3,
+                                '0'));
+                    }
+                    else
+                    {
+                        builder.Append('?');
+                    }
+
+                    break;
+            }
+        }
+
+        return builder.ToString();
     }
 
     private static string Format(double value)
