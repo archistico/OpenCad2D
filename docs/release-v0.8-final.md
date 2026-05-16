@@ -7,9 +7,9 @@ This release consolidates the v0.8 line before the v0.9 roadmap. It combines the
 - CAD-style guided command input with aliases, contextual prompts, coordinates, relative coordinates, polar input and direct distances.
 - Native save/load using `.opencad2d.json`, including document settings and partial recovery for readable but partially invalid files.
 - Export to SVG, DXF and PDF, with dimension export coverage across the current non-associative dimension types.
-- DXF import for the practical 2D subset, including `MTEXT`.
+- DXF import for the practical 2D subset, including `MTEXT`, `LWPOLYLINE` bulge arcs, full `ELLIPSE` entities and readable `SPLINE` control/fit point data.
 - Final v0.8.x drawing tools: Polygon, Ellipse, MTEXT and Bezier Spline.
-- Modify workflow stabilization for Trim, Break and Offset across the supported entity set.
+- Modify workflow stabilization for Trim, Break and Offset across the supported entity set, plus Fillet live preview and Trim/NoTrim modes.
 
 ## New drawing tools
 
@@ -22,14 +22,17 @@ This release consolidates the v0.8 line before the v0.9 roadmap. It combines the
 
 - `TRIM` supports `All`, additional cutting edges and in-command `Undo`.
 - `BREAKPOINT` and `BREAK` support lines/arcs/circles where applicable, ellipses, polylines, polygons and sampled Bezier splines.
-- `OFFSET` supports lines, circles, arcs, straight-segment polylines and sampled Bezier splines.
+- `OFFSET` supports lines, circles, arcs, straight-segment polylines and sampled Bezier splines, with miter-limit fallback on sharp polyline corners.
 - Ellipse and spline modify results currently become polyline approximations when a partial curve is produced.
+- `FILLET` supports Line-Line with live preview, Radius and Trim/NoTrim modes.
 
 ## Export/import
 
 - SVG/PDF/DXF export for ellipses, multiline text and Bezier splines.
 - DXF `MTEXT` import maps paragraph separators to OpenCad2D multiline text.
-- DXF ELLIPSE/SPLINE import remains future work.
+- DXF `LWPOLYLINE` bulge segments import as native line/arc geometry.
+- Full DXF `ELLIPSE` entities import as native `EllipseEntity`; partial ellipses import as open polyline approximations.
+- Readable DXF `SPLINE` control points import as `BezierSplineEntity`; fit-point-only splines import as polyline approximations.
 
 ## Validation before publishing
 
@@ -53,13 +56,14 @@ TRIM -> All -> line/polyline/ellipse/spline side -> Undo
 BREAK -> line/circle/ellipse/polyline/spline -> first point -> second point
 OFFSET -> line/circle/arc/polyline/spline -> side point
 EXPORT -> SVG/DXF/PDF
-IMPORT DXF -> file with LINE/LWPOLYLINE/TEXT/MTEXT
+IMPORT DXF -> file with LINE/LWPOLYLINE bulge/TEXT/MTEXT/ELLIPSE/SPLINE
 ```
 
 ## Known limitations
 
-- Fillet is currently Line-Line only.
+- Fillet is currently Line-Line only, even though it now has live preview and Trim/NoTrim modes.
 - Advanced Trim modes such as Fence, Crossing, Edge, Project and Erase are not implemented yet.
 - Native partial ellipse/spline entities are not implemented; partial results are polyline approximations.
-- DXF import does not yet reconstruct native ELLIPSE or SPLINE entities.
-- Native associative dimensions remain future work.
+- Partial DXF ellipses import as polyline approximations.
+- DXF SPLINE import does not yet evaluate full external NURBS knot/weight data.
+- Native associative dimensions remain future work; v0.8 uses stale markers after geometry changes.

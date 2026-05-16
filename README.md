@@ -21,7 +21,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - document recovery for partially invalid native files;
 - New, Open, Save and Save As;
 - SVG, DXF and PDF export;
-- ASCII DXF import for core 2D entities and layer tables;
+- ASCII DXF import for core 2D entities, layer tables, MTEXT, LWPOLYLINE bulge arcs, ELLIPSE and readable SPLINE entities;
 - layers with visibility and locking;
 - reusable line formats with color, lineweight, line style and custom dash pattern values;
 - reusable text formats;
@@ -29,16 +29,16 @@ OpenCad2D currently supports a complete early CAD workflow:
 - compact ColorPicker support in line/text format managers;
 - editable Property Panel for supported entities, including read-only draw order display;
 - independent draw order / Z-order, separate from layers;
-- CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input and direct distances;
+- CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input, direct distances, command history navigation and first-pass autocomplete;
 - object snapping, grid snapping, Ortho mode and Polar Tracking;
 - selection, Select All and Select Last;
 - drawing tools for points, single-line text, multiline text, lines, rectangles, circles, ellipses, arcs, polylines, polygons and Bezier splines;
-- dimension tools for horizontal, vertical, aligned, radius, diameter and angular dimensions;
+- dimension tools for horizontal, vertical, aligned, radius, diameter and angular dimensions, with stale-state marking after geometry modifications;
 - transform tools: move, copy, rotate, scale and point-based align;
 - modify tools: delete, break point, break segment, trim, extend, offset and fillet;
 - trim and break support for lines, arcs, circles where applicable, ellipses, polylines, polygons and sampled Bezier splines;
-- offset for lines, circles, arcs, straight-segment polylines and sampled Bezier splines, including preview;
-- line-line fillet with radius option and radius `0` sharp-corner join;
+- offset for lines, circles, arcs, straight-segment polylines and sampled Bezier splines, including preview and miter-limit fallback for sharp polyline corners;
+- line-line fillet with radius option, live preview, Trim/NoTrim modes and radius `0` sharp-corner join in Trim mode;
 - align object tools: left, right, top and bottom;
 - distribute object tools: horizontal and vertical distribution by centers;
 - measure tools for distance, entity properties, angles and closed-polyline areas;
@@ -100,6 +100,8 @@ Supported input forms:
 | `C`, `Close`, `U`, `Undo`, `All`, `Radius` | command options when exposed by the active prompt |
 | empty Enter while idle | repeat the last valid command |
 | empty Enter inside a command | confirm only if the current phase accepts confirmation |
+| `↑` / `↓` | navigate command history while the command input is focused |
+| `Tab` | accept the first autocomplete suggestion for known commands/aliases |
 
 Mouse input and typed input feed the same tool state machine. When a tool asks for a point, the user can either click on the canvas or type coordinates.
 

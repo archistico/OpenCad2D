@@ -23,8 +23,8 @@ Before the first stable release, OpenCad2D should prioritize user trust and pred
 - [x] open the main window maximized by default;
 - [x] implement draw order / Z-order independent from layers;
 - [ ] validate DXF import/export in external CAD viewers;
-- [~] add end-to-end workflow tests for save/reopen and import/modify/export;
-- [ ] keep current limitations visible in the README and user documentation.
+- [x] add end-to-end workflow tests for save/reopen and import/modify/export;
+- [x] keep current limitations visible in the README and user documentation.
 - [x] maintain a v0.9 stabilization plan for post-v0.8 hardening (`docs/stabilization-v0.9-plan.md`).
 
 ## Current implemented foundations
@@ -1344,4 +1344,22 @@ Completed:
 Future work:
 
 - [ ] introduce a native ellipse-arc entity if partial ellipse editability becomes required;
-- [ ] implement DXF `SPLINE` import as the next interoperability target.
+- [x] implement first-pass DXF `SPLINE` import for control-point splines;
+- [ ] improve external NURBS `SPLINE` fidelity with knot/weight evaluation.
+
+
+## v0.8 final documentation cleanup
+
+Completed before the release freeze:
+
+- [x] README aligned with current implemented features;
+- [x] known limitations updated so implemented items are not still listed as missing;
+- [x] final release draft updated for Fillet Trim/NoTrim, Offset miter-limit fallback, command history/autocomplete, dimension stale markers and DXF bulge/ELLIPSE/SPLINE import;
+- [x] v0.9 stabilization plan updated with the final v0.8 documentation state.
+
+Remaining release-gate work:
+
+- [ ] refresh DXF compatibility samples 03-07;
+- [ ] manually validate DXF samples in external CAD viewers;
+- [ ] run final clean/build/test;
+- [ ] publish GitHub release notes from `docs/release-v0.8-final.md`.

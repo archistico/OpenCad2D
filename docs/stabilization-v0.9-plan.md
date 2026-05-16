@@ -2,7 +2,7 @@
 
 This document converts the post-v0.8 critical review into a concrete stabilization track for v0.9.
 
-The goal is not to stop feature development permanently. The goal is to make the current v0.8.x foundation safer before larger features such as hatch, blocks, richer DXF import and autosave are added.
+The goal is not to stop feature development permanently. The goal is to make the current v0.8.x foundation safer before larger features such as hatch, blocks, full NURBS-level DXF fidelity and autosave are added.
 
 ---
 
@@ -13,8 +13,8 @@ The goal is not to stop feature development permanently. The goal is to make the
 | Runtime safety | `CadCanvas.OnPointerPressed` is `async void` without a top-level exception boundary | Completed | v0.8.1 | Added a guarded async body and reports failures through the normal canvas status path. |
 | Runtime safety | Text/MTEXT modal dialog uses a boolean reentrancy flag | Completed | v0.8.1 | Replaced the boolean gate with a non-blocking semaphore-based guard. |
 | Testing | No end-to-end save/reopen workflow test | Completed | v0.8.1 | Added a persistence-level workflow covering geometry, annotation and current v0.8.x entities. |
-| Documentation | Critical review contains outdated entity status | In progress | v0.8.1 | Ellipse, MTEXT and Bezier spline are now implemented and should be tracked as stabilization/import follow-up work. |
-| Documentation | Roadmap needs explicit stabilization track | In progress | v0.8.1 | Keep v0.9 stabilization separate from future feature backlog. |
+| Documentation | Critical review contains outdated entity status | Completed | v0.8 final | Active docs now treat Ellipse, MTEXT, Bezier spline, command history/autocomplete, Fillet NoTrim and DXF ELLIPSE/SPLINE import according to the implemented state. |
+| Documentation | Roadmap needs explicit stabilization track | Completed | v0.8 final | v0.9 stabilization is tracked separately from the future feature backlog. |
 | Interop | DXF export/import not externally validated | In progress | v0.8.2 | Compatibility sample folder and validation document have been added; external viewer results are still pending. |
 | Testing | No import DXF -> modify -> export workflow test | Completed | v0.8.2 | Added a first simple DXF import -> trim -> export regression test. |
 | Architecture | `CadCanvas` is too large and knows concrete tools | In progress | v0.8.3 | Entity rendering, active-tool preview rendering and active-tool keyboard delegation have been extracted/delegated; preview descriptors remain future work. |
@@ -25,7 +25,7 @@ The goal is not to stop feature development permanently. The goal is to make the
 | Modify tools | Fillet lacks NoTrim and advanced entity pairs | Partially complete | v0.8.5 | Line-Line live preview and Trim/NoTrim mode added; Line-Arc/Arc-Arc remain future work. |
 | Modify tools | Offset lacks miter limit / round join | Partially complete | v0.8.5 | Added a conservative miter limit with bevel fallback for sharp corners; configurable/round joins remain future work. |
 | DXF import | LWPOLYLINE bulge is not converted to arcs | Completed | v0.8.5 | Bulge segments are converted to separate `LineEntity`/`ArcEntity` geometry; preserving compound polyline topology remains future work. |
-| DXF import | ELLIPSE/SPLINE import is deferred | Planned | v0.9+ | Export exists; import should be added after compatibility validation. |
+| DXF import | ELLIPSE/SPLINE import coverage | Partially complete | v0.8.5 | Full ELLIPSE and readable SPLINE control-point import are implemented; external NURBS fidelity remains limited. |
 | Future feature | Hatch/campiture | Deferred | post-v0.9 | Requires a dedicated entity and render/export strategy. |
 | Future feature | Blocks/symbols | Deferred | post-v0.9 | Large model-level feature; should not be mixed with stabilization. |
 | Future feature | PNG export | Deferred | post-v0.9 | Useful but lower risk than runtime, testing and DXF validation. |
@@ -116,4 +116,36 @@ Before tagging v0.9, the project should have:
 
 - Added native import for full DXF `ELLIPSE` entities.
 - Added open-polyline approximation for partial DXF elliptical arcs.
-- Kept `SPLINE` import as the next DXF interoperability target.
+- Implemented `SPLINE` import for readable control-point splines; remaining work is external NURBS/weights/knot-vector fidelity.
+
+
+### v0.8.5 DXF import compatibility - SPLINE
+
+Completed:
+
+- [x] import DXF `SPLINE` control points as editable `BezierSplineEntity` instances;
+- [x] detect closed spline flags;
+- [x] import fit-point-only splines as open/closed `PolylineEntity` approximations;
+- [x] log informational diagnostics when importing approximated spline data.
+
+Future work:
+
+- [ ] evaluate external NURBS knot vectors and weights instead of treating all control-point data as Bezier control points;
+- [ ] add richer compatibility samples from QCAD/LibreCAD/AutoCAD-generated SPLINE entities.
+
+
+## v0.8 final documentation cleanup
+
+Completed before release freeze:
+
+- [x] README aligned with implemented command history/autocomplete, dimension stale markers, Fillet Trim/NoTrim, Offset miter-limit fallback and expanded DXF import.
+- [x] Known limitations updated so implemented items are no longer listed as missing.
+- [x] Final release draft updated for DXF bulge, full ELLIPSE and readable SPLINE import.
+- [x] Handoff updated with the final v0.8 documentation state and remaining pre-release tasks.
+
+Remaining before tagging:
+
+- [ ] generate or refresh DXF compatibility samples 03-07;
+- [ ] perform manual DXF compatibility checks;
+- [ ] run full clean/build/test release gate;
+- [ ] prepare GitHub release text from `docs/release-v0.8-final.md`.

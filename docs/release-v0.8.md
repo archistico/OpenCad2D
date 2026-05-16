@@ -256,7 +256,7 @@ Syntax-invalid JSON still fails explicitly because there is no reliable document
 - Trim does not yet support Fence/Crossing/Edge/Project/Erase modes.
 - Shift-click Extend inside Trim is not implemented yet.
 - Ellipse and Bezier spline Trim/Break/Offset results are approximated as polylines; native partial ellipse/spline entities are future work.
-- DXF import does not yet reconstruct native ELLIPSE or SPLINE entities.
+- DXF import reconstructs full ELLIPSE entities and readable SPLINE control-point entities where possible; partial ellipses and fit-point-only splines may become approximations.
 - The command history is compact and visible, but not yet a full docked CAD console.
 
 ---

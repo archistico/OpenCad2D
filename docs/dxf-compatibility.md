@@ -16,7 +16,7 @@ The automated unit tests verify the structure emitted by the exporter, but DXF i
 | Imported LWPOLYLINE bulge segments | `LineEntity` / `ArcEntity` | Curved DXF polyline segments are converted to separate native line/arc entities on import. |
 | Closed polyline / polygon | `LWPOLYLINE` closed | Polygon is stored as a closed polyline. |
 | Ellipse | `ELLIPSE` | Native export and full-ellipse import. Partial DXF ellipses import as open polyline approximations. |
-| Bezier spline | `SPLINE` | Native export; import is still future work. |
+| Bezier spline | `SPLINE` | Native export; readable control-point splines import as `BezierSplineEntity`; fit-point-only splines import as polyline approximations. |
 | Text | `TEXT` | Native. |
 | Multiline text | `MTEXT` | Uses DXF `\P` line separators. |
 | Dimensions | Graphic primitives | OpenCad2D dimensions are non-associative and are not exported as native DXF `DIMENSION` entities yet. |
@@ -43,7 +43,7 @@ Fill this table during the release-candidate pass.
 - `HATCH`, `IMAGE` and `LEADER` are not supported yet.
 - `LWPOLYLINE` bulge import preserves curved geometry by converting bulge segments to separate line/arc entities; the original compound polyline topology is not preserved yet.
 - Native DXF `DIMENSION` import/export is still pending.
-- `SPLINE` export exists, while import is still future work.
+- `SPLINE` import supports readable control-point splines but does not yet evaluate external NURBS knot vectors/weights.
 - Full `ELLIPSE` import is supported; partial DXF ellipses are approximated as open polylines until a native ellipse-arc entity exists.
 
 ## Release rule

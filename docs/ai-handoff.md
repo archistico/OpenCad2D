@@ -1,5 +1,15 @@
 # Latest handoff note
 
+## v0.8.5 DXF SPLINE import
+
+Implemented first-pass DXF `SPLINE` import. Readable control-point splines are imported as editable `BezierSplineEntity` instances, preserving the OpenCad2D Bezier workflow and enabling round-trips for OpenCad2D-exported SPLINE entities. Closed spline flags are respected. Fit-point-only SPLINE entities are imported as `PolylineEntity` approximations with an informational diagnostic, because OpenCad2D does not yet evaluate external NURBS knot vectors or rational weights. Added focused importer tests for open control-point splines, closed splines, fit-point-only fallback and malformed point data.
+
+Remaining DXF spline limitation: full external NURBS fidelity is still future work.
+
+---
+
+# Latest handoff note
+
 ## v0.8.x final documentation and release consolidation
 
 The v0.8.x baseline is now ready for final local validation and GitHub release preparation. Polygon, Ellipse, MTEXT and Bezier Spline are complete in the current baseline, including command aliases, rendering/preview, persistence, export coverage and focused tests.
@@ -9,7 +19,7 @@ Important implementation notes for future work:
 - regular polygons are stored as closed `PolylineEntity` instances;
 - ellipse partial edit results currently become open `PolylineEntity` approximations because there is no `EllipseArcEntity`;
 - Bezier spline Trim/Break/Offset workflows use sampled polyline approximation, so edited fragments currently become `PolylineEntity` results;
-- DXF import supports `MTEXT`, but native DXF `ELLIPSE` and `SPLINE` import is still deferred;
+- DXF import supports `MTEXT`, full `ELLIPSE` entities and first-pass `SPLINE` control-point import;
 - release notes are consolidated in `docs/release-v0.8.md`, with a GitHub-ready draft in `docs/release-v0.8-final.md`.
 
 Recommended final validation before publishing:
@@ -1842,7 +1852,7 @@ Added initial Bezier spline support. The new `BezierSplineEntity` stores control
 
 Implemented `SplineTool` with `SPLINE` / `SPL` aliases. Workflow: specify control points, `Undo` removes the last control point, `Close` creates a closed spline, Enter creates an open spline. Rendering and preview draw the sampled curve. Grip editing exposes each control point plus a move-entity grip.
 
-Export/persistence status: JSON round-trip includes `BezierSplineEntityDto`; SVG/PDF export use sampled polyline/polygon approximations; DXF export writes a `SPLINE` entity with control points. DXF import is still deferred.
+Export/persistence status: JSON round-trip includes `BezierSplineEntityDto`; SVG/PDF export use sampled polyline/polygon approximations; DXF export writes a `SPLINE` entity with control points. DXF import now supports readable control-point SPLINE entities; full external NURBS fidelity remains deferred.
 
 Modify support: Trim, Break Point, Break Segment and Offset accept splines by converting them to sampled `PolylineEntity` geometry. Result fragments are currently polylines, not partial spline entities. This is intentional for phase 1 and avoids introducing a partial spline model before the core curve behavior stabilizes.
 
@@ -1875,7 +1885,7 @@ Important current state:
 
 - Automated DXF structure tests exist, but external viewer validation is still pending.
 - Dimensions are intentionally exported as graphic primitives, not native DXF `DIMENSION` entities.
-- `ELLIPSE` and `SPLINE` export exist; import is still future work.
+- `ELLIPSE` and first-pass `SPLINE` import now exist; external NURBS fidelity remains future work.
 - `LWPOLYLINE` bulge import remains a high-value DXF compatibility improvement.
 
 Recommended next step:
@@ -2004,7 +2014,7 @@ Implemented the first Fillet refinement pass. `FilletTool` now keeps transient p
 
 The preview is cleared when the tool is cancelled, deactivated, reset, completed or when the hovered second entity is invalid. The Line-Line fillet geometry also gained an explicit degenerate-bisector guard before normalizing the angle bisector, making near-opposite branch cases safer.
 
-Added Tool tests covering live preview generation without changing the document and preview cleanup after committing the fillet. Remaining v0.8.5 work: NoTrim option, additional near-collinear edge-case tests, then Offset miter-limit/join-style refinement.
+Added Tool tests covering live preview generation without changing the document and preview cleanup after committing the fillet. Subsequent v0.8.5 work added Fillet Trim/NoTrim, near-collinear safeguards, Offset miter-limit fallback, and DXF bulge/ELLIPSE/SPLINE import.
 
 
 ## 2026-05-16 - v0.8.5 Fillet Trim/NoTrim refinement
@@ -2048,4 +2058,22 @@ This preserves curved geometry from external DXF files without introducing a cur
 
 ## Latest update - v0.8.5 DXF ELLIPSE import
 
-Implemented DXF `ELLIPSE` import. Full ellipse parameter ranges are mapped to native `EllipseEntity`; partial elliptical arcs are approximated as open `PolylineEntity` instances. Added importer tests for full ellipses, omitted parameters, partial ranges, invalid major axis and invalid ratio. Next DXF target: `SPLINE` import.
+Implemented DXF `ELLIPSE` import. Full ellipse parameter ranges are mapped to native `EllipseEntity`; partial elliptical arcs are approximated as open `PolylineEntity` instances. Added importer tests for full ellipses, omitted parameters, partial ranges, invalid major axis and invalid ratio. Next DXF target: external NURBS spline fidelity and compatibility samples.
+
+
+## 2026-05-17 — v0.8 final documentation cleanup
+
+Aligned the active documentation set with the implemented v0.8.x state after Ellipse, MTEXT, Bezier Spline, Fillet Trim/NoTrim, Offset miter-limit fallback, command history/autocomplete, dimension stale markers, and DXF bulge/ELLIPSE/SPLINE import.
+
+Important documentation corrections:
+
+- `known-limitations.md` now treats command history/autocomplete, Fillet NoTrim, full DXF ELLIPSE import and readable DXF SPLINE import as implemented.
+- `release-v0.8-final.md` now reflects DXF bulge, ELLIPSE and SPLINE import support instead of listing them as future work.
+- `README.md` now mentions command history/autocomplete, dimension stale markers, Fillet Trim/NoTrim, Offset miter-limit fallback and the expanded DXF import subset.
+
+Remaining pre-release tasks:
+
+- generate/refresh DXF compatibility samples 03-07;
+- manually validate the samples in LibreCAD/QCAD and, if available, Autodesk DWG TrueView;
+- run final `dotnet clean`, `dotnet restore`, `dotnet build`, `dotnet test`;
+- prepare the GitHub release notes from `docs/release-v0.8-final.md`.

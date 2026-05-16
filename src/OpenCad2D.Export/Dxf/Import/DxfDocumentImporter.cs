@@ -386,6 +386,16 @@ public sealed class DxfDocumentImporter : IDxfImporter
                 continue;
             }
 
+            if (entityRecord.Type == "SPLINE")
+            {
+                ImportSpline(
+                    entityRecord,
+                    document,
+                    log);
+
+                continue;
+            }
+
             log.Add(new DxfImportLogEntry(
                 DxfImportLogSeverity.Warning,
                 $"Skipped unsupported DXF entity: {entityRecord.Type}.",
@@ -1118,6 +1128,172 @@ public sealed class DxfDocumentImporter : IDxfImporter
         }
 
         return normalized;
+    }
+
+    private static void ImportSpline(
+        DxfEntityRecord record,
+        CadDocument document,
+        List<DxfImportLogEntry> log)
+    {
+        IReadOnlyList<Point2D> controlPoints = ReadSplinePointSequence(
+            record,
+            xCode: 10,
+            yCode: 20,
+            pointKind: "control point",
+            log);
+
+        if (controlPoints.Count >= 2)
+        {
+            LayerId layerId = EnsureLayer(
+                document,
+                GetLayerName(record));
+
+            bool isClosed = IsSplineClosed(record);
+
+            document.AddEntity(new BezierSplineEntity(
+                controlPoints,
+                isClosed,
+                layerId: layerId));
+
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Info,
+                "Imported DXF SPLINE control points as a BezierSplineEntity approximation.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        IReadOnlyList<Point2D> fitPoints = ReadSplinePointSequence(
+            record,
+            xCode: 11,
+            yCode: 21,
+            pointKind: "fit point",
+            log);
+
+        if (fitPoints.Count >= 2)
+        {
+            LayerId layerId = EnsureLayer(
+                document,
+                GetLayerName(record));
+
+            document.AddEntity(new PolylineEntity(
+                fitPoints,
+                IsSplineClosed(record),
+                layerId: layerId));
+
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Info,
+                "Imported DXF SPLINE fit points as an approximated polyline because OpenCad2D does not yet evaluate external NURBS knot vectors.",
+                record.StartLineNumber));
+
+            return;
+        }
+
+        log.Add(new DxfImportLogEntry(
+            DxfImportLogSeverity.Warning,
+            "Skipped SPLINE entity because it does not contain at least two readable control or fit points.",
+            record.StartLineNumber));
+    }
+
+    private static IReadOnlyList<Point2D> ReadSplinePointSequence(
+        DxfEntityRecord record,
+        int xCode,
+        int yCode,
+        string pointKind,
+        List<DxfImportLogEntry> log)
+    {
+        var points = new List<Point2D>();
+        double? currentX = null;
+        int currentXLineNumber = record.StartLineNumber;
+
+        foreach (DxfCodePair pair in record.Pairs)
+        {
+            if (pair.Code == xCode)
+            {
+                if (currentX.HasValue)
+                {
+                    log.Add(new DxfImportLogEntry(
+                        DxfImportLogSeverity.Warning,
+                        $"Skipped SPLINE entity because a {pointKind} X coordinate is missing its matching Y coordinate.",
+                        currentXLineNumber));
+
+                    return Array.Empty<Point2D>();
+                }
+
+                if (!TryParseDouble(
+                        pair,
+                        record,
+                        $"SPLINE {pointKind} X coordinate",
+                        log,
+                        out double x))
+                {
+                    return Array.Empty<Point2D>();
+                }
+
+                currentX = x;
+                currentXLineNumber = pair.CodeLineNumber;
+                continue;
+            }
+
+            if (pair.Code == yCode)
+            {
+                if (!currentX.HasValue)
+                {
+                    log.Add(new DxfImportLogEntry(
+                        DxfImportLogSeverity.Warning,
+                        $"Skipped SPLINE entity because a {pointKind} Y coordinate appears before its X coordinate.",
+                        pair.CodeLineNumber));
+
+                    return Array.Empty<Point2D>();
+                }
+
+                if (!TryParseDouble(
+                        pair,
+                        record,
+                        $"SPLINE {pointKind} Y coordinate",
+                        log,
+                        out double y))
+                {
+                    return Array.Empty<Point2D>();
+                }
+
+                points.Add(new Point2D(currentX.Value, y));
+                currentX = null;
+            }
+        }
+
+        if (currentX.HasValue)
+        {
+            log.Add(new DxfImportLogEntry(
+                DxfImportLogSeverity.Warning,
+                $"Skipped SPLINE entity because a {pointKind} X coordinate is missing its matching Y coordinate.",
+                currentXLineNumber));
+
+            return Array.Empty<Point2D>();
+        }
+
+        return points;
+    }
+
+    private static bool IsSplineClosed(DxfEntityRecord record)
+    {
+        DxfCodePair? flagsPair = record.LastOrDefault(70);
+
+        if (flagsPair is null)
+        {
+            return false;
+        }
+
+        if (!int.TryParse(
+                flagsPair.Value.Value,
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out int flags))
+        {
+            return false;
+        }
+
+        return (flags & 1) == 1;
     }
 
     private static void ImportMultilineText(
