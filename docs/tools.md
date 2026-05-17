@@ -223,3 +223,13 @@ The Mirror tool now draws the mirror axis while the user is choosing the second 
 ## Polygon tool
 
 The `Polygon` tool draws regular polygons as closed polylines. It is command-driven and supports `POLYGON` / `PG`. The first step asks for the side count, Enter accepts the default of 6, then the user specifies the center point and a vertex point or radius. The generated entity is a closed `PolylineEntity`.
+
+## Preview provider protocols
+
+Tools with previews made of normal CAD entities can implement `IToolPreviewEntityProvider`. Tools that also need guide lines, point markers, highlighted entities or other semantic overlays can implement `IToolPreviewDescriptorProvider`.
+
+The app renderer asks the active tool for a descriptor first, then for simple preview entities. The former active-tool concrete fallback dispatch has been removed, so new preview-capable tools should expose their preview through one of these protocols instead of requiring a renderer `case SomeNewTool`.
+
+The drawing tools now migrated to entity previews are `LineTool`, `RectangleTool`, `RectangleBySidesTool`, `CircleTool`, `ArcTool`, `ArcThreePointsTool`, `EllipseTool`, `PolylineTool`, `PolygonTool` and `SplineTool`. Dimension previews plus `MoveTool`, `CopyTool`, `RotateTool`, `ScaleTool`, `AlignTool`, `BreakAtPointTool`, `BreakBetweenPointsTool`, `FilletTool`, `OffsetTool` and `MeasureDistanceTool` are also migrated.
+
+`MirrorTool` and `MeasureAngleTool` use descriptor previews because they need normal preview entities plus overlay markers/guide lines. `SelectionTool` and `ZoomWindowTool` use descriptor previews for their filled model-space windows. `GripEditTool` uses descriptor previews for grip markers, replacement-entity preview and base-to-destination measurement guides. `ExtendTool` and `TrimTool` use descriptor previews for their normal preview entities plus highlighted added/removed fragments.

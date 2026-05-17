@@ -15,21 +15,24 @@ The goal is not to stop feature development permanently. The goal is to make the
 | Testing | No end-to-end save/reopen workflow test | Completed | v0.8.1 | Added a persistence-level workflow covering geometry, annotation and current v0.8.x entities. |
 | Documentation | Critical review contains outdated entity status | Completed | v0.8 final | Active docs now treat Ellipse, MTEXT, Bezier spline, command history/autocomplete, Fillet NoTrim and DXF ELLIPSE/SPLINE import according to the implemented state. |
 | Documentation | Roadmap needs explicit stabilization track | Completed | v0.8 final | v0.9 stabilization is tracked separately from the future feature backlog. |
-| Interop | DXF export/import not externally validated | External audit pending for v0.8.5 | v0.8.5/S3 | Compatibility sample folder, seven representative DXF samples and validation document are prepared. A historical v0.8 pass opened the files successfully, but exact viewer versions were not recorded. The v0.8.5 audit should record viewer names, versions, OS and dates before being considered complete. |
+| Interop | DXF export/import not externally validated | Completed with manual sample check | v0.8.5/S3 | Compatibility sample folder, seven representative DXF samples and validation document are prepared. The current samples were reported as opening correctly in external viewers. Exact viewer names/versions should still be recorded in a future audit. |
 | Testing | No import DXF -> modify -> export workflow test | Completed | v0.8.2 | Added a first simple DXF import -> trim -> export regression test. |
-| Architecture | `CadCanvas` is too large and knows concrete tools | In progress | v0.8.3 | Entity rendering, active-tool preview rendering and active-tool keyboard delegation have been extracted/delegated; preview descriptors remain future work. |
+| Architecture | `CadCanvas` is too large and knows concrete tools | Completed for active preview dispatch | v0.8.3/S7 | Entity rendering, active-tool preview rendering and active-tool keyboard delegation have been extracted/delegated. Tool previews are now provided through `IToolPreviewDescriptorProvider` / `IToolPreviewEntityProvider`; the old concrete active-tool preview fallback dispatch has been removed. |
 | Architecture | `MainWindow.axaml.cs` duplicates full UI refresh after document replacement | Completed | v0.8.3 | Introduced `RefreshAllUiAfterDocumentChange()` for document replacement refresh paths. |
-| UX correctness | Non-associative dimensions can become stale silently | Completed | v0.8.4 | Added a conservative `DimensionEntity.IsStale` marker, persistence support, property-panel status and distinct canvas rendering. |
+| UX correctness | Non-associative dimensions can become stale silently | Completed | v0.8.4/S1 | Added a conservative `DimensionEntity.IsStale` marker, persistence support, property-panel status and distinct canvas rendering. Delete now also marks related dimensions stale and undo restores the previous stale state. |
 | Command UX | Command history navigation with up/down is missing | Completed | v0.8.4 | Up/down now navigates stored command/action history without recalling coordinate input. |
 | Command UX | Command autocomplete is missing | Completed | v0.8.4 | Added simple Tab completion for known command/action prefixes; visual dropdown remains future work. |
 | Modify tools | Fillet lacks NoTrim and advanced entity pairs | Partially complete | v0.8.5 | Line-Line live preview and Trim/NoTrim mode added; Line-Arc/Arc-Arc remain future work. |
 | Modify tools | Offset lacks miter limit / round join | Partially complete | v0.8.5 | Added a conservative miter limit with bevel fallback for sharp corners; configurable/round joins remain future work. |
 | DXF import | LWPOLYLINE bulge is not converted to arcs | Completed | v0.8.5 | Bulge segments are converted to separate `LineEntity`/`ArcEntity` geometry; preserving compound polyline topology remains future work. |
-| DXF import | ELLIPSE/SPLINE import coverage | Partially complete | v0.8.5 | Full ELLIPSE and readable SPLINE control-point import are implemented; external NURBS fidelity remains limited. |
+| DXF import/export | ELLIPSE/SPLINE coverage | Partially complete | v0.8.5/S2 | Full ELLIPSE and readable SPLINE control-point import are implemented. DXF SPLINE export now writes degree, knot count and an open-uniform knot vector. External NURBS fidelity remains limited. |
 | Future feature | Hatch/campiture | Deferred | post-v0.9 | Requires a dedicated entity and render/export strategy. |
 | Future feature | Blocks/symbols | Deferred | post-v0.9 | Large model-level feature; should not be mixed with stabilization. |
 | Future feature | PNG export | Deferred | post-v0.9 | Useful but lower risk than runtime, testing and DXF validation. |
 | Persistence | Autosave and recovery | Deferred | post-v0.9 | Should follow save/reopen and safe-write groundwork. |
+| Runtime diagnostics | Tool/UI exceptions only show status text | Completed | S6 | Added minimal application logging with trace output and testable in-memory logger; canvas pointer failures now log the full exception before reporting a user-facing status message. |
+| Text/interop | MTEXT lacks reference width in DXF | Completed | S8 | `MultilineTextEntity.ReferenceWidth` is persisted and imported/exported as DXF group `41`; `0` preserves unconstrained wrapping. |
+| Property panel | MTEXT is read-only after insertion | Completed | S10 | MTEXT value, insertion point, rotation, text format and reference width are editable through the property panel with undo/redo. |
 
 ---
 
@@ -68,9 +71,9 @@ Start architectural cleanup without changing behavior:
 - [x] keep tool behavior unchanged during entity-render extraction;
 - [x] extract active-tool preview rendering from `CadCanvas` into `CadToolPreviewRenderer`;
 - [x] delegate active-tool keyboard handling through `IKeyboardAwareTool`;
-- [ ] replace concrete tool preview dispatch with tool-provided preview descriptors in a later pass.
+- [x] replace concrete tool preview dispatch with tool-provided preview descriptors.
 
-The second v0.8.3 pass moved entity drawing, text drawing and dimension drawing into `CadEntityRenderer`. The third v0.8.3 pass moved active-tool preview drawing into `CadToolPreviewRenderer`. This pass introduced `IKeyboardAwareTool` so active tools handle their own keyboard-specific actions without `CadCanvas` checking `AlignTool`, `MoveTool`, `CopyTool`, `PolylineTool` or `GripEditTool` directly. `CadCanvas` still owns grid, UCS, snap overlays, crosshair and pointer input. The next architecture pass should focus on replacing the remaining concrete preview dispatch with tool-provided preview descriptors.
+The second v0.8.3 pass moved entity drawing, text drawing and dimension drawing into `CadEntityRenderer`. The third v0.8.3 pass moved active-tool preview drawing into `CadToolPreviewRenderer`. This pass introduced `IKeyboardAwareTool` so active tools handle their own keyboard-specific actions without `CadCanvas` checking `AlignTool`, `MoveTool`, `CopyTool`, `PolylineTool` or `GripEditTool` directly. The later S7 passes completed the preview-dispatch cleanup: tools now expose previews through `IToolPreviewDescriptorProvider` or `IToolPreviewEntityProvider`, and `CadToolPreviewRenderer` no longer needs a concrete active-tool fallback switch. `CadCanvas` still owns grid, UCS, snap overlays, crosshair and pointer input.
 
 ---
 
@@ -99,6 +102,21 @@ Modify-tool refinement:
 
 ---
 
+## Post-review stabilization track S1-S10
+
+Completed after the critical review pass:
+
+- [x] S1: deleting model geometry now marks dimensions as stale and undo restores the previous stale state;
+- [x] S2: DXF `SPLINE` export writes degree, knot count and knot values;
+- [x] S3: external DXF compatibility samples were prepared and manually checked;
+- [x] S4: intersection snap supports ellipses and Bezier splines through sampled curve approximations;
+- [x] S5-S7.7: active tool previews were migrated to tool-provided entity/descriptor protocols and the concrete preview fallback dispatch was removed;
+- [x] S6: application logging now records tool/UI exceptions before user-facing status reporting;
+- [x] S8: MTEXT DXF reference width is persisted and imported/exported;
+- [x] S10: MTEXT property-panel editing is available for value, insertion, rotation, text format and reference width.
+
+Remaining stabilization items should now focus on user-facing polish, exact external viewer/version recording, and larger future features such as blocks, hatch, autosave and richer DXF/NURBS fidelity.
+
 ## v0.9 release candidate criteria
 
 Before tagging v0.9, the project should have:
@@ -107,7 +125,7 @@ Before tagging v0.9, the project should have:
 - TEXT/MTEXT dialog reentrancy protection;
 - end-to-end save/reopen test coverage;
 - at least one export-oriented end-to-end workflow test;
-- documented DXF compatibility checks;
+- documented DXF compatibility checks, with exact viewer/version recording still recommended for the next audit;
 - roadmap and known limitations aligned with the current code;
 - explicit known limitation notes for non-associative dimensions and DXF import gaps.
 
@@ -147,7 +165,8 @@ Remaining before tagging:
 
 - [x] generate or refresh DXF compatibility samples 01-07;
 - [x] prepare manual DXF compatibility samples 01-07;
-- [ ] perform external DXF compatibility checks with recorded viewer versions;
+- [x] perform external DXF compatibility smoke checks;
+- [ ] record exact external viewer versions in a future compatibility audit;
 - [ ] run full clean/build/test release gate;
 - [ ] prepare GitHub release text from `docs/release-v0.8-final.md`.
 

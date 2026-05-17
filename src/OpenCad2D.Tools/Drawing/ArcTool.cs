@@ -10,7 +10,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw circular arc entities by center, start point and end point.
 /// </summary>
-public sealed class ArcTool : ICadTool
+public sealed class ArcTool : ICadTool, IToolPreviewEntityProvider
 {
     private Point2D? _centerPoint;
     private Point2D? _startPoint;
@@ -99,6 +99,16 @@ public sealed class ArcTool : ICadTool
         Reset(context);
 
         return ToolResult.None("Arc tool deactivated.");
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        ArcEntity? preview = GetPreviewEntity();
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
     }
 
     public ArcEntity? GetPreviewEntity()

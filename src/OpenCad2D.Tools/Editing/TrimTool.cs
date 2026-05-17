@@ -12,7 +12,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Trims editable entities against a selected boundary entity.
 /// </summary>
-public sealed class TrimTool : ICadTool, ICommandDrivenTool
+public sealed class TrimTool : ICadTool, ICommandDrivenTool, IToolPreviewDescriptorProvider
 {
     private readonly List<CadEntity> _boundaryEntities = new();
     private EntityId? _boundaryEntityId;
@@ -172,6 +172,16 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool
     public IReadOnlyList<CadEntity> GetHighlightedPreviewEntities()
     {
         return _highlightPreviewEntities.ToList();
+    }
+
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new ToolPreviewDescriptor(
+            entities: GetPreviewEntities(),
+            highlightedEntities: GetHighlightedPreviewEntities());
     }
 
     private ToolResult AcceptBoundaryEntity(

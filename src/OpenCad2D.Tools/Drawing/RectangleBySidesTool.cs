@@ -10,7 +10,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// Interactive tool used to draw a rectangular closed polyline from a start point,
 /// a first side endpoint and a point defining the opposite side distance.
 /// </summary>
-public sealed class RectangleBySidesTool : ICadTool
+public sealed class RectangleBySidesTool : ICadTool, IToolPreviewEntityProvider
 {
     private Point2D? _startPoint;
     private Point2D? _firstSideEndPoint;
@@ -102,6 +102,27 @@ public sealed class RectangleBySidesTool : ICadTool
         Reset(context);
 
         return ToolResult.None("Rectangle Sides tool deactivated.");
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var previews = new List<CadEntity>();
+
+        LineEntity? firstSidePreview = GetFirstSidePreviewEntity();
+        if (firstSidePreview is not null)
+        {
+            previews.Add(firstSidePreview);
+        }
+
+        PolylineEntity? rectanglePreview = GetPreviewEntity();
+        if (rectanglePreview is not null)
+        {
+            previews.Add(rectanglePreview);
+        }
+
+        return previews;
     }
 
     public LineEntity? GetFirstSidePreviewEntity()

@@ -12,7 +12,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw regular polygons as closed polylines.
 /// </summary>
-public sealed class PolygonTool : ICadTool, ICommandDrivenTool
+public sealed class PolygonTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     public const int DefaultSideCount = 6;
     public const int MinimumSideCount = 3;
@@ -101,6 +101,16 @@ public sealed class PolygonTool : ICadTool, ICommandDrivenTool
         _center is not null &&
         _currentVertex is not null &&
         CanCreatePolygon(_center.Value, _currentVertex.Value, contextTolerance: GeometryTolerance.Default);
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        PolylineEntity? preview = GetPreviewEntity();
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
+    }
 
     public PolylineEntity? GetPreviewEntity()
     {

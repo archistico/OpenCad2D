@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Dimensions.Rendering;
 using OpenCad2D.Core.Documents;
@@ -552,6 +552,7 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(20, position.Y);
         writer.WriteGroup(30, 0.0);
         writer.WriteGroup(40, textFormat.Height);
+        writer.WriteGroup(41, text.ReferenceWidth);
         writer.WriteGroup(1, ToDxfMTextContent(text.Text));
         writer.WriteGroup(50, ToDxfRotationDegrees(
             text.RotationDegrees,

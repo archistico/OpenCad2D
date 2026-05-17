@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Grips;
 /// <summary>
 /// Edits the characteristic grips of one selected entity.
 /// </summary>
-public sealed class GripEditTool : ICadTool, IKeyboardAwareTool
+public sealed class GripEditTool : ICadTool, IKeyboardAwareTool, IToolPreviewDescriptorProvider
 {
     private readonly EntityId _entityId;
     private readonly GripProviderRegistry _registry;
@@ -57,6 +57,69 @@ public sealed class GripEditTool : ICadTool, IKeyboardAwareTool
     public GripKind? ActiveGripKind => _warmGripIndex is null
         ? null
         : _grips[_warmGripIndex.Value].Kind;
+
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        ToolResult initializeResult = EnsureInitialized(context);
+
+        if ((initializeResult.Changed && _shouldExit) || _shouldExit)
+        {
+            return ToolPreviewDescriptor.Empty;
+        }
+
+        var entities = new List<CadEntity>();
+        var lines = new List<ToolPreviewLine>();
+        var markers = new List<ToolPreviewMarker>();
+
+        if (_previewEntity is not null)
+        {
+            entities.Add(_previewEntity);
+        }
+
+        if (context.CurrentBasePoint is not null &&
+            _currentDestination is not null)
+        {
+            Point2D basePoint = context.CurrentBasePoint.Value;
+            Point2D destination = _currentDestination.Value;
+
+            markers.Add(new ToolPreviewMarker(
+                basePoint,
+                ToolPreviewMarkerKind.Primary));
+            lines.Add(new ToolPreviewLine(
+                basePoint,
+                destination,
+                ToolPreviewLineKind.Measurement));
+            markers.Add(new ToolPreviewMarker(
+                destination,
+                ToolPreviewMarkerKind.Secondary));
+        }
+
+        for (int i = 0; i < _grips.Count; i++)
+        {
+            GripPoint grip = _grips[i];
+            ToolPreviewMarkerKind markerKind = _warmGripIndex == i
+                ? ToolPreviewMarkerKind.GripWarm
+                : _hotGripIndex == i
+                    ? ToolPreviewMarkerKind.GripHot
+                    : ToolPreviewMarkerKind.GripCold;
+            ToolPreviewMarkerShape markerShape = grip.Kind == GripKind.InsertVertex
+                ? ToolPreviewMarkerShape.Circle
+                : ToolPreviewMarkerShape.Square;
+
+            markers.Add(new ToolPreviewMarker(
+                grip.Position,
+                markerKind,
+                markerShape));
+        }
+
+        return new ToolPreviewDescriptor(
+            entities: entities,
+            lines: lines,
+            markers: markers);
+    }
 
     public bool TryHandleKey(
         ToolContext context,

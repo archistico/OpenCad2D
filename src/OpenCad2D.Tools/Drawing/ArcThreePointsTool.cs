@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw circular arc entities through three points.
 /// </summary>
-public sealed class ArcThreePointsTool : ICadTool, ICommandDrivenTool
+public sealed class ArcThreePointsTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private Point2D? _startPoint;
     private Point2D? _pointOnArc;
@@ -152,6 +152,16 @@ public sealed class ArcThreePointsTool : ICadTool, ICommandDrivenTool
         Reset(context);
 
         return ToolResult.None("Arc 3P tool deactivated.");
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        ArcEntity? preview = GetPreviewEntity();
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
     }
 
     public ArcEntity? GetPreviewEntity()

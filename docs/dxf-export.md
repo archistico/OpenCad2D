@@ -1,4 +1,4 @@
-# DXF Export
+﻿# DXF Export
 
 OpenCad2D can export the visible model-space drawing to an ASCII DXF file.
 
@@ -31,7 +31,7 @@ Supported entity mappings:
 |---|---|
 | `PointEntity` | `POINT` |
 | `TextEntity` | `TEXT` |
-| `MultilineTextEntity` | `MTEXT` |
+| `MultilineTextEntity` | `MTEXT` with text height and reference width (`40`/`41`) |
 | `LineEntity` | `LINE` |
 | `CircleEntity` | `CIRCLE` |
 | `ArcEntity` | `ARC` |
@@ -41,6 +41,13 @@ Supported entity mappings:
 | basic dimensions | graphical primitives: `LINE`, `ARC`, `TEXT` |
 
 Hatches, blocks, layouts and paper space are not exported yet.
+
+
+## MTEXT reference width
+
+`MultilineTextEntity.ReferenceWidth` is exported as DXF group code `41`. A value of `0` means unconstrained wrapping and preserves the previous OpenCad2D behavior. Positive values provide a reference rectangle width for external DXF viewers that use MTEXT width to decide text wrapping.
+
+DXF import reads group code `41` when present and stores it on the entity; missing or non-positive values are treated as `0`.
 
 ---
 

@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Interactive tool used to move selected entities.
 /// If no entity is selected when the tool starts, the first phase lets the user select entities to move.
 /// </summary>
-public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, IKeyboardAwareTool
+public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, IKeyboardAwareTool, IToolPreviewEntityProvider
 {
     private Point2D? _basePoint;
     private Point2D? _currentPoint;

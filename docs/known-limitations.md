@@ -27,7 +27,7 @@ Known limits:
 - `LWPOLYLINE` bulge import preserves curved geometry as separate native line/arc entities, but does not preserve the original compound polyline topology;
 - full DXF `ELLIPSE` entities import as native `EllipseEntity`; partial DXF ellipses import as open polyline approximations until a native ellipse-arc entity exists;
 - readable DXF `SPLINE` control points import as `BezierSplineEntity`; fit-point-only splines import as polyline approximations; full external NURBS knot/weight evaluation is not implemented yet;
-- broad compatibility should still be manually verified in LibreCAD, QCAD and Autodesk viewers.
+- broad compatibility should be re-checked periodically with recorded LibreCAD, QCAD and Autodesk viewer versions.
 
 ---
 
@@ -35,7 +35,7 @@ Known limits:
 
 Dimensions are currently non-associative. Editing measured geometry does not automatically recompute existing dimension values.
 
-The v0.8 line mitigates this by marking dimensions as potentially stale after geometry-changing commands. True associative dimensions remain future work.
+The v0.8 line mitigates this by marking dimensions as potentially stale after geometry-changing commands, including deletion of model geometry. True associative dimensions remain future work.
 
 ---
 

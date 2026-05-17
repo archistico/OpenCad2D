@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Documents;
+﻿using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
@@ -17,7 +17,8 @@ public sealed class MultilineTextRoundTripTests
             new Point2D(12, 34),
             "First line\nSecond line",
             25,
-            TextFormatId.Annotation);
+            TextFormatId.Annotation,
+            referenceWidth: 140);
         document.AddEntity(entity);
 
         var serializer = new JsonDocumentSerializer();
@@ -41,5 +42,6 @@ public sealed class MultilineTextRoundTripTests
         Assert.Equal(entity.Text, restoredText.Text);
         Assert.Equal(entity.RotationDegrees, restoredText.RotationDegrees);
         Assert.Equal(entity.TextFormatId, restoredText.TextFormatId);
+        Assert.Equal(entity.ReferenceWidth, restoredText.ReferenceWidth);
     }
 }

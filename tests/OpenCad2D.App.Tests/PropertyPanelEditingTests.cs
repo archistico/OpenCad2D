@@ -267,6 +267,105 @@ public sealed class PropertyPanelEditingTests
         Assert.Null(restored.TextOverride);
     }
 
+
+    [Fact]
+    public void ApplyCommand_ForMultilineTextValue_ShouldReplaceEntityAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var text = new MultilineTextEntity(
+            new Point2D(0, 0),
+            "First line\nSecond line");
+        viewModel.Workspace.Document.AddEntity(text);
+        SelectEntity(viewModel, text);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Value");
+        Assert.True(row.IsEditable);
+
+        row.EditableValue = "Updated line\nSecond updated line";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<MultilineTextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal("Updated line\nSecond updated line", updated.Text);
+        Assert.Equal("Multiline text updated.", viewModel.LastMessage);
+        Assert.True(viewModel.Workspace.CommandHistory.CanUndo);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<MultilineTextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal(text.Text, restored.Text);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForMultilineTextReferenceWidth_ShouldReplaceEntityAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var text = new MultilineTextEntity(
+            new Point2D(0, 0),
+            "Wrapped note",
+            referenceWidth: 120);
+        viewModel.Workspace.Document.AddEntity(text);
+        SelectEntity(viewModel, text);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Reference width");
+        Assert.True(row.IsEditable);
+
+        row.EditableValue = "250.5";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<MultilineTextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal(250.5, updated.ReferenceWidth);
+        Assert.Equal("Multiline text reference width updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<MultilineTextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal(120, restored.ReferenceWidth);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForMultilineTextReferenceWidth_ShouldRejectNegativeValue()
+    {
+        var viewModel = new MainWindowViewModel();
+        var text = new MultilineTextEntity(
+            new Point2D(0, 0),
+            "Wrapped note",
+            referenceWidth: 120);
+        viewModel.Workspace.Document.AddEntity(text);
+        SelectEntity(viewModel, text);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Reference width");
+        row.EditableValue = "-1";
+        row.ApplyCommand.Execute(null);
+
+        var unchanged = Assert.IsType<MultilineTextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal(120, unchanged.ReferenceWidth);
+        Assert.Equal("Multiline text reference width cannot be negative.", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForMultilineTextFormat_ShouldReplaceTextFormatAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var text = new MultilineTextEntity(
+            new Point2D(0, 0),
+            "Note");
+        viewModel.Workspace.Document.AddEntity(text);
+        SelectEntity(viewModel, text);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Text format");
+        row.EditableValue = "Title";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<MultilineTextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal(TextFormatId.Title, updated.TextFormatId);
+        Assert.Equal("Multiline text format updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<MultilineTextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
+        Assert.Equal(TextFormatId.Standard, restored.TextFormatId);
+    }
+
     private static void SelectEntity(
         MainWindowViewModel viewModel,
         CadEntity entity)

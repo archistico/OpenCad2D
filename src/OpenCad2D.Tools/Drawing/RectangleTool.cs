@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw rectangular closed polylines.
 /// </summary>
-public sealed class RectangleTool : TwoPointToolBase, ICommandDrivenTool
+public sealed class RectangleTool : TwoPointToolBase, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     public override string Name => "Rectangle";
 
@@ -45,6 +45,16 @@ public sealed class RectangleTool : TwoPointToolBase, ICommandDrivenTool
         }
 
         return SubmitResolvedPoint(context, input.Point.Value);
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        PolylineEntity? preview = GetPreviewEntity();
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
     }
 
     public PolylineEntity? GetPreviewEntity()

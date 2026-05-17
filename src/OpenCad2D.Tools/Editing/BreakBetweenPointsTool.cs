@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Breaks a supported entity by removing the segment between two picked break points.
 /// </summary>
-public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool
+public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private EntityId? _targetEntityId;
     private CadEntity? _targetEntity;
@@ -152,6 +152,13 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool
         Reset(context);
 
         return ToolResult.None("Break Segment tool deactivated.");
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return GetPreviewEntities();
     }
 
     public IReadOnlyList<CadEntity> GetPreviewEntities()

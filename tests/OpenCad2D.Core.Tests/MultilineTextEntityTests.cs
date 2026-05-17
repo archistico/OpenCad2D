@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Entities;
+﻿using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Geometry.Transformations;
@@ -20,6 +20,27 @@ public sealed class MultilineTextEntityTests
         Assert.Equal("First line\nSecond line", entity.Text);
         Assert.Equal(new[] { "First line", "Second line" }, entity.Lines);
         Assert.Equal(TextFormatId.Annotation, entity.TextFormatId);
+        Assert.Equal(0, entity.ReferenceWidth);
+    }
+
+    [Fact]
+    public void Constructor_WithReferenceWidth_ShouldStoreValue()
+    {
+        var entity = new MultilineTextEntity(
+            new Point2D(10, 20),
+            "First line\nSecond line",
+            referenceWidth: 120);
+
+        Assert.Equal(120, entity.ReferenceWidth);
+    }
+
+    [Fact]
+    public void Constructor_WithNegativeReferenceWidth_ShouldThrow()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() => new MultilineTextEntity(
+            new Point2D(0, 0),
+            "Note",
+            referenceWidth: -1));
     }
 
     [Theory]
@@ -51,6 +72,7 @@ public sealed class MultilineTextEntityTests
         Assert.Equal(new Point2D(4, 6), transformed.InsertionPoint);
         Assert.Equal(10, transformed.RotationDegrees, 6);
         Assert.Equal(entity.Text, transformed.Text);
+        Assert.Equal(entity.ReferenceWidth, transformed.ReferenceWidth);
     }
 
     [Fact]
@@ -65,5 +87,18 @@ public sealed class MultilineTextEntityTests
         Assert.Equal(entity.Text, updated.Text);
         Assert.Equal(entity.RotationDegrees, updated.RotationDegrees);
         Assert.Equal(entity.TextFormatId, updated.TextFormatId);
+        Assert.Equal(entity.ReferenceWidth, updated.ReferenceWidth);
+    }
+
+    [Fact]
+    public void WithReferenceWidth_ShouldReturnUpdatedEntity()
+    {
+        var entity = new MultilineTextEntity(new Point2D(1, 2), "Note");
+
+        MultilineTextEntity updated = entity.WithReferenceWidth(80);
+
+        Assert.Equal(80, updated.ReferenceWidth);
+        Assert.Equal(entity.Id, updated.Id);
+        Assert.Equal(entity.Text, updated.Text);
     }
 }

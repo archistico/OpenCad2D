@@ -5,11 +5,8 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
-using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
-using OpenCad2D.Tools.Grips;
-using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Navigation;
 using OpenCad2D.Tools.Selection;
 using System;
@@ -22,8 +19,8 @@ namespace OpenCad2D.App.Rendering;
 /// </summary>
 /// <remarks>
 /// The class keeps tool-specific preview drawing out of <c>CadCanvas</c>.
-/// It still contains the existing concrete-tool dispatch intentionally; a later
-/// step can replace that dispatch with tool-provided preview descriptors.
+/// Interactive tools can provide preview descriptors or preview entities, while
+/// this renderer remains responsible only for Avalonia drawing details.
 /// </remarks>
 public sealed class CadToolPreviewRenderer
 {
@@ -88,205 +85,188 @@ public sealed class CadToolPreviewRenderer
             return;
         }
 
-        switch (_workspace.ToolController.ActiveTool)
-        {
-            case LineTool lineTool:
-                DrawLinePreview(context, lineTool);
-                break;
+        ICadTool activeTool = _workspace.ToolController.ActiveTool;
+        _ = TryDrawToolProvidedDescriptorPreview(
+            context,
+            activeTool) ||
+            TryDrawToolProvidedEntityPreview(
+                context,
+                activeTool);
 
-            case RectangleTool rectangleTool:
-                DrawRectanglePreview(context, rectangleTool);
-                break;
-
-            case RectangleBySidesTool rectangleBySidesTool:
-                DrawRectangleBySidesPreview(context, rectangleBySidesTool);
-                break;
-
-            case CircleTool circleTool:
-                DrawCirclePreview(context, circleTool);
-                break;
-
-            case EllipseTool ellipseTool:
-                DrawEllipsePreview(context, ellipseTool);
-                break;
-
-            case ArcTool arcTool:
-                DrawArcPreview(context, arcTool);
-                break;
-
-            case ArcThreePointsTool arcThreePointsTool:
-                DrawArcThreePointsPreview(context, arcThreePointsTool);
-                break;
-
-            case PolylineTool polylineTool:
-                DrawPolylinePreview(context, polylineTool);
-                break;
-
-            case SplineTool splineTool:
-                DrawSplinePreview(context, splineTool);
-                break;
-
-            case PolygonTool polygonTool:
-                DrawPolygonPreview(context, polygonTool);
-                break;
-
-            case HorizontalDimensionTool horizontalDimensionTool:
-                DrawEntitiesPreview(
-                    context,
-                    horizontalDimensionTool.GetPreviewEntities());
-                break;
-
-            case VerticalDimensionTool verticalDimensionTool:
-                DrawEntitiesPreview(
-                    context,
-                    verticalDimensionTool.GetPreviewEntities());
-                break;
-
-            case AlignedDimensionTool alignedDimensionTool:
-                DrawEntitiesPreview(
-                    context,
-                    alignedDimensionTool.GetPreviewEntities());
-                break;
-
-            case RadiusDimensionTool radiusDimensionTool:
-                DrawEntitiesPreview(
-                    context,
-                    radiusDimensionTool.GetPreviewEntities());
-                break;
-
-            case DiameterDimensionTool diameterDimensionTool:
-                DrawEntitiesPreview(
-                    context,
-                    diameterDimensionTool.GetPreviewEntities());
-                break;
-
-            case AngularDimensionTool angularDimensionTool:
-                DrawEntitiesPreview(
-                    context,
-                    angularDimensionTool.GetPreviewEntities());
-                break;
-
-            case MoveTool moveTool:
-                DrawEntitiesPreview(
-                    context,
-                    moveTool.GetPreviewEntities(_workspace.Context));
-                break;
-
-            case CopyTool copyTool:
-                DrawEntitiesPreview(
-                    context,
-                    copyTool.GetPreviewEntities(_workspace.Context));
-                break;
-
-            case RotateTool rotateTool:
-                DrawEntitiesPreview(
-                    context,
-                    rotateTool.GetPreviewEntities(_workspace.Context));
-                break;
-
-            case ScaleTool scaleTool:
-                DrawEntitiesPreview(
-                    context,
-                    scaleTool.GetPreviewEntities(_workspace.Context));
-                break;
-
-            case AlignTool alignTool:
-                DrawEntitiesPreview(
-                    context,
-                    alignTool.GetPreviewEntities(_workspace.Context));
-                break;
-
-            case BreakAtPointTool breakAtPointTool:
-                DrawEntitiesPreview(
-                    context,
-                    breakAtPointTool.GetPreviewEntities());
-                break;
-
-            case BreakBetweenPointsTool breakBetweenPointsTool:
-                DrawEntitiesPreview(
-                    context,
-                    breakBetweenPointsTool.GetPreviewEntities());
-                break;
-
-            case ExtendTool extendTool:
-                DrawEntitiesPreview(
-                    context,
-                    extendTool.GetPreviewEntities());
-                DrawEntitiesPreview(
-                    context,
-                    extendTool.GetHighlightedPreviewEntities(),
-                    _modifyPreviewHighlightPen);
-                break;
-
-            case TrimTool trimTool:
-                DrawEntitiesPreview(
-                    context,
-                    trimTool.GetPreviewEntities());
-                DrawEntitiesPreview(
-                    context,
-                    trimTool.GetHighlightedPreviewEntities(),
-                    _modifyPreviewHighlightPen);
-                break;
-
-            case FilletTool filletTool:
-                DrawEntitiesPreview(
-                    context,
-                    filletTool.GetPreviewEntities());
-                break;
-
-            case OffsetTool offsetTool:
-                DrawOffsetPreview(context, offsetTool);
-                break;
-
-            case MirrorTool mirrorTool:
-                DrawMirrorPreview(context, mirrorTool);
-                break;
-
-            case MeasureDistanceTool measureDistanceTool:
-                DrawMeasureDistancePreview(context, measureDistanceTool);
-                break;
-
-            case MeasureAngleTool measureAngleTool:
-                DrawMeasureAnglePreview(context, measureAngleTool);
-                break;
-
-            case SelectionTool selectionTool:
-                DrawSelectionPreview(context, selectionTool);
-                break;
-
-            case ZoomWindowTool zoomWindowTool:
-                DrawZoomWindowPreview(context, zoomWindowTool);
-                break;
-
-            case GripEditTool gripEditTool:
-                DrawGripEditPreview(context, gripEditTool);
-                break;
-        }
-
-        if (_workspace.ToolController.ActiveTool is TwoPointToolBase twoPointTool)
+        if (activeTool is TwoPointToolBase twoPointTool)
         {
             DrawTwoPointToolMeasurementPreview(
                 context,
                 twoPointTool);
         }
-        else if (_workspace.ToolController.ActiveTool is MoveTool moveTool)
+        else if (activeTool is MoveTool moveTool)
         {
             DrawMoveToolMeasurementPreview(
                 context,
                 moveTool);
         }
-        else if (_workspace.ToolController.ActiveTool is ArcTool arcTool)
+        else if (activeTool is ArcTool arcTool)
         {
             DrawArcToolMeasurementPreview(
                 context,
                 arcTool);
         }
-        else if (_workspace.ToolController.ActiveTool is ArcThreePointsTool arcThreePointsTool)
+        else if (activeTool is ArcThreePointsTool arcThreePointsTool)
         {
             DrawArcThreePointsToolMeasurementPreview(
                 context,
                 arcThreePointsTool);
         }
+    }
+
+
+    private bool TryDrawToolProvidedDescriptorPreview(
+        DrawingContext context,
+        ICadTool activeTool)
+    {
+        if (_workspace is null ||
+            activeTool is not IToolPreviewDescriptorProvider previewProvider)
+        {
+            return false;
+        }
+
+        DrawPreviewDescriptor(
+            context,
+            previewProvider.GetPreviewDescriptor(_workspace.Context));
+
+        return true;
+    }
+
+    private bool TryDrawToolProvidedEntityPreview(
+        DrawingContext context,
+        ICadTool activeTool)
+    {
+        if (_workspace is null ||
+            activeTool is not IToolPreviewEntityProvider previewProvider)
+        {
+            return false;
+        }
+
+        DrawEntitiesPreview(
+            context,
+            previewProvider.GetPreviewEntities(_workspace.Context));
+
+        return true;
+    }
+
+    private void DrawPreviewDescriptor(
+        DrawingContext context,
+        ToolPreviewDescriptor descriptor)
+    {
+        DrawEntitiesPreview(
+            context,
+            descriptor.Entities);
+        DrawEntitiesPreview(
+            context,
+            descriptor.HighlightedEntities,
+            _modifyPreviewHighlightPen);
+
+        foreach (ToolPreviewLine line in descriptor.Lines)
+        {
+            DrawPreviewLine(
+                context,
+                line);
+        }
+
+        foreach (ToolPreviewMarker marker in descriptor.Markers)
+        {
+            DrawPreviewMarker(
+                context,
+                marker);
+        }
+
+        foreach (ToolPreviewWindow window in descriptor.Windows)
+        {
+            DrawPreviewWindow(
+                context,
+                window);
+        }
+    }
+
+    private void DrawPreviewLine(
+        DrawingContext context,
+        ToolPreviewLine line)
+    {
+        Pen pen = line.Kind == ToolPreviewLineKind.Axis
+            ? _measurementVectorPen
+            : _measurementVectorPen;
+
+        context.DrawLine(
+            pen,
+            ToScreenPoint(line.Start),
+            ToScreenPoint(line.End));
+    }
+
+    private void DrawPreviewMarker(
+        DrawingContext context,
+        ToolPreviewMarker marker)
+    {
+        Point center = ToScreenPoint(marker.Position);
+
+        switch (marker.Kind)
+        {
+        case ToolPreviewMarkerKind.GripCold:
+            DrawGripMarker(
+                context,
+                center,
+                marker.Shape,
+                isHot: false,
+                isWarm: false);
+            return;
+
+        case ToolPreviewMarkerKind.GripHot:
+            DrawGripMarker(
+                context,
+                center,
+                marker.Shape,
+                isHot: true,
+                isWarm: false);
+            return;
+
+        case ToolPreviewMarkerKind.GripWarm:
+            DrawGripMarker(
+                context,
+                center,
+                marker.Shape,
+                isHot: false,
+                isWarm: true);
+            return;
+        }
+
+        const double markerRadius = 4;
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            marker.Kind == ToolPreviewMarkerKind.Secondary
+                ? _measurementVectorPen
+                : _basePointMarkerPen,
+            center,
+            markerRadius,
+            markerRadius);
+    }
+
+    private void DrawPreviewWindow(
+        DrawingContext context,
+        ToolPreviewWindow window)
+    {
+        Rect rect = ToScreenRect(window.Bounds);
+
+        IBrush fill = window.Kind == ToolPreviewWindowKind.Zoom
+            ? _zoomWindowFill
+            : _selectionWindowFill;
+        Pen pen = window.Kind == ToolPreviewWindowKind.Zoom
+            ? _zoomWindowPen
+            : _selectionWindowPen;
+
+        context.DrawRectangle(
+            fill,
+            pen,
+            rect);
     }
 
     private void DrawArcToolMeasurementPreview(
@@ -461,88 +441,10 @@ public sealed class CadToolPreviewRenderer
     }
 
 
-    private void DrawGripEditPreview(
-        DrawingContext context,
-        GripEditTool tool)
-    {
-        if (tool.PreviewEntity is not null)
-        {
-            DrawEntity(
-                context,
-                tool.PreviewEntity,
-                _previewPen);
-        }
-
-        DrawGripMeasurementPreview(
-            context,
-            tool);
-
-        DrawGripMarkers(
-            context,
-            tool);
-    }
-
-    private void DrawGripMeasurementPreview(
-        DrawingContext context,
-        GripEditTool tool)
-    {
-        if (_workspace?.Context.CurrentBasePoint is null ||
-            tool.CurrentDestination is null)
-        {
-            return;
-        }
-
-        Point start = ToScreenPoint(_workspace.Context.CurrentBasePoint.Value);
-        Point end = ToScreenPoint(tool.CurrentDestination.Value);
-        const double baseMarkerRadius = 4;
-        const double destinationMarkerRadius = 5;
-
-        context.DrawEllipse(
-            _basePointMarkerFill,
-            _basePointMarkerPen,
-            start,
-            baseMarkerRadius,
-            baseMarkerRadius);
-
-        context.DrawLine(
-            _measurementVectorPen,
-            start,
-            end);
-
-        context.DrawEllipse(
-            _basePointMarkerFill,
-            _measurementVectorPen,
-            end,
-            destinationMarkerRadius,
-            destinationMarkerRadius);
-    }
-
-    private void DrawGripMarkers(
-        DrawingContext context,
-        GripEditTool tool)
-    {
-        IReadOnlyList<GripPoint> grips = tool.CurrentGrips;
-
-        for (int i = 0; i < grips.Count; i++)
-        {
-            Point point = ToScreenPoint(grips[i].Position);
-
-            bool isWarm = tool.WarmGripIndex == i;
-            bool isHot = tool.HotGripIndex == i;
-
-            DrawGripMarker(
-                context,
-                point,
-                grips[i].Kind,
-                isHot,
-                isWarm);
-        }
-    }
-
     private void DrawGripMarker(
         DrawingContext context,
         Point center,
-        GripKind kind,
+        ToolPreviewMarkerShape shape,
         bool isHot,
         bool isWarm)
     {
@@ -588,7 +490,7 @@ public sealed class CadToolPreviewRenderer
             pen = _gripHotPen;
         }
 
-        if (kind == GripKind.InsertVertex)
+        if (shape == ToolPreviewMarkerShape.Circle)
         {
             context.DrawEllipse(
                 fill,
@@ -603,21 +505,6 @@ public sealed class CadToolPreviewRenderer
             fill,
             pen,
             rect);
-    }
-
-    private void DrawLinePreview(
-        DrawingContext context,
-        LineTool tool)
-    {
-        LineEntity? preview = tool.GetPreviewEntity();
-
-        if (preview is not null)
-        {
-            DrawEntity(
-                context,
-                preview,
-                _previewPen);
-        }
     }
 
     private void DrawRectanglePreview(
@@ -765,68 +652,6 @@ public sealed class CadToolPreviewRenderer
         }
     }
 
-    private void DrawOffsetPreview(
-        DrawingContext context,
-        OffsetTool tool)
-    {
-        CadEntity? preview = tool.GetPreviewEntity();
-
-        if (preview is not null)
-        {
-            DrawEntity(
-                context,
-                preview,
-                _previewPen);
-        }
-    }
-
-    private void DrawMirrorPreview(
-        DrawingContext context,
-        MirrorTool tool)
-    {
-        if (_workspace is null)
-        {
-            return;
-        }
-
-        DrawEntitiesPreview(
-            context,
-            tool.GetPreviewEntities(_workspace.Context));
-
-        if (tool.FirstAxisPoint is null)
-        {
-            return;
-        }
-
-        const double markerRadius = 4;
-        Point first = ToScreenPoint(tool.FirstAxisPoint.Value);
-
-        context.DrawEllipse(
-            _basePointMarkerFill,
-            _basePointMarkerPen,
-            first,
-            markerRadius,
-            markerRadius);
-
-        if (tool.SecondAxisPoint is null)
-        {
-            return;
-        }
-
-        Point second = ToScreenPoint(tool.SecondAxisPoint.Value);
-
-        context.DrawLine(
-            _measurementVectorPen,
-            first,
-            second);
-
-        context.DrawEllipse(
-            _basePointMarkerFill,
-            _basePointMarkerPen,
-            second,
-            markerRadius,
-            markerRadius);
-    }
 
     private void DrawEntitiesPreview(
         DrawingContext context,
@@ -852,94 +677,6 @@ public sealed class CadToolPreviewRenderer
         }
     }
 
-    private void DrawMeasureDistancePreview(
-        DrawingContext context,
-        MeasureDistanceTool tool)
-    {
-        LineEntity? preview = tool.GetPreviewEntity();
-
-        if (preview is not null)
-        {
-            DrawEntity(
-                context,
-                preview,
-                _previewPen);
-        }
-    }
-
-
-    private void DrawMeasureAnglePreview(
-        DrawingContext context,
-        MeasureAngleTool tool)
-    {
-        foreach (LineEntity preview in tool.GetPreviewEntities())
-        {
-            DrawEntity(
-                context,
-                preview,
-                _previewPen);
-        }
-
-        const double markerRadius = 4;
-
-        if (tool.FirstRayPoint is not null)
-        {
-            context.DrawEllipse(
-                _basePointMarkerFill,
-                _basePointMarkerPen,
-                ToScreenPoint(tool.FirstRayPoint.Value),
-                markerRadius,
-                markerRadius);
-        }
-
-        if (tool.Vertex is not null)
-        {
-            context.DrawEllipse(
-                _basePointMarkerFill,
-                _basePointMarkerPen,
-                ToScreenPoint(tool.Vertex.Value),
-                markerRadius,
-                markerRadius);
-        }
-    }
-
-    private void DrawSelectionPreview(
-        DrawingContext context,
-        SelectionTool tool)
-    {
-        BoundingBox2D? window = tool.GetPreviewWindow();
-
-        if (window is null)
-        {
-            return;
-        }
-
-        Rect rect = ToScreenRect(window.Value);
-
-        context.DrawRectangle(
-            _selectionWindowFill,
-            _selectionWindowPen,
-            rect);
-    }
-
-    private void DrawZoomWindowPreview(
-        DrawingContext context,
-        ZoomWindowTool tool)
-    {
-        BoundingBox2D? window = tool.GetPreviewWindow();
-
-        if (window is null)
-        {
-            return;
-        }
-
-        Rect rect = ToScreenRect(window.Value);
-
-        context.DrawRectangle(
-            _zoomWindowFill,
-            _zoomWindowPen,
-            rect);
-    }
 
     private void DrawEntity(
         DrawingContext context,

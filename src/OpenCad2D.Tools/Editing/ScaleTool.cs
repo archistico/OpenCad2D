@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Interactive tool used to uniformly scale the current selection around a base point.
 /// </summary>
-public sealed class ScaleTool : ICadTool, ICommandDrivenTool
+public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private Point2D? _basePoint;
     private Point2D? _referencePoint;

@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
@@ -481,6 +481,7 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 InsertionX = multilineText.InsertionPoint.X,
                 InsertionY = multilineText.InsertionPoint.Y,
                 RotationDegrees = multilineText.RotationDegrees,
+                ReferenceWidth = multilineText.ReferenceWidth,
                 TextFormatId = multilineText.TextFormatId.Value
             },
 
@@ -871,7 +872,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                         ? TextFormatId.Standard
                         : new TextFormatId(multilineText.TextFormatId),
                     id,
-                    layerId),
+                    layerId,
+                    referenceWidth: multilineText.ReferenceWidth),
 
             LinearDimensionEntityDto linearDimension => new LinearDimensionEntity(
                 new Point2D(linearDimension.FirstX, linearDimension.FirstY),

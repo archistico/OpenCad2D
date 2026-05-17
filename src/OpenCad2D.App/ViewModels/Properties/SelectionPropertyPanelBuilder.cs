@@ -152,7 +152,7 @@ public sealed class SelectionPropertyPanelBuilder
         {
             PointEntity point => BuildPointGeometrySection(workspace, point, setMessage, refresh),
             TextEntity text => BuildTextGeometrySection(workspace, text, setMessage, refresh),
-            MultilineTextEntity multilineText => BuildMultilineTextGeometrySection(multilineText),
+            MultilineTextEntity multilineText => BuildMultilineTextGeometrySection(workspace, multilineText, setMessage, refresh),
             LinearDimensionEntity linearDimension => BuildLinearDimensionGeometrySection(workspace, linearDimension, setMessage, refresh),
             AlignedDimensionEntity alignedDimension => BuildAlignedDimensionGeometrySection(workspace, alignedDimension, setMessage, refresh),
             RadiusDimensionEntity radiusDimension => BuildRadiusDimensionGeometrySection(workspace, radiusDimension, setMessage, refresh),
@@ -213,19 +213,23 @@ public sealed class SelectionPropertyPanelBuilder
 
 
     private static PropertySectionViewModel BuildMultilineTextGeometrySection(
-        MultilineTextEntity text)
+        CadWorkspace workspace,
+        MultilineTextEntity text,
+        Action<string>? setMessage,
+        Action? refresh)
     {
         return new PropertySectionViewModel(
             "Multiline Text",
             new[]
             {
-                Row("Value", text.Text),
+                EditableRow("Value", text.Text, value => ReplaceMultilineTextValue(workspace, text.Id, value, setMessage, refresh)),
                 Row("Insertion", PropertyValueFormatter.FormatPoint(text.InsertionPoint)),
-                Row("X", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.X)),
-                Row("Y", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.Y)),
-                Row("Rotation", PropertyValueFormatter.FormatCoordinate(text.RotationDegrees)),
-                Row("Text format", text.TextFormatId.Value),
-                Row("Lines", text.Lines.Count.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                EditableRow("X", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.X), value => ReplaceMultilineTextCoordinate(workspace, text.Id, value, updateX: true, setMessage, refresh)),
+                EditableRow("Y", PropertyValueFormatter.FormatCoordinate(text.InsertionPoint.Y), value => ReplaceMultilineTextCoordinate(workspace, text.Id, value, updateX: false, setMessage, refresh)),
+                EditableRow("Rotation", PropertyValueFormatter.FormatCoordinate(text.RotationDegrees), value => ReplaceMultilineTextRotation(workspace, text.Id, value, setMessage, refresh)),
+                EditableRow("Text format", text.TextFormatId.Value, value => ReplaceMultilineTextFormat(workspace, text.Id, value, setMessage, refresh)),
+                EditableRow("Reference width", PropertyValueFormatter.FormatCoordinate(text.ReferenceWidth), value => ReplaceMultilineTextReferenceWidth(workspace, text.Id, value, setMessage, refresh)),
+                Row("Lines", text.Lines.Count.ToString(CultureInfo.InvariantCulture))
             });
     }
 
@@ -703,6 +707,88 @@ public sealed class SelectionPropertyPanelBuilder
 
         ReplaceEntity(workspace, text.WithTextFormat(textFormatId), "Text format updated.", setMessage, refresh);
     }
+
+    private static void ReplaceMultilineTextValue(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<MultilineTextEntity>(workspace, entityId, setMessage, out MultilineTextEntity text))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            setMessage?.Invoke("Multiline text value cannot be empty.");
+            return;
+        }
+
+        ReplaceEntity(workspace, text.WithText(value), "Multiline text updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceMultilineTextCoordinate(CadWorkspace workspace, EntityId entityId, string value, bool updateX, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<MultilineTextEntity>(workspace, entityId, setMessage, out MultilineTextEntity text) ||
+            !TryParseDouble(value, setMessage, out double coordinate))
+        {
+            return;
+        }
+
+        Point2D insertionPoint = updateX
+            ? new Point2D(coordinate, text.InsertionPoint.Y)
+            : new Point2D(text.InsertionPoint.X, coordinate);
+
+        ReplaceEntity(workspace, text.WithInsertionPoint(insertionPoint), "Multiline text updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceMultilineTextRotation(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<MultilineTextEntity>(workspace, entityId, setMessage, out MultilineTextEntity text) ||
+            !TryParseDouble(value, setMessage, out double rotationDegrees))
+        {
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            new MultilineTextEntity(text.InsertionPoint, text.Text, rotationDegrees, text.TextFormatId, text.Id, text.LayerId, text.Style, text.IsVisible, text.IsLocked, text.DrawOrder, text.ReferenceWidth),
+            "Multiline text updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceMultilineTextFormat(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<MultilineTextEntity>(workspace, entityId, setMessage, out MultilineTextEntity text))
+        {
+            return;
+        }
+
+        var textFormatId = new TextFormatId(value.Trim());
+        if (string.IsNullOrWhiteSpace(textFormatId.Value) || !workspace.Document.TextFormats.Contains(textFormatId))
+        {
+            setMessage?.Invoke("Text format was not found.");
+            return;
+        }
+
+        ReplaceEntity(workspace, text.WithTextFormat(textFormatId), "Multiline text format updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceMultilineTextReferenceWidth(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<MultilineTextEntity>(workspace, entityId, setMessage, out MultilineTextEntity text) ||
+            !TryParseDouble(value, setMessage, out double referenceWidth))
+        {
+            return;
+        }
+
+        if (referenceWidth < 0)
+        {
+            setMessage?.Invoke("Multiline text reference width cannot be negative.");
+            return;
+        }
+
+        ReplaceEntity(workspace, text.WithReferenceWidth(referenceWidth), "Multiline text reference width updated.", setMessage, refresh);
+    }
+
 
     private static void ReplaceArcCoordinate(CadWorkspace workspace, EntityId entityId, string value, bool updateX, Action<string>? setMessage, Action? refresh)
     {

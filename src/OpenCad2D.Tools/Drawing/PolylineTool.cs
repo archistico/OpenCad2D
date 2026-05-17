@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw open or closed polylines.
 /// </summary>
-public sealed class PolylineTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool
+public sealed class PolylineTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool, IToolPreviewEntityProvider
 {
     private readonly List<Point2D> _vertices = new();
     private Point2D? _currentPoint;
@@ -80,6 +80,16 @@ public sealed class PolylineTool : ICadTool, ICommandDrivenTool, IKeyboardAwareT
         State == PolylineToolState.CollectingVertices &&
         _vertices.Count > 0 &&
         _currentPoint.HasValue;
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        PolylineEntity? preview = GetPreviewEntity();
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
+    }
 
     public PolylineEntity? GetPreviewEntity()
     {

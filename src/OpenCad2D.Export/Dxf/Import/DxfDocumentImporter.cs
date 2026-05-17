@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -1331,6 +1331,22 @@ public sealed class DxfDocumentImporter : IDxfImporter
         }
 
         double rotationDegrees = 0.0;
+        double referenceWidth = 0.0;
+
+        if (!TryReadOptionalDouble(
+                record,
+                code: 41,
+                fieldName: "MTEXT reference width",
+                log,
+                out double? parsedReferenceWidth))
+        {
+            return;
+        }
+
+        if (parsedReferenceWidth.HasValue && parsedReferenceWidth.Value > 0)
+        {
+            referenceWidth = parsedReferenceWidth.Value;
+        }
 
         if (!TryReadOptionalDouble(
                 record,
@@ -1356,7 +1372,8 @@ public sealed class DxfDocumentImporter : IDxfImporter
             text,
             rotationDegrees,
             TextFormatId.Standard,
-            layerId: layerId));
+            layerId: layerId,
+            referenceWidth: referenceWidth));
     }
 
     private static string FromDxfMTextContent(string text)

@@ -6,7 +6,7 @@ namespace OpenCad2D.Tools.Navigation;
 /// <summary>
 /// Interactive two-point navigation tool used by the UI viewport to fit a user-drawn window.
 /// </summary>
-public sealed class ZoomWindowTool : ICadTool
+public sealed class ZoomWindowTool : ICadTool, IToolPreviewDescriptorProvider
 {
     private Point2D? _firstPoint;
     private Point2D? _currentPoint;
@@ -34,6 +34,27 @@ public sealed class ZoomWindowTool : ICadTool
         return BoundingBox2D.FromPoints(
             _firstPoint.Value,
             _currentPoint.Value);
+    }
+
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        BoundingBox2D? window = GetPreviewWindow();
+
+        if (window is null)
+        {
+            return ToolPreviewDescriptor.Empty;
+        }
+
+        return new ToolPreviewDescriptor(
+            windows: new[]
+            {
+                new ToolPreviewWindow(
+                    window.Value,
+                    ToolPreviewWindowKind.Zoom)
+            });
     }
 
     public ToolResult OnPointerPressed(

@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Breaks a supported entity at a picked point.
 /// </summary>
-public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool
+public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private EntityId? _targetEntityId;
     private CadEntity? _targetEntity;
@@ -137,6 +137,13 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool
         Reset(context);
 
         return ToolResult.None("Break Point tool deactivated.");
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return GetPreviewEntities();
     }
 
     public IReadOnlyList<CadEntity> GetPreviewEntities()

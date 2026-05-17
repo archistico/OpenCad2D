@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Creates a tangent fillet between two lines.
 /// v0.8 supports Line-Line with Radius and Radius=0 corner joining.
 /// </summary>
-public sealed class FilletTool : ICadTool, ICommandDrivenTool
+public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private const double MinimumPracticalFilletAngleRadians = 1e-6;
 
@@ -31,6 +31,13 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool
     public bool TrimEnabled => _trimEnabled;
 
     public EntityId? FirstEntityId => _firstPick?.EntityId;
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return GetPreviewEntities();
+    }
 
     public IReadOnlyList<CadEntity> GetPreviewEntities()
     {

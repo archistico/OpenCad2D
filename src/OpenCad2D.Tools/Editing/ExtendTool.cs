@@ -12,7 +12,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Extends editable entities until they reach a selected boundary entity.
 /// </summary>
-public sealed class ExtendTool : ICadTool, ICommandDrivenTool
+public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescriptorProvider
 {
     private EntityId? _boundaryEntityId;
     private CadEntity? _boundaryEntity;
@@ -136,6 +136,16 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool
     public IReadOnlyList<CadEntity> GetHighlightedPreviewEntities()
     {
         return _highlightPreviewEntities.ToList();
+    }
+
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new ToolPreviewDescriptor(
+            entities: GetPreviewEntities(),
+            highlightedEntities: GetHighlightedPreviewEntities());
     }
 
     private ToolResult AcceptBoundaryEntity(

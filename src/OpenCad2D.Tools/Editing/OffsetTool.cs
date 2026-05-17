@@ -12,7 +12,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Creates parallel/constant-distance copies of supported entities.
 /// Supports lines, circles, arcs, straight-segment polylines and sampled Bezier splines with miter joins.
 /// </summary>
-public sealed class OffsetTool : ICadTool, ICommandDrivenTool
+public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private const double MiterLimitRatio = 10.0;
 
@@ -32,6 +32,15 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool
     public CadEntity? GetPreviewEntity()
     {
         return _previewEntity;
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return _previewEntity is null
+            ? Array.Empty<CadEntity>()
+            : new[] { _previewEntity };
     }
 
     public CommandPromptState GetPromptState(ToolContext context)

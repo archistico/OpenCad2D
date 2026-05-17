@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using OpenCad2D.App.Diagnostics;
 using OpenCad2D.App.Rendering;
 using OpenCad2D.App.Viewport;
 using OpenCad2D.Core.Entities;
@@ -35,6 +36,7 @@ public sealed class CadCanvas : Control
     private readonly ViewportTransform _viewport = new();
     private readonly CadEntityRenderer _entityRenderer;
     private readonly CadToolPreviewRenderer _toolPreviewRenderer;
+    private IApplicationLogger _logger = TraceApplicationLogger.Instance;
     private Point? _pointerScreenPoint;
     private bool _isPointerInside;
     private readonly Dictionary<PenCacheKey, Pen> _penCache = new();
@@ -79,6 +81,12 @@ public sealed class CadCanvas : Control
         2);
 
     public ViewportTransform Viewport => _viewport;
+
+    public IApplicationLogger Logger
+    {
+        get => _logger;
+        set => _logger = value ?? throw new ArgumentNullException(nameof(value));
+    }
 
     public int RenderedEntityCount { get; private set; }
 
@@ -1105,6 +1113,11 @@ public sealed class CadCanvas : Control
         PointerPressedEventArgs e,
         Exception exception)
     {
+        _logger.Error(
+            nameof(CadCanvas),
+            "Unhandled exception while processing pointer input.",
+            exception);
+
         Point position = e.GetPosition(this);
         Point2D modelPoint = ToModelPoint(position);
 

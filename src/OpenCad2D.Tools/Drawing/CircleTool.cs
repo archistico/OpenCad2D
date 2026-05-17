@@ -9,7 +9,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw circle entities by center and radius point.
 /// </summary>
-public sealed class CircleTool : TwoPointToolBase, ICommandDrivenTool
+public sealed class CircleTool : TwoPointToolBase, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     public override string Name => "Circle";
 
@@ -43,6 +43,16 @@ public sealed class CircleTool : TwoPointToolBase, ICommandDrivenTool
         }
 
         return SubmitResolvedPoint(context, input.Point.Value);
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        CircleEntity? preview = GetPreviewEntity();
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
     }
 
     public CircleEntity? GetPreviewEntity()

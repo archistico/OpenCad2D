@@ -426,3 +426,44 @@ Selection without selected entities -> no operation
 ```
 
 Tool-specific cleanup remains inside the active tool, but the fallback policy belongs to `CadWorkspace`, not to Avalonia controls.
+
+## Tool-provided previews
+
+The active-tool preview renderer supports two UI-agnostic protocols from the tools layer.
+
+`IToolPreviewEntityProvider` is for simple previews that can be represented as ordinary transient `CadEntity` instances. Drawing tools, dimension previews and many modify tools use this path.
+
+`IToolPreviewDescriptorProvider` is the richer protocol for previews that also need semantic overlays, such as guide lines, axis lines, point markers, highlighted fragments or selection/zoom windows. The descriptor is still defined in the tools layer and uses only model-space geometry plus semantic preview items; the app layer decides how those items are rendered.
+
+Currently migrated examples include:
+
+- `LineTool` for a simple two-point drawing preview;
+- `RectangleTool` and `RectangleBySidesTool` for rectangle previews;
+- `CircleTool`, `ArcTool`, `ArcThreePointsTool` and `EllipseTool` for basic curve previews;
+- `PolylineTool`, `PolygonTool` and `SplineTool` for multi-point drawing previews;
+- `MoveTool`, `CopyTool`, `RotateTool`, `ScaleTool` and `AlignTool` for context-aware modify previews;
+- `BreakAtPointTool`, `BreakBetweenPointsTool`, `FilletTool` and `OffsetTool` for entity-based edit previews;
+- `MeasureDistanceTool` for its transient distance segment preview;
+- `MirrorTool` through `IToolPreviewDescriptorProvider`, including mirrored entities, axis line and endpoint markers;
+- `MeasureAngleTool` through `IToolPreviewDescriptorProvider`, including measurement rays and point markers;
+- `SelectionTool` and `ZoomWindowTool` through `IToolPreviewDescriptorProvider`, including semantic filled preview windows;
+- `GripEditTool` through `IToolPreviewDescriptorProvider`, including preview replacement entities, measurement guides and hot/warm/cold grip markers;
+- `ExtendTool` and `TrimTool` through `IToolPreviewDescriptorProvider`, including normal preview entities plus highlighted added/removed fragments;
+- `ThreePointDimensionToolBase`, which covers the linear/aligned/radius/diameter/angular dimension tools that expose entity previews.
+
+`CadToolPreviewRenderer` now tries the descriptor provider first and then the entity provider. The previous active-tool concrete fallback dispatch has been removed, so tool-specific preview knowledge stays in the tools layer rather than in the app renderer.
+
+---
+
+## Application diagnostics
+
+`OpenCad2D.App.Diagnostics` contains the minimal application logging abstraction used by the UI layer.
+
+The current logging contract is intentionally small:
+
+- `IApplicationLogger` exposes `Info`, `Warning` and `Error` methods;
+- `ApplicationLogEntry` stores timestamp, severity, category, message and optional exception;
+- `TraceApplicationLogger` writes entries to `System.Diagnostics.Trace`;
+- `InMemoryApplicationLogger` supports focused tests and future diagnostic UI scenarios.
+
+The first consumer is `CadCanvas.HandlePointerPressedException`. Pointer/tool failures are still converted into a recoverable user-facing `ToolResult.Cancelled(...)`, but the full exception is now logged before the canvas is invalidated. This avoids losing stack traces when asynchronous tool input fails.

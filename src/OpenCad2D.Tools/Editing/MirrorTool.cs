@@ -14,7 +14,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Mirrors the current selection across a two-point axis.
 /// By default the source entities are kept, matching the common CAD workflow.
 /// </summary>
-public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
+public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, IToolPreviewDescriptorProvider
 {
     private static readonly CommandOption YesOption = new("Yes", "Y", "Delete source entities after mirroring");
     private static readonly CommandOption NoOption = new("No", "N", "Keep source entities after mirroring");
@@ -156,6 +156,42 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             .GetByIds(context.Selection.SelectedIds)
             .Select(entity => entity.Transform(matrix).WithId(EntityId.New()))
             .ToList();
+    }
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        IReadOnlyList<CadEntity> entities = GetPreviewEntities(context);
+
+        if (_firstAxisPoint is null)
+        {
+            return ToolPreviewDescriptor.FromEntities(entities);
+        }
+
+        var markers = new List<ToolPreviewMarker>
+        {
+            new(_firstAxisPoint.Value, ToolPreviewMarkerKind.Primary)
+        };
+
+        var lines = new List<ToolPreviewLine>();
+
+        if (_secondAxisPoint is not null)
+        {
+            lines.Add(new ToolPreviewLine(
+                _firstAxisPoint.Value,
+                _secondAxisPoint.Value,
+                ToolPreviewLineKind.Axis));
+
+            markers.Add(new ToolPreviewMarker(
+                _secondAxisPoint.Value,
+                ToolPreviewMarkerKind.Primary));
+        }
+
+        return new ToolPreviewDescriptor(
+            entities: entities,
+            lines: lines,
+            markers: markers);
     }
 
     public ToolResult OnPointerPressed(

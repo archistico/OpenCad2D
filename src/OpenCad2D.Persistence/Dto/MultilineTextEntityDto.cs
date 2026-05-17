@@ -18,5 +18,7 @@ public sealed class MultilineTextEntityDto : EntityDto
 
     public double RotationDegrees { get; set; }
 
+    public double ReferenceWidth { get; set; }
+
     public string TextFormatId { get; set; } = "Standard";
 }

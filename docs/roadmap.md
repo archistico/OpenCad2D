@@ -22,7 +22,7 @@ Before the first stable release, OpenCad2D should prioritize user trust and pred
 - [x] start with a clean drawing loaded from `Templates/default.opencad2d.json`;
 - [x] open the main window maximized by default;
 - [x] implement draw order / Z-order independent from layers;
-- [ ] validate DXF import/export in external CAD viewers;
+- [x] validate the current DXF compatibility sample set in external CAD viewers;
 - [x] add end-to-end workflow tests for save/reopen and import/modify/export;
 - [x] keep current limitations visible in the README and user documentation.
 - [x] maintain a v0.9 stabilization plan for post-v0.8 hardening (`docs/stabilization-v0.9-plan.md`).
@@ -41,7 +41,7 @@ OpenCad2D currently includes:
 - [x] Line Format Manager;
 - [x] Text Format Manager;
 - [x] DimensionStyle and basic dimension entities/tools;
-- [x] editable Property Panel v2 for supported primary entity properties;
+- [x] editable Property Panel v2 for supported primary entity properties, including MTEXT value/reference-width editing;
 - [x] hidden layer behavior;
 - [x] locked layer behavior;
 - [x] spatial index abstraction;
@@ -53,6 +53,7 @@ OpenCad2D currently includes:
 - [x] startup default template file;
 - [x] SVG export;
 - [x] DXF export;
+- [x] DXF SPLINE export with degree, knot count and knot vector;
 - [x] automated DXF structure and compatibility tests;
 - [x] hit testing;
 - [x] selection;
@@ -66,9 +67,10 @@ OpenCad2D currently includes:
 - [x] modify tools for lines/arcs/circles/polylines where supported;
 - [x] grip editing;
 - [x] custom Avalonia canvas;
+- [x] tool-provided preview descriptor/entity protocols for active tool previews;
 - [x] CAD-style crosshair;
 - [x] basic command line with aliases and coordinate input for supported tools;
-- [ ] CAD-style guided command input with prompt phases, options, visible history, relative and polar input for v0.8;
+- [x] CAD-style guided command input with prompt phases, options, command history navigation, relative and polar input for supported workflows;
 - [x] Ortho mode;
 - [x] Polar Tracking with Off/90°/45°/30°/15°.
 
@@ -105,6 +107,19 @@ Pending in this phase:
 
 ---
 
+
+## Post-review stabilization S1-S10
+
+Completed after the v0.8.x critical review:
+
+- [x] S1: `DeleteEntitiesCommand` marks dimensions stale when model geometry is removed;
+- [x] S2: DXF `SPLINE` export writes knot vectors instead of declaring zero knots;
+- [x] S3: representative DXF compatibility samples were prepared and manually checked in external viewers;
+- [x] S4: intersection snap supports ellipses and Bezier splines through sampled approximations;
+- [x] S5-S7.7: `CadToolPreviewRenderer` no longer owns a concrete active-tool preview dispatch; tools provide previews through `IToolPreviewEntityProvider` or `IToolPreviewDescriptorProvider`;
+- [x] S6: application logging records tool/UI exceptions before user-facing status reporting;
+- [x] S8: MTEXT reference width is persisted and imported/exported through DXF group `41`;
+- [x] S10: MTEXT can be edited from the property panel with undo/redo.
 
 ## Final v0.8.x completion before v0.9
 
@@ -946,10 +961,10 @@ These remain useful but are intentionally deferred beyond v0.8:
 
 ### Stability & Test
 
-- [~] end-to-end workflow: draw -> save -> reopen;
+- [x] end-to-end workflow: draw -> save -> reopen;
 - [~] end-to-end workflow: draw -> annotate -> export DXF;
 - [~] end-to-end workflow: draw -> annotate -> export SVG/PDF;
-- [~] end-to-end workflow: import DXF -> modify -> export;
+- [x] end-to-end workflow: import DXF -> modify -> export;
 - [ ] performance review for rendering;
 - [ ] performance review for large files;
 - [ ] performance review for snap and hit testing;
@@ -975,16 +990,16 @@ These remain useful but are intentionally deferred beyond v0.8:
 - [x] text and basic dimensions operational;
 - [x] PDF export working;
 - [x] basic command line with aliases and coordinate input;
-- [ ] guided CAD-style command input completed for v0.8;
-- [~] editable Property Panel for supported primary entity properties;
-- [~] DXF import/export covered by automated structural and round-trip tests;
-- [ ] DXF import/export externally validated in LibreCAD, QCAD and Autodesk DWG TrueView;
-- [ ] application/session settings persistence;
-- [ ] draw order / Z-order independent from layers;
-- [~] end-to-end workflow: draw -> save -> reopen;
-- [~] end-to-end workflow: import DXF -> modify -> export;
+- [x] guided CAD-style command input completed for the current supported workflows;
+- [x] editable Property Panel for supported primary entity properties;
+- [x] DXF import/export covered by automated structural, compatibility and workflow tests;
+- [~] DXF import/export externally smoke-tested; exact LibreCAD/QCAD/Autodesk viewer versions still need to be recorded;
+- [~] application/session settings persistence;
+- [x] draw order / Z-order independent from layers;
+- [x] end-to-end workflow: draw -> save -> reopen;
+- [x] end-to-end workflow: import DXF -> modify -> export;
 - [ ] stable undo/redo on all primary tools;
-- [~] reliable `.opencad2d.json` persistence under end-to-end workflow tests;
+- [x] reliable `.opencad2d.json` persistence under end-to-end workflow tests;
 - [ ] no known crash in common operations;
 - [ ] complete user documentation;
 - [ ] updated developer documentation;
@@ -1375,7 +1390,7 @@ Remaining release-gate work:
 - [x] `samples/dxf/compatibility/06_spline_bezier.dxf`;
 - [x] `samples/dxf/compatibility/07_mixed_drawing.dxf`;
 - [x] manual DXF sample validation results recorded in `docs/dxf-compatibility.md`;
-- [ ] record exact external viewer versions in a future compatibility audit;
+- [ ] record exact external viewer names/versions in a future compatibility audit;
 - [ ] optional Autodesk DWG TrueView validation recorded when available.
 
 

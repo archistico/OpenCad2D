@@ -21,17 +21,25 @@ samples/dxf/compatibility/
 
 | Sample | Purpose | Current validation state |
 |---|---|---|
-| `01_basic_lines_layers.dxf` | Lines, layers, linetypes and lineweights | Ready for external validation |
-| `02_text_mtext.dxf` | `TEXT` and `MTEXT`, including MTEXT line breaks and reference width | Ready for external validation |
-| `03_arcs_circles_ellipses.dxf` | `CIRCLE`, `ARC`, full `ELLIPSE` and partial `ELLIPSE` | Ready for external validation |
-| `04_polylines_polygons.dxf` | Open/closed `LWPOLYLINE` and one bulge segment | Ready for external validation |
-| `05_dimensions_as_geometry.dxf` | Dimension-like graphics exported as primitive geometry | Ready for external validation |
-| `06_spline_bezier.dxf` | `SPLINE` with degree, knot vector and control points | Ready for external validation |
-| `07_mixed_drawing.dxf` | Mixed smoke drawing with the main supported entity families | Ready for external validation |
+| `01_basic_lines_layers.dxf` | Lines, layers, linetypes and lineweights | Manual check passed; exact viewer/version not recorded |
+| `02_text_mtext.dxf` | `TEXT` and `MTEXT`, including MTEXT line breaks and reference width | Manual check passed; exact viewer/version not recorded |
+| `03_arcs_circles_ellipses.dxf` | `CIRCLE`, `ARC`, full `ELLIPSE` and partial `ELLIPSE` | Manual check passed; exact viewer/version not recorded |
+| `04_polylines_polygons.dxf` | Open/closed `LWPOLYLINE` and one bulge segment | Manual check passed; exact viewer/version not recorded |
+| `05_dimensions_as_geometry.dxf` | Dimension-like graphics exported as primitive geometry | Manual check passed; exact viewer/version not recorded |
+| `06_spline_bezier.dxf` | `SPLINE` with degree, knot vector and control points | Manual check passed; exact viewer/version not recorded |
+| `07_mixed_drawing.dxf` | Mixed smoke drawing with the main supported entity families | Manual check passed; exact viewer/version not recorded |
 
-Historical note: a previous v0.8 validation pass reported that the seven compatibility samples opened successfully, but the exact external application names and versions were not recorded. For v0.8.5 and later, consider a validation pass complete only when the viewer name, version/build, operating system and date are recorded.
+Current note: the seven compatibility samples were manually checked and reported as opening correctly in external viewers. Exact external application names, versions/builds and operating systems were not recorded in this pass. For a stricter future compatibility audit, record the viewer name, version/build, operating system and date for each sample.
 
 ---
+
+## Current manual result
+
+The current sample set was manually checked after the S3/S8/S2 DXF work and reported as OK. Because the exact viewer versions were not recorded, this should be treated as a practical smoke pass, not as a fully reproducible compatibility certification.
+
+| Date | Sample set | Result | Notes |
+|---|---|---|---|
+| 2026-05-17 | `samples/dxf/compatibility/01` through `07` | Passed smoke check | External viewer check reported OK; exact applications and versions to be recorded in a future audit. |
 
 ## External viewer validation log
 

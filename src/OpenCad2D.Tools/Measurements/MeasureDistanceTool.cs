@@ -8,7 +8,7 @@ namespace OpenCad2D.Tools.Measurements;
 /// <summary>
 /// Non-destructive tool that measures distance, delta and angle between two points.
 /// </summary>
-public sealed class MeasureDistanceTool : TwoPointToolBase
+public sealed class MeasureDistanceTool : TwoPointToolBase, IToolPreviewEntityProvider
 {
     public override string Name => "Measure Distance";
 
@@ -22,6 +22,17 @@ public sealed class MeasureDistanceTool : TwoPointToolBase
         return new LineEntity(
             FirstPoint.Value,
             CurrentPoint.Value);
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        LineEntity? preview = GetPreviewEntity();
+
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new[] { preview };
     }
 
     protected override ToolResult OnFirstPointSelected(

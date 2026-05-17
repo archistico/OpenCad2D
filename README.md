@@ -20,14 +20,14 @@ OpenCad2D currently supports a complete early CAD workflow:
 - document-level settings persistence for grid, snap, ortho, polar tracking and current drawing settings;
 - document recovery for partially invalid native files;
 - New, Open, Save and Save As;
-- SVG, DXF and PDF export;
+- SVG, DXF and PDF export, including DXF SPLINE knot-vector output and MTEXT reference width;
 - ASCII DXF import for core 2D entities, layer tables, MTEXT, LWPOLYLINE bulge arcs, ELLIPSE and readable SPLINE entities;
 - layers with visibility and locking;
 - reusable line formats with color, lineweight, line style and custom dash pattern values;
 - reusable text formats;
 - Layer Manager, Line Format Manager and Text Format Manager;
 - compact ColorPicker support in line/text format managers;
-- editable Property Panel for supported entities, including read-only draw order display;
+- editable Property Panel for supported entities, including MTEXT value/reference-width editing and read-only draw order display;
 - independent draw order / Z-order, separate from layers;
 - CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input, direct distances, command history navigation and first-pass autocomplete;
 - object snapping, grid snapping, Ortho mode and Polar Tracking;
@@ -44,7 +44,9 @@ OpenCad2D currently supports a complete early CAD workflow:
 - measure tools for distance, entity properties, angles and closed-polyline areas;
 - Zoom Window, Zoom Extents, pan and reset view;
 - CAD-style crosshair cursor;
-- undo/redo for document mutations.
+- undo/redo for document mutations;
+- tool-provided preview descriptor/entity protocols that keep active tool preview logic out of the app renderer;
+- minimal application logging for tool/UI exceptions.
 
 See `docs/release-v0.8.md` for the current release notes.
 
@@ -151,10 +153,10 @@ Important documents:
 | Document | Purpose |
 |---|---|
 | `docs/architecture.md` | project structure and dependency rules |
-| `docs/roadmap.md` | current roadmap and next milestones |
+| `docs/roadmap.md` | current roadmap, completed stabilization work and next milestones |
 | `docs/commands.md` | commands, aliases and undoable command rules |
 | `docs/command-input.md` | command input syntax and tool workflow |
-| `docs/tools.md` | tool behavior and workflow rules |
+| `docs/tools.md` | tool behavior, workflow rules and preview-provider conventions |
 | `docs/line-formats.md` | line format and line style pattern rules |
 | `docs/application-settings.md` | document settings and local settings separation |
 | `docs/draw-order.md` | Z-order behavior |

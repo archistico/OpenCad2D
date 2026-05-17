@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to create open or closed Bezier spline entities.
 /// </summary>
-public sealed class SplineTool : ICadTool, ICommandDrivenTool
+public sealed class SplineTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private readonly List<Point2D> _controlPoints = new();
     private Point2D? _currentPoint;
@@ -79,6 +79,16 @@ public sealed class SplineTool : ICadTool, ICommandDrivenTool
         State == SplineToolState.CollectingControlPoints &&
         _controlPoints.Count > 0 &&
         _currentPoint.HasValue;
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        BezierSplineEntity? preview = GetPreviewEntity();
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
+    }
 
     public BezierSplineEntity? GetPreviewEntity()
     {

@@ -9,7 +9,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw ellipse entities by center, major axis point and minor radius point.
 /// </summary>
-public sealed class EllipseTool : ICadTool, ICommandDrivenTool
+public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     public string Name => "Ellipse";
 
@@ -97,6 +97,16 @@ public sealed class EllipseTool : ICadTool, ICommandDrivenTool
         }
 
         return SubmitPoint(context, input.Point.Value);
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EllipseEntity? preview = GetPreviewEntity();
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
     }
 
     public EllipseEntity? GetPreviewEntity()

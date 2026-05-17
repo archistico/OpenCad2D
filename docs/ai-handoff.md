@@ -1,4 +1,4 @@
-# Latest handoff note
+﻿# Latest handoff note
 
 ## v0.8.5 stabilization: delete marks dimensions stale
 
@@ -2146,4 +2146,191 @@ New covered combinations include line/ellipse, polyline/ellipse, circle/ellipse,
 Added focused interaction tests for line/ellipse, polyline/ellipse, line/spline and ellipse/spline intersection snaps. Updated snapping and limitation docs to make clear that ellipse/spline intersections are currently approximate for interactive snapping, not exact analytic/NURBS solving.
 
 Validation note: tests were prepared but not executed in the assistant sandbox because `dotnet` is not installed there. Run `dotnet build OpenCad2D.sln` and `dotnet test OpenCad2D.sln --no-build` locally.
+
+
+## 2026-05-17 - S5 preview provider first migration
+
+Started the first low-risk refactor of `CadToolPreviewRenderer` after the v0.8.5 stabilization passes.
+
+Added `IToolPreviewEntityProvider` in `OpenCad2D.Tools.Common`. The interface lets tools expose transient preview geometry as `CadEntity` instances, so the App renderer can draw these previews without switching on each concrete tool type.
+
+Migrated representative tools only:
+
+- `LineTool` for a simple two-point drawing preview;
+- `MoveTool` for a context-aware modify preview based on the current selection and tool context;
+- `ThreePointDimensionToolBase`, so horizontal, vertical, aligned, radius, diameter and angular dimensions can provide their preview entities through the shared protocol.
+
+`CadToolPreviewRenderer` now tries the provider first and keeps the legacy concrete-tool dispatch as fallback for tools not yet migrated or for previews that require custom overlay drawing. Measurement vectors, base-point markers and other custom overlays remain unchanged.
+
+Added `ToolPreviewEntityProviderTests` to lock the protocol for line, move and dimension previews. Future cleanup can migrate Rectangle/Circle/Arc/Polyline/Spline/Polygon, then modify tools, and finally remove dead fallback cases once manual preview validation is complete.
+
+## 2026-05-17 - S6 application logging foundation
+
+Added the first minimal application logging abstraction after the preview-provider stabilization pass.
+
+New `OpenCad2D.App.Diagnostics` types:
+
+- `ApplicationLogLevel`;
+- `ApplicationLogEntry`;
+- `IApplicationLogger`;
+- `TraceApplicationLogger`;
+- `InMemoryApplicationLogger`.
+
+`CadCanvas` now owns a configurable `IApplicationLogger` instance, defaulting to `TraceApplicationLogger.Instance`. `HandlePointerPressedException` logs the full exception, including stack trace through `Exception.ToString()`, before showing the existing user-facing status message. This keeps the UI recoverable while preserving enough diagnostic detail for debugging tool/input failures.
+
+Added `ApplicationLoggerTests` to verify in-memory logging, exception preservation and basic entry validation. Future passes can route additional application-level exception handlers through the same abstraction and optionally replace the trace logger with a file-backed logger.
+
+
+## 2026-05-17 - S8 MTEXT DXF reference width
+
+Added `MultilineTextEntity.ReferenceWidth` as the native holder for DXF MTEXT reference rectangle width. The value defaults to `0`, preserving the previous unconstrained-wrapping behavior. Positive values are persisted through JSON document serialization and used for DXF import/export; on-canvas wrapping remains a future UI/rendering step.
+
+DXF export now writes group code `41` for `MTEXT`, and DXF import reads group code `41` when available. Missing or non-positive imported widths are treated as `0`. Added focused Core, Export and Persistence tests for reference width validation, DXF group `41` output/import and native round-trip preservation.
+
+
+## 2026-05-17 - S7 preview provider drawing-tool migration
+
+Continued the `CadToolPreviewRenderer` refactor by migrating the remaining entity-based drawing previews to `IToolPreviewEntityProvider`.
+
+Newly migrated drawing tools:
+
+- `RectangleTool`;
+- `RectangleBySidesTool`;
+- `CircleTool`;
+- `ArcTool`;
+- `ArcThreePointsTool`;
+- `EllipseTool`;
+- `PolylineTool`;
+- `PolygonTool`;
+- `SplineTool`.
+
+`CadToolPreviewRenderer` no longer needs switch cases for these basic drawing previews. It still keeps fallback cases for modify tools with highlighted previews, measurement overlays, selection/zoom windows, mirror-axis overlays and grip editing. Existing measurement helper overlays for two-point tools and arc tools remain in the renderer so dynamic distance/radius guides are unchanged.
+
+Expanded `ToolPreviewEntityProviderTests` to cover the migrated drawing tools and verify that representative previews are still exposed as normal `CadEntity` instances. Future cleanup can migrate context-aware modify tools (`CopyTool`, `RotateTool`, `ScaleTool`, `MirrorTool`, `OffsetTool`) and then remove now-unused private drawing-preview methods from `CadToolPreviewRenderer` after manual UI validation.
+
+
+## 2026-05-17 - S7.2 preview provider modify-tool migration
+
+Continued the `CadToolPreviewRenderer` refactor after the drawing-tool migration by moving additional entity-based modify previews to `IToolPreviewEntityProvider`.
+
+Newly migrated modify tools:
+
+- `CopyTool`;
+- `RotateTool`;
+- `ScaleTool`;
+- `AlignTool`;
+- `BreakAtPointTool`;
+- `BreakBetweenPointsTool`;
+- `FilletTool`.
+
+`CadToolPreviewRenderer` now delegates these previews through the shared provider protocol before falling back to custom drawing. The fallback switch is reduced to tools that still need additional overlays or non-entity drawing: `ExtendTool`, `TrimTool`, `OffsetTool`, `MirrorTool`, measurement tools, selection/zoom windows and grip editing.
+
+Expanded `ToolPreviewEntityProviderTests` with a modify-tool protocol check. Future cleanup can either introduce a richer preview descriptor for highlighted/custom overlays or keep those tools in the fallback until their drawing requirements are generalized.
+
+## 2026-05-17 - S7.3 preview provider offset and distance migration
+
+Continued the incremental `CadToolPreviewRenderer` cleanup by migrating two more entity-only previews to `IToolPreviewEntityProvider`:
+
+- `OffsetTool`, which now exposes its current offset preview entity through the shared provider protocol;
+- `MeasureDistanceTool`, which now exposes its transient measured segment as a preview entity.
+
+Removed the corresponding fallback switch cases and private drawing methods from `CadToolPreviewRenderer`. The renderer still keeps concrete fallback cases for tools that need extra custom drawing beyond plain preview entities: `ExtendTool` and `TrimTool` need highlighted preview fragments, `MirrorTool` needs the mirror-axis overlay, `MeasureAngleTool` needs angle-point markers, selection/zoom tools need filled screen windows, and `GripEditTool` needs grip-marker overlays.
+
+Expanded `ToolPreviewEntityProviderTests` so the protocol check includes `OffsetTool` and `MeasureDistanceTool`, with a focused distance-preview assertion. The next architectural step should not force these remaining custom-overlay tools into the current entity-only interface; instead, introduce a richer preview descriptor/model if we want to remove the final fallback dispatch cleanly.
+
+## 2026-05-17 - S7.4 ToolPreviewDescriptor foundation
+
+Introduced the richer tool preview descriptor protocol so previews are no longer limited to plain transient `CadEntity` lists.
+
+New tools-layer preview model types:
+
+- `IToolPreviewDescriptorProvider`;
+- `ToolPreviewDescriptor`;
+- `ToolPreviewLine` / `ToolPreviewLineKind`;
+- `ToolPreviewMarker` / `ToolPreviewMarkerKind`;
+- `ToolPreviewWindow` / `ToolPreviewWindowKind`.
+
+The descriptor model is UI-agnostic and stores model-space geometry plus semantic overlay items. `CadToolPreviewRenderer` now tries `IToolPreviewDescriptorProvider` first, then `IToolPreviewEntityProvider`, then the remaining legacy fallback switch.
+
+Migrated `MirrorTool` to descriptor previews so mirrored entities, mirror-axis line and axis endpoint markers are provided by the tool instead of drawn by a concrete renderer case. Migrated `MeasureAngleTool` to descriptor previews so measurement rays and angle point markers are also tool-provided. Removed the old concrete renderer cases and private drawing methods for those two tools.
+
+Expanded `ToolPreviewEntityProviderTests` with descriptor-specific coverage for mirror-axis overlays, angle markers and descriptor collection storage. Remaining fallback tools can now be migrated incrementally by expressing their overlays as descriptor items instead of adding new renderer-specific branches.
+
+
+
+## 2026-05-17 - S7.5 ToolPreviewDescriptor window migration
+
+Continued the `ToolPreviewDescriptor` migration by moving filled window overlays out of the concrete renderer fallback.
+
+Migrated tools:
+
+- `SelectionTool`, which now implements `IToolPreviewDescriptorProvider` and emits a `ToolPreviewWindow` with `ToolPreviewWindowKind.Selection` while a drag window is active;
+- `ZoomWindowTool`, which now implements `IToolPreviewDescriptorProvider` and emits a `ToolPreviewWindow` with `ToolPreviewWindowKind.Zoom` while the zoom rectangle is active.
+
+`CadToolPreviewRenderer` already knew how to render descriptor windows, so the concrete `SelectionTool` and `ZoomWindowTool` fallback cases and their private drawing methods were removed. The remaining fallback switch is now limited to `ExtendTool`, `TrimTool` and `GripEditTool`.
+
+Expanded `ToolPreviewEntityProviderTests` with descriptor checks for selection and zoom windows. This keeps the migration incremental while reducing concrete tool knowledge in the app renderer.
+
+## 2026-05-17 - S7.6 ToolPreviewDescriptor grip-edit migration
+
+Continued the `ToolPreviewDescriptor` migration by moving `GripEditTool` out of the concrete `CadToolPreviewRenderer` fallback.
+
+Changes made:
+
+- `GripEditTool` now implements `IToolPreviewDescriptorProvider`.
+- The descriptor emitted by `GripEditTool` contains:
+  - the transient replacement entity while a grip is being dragged;
+  - the base-to-destination measurement guide line;
+  - primary/secondary point markers for the active grip move;
+  - cold/hot/warm grip markers for all active grips.
+- `ToolPreviewMarker` now has a `Shape` field through `ToolPreviewMarkerShape` so app rendering can distinguish square grip markers from circular insert-vertex markers without the app depending on `GripKind`.
+- `ToolPreviewMarkerKind` now includes `GripCold`, `GripHot` and `GripWarm` semantic states.
+- `CadToolPreviewRenderer` renders grip markers from descriptors and no longer switches on `GripEditTool`.
+
+The remaining concrete fallback switch in `CadToolPreviewRenderer` is now limited to `ExtendTool` and `TrimTool`, because they still expose two preview collections: normal preview entities and highlighted fragments. A next cleanup pass can migrate them by returning normal entities through `ToolPreviewDescriptor.Entities` and highlighted fragments through `ToolPreviewDescriptor.HighlightedEntities`.
+
+
+## 2026-05-17 - S7.7 ToolPreviewDescriptor highlighted-fragment migration
+
+Completed the remaining concrete fallback cleanup in `CadToolPreviewRenderer` by migrating the highlighted-fragment modify tools to `IToolPreviewDescriptorProvider`.
+
+Migrated tools:
+
+- `ExtendTool`, which now emits its extended replacement entity through `ToolPreviewDescriptor.Entities` and the newly added extension segment through `ToolPreviewDescriptor.HighlightedEntities`;
+- `TrimTool`, which now emits the kept trim result through `ToolPreviewDescriptor.Entities` and the removed fragment through `ToolPreviewDescriptor.HighlightedEntities`.
+
+`CadToolPreviewRenderer` now resolves active tool previews through the tool-provided protocols only: descriptor provider first, entity provider second. The old concrete fallback switch for `ExtendTool` and `TrimTool` was removed. This means adding a new preview-capable tool should no longer require adding a concrete tool case to the app renderer; the tool should implement either `IToolPreviewEntityProvider` or `IToolPreviewDescriptorProvider`.
+
+Expanded `ToolPreviewEntityProviderTests` with focused descriptor tests for `ExtendTool` and `TrimTool`, including highlighted fragments. The app renderer still contains some measurement-overlay helpers for shared base classes/special tool states, but the former active-tool fallback dispatch has been eliminated.
+
+## 2026-05-17 - S10 multiline text property editing
+
+Added basic property-panel editing support for `MultilineTextEntity` so MTEXT annotations are no longer read-only after insertion.
+
+Editable MTEXT properties now include:
+
+- text value;
+- insertion X/Y;
+- rotation;
+- text format id;
+- reference width.
+
+The update path uses the same `ReplaceEntitiesCommand` workflow as other property-panel edits, so edits participate in undo/redo and keep the selected entity id active after replacement. Empty multiline text values are rejected, invalid numeric values use the shared numeric validation message, and negative reference widths are rejected because `ReferenceWidth = 0` is the supported unconstrained-wrapping value.
+
+Expanded `PropertyPanelEditingTests` with multiline text value, text format and reference width editing coverage.
+
+## 2026-05-17 - Documentation sync after S10
+
+Updated the active documentation set after the S1-S10 stabilization passes. The docs now reflect that:
+
+- deleting model geometry marks dimensions stale;
+- DXF `SPLINE` export writes knot-vector data;
+- the representative DXF compatibility samples were manually checked, while exact viewer/version recording remains a future audit task;
+- ellipse/spline intersection snaps use sampled approximations;
+- active tool previews are provided through `IToolPreviewEntityProvider` and `IToolPreviewDescriptorProvider`, with the old concrete active-tool fallback dispatch removed from `CadToolPreviewRenderer`;
+- application logging captures tool/UI exceptions;
+- MTEXT reference width is persisted and imported/exported through DXF group `41`;
+- MTEXT value, insertion, rotation, text format and reference width are editable from the property panel.
+
+Touched docs include `README.md`, `docs/roadmap.md`, `docs/stabilization-v0.9-plan.md`, `docs/dxf-compatibility.md`, `docs/known-limitations.md` and this handoff.
 

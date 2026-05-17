@@ -10,7 +10,7 @@ namespace OpenCad2D.Tools.Dimensions;
 /// Base class for non-associative dimension tools that collect two measured points
 /// and one placement point.
 /// </summary>
-public abstract class ThreePointDimensionToolBase : ICadTool
+public abstract class ThreePointDimensionToolBase : ICadTool, IToolPreviewEntityProvider
 {
     private Point2D? _firstPoint;
     private Point2D? _secondPoint;
@@ -117,6 +117,13 @@ public abstract class ThreePointDimensionToolBase : ICadTool
     }
 
     public abstract IReadOnlyList<CadEntity> GetPreviewEntities();
+
+    IReadOnlyList<CadEntity> IToolPreviewEntityProvider.GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return GetPreviewEntities();
+    }
 
     protected virtual bool IsValidSecondPoint(
         ToolContext context,

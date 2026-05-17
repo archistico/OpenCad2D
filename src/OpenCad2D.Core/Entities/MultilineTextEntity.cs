@@ -24,7 +24,8 @@ public sealed class MultilineTextEntity : CadEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        double referenceWidth = 0.0)
         : base(
             id ?? EntityId.New(),
             layerId ?? LayerId.Default,
@@ -50,9 +51,17 @@ public sealed class MultilineTextEntity : CadEntity
         }
 
         InsertionPoint = insertionPoint;
+        if (referenceWidth < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(referenceWidth),
+                "Reference width cannot be negative.");
+        }
+
         Text = NormalizeText(text);
         RotationDegrees = NormalizeRotation(rotationDegrees);
         TextFormatId = resolvedFormatId;
+        ReferenceWidth = referenceWidth;
     }
 
     public Point2D InsertionPoint { get; }
@@ -62,6 +71,11 @@ public sealed class MultilineTextEntity : CadEntity
     public double RotationDegrees { get; }
 
     public TextFormatId TextFormatId { get; }
+
+    /// <summary>
+    /// Optional MTEXT reference rectangle width. A value of 0 means unconstrained wrapping.
+    /// </summary>
+    public double ReferenceWidth { get; }
 
     public IReadOnlyList<string> Lines => Text.Split('\n');
 
@@ -139,7 +153,8 @@ public sealed class MultilineTextEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            ReferenceWidth);
     }
 
     public override CadEntity WithId(EntityId id)
@@ -154,7 +169,8 @@ public sealed class MultilineTextEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            ReferenceWidth);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -169,7 +185,8 @@ public sealed class MultilineTextEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            ReferenceWidth);
     }
 
     public MultilineTextEntity WithText(string text)
@@ -184,7 +201,8 @@ public sealed class MultilineTextEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            ReferenceWidth);
     }
 
     public MultilineTextEntity WithInsertionPoint(Point2D insertionPoint)
@@ -199,7 +217,8 @@ public sealed class MultilineTextEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            ReferenceWidth);
     }
 
     public MultilineTextEntity WithTextFormat(TextFormatId textFormatId)
@@ -214,7 +233,25 @@ public sealed class MultilineTextEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            ReferenceWidth);
+    }
+
+
+    public MultilineTextEntity WithReferenceWidth(double referenceWidth)
+    {
+        return new MultilineTextEntity(
+            InsertionPoint,
+            Text,
+            RotationDegrees,
+            TextFormatId,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder,
+            referenceWidth);
     }
 
     private Point2D RotateLocal(

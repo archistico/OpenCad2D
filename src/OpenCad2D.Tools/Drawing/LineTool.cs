@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Commands;
+﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
@@ -9,7 +9,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw line entities.
 /// </summary>
-public sealed class LineTool : TwoPointToolBase, ICommandDrivenTool
+public sealed class LineTool : TwoPointToolBase, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     public override string Name => "Line";
 
@@ -56,6 +56,17 @@ public sealed class LineTool : TwoPointToolBase, ICommandDrivenTool
         return new LineEntity(
             FirstPoint.Value,
             CurrentPoint.Value);
+    }
+
+    public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        LineEntity? preview = GetPreviewEntity();
+
+        return preview is null
+            ? Array.Empty<CadEntity>()
+            : new CadEntity[] { preview };
     }
 
     protected override ToolResult OnFirstPointSelected(

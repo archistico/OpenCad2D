@@ -9,7 +9,7 @@ namespace OpenCad2D.Tools.Selection;
 /// <summary>
 /// Interactive tool used to select entities by point or by window.
 /// </summary>
-public sealed class SelectionTool : ICadTool, ISnapModeProvider
+public sealed class SelectionTool : ICadTool, ISnapModeProvider, IToolPreviewDescriptorProvider
 {
     private Point2D? _dragStartPoint;
     private Point2D? _dragCurrentPoint;
@@ -64,6 +64,27 @@ public sealed class SelectionTool : ICadTool, ISnapModeProvider
         ArgumentNullException.ThrowIfNull(context);
 
         return SnapKind.EntityOnly;
+    }
+
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        BoundingBox2D? window = GetPreviewWindow();
+
+        if (window is null)
+        {
+            return ToolPreviewDescriptor.Empty;
+        }
+
+        return new ToolPreviewDescriptor(
+            windows: new[]
+            {
+                new ToolPreviewWindow(
+                    window.Value,
+                    ToolPreviewWindowKind.Selection)
+            });
     }
 
     public ToolResult OnPointerPressed(

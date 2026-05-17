@@ -15,7 +15,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Interactive tool used to align the current selection by mapping two source
 /// points to two destination points.
 /// </summary>
-public sealed class AlignTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool
+public sealed class AlignTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool, IToolPreviewEntityProvider
 {
     private readonly AlignTransformService _alignTransformService;
     private Point2D? _sourcePoint1;

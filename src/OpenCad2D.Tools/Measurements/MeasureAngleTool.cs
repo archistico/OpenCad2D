@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Measurements;
 /// Non-destructive tool that measures the angle defined by three points:
 /// first ray point, vertex, second ray point.
 /// </summary>
-public sealed class MeasureAngleTool : ICadTool
+public sealed class MeasureAngleTool : ICadTool, IToolPreviewDescriptorProvider
 {
     private Point2D? _firstRayPoint;
     private Point2D? _vertex;
@@ -59,6 +59,35 @@ public sealed class MeasureAngleTool : ICadTool
             _currentPoint.Value));
 
         return entities;
+    }
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        IReadOnlyList<CadEntity> entities = GetPreviewEntities()
+            .Cast<CadEntity>()
+            .ToList();
+
+        var markers = new List<ToolPreviewMarker>();
+
+        if (_firstRayPoint is not null)
+        {
+            markers.Add(new ToolPreviewMarker(
+                _firstRayPoint.Value,
+                ToolPreviewMarkerKind.Primary));
+        }
+
+        if (_vertex is not null)
+        {
+            markers.Add(new ToolPreviewMarker(
+                _vertex.Value,
+                ToolPreviewMarkerKind.Primary));
+        }
+
+        return new ToolPreviewDescriptor(
+            entities: entities,
+            markers: markers);
     }
 
     public ToolResult OnPointerPressed(
