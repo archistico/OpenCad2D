@@ -736,11 +736,21 @@ public sealed class DxfExporter : IDxfExporter
         WriteEntityByLayerProperties(
             writer,
             layerName);
-        writer.WriteGroup(70, spline.IsClosed ? 11 : 8);
-        writer.WriteGroup(71, Math.Min(3, spline.ControlPoints.Count - 1));
-        writer.WriteGroup(72, 0);
+        int degree = Math.Min(3, spline.ControlPoints.Count - 1);
+        IReadOnlyList<double> knots = CreateOpenUniformKnotVector(
+            spline.ControlPoints.Count,
+            degree);
+
+        writer.WriteGroup(70, spline.IsClosed ? 9 : 8);
+        writer.WriteGroup(71, degree);
+        writer.WriteGroup(72, knots.Count);
         writer.WriteGroup(73, spline.ControlPoints.Count);
         writer.WriteGroup(74, 0);
+
+        foreach (double knot in knots)
+        {
+            writer.WriteGroup(40, knot);
+        }
 
         foreach (Point2D controlPoint in spline.ControlPoints)
         {
@@ -754,6 +764,46 @@ public sealed class DxfExporter : IDxfExporter
         }
     }
 
+    private static IReadOnlyList<double> CreateOpenUniformKnotVector(
+        int controlPointCount,
+        int degree)
+    {
+        if (controlPointCount <= 0)
+        {
+            return Array.Empty<double>();
+        }
+
+        if (degree < 1)
+        {
+            return Enumerable.Range(
+                    0,
+                    controlPointCount + degree + 1)
+                .Select(index => (double)index)
+                .ToArray();
+        }
+
+        int knotCount = controlPointCount + degree + 1;
+        int maximumKnotValue = controlPointCount - degree;
+        var knots = new double[knotCount];
+
+        for (int index = 0; index < knotCount; index++)
+        {
+            if (index <= degree)
+            {
+                knots[index] = 0.0;
+            }
+            else if (index >= controlPointCount)
+            {
+                knots[index] = maximumKnotValue;
+            }
+            else
+            {
+                knots[index] = index - degree;
+            }
+        }
+
+        return knots;
+    }
 
     private static BoundingBox2D? GetContentBounds(
         CadDocument document,

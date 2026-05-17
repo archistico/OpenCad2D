@@ -1,5 +1,15 @@
 # Latest handoff note
 
+## v0.8.5 stabilization: delete marks dimensions stale
+
+Deleting model geometry now marks remaining non-associative dimensions as stale, matching the existing behavior used by modify, replace and transform commands. `DeleteEntitiesCommand` captures the previous dimension stale state before deletion, marks dimensions stale only when model geometry is removed, and restores the captured state on undo. Deleting dimension annotations alone does not mark other dimensions stale.
+
+Added focused core tests for delete-driven stale marking, undo restoration and the dimension-only deletion case.
+
+---
+
+# Latest handoff note
+
 ## v0.8.5 DXF SPLINE import
 
 Implemented first-pass DXF `SPLINE` import. Readable control-point splines are imported as editable `BezierSplineEntity` instances, preserving the OpenCad2D Bezier workflow and enabling round-trips for OpenCad2D-exported SPLINE entities. Closed spline flags are respected. Fit-point-only SPLINE entities are imported as `PolylineEntity` approximations with an informational diagnostic, because OpenCad2D does not yet evaluate external NURBS knot vectors or rational weights. Added focused importer tests for open control-point splines, closed splines, fit-point-only fallback and malformed point data.
@@ -2101,3 +2111,39 @@ Final pre-tag gate:
 - `git status`;
 - commit release docs/samples if needed;
 - tag and push `v0.8.0`.
+
+## 2026-05-17 — v0.8.5 stabilization S2 DXF SPLINE knot vector
+
+Completed the second stabilization pass after the dimension-stale delete fix. `DxfExporter.WriteBezierSpline` now writes a structurally complete DXF `SPLINE` header for OpenCad2D Bezier splines: degree, knot count, control point count, fit point count, open-uniform knot values and control points. Closed splines now use the closed + planar DXF flags without the periodic flag, because the exported knot vector is open-uniform rather than periodic.
+
+Added DXF export tests for quadratic and cubic spline knot vectors and for the closed-spline flag. Updated `docs/dxf-export.md` to document the SPLINE group codes and the current NURBS limitations.
+
+Validation note: tests were prepared but not executed in the assistant sandbox because `dotnet` is not installed there. Run `dotnet build OpenCad2D.sln` and `dotnet test OpenCad2D.sln --no-build` locally.
+
+
+## 2026-05-17 — v0.8.5 stabilization S3 DXF external validation preparation
+
+Prepared the third stabilization pass after the SPLINE knot-vector export fix. The project now includes an explicit manual DXF compatibility sample folder under `samples/dxf/compatibility/` with seven small ASCII DXF files:
+
+- `01_basic_lines_layers.dxf`;
+- `02_text_mtext.dxf`;
+- `03_arcs_circles_ellipses.dxf`;
+- `04_polylines_polygons.dxf`;
+- `05_dimensions_as_geometry.dxf`;
+- `06_spline_bezier.dxf`;
+- `07_mixed_drawing.dxf`.
+
+Updated `docs/dxf-compatibility.md` so the compatibility status distinguishes clearly between automated/internal checks and external viewer validation. The previous v0.8 note remains documented as a historical pass, but the new rule is stricter: a manual audit is complete only when the application name, exact version/build, operating system and date are recorded.
+
+Next validation step: open all seven sample files in LibreCAD and QCAD at minimum, record pass/partial/fail results in `docs/dxf-compatibility.md`, and only then mark the external compatibility audit as complete.
+
+## 2026-05-17 — v0.8.5 stabilization S4 curve intersection snaps
+
+Completed the fourth stabilization pass for intersection snapping. `IntersectionSnapProvider` now includes a first-pass curve-intersection path for `EllipseEntity` and `BezierSplineEntity` by converting supported curves to high-resolution polyline approximations during snap candidate evaluation.
+
+New covered combinations include line/ellipse, polyline/ellipse, circle/ellipse, ellipse/ellipse, line/spline, polyline/spline, circle/spline, ellipse/spline and spline/spline. Existing exact analytic cases for lines, polylines, circles and arcs remain unchanged.
+
+Added focused interaction tests for line/ellipse, polyline/ellipse, line/spline and ellipse/spline intersection snaps. Updated snapping and limitation docs to make clear that ellipse/spline intersections are currently approximate for interactive snapping, not exact analytic/NURBS solving.
+
+Validation note: tests were prepared but not executed in the assistant sandbox because `dotnet` is not installed there. Run `dotnet build OpenCad2D.sln` and `dotnet test OpenCad2D.sln --no-build` locally.
+

@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
@@ -240,6 +240,143 @@ public sealed class IntersectionSnapProviderTests
         Assert.Equal(SnapKind.Intersection, result.Kind);
         Assert.Equal(5, result.Point.X, precision: 10);
         Assert.Equal(Math.Sqrt(75), result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_LineEllipseIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(-20, 0),
+            new Point2D(20, 0));
+
+        var ellipse = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+
+        document.AddEntity(line);
+        document.AddEntity(ellipse);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(10.1, 0.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(10, result.Point.X, precision: 10);
+        Assert.Equal(0, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_PolylineEllipseIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, -10),
+            new Point2D(0, 10)
+        });
+
+        var ellipse = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+
+        document.AddEntity(polyline);
+        document.AddEntity(ellipse);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(0.1, 5.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(0, result.Point.X, precision: 10);
+        Assert.Equal(5, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_LineSplineIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(5, -5),
+            new Point2D(5, 5));
+
+        var spline = new BezierSplineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0)
+        });
+
+        document.AddEntity(line);
+        document.AddEntity(spline);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(5.1, 0.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(5, result.Point.X, precision: 10);
+        Assert.Equal(0, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_EllipseSplineIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var ellipse = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+
+        var spline = new BezierSplineEntity(new[]
+        {
+            new Point2D(10, -5),
+            new Point2D(10, 5)
+        });
+
+        document.AddEntity(ellipse);
+        document.AddEntity(spline);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(10.1, 0.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(10, result.Point.X, precision: 10);
+        Assert.Equal(0, result.Point.Y, precision: 10);
     }
 
     [Fact]

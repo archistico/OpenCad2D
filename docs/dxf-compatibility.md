@@ -1,44 +1,108 @@
-# DXF Compatibility — OpenCad2D v0.8
+# DXF Compatibility — OpenCad2D v0.8.5
 
-This document records the current DXF compatibility policy and the manual validation checklist for the v0.8 release.
+This document records the current DXF compatibility policy, the representative manual sample set and the external viewer validation log.
 
-## v0.8 manual validation status
+DXF compatibility has two different validation levels:
 
-The v0.8 compatibility samples in `samples/dxf/compatibility/` were opened successfully during release validation.
+1. automated structure tests inside the OpenCad2D test suite;
+2. manual external viewer checks with real CAD/viewer applications.
 
-| Sample | Status | Notes |
+A round-trip generated and re-imported by OpenCad2D is useful, but it is not sufficient to claim broad DXF interoperability.
+
+---
+
+## Manual sample set
+
+The current manual sample files are stored in:
+
+```text
+samples/dxf/compatibility/
+```
+
+| Sample | Purpose | Current validation state |
 |---|---|---|
-| `01_basic_lines_layers.dxf` | Passed | Basic lines and layers validated. |
-| `02_text_mtext.dxf` | Passed | TEXT and MTEXT opened successfully. |
-| `03_arcs_circles_ellipses.dxf` | Passed | Circle, arc and ellipse geometry validated. |
-| `04_polylines_polygons.dxf` | Passed | Open/closed polylines and polygon-like geometry validated. |
-| `05_dimensions_as_geometry.dxf` | Passed | Dimension graphics opened as drawable geometry. |
-| `06_spline_bezier.dxf` | Passed | Spline sample opened successfully. |
-| `07_mixed_drawing.dxf` | Passed | Mixed v0.8 showcase opened successfully. |
+| `01_basic_lines_layers.dxf` | Lines, layers, linetypes and lineweights | Ready for external validation |
+| `02_text_mtext.dxf` | `TEXT` and `MTEXT`, including MTEXT line breaks and reference width | Ready for external validation |
+| `03_arcs_circles_ellipses.dxf` | `CIRCLE`, `ARC`, full `ELLIPSE` and partial `ELLIPSE` | Ready for external validation |
+| `04_polylines_polygons.dxf` | Open/closed `LWPOLYLINE` and one bulge segment | Ready for external validation |
+| `05_dimensions_as_geometry.dxf` | Dimension-like graphics exported as primitive geometry | Ready for external validation |
+| `06_spline_bezier.dxf` | `SPLINE` with degree, knot vector and control points | Ready for external validation |
+| `07_mixed_drawing.dxf` | Mixed smoke drawing with the main supported entity families | Ready for external validation |
 
+Historical note: a previous v0.8 validation pass reported that the seven compatibility samples opened successfully, but the exact external application names and versions were not recorded. For v0.8.5 and later, consider a validation pass complete only when the viewer name, version/build, operating system and date are recorded.
 
-Validation note: the sample set has been manually opened successfully for the v0.8 release gate. Exact viewer names/versions were not recorded in this pass; add them during a future compatibility audit.
+---
 
-For future releases, keep recording the specific external application versions used for validation, especially LibreCAD, QCAD and Autodesk DWG TrueView.
+## External viewer validation log
+
+Use this table for every manual audit. Do not mark a sample as passed without recording the exact application version.
+
+| Date | OS | Application | Version/build | Sample | Result | Notes |
+|---|---|---|---|---|---|---|
+| _pending_ | _pending_ | LibreCAD | _pending_ | `01_basic_lines_layers.dxf` | Pending | Validate line orientation, layer colors, linetypes and lineweights. |
+| _pending_ | _pending_ | LibreCAD | _pending_ | `02_text_mtext.dxf` | Pending | Validate TEXT/MTEXT visibility and wrapping. |
+| _pending_ | _pending_ | LibreCAD | _pending_ | `03_arcs_circles_ellipses.dxf` | Pending | Validate circle, arc, full ellipse and partial ellipse behavior. |
+| _pending_ | _pending_ | LibreCAD | _pending_ | `04_polylines_polygons.dxf` | Pending | Validate closed polyline and bulge arc. |
+| _pending_ | _pending_ | LibreCAD | _pending_ | `05_dimensions_as_geometry.dxf` | Pending | Validate dimension graphics as primitive geometry. |
+| _pending_ | _pending_ | LibreCAD | _pending_ | `06_spline_bezier.dxf` | Pending | Validate spline rendering and control point interpretation. |
+| _pending_ | _pending_ | LibreCAD | _pending_ | `07_mixed_drawing.dxf` | Pending | Validate mixed drawing smoke test. |
+| _pending_ | _pending_ | QCAD | _pending_ | `01_basic_lines_layers.dxf` | Pending | Validate line orientation, layer colors, linetypes and lineweights. |
+| _pending_ | _pending_ | QCAD | _pending_ | `02_text_mtext.dxf` | Pending | Validate TEXT/MTEXT visibility and wrapping. |
+| _pending_ | _pending_ | QCAD | _pending_ | `03_arcs_circles_ellipses.dxf` | Pending | Validate circle, arc, full ellipse and partial ellipse behavior. |
+| _pending_ | _pending_ | QCAD | _pending_ | `04_polylines_polygons.dxf` | Pending | Validate closed polyline and bulge arc. |
+| _pending_ | _pending_ | QCAD | _pending_ | `05_dimensions_as_geometry.dxf` | Pending | Validate dimension graphics as primitive geometry. |
+| _pending_ | _pending_ | QCAD | _pending_ | `06_spline_bezier.dxf` | Pending | Validate spline rendering and control point interpretation. |
+| _pending_ | _pending_ | QCAD | _pending_ | `07_mixed_drawing.dxf` | Pending | Validate mixed drawing smoke test. |
+
+Recommended optional viewers for later passes:
+
+- Autodesk DWG TrueView;
+- AutoCAD or AutoCAD LT, if available;
+- FreeCAD DXF importer;
+- browser-based DXF viewers only as secondary smoke checks, not as primary validation.
+
+---
+
+## Manual validation checklist
+
+For each sample, check at least:
+
+- the file opens without importer errors;
+- the geometry is visible and not collapsed to the origin;
+- the Y orientation matches the expected OpenCad2D visual orientation;
+- layers are present with meaningful names;
+- layer color, linetype and lineweight are reasonably preserved;
+- text is readable;
+- MTEXT wraps or breaks predictably;
+- arcs and ellipses are curved, not silently dropped;
+- splines are visible and approximate the intended curve;
+- primitive dimension graphics remain legible.
+
+If a viewer opens the file but changes some visual details, record the result as `Partial`, not `Passed`.
+
+---
 
 ## Export policy
 
 | OpenCad2D entity | DXF export policy |
 |---|---|
+| Point | `POINT` |
 | Line | `LINE` |
 | Circle | `CIRCLE` |
 | Arc | `ARC` |
 | Polyline | `LWPOLYLINE` |
 | Polygon | closed `LWPOLYLINE` |
-| Ellipse | `ELLIPSE` where supported by the exporter path |
+| Ellipse | `ELLIPSE` |
 | Text | `TEXT` |
 | Multiline text | `MTEXT` |
-| Bezier spline | `SPLINE` or compatible approximation depending on the export path |
+| Bezier spline | `SPLINE` with degree, knot vector and control points |
 | Dimensions | drawable geometry, not native associative DXF `DIMENSION` |
+
+---
 
 ## Import policy
 
-| DXF entity | v0.8 import behavior |
+| DXF entity | v0.8.5 import behavior |
 |---|---|
 | `LINE` | imported as `LineEntity` |
 | `CIRCLE` | imported as `CircleEntity` |
@@ -52,6 +116,8 @@ For future releases, keep recording the specific external application versions u
 | readable `SPLINE` control points | imported as `BezierSplineEntity` |
 | fit-point-only `SPLINE` | imported as `PolylineEntity` approximation |
 
+---
+
 ## Known DXF limitations
 
 - Binary DXF is not supported.
@@ -59,5 +125,6 @@ For future releases, keep recording the specific external application versions u
 - `BLOCK` / `INSERT` are not yet supported.
 - `HATCH`, `IMAGE` and `LEADER` are not yet supported.
 - Native associative DXF `DIMENSION` import/export is not yet implemented.
-- Partial ellipses are approximated as polylines.
+- Partial ellipses are approximated as polylines on import.
 - Full NURBS spline fidelity is not guaranteed yet.
+- External compatibility is viewer-dependent and must be validated with explicit viewer versions.

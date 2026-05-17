@@ -39,6 +39,13 @@ The v0.8 line mitigates this by marking dimensions as potentially stale after ge
 
 ---
 
+
+## Snapping
+
+Intersection snaps for `EllipseEntity` and `BezierSplineEntity` are supported through sampled polyline approximations. This is practical for the current interactive workflow but is not yet an exact analytic/NURBS intersection solver.
+
+---
+
 ## Offset
 
 Offset supports lines, circles, arcs, straight-segment polylines and sampled Bezier splines.

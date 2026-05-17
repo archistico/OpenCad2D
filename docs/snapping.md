@@ -264,11 +264,13 @@ For arcs, only quadrant points that actually lie on the arc are returned.
 
 Intersection snapping finds intersections between visible entities.
 
-It supports common combinations such as line-line, line-polyline, polyline-polyline, line-circle, circle-circle, line-arc and circle-arc.
+It supports exact intersections for common analytic combinations such as line-line, line-polyline, polyline-polyline, line-circle, circle-circle, line-arc and circle-arc.
+
+It also supports first-pass curve intersections for `EllipseEntity` and `BezierSplineEntity` by converting curves to a high-resolution polyline approximation for snapping. This covers practical line/ellipse, polyline/ellipse, circle/ellipse, ellipse/ellipse, line/spline, polyline/spline, circle/spline, ellipse/spline and spline/spline intersections.
 
 Intersection snapping should use the document search area to collect candidate entities near the cursor, then evaluate actual geometric intersections.
 
-As the geometry engine grows, this provider can be extended to support more entity combinations.
+Future work can replace the sampled curve path with exact analytic/NURBS-specific solvers where needed.
 
 ---
 

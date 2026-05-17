@@ -31,10 +31,13 @@ Supported entity mappings:
 |---|---|
 | `PointEntity` | `POINT` |
 | `TextEntity` | `TEXT` |
+| `MultilineTextEntity` | `MTEXT` |
 | `LineEntity` | `LINE` |
 | `CircleEntity` | `CIRCLE` |
 | `ArcEntity` | `ARC` |
+| `EllipseEntity` | `ELLIPSE` |
 | `PolylineEntity` | `LWPOLYLINE` |
+| `BezierSplineEntity` | `SPLINE` with open-uniform knot vector |
 | basic dimensions | graphical primitives: `LINE`, `ARC`, `TEXT` |
 
 Hatches, blocks, layouts and paper space are not exported yet.
@@ -166,6 +169,25 @@ visible normal layers -> entities exported
 Locked layers are exported as locked layer records in the `LAYER` table and their visible entities are exported normally.
 
 ---
+
+
+## SPLINE export
+
+`BezierSplineEntity` is exported as a DXF `SPLINE` entity. The exporter writes:
+
+```text
+70  spline flags
+71  degree
+72  knot count
+73  control point count
+74  fit point count
+40  knot values
+10/20/30 control points
+```
+
+The knot vector is an open-uniform vector with `controlPointCount + degree + 1` values. The degree is capped at 3 and also limited by the available control point count. Closed OpenCad2D splines are written with the closed + planar flags, but without the periodic flag, because the exported knot vector is not periodic.
+
+This keeps the DXF file structurally complete for CAD viewers that expect knot values on `SPLINE` entities. Full external NURBS fidelity, rational weights and fit-point reconstruction are still outside the current exporter scope.
 
 ## Coordinates and Y orientation
 

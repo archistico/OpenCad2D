@@ -11,6 +11,7 @@ public sealed class DeleteEntitiesCommand : ICadCommand
 {
     private readonly IReadOnlyList<EntityId> _entityIds;
     private List<CadEntity>? _deletedEntities;
+    private List<DimensionEntity>? _oldDimensions;
 
     public DeleteEntitiesCommand(IEnumerable<EntityId> entityIds)
     {
@@ -30,9 +31,18 @@ public sealed class DeleteEntitiesCommand : ICadCommand
 
     public void Execute(CadDocument document)
     {
+        ArgumentNullException.ThrowIfNull(document);
+
+        _oldDimensions = DimensionStaleStateHelper.Capture(document);
         _deletedEntities = document.Entities.GetByIds(_entityIds).ToList();
+        bool deletesModelGeometry = _deletedEntities.Any(entity => entity is not DimensionEntity);
 
         document.RemoveEntities(_entityIds);
+
+        if (deletesModelGeometry)
+        {
+            DimensionStaleStateHelper.MarkAllStale(document);
+        }
     }
 
     public void Undo(CadDocument document)
@@ -45,5 +55,6 @@ public sealed class DeleteEntitiesCommand : ICadCommand
         }
 
         document.AddEntities(_deletedEntities);
+        DimensionStaleStateHelper.Restore(document, _oldDimensions);
     }
 }

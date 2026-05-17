@@ -15,7 +15,7 @@ The goal is not to stop feature development permanently. The goal is to make the
 | Testing | No end-to-end save/reopen workflow test | Completed | v0.8.1 | Added a persistence-level workflow covering geometry, annotation and current v0.8.x entities. |
 | Documentation | Critical review contains outdated entity status | Completed | v0.8 final | Active docs now treat Ellipse, MTEXT, Bezier spline, command history/autocomplete, Fillet NoTrim and DXF ELLIPSE/SPLINE import according to the implemented state. |
 | Documentation | Roadmap needs explicit stabilization track | Completed | v0.8 final | v0.9 stabilization is tracked separately from the future feature backlog. |
-| Interop | DXF export/import not externally validated | Completed for v0.8 sample set | v0.8.2/v0.8 final | Compatibility sample folder, seven representative DXF samples and validation document have been added; the sample set was opened successfully during release validation. Exact viewer versions should be recorded in a future compatibility audit. |
+| Interop | DXF export/import not externally validated | External audit pending for v0.8.5 | v0.8.5/S3 | Compatibility sample folder, seven representative DXF samples and validation document are prepared. A historical v0.8 pass opened the files successfully, but exact viewer versions were not recorded. The v0.8.5 audit should record viewer names, versions, OS and dates before being considered complete. |
 | Testing | No import DXF -> modify -> export workflow test | Completed | v0.8.2 | Added a first simple DXF import -> trim -> export regression test. |
 | Architecture | `CadCanvas` is too large and knows concrete tools | In progress | v0.8.3 | Entity rendering, active-tool preview rendering and active-tool keyboard delegation have been extracted/delegated; preview descriptors remain future work. |
 | Architecture | `MainWindow.axaml.cs` duplicates full UI refresh after document replacement | Completed | v0.8.3 | Introduced `RefreshAllUiAfterDocumentChange()` for document replacement refresh paths. |
@@ -146,18 +146,19 @@ Completed before release freeze:
 Remaining before tagging:
 
 - [x] generate or refresh DXF compatibility samples 01-07;
-- [x] perform manual DXF compatibility checks;
+- [x] prepare manual DXF compatibility samples 01-07;
+- [ ] perform external DXF compatibility checks with recorded viewer versions;
 - [ ] run full clean/build/test release gate;
 - [ ] prepare GitHub release text from `docs/release-v0.8-final.md`.
 
-Note: the v0.8 sample set opened successfully during manual validation. Exact external viewer names/versions were not recorded in this pass and should be added during the next compatibility audit.
+Note: the historical v0.8 sample set opened successfully during manual validation, but exact external viewer names/versions were not recorded. The v0.8.5/S3 audit is not complete until LibreCAD/QCAD or other external viewer names, versions, operating systems and dates are recorded in `docs/dxf-compatibility.md`.
 
 
 ## v0.8 final release gate cleanup
 
-Completed after manual DXF sample validation:
+Completed after manual DXF sample preparation:
 
-- [x] update `docs/dxf-compatibility.md` to mark the seven compatibility samples as passed;
+- [x] update `docs/dxf-compatibility.md` with strict external validation placeholders for the seven compatibility samples;
 - [x] update `docs/roadmap.md` release-gate state;
 - [x] update `docs/ai-handoff.md` with the final pre-tag checklist.
 
