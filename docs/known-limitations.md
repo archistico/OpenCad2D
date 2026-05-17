@@ -14,7 +14,9 @@ OpenCad2D is in the v0.9 stabilization track before the first stable v1.0 releas
 
 Document-level drafting settings such as grid, snap, Ortho, Polar Tracking and current drawing settings are persisted in `.opencad2d.json`.
 
-Local application/session preferences are still being finalized for v0.9. This includes items such as last open/save folder, last export folder, optional last opened file metadata and window/session preferences. These settings should remain outside the drawing file.
+A first local application/session settings layer now stores last opened file metadata, recent native drawing files and last open/save/export directories outside the drawing file.
+
+Still deferred: window size/position, panel widths, theme preference and shortcut persistence. These should remain outside `.opencad2d.json` and should only be added if they do not make startup fragile.
 
 ---
 

@@ -76,23 +76,32 @@ Status: completed by the v0.9 planning pass.
 
 ### Phase 1 - Local application/session settings
 
-Document-level drafting settings are already stored in `.opencad2d.json`. v0.9 should now decide and implement the small local settings layer, separate from drawing content.
+Document-level drafting settings are already stored in `.opencad2d.json`. v0.9 now includes a first small local settings layer, separate from drawing content.
 
-Candidate local settings:
+Implemented local settings scope:
 
-- last open/save folder;
-- last export folder;
-- optional last opened file metadata;
-- window/session preferences, only if they are safe and do not make startup fragile;
-- future shortcut preferences, if kept small.
+- last opened native drawing file path;
+- last open directory;
+- last save directory;
+- last export directory;
+- recent native drawing files, capped to a small stable list.
 
-Required behavior:
+Implemented behavior:
 
-- missing settings file must use defaults;
-- partial settings file must use defaults for missing values;
-- corrupt settings file must not prevent startup;
-- local settings must not be written into `.opencad2d.json`;
-- tests must cover save, load and fallback behavior.
+- missing settings file uses defaults;
+- partial settings file uses defaults for missing values;
+- corrupt settings file does not prevent startup;
+- local settings are not written into `.opencad2d.json`;
+- settings save/load/fallback behavior is covered by app tests.
+
+Deferred local settings:
+
+- window size/position;
+- panel widths;
+- theme preference;
+- shortcut preferences.
+
+These are intentionally deferred until they can be added without making startup fragile.
 
 ### Phase 2 - Undo/redo audit
 
@@ -223,9 +232,9 @@ git push origin v0.9.0
 ## v0.9 completion checklist
 
 ```text
-[ ] Local settings scope decided
-[ ] Local settings storage implemented
-[ ] Local settings fallback tests added
+[x] Local settings scope decided
+[x] Local settings storage implemented
+[x] Local settings fallback tests added
 [ ] Undo/redo audit completed for drawing tools
 [ ] Undo/redo audit completed for modify tools
 [ ] Undo/redo audit completed for Property Panel and manager edits

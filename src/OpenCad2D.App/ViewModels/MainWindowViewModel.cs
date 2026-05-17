@@ -12,6 +12,7 @@ using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Navigation;
 using OpenCad2D.App.ViewModels.Properties;
 using OpenCad2D.App.ViewModels.PolarTracking;
+using OpenCad2D.App.Settings;
 using System.IO;
 using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Persistence;
@@ -83,13 +84,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private readonly IDxfExporter _dxfExporter = new DxfExporter();
     private readonly IDxfImporter _dxfImporter = new DxfDocumentImporter();
     private readonly IPdfExporter _pdfExporter = new PdfExporter();
+    private readonly IApplicationSettingsStore _applicationSettingsStore;
+    private ApplicationSettings _applicationSettings;
     private string? _currentFilePath;
     private PropertyPanelViewModel _propertyPanel = new("Properties", Array.Empty<PropertySectionViewModel>());
     private bool _isPropertyPanelVisible = true;
     private PolarTrackingOptionViewModel _selectedPolarTrackingOption;
 
-    public MainWindowViewModel(ITextInputProvider? textInputProvider = null)
+    public MainWindowViewModel(
+        ITextInputProvider? textInputProvider = null,
+        IApplicationSettingsStore? applicationSettingsStore = null)
     {
+        _applicationSettingsStore = applicationSettingsStore ?? JsonApplicationSettingsStore.CreateDefault();
+        _applicationSettings = _applicationSettingsStore.Load();
+
         PolarTrackingOptions = CreatePolarTrackingOptions();
         _selectedPolarTrackingOption = PolarTrackingOptions[0];
 
@@ -114,6 +122,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public CadWorkspace Workspace { get; }
 
     public string? CurrentFilePath => _currentFilePath;
+
+    public ApplicationSettings ApplicationSettings => _applicationSettings;
+
+    public IReadOnlyList<string> RecentFiles => _applicationSettings.RecentFiles;
 
     public IReadOnlyList<string> CommandLineHistory => _commandLineHistory;
 
@@ -526,6 +538,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         _currentFilePath = filePath;
         Workspace.MarkSaved();
+        RegisterSavedFile(filePath);
 
         SetMessage($"Saved '{CurrentFileName}'.");
         NotifyDocumentStateChanged();
@@ -551,6 +564,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         ApplyDocumentSettings(recovery.Settings);
 
         _currentFilePath = filePath;
+        RegisterOpenedFile(filePath);
 
         if (recovery.HasIssues)
         {
@@ -601,6 +615,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Workspace.Document,
             filePath,
             options);
+
+        RegisterExportedFile(filePath);
 
         SetMessage($"Exported SVG '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities). Use Save to save the native drawing.");
         OnPropertiesChanged(
@@ -671,6 +687,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             filePath,
             DxfExportOptions.Default);
 
+        RegisterExportedFile(filePath);
+
         SetMessage($"Exported DXF '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities). Use Save to save the native drawing.");
         OnPropertiesChanged(
             nameof(LastMessage),
@@ -707,6 +725,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             Workspace.Document,
             filePath,
             options);
+
+        RegisterExportedFile(filePath);
 
         SetMessage(
             $"Exported PDF '{Path.GetFileName(filePath)}' " +
@@ -2060,6 +2080,43 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         Workspace.Document.Layers.Add(layer);
+    }
+
+
+    private void RegisterOpenedFile(string filePath)
+    {
+        _applicationSettings.RegisterOpenedFile(filePath);
+        SaveApplicationSettings();
+    }
+
+    private void RegisterSavedFile(string filePath)
+    {
+        _applicationSettings.RegisterSavedFile(filePath);
+        SaveApplicationSettings();
+    }
+
+    private void RegisterExportedFile(string filePath)
+    {
+        _applicationSettings.RegisterExportedFile(filePath);
+        SaveApplicationSettings();
+    }
+
+    private void SaveApplicationSettings()
+    {
+        try
+        {
+            _applicationSettingsStore.Save(_applicationSettings);
+        }
+        catch (IOException)
+        {
+            // Local settings must never block drawing workflows.
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Local settings must never block drawing workflows.
+        }
+
+        OnPropertiesChanged(nameof(ApplicationSettings), nameof(RecentFiles));
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

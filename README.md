@@ -18,6 +18,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - maximized main window on startup;
 - native save/load using `.opencad2d.json`;
 - document-level settings persistence for grid, snap, ortho, polar tracking and current drawing settings;
+- local application settings for last opened file metadata, recent files and last open/save/export folders;
 - document recovery for partially invalid native files;
 - New, Open, Save and Save As;
 - SVG, DXF and PDF export, including DXF SPLINE knot-vector output and MTEXT reference width;

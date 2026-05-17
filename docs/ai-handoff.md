@@ -2365,3 +2365,24 @@ Suggested first files for Phase 1:
 - `tests/OpenCad2D.App.Tests/LocalApplicationSettingsStoreTests.cs`
 - `docs/application-settings.md`
 - `docs/ai-handoff.md`
+
+## 2026-05-18 - v0.9 Phase 1 local settings layer
+
+Implemented the first local application/session settings layer in `OpenCad2D.App.Settings`. The new model is intentionally small and separate from `.opencad2d.json`:
+
+- `ApplicationSettings` stores schema version, last opened file path, last open directory, last save directory, last export directory and recent native drawing files;
+- `IApplicationSettingsStore` abstracts loading and saving;
+- `JsonApplicationSettingsStore` persists JSON to `%APPDATA%/OpenCad2D/settings.json` on Windows, with AppContext fallback if the application data path is unavailable;
+- missing, empty, partial, invalid, unreadable or unauthorized settings load as safe defaults;
+- `MainWindowViewModel` updates the local settings after native open/save and after SVG/DXF/PDF export;
+- local settings save failures are swallowed so they never block drawing workflows.
+
+Tests added:
+
+- `ApplicationSettingsTests`;
+- `JsonApplicationSettingsStoreTests`.
+
+Important boundary: local settings are app/user preferences and metadata only. Drawing state continues to live in `.opencad2d.json`. Window size/position, panel widths, theme and shortcut persistence remain deferred.
+
+Validation note: this environment did not have the `dotnet` command available, so build/tests must be run locally with `dotnet build` and `dotnet test`.
+

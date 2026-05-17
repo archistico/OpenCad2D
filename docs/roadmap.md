@@ -944,7 +944,7 @@ Completed before v0.9:
 
 Still useful but not required for v0.9:
 
-- [ ] local UI/session settings such as last file, last export folder and window/session preferences;
+- [x] first local UI/session settings layer for last file, recent files and last open/save/export folders;
 - [ ] shortcuts persistence;
 - [ ] final XAML theme polish;
 - [ ] snap icons: active / detected / disabled states;
@@ -974,12 +974,12 @@ Still useful but not required for v0.9:
 
 ### Phase 1 - Local application/session settings
 
-- [ ] define which settings are local session preferences and must stay outside `.opencad2d.json`;
-- [ ] persist last opened/saved folder and last export folder safely;
-- [ ] decide whether last opened file should be remembered automatically or only displayed in recent-file metadata;
+- [x] define which settings are local session preferences and must stay outside `.opencad2d.json`;
+- [x] persist last opened/saved folder and last export folder safely;
+- [x] remember last opened file and maintain recent-file metadata outside the drawing file;
 - [ ] persist window/session preferences only if they do not create fragile startup behavior;
-- [ ] add fallback behavior for missing, partial or corrupt local settings;
-- [ ] add settings persistence tests.
+- [x] add fallback behavior for missing, partial or corrupt local settings;
+- [x] add settings persistence tests.
 
 ### Phase 2 - Undo/redo audit
 
@@ -1050,7 +1050,7 @@ Still useful but not required for v0.9:
 - [x] editable Property Panel for supported primary entity properties;
 - [x] DXF import/export covered by automated structural, compatibility and workflow tests;
 - [~] DXF import/export externally smoke-tested; exact LibreCAD/QCAD/Autodesk viewer versions still need to be recorded;
-- [~] application/session settings persistence;
+- [~] application/session settings persistence; first local settings layer completed, window/session preferences deferred;
 - [x] draw order / Z-order independent from layers;
 - [x] end-to-end workflow: draw -> save -> reopen;
 - [x] end-to-end workflow: import DXF -> modify -> export;

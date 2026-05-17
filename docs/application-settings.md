@@ -27,17 +27,26 @@ Old files without the `settings` section must load with safe defaults.
 
 ## Local session settings
 
-Local session settings should remain outside `.opencad2d.json`.
+Local session settings remain outside `.opencad2d.json`.
 
-Examples:
+Implemented in v0.9 Phase 1:
+
+- last opened native drawing file path;
+- last open directory;
+- last save directory;
+- last export directory;
+- recent native drawing files, capped to 10 entries.
+
+The app must tolerate missing, partial, empty, unreadable or corrupt local settings by falling back to safe defaults. Local settings persistence must not block opening, saving or exporting drawings.
+
+Deferred for later:
 
 - theme;
-- window size/position if implemented;
-- recent files;
-- last opened directory;
-- panel widths.
+- window size/position;
+- panel widths;
+- shortcut preferences.
 
-Suggested future location:
+Default location:
 
 ```text
 Windows   %APPDATA%\OpenCad2D\settings.json
