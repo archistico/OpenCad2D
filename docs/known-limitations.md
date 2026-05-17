@@ -1,12 +1,20 @@
 # Known Limitations
 
-OpenCad2D is still an early prototype. The following limitations should remain visible until they are resolved.
+OpenCad2D is in the v0.9 stabilization track before the first stable v1.0 release. The following limitations should remain visible until they are resolved.
 
 ---
 
 ## Native save vs export
 
 `.opencad2d.json` is the native save format. DXF/SVG/PDF are export/interchange formats and may not preserve every OpenCad2D-specific concept.
+
+---
+
+## Local application/session settings
+
+Document-level drafting settings such as grid, snap, Ortho, Polar Tracking and current drawing settings are persisted in `.opencad2d.json`.
+
+Local application/session preferences are still being finalized for v0.9. This includes items such as last open/save folder, last export folder, optional last opened file metadata and window/session preferences. These settings should remain outside the drawing file.
 
 ---
 
@@ -38,7 +46,6 @@ Dimensions are currently non-associative. Editing measured geometry does not aut
 The v0.8 line mitigates this by marking dimensions as potentially stale after geometry-changing commands, including deletion of model geometry. True associative dimensions remain future work.
 
 ---
-
 
 ## Snapping
 

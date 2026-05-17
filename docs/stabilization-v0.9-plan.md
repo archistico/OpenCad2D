@@ -1,202 +1,263 @@
 # OpenCad2D v0.9 stabilization plan
 
-This document converts the post-v0.8 critical review into a concrete stabilization track for v0.9.
+This document is the working plan for the v0.9 release-candidate cycle.
 
-The goal is not to stop feature development permanently. The goal is to make the current v0.8.x foundation safer before larger features such as hatch, blocks, full NURBS-level DXF fidelity and autosave are added.
+The goal of v0.9 is not to add another large group of CAD features. The goal is to make the current v0.8.x foundation reliable enough to approach the first stable v1.0 release with confidence.
 
----
+v0.9 should therefore prioritize:
 
-## Current triage status
+- predictable user workflows;
+- regression tests around existing behavior;
+- external DXF compatibility records with exact viewer versions;
+- complete user/developer documentation;
+- safe performance review;
+- release packaging discipline.
 
-| Area | Issue | Status | Target milestone | Notes |
-|---|---|---|---|---|
-| Runtime safety | `CadCanvas.OnPointerPressed` is `async void` without a top-level exception boundary | Completed | v0.8.1 | Added a guarded async body and reports failures through the normal canvas status path. |
-| Runtime safety | Text/MTEXT modal dialog uses a boolean reentrancy flag | Completed | v0.8.1 | Replaced the boolean gate with a non-blocking semaphore-based guard. |
-| Testing | No end-to-end save/reopen workflow test | Completed | v0.8.1 | Added a persistence-level workflow covering geometry, annotation and current v0.8.x entities. |
-| Documentation | Critical review contains outdated entity status | Completed | v0.8 final | Active docs now treat Ellipse, MTEXT, Bezier spline, command history/autocomplete, Fillet NoTrim and DXF ELLIPSE/SPLINE import according to the implemented state. |
-| Documentation | Roadmap needs explicit stabilization track | Completed | v0.8 final | v0.9 stabilization is tracked separately from the future feature backlog. |
-| Interop | DXF export/import not externally validated | Completed with manual sample check | v0.8.5/S3 | Compatibility sample folder, seven representative DXF samples and validation document are prepared. The current samples were reported as opening correctly in external viewers. Exact viewer names/versions should still be recorded in a future audit. |
-| Testing | No import DXF -> modify -> export workflow test | Completed | v0.8.2 | Added a first simple DXF import -> trim -> export regression test. |
-| Architecture | `CadCanvas` is too large and knows concrete tools | Completed for active preview dispatch | v0.8.3/S7 | Entity rendering, active-tool preview rendering and active-tool keyboard delegation have been extracted/delegated. Tool previews are now provided through `IToolPreviewDescriptorProvider` / `IToolPreviewEntityProvider`; the old concrete active-tool preview fallback dispatch has been removed. |
-| Architecture | `MainWindow.axaml.cs` duplicates full UI refresh after document replacement | Completed | v0.8.3 | Introduced `RefreshAllUiAfterDocumentChange()` for document replacement refresh paths. |
-| UX correctness | Non-associative dimensions can become stale silently | Completed | v0.8.4/S1 | Added a conservative `DimensionEntity.IsStale` marker, persistence support, property-panel status and distinct canvas rendering. Delete now also marks related dimensions stale and undo restores the previous stale state. |
-| Command UX | Command history navigation with up/down is missing | Completed | v0.8.4 | Up/down now navigates stored command/action history without recalling coordinate input. |
-| Command UX | Command autocomplete is missing | Completed | v0.8.4 | Added simple Tab completion for known command/action prefixes; visual dropdown remains future work. |
-| Modify tools | Fillet lacks NoTrim and advanced entity pairs | Partially complete | v0.8.5 | Line-Line live preview and Trim/NoTrim mode added; Line-Arc/Arc-Arc remain future work. |
-| Modify tools | Offset lacks miter limit / round join | Partially complete | v0.8.5 | Added a conservative miter limit with bevel fallback for sharp corners; configurable/round joins remain future work. |
-| DXF import | LWPOLYLINE bulge is not converted to arcs | Completed | v0.8.5 | Bulge segments are converted to separate `LineEntity`/`ArcEntity` geometry; preserving compound polyline topology remains future work. |
-| DXF import/export | ELLIPSE/SPLINE coverage | Partially complete | v0.8.5/S2 | Full ELLIPSE and readable SPLINE control-point import are implemented. DXF SPLINE export now writes degree, knot count and an open-uniform knot vector. External NURBS fidelity remains limited. |
-| Future feature | Hatch/campiture | Deferred | post-v0.9 | Requires a dedicated entity and render/export strategy. |
-| Future feature | Blocks/symbols | Deferred | post-v0.9 | Large model-level feature; should not be mixed with stabilization. |
-| Future feature | PNG export | Deferred | post-v0.9 | Useful but lower risk than runtime, testing and DXF validation. |
-| Persistence | Autosave and recovery | Deferred | post-v0.9 | Should follow save/reopen and safe-write groundwork. |
-| Runtime diagnostics | Tool/UI exceptions only show status text | Completed | S6 | Added minimal application logging with trace output and testable in-memory logger; canvas pointer failures now log the full exception before reporting a user-facing status message. |
-| Text/interop | MTEXT lacks reference width in DXF | Completed | S8 | `MultilineTextEntity.ReferenceWidth` is persisted and imported/exported as DXF group `41`; `0` preserves unconstrained wrapping. |
-| Property panel | MTEXT is read-only after insertion | Completed | S10 | MTEXT value, insertion point, rotation, text format and reference width are editable through the property panel with undo/redo. |
+Large features such as blocks, hatch, raster references, richer native DXF `DIMENSION` support, autosave/recovery v2 and advanced NURBS fidelity are intentionally deferred.
 
 ---
 
-## v0.8.1 scope
+## Current baseline before v0.9
 
-v0.8.1 should remain small and low-risk:
+The v0.8.x line already includes the core CAD baseline needed for stabilization:
 
-- document the stabilization plan;
-- add a top-level exception boundary around canvas pointer input;
-- replace the TEXT/MTEXT dialog boolean gate with a reusable reentrancy guard;
-- add one end-to-end save/reopen regression test covering the current primary entity set;
-- update handoff notes so the next development pass starts from the stabilization track.
-
-No large canvas refactor should be done in v0.8.1.
-
----
-
-## v0.8.2 scope
-
-Focus on test and DXF validation:
-
-- add draw -> annotate -> export SVG/PDF/DXF workflow tests;
-- add import DXF -> modify -> export workflow tests;
-- create `samples/dxf/compatibility/` with representative compatibility files;
-- create `docs/dxf-compatibility.md` with external viewer result placeholders;
-- document that dimensions are exported as graphical primitives, not native DXF `DIMENSION` entities.
-
----
-
-## v0.8.3 scope
-
-Start architectural cleanup without changing behavior:
-
-- [x] add `RefreshAllUiAfterDocumentChange()` in `MainWindow.axaml.cs` for New/Open/Import DXF document replacement paths;
-- [x] extract entity rendering from `CadCanvas` into a dedicated renderer;
-- [x] keep tool behavior unchanged during entity-render extraction;
-- [x] extract active-tool preview rendering from `CadCanvas` into `CadToolPreviewRenderer`;
-- [x] delegate active-tool keyboard handling through `IKeyboardAwareTool`;
-- [x] replace concrete tool preview dispatch with tool-provided preview descriptors.
-
-The second v0.8.3 pass moved entity drawing, text drawing and dimension drawing into `CadEntityRenderer`. The third v0.8.3 pass moved active-tool preview drawing into `CadToolPreviewRenderer`. This pass introduced `IKeyboardAwareTool` so active tools handle their own keyboard-specific actions without `CadCanvas` checking `AlignTool`, `MoveTool`, `CopyTool`, `PolylineTool` or `GripEditTool` directly. The later S7 passes completed the preview-dispatch cleanup: tools now expose previews through `IToolPreviewDescriptorProvider` or `IToolPreviewEntityProvider`, and `CadToolPreviewRenderer` no longer needs a concrete active-tool fallback switch. `CadCanvas` still owns grid, UCS, snap overlays, crosshair and pointer input.
+- clean startup from `Templates/default.opencad2d.json`;
+- maximized main window on startup;
+- native `.opencad2d.json` save/load;
+- document-level drafting settings persisted in the drawing file;
+- document recovery for partially invalid native files;
+- SVG, DXF and PDF export;
+- ASCII DXF import for the current practical 2D entity set;
+- layers, line formats, text formats and dimension styles;
+- editable Property Panel v2 for supported properties, including MTEXT;
+- independent draw order / Z-order;
+- command input with aliases, coordinates, relative/polar input, history and first-pass autocomplete;
+- snapping, grid snapping, Ortho mode and Polar Tracking;
+- drawing tools for points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and Bezier splines;
+- dimension tools for horizontal, vertical, aligned, radius, diameter and angular dimensions;
+- transform/modify tools including Move, Copy, Rotate, Scale, Align, Break, Trim, Extend, Offset, Fillet and Mirror;
+- align/distribute object tools;
+- measure tools;
+- tool-provided preview descriptors/entities, so active tool previews no longer require concrete app-renderer dispatch;
+- minimal application logging for tool/UI exceptions.
 
 ---
 
-## v0.8.4 scope
+## Completed stabilization work inherited from v0.8.x
 
-UX correctness and command line improvements:
-
-- [x] add a conservative dimension stale marker;
-- [x] render stale dimensions distinctly;
-- [x] persist dimension stale status through `.opencad2d.json`;
-- [ ] add a way to mark dimensions as checked;
-- [x] command history navigation with up/down is implemented;
-- [x] implement first-pass command autocomplete.
-
----
-
-## v0.8.5 scope
-
-Modify-tool refinement:
-
-- [x] Fillet preview;
-- [x] Fillet NoTrim;
-- [x] stronger Fillet degenerate-bisector guard;
-- [x] Offset miter limit with bevel fallback for sharp corners;
-- [ ] plan/configure bevel/round join styles.
+| Area | Status | Notes |
+|---|---|---|
+| Runtime safety | Done | Canvas pointer input has guarded async execution and tool/UI exceptions are logged before status reporting. |
+| Dialog reentrancy | Done | TEXT/MTEXT dialog reentrancy uses a non-blocking guard. |
+| Save/reopen workflow | Done | End-to-end native persistence coverage exists for the current entity set. |
+| Import/modify/export workflow | Done | DXF import -> modify -> export regression coverage exists. |
+| Default startup | Done | The app starts from a clean template and falls back to safe defaults if the template is invalid. |
+| Draw order | Done | Draw order is independent from layers and is undoable. |
+| Dimension stale marker | Done | Non-associative dimensions are conservatively marked stale after geometry-changing operations. |
+| Command UX | Done | Command history and first-pass autocomplete are implemented. |
+| DXF import coverage | Done for v0.8.x scope | LWPOLYLINE bulge arcs, full ELLIPSE and readable SPLINE data are handled with documented limitations. |
+| DXF export coverage | Done for v0.8.x scope | SPLINE export writes degree, knot count and knot-vector data. |
+| Preview architecture | Done | Active tool previews are exposed through `IToolPreviewDescriptorProvider` / `IToolPreviewEntityProvider`. |
+| MTEXT editing | Done | MTEXT text, insertion, rotation, text format and reference width are editable through the Property Panel. |
 
 ---
 
-## Post-review stabilization track S1-S10
+## v0.9 working phases
 
-Completed after the critical review pass:
+### Phase 0 - Documentation alignment
 
-- [x] S1: deleting model geometry now marks dimensions as stale and undo restores the previous stale state;
-- [x] S2: DXF `SPLINE` export writes degree, knot count and knot values;
-- [x] S3: external DXF compatibility samples were prepared and manually checked;
-- [x] S4: intersection snap supports ellipses and Bezier splines through sampled curve approximations;
-- [x] S5-S7.7: active tool previews were migrated to tool-provided entity/descriptor protocols and the concrete preview fallback dispatch was removed;
-- [x] S6: application logging now records tool/UI exceptions before user-facing status reporting;
-- [x] S8: MTEXT DXF reference width is persisted and imported/exported;
-- [x] S10: MTEXT property-panel editing is available for value, insertion, rotation, text format and reference width.
+Status: completed by the v0.9 planning pass.
 
-Remaining stabilization items should now focus on user-facing polish, exact external viewer/version recording, and larger future features such as blocks, hatch, autosave and richer DXF/NURBS fidelity.
+- [x] Roadmap re-triaged against the actual v0.8.x state.
+- [x] Already completed items removed from the active v0.9 backlog.
+- [x] Post-v1.0 feature backlog cleaned so completed entity types are not listed as future work.
+- [x] Known limitations focused on real current limitations.
+- [x] Handoff updated with the v0.9 starting point and first implementation target.
 
-## v0.9 release candidate criteria
+### Phase 1 - Local application/session settings
 
-Before tagging v0.9, the project should have:
+Document-level drafting settings are already stored in `.opencad2d.json`. v0.9 should now decide and implement the small local settings layer, separate from drawing content.
 
-- runtime-safe pointer input;
-- TEXT/MTEXT dialog reentrancy protection;
-- end-to-end save/reopen test coverage;
-- at least one export-oriented end-to-end workflow test;
-- documented DXF compatibility checks, with exact viewer/version recording still recommended for the next audit;
-- roadmap and known limitations aligned with the current code;
-- explicit known limitation notes for non-associative dimensions and DXF import gaps.
+Candidate local settings:
 
+- last open/save folder;
+- last export folder;
+- optional last opened file metadata;
+- window/session preferences, only if they are safe and do not make startup fragile;
+- future shortcut preferences, if kept small.
 
-## v0.8.5 DXF ELLIPSE import
+Required behavior:
 
-- Added native import for full DXF `ELLIPSE` entities.
-- Added open-polyline approximation for partial DXF elliptical arcs.
-- Implemented `SPLINE` import for readable control-point splines; remaining work is external NURBS/weights/knot-vector fidelity.
+- missing settings file must use defaults;
+- partial settings file must use defaults for missing values;
+- corrupt settings file must not prevent startup;
+- local settings must not be written into `.opencad2d.json`;
+- tests must cover save, load and fallback behavior.
 
+### Phase 2 - Undo/redo audit
 
-### v0.8.5 DXF import compatibility - SPLINE
+The project already has command-based undo/redo, but v0.9 should audit the full current user-facing workflow.
 
-Completed:
+Audit groups:
 
-- [x] import DXF `SPLINE` control points as editable `BezierSplineEntity` instances;
-- [x] detect closed spline flags;
-- [x] import fit-point-only splines as open/closed `PolylineEntity` approximations;
-- [x] log informational diagnostics when importing approximated spline data.
+- drawing tools: Point, Text, MTEXT, Line, Rectangle, Circle, Arc, Ellipse, Polyline, Polygon, Spline and dimensions;
+- transform/modify tools: Move, Copy, Rotate, Scale, Mirror, Align, Distribute, Break, Trim, Extend, Offset and Fillet;
+- Property Panel edits;
+- Layer Manager, Line Format Manager, Text Format Manager and draw-order operations.
 
-Future work:
+For each primary operation, verify:
 
-- [ ] evaluate external NURBS knot vectors and weights instead of treating all control-point data as Bezier control points;
-- [ ] add richer compatibility samples from QCAD/LibreCAD/AutoCAD-generated SPLINE entities.
+1. operation changes the document as expected;
+2. Undo restores the previous state;
+3. Redo restores the operation result;
+4. selection and dirty state remain coherent where applicable.
 
+### Phase 3 - Export workflow hardening
 
-## v0.8 final documentation cleanup
+Existing export tests should be expanded into release-candidate workflows.
 
-Completed before release freeze:
+Required workflows:
 
-- [x] README aligned with implemented command history/autocomplete, dimension stale markers, Fillet Trim/NoTrim, Offset miter-limit fallback and expanded DXF import.
-- [x] Known limitations updated so implemented items are no longer listed as missing.
-- [x] Final release draft updated for DXF bulge, full ELLIPSE and readable SPLINE import.
-- [x] Handoff updated with the final v0.8 documentation state and remaining pre-release tasks.
+- draw -> annotate -> export DXF;
+- draw -> annotate -> export SVG;
+- draw -> annotate -> export PDF;
+- import DXF -> modify -> export DXF regression remains green.
 
-Remaining before tagging:
+The mixed drawing should include:
 
-- [x] generate or refresh DXF compatibility samples 01-07;
-- [x] prepare manual DXF compatibility samples 01-07;
-- [x] perform external DXF compatibility smoke checks;
-- [ ] record exact external viewer versions in a future compatibility audit;
-- [ ] run full clean/build/test release gate;
-- [ ] prepare GitHub release text from `docs/release-v0.8-final.md`.
+- multiple layers;
+- line formats, lineweights and dash patterns;
+- text and MTEXT;
+- current dimension types;
+- circles, arcs, ellipses, polylines, polygons and splines;
+- representative modified geometry.
 
-Note: the historical v0.8 sample set opened successfully during manual validation, but exact external viewer names/versions were not recorded. The v0.8.5/S3 audit is not complete until LibreCAD/QCAD or other external viewer names, versions, operating systems and dates are recorded in `docs/dxf-compatibility.md`.
+### Phase 4 - DXF compatibility audit
 
+The compatibility sample set already exists. v0.9 should record exact external validation details instead of generic smoke-check notes.
 
-## v0.8 final release gate cleanup
+Record for each viewer:
 
-Completed after manual DXF sample preparation:
+- viewer name;
+- exact version;
+- operating system;
+- test date;
+- sample file result: pass / partial / fail;
+- visual notes when relevant.
 
-- [x] update `docs/dxf-compatibility.md` with strict external validation placeholders for the seven compatibility samples;
-- [x] update `docs/roadmap.md` release-gate state;
-- [x] update `docs/ai-handoff.md` with the final pre-tag checklist.
+Minimum target viewers:
 
-Final release gate still to run locally:
+- LibreCAD;
+- QCAD.
+
+Optional:
+
+- Autodesk DWG TrueView.
+
+### Phase 5 - Performance review
+
+This phase is measurement-first.
+
+Review:
+
+- rendering/repaint behavior;
+- large file open and viewport interaction;
+- snap and hit testing on dense drawings;
+- export time for representative files.
+
+Allowed v0.9 fixes:
+
+- avoid obvious repeated calculations;
+- guard degenerate geometry cases;
+- improve small hot paths when tests stay stable;
+- add regression tests for discovered performance-related correctness bugs.
+
+Deferred:
+
+- major renderer rewrite;
+- major spatial-index rewrite;
+- speculative caching with complex invalidation.
+
+### Phase 6 - Documentation completion
+
+Required user docs:
+
+- installation guide;
+- first-use guide;
+- import/export guide;
+- shortcuts/command input guide;
+- known limitations;
+- v0.9 release notes.
+
+Required developer docs:
+
+- architecture overview updated with current module boundaries;
+- tools/commands docs updated with preview-provider conventions;
+- persistence and export docs updated with current capabilities;
+- handoff kept current after each v0.9 milestone.
+
+### Phase 7 - Release gate
+
+The v0.9 release gate is:
 
 ```powershell
 dotnet clean
 dotnet restore
 dotnet build
 dotnet test
+git status
 ```
 
-Then publish with:
+Only after the release gate passes locally:
 
 ```powershell
-git status
-git add README.md docs samples
-git commit -m "docs: prepare OpenCad2D v0.8 release"
-git tag -a v0.8.0 -m "OpenCad2D v0.8.0"
+git add README.md docs samples src tests
+git commit -m "docs: prepare OpenCad2D v0.9 release candidate"
+git tag -a v0.9.0 -m "OpenCad2D v0.9.0"
 git push
-git push origin v0.8.0
+git push origin v0.9.0
 ```
+
+---
+
+## v0.9 completion checklist
+
+```text
+[ ] Local settings scope decided
+[ ] Local settings storage implemented
+[ ] Local settings fallback tests added
+[ ] Undo/redo audit completed for drawing tools
+[ ] Undo/redo audit completed for modify tools
+[ ] Undo/redo audit completed for Property Panel and manager edits
+[ ] DXF export E2E workflow completed
+[ ] SVG export E2E workflow completed
+[ ] PDF export E2E workflow completed
+[ ] LibreCAD exact compatibility audit recorded
+[ ] QCAD exact compatibility audit recorded
+[ ] Optional TrueView compatibility audit recorded
+[ ] Rendering performance reviewed
+[ ] Large-file behavior reviewed
+[ ] Snap/hit-test behavior reviewed
+[ ] User documentation completed
+[ ] Developer documentation completed
+[ ] v0.9 release notes completed
+[ ] Full clean/build/test release gate passed
+[ ] GitHub release package prepared
+[ ] v0.9.0 tag published
+```
+
+---
+
+## Do not include in v0.9 unless required by a blocking bug
+
+- Hatch/campiture.
+- Blocks/symbols.
+- Raster reference images.
+- PNG export.
+- SVG import.
+- Associative dimensions.
+- Native DXF `DIMENSION` import/export.
+- Advanced Trim modes: Fence, Crossing, Edge, Project, Erase.
+- Advanced Fillet pairs: Line-Arc, Arc-Arc and polyline fillet.
+- Full NURBS knot/weight evaluation.
+- Large UI redesign.

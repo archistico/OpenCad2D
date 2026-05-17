@@ -2334,3 +2334,34 @@ Updated the active documentation set after the S1-S10 stabilization passes. The 
 
 Touched docs include `README.md`, `docs/roadmap.md`, `docs/stabilization-v0.9-plan.md`, `docs/dxf-compatibility.md`, `docs/known-limitations.md` and this handoff.
 
+
+
+## 2026-05-18 - v0.9 planning kickoff / Phase 0 documentation alignment
+
+Opened the v0.9 release-candidate planning track.
+
+The active direction is stabilization rather than another feature-heavy release. v0.9 should focus on local application/session settings, undo/redo audit, export workflow hardening, exact DXF compatibility audit records, safe performance review, documentation completion and release packaging.
+
+Documentation changes made in this pass:
+
+- `docs/roadmap.md` now separates completed v0.8.x work from the active v0.9 release-candidate checklist.
+- The old secondary v0.8 backlog was re-triaged so already-completed items such as Z-order, draw-order tests, document-level drafting settings, polyline offset, favicon/logo support and Line-Line Fillet improvements are not planned twice.
+- The post-v1.0 backlog no longer lists ellipses and splines as future features because native entity/tool support already exists.
+- `docs/stabilization-v0.9-plan.md` was rewritten as the working v0.9 plan with phases 0-7.
+- `docs/known-limitations.md` now distinguishes persisted document-level drafting settings from the still-planned local application/session settings layer.
+- `README.md` links the v0.9 stabilization plan in the documentation table.
+
+Recommended next implementation step:
+
+1. Start v0.9 Phase 1 with a small local settings service.
+2. Keep it separate from `.opencad2d.json` drawing persistence.
+3. Cover missing/partial/corrupt settings fallback with tests before wiring it into the UI.
+
+Suggested first files for Phase 1:
+
+- `src/OpenCad2D.App/Settings/LocalApplicationSettings.cs`
+- `src/OpenCad2D.App/Settings/ILocalApplicationSettingsStore.cs`
+- `src/OpenCad2D.App/Settings/JsonLocalApplicationSettingsStore.cs`
+- `tests/OpenCad2D.App.Tests/LocalApplicationSettingsStoreTests.cs`
+- `docs/application-settings.md`
+- `docs/ai-handoff.md`

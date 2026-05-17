@@ -163,6 +163,7 @@ Important documents:
 | `docs/persistence.md` | native file format and recovery rules |
 | `docs/release-v0.8.md` | current release notes |
 | `docs/release-v0.8-final.md` | GitHub-ready v0.8.x final release draft |
+| `docs/stabilization-v0.9-plan.md` | v0.9 release-candidate stabilization plan |
 | `docs/ai-handoff.md` | current handoff for future development |
 
 Historical milestone notes before v0.8 are no longer needed in the active documentation set.

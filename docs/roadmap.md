@@ -925,26 +925,31 @@ docs/command-input.md
 - [x] add release notes for v0.8;
 - [ ] run the final local full solution build and tests before tagging the release.
 
-### Secondary v0.8 backlog moved forward
+### Secondary v0.8 backlog status before v0.9
 
-These remain useful but are intentionally deferred beyond v0.8:
+The old secondary backlog has been re-triaged before opening the v0.9 release-candidate track.
+Items already implemented in the v0.8.x stabilization line are marked complete here so they are not planned twice.
+
+Completed before v0.9:
 
 - [x] color picker improvements for line and text format managers;
-- [ ] application settings;
+- [x] document-level drafting settings persisted in `.opencad2d.json`;
+- [x] default grid/drafting settings loaded through the startup template and safe fallbacks;
+- [x] application icon/logo assets and favicon support for the companion site/assets;
+- [x] draw order / Z-order independent from layers before v1.0;
+- [x] draw-order behavior covered by command/model tests;
+- [x] polyline offset for straight-segment open/closed polylines;
+- [x] Fillet live preview for Line-Line;
+- [x] Fillet Trim/NoTrim mode for Line-Line.
+
+Still useful but not required for v0.9:
+
+- [ ] local UI/session settings such as last file, last export folder and window/session preferences;
 - [ ] shortcuts persistence;
-- [ ] last file persistence;
-- [ ] default grid settings;
-- [ ] favicon;
-- [ ] final XAML theme;
-- [ ] draw order / Z-order independent from layers before v1.0;
+- [ ] final XAML theme polish;
 - [ ] snap icons: active / detected / disabled states;
 - [ ] dark theme regression tests;
-- [ ] settings persistence tests;
-- [ ] draw order / Z-order tests;
-- [ ] polyline offset;
 - [ ] advanced Fillet variants;
-- [x] Fillet live preview for Line-Line;
-- [x] Fillet Trim/NoTrim mode for Line-Line;
 - [ ] advanced Trim Fence/Crossing/Edge/Project/Erase modes.
 
 ---
@@ -952,25 +957,66 @@ These remain useful but are intentionally deferred beyond v0.8:
 
 ### Rule
 
-- [ ] no new features;
+- [ ] no large new features;
 - [ ] no avoidable architecture churn;
-- [ ] bug fixing only;
-- [ ] test expansion;
-- [ ] documentation completion;
-- [ ] safe performance work only.
+- [ ] bug fixing and regression fixing first;
+- [ ] tests before or with every behavior change;
+- [ ] documentation updated with every milestone;
+- [ ] safe performance work only, based on measurement rather than speculative rewrites.
 
-### Stability & Test
+### Phase 0 - Documentation alignment
+
+- [x] re-triage the v0.8 secondary backlog against the actual implemented state;
+- [x] separate v0.9 release-candidate work from post-v1.0 feature backlog;
+- [x] make the v0.9 plan explicit in `docs/stabilization-v0.9-plan.md`;
+- [x] keep `docs/known-limitations.md` focused on current real limitations;
+- [x] update `docs/ai-handoff.md` with the v0.9 starting point.
+
+### Phase 1 - Local application/session settings
+
+- [ ] define which settings are local session preferences and must stay outside `.opencad2d.json`;
+- [ ] persist last opened/saved folder and last export folder safely;
+- [ ] decide whether last opened file should be remembered automatically or only displayed in recent-file metadata;
+- [ ] persist window/session preferences only if they do not create fragile startup behavior;
+- [ ] add fallback behavior for missing, partial or corrupt local settings;
+- [ ] add settings persistence tests.
+
+### Phase 2 - Undo/redo audit
+
+- [ ] audit undo/redo for all primary drawing tools;
+- [ ] audit undo/redo for all primary modify tools;
+- [ ] audit undo/redo for Property Panel edits;
+- [ ] audit undo/redo for layer, line format, text format and draw-order changes;
+- [ ] add missing regression tests where coverage is weak;
+- [ ] document any intentional limitation instead of hiding it.
+
+### Phase 3 - Export workflow hardening
 
 - [x] end-to-end workflow: draw -> save -> reopen;
-- [~] end-to-end workflow: draw -> annotate -> export DXF;
-- [~] end-to-end workflow: draw -> annotate -> export SVG/PDF;
 - [x] end-to-end workflow: import DXF -> modify -> export;
-- [ ] performance review for rendering;
-- [ ] performance review for large files;
-- [ ] performance review for snap and hit testing;
-- [ ] bug fixing from v0.8 feedback.
+- [ ] complete draw -> annotate -> export DXF workflow coverage for the current entity set;
+- [ ] complete draw -> annotate -> export SVG workflow coverage for the current entity set;
+- [ ] complete draw -> annotate -> export PDF workflow coverage for the current entity set;
+- [ ] verify that text, MTEXT, dimensions, line formats, lineweights and curve entities remain covered.
 
-### Documentation
+### Phase 4 - DXF compatibility audit
+
+- [x] prepare representative DXF compatibility sample set;
+- [x] manually smoke-check the current sample set in external viewers;
+- [ ] record exact LibreCAD version, operating system and test date;
+- [ ] record exact QCAD version, operating system and test date;
+- [ ] optionally record Autodesk DWG TrueView validation when available;
+- [ ] update `docs/dxf-compatibility.md` with pass/partial/fail notes per sample.
+
+### Phase 5 - Performance review
+
+- [ ] review rendering behavior on small, medium and large sample drawings;
+- [ ] review large-file open/repaint behavior;
+- [ ] review snap and hit-testing behavior on dense drawings;
+- [ ] apply only low-risk fixes such as avoiding repeated calculations or guarding degenerate cases;
+- [ ] defer major renderer/spatial-index rewrites unless a measured blocking issue is found.
+
+### Phase 6 - Documentation completion
 
 - [ ] complete user documentation;
 - [ ] complete developer documentation;
@@ -979,7 +1025,17 @@ These remain useful but are intentionally deferred beyond v0.8:
 - [ ] import/export guide;
 - [ ] shortcuts guide;
 - [ ] full changelog;
-- [ ] release candidate notes.
+- [ ] v0.9 release-candidate notes.
+
+### Phase 7 - Release gate
+
+- [ ] run `dotnet clean`;
+- [ ] run `dotnet restore`;
+- [ ] run `dotnet build`;
+- [ ] run `dotnet test`;
+- [ ] check `git status`;
+- [ ] prepare GitHub release package;
+- [ ] tag `v0.9.0` only after the release gate passes locally.
 
 ---
 
@@ -1012,8 +1068,6 @@ These remain useful but are intentionally deferred beyond v0.8:
 
 - [ ] blocks;
 - [ ] groups;
-- [ ] ellipses;
-- [ ] splines;
 - [ ] background/reference raster images;
 - [ ] SVG import;
 - [ ] associative dimensions;
