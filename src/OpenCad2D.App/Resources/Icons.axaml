@@ -172,13 +172,13 @@
     <StreamGeometry x:Key="IconScale">M5 13h5a1 1 0 0 1 1 1v5a1 1 0 0 1 -1 1h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1 M4 9v.01 M4 4v.01 M9 4v.01 M15 4v.01 M15 20v.01 M20 4v.01 M20 9v.01 M20 15v.01 M20 20v.01</StreamGeometry>
 
     <!-- Select.svg -->
-    <StreamGeometry x:Key="IconSelect">M11 5v5a1 1 0 0 1 -1 1h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1h5a1 1 0 0 1 1 1 M15 4h-.01 M20 4h-.01 M20 9h-.01 M20 15h-.01 M4 15h-.01 M20 20h-.01 M15 20h-.01 M9 20h-.01 M4 20h-.01</StreamGeometry>
+    <StreamGeometry x:Key="IconSelect">M19 11.01h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1h5a1 1 0 0 1 1 1v5a1 1 0 0 1 -1 1 M20 15.01v-.01 M20 20.01v-.01 M15 20.01v-.01 M9 20.01v-.01 M9 4.01v-.01 M4 20.01v-.01 M4 15.01v-.01 M4 9.01v-.01 M4 4.01v-.01</StreamGeometry>
 
     <!-- Select_All.svg -->
     <StreamGeometry x:Key="IconSelectAll">M8 8h8v8h-8l0 -8 M4 4v.01 M8 4v.01 M12 4v.01 M16 4v.01 M20 4v.01 M4 20v.01 M8 20v.01 M12 20v.01 M16 20v.01 M20 20v.01 M20 16v.01 M20 12v.01 M20 8v.01 M4 16v.01 M4 12v.01 M4 8v.01</StreamGeometry>
 
     <!-- Select_Last.svg -->
-    <StreamGeometry x:Key="IconSelectLast">M19 11.01h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1h5a1 1 0 0 1 1 1v5a1 1 0 0 1 -1 1 M20 15.01v-.01 M20 20.01v-.01 M15 20.01v-.01 M9 20.01v-.01 M9 4.01v-.01 M4 20.01v-.01 M4 15.01v-.01 M4 9.01v-.01 M4 4.01v-.01</StreamGeometry>
+    <StreamGeometry x:Key="IconSelectLast">M11 5v5a1 1 0 0 1 -1 1h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1h5a1 1 0 0 1 1 1 M15 4h-.01 M20 4h-.01 M20 9h-.01 M20 15h-.01 M4 15h-.01 M20 20h-.01 M15 20h-.01 M9 20h-.01 M4 20h-.01</StreamGeometry>
 
     <!-- Snap.svg -->
     <StreamGeometry x:Key="IconSnap">M16 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M16 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M8 18h8 M18 20v1 M18 3v1 M6 20v1 M6 10v-7 M12 3v18 M18 8v8 M8 12h13 M21 6h-1 M16 6h-13 M3 12h1 M20 18h1 M3 18h1 M6 14v2</StreamGeometry>
