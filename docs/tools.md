@@ -233,3 +233,24 @@ The app renderer asks the active tool for a descriptor first, then for simple pr
 The drawing tools now migrated to entity previews are `LineTool`, `RectangleTool`, `RectangleBySidesTool`, `CircleTool`, `ArcTool`, `ArcThreePointsTool`, `EllipseTool`, `PolylineTool`, `PolygonTool` and `SplineTool`. Dimension previews plus `MoveTool`, `CopyTool`, `RotateTool`, `ScaleTool`, `AlignTool`, `BreakAtPointTool`, `BreakBetweenPointsTool`, `FilletTool`, `OffsetTool` and `MeasureDistanceTool` are also migrated.
 
 `MirrorTool` and `MeasureAngleTool` use descriptor previews because they need normal preview entities plus overlay markers/guide lines. `SelectionTool` and `ZoomWindowTool` use descriptor previews for their filled model-space windows. `GripEditTool` uses descriptor previews for grip markers, replacement-entity preview and base-to-destination measurement guides. `ExtendTool` and `TrimTool` use descriptor previews for their normal preview entities plus highlighted added/removed fragments.
+
+---
+
+## Toolbar icon resources
+
+The main toolbar and left tool panel now use vector icons loaded from `src/OpenCad2D.App/Resources/Icons.axaml`.
+
+The icons are stored as `StreamGeometry` resources generated from the SVG source paths. Buttons keep their existing click handlers and tooltips, but their content is now a left-aligned grid with:
+
+- a `Path` bound to a `StreamGeometry` resource;
+- a small spacing column;
+- the button text aligned to the left.
+
+The shared styling lives in `MainWindow.axaml` through the `icon-button-content`, `icon-button-path` and `icon-button-text` classes. Since the supplied SVG icons are outline/stroke icons, they are rendered with `Path` and `Stroke` rather than `PathIcon` fill rendering.
+
+
+## Icon licensing
+
+The toolbar icons are derived from Tabler Icons SVG assets and converted to Avalonia `StreamGeometry` resources. Tabler Icons is licensed under the MIT License.
+
+When distributing OpenCad2D with these icons, keep the Tabler Icons copyright and MIT license notice in `LICENSES/Tabler-Icons-MIT.txt` and keep the attribution summary in `docs/third-party-notices.md`.

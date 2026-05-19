@@ -1,0 +1,216 @@
+<ResourceDictionary
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Icons generated from the SVG files in Icone.zip. -->
+    <!-- About.svg -->
+    <StreamGeometry x:Key="IconAbout">M12 9h.01 M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14 M11 12h1v4h1</StreamGeometry>
+
+    <!-- Align.svg -->
+    <StreamGeometry x:Key="IconAlign">M20 20h-15.269a.731 .731 0 0 1 -.517 -1.249l14.537 -14.537a.731 .731 0 0 1 1.249 .517v15.269</StreamGeometry>
+
+    <!-- Align_Bottom.svg -->
+    <StreamGeometry x:Key="IconAlignBottom">M4 20l16 0 M9 6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -8</StreamGeometry>
+
+    <!-- Align_Left.svg -->
+    <StreamGeometry x:Key="IconAlignLeft">M4 4l0 16 M8 11a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l0 -2</StreamGeometry>
+
+    <!-- Align_Right.svg -->
+    <StreamGeometry x:Key="IconAlignRight">M20 4l0 16 M4 11a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-8a2 2 0 0 1 -2 -2l0 -2</StreamGeometry>
+
+    <!-- Align_Top.svg -->
+    <StreamGeometry x:Key="IconAlignTop">M4 4l16 0 M9 10a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -8</StreamGeometry>
+
+    <!-- Aligned_Dim.svg -->
+    <StreamGeometry x:Key="IconAlignedDim">M17 3l4 4l-14 14l-4 -4l14 -14 M16 7l-1.5 -1.5 M13 10l-1.5 -1.5 M10 13l-1.5 -1.5 M7 16l-1.5 -1.5</StreamGeometry>
+
+    <!-- Angle.svg -->
+    <StreamGeometry x:Key="IconAngle">M21 19h-18l9 -15 M20.615 15.171h.015 M19.515 11.771h.015 M17.715 8.671h.015 M15.415 5.971h.015</StreamGeometry>
+
+    <!-- Angular_Dim.svg -->
+    <StreamGeometry x:Key="IconAngularDim">M21 19h-18l9 -15 M20.615 15.171h.015 M19.515 11.771h.015 M17.715 8.671h.015 M15.415 5.971h.015</StreamGeometry>
+
+    <!-- Arc.svg -->
+    <StreamGeometry x:Key="IconArc">M17 4a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M3 18a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M17 5c-6.627 0 -12 5.373 -12 12</StreamGeometry>
+
+    <!-- Arc_3P.svg -->
+    <StreamGeometry x:Key="IconArc3P">M12 3a9 9 0 1 0 9 9</StreamGeometry>
+
+    <!-- Area.svg -->
+    <StreamGeometry x:Key="IconArea">M17 5h2a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-1a1 1 0 0 0 -1 1v1a1 1 0 0 0 1 1h2 M4 12v6 M4 14a2 2 0 0 1 2 -2h.5a2.5 2.5 0 0 1 2.5 2.5v3.5 M9 15.5v-1a2.5 2.5 0 1 1 5 0v3.5</StreamGeometry>
+
+    <!-- Assign.svg: adapted from Assegna.svg source icon. -->
+    <StreamGeometry x:Key="IconAssign">M5 5a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2l0 -2 M19 6h1a2 2 0 0 1 2 2a5 5 0 0 1 -5 5l-5 0v2 M10 16a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v4a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -4</StreamGeometry>
+
+    <!-- Backward.svg -->
+    <StreamGeometry x:Key="IconBackward">M6 10l-2 1l8 4l8 -4l-2 -1 M4 15l8 4l8 -4 M12 4v7 M15 8l-3 3l-3 -3</StreamGeometry>
+
+    <!-- Break_Pt.svg -->
+    <StreamGeometry x:Key="IconBreakPt">M8 4h-3v16h3 M16 4h3v16h-3</StreamGeometry>
+
+    <!-- Break_Seg.svg -->
+    <StreamGeometry x:Key="IconBreakSeg">M8 4h-3v16h3 M16 4h3v16h-3</StreamGeometry>
+
+    <!-- Circle.svg -->
+    <StreamGeometry x:Key="IconCircle">M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0</StreamGeometry>
+
+    <!-- Copy.svg -->
+    <StreamGeometry x:Key="IconCopy">M7 5a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2l0 -10 M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-10a2 2 0 0 1 2 -2h2</StreamGeometry>
+
+    <!-- Delete.svg -->
+    <StreamGeometry x:Key="IconDelete">M4 7l16 0 M10 11l0 6 M14 11l0 6 M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12 M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3</StreamGeometry>
+
+    <!-- Diameter_Dim.svg -->
+    <StreamGeometry x:Key="IconDiameterDim">M21 19h-18l9 -15 M20.615 15.171h.015 M19.515 11.771h.015 M17.715 8.671h.015 M15.415 5.971h.015</StreamGeometry>
+
+    <!-- Distance.svg -->
+    <StreamGeometry x:Key="IconDistance">M18 9l3 3l-3 3 M15 12h6 M6 9l-3 3l3 3 M3 12h6</StreamGeometry>
+
+    <!-- Distribute_H.svg -->
+    <StreamGeometry x:Key="IconDistributeH">M20 20h-2a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h2 M4 20h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2 M12 8v8</StreamGeometry>
+
+    <!-- Distribute_V.svg -->
+    <StreamGeometry x:Key="IconDistributeV">M4 20v-2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v2 M4 4v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2 M16 12h-8</StreamGeometry>
+
+    <!-- Ellipse.svg -->
+    <StreamGeometry x:Key="IconEllipse">M3 12c0 -3.314 4.03 -6 9 -6s9 2.686 9 6s-4.03 6 -9 6s-9 -2.686 -9 -6</StreamGeometry>
+
+    <!-- Export_DXF.svg -->
+    <StreamGeometry x:Key="IconExportDXF">M14 3v4a1 1 0 0 0 1 1h4 M11.5 21h-4.5a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v5m-5 6h7m-3 -3l3 3l-3 3</StreamGeometry>
+
+    <!-- Export_PDF.svg -->
+    <StreamGeometry x:Key="IconExportPDF">M14 3v4a1 1 0 0 0 1 1h4 M11.5 21h-4.5a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v5m-5 6h7m-3 -3l3 3l-3 3</StreamGeometry>
+
+    <!-- Export_SVG.svg -->
+    <StreamGeometry x:Key="IconExportSVG">M14 3v4a1 1 0 0 0 1 1h4 M11.5 21h-4.5a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v5m-5 6h7m-3 -3l3 3l-3 3</StreamGeometry>
+
+    <!-- Extend.svg -->
+    <StreamGeometry x:Key="IconExtend">M10 12l10 0 M10 12l4 -4 M10 12l4 4 M4 20l0 -3m0 -13l0 3m0 3.5l0 3</StreamGeometry>
+
+    <!-- Extents.svg -->
+    <StreamGeometry x:Key="IconExtents">M8 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0 M16 16l-2.5 -2.5 M3 7v-2a2 2 0 0 1 2 -2h2 M3 17v2a2 2 0 0 0 2 2h2 M17 3h2a2 2 0 0 1 2 2v2 M17 21h2a2 2 0 0 0 2 -2v-2</StreamGeometry>
+
+    <!-- Fillet.svg -->
+    <StreamGeometry x:Key="IconFillet">M5 19v-6a8 8 0 0 1 8 -8h6</StreamGeometry>
+
+    <!-- Forward.svg -->
+    <StreamGeometry x:Key="IconForward">M7 9.5l-3 1.5l8 4l8 -4l-3 -1.5 M4 15l8 4l8 -4 M12 11v-7 M9 7l3 -3l3 3</StreamGeometry>
+
+    <!-- Grid.svg -->
+    <StreamGeometry x:Key="IconGrid">M3 6h18 M3 12h18 M3 18h18 M6 3v18 M12 3v18 M18 3v18</StreamGeometry>
+
+    <!-- Horizontal_Dim.svg -->
+    <StreamGeometry x:Key="IconHorizontalDim">M19.875 12c.621 0 1.125 .512 1.125 1.143v5.714c0 .631 -.504 1.143 -1.125 1.143h-15.875a1 1 0 0 1 -1 -1v-5.857c0 -.631 .504 -1.143 1.125 -1.143h15.75 M9 12v2 M6 12v3 M12 12v3 M18 12v3 M15 12v2 M3 3v4 M3 5h18 M21 3v4</StreamGeometry>
+
+    <!-- Import_DXF.svg -->
+    <StreamGeometry x:Key="IconImportDXF">M14 3v4a1 1 0 0 0 1 1h4 M5 13v-8a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5.5m-9.5 -2h7m-3 -3l3 3l-3 3</StreamGeometry>
+
+    <!-- Layers.svg -->
+    <StreamGeometry x:Key="IconLayers">M4 3h16 M4 9h16 M4 15h16 M4 21h16</StreamGeometry>
+
+    <!-- Line.svg -->
+    <StreamGeometry x:Key="IconLine">M4 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M16 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M7.5 16.5l9 -9</StreamGeometry>
+
+    <!-- Line_formats.svg -->
+    <StreamGeometry x:Key="IconLineFormats">M4 18v.01 M8 18v.01 M12 18v.01 M16 18v.01 M20 18v.01 M18 12h2 M11 12h2 M4 12h2 M4 6h16</StreamGeometry>
+
+    <!-- MText.svg -->
+    <StreamGeometry x:Key="IconMText">M4 20l3 0 M14 20l7 0 M6.9 15l6.9 0 M10.2 6.3l5.8 13.7 M5 20l6 -16l2 0l7 16</StreamGeometry>
+
+    <!-- Mirror.svg -->
+    <StreamGeometry x:Key="IconMirror">M12 3l0 18 M16 7l0 10l5 0l-5 -10 M8 7l0 10l-5 0l5 -10</StreamGeometry>
+
+    <!-- Move.svg -->
+    <StreamGeometry x:Key="IconMove">M18 9l3 3l-3 3 M15 12h6 M6 9l-3 3l3 3 M3 12h6 M9 18l3 3l3 -3 M12 15v6 M15 6l-3 -3l-3 3 M12 3v6</StreamGeometry>
+
+    <!-- New.svg -->
+    <StreamGeometry x:Key="IconNew">M14 3v4a1 1 0 0 0 1 1h4 M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2</StreamGeometry>
+
+    <!-- Offset.svg -->
+    <StreamGeometry x:Key="IconOffset">M14 5l-10 14 M20 5l-10 14</StreamGeometry>
+
+    <!-- Open.svg -->
+    <StreamGeometry x:Key="IconOpen">M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2 M7 9l5 -5l5 5 M12 4l0 12</StreamGeometry>
+
+    <!-- Point.svg -->
+    <StreamGeometry x:Key="IconPoint">M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0</StreamGeometry>
+
+    <!-- Polar.svg -->
+    <StreamGeometry x:Key="IconPolar">M10 3h4v4h-4l0 -4 M3 17h4v4h-4l0 -4 M17 17h4v4h-4l0 -4 M7 17l5 -4l5 4 M12 7l0 6</StreamGeometry>
+
+    <!-- Polygon.svg -->
+    <StreamGeometry x:Key="IconPolygon">M13.163 2.168l8.021 5.828c.694 .504 .984 1.397 .719 2.212l-3.064 9.43a1.978 1.978 0 0 1 -1.881 1.367h-9.916a1.978 1.978 0 0 1 -1.881 -1.367l-3.064 -9.43a1.978 1.978 0 0 1 .719 -2.212l8.021 -5.828a1.978 1.978 0 0 1 2.326 0</StreamGeometry>
+
+    <!-- Polyline.svg -->
+    <StreamGeometry x:Key="IconPolyline">M3 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M17 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M17 5a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M3 19a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M6.5 17.5l11 -11m-12.5 .5v10m14 -10v10</StreamGeometry>
+
+    <!-- Props.svg -->
+    <StreamGeometry x:Key="IconProps">M4 5a1 1 0 0 1 1 -1h14a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-14a1 1 0 0 1 -1 -1l0 -2 M4 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6 M14 12l6 0 M14 16l6 0 M14 20l6 0</StreamGeometry>
+
+    <!-- Radius_Dim.svg -->
+    <StreamGeometry x:Key="IconRadiusDim">M21 19h-18l9 -15 M20.615 15.171h.015 M19.515 11.771h.015 M17.715 8.671h.015 M15.415 5.971h.015</StreamGeometry>
+
+    <!-- Rect_Sides.svg -->
+    <StreamGeometry x:Key="IconRectSides">M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -14</StreamGeometry>
+
+    <!-- Rectangle.svg -->
+    <StreamGeometry x:Key="IconRectangle">M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10</StreamGeometry>
+
+    <!-- Redo.svg -->
+    <StreamGeometry x:Key="IconRedo">M15 14l4 -4l-4 -4 M19 10h-11a4 4 0 1 0 0 8h1</StreamGeometry>
+
+    <!-- Rotate.svg -->
+    <StreamGeometry x:Key="IconRotate">M4.05 11a8 8 0 1 1 .5 4m-.5 5v-5h5</StreamGeometry>
+
+    <!-- Save.svg -->
+    <StreamGeometry x:Key="IconSave">M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2 M10 14a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M14 4l0 4l-6 0l0 -4</StreamGeometry>
+
+    <!-- Save_As.svg -->
+    <StreamGeometry x:Key="IconSaveAs">M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2 M10 14a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M14 4l0 4l-6 0l0 -4</StreamGeometry>
+
+    <!-- Scale.svg -->
+    <StreamGeometry x:Key="IconScale">M5 13h5a1 1 0 0 1 1 1v5a1 1 0 0 1 -1 1h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1 M4 9v.01 M4 4v.01 M9 4v.01 M15 4v.01 M15 20v.01 M20 4v.01 M20 9v.01 M20 15v.01 M20 20v.01</StreamGeometry>
+
+    <!-- Select.svg -->
+    <StreamGeometry x:Key="IconSelect">M11 5v5a1 1 0 0 1 -1 1h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1h5a1 1 0 0 1 1 1 M15 4h-.01 M20 4h-.01 M20 9h-.01 M20 15h-.01 M4 15h-.01 M20 20h-.01 M15 20h-.01 M9 20h-.01 M4 20h-.01</StreamGeometry>
+
+    <!-- Select_All.svg -->
+    <StreamGeometry x:Key="IconSelectAll">M8 8h8v8h-8l0 -8 M4 4v.01 M8 4v.01 M12 4v.01 M16 4v.01 M20 4v.01 M4 20v.01 M8 20v.01 M12 20v.01 M16 20v.01 M20 20v.01 M20 16v.01 M20 12v.01 M20 8v.01 M4 16v.01 M4 12v.01 M4 8v.01</StreamGeometry>
+
+    <!-- Select_Last.svg -->
+    <StreamGeometry x:Key="IconSelectLast">M19 11.01h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1h5a1 1 0 0 1 1 1v5a1 1 0 0 1 -1 1 M20 15.01v-.01 M20 20.01v-.01 M15 20.01v-.01 M9 20.01v-.01 M9 4.01v-.01 M4 20.01v-.01 M4 15.01v-.01 M4 9.01v-.01 M4 4.01v-.01</StreamGeometry>
+
+    <!-- Snap.svg -->
+    <StreamGeometry x:Key="IconSnap">M16 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M16 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M8 18h8 M18 20v1 M18 3v1 M6 20v1 M6 10v-7 M12 3v18 M18 8v8 M8 12h13 M21 6h-1 M16 6h-13 M3 12h1 M20 18h1 M3 18h1 M6 14v2</StreamGeometry>
+
+    <!-- Spline.svg -->
+    <StreamGeometry x:Key="IconSpline">M4 19h1.341a7 7 0 0 0 6.845 -5.533l.628 -2.934a7 7 0 0 1 6.846 -5.533h1.34</StreamGeometry>
+
+    <!-- Text.svg -->
+    <StreamGeometry x:Key="IconText">M4 20l3 0 M14 20l7 0 M6.9 15l6.9 0 M10.2 6.3l5.8 13.7 M5 20l6 -16l2 0l7 16</StreamGeometry>
+
+    <!-- Text_formats.svg -->
+    <StreamGeometry x:Key="IconTextFormats">M4 20l3 0 M14 20l7 0 M6.9 15l6.9 0 M10.2 6.3l5.8 13.7 M5 20l6 -16l2 0l7 16</StreamGeometry>
+
+    <!-- To_Back.svg -->
+    <StreamGeometry x:Key="IconToBack">M14 12l6 -3l-8 -4l-8 4l6 3 M10 12l-6 3l8 4l8 -4l-6 -3l-2 1l-2 -1</StreamGeometry>
+
+    <!-- To_Front.svg -->
+    <StreamGeometry x:Key="IconToFront">M12 5l-8 4l8 4l8 -4l-8 -4 M10 12l-6 3l8 4l8 -4l-6 -3</StreamGeometry>
+
+    <!-- Trim.svg -->
+    <StreamGeometry x:Key="IconTrim">M20 4v16 M4 6h12 M10 12h6 M6 18h10</StreamGeometry>
+
+    <!-- Undo.svg -->
+    <StreamGeometry x:Key="IconUndo">M9 14l-4 -4l4 -4 M5 10h11a4 4 0 1 1 0 8h-1</StreamGeometry>
+
+    <!-- Vertical_Dim.svg -->
+    <StreamGeometry x:Key="IconVerticalDim">M12 19.875c0 .621 -.512 1.125 -1.143 1.125h-5.714a1.134 1.134 0 0 1 -1.143 -1.125v-15.875a1 1 0 0 1 1 -1h5.857c.631 0 1.143 .504 1.143 1.125l0 15.75 M12 9h-2 M12 6h-3 M12 12h-3 M12 18h-3 M12 15h-2 M21 3h-4 M19 3v18 M21 21h-4</StreamGeometry>
+
+    <!-- Zoom_Extents.svg -->
+    <StreamGeometry x:Key="IconZoomExtents">M8 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0 M16 16l-2.5 -2.5 M3 7v-2a2 2 0 0 1 2 -2h2 M3 17v2a2 2 0 0 0 2 2h2 M17 3h2a2 2 0 0 1 2 2v2 M17 21h2a2 2 0 0 0 2 -2v-2</StreamGeometry>
+
+    <!-- Zoom_Window.svg -->
+    <StreamGeometry x:Key="IconZoomWindow">M15 13v4 M13 15h4 M10 15a5 5 0 1 0 10 0a5 5 0 1 0 -10 0 M22 22l-3 -3 M6 18h-1a2 2 0 0 1 -2 -2v-1 M3 11v-1 M3 6v-1a2 2 0 0 1 2 -2h1 M10 3h1 M15 3h1a2 2 0 0 1 2 2v1</StreamGeometry>
+
+</ResourceDictionary>

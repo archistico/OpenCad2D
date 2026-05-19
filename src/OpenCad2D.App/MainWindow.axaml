@@ -22,7 +22,7 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="7,4" />
             <Setter Property="FontSize" Value="11" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="MinWidth" Value="110" />
             <Setter Property="Width" Value="110" />
         </Style>
@@ -42,7 +42,35 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding" Value="7,3" />
             <Setter Property="FontSize" Value="11" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
             <Setter Property="MinWidth" Value="58" />
+        </Style>
+
+        <Style Selector="Grid.icon-button-content">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Path.icon-button-path">
+            <Setter Property="Width" Value="16" />
+            <Setter Property="Height" Value="16" />
+            <Setter Property="Stretch" Value="Uniform" />
+            <Setter Property="Stroke" Value="#DDDDDD" />
+            <Setter Property="Fill" Value="Transparent" />
+            <Setter Property="StrokeThickness" Value="2" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="StrokeJoin" Value="Round" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.active-tool Path.icon-button-path">
+            <Setter Property="Stroke" Value="White" />
+        </Style>
+
+        <Style Selector="TextBlock.icon-button-text">
+            <Setter Property="HorizontalAlignment" Value="Left" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextAlignment" Value="Left" />
         </Style>
 
         <Style Selector="TextBlock.active-command-label">
@@ -134,9 +162,17 @@
                             Orientation="Horizontal"
                             Spacing="6">
                     <Button Classes="global-button"
-                            Content="About"
                             ToolTip.Tip="About OpenCad2D"
-                            Click="About_Click" />
+                            Click="About_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAbout}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="About" />
+                                </Grid>
+                            </Button>
                 </StackPanel>
 
                 <StackPanel DockPanel.Dock="Left"
@@ -149,46 +185,110 @@
                                Margin="0,0,2,0" />
 
                     <Button Classes="global-button"
-                            Content="New"
                             ToolTip.Tip="Create a new OpenCad2D document"
-                            Click="New_Click" />
+                            Click="New_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconNew}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="New" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Open"
                             ToolTip.Tip="Open an existing .opencad2d.json drawing"
-                            Click="Open_Click" />
+                            Click="Open_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconOpen}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Open" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Import DXF"
                             ToolTip.Tip="Import an ASCII DXF drawing into a new OpenCad2D document"
-                            Click="ImportDxf_Click" />
+                            Click="ImportDxf_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconImportDXF}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Import DXF" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Save"
                             ToolTip.Tip="Save the current drawing"
-                            Click="Save_Click" />
+                            Click="Save_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconSave}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Save" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Save As"
                             ToolTip.Tip="Save the current drawing to a new file"
-                            Click="SaveAs_Click" />
+                            Click="SaveAs_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconSaveAs}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Save As" />
+                                </Grid>
+                            </Button>
 
                     <Separator Margin="5,0" />
 
                     <Button Classes="global-button"
-                            Content="Export SVG"
                             ToolTip.Tip="Export the drawing as SVG"
-                            Click="ExportSvg_Click" />
+                            Click="ExportSvg_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExportSVG}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Export SVG" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Export DXF"
                             ToolTip.Tip="Export the drawing as DXF"
-                            Click="ExportDxf_Click" />
+                            Click="ExportDxf_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExportDXF}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Export DXF" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Export PDF"
                             ToolTip.Tip="Export a print-friendly PDF drawing"
-                            Click="ExportPdf_Click" />
+                            Click="ExportPdf_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExportPDF}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Export PDF" />
+                                </Grid>
+                            </Button>
 
                     <Separator Margin="5,0" />
 
@@ -219,9 +319,17 @@
                                Margin="0,0,2,0" />
 
                     <Button Classes="global-button"
-                            Content="Assegna"
                             ToolTip.Tip="Assign selected entities to the current layer"
-                            Click="AssignCurrentLayer_Click" />
+                            Click="AssignCurrentLayer_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAssign}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Assign" />
+                                </Grid>
+                            </Button>
 
                     <ComboBox x:Name="LayerComboBox"
                               Classes="compact-combo"
@@ -243,24 +351,56 @@
                               Click="LayerLockedCheckBox_Click" />
 
                     <Button Classes="global-button"
-                            Content="Layers..."
                             ToolTip.Tip="Open the Layer Manager"
-                            Click="Layers_Click" />
+                            Click="Layers_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconLayers}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Layers..." />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Line formats..."
                             ToolTip.Tip="Open the Line Format Manager"
-                            Click="LineFormats_Click" />
+                            Click="LineFormats_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconLineFormats}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Line formats..." />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Text formats..."
                             ToolTip.Tip="Open the Text Format Manager"
-                            Click="TextFormats_Click" />
+                            Click="TextFormats_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconTextFormats}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Text formats..." />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Grid..."
                             ToolTip.Tip="Configure grid display and spacing"
-                            Click="Grid_Click" />
+                            Click="Grid_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconGrid}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Grid..." />
+                                </Grid>
+                            </Button>
 
                     <Separator Margin="5,0" />
 
@@ -277,25 +417,57 @@
                     <Separator Margin="5,0" />
 
                     <Button Classes="global-button"
-                            Content="Undo"
                             ToolTip.Tip="Undo the last operation"
-                            Click="Undo_Click" />
+                            Click="Undo_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconUndo}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Undo" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Redo"
                             ToolTip.Tip="Redo the last undone operation"
-                            Click="Redo_Click" />
+                            Click="Redo_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRedo}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Redo" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
-                            Content="Extents"
                             ToolTip.Tip="Zoom to show the full drawing extents"
-                            Click="ZoomExtents_Click" />
+                            Click="ZoomExtents_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExtents}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Extents" />
+                                </Grid>
+                            </Button>
 
                     <Button x:Name="PropertiesButton"
                             Classes="global-button"
-                            Content="Props"
                             ToolTip.Tip="Show or hide the selection property panel"
-                            Click="Properties_Click" />
+                            Click="Properties_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconProps}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Props" />
+                                </Grid>
+                            </Button>
 
                 </StackPanel>
             </DockPanel>
@@ -327,168 +499,376 @@
 
                             <Button x:Name="SelectButton"
                                     Classes="tool-button"
-                                    Content="Select"
                                     ToolTip.Tip="Select entities in the drawing"
-                                    Click="Select_Click" />
+                                    Click="Select_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconSelect}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Select" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="SelectAllButton"
                                     Classes="tool-button"
-                                    Content="Select All"
                                     ToolTip.Tip="Select all visible and unlocked entities"
-                                    Click="SelectAll_Click" />
+                                    Click="SelectAll_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconSelectAll}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Select All" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="SelectLastButton"
                                     Classes="tool-button"
-                                    Content="Select Last"
                                     ToolTip.Tip="Restore the last effective selection"
-                                    Click="SelectLast_Click" />
+                                    Click="SelectLast_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconSelectLast}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Select Last" />
+                                </Grid>
+                            </Button>
 
                             <TextBlock Classes="panel-section-label"
                                        Text="DRAW" />
 
                             <Button x:Name="PointButton"
                                     Classes="tool-button"
-                                    Content="Point"
                                     ToolTip.Tip="Draw a point entity"
-                                    Click="Point_Click" />
+                                    Click="Point_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconPoint}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Point" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="TextButton"
                                     Classes="tool-button"
-                                    Content="Text"
                                     ToolTip.Tip="Place a text entity"
-                                    Click="Text_Click" />
+                                    Click="Text_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconText}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Text" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="MultilineTextButton"
                                     Classes="tool-button"
-                                    Content="MText"
                                     ToolTip.Tip="Place a multiline text entity"
-                                    Click="MultilineText_Click" />
+                                    Click="MultilineText_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconMText}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="MText" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="LineButton"
                                     Classes="tool-button"
-                                    Content="Line"
                                     ToolTip.Tip="Draw a line from two points"
-                                    Click="Line_Click" />
+                                    Click="Line_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconLine}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Line" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="RectangleButton"
                                     Classes="tool-button"
-                                    Content="Rectangle"
                                     ToolTip.Tip="Draw a rectangle from two opposite corners"
-                                    Click="Rectangle_Click" />
+                                    Click="Rectangle_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectangle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Rectangle" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="RectangleBySidesButton"
                                     Classes="tool-button"
-                                    Content="Rect Sides"
                                     ToolTip.Tip="Draw a rectangle by side dimensions"
-                                    Click="RectangleBySides_Click" />
+                                    Click="RectangleBySides_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectSides}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Rect Sides" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="CircleButton"
                                     Classes="tool-button"
-                                    Content="Circle"
                                     ToolTip.Tip="Draw a circle by center and radius"
-                                    Click="Circle_Click" />
+                                    Click="Circle_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconCircle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Circle" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="EllipseButton"
                                     Classes="tool-button"
-                                    Content="Ellipse"
                                     ToolTip.Tip="Draw an ellipse by center, major axis and minor radius"
-                                    Click="Ellipse_Click" />
+                                    Click="Ellipse_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconEllipse}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Ellipse" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="ArcButton"
                                     Classes="tool-button"
-                                    Content="Arc"
                                     ToolTip.Tip="Draw an arc by center/start/end"
-                                    Click="Arc_Click" />
+                                    Click="Arc_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconArc}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Arc" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="ArcThreePointsButton"
                                     Classes="tool-button"
-                                    Content="Arc 3P"
                                     ToolTip.Tip="Draw an arc through three points"
-                                    Click="ArcThreePoints_Click" />
+                                    Click="ArcThreePoints_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconArc3P}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Arc 3P" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="PolylineButton"
                                     Classes="tool-button"
-                                    Content="Polyline"
                                     ToolTip.Tip="Draw a polyline with multiple vertices"
-                                    Click="Polyline_Click" />
+                                    Click="Polyline_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconPolyline}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Polyline" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="SplineButton"
                                     Classes="tool-button"
-                                    Content="Spline"
                                     ToolTip.Tip="Draw a Bezier spline with control points"
-                                    Click="Spline_Click" />
+                                    Click="Spline_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconSpline}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Spline" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="PolygonButton"
                                     Classes="tool-button"
-                                    Content="Polygon"
                                     ToolTip.Tip="Draw a regular polygon from side count, center and vertex"
-                                    Click="Polygon_Click" />
+                                    Click="Polygon_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconPolygon}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Polygon" />
+                                </Grid>
+                            </Button>
 
                             <TextBlock Classes="panel-section-label"
                                        Text="DIMENSION" />
 
                             <Button x:Name="HorizontalDimensionButton"
                                     Classes="tool-button"
-                                    Content="Horizontal Dim"
                                     ToolTip.Tip="Add a horizontal dimension"
-                                    Click="HorizontalDimension_Click" />
+                                    Click="HorizontalDimension_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconHorizontalDim}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Horizontal Dim" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="VerticalDimensionButton"
                                     Classes="tool-button"
-                                    Content="Vertical Dim"
                                     ToolTip.Tip="Add a vertical dimension"
-                                    Click="VerticalDimension_Click" />
+                                    Click="VerticalDimension_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconVerticalDim}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Vertical Dim" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="AlignedDimensionButton"
                                     Classes="tool-button"
-                                    Content="Aligned Dim"
                                     ToolTip.Tip="Add an aligned dimension"
-                                    Click="AlignedDimension_Click" />
+                                    Click="AlignedDimension_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAlignedDim}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Aligned Dim" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="RadiusDimensionButton"
                                     Classes="tool-button"
-                                    Content="Radius Dim"
                                     ToolTip.Tip="Add a radius dimension"
-                                    Click="RadiusDimension_Click" />
+                                    Click="RadiusDimension_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRadiusDim}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Radius Dim" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="DiameterDimensionButton"
                                     Classes="tool-button"
-                                    Content="Diameter Dim"
                                     ToolTip.Tip="Add a diameter dimension"
-                                    Click="DiameterDimension_Click" />
+                                    Click="DiameterDimension_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDiameterDim}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Diameter Dim" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="AngularDimensionButton"
                                     Classes="tool-button"
-                                    Content="Angular Dim"
                                     ToolTip.Tip="Add an angular dimension"
-                                    Click="AngularDimension_Click" />
+                                    Click="AngularDimension_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAngularDim}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Angular Dim" />
+                                </Grid>
+                            </Button>
 
                             <TextBlock Classes="panel-section-label"
                                        Text="MEASURE" />
 
                             <Button x:Name="MeasureDistanceButton"
                                     Classes="tool-button"
-                                    Content="Distance"
                                     ToolTip.Tip="Measure the distance between two points"
-                                    Click="MeasureDistance_Click" />
+                                    Click="MeasureDistance_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDistance}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Distance" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="MeasureEntityButton"
                                     Classes="tool-button"
-                                    Content="Entity"
                                     ToolTip.Tip="Measure properties of a selected entity"
-                                    Click="MeasureEntity_Click" />
+                                    Click="MeasureEntity_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconProps}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Entity" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="MeasureAngleButton"
                                     Classes="tool-button"
-                                    Content="Angle"
                                     ToolTip.Tip="Measure an angle"
-                                    Click="MeasureAngle_Click" />
+                                    Click="MeasureAngle_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAngle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Angle" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="MeasureAreaButton"
                                     Classes="tool-button"
-                                    Content="Area"
                                     ToolTip.Tip="Measure a closed area"
-                                    Click="MeasureArea_Click" />
+                                    Click="MeasureArea_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconArea}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Area" />
+                                </Grid>
+                            </Button>
                         </StackPanel>
 
                         <StackPanel Grid.Column="1"
@@ -499,151 +879,351 @@
 
                             <Button x:Name="ZoomWindowButton"
                                     Classes="tool-button"
-                                    Content="Zoom Window"
                                     ToolTip.Tip="Zoom to a rectangular window"
-                                    Click="ZoomWindow_Click" />
+                                    Click="ZoomWindow_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconZoomWindow}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Zoom Window" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="ZoomExtentsPanelButton"
                                     Classes="tool-button"
-                                    Content="Zoom Extents"
                                     ToolTip.Tip="Zoom to show the full drawing extents"
-                                    Click="ZoomExtents_Click" />
+                                    Click="ZoomExtents_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconZoomExtents}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Zoom Extents" />
+                                </Grid>
+                            </Button>
 
                             <TextBlock Classes="panel-section-label"
                                        Text="EDIT" />
 
                             <Button x:Name="MoveButton"
                                     Classes="tool-button"
-                                    Content="Move"
                                     ToolTip.Tip="Move selected entities by base and destination points"
-                                    Click="Move_Click" />
+                                    Click="Move_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconMove}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Move" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="CopyButton"
                                     Classes="tool-button"
-                                    Content="Copy"
                                     ToolTip.Tip="Copy selected entities by base and destination points"
-                                    Click="Copy_Click" />
+                                    Click="Copy_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconCopy}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Copy" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="RotateButton"
                                     Classes="tool-button"
-                                    Content="Rotate"
                                     ToolTip.Tip="Rotate selected entities"
-                                    Click="Rotate_Click" />
+                                    Click="Rotate_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRotate}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Rotate" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="ScaleButton"
                                     Classes="tool-button"
-                                    Content="Scale"
                                     ToolTip.Tip="Scale selected entities"
-                                    Click="Scale_Click" />
+                                    Click="Scale_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconScale}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Scale" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="AlignButton"
                                     Classes="tool-button"
-                                    Content="Align"
                                     ToolTip.Tip="Align selected entities using source and destination points"
-                                    Click="Align_Click" />
+                                    Click="Align_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAlign}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Align" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="BreakAtPointButton"
                                     Classes="tool-button"
-                                    Content="Break Pt"
                                     ToolTip.Tip="Break an entity at a single point"
-                                    Click="BreakAtPoint_Click" />
+                                    Click="BreakAtPoint_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconBreakPt}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Break Pt" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="BreakBetweenPointsButton"
                                     Classes="tool-button"
-                                    Content="Break Seg"
                                     ToolTip.Tip="Remove a segment between two break points"
-                                    Click="BreakBetweenPoints_Click" />
+                                    Click="BreakBetweenPoints_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconBreakSeg}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Break Seg" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="ExtendButton"
                                     Classes="tool-button"
-                                    Content="Extend"
                                     ToolTip.Tip="Extend an entity to a boundary"
-                                    Click="Extend_Click" />
+                                    Click="Extend_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExtend}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Extend" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="TrimButton"
                                     Classes="tool-button"
-                                    Content="Trim"
                                     ToolTip.Tip="Trim entities using cutting edges"
-                                    Click="Trim_Click" />
+                                    Click="Trim_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconTrim}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Trim" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="OffsetButton"
                                     Classes="tool-button"
-                                    Content="Offset"
                                     ToolTip.Tip="Create an offset copy of a line, circle or arc"
-                                    Click="Offset_Click" />
+                                    Click="Offset_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconOffset}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Offset" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="FilletButton"
                                     Classes="tool-button"
-                                    Content="Fillet"
                                     ToolTip.Tip="Create a line-line fillet with the current radius"
-                                    Click="Fillet_Click" />
+                                    Click="Fillet_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconFillet}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Fillet" />
+                                </Grid>
+                            </Button>
 
                             <Button x:Name="MirrorButton"
                                     Classes="tool-button"
-                                    Content="Mirror"
                                     ToolTip.Tip="Mirror selected entities across a two-point axis"
-                                    Click="Mirror_Click" />
+                                    Click="Mirror_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconMirror}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Mirror" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="Delete"
                                     ToolTip.Tip="Delete the selected entities"
-                                    Click="Delete_Click" />
+                                    Click="Delete_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDelete}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Delete" />
+                                </Grid>
+                            </Button>
 
                             <TextBlock Classes="panel-section-label"
                                        Text="ALIGN OBJECTS" />
 
                             <Button Classes="tool-button"
-                                    Content="Align Left"
                                     ToolTip.Tip="Align selected entities to the left edge of the selection bounds"
-                                    Click="AlignLeft_Click" />
+                                    Click="AlignLeft_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAlignLeft}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Align Left" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="Align Right"
                                     ToolTip.Tip="Align selected entities to the right edge of the selection bounds"
-                                    Click="AlignRight_Click" />
+                                    Click="AlignRight_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAlignRight}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Align Right" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="Align Top"
                                     ToolTip.Tip="Align selected entities to the top edge of the selection bounds"
-                                    Click="AlignTop_Click" />
+                                    Click="AlignTop_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAlignTop}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Align Top" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="Align Bottom"
                                     ToolTip.Tip="Align selected entities to the bottom edge of the selection bounds"
-                                    Click="AlignBottom_Click" />
+                                    Click="AlignBottom_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconAlignBottom}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Align Bottom" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="Distribute H"
                                     ToolTip.Tip="Distribute selected entities horizontally by center, keeping first and last fixed"
-                                    Click="DistributeHorizontal_Click" />
+                                    Click="DistributeHorizontal_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDistributeH}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Distribute H" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="Distribute V"
                                     ToolTip.Tip="Distribute selected entities vertically by center, keeping first and last fixed"
-                                    Click="DistributeVertical_Click" />
+                                    Click="DistributeVertical_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDistributeV}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Distribute V" />
+                                </Grid>
+                            </Button>
 
                             <TextBlock Classes="panel-section-label"
                                        Text="ORDER" />
 
                             <Button Classes="tool-button"
-                                    Content="To Front"
                                     ToolTip.Tip="Bring selected entities to the top draw order"
-                                    Click="BringToFront_Click" />
+                                    Click="BringToFront_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconToFront}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="To Front" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="To Back"
                                     ToolTip.Tip="Send selected entities to the bottom draw order"
-                                    Click="SendToBack_Click" />
+                                    Click="SendToBack_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconToBack}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="To Back" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="Forward"
                                     ToolTip.Tip="Move selected entities one draw-order step up"
-                                    Click="BringForward_Click" />
+                                    Click="BringForward_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconForward}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Forward" />
+                                </Grid>
+                            </Button>
 
                             <Button Classes="tool-button"
-                                    Content="Backward"
                                     ToolTip.Tip="Move selected entities one draw-order step down"
-                                    Click="SendBackward_Click" />
+                                    Click="SendBackward_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconBackward}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Backward" />
+                                </Grid>
+                            </Button>
 
                         </StackPanel>
                     </Grid>

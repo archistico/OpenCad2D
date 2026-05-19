@@ -172,7 +172,7 @@ The project currently supports:
 - layer `0` protected;
 - reusable line formats control layer stroke color, weight and style;
 - reusable text formats control single-line text font, height, color, bold and italic;
-- selected entities can be assigned to the current layer with the `Assegna` top-bar button.
+- selected entities can be assigned to the current layer with the `Assign` top-bar button.
 
 ### UI
 
@@ -2386,3 +2386,27 @@ Important boundary: local settings are app/user preferences and metadata only. D
 
 Validation note: this environment did not have the `dotnet` command available, so build/tests must be run locally with `dotnet build` and `dotnet test`.
 
+
+## 2026-05-19 - Toolbar StreamGeometry icons
+
+Added vector icons to the main OpenCad2D command buttons.
+
+Implemented files:
+
+- `src/OpenCad2D.App/Resources/Icons.axaml`: dedicated resource dictionary containing `StreamGeometry` entries generated from the supplied SVG icon paths;
+- `src/OpenCad2D.App/App.axaml`: loads the icon resource dictionary through application resources;
+- `src/OpenCad2D.App/MainWindow.axaml`: replaces plain text-only button content with left-aligned icon+text grids for file commands, top-bar commands and the left tool panel.
+
+Important implementation notes:
+
+- the icons are outline SVG paths, so buttons render them with `Path` and `Stroke` instead of `PathIcon` fill rendering;
+- the existing commands, names, click handlers and tooltips were preserved;
+- icon/text alignment is controlled by shared XAML classes: `icon-button-content`, `icon-button-path` and `icon-button-text`;
+- active tool buttons also force the icon stroke to white to match the active text color.
+
+Validation note: this environment did not have the `dotnet` command available, so build/tests must be run locally with `dotnet build` and `dotnet test`.
+
+
+### Third-party icon licensing
+
+Toolbar icons are derived from Tabler Icons SVG assets and converted to Avalonia `StreamGeometry` resources. Tabler Icons is licensed under the MIT License. Keep `LICENSES/Tabler-Icons-MIT.txt` and `docs/third-party-notices.md` with the repository/distribution when these icon resources are included.
