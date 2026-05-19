@@ -246,7 +246,7 @@ The icons are stored as `StreamGeometry` resources generated from the SVG source
 - a small spacing column;
 - the button text aligned to the left.
 
-The shared styling lives in `MainWindow.axaml` through the `icon-button-content`, `icon-button-path` and `icon-button-text` classes. Since the supplied SVG icons are outline/stroke icons, they are rendered with `Path` and `Stroke` rather than `PathIcon` fill rendering.
+The shared styling lives in `MainWindow.axaml` through the `icon-button-content`, `icon-button-path` and `icon-button-text` classes. Since the supplied SVG icons are outline/stroke icons, they are rendered with `Path` and `Stroke` rather than `PathIcon` fill rendering. The toolbar icon stroke uses the same yellow accent as the snap markers (`#FFE650`) and a slightly thinner `StrokeThickness` of `1.5` for a lighter visual weight.
 
 
 ## Icon licensing

@@ -2402,7 +2402,8 @@ Important implementation notes:
 - the icons are outline SVG paths, so buttons render them with `Path` and `Stroke` instead of `PathIcon` fill rendering;
 - the existing commands, names, click handlers and tooltips were preserved;
 - icon/text alignment is controlled by shared XAML classes: `icon-button-content`, `icon-button-path` and `icon-button-text`;
-- active tool buttons also force the icon stroke to white to match the active text color.
+- toolbar icons use the same yellow accent as the snap marker (`#FFE650`) with a `StrokeThickness` of `1.5` for a lighter outline;
+- active tool buttons keep the yellow icon stroke so the symbol language remains consistent with snap markers.
 
 Validation note: this environment did not have the `dotnet` command available, so build/tests must be run locally with `dotnet build` and `dotnet test`.
 
