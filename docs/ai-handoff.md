@@ -1,5 +1,23 @@
 # Latest handoff note
 
+## Manual regression checklist for curve editing v0.9
+
+Added `docs/testing/curve-editing-regression-v0.9.md` as the manual verification checklist for the v0.9 curve-editing stabilization block.
+
+The checklist covers TRIM, BREAK AT POINT, BREAK SEGMENT, EXTEND, shared intersection / micro-gap checks, `EllipticalArcEntity`, open `BezierSplineEntity`, persistence, SVG/PDF/DXF export, DXF import smoke checks, property panel behavior, preview UX, command messages, and performance smoke tests.
+
+It also records the known deferred items:
+- BreakAtPoint on full `CircleEntity`;
+- BreakAtPoint on full `EllipseEntity`;
+- closed Bezier spline editing;
+- ellipse/spline offset policy;
+- DXF partial ELLIPSE import mapping to `EllipticalArcEntity`.
+
+
+---
+
+## Previous checkpoint
+
 ## v0.9 curve editing and preview UX checkpoint
 
 The curve-editing stabilization block is now substantially complete for the current supported native entity set. `CadCurveSplitService`, `ICurveAdapter`, `CurveCut`, `CurveInterval` and the richer `CadIntersectionPoint` model are in place. TRIM and BREAK now preserve native geometry for lines, circles, arcs, polylines, full ellipses, elliptical arcs and open Bezier splines. Permanent command-level fallback from ellipses or supported open splines to `PolylineEntity` has been removed.
