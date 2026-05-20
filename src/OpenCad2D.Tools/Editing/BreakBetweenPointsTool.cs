@@ -13,13 +13,14 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Breaks a supported entity by removing the segment between two picked break points.
 /// </summary>
-public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
+public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, IToolPreviewDescriptorProvider
 {
     private EntityId? _targetEntityId;
     private CadEntity? _targetEntity;
     private Point2D? _firstBreakPoint;
     private Point2D? _currentSecondBreakPoint;
     private IReadOnlyList<CadEntity> _previewSegments = Array.Empty<CadEntity>();
+    private IReadOnlyList<CadEntity> _removedPreviewSegments = Array.Empty<CadEntity>();
 
     public string Name => "Break Segment";
 
@@ -34,7 +35,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
 
     public bool HasPreview =>
         State == BreakBetweenPointsToolState.WaitingForSecondBreakPoint &&
-        _previewSegments.Count > 0;
+        (_previewSegments.Count > 0 || _removedPreviewSegments.Count > 0);
 
     public CommandPromptState GetPromptState(ToolContext context)
     {
@@ -166,6 +167,16 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         return _previewSegments;
     }
 
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new ToolPreviewDescriptor(
+            entities: _previewSegments,
+            highlightedEntities: _removedPreviewSegments,
+            highlightedEntityKind: ToolPreviewHighlightKind.Removal);
+    }
+
     private ToolResult AcceptTargetEntity(
         ToolContext context,
         PointerInfo pointer)
@@ -182,9 +193,9 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
-        if (entity is not LineEntity and not ArcEntity and not CircleEntity and not EllipseEntity and not PolylineEntity and not BezierSplineEntity)
+        if (entity is not LineEntity and not ArcEntity and not CircleEntity and not EllipseEntity and not EllipticalArcEntity and not PolylineEntity and not BezierSplineEntity)
         {
-            return ToolResult.None("Break Segment supports lines, arcs, circles, ellipses and polylines only.");
+            return ToolResult.None("Break Segment supports lines, arcs, circles, ellipses, elliptical arcs, polylines and open splines only.");
         }
 
         if (!context.Document.IsEntitySelectable(entity))
@@ -234,6 +245,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
 
         _currentSecondBreakPoint = null;
         _previewSegments = Array.Empty<CadEntity>();
+        _removedPreviewSegments = Array.Empty<CadEntity>();
         State = BreakBetweenPointsToolState.WaitingForSecondBreakPoint;
         context.CurrentBasePoint = _firstBreakPoint;
 
@@ -295,12 +307,19 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         {
             _currentSecondBreakPoint = null;
             _previewSegments = Array.Empty<CadEntity>();
+            _removedPreviewSegments = Array.Empty<CadEntity>();
             return;
         }
 
         _currentSecondBreakPoint = _targetEntity.GetClosestPoint(point);
 
         _previewSegments = CadBreakService.BreakBetweenPoints(
+            _targetEntity,
+            _firstBreakPoint.Value,
+            point,
+            context.GeometryTolerance);
+
+        _removedPreviewSegments = CadBreakService.GetRemovedSegmentBetweenPoints(
             _targetEntity,
             _firstBreakPoint.Value,
             point,
@@ -337,6 +356,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         _firstBreakPoint = null;
         _currentSecondBreakPoint = null;
         _previewSegments = Array.Empty<CadEntity>();
+        _removedPreviewSegments = Array.Empty<CadEntity>();
         State = BreakBetweenPointsToolState.WaitingForTargetEntity;
 
         if (context is not null)

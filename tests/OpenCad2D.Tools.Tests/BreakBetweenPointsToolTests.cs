@@ -101,6 +101,32 @@ public sealed class BreakBetweenPointsToolTests
     }
 
     [Fact]
+    public void GetPreviewDescriptor_AfterPointerMove_ShouldHighlightRemovedSegmentAsRemoval()
+    {
+        var context = CreateContextWithLine(out _);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(3, 0)));
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(7, 2)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(ToolPreviewHighlightKind.Removal, descriptor.HighlightedEntityKind);
+        Assert.Equal(2, descriptor.Entities.Count);
+
+        LineEntity removedSegment = Assert.IsType<LineEntity>(Assert.Single(descriptor.HighlightedEntities));
+        Assert.Equal(new Point2D(3, 0), removedSegment.Start);
+        Assert.Equal(new Point2D(7, 0), removedSegment.End);
+    }
+
+    [Fact]
     public void ThirdPointerPress_ShouldRemoveSegmentBetweenBreakPoints()
     {
         var context = CreateContextWithLine(out LineEntity originalLine);
@@ -315,6 +341,26 @@ public sealed class BreakBetweenPointsToolTests
 
         ArcEntity preview = Assert.IsType<ArcEntity>(Assert.Single(tool.GetPreviewEntities()));
         Assert.Equal(90, preview.StartAngle.Degrees, precision: 10);
+    }
+
+
+
+    [Fact]
+    public void GetPreviewDescriptor_OnCircle_ShouldHighlightRemovedArcAsRemoval()
+    {
+        var context = CreateContextWithCircle(out _);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerMoved(context, new PointerInfo(new Point2D(0, 10)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(ToolPreviewHighlightKind.Removal, descriptor.HighlightedEntityKind);
+        ArcEntity removedArc = Assert.IsType<ArcEntity>(Assert.Single(descriptor.HighlightedEntities));
+        Assert.Equal(0, removedArc.StartAngle.Degrees, precision: 10);
+        Assert.Equal(90, removedArc.EndAngle.Degrees, precision: 10);
     }
 
 

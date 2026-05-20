@@ -784,3 +784,9 @@ Closed BezierSplineEntity  -> deferred / no fragments
 `PolylineEntity` remains a correct result only when the source geometry is itself polyline-based, for example open polylines, rectangles and polygons represented as closed polylines. It is no longer the hidden permanent fallback for ellipse or supported open spline TRIM/BREAK operations.
 
 Sampling is still allowed for preview, snapping, broad-phase discovery or unsupported import cases. When a native edited representation exists, sampled geometry must be projected/refined back to the native parameter before the command creates the final entity.
+
+### BREAK preview policy
+
+Break Segment previews must distinguish the geometry that will remain from the interval that will be removed. Remaining fragments may be shown as regular transient entities, but the removed interval must be exposed as `ToolPreviewHighlightKind.Removal` so UI renderers can draw it as a dashed removal preview.
+
+The removed preview interval must be produced by the shared curve-splitting pipeline, not by a separate sampled approximation, so preview and final geometry stay consistent for lines, arcs, circles, polylines, ellipses, elliptical arcs and supported open Bezier splines.

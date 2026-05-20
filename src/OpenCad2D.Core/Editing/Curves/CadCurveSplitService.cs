@@ -91,6 +91,28 @@ public sealed class CadCurveSplitService
             effectiveTolerance);
     }
 
+    public IReadOnlyList<CadEntity> GetIntervalBetweenPoints(
+        CadEntity entity,
+        Point2D firstPoint,
+        Point2D secondPoint,
+        GeometryTolerance? tolerance = null)
+    {
+        GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
+
+        if (!_adapterFactory.TryCreate(entity, out ICurveAdapter adapter) ||
+            !adapter.TryProjectPointToCut(firstPoint, effectiveTolerance, out CurveCut firstCut) ||
+            !adapter.TryProjectPointToCut(secondPoint, effectiveTolerance, out CurveCut secondCut))
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        return BuildIntervalBetweenCuts(
+            adapter,
+            firstCut,
+            secondCut,
+            effectiveTolerance);
+    }
+
     public IReadOnlyList<CadEntity> RemovePickedInterval(
         CadEntity entity,
         IReadOnlyList<Point2D> cutPoints,
@@ -513,6 +535,61 @@ public sealed class CadCurveSplitService
 
         return pickParameter > startParameter &&
                pickParameter < endParameter;
+    }
+
+    private IReadOnlyList<CadEntity> BuildIntervalBetweenCuts(
+        ICurveAdapter adapter,
+        CurveCut firstCut,
+        CurveCut secondCut,
+        GeometryTolerance tolerance)
+    {
+        if (firstCut.Point.DistanceTo(secondCut.Point) <= tolerance.Distance)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        CurveCut start = firstCut;
+        CurveCut end = secondCut;
+
+        if (adapter.IsClosed)
+        {
+            double endParameter = end.Parameter;
+            if (endParameter <= start.Parameter)
+            {
+                endParameter += adapter.Period;
+            }
+
+            if (endParameter - start.Parameter <= tolerance.Parameter)
+            {
+                return Array.Empty<CadEntity>();
+            }
+
+            return adapter.BuildFragments(
+                new[]
+                {
+                    new CurveInterval(
+                        start,
+                        new CurveCut(endParameter, end.Point))
+                },
+                tolerance);
+        }
+
+        if (start.Parameter > end.Parameter)
+        {
+            (start, end) = (end, start);
+        }
+
+        if (end.Parameter - start.Parameter <= tolerance.Parameter)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        return adapter.BuildFragments(
+            new[]
+            {
+                new CurveInterval(start, end)
+            },
+            tolerance);
     }
 
     private IReadOnlyList<CadEntity> RemoveBetweenCuts(

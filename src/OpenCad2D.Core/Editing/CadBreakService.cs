@@ -58,4 +58,26 @@ public static class CadBreakService
             _ => Array.Empty<CadEntity>()
         };
     }
+
+    public static IReadOnlyList<CadEntity> GetRemovedSegmentBetweenPoints(
+        CadEntity entity,
+        Point2D firstBreakPoint,
+        Point2D secondBreakPoint,
+        GeometryTolerance? tolerance = null)
+    {
+        ArgumentNullException.ThrowIfNull(entity);
+
+        GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
+
+        return entity switch
+        {
+            LineEntity or CircleEntity or ArcEntity or PolylineEntity or EllipseEntity or EllipticalArcEntity or BezierSplineEntity => CurveSplitService.GetIntervalBetweenPoints(
+                entity,
+                firstBreakPoint,
+                secondBreakPoint,
+                effectiveTolerance),
+
+            _ => Array.Empty<CadEntity>()
+        };
+    }
 }

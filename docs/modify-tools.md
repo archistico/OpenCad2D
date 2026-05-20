@@ -206,3 +206,9 @@ Future work:
 - Line-Arc;
 - Arc-Arc;
 - polyline fillet.
+
+### Break Segment removal preview
+
+Break Segment now exposes a semantic preview descriptor while the second break point is being chosen. The remaining native fragments are shown as normal preview geometry, while the interval that will be removed is emitted as a `Removal` highlight so the application can render it with the same dashed removal style used by TRIM.
+
+The preview uses `CadBreakService.GetRemovedSegmentBetweenPoints`, which delegates to `CadCurveSplitService.GetIntervalBetweenPoints`; therefore the displayed removal interval is built from the same native curve adapters used by the final BREAK operation.

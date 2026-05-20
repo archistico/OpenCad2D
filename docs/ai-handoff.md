@@ -2940,3 +2940,7 @@ Validation note: this handoff environment still does not provide the `dotnet` CL
 dotnet build
 dotnet test
 ```
+
+## Latest update - BREAK removal preview
+
+Added a native BREAK Segment removal preview path. `CadCurveSplitService` now exposes `GetIntervalBetweenPoints`, `CadBreakService` exposes `GetRemovedSegmentBetweenPoints`, and `BreakBetweenPointsTool` implements `IToolPreviewDescriptorProvider`. During second-point preview, the tool returns regular preview entities for the remaining fragments and a `Removal` highlight for the interval that will be cut away. The app renderer already draws `Removal` highlights with the dashed red preview pen introduced for TRIM.
