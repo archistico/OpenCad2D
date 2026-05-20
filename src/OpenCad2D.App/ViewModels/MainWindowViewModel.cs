@@ -51,6 +51,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         "SELECTLAST",
         "SL",
         "LAST",
+        "DESELECT",
+        "CLEARSELECTION",
+        "CS",
         "BRINGTOFRONT",
         "BTF",
         "FRONT",
@@ -1288,6 +1291,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+    public ToolResult DeselectAll()
+    {
+        ToolResult result = Workspace.ActionController.DeselectAll();
+
+        SetLastResult(result);
+        RefreshPropertyPanel();
+        NotifySelectionStateChanged();
+
+        return result;
+    }
+
     public ToolResult BringSelectionToFront()
     {
         ToolResult result = Workspace.ActionController.BringSelectionToFront();
@@ -1421,6 +1435,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             case "SL":
             case "LAST":
                 result = SelectLast();
+                return true;
+
+            case "DESELECT":
+            case "CLEARSELECTION":
+            case "CS":
+                result = DeselectAll();
                 return true;
 
             case "BRINGTOFRONT":

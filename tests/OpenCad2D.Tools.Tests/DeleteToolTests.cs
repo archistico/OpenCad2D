@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
@@ -6,6 +6,7 @@ using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -226,6 +227,71 @@ public sealed class DeleteToolTests
         Assert.Equal(1, document.Entities.Count);
         Assert.True(document.Entities.Contains(line.Id));
         Assert.True(selectionSet.Contains(line.Id));
+    }
+
+    [Fact]
+    public void GetActiveSnapKind_ShouldUseEntityOnlySnap()
+    {
+        var context = CreateContext();
+        var tool = new DeleteTool();
+
+        SnapKind snapKind = tool.GetActiveSnapKind(context);
+
+        Assert.Equal(SnapKind.EntityOnly, snapKind);
+    }
+
+    [Fact]
+    public void OnPointerPressed_WithNoSelectionAndTextBoundingBoxHit_ShouldSelectTextForDeletion()
+    {
+        CadDocument document = new();
+        SelectionSet selectionSet = new();
+
+        var text = new TextEntity(
+            new Point2D(10, 10),
+            "Delete me");
+
+        document.AddEntity(text);
+
+        BoundingBox2D bounds = text.GetBoundingBox();
+        var inside = new Point2D(
+            (bounds.MinX + bounds.MaxX) / 2.0,
+            (bounds.MinY + bounds.MaxY) / 2.0);
+
+        var context = CreateContext(document, selectionSet);
+        var tool = new DeleteTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(inside));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.True(selectionSet.Contains(text.Id));
+        Assert.Equal("Entity selected. Press Enter to delete.", result.Message);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithSelectedText_ShouldDeleteText()
+    {
+        CadDocument document = new();
+        SelectionSet selectionSet = new();
+
+        var text = new TextEntity(
+            new Point2D(10, 10),
+            "Delete me");
+
+        document.AddEntity(text);
+        selectionSet.Select(text.Id);
+
+        var context = CreateContext(document, selectionSet);
+        var tool = new DeleteTool();
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Confirm(string.Empty),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(document.Entities.Contains(text.Id));
+        Assert.True(selectionSet.IsEmpty);
     }
 
     private static ToolContext CreateContext(

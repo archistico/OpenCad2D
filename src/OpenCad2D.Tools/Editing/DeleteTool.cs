@@ -1,18 +1,25 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
+using OpenCad2D.Interaction.Snapping;
 
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Tool used to delete selected entities.
 /// </summary>
-public sealed class DeleteTool : ICadTool, ICommandDrivenTool
+public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 {
     public string Name => "Delete";
 
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return SnapKind.EntityOnly;
+    }
 
     public CommandPromptState GetPromptState(ToolContext context)
     {

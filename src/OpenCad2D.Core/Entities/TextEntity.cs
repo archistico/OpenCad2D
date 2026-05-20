@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Geometry.Transformations;
@@ -113,7 +113,11 @@ public sealed class TextEntity : CadEntity
 
     public override Point2D GetClosestPoint(Point2D point)
     {
-        return InsertionPoint;
+        BoundingBox2D bounds = GetBoundingBox();
+
+        return new Point2D(
+            Math.Clamp(point.X, bounds.MinX, bounds.MaxX),
+            Math.Clamp(point.Y, bounds.MinY, bounds.MaxY));
     }
 
     public override CadEntity Transform(Matrix2D matrix)

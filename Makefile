@@ -1,4 +1,4 @@
-.PHONY: run build test check clean zip
+.PHONY: run build test check clean zip z
 
 run:
 	dotnet run --project src/OpenCad2D.App
@@ -28,3 +28,4 @@ else
 	@name="$$(date +%Y%m%d)_OpenCad2d.zip"; rm -f "$$name"; zip -r "$$name" docs src tests OpenCad2D.sln README.md THIRD-PARTY-NOTICES.md; echo "Created $$name"
 endif
 
+z: clean zip

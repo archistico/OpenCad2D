@@ -539,6 +539,20 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="DeselectButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Clear the current selection"
+                                    Click="Deselect_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDeselect}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Deselect" />
+                                </Grid>
+                            </Button>
+
                             <TextBlock Classes="panel-section-label"
                                        Text="DRAW" />
 

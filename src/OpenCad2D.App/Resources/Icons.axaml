@@ -132,8 +132,8 @@
     <!-- Open.svg -->
     <StreamGeometry x:Key="IconOpen">M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2 M7 9l5 -5l5 5 M12 4l0 12</StreamGeometry>
 
-    <!-- Point.svg -->
-    <StreamGeometry x:Key="IconPoint">M8 12a4 4 0 1 0 8 0a4 4 0 1 0 -8 0</StreamGeometry>
+    <!-- Point.svg: custom cross point marker. -->
+    <StreamGeometry x:Key="IconPoint">M12 8v8 M8 12h8 M12 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0</StreamGeometry>
 
     <!-- Polar.svg -->
     <StreamGeometry x:Key="IconPolar">M10 3h4v4h-4l0 -4 M3 17h4v4h-4l0 -4 M17 17h4v4h-4l0 -4 M7 17l5 -4l5 4 M12 7l0 6</StreamGeometry>
@@ -179,6 +179,9 @@
 
     <!-- Select_Last.svg -->
     <StreamGeometry x:Key="IconSelectLast">M11 5v5a1 1 0 0 1 -1 1h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1h5a1 1 0 0 1 1 1 M15 4h-.01 M20 4h-.01 M20 9h-.01 M20 15h-.01 M4 15h-.01 M20 20h-.01 M15 20h-.01 M9 20h-.01 M4 20h-.01</StreamGeometry>
+
+    <!-- Deselect.svg: clear current selection. -->
+    <StreamGeometry x:Key="IconDeselect">M6 6l12 12 M18 6l-12 12 M4 4v.01 M8 4v.01 M12 4v.01 M16 4v.01 M20 4v.01 M4 20v.01 M8 20v.01 M12 20v.01 M16 20v.01 M20 20v.01 M20 16v.01 M20 12v.01 M20 8v.01 M4 16v.01 M4 12v.01 M4 8v.01</StreamGeometry>
 
     <!-- Snap.svg -->
     <StreamGeometry x:Key="IconSnap">M16 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M4 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M16 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0 M8 18h8 M18 20v1 M18 3v1 M6 20v1 M6 10v-7 M12 3v18 M18 8v8 M8 12h13 M21 6h-1 M16 6h-13 M3 12h1 M20 18h1 M3 18h1 M6 14v2</StreamGeometry>

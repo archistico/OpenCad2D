@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -184,4 +184,60 @@ public sealed class HitTestServiceTests
 
         Assert.Null(result);
     }
+    [Fact]
+    public void HitTest_WhenPointIsInsideTextBoundingBox_ShouldReturnText()
+    {
+        var document = new CadDocument();
+
+        var text = new TextEntity(
+            new Point2D(10, 20),
+            "Room name");
+
+        document.AddEntity(text);
+
+        BoundingBox2D bounds = text.GetBoundingBox();
+        var inside = new Point2D(
+            (bounds.MinX + bounds.MaxX) / 2.0,
+            (bounds.MinY + bounds.MaxY) / 2.0);
+
+        var service = new HitTestService();
+
+        HitTestResult? result = service.HitTest(
+            document,
+            inside,
+            tolerance: 0.01);
+
+        Assert.NotNull(result);
+        Assert.Equal(text.Id, result.Entity.Id);
+        Assert.Equal(0, result.Distance, precision: 12);
+    }
+
+    [Fact]
+    public void HitTest_WhenPointIsInsideMultilineTextBoundingBox_ShouldReturnMultilineText()
+    {
+        var document = new CadDocument();
+
+        var text = new MultilineTextEntity(
+            new Point2D(10, 20),
+            "First line\nSecond line");
+
+        document.AddEntity(text);
+
+        BoundingBox2D bounds = text.GetBoundingBox();
+        var inside = new Point2D(
+            (bounds.MinX + bounds.MaxX) / 2.0,
+            (bounds.MinY + bounds.MaxY) / 2.0);
+
+        var service = new HitTestService();
+
+        HitTestResult? result = service.HitTest(
+            document,
+            inside,
+            tolerance: 0.01);
+
+        Assert.NotNull(result);
+        Assert.Equal(text.Id, result.Entity.Id);
+        Assert.Equal(0, result.Distance, precision: 12);
+    }
+
 }

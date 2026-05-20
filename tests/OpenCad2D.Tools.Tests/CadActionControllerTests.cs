@@ -929,6 +929,50 @@ public sealed class CadActionControllerTests
         Assert.False(actionController.CanUndo);
     }
 
+    [Fact]
+    public void DeselectAll_WithSelection_ShouldClearSelectionAndRememberLastSelection()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var first = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var second = new LineEntity(new Point2D(0, 1), new Point2D(10, 1));
+
+        document.AddEntities(new[] { first, second });
+        selectionSet.ReplaceWith(new[] { first.Id, second.Id });
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.DeselectAll();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal("Deselected 2 entities.", result.Message);
+        Assert.Empty(selectionSet.SelectedIds);
+        Assert.Equal(new[] { first.Id, second.Id }, selectionSet.LastDeselectedSelectionIds);
+    }
+
+    [Fact]
+    public void DeselectAll_WithEmptySelection_ShouldReturnNone()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        CadActionController actionController = CreateActionController(
+            document,
+            history,
+            selectionSet);
+
+        ToolResult result = actionController.DeselectAll();
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("No selected entities to deselect.", result.Message);
+    }
+
     private static CadActionController CreateActionController(
         CadDocument document,
         CommandHistory history,

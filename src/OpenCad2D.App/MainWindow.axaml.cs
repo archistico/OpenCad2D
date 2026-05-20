@@ -726,6 +726,19 @@ public partial class MainWindow : Window
         CadCanvas.Focus();
     }
 
+    private void Deselect_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.DeselectAll();
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
     private void Point_Click(
         object? sender,
         RoutedEventArgs e)

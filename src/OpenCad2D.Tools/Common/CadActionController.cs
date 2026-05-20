@@ -81,6 +81,22 @@ public sealed class CadActionController
         return ToolResult.Completed($"Selected {selectableIds.Count} entities.");
     }
 
+    public ToolResult DeselectAll()
+    {
+        if (_context.SelectionSet.IsEmpty)
+        {
+            return ToolResult.None("No selected entities to deselect.");
+        }
+
+        int deselectedCount = _context.SelectionSet.Count;
+
+        _context.SelectionSet.Clear();
+
+        return ToolResult.Completed(deselectedCount == 1
+            ? "Deselected 1 entity."
+            : $"Deselected {deselectedCount} entities.");
+    }
+
     public ToolResult SelectLast()
     {
         List<EntityId> previousSelectionIds = _context.SelectionSet.LastDeselectedSelectionIds

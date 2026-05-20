@@ -93,6 +93,38 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.NotNull(result);
     }
 
+    [Theory]
+    [InlineData("DESELECT")]
+    [InlineData("CLEARSELECTION")]
+    [InlineData("CS")]
+    public void SubmitCommandInput_WithDeselectAction_ShouldClearCurrentSelection(string input)
+    {
+        var viewModel = new MainWindowViewModel();
+
+        var firstLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var secondLine = new LineEntity(
+            new Point2D(0, 1),
+            new Point2D(10, 1));
+
+        viewModel.Workspace.Document.AddEntity(firstLine);
+        viewModel.Workspace.Document.AddEntity(secondLine);
+        viewModel.Workspace.SelectionSet.ReplaceWith(new[]
+        {
+            firstLine.Id,
+            secondLine.Id
+        });
+
+        var result = viewModel.SubmitCommandInput(input);
+
+        Assert.Equal(0, viewModel.SelectedCount);
+        Assert.Empty(viewModel.Workspace.SelectionSet.SelectedIds);
+        Assert.Equal("Deselected 2 entities.", viewModel.LastMessage);
+        Assert.Contains(input, viewModel.CommandLineHistory);
+        Assert.NotNull(result);
+    }
+
     [Fact]
     public void SubmitCommandInput_WithUnknownCommand_ShouldKeepCurrentTool()
     {

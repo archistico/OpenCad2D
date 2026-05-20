@@ -527,3 +527,49 @@ tests/OpenCad2D.Tools.Tests/ScaleToolTests.cs
 docs/modify-tools.md
 docs/ai-handoff.md
 ```
+
+### 2026-05-20 - Modify Tools UX cleanup: Deselect action and confirmation policy
+
+Started the broader Modify Tools UX policy pass requested after the curve-editing stabilization work. The intended interaction model is now documented in `docs/modify-tools.md`:
+
+- left click provides graphical input or entity picking;
+- right click confirms or advances the current prompt when a valid default/selection exists;
+- Enter is the keyboard equivalent of right click for prompts;
+- Esc cancels the current phase or clears selection when applicable;
+- entity-selection phases use `SnapKind.EntityOnly`;
+- geometric point phases use geometric snaps.
+
+Added an explicit Deselect action in the Select panel. `MainWindowViewModel.DeselectAll()` delegates to `CadActionController.DeselectAll()`, clears the current selection, refreshes the property panel and preserves the cleared selection for `Select Last` through the existing `SelectionSet.Clear()` behavior. Command-line aliases are `DESELECT`, `CLEARSELECTION` and `CS`. The Point tool icon was changed from a circle to a small cross marker to better communicate point placement while staying consistent with the existing StreamGeometry icon style.
+
+Files touched in this pass:
+
+```text
+src/OpenCad2D.Tools/Common/CadActionController.cs
+src/OpenCad2D.App/ViewModels/MainWindowViewModel.cs
+src/OpenCad2D.App/MainWindow.axaml
+src/OpenCad2D.App/MainWindow.axaml.cs
+src/OpenCad2D.App/Resources/Icons.axaml
+tests/OpenCad2D.Tools.Tests/CadActionControllerTests.cs
+tests/OpenCad2D.App.Tests/MainWindowViewModelCommandLineTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+
+### 2026-05-20 - Modify Tools UX cleanup: text hit testing and Delete tool
+
+Continued the Modify Tools UX cleanup after Deselect/Point icon. Text selection has been improved for both `TextEntity` and `MultilineTextEntity`: `GetClosestPoint` now clamps to the estimated bounding box instead of returning only the insertion point. This lets hit testing/select-by-point succeed when the user clicks anywhere inside the text bounding box, which is the intended CAD behavior for annotations.
+
+`DeleteTool` now implements `ISnapModeProvider` and uses `SnapKind.EntityOnly` during entity-picking. Existing behavior is preserved for selected entities: `Execute` deletes the current selection with `DeleteEntitiesCommand` and clears the selection. When no selection exists, the tool can pick a text/mtext entity by bounding-box hit and then Enter confirms deletion.
+
+Files touched:
+
+```text
+src/OpenCad2D.Core/Entities/TextEntity.cs
+src/OpenCad2D.Core/Entities/MultilineTextEntity.cs
+src/OpenCad2D.Tools/Editing/DeleteTool.cs
+tests/OpenCad2D.Interaction.Tests/HitTestServiceTests.cs
+tests/OpenCad2D.Tools.Tests/DeleteToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```

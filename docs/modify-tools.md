@@ -4,6 +4,29 @@ Modify tools change existing geometry. Tools own workflow state; geometry calcul
 
 ---
 
+## Command confirmation and snap policy
+
+OpenCad2D modify tools use a consistent confirmation model:
+
+```text
+Left click  -> graphical input or entity pick
+Right click -> confirm the current prompt when a default value or a valid current selection exists
+Enter       -> keyboard equivalent of right click for command prompts
+Esc         -> cancel the current phase; when idle, clear selection where applicable
+```
+
+Right click is not a generic cancel action. It advances or completes the current phase only when the tool can do so safely. If a command requires a value and no default exists yet, the tool must show a clear message instead of guessing.
+
+Entity-selection phases should use `SnapKind.EntityOnly`. Geometric point phases should use the normal geometric snap set. Numeric prompts may be completed by typing a value, by supported graphical input, or by confirming the proposed value shown in angle brackets such as `<N>` or `<10>`.
+
+The Select area includes explicit selection actions:
+
+- `Select` starts the selection tool;
+- `Select All` selects all visible and unlocked entities;
+- `Select Last` restores the last cleared selection;
+- `Deselect` clears the current selection without deleting geometry.
+
+---
 
 ## Native curve-editing policy
 
@@ -248,3 +271,17 @@ Interactive modify tools should follow the same selection-first pattern where pr
 - command-line prompts should tell the user whether they are selecting entities or specifying geometry.
 
 This pass aligns `RotateTool` and `ScaleTool` with the existing Move, Copy and Mirror behavior. They now support selecting entities after the command starts, use `EntityOnly` snapping during that selection phase, and then continue with their base/reference/destination workflow.
+
+---
+
+## Delete UX cleanup
+
+Delete follows the entity-selection policy used by Modify tools:
+
+- if entities are already selected, `DELETE` removes the current selection through an undoable command;
+- if no entity is selected, the tool enters an entity-picking phase;
+- the entity-picking phase uses `SnapKind.EntityOnly`;
+- after an entity is picked, Enter confirms deletion;
+- text and multiline text can be picked by clicking anywhere inside their estimated bounding box.
+
+Text hit testing intentionally uses the estimated text bounding box rather than only the insertion point. This makes text behave like a selectable annotation object in Move, Copy, Delete and other selection-driven workflows.
