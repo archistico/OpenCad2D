@@ -618,3 +618,16 @@ tests/OpenCad2D.Tools.Tests/ToolPreviewEntityProviderTests.cs
 docs/modify-tools.md
 docs/ai-handoff.md
 ```
+
+### 2026-05-20 - Modify Tools UX cleanup: Polyline right-click finish
+
+Aligned `PolylineTool` with the global command confirmation policy. While collecting vertices, right-click is routed through `ToolController.ConfirmActiveToolCommand()` as an empty confirmation and now finishes the open polyline exactly like Enter when at least two vertices exist. With fewer than two vertices the tool remains active and reports that at least two points are required. The in-tool prompt text now mentions `Enter/right-click` explicitly.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Drawing/PolylineTool.cs
+tests/OpenCad2D.Tools.Tests/PolylineToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```

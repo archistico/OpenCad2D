@@ -229,7 +229,7 @@ public sealed class PolylineTool : ICadTool, ICommandDrivenTool, IKeyboardAwareT
         _currentPoint = _vertices[^1];
         context.CurrentBasePoint = _vertices[^1];
 
-        return ToolResult.Updated("Specify next polyline point, press Enter to finish, or C to close.");
+        return ToolResult.Updated("Specify next polyline point, press Enter/right-click to finish, or C to close.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -275,7 +275,7 @@ public sealed class PolylineTool : ICadTool, ICommandDrivenTool, IKeyboardAwareT
             State = PolylineToolState.CollectingVertices;
             context.CurrentBasePoint = point;
 
-            return ToolResult.Started("Specify next polyline point, press Enter to finish, or C to close.");
+            return ToolResult.Started("Specify next polyline point, press Enter/right-click to finish, or C to close.");
         }
 
         if (State == PolylineToolState.CollectingVertices)
@@ -290,7 +290,7 @@ public sealed class PolylineTool : ICadTool, ICommandDrivenTool, IKeyboardAwareT
             _currentPoint = point;
             context.CurrentBasePoint = point;
 
-            return ToolResult.Updated("Specify next polyline point, press Enter to finish, or C to close.");
+            return ToolResult.Updated("Specify next polyline point, press Enter/right-click to finish, or C to close.");
         }
 
         return ToolResult.None();

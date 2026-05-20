@@ -334,6 +334,44 @@ public sealed class PolylineToolTests
         Assert.Equal(new Point2D(0, 0), context.CurrentBasePoint);
         Assert.Equal(0, context.Document.Entities.Count);
     }
+
+    [Fact]
+    public void ToolControllerConfirmActiveToolCommand_WithEnoughVertices_ShouldFinishOpenPolyline()
+    {
+        var context = CreateContext();
+        var tool = new PolylineTool();
+        var controller = new ToolController(context, tool);
+
+        controller.OnPointerPressed(new PointerInfo(new Point2D(0, 0)));
+        controller.OnPointerPressed(new PointerInfo(new Point2D(10, 0)));
+
+        ToolResult result = controller.ConfirmActiveToolCommand();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        PolylineEntity polyline = Assert.Single(context.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.False(polyline.IsClosed);
+        Assert.Equal(new[] { new Point2D(0, 0), new Point2D(10, 0) }, polyline.Vertices);
+        Assert.Equal(PolylineToolState.WaitingForFirstPoint, tool.State);
+    }
+
+    [Fact]
+    public void ToolControllerConfirmActiveToolCommand_WithTooFewVertices_ShouldKeepPolylineActive()
+    {
+        var context = CreateContext();
+        var tool = new PolylineTool();
+        var controller = new ToolController(context, tool);
+
+        controller.OnPointerPressed(new PointerInfo(new Point2D(0, 0)));
+
+        ToolResult result = controller.ConfirmActiveToolCommand();
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("Polyline requires at least two points.", result.Message);
+        Assert.Empty(context.Document.Entities.All);
+        Assert.Equal(PolylineToolState.CollectingVertices, tool.State);
+    }
+
     private static ToolContext CreateContext(
         CadDocument? document = null)
     {

@@ -28,6 +28,22 @@ The Select area includes explicit selection actions:
 
 ---
 
+## Polyline completion
+
+Polyline follows the global confirmation policy:
+
+```text
+Left click  -> add another vertex
+Enter       -> finish the open polyline when at least two vertices exist
+Right click -> same as Enter, finish the open polyline when at least two vertices exist
+C / Close   -> create a closed polyline when at least three vertices exist
+U / Undo    -> remove the last vertex
+```
+
+If the user confirms with fewer than two vertices, the tool stays active and reports that at least two points are required.
+
+---
+
 ## Native curve-editing policy
 
 Trim and Break are being consolidated around the shared curve-editing architecture described in `docs/curve-editing.md`.
