@@ -1062,7 +1062,23 @@ public sealed class CadCanvas : Control
 
         if (pointerProperties.IsRightButtonPressed)
         {
-            RepeatLastCommandRequested?.Invoke(this, EventArgs.Empty);
+            ToolResult rightClickResult = Workspace.ToolController.ConfirmActiveToolCommand();
+
+            if (rightClickResult.Kind == ToolResultKind.None &&
+                Workspace.ToolController.ActiveTool is not OpenCad2D.Tools.Input.ICommandDrivenTool)
+            {
+                RepeatLastCommandRequested?.Invoke(this, EventArgs.Empty);
+            }
+            else
+            {
+                Point2D rightClickModelPoint = ToModelPoint(position);
+                NotifyWorkspaceChanged(
+                    rightClickResult,
+                    rightClickModelPoint);
+
+                InvalidateVisual();
+            }
+
             e.Handled = true;
             return;
         }

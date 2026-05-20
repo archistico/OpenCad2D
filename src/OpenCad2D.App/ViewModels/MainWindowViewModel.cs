@@ -1608,10 +1608,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ToolResult DeleteSelection()
     {
-        ToolResult result = Workspace.ActionController.DeleteSelection();
+        ToolResult result;
+
+        if (Workspace.SelectionSet.IsEmpty)
+        {
+            result = Workspace.SetActiveTool(ToolId.Delete);
+            result = ToolResult.Started("Delete tool started. Select entities to delete, then press Enter or right-click.");
+        }
+        else
+        {
+            result = Workspace.ActionController.DeleteSelection();
+        }
 
         SetLastResult(result);
         NotifyDocumentStateChanged();
+        NotifyCommandInputStateChanged();
 
         return result;
     }

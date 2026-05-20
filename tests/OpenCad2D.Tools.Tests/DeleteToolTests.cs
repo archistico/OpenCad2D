@@ -266,7 +266,7 @@ public sealed class DeleteToolTests
 
         Assert.Equal(ToolResultKind.Updated, result.Kind);
         Assert.True(selectionSet.Contains(text.Id));
-        Assert.Equal("Entity selected. Press Enter to delete.", result.Message);
+        Assert.Equal("1 entity selected for deletion. Select more entities or press Enter/right-click to delete.", result.Message);
     }
 
     [Fact]
@@ -291,6 +291,81 @@ public sealed class DeleteToolTests
 
         Assert.Equal(ToolResultKind.Completed, result.Kind);
         Assert.False(document.Entities.Contains(text.Id));
+        Assert.True(selectionSet.IsEmpty);
+    }
+
+    [Fact]
+    public void OnPointerPressed_WithNoInitialSelection_ShouldAllowMultipleEntitiesBeforeConfirm()
+    {
+        CadDocument document = new();
+        SelectionSet selectionSet = new();
+
+        var first = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        var second = new LineEntity(
+            new Point2D(0, 5),
+            new Point2D(10, 5));
+
+        document.AddEntity(first);
+        document.AddEntity(second);
+
+        var context = CreateContext(document, selectionSet);
+        var tool = new DeleteTool();
+
+        ToolResult firstResult = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult secondResult = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 5)));
+
+        Assert.Equal(ToolResultKind.Updated, firstResult.Kind);
+        Assert.Equal(ToolResultKind.Updated, secondResult.Kind);
+        Assert.True(document.Entities.Contains(first.Id));
+        Assert.True(document.Entities.Contains(second.Id));
+        Assert.True(selectionSet.Contains(first.Id));
+        Assert.True(selectionSet.Contains(second.Id));
+        Assert.Equal(2, selectionSet.Count);
+    }
+
+    [Fact]
+    public void HandleCommandInput_AfterInteractiveSelection_ShouldDeleteAllSelectedEntities()
+    {
+        CadDocument document = new();
+        SelectionSet selectionSet = new();
+
+        var first = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        var second = new LineEntity(
+            new Point2D(0, 5),
+            new Point2D(10, 5));
+
+        document.AddEntity(first);
+        document.AddEntity(second);
+
+        var context = CreateContext(document, selectionSet);
+        var tool = new DeleteTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 5)));
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Confirm(string.Empty),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(document.Entities.Contains(first.Id));
+        Assert.False(document.Entities.Contains(second.Id));
         Assert.True(selectionSet.IsEmpty);
     }
 

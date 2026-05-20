@@ -278,10 +278,11 @@ This pass aligns `RotateTool` and `ScaleTool` with the existing Move, Copy and M
 
 Delete follows the entity-selection policy used by Modify tools:
 
-- if entities are already selected, `DELETE` removes the current selection through an undoable command;
-- if no entity is selected, the tool enters an entity-picking phase;
+- if entities are already selected when the tool starts, `DELETE` removes the current selection immediately through an undoable command;
+- if no entity is selected, the tool enters a multi-entity picking phase;
 - the entity-picking phase uses `SnapKind.EntityOnly`;
-- after an entity is picked, Enter confirms deletion;
+- each left click toggles an entity in the pending delete selection;
+- Enter or right click confirms deletion of all selected entities;
 - text and multiline text can be picked by clicking anywhere inside their estimated bounding box.
 
 Text hit testing intentionally uses the estimated text bounding box rather than only the insertion point. This makes text behave like a selectable annotation object in Move, Copy, Delete and other selection-driven workflows.

@@ -346,4 +346,48 @@ public sealed class ToolControllerIntegrationTests
         Assert.Equal(1, document.Entities.Count);
         Assert.True(document.Entities.Contains(line.Id));
     }
+    [Fact]
+    public void ConfirmActiveToolCommand_WithDeleteTool_ShouldDeleteInteractiveSelection()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selectionSet = new();
+
+        var first = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        var second = new LineEntity(
+            new Point2D(0, 5),
+            new Point2D(10, 5));
+
+        document.AddEntity(first);
+        document.AddEntity(second);
+
+        var context = new ToolContext(
+            document,
+            history,
+            new SnapService(),
+            selectionSet: selectionSet,
+            selectionTolerance: 1);
+
+        var controller = new ToolController(
+            context,
+            new DeleteTool());
+
+        controller.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 0)));
+
+        controller.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 5)));
+
+        ToolResult result = controller.ConfirmActiveToolCommand();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(document.Entities.Contains(first.Id));
+        Assert.False(document.Entities.Contains(second.Id));
+        Assert.True(selectionSet.IsEmpty);
+        Assert.True(history.CanUndo);
+    }
+
 }

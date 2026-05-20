@@ -573,3 +573,21 @@ tests/OpenCad2D.Tools.Tests/DeleteToolTests.cs
 docs/modify-tools.md
 docs/ai-handoff.md
 ```
+
+### 2026-05-20 - Modify Tools UX cleanup: Delete multi-pick and right-click confirmation
+
+Refined `DeleteTool` to match the requested CAD workflow. If entities are already selected when Delete is invoked, the tool deletes them immediately through `DeleteEntitiesCommand`. If no selection exists, Delete now enters a multi-pick phase: left click toggles entities in the pending delete selection, and Enter or right click confirms the deletion. The selection phase remains `SnapKind.EntityOnly`, and text/mtext can still be selected through their bounding boxes.
+
+Added `ToolController.ConfirmActiveToolCommand()` so canvas right-click can submit an empty confirmation to active `ICommandDrivenTool` tools. `CadCanvas` now routes right-click to the active command-driven tool when possible and only falls back to repeat-last-command for tools that do not consume command prompts. This starts applying the documented right-click-confirmation policy at the input layer.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Editing/DeleteTool.cs
+src/OpenCad2D.Tools/Common/ToolController.cs
+src/OpenCad2D.App/Controls/CadCanvas.cs
+tests/OpenCad2D.Tools.Tests/DeleteToolTests.cs
+tests/OpenCad2D.Tools.Tests/ToolControllerIntegrationTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```

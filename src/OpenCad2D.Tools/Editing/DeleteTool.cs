@@ -12,6 +12,8 @@ namespace OpenCad2D.Tools.Editing;
 /// </summary>
 public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 {
+    private bool _isSelectingObjects;
+
     public string Name => "Delete";
 
     public SnapKind GetActiveSnapKind(ToolContext context)
@@ -25,16 +27,29 @@ public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        string message;
+        string placeholder;
+
+        if (context.Selection.HasSelection)
+        {
+            int count = context.Selection.SelectedIds.Count;
+            message = count == 1
+                ? "1 entity selected. Press Enter or right-click to delete."
+                : $"{count} entities selected. Press Enter or right-click to delete.";
+            placeholder = "Enter/right-click to delete";
+        }
+        else
+        {
+            message = "Select objects to delete";
+            placeholder = "Select objects, then press Enter/right-click";
+        }
+
         return new CommandPromptState(
             "DELETE",
-            context.Selection.HasSelection
-                ? "Press Enter to delete selected entities"
-                : "Select objects to delete",
+            message,
             CommandInputKind.Selection,
             acceptsEmptyEnter: true,
-            placeholder: context.Selection.HasSelection
-                ? "Enter"
-                : "Select objects, then press Enter");
+            placeholder: placeholder);
     }
 
     public ToolResult HandleCommandInput(
@@ -49,7 +64,7 @@ public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
             return Execute(context);
         }
 
-        return ToolResult.None("Select entities to delete, then press Enter.");
+        return ToolResult.None("Select entities to delete, then press Enter or right-click.");
     }
 
     public ToolResult Execute(ToolContext context)
@@ -69,8 +84,11 @@ public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
             new DeleteEntitiesCommand(selectedIds));
 
         context.Selection.Set.Clear();
+        _isSelectingObjects = false;
 
-        return ToolResult.Completed("Selected entities deleted.");
+        return ToolResult.Completed(selectedIds.Count == 1
+            ? "Selected entity deleted."
+            : $"{selectedIds.Count} selected entities deleted.");
     }
 
     public ToolResult OnPointerPressed(
@@ -80,10 +98,12 @@ public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
-        if (context.Selection.HasSelection)
+        if (!_isSelectingObjects && context.Selection.HasSelection)
         {
             return Execute(context);
         }
+
+        _isSelectingObjects = true;
 
         EntityId? selectedId = context.Selection.Service.SelectByPoint(
             context.Document,
@@ -92,7 +112,7 @@ public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select entities to delete, then press Enter.");
+            return ToolResult.None("Select entities to delete, then press Enter or right-click.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
@@ -101,9 +121,17 @@ public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
             return ToolResult.None("Target entity is not editable.");
         }
 
-        context.Selection.Set.ReplaceWith(selectedId.Value);
+        context.Selection.Set.Toggle(selectedId.Value);
 
-        return ToolResult.Updated("Entity selected. Press Enter to delete.");
+        int count = context.Selection.SelectedIds.Count;
+        if (count == 0)
+        {
+            return ToolResult.Updated("Entity removed from delete selection. Select objects to delete.");
+        }
+
+        return ToolResult.Updated(count == 1
+            ? "1 entity selected for deletion. Select more entities or press Enter/right-click to delete."
+            : $"{count} entities selected for deletion. Select more entities or press Enter/right-click to delete.");
     }
 
     public ToolResult OnPointerMoved(
@@ -120,12 +148,16 @@ public sealed class DeleteTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        _isSelectingObjects = false;
+
         return ToolResult.Cancelled("Delete command cancelled.");
     }
 
     public ToolResult Deactivate(ToolContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
+
+        _isSelectingObjects = false;
 
         return ToolResult.None("Delete tool deactivated.");
     }
