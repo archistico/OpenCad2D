@@ -74,32 +74,34 @@ Completed:
 - [x] fixed Ellipse axis input to use snap-resolved points;
 - [x] fixed Rect Sides numeric second-side input so typed values create the exact requested side length.
 
-Remaining:
+Completed Offset cleanup:
 
-- [ ] rebuild Offset workflow around typed distance, two-point distance, last distance and right-click/Enter default confirmation;
+- [x] rebuilt Offset workflow around typed distance, two-point distance, last distance and right-click/Enter default confirmation;
+- [x] added Offset target highlight and addition preview;
+- [x] made Offset geometry support explicit: lines, circles, arcs and straight-segment polylines are supported; ellipses, elliptical arcs and Bezier splines are deferred with clear messages;
 - [ ] run one pass over remaining tools for consistent right-click/Enter/Esc behavior and phase-specific snap modes;
-- [ ] update command docs after Offset is stabilized.
+- [ ] update command docs after final UX consistency pass.
 
 ### 2. Offset stabilization
 
-Status: [ ] planned next.
+Status: [x] completed for v0.9 scope.
 
-Required behavior:
+Completed behavior:
 
-- [ ] first use requires a typed distance or two picked distance points;
-- [ ] typed distance stores the last offset distance;
-- [ ] two picked points measure and store the last offset distance;
-- [ ] right click/Enter uses the last stored distance when one exists;
-- [ ] target selection uses EntityOnly snap;
-- [ ] side selection uses graphical input;
-- [ ] preview clearly shows the offset result before confirmation;
-- [ ] supported geometry and limitations are documented.
+- [x] first use requires a typed distance or two picked distance points;
+- [x] typed distance stores the last offset distance;
+- [x] two picked points measure and store the last offset distance;
+- [x] right click/Enter uses the last stored distance when one exists;
+- [x] target selection uses EntityOnly snap;
+- [x] side selection uses graphical input;
+- [x] preview clearly shows the offset result before confirmation;
+- [x] supported geometry and limitations are documented.
 
 Geometry policy:
 
-- line/circle/arc/polyline offset should remain supported and tested;
-- ellipse, elliptical arc and Bezier spline offset require an explicit policy because their true offsets are not the same native curve type;
-- no silent permanent degradation of native curves should be introduced.
+- line/circle/arc/polyline offset is supported and tested;
+- ellipse, elliptical arc and Bezier spline offset is deferred because their true offsets are not the same native curve type;
+- unsupported advanced curves return clear messages and create no silent permanent polyline approximation.
 
 ### 3. Curve editing regression checklist
 
@@ -194,7 +196,7 @@ After v0.9 stabilizes, v1.0 should focus on finishing the professional baseline 
 
 Candidate v1.0 gates:
 
-- [ ] Offset workflow and documented offset limitations are stable;
+- [x] Offset workflow and documented offset limitations are stable;
 - [ ] DXF import/export compatibility pass is recorded;
 - [ ] Property Panel coverage is coherent for primary entities;
 - [ ] command UX is consistent across major draw/modify tools;

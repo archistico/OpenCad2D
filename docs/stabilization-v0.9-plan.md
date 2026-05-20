@@ -39,7 +39,7 @@ v0.9 is a stabilization release. The goal is to make the existing CAD foundation
 | EXTEND native alignment | Done for supported targets | EXTEND uses the native model for supported lines/arcs/polylines/elliptical arcs and native elliptical boundaries. |
 | Preview UX | Done for TRIM/BREAK/EXTEND | Dashed removal previews and addition highlights are implemented. |
 | Save/export clarity | Done | Export messages clarify that the editable native project may still need saving. |
-| Modify-tool UX policy | In progress, mostly done | Deselect, Delete multipick, right-click confirmations, entity-only snap phases and selected-boundary highlights are implemented for the covered tools. |
+| Modify-tool UX policy | In progress, nearly complete | Deselect, Delete multipick, right-click confirmations, entity-only snap phases, selected-boundary highlights and Offset workflow stabilization are implemented for the covered tools. |
 
 ---
 
@@ -58,24 +58,26 @@ Completed in this block:
 - Ellipse axis input uses snap-resolved points;
 - Rect Sides typed second-side length creates the exact requested length.
 
+Completed in the Offset block:
+
+- typed distance;
+- two-point measured distance;
+- stored last distance;
+- right-click/Enter default when available;
+- clear first-run message when no default exists;
+- EntityOnly target selection;
+- side selection and preview;
+- explicit supported/deferred geometry policy.
+
 Remaining in this block:
 
-1. **Offset workflow**
-   - typed distance;
-   - two-point measured distance;
-   - stored last distance;
-   - right-click/Enter default when available;
-   - clear first-run message when no default exists;
-   - EntityOnly target selection;
-   - side selection and preview.
-
-2. **Final UX consistency pass**
+1. **Final UX consistency pass**
    - right-click/Enter/Esc behavior across draw/modify tools;
    - snap mode by phase;
    - command messages;
    - preview semantics.
 
-3. **Documentation sync**
+2. **Documentation sync**
    - update `docs/commands.md` and `docs/modify-tools.md` after Offset is finalized.
 
 ---

@@ -400,7 +400,7 @@ public sealed class OffsetToolTests
 
 
     [Fact]
-    public void OffsetBezierSpline_ShouldCreatePolylineApproximationOffset()
+    public void OffsetBezierSpline_ShouldReturnDeferredMessageAndNotCreatePolylineApproximation()
     {
         CadDocument document = new();
         var spline = new BezierSplineEntity(new[]
@@ -414,14 +414,59 @@ public sealed class OffsetToolTests
         var tool = new OffsetTool();
 
         tool.HandleCommandInput(CommandInputSubmission.FromDistance("1", 1), context);
-        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 4)));
 
-        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 8)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 4)));
 
-        Assert.Equal(ToolResultKind.Completed, result.Kind);
-        PolylineEntity offset = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All.Where(entity => !entity.Id.Equals(spline.Id))));
-        Assert.False(offset.IsClosed);
-        Assert.True(offset.Vertices.Count > 10);
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
+        Assert.Single(document.Entities.All);
+        Assert.Contains("Spline offsets are deferred", result.Message);
+    }
+
+    [Fact]
+    public void OffsetEllipse_ShouldReturnDeferredMessageAndNotCreateEntity()
+    {
+        CadDocument document = new();
+        var ellipse = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(5, 0),
+            3);
+        document.AddEntity(ellipse);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("1", 1), context);
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
+        Assert.Single(document.Entities.All);
+        Assert.Contains("Ellipse and elliptical arc offsets are deferred", result.Message);
+    }
+
+    [Fact]
+    public void OffsetEllipticalArc_ShouldReturnDeferredMessageAndNotCreateEntity()
+    {
+        CadDocument document = new();
+        var arc = new EllipticalArcEntity(
+            new Point2D(0, 0),
+            new Vector2D(5, 0),
+            3,
+            0,
+            Math.PI);
+        document.AddEntity(arc);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("1", 1), context);
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
+        Assert.Single(document.Entities.All);
+        Assert.Contains("Ellipse and elliptical arc offsets are deferred", result.Message);
     }
 
 

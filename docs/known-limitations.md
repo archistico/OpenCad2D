@@ -81,16 +81,20 @@ Current intentional limitations:
 
 ## Offset
 
-Offset is the main geometry/UX item still awaiting v0.9 stabilization.
+Offset has a stabilized v0.9 workflow for distance input, target selection, side selection and preview. Its supported target set is intentionally explicit:
 
-Current limitations to resolve or document clearly:
+- Line;
+- Circle;
+- Arc;
+- straight-segment open/closed Polyline.
 
-- first-run distance/default behavior must be rebuilt around typed distance, two-point distance and last distance;
-- right click/Enter default confirmation must be made consistent;
-- target selection should use EntityOnly snap;
-- supported native geometry should remain explicit;
-- true offsets of ellipses, elliptical arcs and Bezier splines are not generally the same native curve type, so these require an explicit policy before being advertised as fully native support;
-- sampled approximations must not be hidden as precise native results.
+Current intentional limitations:
+
+- ellipse and elliptical arc offsets are deferred because a true offset is not another exact ellipse;
+- Bezier spline offsets are deferred because a true offset is not another exact Bezier spline;
+- unsupported advanced curves return a clear message and create no geometry;
+- no silent permanent `PolylineEntity` approximation is created for ellipse, elliptical arc or spline offset;
+- rounded joins, configurable join styles and advanced self-intersection cleanup remain future work.
 
 ---
 

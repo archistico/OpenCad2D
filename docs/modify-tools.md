@@ -200,20 +200,25 @@ Distance input rules:
 - object selection uses `SnapKind.EntityOnly`;
 - side selection uses geometric snaps and excludes entity-only snap.
 
-Targets:
+Targets supported in v0.9:
 
 - Line;
 - Circle;
 - Arc;
-- straight-segment open/closed Polyline;
-- Bezier Spline, offset through sampled polyline approximation.
+- straight-segment open/closed Polyline.
+
+Deferred targets:
+
+- Ellipse and Elliptical Arc: a true offset is not another exact ellipse, so OpenCad2D does not silently create an imprecise native-looking result;
+- Bezier Spline: a true offset is not another exact Bezier spline, so spline offset remains deferred rather than being hidden as a permanent polyline approximation.
 
 Rules:
 
 - line offset creates a parallel line;
 - circle/arc offset changes radius based on picked side;
-- polyline/spline approximation offset uses miter joins with a conservative miter limit;
+- polyline offset uses miter joins with a conservative miter limit;
 - very sharp joins fall back to a bevel-style corner instead of creating long spikes;
+- unsupported advanced curves return a clear deferred-support message and create no geometry;
 - invalid or degenerate results are rejected;
 - live preview is shown while choosing the side.
 
