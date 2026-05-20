@@ -51,7 +51,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Open Bezier split | [x] | Open Bezier splines can be split/extracted natively and are no longer permanently degraded to polylines in TRIM/BREAK. |
 | Preview UX base | [x] | TRIM/BREAK removal previews are dashed; EXTEND addition previews are highlighted; selected boundaries stay visible. |
 | Save/export UX clarity | [x] | Export creates derived files and does not clear dirty state or replace the current native file path; user messages make this explicit. |
-| Modify-tool confirmation policy | [x] | Right click/Enter confirmation is established for supported prompts and command phases. |
+| Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
 
 ---
 
@@ -59,7 +59,7 @@ The following foundations are considered complete for the active roadmap. Older 
 
 ### 1. Modify Tools UX cleanup
 
-Status: [~] in progress.
+Status: [x] completed for current v0.9 UX cleanup scope.
 
 Completed:
 
@@ -73,14 +73,15 @@ Completed:
 - [x] allowed right click/Enter defaults for Polygon sides, Fillet radius and Mirror delete-source prompt;
 - [x] fixed Ellipse axis input to use snap-resolved points;
 - [x] fixed Rect Sides numeric second-side input so typed values create the exact requested side length.
+- [x] completed final pass for right-click/Enter messaging, selection-phase EntityOnly snap policy and state-cleanup expectations across the remaining primary tools.
 
 Completed Offset cleanup:
 
 - [x] rebuilt Offset workflow around typed distance, two-point distance, last distance and right-click/Enter default confirmation;
 - [x] added Offset target highlight and addition preview;
 - [x] made Offset geometry support explicit: lines, circles, arcs and straight-segment polylines are supported; ellipses, elliptical arcs and Bezier splines are deferred with clear messages;
-- [ ] run one pass over remaining tools for consistent right-click/Enter/Esc behavior and phase-specific snap modes;
-- [ ] update command docs after final UX consistency pass.
+- [x] ran the final pass over remaining tools for consistent right-click/Enter/Esc behavior and phase-specific snap modes;
+- [x] updated command/tool docs after final UX consistency pass.
 
 ### 2. Offset stabilization
 

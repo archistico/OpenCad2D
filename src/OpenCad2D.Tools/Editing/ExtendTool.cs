@@ -4,6 +4,7 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
 
@@ -12,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Extends editable entities until they reach a selected boundary entity.
 /// </summary>
-public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescriptorProvider
+public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescriptorProvider, ISnapModeProvider
 {
     private EntityId? _boundaryEntityId;
     private CadEntity? _boundaryEntity;
@@ -31,6 +32,13 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         State == ExtendToolState.WaitingForTargetEntity &&
         _previewEntity is not null;
 
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return SnapKind.EntityOnly;
+    }
 
     public CommandPromptState GetPromptState(ToolContext context)
     {

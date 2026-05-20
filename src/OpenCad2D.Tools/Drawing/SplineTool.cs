@@ -188,7 +188,7 @@ public sealed class SplineTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         _currentPoint = _controlPoints[^1];
         context.CurrentBasePoint = _controlPoints[^1];
-        return ToolResult.Updated("Specify next spline control point, press Enter to finish, or C to close.");
+        return ToolResult.Updated("Specify next spline control point, press Enter/right-click to finish, or C to close.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -223,7 +223,7 @@ public sealed class SplineTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             _currentPoint = point;
             State = SplineToolState.CollectingControlPoints;
             context.CurrentBasePoint = point;
-            return ToolResult.Started("Specify next spline control point, press Enter to finish, or C to close.");
+            return ToolResult.Started("Specify next spline control point, press Enter/right-click to finish, or C to close.");
         }
 
         if (_controlPoints.Count > 0 &&
@@ -235,7 +235,7 @@ public sealed class SplineTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         _controlPoints.Add(point);
         _currentPoint = point;
         context.CurrentBasePoint = point;
-        return ToolResult.Updated("Specify next spline control point, press Enter to finish, or C to close.");
+        return ToolResult.Updated("Specify next spline control point, press Enter/right-click to finish, or C to close.");
     }
 
     private ToolResult Commit(ToolContext context, bool isClosed, string message)

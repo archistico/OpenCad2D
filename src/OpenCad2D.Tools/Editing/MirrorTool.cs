@@ -55,7 +55,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
                 "Select objects to mirror",
                 CommandInputKind.Selection,
                 acceptsEmptyEnter: true,
-                placeholder: "Click objects, then press Enter"),
+                placeholder: "Click objects, then press Enter/right-click"),
 
             MirrorToolState.WaitingForFirstAxisPoint => new CommandPromptState(
                 "MIRROR",
@@ -97,7 +97,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
                 return ConfirmEntitySelection(context);
             }
 
-            return ToolResult.None("Select entities to mirror, then press Enter.");
+            return ToolResult.None("Select entities to mirror, then press Enter/right-click.");
         }
 
         if (_state == MirrorToolState.WaitingForDeleteSourceOption)
@@ -212,7 +212,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             MirrorToolState.WaitingForSecondAxisPoint => AcceptSecondAxisPoint(
                 context,
                 ApplyGeometricSnap(context, pointer.ModelPoint, _firstAxisPoint)),
-            MirrorToolState.WaitingForDeleteSourceOption => ToolResult.None("Type Yes or No, or press Enter to keep source objects."),
+            MirrorToolState.WaitingForDeleteSourceOption => ToolResult.None("Type Yes or No, or press Enter/right-click to keep source objects."),
             _ => ToolResult.None()
         };
     }
@@ -300,7 +300,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select entities to mirror, then press Enter.");
+            return ToolResult.None("Select entities to mirror, then press Enter/right-click.");
         }
 
         if (pointer.IsShiftPressed)
@@ -313,8 +313,8 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
         }
 
         return ToolResult.Updated(pointer.IsControlPressed
-            ? "Overlapping entity selected. Press Enter to specify mirror line."
-            : "Entity selected. Press Enter to specify mirror line.");
+            ? "Overlapping entity selected. Press Enter/right-click to specify mirror line."
+            : "Entity selected. Press Enter/right-click to specify mirror line.");
     }
 
     private ToolResult AcceptFirstAxisPoint(

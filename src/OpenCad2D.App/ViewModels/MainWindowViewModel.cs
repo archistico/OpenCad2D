@@ -405,7 +405,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             {
                 return polylineTool.State == PolylineToolState.WaitingForFirstPoint
                     ? "Polyline: specify first point or type coordinates:"
-                    : "Polyline: specify next point, type distance, press Enter to finish, or C to close:";
+                    : "Polyline: specify next point, type distance, press Enter/right-click to finish, or C to close:";
             }
 
             if (Workspace.ToolController.ActiveTool is ArcTool arcTool)

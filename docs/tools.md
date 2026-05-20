@@ -35,7 +35,7 @@ Implemented:
 - `PolylineTool`
 - `SplineTool`
 
-`MTEXT` inserts multiline annotation text through the text dialog. `LINE` creates a single segment and then ends. `POLYLINE` supports `Close`, `Undo` and Enter to finish an open polyline. `SPLINE` creates an open or closed Bezier spline from control points, with `Undo`, `Close` and Enter-to-finish command flow.
+`MTEXT` inserts multiline annotation text through the text dialog. `LINE` creates a single segment and then ends. `POLYLINE` supports `Close`, `Undo` and Enter/right-click to finish an open polyline. `SPLINE` creates an open or closed Bezier spline from control points, with `Undo`, `Close` and Enter/right-click-to-finish command flow.
 
 ---
 
@@ -78,9 +78,9 @@ Implemented:
 | Copy | command-driven, supports typed points/distances |
 | Rotate | command-driven, typed angle support |
 | Scale | command-driven, typed factor support |
-| Align | point-based transform align |
-| Break Point | line/arc/ellipse/polyline target support |
-| Break Segment | line/arc/circle/ellipse/polyline target support |
+| Align | point-based transform align, optional scale confirmation |
+| Break Point | line/arc/ellipse/polyline/open-spline target support |
+| Break Segment | line/arc/circle/ellipse/polyline/open-spline target support |
 | Extend | line/arc/open-polyline target support |
 | Trim | cutting edges including ellipses, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
@@ -94,7 +94,8 @@ Implemented:
 Workflow:
 
 ```text
-OFFSET: Specify offset distance:
+OFFSET: Specify offset distance or first distance point <last>:
+OFFSET: Specify second distance point or type distance:
 OFFSET: Select object to offset:
 OFFSET: Specify side to offset:
 ```
@@ -104,10 +105,9 @@ Supported targets:
 - Line;
 - Circle;
 - Arc;
-- straight-segment open/closed Polyline;
-- Bezier Spline through sampled polyline approximation.
+- straight-segment open/closed Polyline.
 
-Polyline and sampled spline offset use miter joins with a conservative miter limit. Very sharp joins fall back to a bevel-style corner instead of producing long miter spikes. Rounded joins, configurable join styles, bulge/arc polyline segments and advanced self-intersection cleanup are future work.
+Polyline offset uses miter joins with a conservative miter limit. Very sharp joins fall back to a bevel-style corner instead of producing long miter spikes. Ellipse, elliptical arc and Bezier spline offset are intentionally deferred because true offsets are not the same native curve type. Rounded joins, configurable join styles, bulge/arc polyline segments and advanced self-intersection cleanup are future work.
 
 The side preview must use the same geometry method as final creation.
 
@@ -134,9 +134,9 @@ Rules:
 - radius greater than zero creates a tangent arc;
 - `Trim` replaces the source lines with trimmed line segments plus the fillet arc;
 - `NoTrim` keeps the source lines and adds only the fillet arc;
+- Enter/right-click accepts the current radius and trim-mode defaults;
 - a live preview is shown while choosing the second line;
-- trim mode is always on;
-- Line-Arc, Arc-Arc, polyline fillet and NoTrim are future work.
+- Line-Arc, Arc-Arc and polyline fillet are future work.
 
 ---
 
@@ -155,7 +155,7 @@ Rules:
 
 - works on the current selection, or enters a selection phase when no entities are selected;
 - the mirror axis is an infinite line defined by two points;
-- the default final Enter keeps the source entities and creates mirrored copies;
+- the default final Enter/right-click keeps the source entities and creates mirrored copies;
 - `Yes` deletes/replaces the source entities by mirroring them in place;
 - preview is shown while choosing the second axis point.
 

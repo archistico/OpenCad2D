@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Breaks a supported entity by removing the segment between two picked break points.
 /// </summary>
-public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, IToolPreviewDescriptorProvider
+public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, IToolPreviewDescriptorProvider, ISnapModeProvider
 {
     private EntityId? _targetEntityId;
     private CadEntity? _targetEntity;
@@ -36,6 +36,15 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
     public bool HasPreview =>
         State == BreakBetweenPointsToolState.WaitingForSecondBreakPoint &&
         (_previewSegments.Count > 0 || _removedPreviewSegments.Count > 0);
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State == BreakBetweenPointsToolState.WaitingForTargetEntity
+            ? SnapKind.EntityOnly
+            : context.EnabledSnaps;
+    }
 
     public CommandPromptState GetPromptState(ToolContext context)
     {

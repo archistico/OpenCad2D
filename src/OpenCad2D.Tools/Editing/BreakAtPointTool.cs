@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Breaks a supported entity at a picked point.
 /// </summary>
-public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
+public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, ISnapModeProvider
 {
     private EntityId? _targetEntityId;
     private CadEntity? _targetEntity;
@@ -33,6 +33,15 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPrevie
         State == BreakAtPointToolState.WaitingForBreakPoint &&
         _previewSegments.Count > 0;
 
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State == BreakAtPointToolState.WaitingForTargetEntity
+            ? SnapKind.EntityOnly
+            : context.EnabledSnaps;
+    }
 
     public CommandPromptState GetPromptState(ToolContext context)
     {

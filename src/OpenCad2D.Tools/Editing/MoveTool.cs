@@ -58,7 +58,7 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
                 "Select objects to move",
                 CommandInputKind.Selection,
                 acceptsEmptyEnter: true,
-                placeholder: "Click objects, then press Enter"),
+                placeholder: "Click objects, then press Enter/right-click"),
 
             MoveToolState.WaitingForBasePoint => new CommandPromptState(
                 "MOVE",
@@ -99,7 +99,7 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         {
             MoveToolState.WaitingForBasePoint => AcceptBasePoint(context, input.Point.Value),
             MoveToolState.WaitingForDestinationPoint => AcceptDestinationPoint(context, input.Point.Value),
-            MoveToolState.WaitingForEntitySelection => ToolResult.None("Select entities to move, then press Enter."),
+            MoveToolState.WaitingForEntitySelection => ToolResult.None("Select entities to move, then press Enter/right-click."),
             _ => ToolResult.None()
         };
     }
@@ -256,7 +256,7 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select entities to move, then press Enter.");
+            return ToolResult.None("Select entities to move, then press Enter/right-click.");
         }
 
         if (pointer.IsShiftPressed)
@@ -269,8 +269,8 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         }
 
         return ToolResult.Updated(pointer.IsControlPressed
-            ? "Overlapping entity selected. Press Enter to specify base point."
-            : "Entity selected. Press Enter to specify base point.");
+            ? "Overlapping entity selected. Press Enter/right-click to specify base point."
+            : "Entity selected. Press Enter/right-click to specify base point.");
     }
 
     private ToolResult SelectBasePoint(

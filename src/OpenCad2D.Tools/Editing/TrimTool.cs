@@ -337,7 +337,7 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Completed(
-            "Entity trimmed. Select another entity to trim, type Undo, or press Enter/Escape to finish.");
+            "Entity trimmed. Select another entity to trim, type Undo, or press Enter/right-click/Escape to finish.");
     }
 
     private ToolResult AcceptSecondBoundaryEntity(

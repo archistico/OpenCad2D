@@ -102,7 +102,7 @@ Supported input forms:
 | `25` | distance, angle or factor when the active command expects it |
 | `C`, `Close`, `U`, `Undo`, `All`, `Radius` | command options when exposed by the active prompt |
 | empty Enter while idle | repeat the last valid command |
-| empty Enter inside a command | confirm only if the current phase accepts confirmation |
+| empty Enter/right-click inside a command | confirm only if the current phase accepts confirmation |
 | `↑` / `↓` | navigate command history while the command input is focused |
 | `Tab` | accept the first autocomplete suggestion for known commands/aliases |
 

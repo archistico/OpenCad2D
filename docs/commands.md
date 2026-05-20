@@ -41,6 +41,8 @@ Esc         -> cancel the current phase
 
 A tool must not guess a missing value. If a prompt has no valid default yet, right click/Enter should show a clear message instead of committing an operation.
 
+Selection phases in modify tools expose `SnapKind.EntityOnly`; point phases expose the active geometric snap set; option-only confirmations disable point snaps when no canvas point is meaningful.
+
 ## Command input aliases
 
 Aliases are case-insensitive.

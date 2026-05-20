@@ -15,7 +15,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Interactive tool used to align the current selection by mapping two source
 /// points to two destination points.
 /// </summary>
-public sealed class AlignTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool, IToolPreviewEntityProvider
+public sealed class AlignTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool, IToolPreviewEntityProvider, ISnapModeProvider
 {
     private readonly AlignTransformService _alignTransformService;
     private Point2D? _sourcePoint1;
@@ -154,6 +154,20 @@ public sealed class AlignTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool
         };
     }
 
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (!context.Selection.HasSelection)
+        {
+            return SnapKind.EntityOnly;
+        }
+
+        return State == AlignToolState.WaitingForScaleConfirmation
+            ? SnapKind.None
+            : context.EnabledSnaps;
+    }
+
     public bool TryHandleKey(
         ToolContext context,
         CadToolKey key,
@@ -196,7 +210,7 @@ public sealed class AlignTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool
         if (State == AlignToolState.WaitingForScaleConfirmation)
         {
             return ToolResult.None(
-                "Press Enter or N to align without scale, or Y to align with scale.");
+                "Press Enter/right-click or N to align without scale, or Y to align with scale.");
         }
 
         Point2D point = ApplySnap(
@@ -394,7 +408,7 @@ public sealed class AlignTool : ICadTool, ICommandDrivenTool, IKeyboardAwareTool
         context.CurrentBasePoint = null;
 
         return ToolResult.Started(
-            "Apply scale? Press Enter/N for No, or Y for Yes.");
+            "Apply scale? Press Enter/right-click/N for No, or Y for Yes.");
     }
 
     private ToolResult Confirm(

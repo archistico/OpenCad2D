@@ -230,10 +230,10 @@ Future work:
 - polyline bulge/arc segment support;
 - Multiple/Through/Erase/Layer options.
 
-Current active cleanup status:
+Current cleanup status:
 
-- Phase A completed: distance input workflow, two-click distance measurement, reusable last distance and right-click/Enter default confirmation.
-- Next phases: target/side workflow polish, richer previews and geometry support policy review.
+- Distance workflow completed: typed distance, two-click distance measurement, reusable last distance and right-click/Enter default confirmation.
+- Target/side workflow completed for the v0.9 scope: EntityOnly target selection, geometric side picking, target highlight, addition preview and explicit unsupported-curve messages.
 
 ---
 
@@ -354,3 +354,31 @@ When the first side is already defined, a plain numeric command input such as `1
 ### Offset target/side preview
 
 Offset now separates its workflow into distance, target selection and side selection phases. Target selection uses `EntityOnly` snapping and the selected target remains highlighted while the user chooses the side. Moving the pointer on either side of the target displays the offset result as an `Addition` preview; clicking the side creates the offset and keeps the tool active so another entity can be offset with the same distance.
+
+
+---
+
+## Final Modify Tools UX consistency pass
+
+The final cleanup pass checks the remaining primary tools against the same interaction contract.
+
+Covered tools:
+
+- Select, Deselect and Delete;
+- Move, Copy, Rotate, Scale, Align and Mirror;
+- Trim, Break Point, Break Segment, Extend, Offset and Fillet;
+- Polyline, Polygon, Rectangle Sides and Ellipse.
+
+Consistency rules now documented and guarded by tests:
+
+- right click is routed through the same confirmation path as empty Enter for command-driven tools;
+- Move, Copy, Rotate, Scale and Mirror can enter an entity-selection phase when started without an existing selection, then right-click/Enter advances to the first geometric input once a valid selection exists;
+- Delete confirms the pending multi-pick deletion with Enter/right-click;
+- Polyline and Spline messages describe Enter/right-click completion consistently;
+- Polygon side count, Fillet radius/trim mode, Mirror delete-source and Offset last-distance prompts expose safe defaults and reject missing defaults with clear messages;
+- entity-selection phases expose `SnapKind.EntityOnly`;
+- geometric point phases expose the active geometric snap set;
+- option-only confirmation phases that do not need a canvas point expose no point snap mode;
+- `Cancel`/`Deactivate` clears transient base points, previews and pending state so tools do not leave dirty intermediate state behind.
+
+Additional snap-mode coverage was added for Break Point, Break Segment, Extend and Align. These tools now explicitly implement `ISnapModeProvider`, closing the remaining gap where a selection phase could otherwise leave geometric snap modes active in the UI.

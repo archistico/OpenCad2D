@@ -54,7 +54,7 @@ public sealed class ScaleTool : ICadTool, ISnapModeProvider, ICommandDrivenTool,
                 "Select objects to scale",
                 CommandInputKind.Selection,
                 acceptsEmptyEnter: true,
-                placeholder: "Click objects, then press Enter"),
+                placeholder: "Click objects, then press Enter/right-click"),
 
             ScaleToolState.WaitingForBasePoint => new CommandPromptState(
                 "SCALE",
@@ -94,7 +94,7 @@ public sealed class ScaleTool : ICadTool, ISnapModeProvider, ICommandDrivenTool,
                 return ConfirmEntitySelection(context);
             }
 
-            return ToolResult.None("Select entities to scale, then press Enter.");
+            return ToolResult.None("Select entities to scale, then press Enter/right-click.");
         }
 
         if (State == ScaleToolState.WaitingForDestinationPoint &&
@@ -437,7 +437,7 @@ public sealed class ScaleTool : ICadTool, ISnapModeProvider, ICommandDrivenTool,
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select entities to scale, then press Enter.");
+            return ToolResult.None("Select entities to scale, then press Enter/right-click.");
         }
 
         if (pointer.IsShiftPressed)
@@ -450,8 +450,8 @@ public sealed class ScaleTool : ICadTool, ISnapModeProvider, ICommandDrivenTool,
         }
 
         return ToolResult.Updated(pointer.IsControlPressed
-            ? "Overlapping entity selected. Press Enter to specify base point."
-            : "Entity selected. Press Enter to specify base point.");
+            ? "Overlapping entity selected. Press Enter/right-click to specify base point."
+            : "Entity selected. Press Enter/right-click to specify base point.");
     }
 
     private static Point2D ApplyGeometricSnap(

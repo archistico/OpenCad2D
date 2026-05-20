@@ -8,7 +8,7 @@ This file is the current technical handoff for continuing OpenCad2D work. It sho
 
 OpenCad2D is in the v0.9 stabilization cycle. The active goal is to make the existing 2D CAD foundation predictable, precise and release-ready before moving toward v1.0.
 
-Current work area: Modify Tools UX cleanup and final v0.9 validation.
+Current work area: final v0.9 validation after completing the Modify Tools UX cleanup pass.
 
 ---
 
@@ -92,6 +92,8 @@ Completed Modify UX work:
 - Ellipse axis input uses snap-resolved points;
 - Rect Sides numeric second-side input creates the exact typed side length;
 - Offset workflow accepts typed distance, two picked distance points, stored last distance and right-click/Enter default confirmation.
+- Final Modify Tools UX pass completed for the primary tool set: right-click/Enter messaging, EntityOnly selection phases, geometric snap phases and transient-state cleanup expectations are documented and covered by targeted tests.
+- Break Point, Break Segment, Extend and Align now explicitly expose phase-specific snap modes through `ISnapModeProvider`.
 
 ---
 
@@ -125,15 +127,10 @@ Offset workflow:
 
 ## Current next work
 
-1. Final UX consistency pass across remaining draw/modify tools:
-   - right-click/Enter/Esc behavior;
-   - snap mode by phase;
-   - command messages;
-   - preview semantics.
-2. Complete/execute `docs/testing/curve-editing-regression-v0.9.md`.
-3. Export/import compatibility pass for SVG/PDF/DXF.
-4. Property Panel curve review.
-5. Release preparation for v0.9.
+1. Complete/execute `docs/testing/curve-editing-regression-v0.9.md`.
+2. Export/import compatibility pass for SVG/PDF/DXF.
+3. Property Panel curve review.
+4. Release preparation for v0.9.
 
 ---
 
