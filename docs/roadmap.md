@@ -52,6 +52,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Preview UX base | [x] | TRIM/BREAK removal previews are dashed; EXTEND addition previews are highlighted; selected boundaries stay visible. |
 | Save/export UX clarity | [x] | Export creates derived files and does not clear dirty state or replace the current native file path; user messages make this explicit. |
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
+| Explode / Join essentials | [x] | EXPLODE converts selected polylines into lines; JOIN converts connected selected lines into polylines, with command aliases, buttons, undo and targeted tests. |
 
 ---
 
@@ -74,6 +75,7 @@ Completed:
 - [x] fixed Ellipse axis input to use snap-resolved points;
 - [x] fixed Rect Sides numeric second-side input so typed values create the exact requested side length.
 - [x] completed final pass for right-click/Enter messaging, selection-phase EntityOnly snap policy and state-cleanup expectations across the remaining primary tools.
+- [x] added essential Explode and Join tools before v0.9 planning: `EXPLODE`/`X` and `JOIN`/`J`.
 
 Completed Offset cleanup:
 

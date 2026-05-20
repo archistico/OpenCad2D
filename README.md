@@ -36,9 +36,9 @@ OpenCad2D currently supports a complete early CAD workflow:
 - drawing tools for points, single-line text, multiline text, lines, rectangles, circles, ellipses, arcs, polylines, polygons and Bezier splines;
 - dimension tools for horizontal, vertical, aligned, radius, diameter and angular dimensions, with stale-state marking after geometry modifications;
 - transform tools: move, copy, rotate, scale and point-based align;
-- modify tools: delete, break point, break segment, trim, extend, offset and fillet;
+- modify tools: delete, break point, break segment, trim, extend, offset, fillet, explode and join;
 - trim and break support based on native curve parameters for lines, arcs, circles where applicable, ellipses, elliptical arcs, polylines, polygons and open Bezier splines;
-- offset for lines, circles, arcs, straight-segment polylines and sampled Bezier splines, currently pending a v0.9 workflow/native-geometry review;
+- offset for lines, circles, arcs and straight-segment polylines;
 - line-line fillet with radius option, live preview, Trim/NoTrim modes and radius `0` sharp-corner join in Trim mode;
 - align object tools: left, right, top and bottom;
 - distribute object tools: horizontal and vertical distribution by centers;

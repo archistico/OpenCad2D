@@ -86,6 +86,21 @@ Implemented:
 | Offset | line/circle/arc/polyline with preview |
 | Fillet | line-line, Radius and Trim/NoTrim options, radius 0 sharp join |
 | Mirror | two-point mirror axis, keeps source by default, optional source deletion |
+| Explode | selected straight-segment polylines become individual lines |
+| Join | selected connected lines become one or more polylines |
+
+---
+
+## Explode and Join
+
+Workflow:
+
+```text
+EXPLODE: Select polylines to explode into lines:
+JOIN: Select connected lines to join into polylines:
+```
+
+Both tools are selection-first, support multi-pick selection, use EntityOnly snap while selecting entities and accept Enter/right-click to confirm. Explode supports open and closed straight-segment polylines. Join supports connected line chains and can create either open or closed polylines; disconnected connected groups become separate polylines.
 
 ---
 

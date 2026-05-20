@@ -48,6 +48,8 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Offset));
         Assert.True(registry.Contains(ToolId.Fillet));
         Assert.True(registry.Contains(ToolId.Mirror));
+        Assert.True(registry.Contains(ToolId.Explode));
+        Assert.True(registry.Contains(ToolId.Join));
         Assert.True(registry.Contains(ToolId.Delete));
         Assert.True(registry.Contains(ToolId.MeasureDistance));
         Assert.True(registry.Contains(ToolId.MeasureEntity));
@@ -62,7 +64,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(38, tools.Count);
+        Assert.Equal(40, tools.Count);
 
         Assert.Contains(
             tools,
@@ -143,6 +145,14 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Mirror);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Explode);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Join);
 
         Assert.Contains(
             tools,
@@ -260,7 +270,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Modify");
 
-        Assert.Equal(14, tools.Count);
+        Assert.Equal(16, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Selection);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Move);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Copy);
@@ -274,6 +284,8 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Offset);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Fillet);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Mirror);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Explode);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Join);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Delete);
     }
 
@@ -664,6 +676,29 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<MirrorTool>(tool);
         Assert.Equal("Mirror", tool.Name);
+    }
+
+
+    [Fact]
+    public void Create_Explode_ShouldReturnExplodeTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Explode);
+
+        Assert.IsType<ExplodeTool>(tool);
+        Assert.Equal("Explode", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Join_ShouldReturnJoinTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Join);
+
+        Assert.IsType<JoinTool>(tool);
+        Assert.Equal("Join", tool.Name);
     }
 
     [Fact]

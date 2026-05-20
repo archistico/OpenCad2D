@@ -60,6 +60,12 @@
     <!-- Delete.svg -->
     <StreamGeometry x:Key="IconDelete">M4 7l16 0 M10 11l0 6 M14 11l0 6 M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12 M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3</StreamGeometry>
 
+    <!-- Explode.svg: custom explode-polyline icon. -->
+    <StreamGeometry x:Key="IconExplode">M4 5l5 0 M15 5l5 0 M9 5l3 3l3 -3 M4 19l5 0 M15 19l5 0 M9 19l3 -3l3 3 M5 8l0 8 M19 8l0 8</StreamGeometry>
+
+    <!-- Join.svg: custom line-to-polyline icon. -->
+    <StreamGeometry x:Key="IconJoin">M4 18l6 -6 M14 12l6 -6 M10 12h4 M12 10l2 2l-2 2 M4 18a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0 M10.5 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0 M17 6a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0</StreamGeometry>
+
     <!-- Diameter_Dim.svg -->
     <StreamGeometry x:Key="IconDiameterDim">M21 19h-18l9 -15 M20.615 15.171h.015 M19.515 11.771h.015 M17.715 8.671h.015 M15.415 5.971h.015</StreamGeometry>
 

@@ -185,6 +185,12 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("BR", ToolId.BreakBetweenPoints);
         yield return new CommandAlias("BS", ToolId.BreakBetweenPoints);
 
+        yield return new CommandAlias("EXPLODE", ToolId.Explode);
+        yield return new CommandAlias("X", ToolId.Explode);
+
+        yield return new CommandAlias("JOIN", ToolId.Join);
+        yield return new CommandAlias("J", ToolId.Join);
+
         yield return new CommandAlias("DELETE", ToolId.Delete);
         yield return new CommandAlias("DEL", ToolId.Delete);
 

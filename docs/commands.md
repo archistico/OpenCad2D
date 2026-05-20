@@ -103,6 +103,8 @@ Aliases are case-insensitive.
 | Offset | `OFFSET`, `O` |
 | Fillet | `FILLET`, `F` |
 | Mirror | `MIRROR`, `MI` |
+| Explode | `EXPLODE`, `X` |
+| Join | `JOIN`, `J` |
 
 ### Draw order
 

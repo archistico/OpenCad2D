@@ -17,7 +17,7 @@ Esc         -> cancel the current phase; when idle, clear selection where applic
 
 Right click is not a generic cancel action. It advances or completes the current phase only when the tool can do so safely. If a command requires a value and no default exists yet, the tool must show a clear message instead of guessing.
 
-Entity-selection phases should use `SnapKind.EntityOnly`. Geometric point phases should use the normal geometric snap set. Numeric prompts may be completed by typing a value, by supported graphical input, or by confirming the proposed value shown in angle brackets such as `<N>` or `<10>`. Current confirmations explicitly covered by this policy include Polygon side count, Fillet radius/trim mode, Mirror delete-source choice, Polyline finish and Delete multi-pick confirmation.
+Entity-selection phases should use `SnapKind.EntityOnly`. Geometric point phases should use the normal geometric snap set. Numeric prompts may be completed by typing a value, by supported graphical input, or by confirming the proposed value shown in angle brackets such as `<N>` or `<10>`. Current confirmations explicitly covered by this policy include Polygon side count, Fillet radius/trim mode, Mirror delete-source choice, Polyline finish, Delete multi-pick confirmation, Explode confirmation and Join confirmation.
 
 When a tool acquires a geometric point from pointer input, it must use the snap-resolved point, not the raw cursor position. This applies to every point collection phase, including center points, axis endpoints, radius points, rectangle corners, polyline vertices and preview updates. Command-line coordinates are already explicit and should remain exact.
 
@@ -27,6 +27,27 @@ The Select area includes explicit selection actions:
 - `Select All` selects all visible and unlocked entities;
 - `Select Last` restores the last cleared selection;
 - `Deselect` clears the current selection without deleting geometry.
+
+---
+
+## Explode and Join
+
+`EXPLODE` and `JOIN` are selection-first modify tools and follow the same confirmation policy as Delete:
+
+```text
+EXPLODE: Select polylines to explode into lines:
+JOIN: Select connected lines to join into polylines:
+```
+
+Behavior:
+
+- `EXPLODE` converts selected straight-segment `PolylineEntity` objects into individual `LineEntity` segments; closed polylines produce a final closing segment.
+- `JOIN` converts selected connected `LineEntity` chains into one or more `PolylineEntity` objects. Closed chains are detected and stored as closed polylines.
+- Both tools use `SnapKind.EntityOnly` during selection.
+- Enter/right-click confirms the current selection.
+- Created entities preserve the source layer, style, visibility, lock flag and draw order.
+- The operation is wrapped in a single undoable composite command.
+- Non-supported or unconnected entities are ignored; if no valid conversion is possible, the document is left unchanged.
 
 ---
 

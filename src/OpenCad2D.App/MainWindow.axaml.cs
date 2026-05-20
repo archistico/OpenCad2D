@@ -1088,6 +1088,28 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Explode_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Explode);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void Join_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Join);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
 
     private void AlignLeft_Click(
         object? sender,

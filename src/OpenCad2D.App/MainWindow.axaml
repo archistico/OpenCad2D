@@ -1090,6 +1090,34 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="ExplodeButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Explode selected polylines into individual lines"
+                                    Click="Explode_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExplode}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Explode" />
+                                </Grid>
+                            </Button>
+
+                            <Button x:Name="JoinButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Join connected lines into polylines"
+                                    Click="Join_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconJoin}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Join" />
+                                </Grid>
+                            </Button>
+
                             <Button Classes="tool-button"
                                     ToolTip.Tip="Delete the selected entities"
                                     Click="Delete_Click" >

@@ -287,6 +287,22 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Explode,
+                "Explode",
+                "Explode",
+                "Modify"),
+            () => new ExplodeTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Join,
+                "Join",
+                "Join",
+                "Modify"),
+            () => new JoinTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Delete,
                 "Delete",
                 "Delete",

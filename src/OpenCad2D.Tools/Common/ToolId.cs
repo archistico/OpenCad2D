@@ -38,6 +38,8 @@ public enum ToolId
     Offset,
     Fillet,
     Mirror,
+    Explode,
+    Join,
     Delete,
     MeasureDistance,
     MeasureEntity,

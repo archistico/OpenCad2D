@@ -94,6 +94,7 @@ Completed Modify UX work:
 - Offset workflow accepts typed distance, two picked distance points, stored last distance and right-click/Enter default confirmation.
 - Final Modify Tools UX pass completed for the primary tool set: right-click/Enter messaging, EntityOnly selection phases, geometric snap phases and transient-state cleanup expectations are documented and covered by targeted tests.
 - Break Point, Break Segment, Extend and Align now explicitly expose phase-specific snap modes through `ISnapModeProvider`.
+- Added `ExplodeTool` and `JoinTool` as essential pre-v0.9 modify tools. Explode turns selected straight-segment polylines into line entities; Join turns connected selected line chains into open/closed polylines. Both use EntityOnly selection, Enter/right-click confirmation, command aliases and single-step undo.
 
 ---
 
@@ -127,10 +128,11 @@ Offset workflow:
 
 ## Current next work
 
-1. Complete/execute `docs/testing/curve-editing-regression-v0.9.md`.
-2. Export/import compatibility pass for SVG/PDF/DXF.
-3. Property Panel curve review.
-4. Release preparation for v0.9.
+1. Validate Explode/Join manually in the UI after local build/test.
+2. Complete/execute `docs/testing/curve-editing-regression-v0.9.md`.
+3. Export/import compatibility pass for SVG/PDF/DXF.
+4. Property Panel curve review.
+5. Release preparation for v0.9.
 
 ---
 
