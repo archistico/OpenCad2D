@@ -1,4 +1,4 @@
-.PHONY: run build test check clean
+.PHONY: run build test check clean zip
 
 run:
 	dotnet run --project src/OpenCad2D.App
@@ -20,3 +20,11 @@ else
 	find src tests -type d \( -name bin -o -name obj \) -prune -exec rm -rf {} +
 endif
 	@echo "Clean completed."
+
+zip:
+ifeq ($(OS),Windows_NT)
+	@powershell -NoProfile -ExecutionPolicy Bypass -Command "$$date = Get-Date -Format 'yyyyMMdd'; $$name = $${date} + '_OpenCad2d.zip'; if (Test-Path $$name) { Remove-Item $$name -Force }; Compress-Archive -Path 'docs','src','tests','OpenCad2D.sln','README.md','THIRD-PARTY-NOTICES.md' -DestinationPath $$name -Force; Write-Host ('Created ' + $$name)"
+else
+	@name="$$(date +%Y%m%d)_OpenCad2d.zip"; rm -f "$$name"; zip -r "$$name" docs src tests OpenCad2D.sln README.md THIRD-PARTY-NOTICES.md; echo "Created $$name"
+endif
+

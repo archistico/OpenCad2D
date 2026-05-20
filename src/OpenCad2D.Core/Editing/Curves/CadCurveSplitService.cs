@@ -140,6 +140,56 @@ public sealed class CadCurveSplitService
             effectiveTolerance);
     }
 
+
+    public IReadOnlyList<CadEntity> GetPickedInterval(
+        CadEntity entity,
+        IReadOnlyList<Point2D> cutPoints,
+        Point2D pickPoint,
+        GeometryTolerance? tolerance = null)
+    {
+        GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
+
+        if (!_adapterFactory.TryCreate(entity, out ICurveAdapter adapter))
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        var cuts = new List<CurveCut>();
+        foreach (Point2D point in cutPoints)
+        {
+            if (adapter.TryProjectPointToCut(point, effectiveTolerance, out CurveCut cut))
+            {
+                cuts.Add(cut);
+            }
+        }
+
+        return GetPickedInterval(
+            adapter,
+            cuts,
+            pickPoint,
+            effectiveTolerance);
+    }
+
+    public IReadOnlyList<CadEntity> GetPickedInterval(
+        CadEntity entity,
+        IReadOnlyList<CurveCut> cuts,
+        Point2D pickPoint,
+        GeometryTolerance? tolerance = null)
+    {
+        GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
+
+        if (!_adapterFactory.TryCreate(entity, out ICurveAdapter adapter))
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        return GetPickedInterval(
+            adapter,
+            cuts,
+            pickPoint,
+            effectiveTolerance);
+    }
+
     private IReadOnlyList<CadEntity> RemovePickedInterval(
         ICurveAdapter adapter,
         IReadOnlyList<CurveCut> cuts,
@@ -231,6 +281,143 @@ public sealed class CadCurveSplitService
         return adapter.BuildFragments(
             MergeContiguousOpenIntervals(intervalsToKeep, tolerance),
             tolerance);
+    }
+
+
+    private IReadOnlyList<CadEntity> GetPickedInterval(
+        ICurveAdapter adapter,
+        IReadOnlyList<CurveCut> cuts,
+        Point2D pickPoint,
+        GeometryTolerance tolerance)
+    {
+        if (!adapter.TryProjectPointToCut(pickPoint, tolerance, out CurveCut pickCut))
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        List<CurveCut> normalizedCuts = NormalizeCuts(
+            cuts,
+            adapter,
+            tolerance);
+
+        if (adapter.IsClosed)
+        {
+            if (normalizedCuts.Count < 2)
+            {
+                return Array.Empty<CadEntity>();
+            }
+
+            return BuildPickedClosedInterval(
+                adapter,
+                normalizedCuts,
+                pickCut,
+                tolerance);
+        }
+
+        if (normalizedCuts.Count == 0)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        return BuildPickedOpenInterval(
+            adapter,
+            normalizedCuts,
+            pickCut,
+            tolerance);
+    }
+
+    private IReadOnlyList<CadEntity> BuildPickedOpenInterval(
+        ICurveAdapter adapter,
+        IReadOnlyList<CurveCut> cuts,
+        CurveCut pickCut,
+        GeometryTolerance tolerance)
+    {
+        var pathCuts = new List<CurveCut>
+        {
+            new(adapter.StartParameter, adapter.PointAt(adapter.StartParameter))
+        };
+        pathCuts.AddRange(cuts.Where(cut =>
+            cut.Parameter > adapter.StartParameter + tolerance.Parameter &&
+            cut.Parameter < adapter.EndParameter - tolerance.Parameter));
+        pathCuts.Add(new CurveCut(adapter.EndParameter, adapter.PointAt(adapter.EndParameter)));
+
+        pathCuts = NormalizeCuts(
+            pathCuts,
+            adapter,
+            tolerance);
+
+        if (pathCuts.Count <= 2)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        int intervalToRemove = FindOpenIntervalContaining(
+            pathCuts,
+            pickCut.Parameter,
+            tolerance);
+
+        CurveCut start = pathCuts[intervalToRemove];
+        CurveCut end = pathCuts[intervalToRemove + 1];
+
+        if (end.Parameter - start.Parameter <= tolerance.Parameter)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        return adapter.BuildFragments(
+            new[]
+            {
+                new CurveInterval(start, end)
+            },
+            tolerance);
+    }
+
+    private IReadOnlyList<CadEntity> BuildPickedClosedInterval(
+        ICurveAdapter adapter,
+        IReadOnlyList<CurveCut> cuts,
+        CurveCut pickCut,
+        GeometryTolerance tolerance)
+    {
+        for (int index = 0; index < cuts.Count; index++)
+        {
+            CurveCut start = cuts[index];
+            CurveCut end = cuts[(index + 1) % cuts.Count];
+            double endParameter = end.Parameter;
+
+            if (endParameter <= start.Parameter)
+            {
+                endParameter += adapter.Period;
+            }
+
+            double pickParameter = pickCut.Parameter;
+            if (pickParameter < start.Parameter)
+            {
+                pickParameter += adapter.Period;
+            }
+
+            bool containsPick = ClosedIntervalContainsPick(
+                start.Parameter,
+                endParameter,
+                pickParameter,
+                tolerance);
+
+            if (!containsPick ||
+                endParameter - start.Parameter <= tolerance.Parameter)
+            {
+                continue;
+            }
+
+            return adapter.BuildFragments(
+                new[]
+                {
+                    new CurveInterval(
+                        start,
+                        new CurveCut(endParameter, end.Point))
+                },
+                tolerance);
+        }
+
+        return Array.Empty<CadEntity>();
     }
 
     private static IReadOnlyList<CurveInterval> MergeContiguousOpenIntervals(

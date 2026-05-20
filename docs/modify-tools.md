@@ -130,6 +130,7 @@ Features:
 - additional cutting edges can be selected;
 - `Undo` reverses the last trim inside the active Trim command;
 - command remains active for repeated trims until cancelled or confirmed;
+- while moving over a trimmable target, the removed portion is shown as a dashed preview highlight;
 - open and closed polylines, including regular polygons stored as closed `PolylineEntity`, can be trimmed;
 - trimmed polyline/polygon fragments are returned as open `PolylineEntity` fragments;
 - trimmed ellipse fragments are returned as native `EllipticalArcEntity` fragments;

@@ -29,6 +29,8 @@ Select entity side to trim
 
 Therefore the active snap set for `TrimTool` is `SnapKind.EntityOnly` in every phase. Endpoint, midpoint, center, quadrant, intersection, nearest, perpendicular, tangent and grid snaps are intentionally disabled while Trim is active. This avoids misleading markers and prevents vertex snaps from suggesting that the command is asking for a geometric point when it is actually asking for an entity portion.
 
+Trim preview must use the same native interval-selection pipeline as the final operation. The kept replacement geometry is exposed as normal preview geometry, while the interval that will be removed is exposed as a removal highlight and rendered dashed. This avoids a mismatch where the UI shows an approximate or line-only removal preview but the command commits a different native curve fragment.
+
 Tools that explicitly ask for construction points, such as drawing tools or Break point selection, may continue to use the normal geometric snap modes.
 
 

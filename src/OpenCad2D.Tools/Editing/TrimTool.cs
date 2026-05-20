@@ -190,7 +190,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
         return new ToolPreviewDescriptor(
             entities: GetPreviewEntities(),
-            highlightedEntities: GetHighlightedPreviewEntities());
+            highlightedEntities: GetHighlightedPreviewEntities(),
+            highlightedEntityKind: ToolPreviewHighlightKind.Removal);
     }
 
     private ToolResult AcceptBoundaryEntity(
@@ -452,9 +453,10 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
             effectiveBoundaries,
             point,
             context.GeometryTolerance);
-        _highlightPreviewEntities = CreateTrimHighlightEntities(
+        _highlightPreviewEntities = CadTrimService.GetRemovedIntervalByBoundaries(
             entity,
-            _previewEntities,
+            effectiveBoundaries,
+            point,
             context.GeometryTolerance);
     }
 

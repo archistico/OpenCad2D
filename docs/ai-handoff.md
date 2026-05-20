@@ -1,3 +1,18 @@
+## Preview UX: Trim removed interval is dashed
+
+`TrimTool` now previews the exact native interval that will be removed, not only the kept replacement geometry. The removed interval is obtained through `CadTrimService.GetRemovedIntervalByBoundaries`, which delegates to `CadCurveSplitService.GetPickedInterval` and therefore uses the same cut collection, native curve adapters and interval selection rules as the final Trim operation.
+
+`ToolPreviewDescriptor` now carries `HighlightedEntityKind`. `TrimTool` marks highlighted entities as `ToolPreviewHighlightKind.Removal`, while existing modify previews such as Extend keep the default emphasis style. `CadToolPreviewRenderer` renders removal highlights with a red dashed pen, making the part to be cut visually distinct from added/modified preview geometry.
+
+Validation note: this environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
 ## Preview UX: Trim uses entity-only snaps
 
 `TrimTool` now implements `ISnapModeProvider` and returns `SnapKind.EntityOnly` for all Trim phases. Trim is an entity/side selection workflow, so geometric snaps such as endpoint, midpoint, center, quadrant, intersection, nearest, perpendicular, tangent and grid are disabled while the command is active. This keeps the UI from showing vertex/point snap markers during Trim and makes the active selection intent clearer.

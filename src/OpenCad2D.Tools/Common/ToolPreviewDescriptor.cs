@@ -17,12 +17,14 @@ public sealed class ToolPreviewDescriptor
     public ToolPreviewDescriptor(
         IEnumerable<CadEntity>? entities = null,
         IEnumerable<CadEntity>? highlightedEntities = null,
+        ToolPreviewHighlightKind highlightedEntityKind = ToolPreviewHighlightKind.Emphasis,
         IEnumerable<ToolPreviewLine>? lines = null,
         IEnumerable<ToolPreviewMarker>? markers = null,
         IEnumerable<ToolPreviewWindow>? windows = null)
     {
         Entities = entities?.ToArray() ?? Array.Empty<CadEntity>();
         HighlightedEntities = highlightedEntities?.ToArray() ?? Array.Empty<CadEntity>();
+        HighlightedEntityKind = highlightedEntityKind;
         Lines = lines?.ToArray() ?? Array.Empty<ToolPreviewLine>();
         Markers = markers?.ToArray() ?? Array.Empty<ToolPreviewMarker>();
         Windows = windows?.ToArray() ?? Array.Empty<ToolPreviewWindow>();
@@ -31,6 +33,8 @@ public sealed class ToolPreviewDescriptor
     public IReadOnlyList<CadEntity> Entities { get; }
 
     public IReadOnlyList<CadEntity> HighlightedEntities { get; }
+
+    public ToolPreviewHighlightKind HighlightedEntityKind { get; }
 
     public IReadOnlyList<ToolPreviewLine> Lines { get; }
 

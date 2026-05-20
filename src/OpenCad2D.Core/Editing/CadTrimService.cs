@@ -94,19 +94,50 @@ public static class CadTrimService
         };
     }
 
+
+    /// <summary>
+    /// Builds the native curve interval that would be removed by a TRIM operation.
+    /// This is intended for transient command previews and uses the same cut collection
+    /// and native curve splitting pipeline as <see cref="TrimByBoundaries"/>.
+    /// </summary>
+    public static IReadOnlyList<CadEntity> GetRemovedIntervalByBoundaries(
+        CadEntity target,
+        IReadOnlyList<CadEntity> boundaries,
+        Point2D targetPickPoint,
+        GeometryTolerance? tolerance = null)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(boundaries);
+
+        GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
+
+        if (boundaries.Count == 0)
+        {
+            return Array.Empty<CadEntity>();
+        }
+
+        IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
+            target,
+            boundaries,
+            effectiveTolerance);
+
+        return CurveSplitService.GetPickedInterval(
+            target,
+            intersections,
+            targetPickPoint,
+            effectiveTolerance);
+    }
+
     private static IReadOnlyList<CadEntity> TrimLineByBoundaries(
         LineEntity target,
         IReadOnlyList<CadEntity> boundaries,
         Point2D pickPoint,
         GeometryTolerance tolerance)
     {
-        IReadOnlyList<Point2D> intersections = CollectIntersections(
+        IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance)
-            .Where(point => !tolerance.ArePointsEqual(point, target.Start) &&
-                            !tolerance.ArePointsEqual(point, target.End))
-            .ToList();
+            tolerance);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -139,13 +170,10 @@ public static class CadTrimService
         Point2D pickPoint,
         GeometryTolerance tolerance)
     {
-        IReadOnlyList<Point2D> intersections = CollectIntersections(
+        IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance)
-            .Where(point => !tolerance.ArePointsEqual(point, target.Geometry.StartPoint) &&
-                            !tolerance.ArePointsEqual(point, target.Geometry.EndPoint))
-            .ToList();
+            tolerance);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -178,13 +206,10 @@ public static class CadTrimService
         Point2D pickPoint,
         GeometryTolerance tolerance)
     {
-        IReadOnlyList<Point2D> intersections = CollectIntersections(
+        IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance)
-            .Where(point => !tolerance.ArePointsEqual(point, target.StartPoint) &&
-                            !tolerance.ArePointsEqual(point, target.EndPoint))
-            .ToList();
+            tolerance);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -204,13 +229,10 @@ public static class CadTrimService
             return Array.Empty<CadEntity>();
         }
 
-        IReadOnlyList<Point2D> intersections = CollectIntersections(
+        IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance)
-            .Where(point => !tolerance.ArePointsEqual(point, target.ControlPoints[0]) &&
-                            !tolerance.ArePointsEqual(point, target.ControlPoints[^1]))
-            .ToList();
+            tolerance);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -235,6 +257,43 @@ public static class CadTrimService
             intersections,
             pickPoint,
             tolerance);
+    }
+
+
+    private static IReadOnlyList<Point2D> CollectTrimIntersections(
+        CadEntity target,
+        IReadOnlyList<CadEntity> boundaries,
+        GeometryTolerance tolerance)
+    {
+        IReadOnlyList<Point2D> intersections = CollectIntersections(
+            target,
+            boundaries,
+            tolerance);
+
+        return target switch
+        {
+            LineEntity line => intersections
+                .Where(point => !tolerance.ArePointsEqual(point, line.Start) &&
+                                !tolerance.ArePointsEqual(point, line.End))
+                .ToList(),
+
+            ArcEntity arc => intersections
+                .Where(point => !tolerance.ArePointsEqual(point, arc.Geometry.StartPoint) &&
+                                !tolerance.ArePointsEqual(point, arc.Geometry.EndPoint))
+                .ToList(),
+
+            EllipticalArcEntity ellipticalArc => intersections
+                .Where(point => !tolerance.ArePointsEqual(point, ellipticalArc.StartPoint) &&
+                                !tolerance.ArePointsEqual(point, ellipticalArc.EndPoint))
+                .ToList(),
+
+            BezierSplineEntity spline when !spline.IsClosed => intersections
+                .Where(point => !tolerance.ArePointsEqual(point, spline.ControlPoints[0]) &&
+                                !tolerance.ArePointsEqual(point, spline.ControlPoints[^1]))
+                .ToList(),
+
+            _ => intersections
+        };
     }
 
     private static IReadOnlyList<Point2D> CollectIntersections(

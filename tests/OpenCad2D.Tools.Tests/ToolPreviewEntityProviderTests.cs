@@ -524,9 +524,42 @@ public sealed class ToolPreviewEntityProviderTests
         ToolPreviewDescriptor descriptor = provider.GetPreviewDescriptor(context);
 
         Assert.NotEmpty(descriptor.Entities);
+        Assert.Equal(ToolPreviewHighlightKind.Removal, descriptor.HighlightedEntityKind);
         var highlighted = Assert.Single(descriptor.HighlightedEntities.OfType<LineEntity>());
         Assert.Equal(new Point2D(5, 0), highlighted.Start);
         Assert.Equal(new Point2D(10, 0), highlighted.End);
+    }
+
+
+    [Fact]
+    public void TrimTool_ShouldExposeRemovedArcPreviewAsRemovalHighlight()
+    {
+        CadDocument document = new();
+        var boundary = new LineEntity(
+            new Point2D(0, -10),
+            new Point2D(0, 10));
+        var target = new CircleEntity(
+            new Point2D(0, 0),
+            5);
+        document.AddEntity(boundary);
+        document.AddEntity(target);
+
+        ToolContext context = CreateContext(document);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 5)));
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        var provider = Assert.IsAssignableFrom<IToolPreviewDescriptorProvider>(tool);
+        ToolPreviewDescriptor descriptor = provider.GetPreviewDescriptor(context);
+
+        Assert.Equal(ToolPreviewHighlightKind.Removal, descriptor.HighlightedEntityKind);
+        Assert.NotEmpty(descriptor.Entities.OfType<ArcEntity>());
+        Assert.Single(descriptor.HighlightedEntities.OfType<ArcEntity>());
     }
 
     [Fact]
@@ -560,6 +593,7 @@ public sealed class ToolPreviewEntityProviderTests
         Assert.False(descriptor.IsEmpty);
         Assert.Same(entity, Assert.Single(descriptor.Entities));
         Assert.Same(highlighted, Assert.Single(descriptor.HighlightedEntities));
+        Assert.Equal(ToolPreviewHighlightKind.Emphasis, descriptor.HighlightedEntityKind);
         Assert.Equal(line, Assert.Single(descriptor.Lines));
         Assert.Equal(marker, Assert.Single(descriptor.Markers));
         Assert.Equal(ToolPreviewMarkerShape.Square, Assert.Single(descriptor.Markers).Shape);
