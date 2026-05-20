@@ -1,235 +1,683 @@
-# OpenCad2D AI handoff
+# Latest handoff note
 
-This file is the current development handoff for future work on OpenCad2D. It intentionally contains only the active state and stabilized checkpoints. Older milestone logs have been removed from this active handoff; use Git history and release notes for historical detail.
+## Modify Tools UX: Offset distance input phase A
 
----
+`OffsetTool` now follows the shared command confirmation policy for its distance prompt. The distance can be supplied by typing a positive value or by clicking two measurement points. Once a distance has been accepted, it is stored as the last offset distance for the session; Enter/right-click at the distance prompt reuses that value. On first use, confirming without a previous distance returns a clear message and keeps the tool waiting for distance input.
 
-## Project snapshot
+The offset prompt now advertises the two-point workflow and shows the previous value in `<...>` when available. During object selection, Offset uses `SnapKind.EntityOnly`; distance and side-point phases use geometric snaps while excluding entity-only selection snap. The actual offset geometry remains unchanged in this phase.
 
-OpenCad2D is a 2D-only CAD application built with C#/.NET 8 and Avalonia.
-
-Core principles currently guiding development:
-
-- keep the application strictly 2D;
-- preserve native geometry whenever possible;
-- avoid silent conversion of supported native curves into permanent polylines;
-- use small testable phases;
-- update documentation after each stabilized block;
-- provide zip packages containing only modified/added files when making project changes.
-
-Native/export formats currently expected:
-
-- native: `.opencad2d.json`;
-- export/interchange: DXF, SVG, PDF, PNG.
+Next Offset work: target/side workflow polish, preview refinement and geometry support policy review for advanced curves.
 
 ---
 
-## Current high-level status
+# Latest handoff note
 
-Completed/stabilized foundations:
+## v0.9 curve editing and preview UX checkpoint
 
-- native save/load with dirty-state handling;
-- SVG/DXF/PDF export baseline;
-- ASCII DXF import baseline for the current practical 2D entity set;
-- layers, line formats, text formats and dimension styles;
-- property panel for supported entity properties;
-- command input with aliases, coordinates, relative/polar input, direct distance input, history and prompt phases;
-- snapping, grid, Ortho and Polar Tracking;
-- draw tools for points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and open Bezier splines;
-- dimensions baseline;
-- transform tools: Move, Copy, Rotate, Scale, Mirror and Align;
-- modify tools: Delete, Break, Trim, Extend, Offset and Fillet;
-- measure, align/distribute and navigation tools;
-- tool preview descriptor/entity architecture;
-- application logging for tool/UI exceptions.
-
-Active release target:
-
-- v0.9 stabilization.
-
-Active focus:
-
-- finish Modify Tools UX cleanup;
-- stabilize Offset workflow;
-- run manual curve-editing regression;
-- complete export/import compatibility validation;
-- prepare v0.9 documentation and release gate.
-
----
-
-## Native curve editing checkpoint
-
-The native curve editing block is considered complete for the currently supported entity set.
-
-Important implemented types/services:
-
-- `CurveCut`;
-- `CurveInterval`;
-- `ICurveAdapter`;
-- `ICurveAdapterFactory`;
-- `DefaultCurveAdapterFactory`;
-- `CadCurveSplitService`;
-- `CadIntersectionPoint`;
-- `CadIntersectionKind`;
-- `EllipticalArcEntity`;
-- `BezierSplineSplitService`.
-
-Current policy:
-
-```text
-CAD editing operations modify native entities using native curve parameters.
-Sampling is allowed only as provisional support, never as the definitive source of edited geometry when a native representation exists.
-Shared intersections should reuse the same geometric point and native parameters to avoid micro-gaps.
-```
+The curve-editing stabilization block is now substantially complete for the current supported native entity set. `CadCurveSplitService`, `ICurveAdapter`, `CurveCut`, `CurveInterval` and the richer `CadIntersectionPoint` model are in place. TRIM and BREAK now preserve native geometry for lines, circles, arcs, polylines, full ellipses, elliptical arcs and open Bezier splines. Permanent command-level fallback from ellipses or supported open splines to `PolylineEntity` has been removed.
 
 Current native edit behavior:
 
-| Source entity | TRIM/BREAK result |
-|---|---|
-| Line | `LineEntity` fragments with shared explicit endpoints |
-| Circle | `ArcEntity` fragments |
-| Arc | `ArcEntity` fragments |
-| Polyline / Rectangle / Polygon | `PolylineEntity` fragments |
-| Ellipse | `EllipticalArcEntity` fragments |
-| EllipticalArc | `EllipticalArcEntity` fragments |
-| Open BezierSpline | `BezierSplineEntity` fragments |
-| Closed BezierSpline | deferred/no-op |
+- `LineEntity` -> native line fragments, with shared cut points reused as explicit endpoints;
+- `CircleEntity` -> native `ArcEntity` fragments for Trim and Break Segment;
+- `ArcEntity` -> native `ArcEntity` fragments;
+- `PolylineEntity`, including rectangles/polygons represented as closed polylines -> `PolylineEntity` fragments;
+- `EllipseEntity` -> native `EllipticalArcEntity` fragments for Trim and Break Segment;
+- `EllipticalArcEntity` -> native `EllipticalArcEntity` fragments;
+- open `BezierSplineEntity` -> native `BezierSplineEntity` fragments through De Casteljau splitting;
+- closed Bezier splines remain intentionally deferred/no-op for edit splitting.
 
-Preview UX:
+EXTEND now participates in the same native-geometry direction for supported targets and boundaries, including elliptical arc targets and native ellipse/elliptical-arc boundary intersections. Full closed curves such as full circles, full ellipses and closed polylines are not extend targets.
 
-- TRIM removal interval: dashed removal preview;
-- BREAK segment removal interval: dashed removal preview;
-- EXTEND added interval: highlighted addition preview;
-- selected TRIM/EXTEND boundaries and first FILLET entity remain visibly highlighted.
+Preview UX is aligned with the edit semantics:
 
-Deferred curve-editing items:
+- TRIM uses entity-only snapping and previews the removed interval as a dashed removal highlight;
+- BREAK Segment previews the removed interval as a dashed removal highlight;
+- EXTEND previews the added interval as an addition highlight;
+- command messages explain removed/added highlighted intervals and closed-curve constraints.
 
-- closed Bezier spline editing policy;
-- full-circle/full-ellipse Break Point convention;
-- wider adoption of `CadIntersectionPoint` where it simplifies command code;
-- Offset review under the same native-geometry preservation policy.
+Save/Export UX has also been clarified: export creates derived files and does not update `CurrentFilePath` or clear dirty state. Status messages now tell the user that the editable native OpenCad2D project still needs to be saved when appropriate.
 
-Reference docs:
-
-- `docs/curve-editing.md`;
-- `docs/testing/curve-editing-regression-v0.9.md`;
-- `docs/known-limitations.md`.
+Remaining curve-editing work is now focused rather than foundational: richer intersection adoption inside more command paths, closed spline policy, Offset cleanup, additional preview polish and broader release-candidate validation.
 
 ---
 
-## Modify Tools UX checkpoint
+## Preview UX: Extend added interval is highlighted as addition
 
-A common CAD-style confirmation policy is now documented and partially implemented.
+`ExtendTool` now marks the highlighted extension segment with `ToolPreviewHighlightKind.Addition` instead of the generic emphasis highlight. This keeps preview semantics explicit:
 
-Policy:
+- `Addition` = geometry that will be added by Extend.
+- `Removal` = geometry that will be removed by Trim/Break.
+- `Emphasis` = generic highlighted transient geometry.
 
-```text
-Left click = graphical input / entity selection.
-Right click = confirm or advance the current phase when a valid default, value or selection exists.
-Enter = equivalent to right click in command prompts.
-Esc = cancel current phase.
-Entity selection phases = EntityOnly snapping.
-Geometric point phases = geometric snapping.
+`CadToolPreviewRenderer` renders addition highlights with a dedicated solid green pen, while removal highlights remain red and dashed. The full extended replacement entity is still drawn as a normal preview entity; the added portion only is highlighted with the addition style.
+
+
+---
+
+## Preview UX: Trim removed interval is dashed
+
+`TrimTool` now previews the exact native interval that will be removed, not only the kept replacement geometry. The removed interval is obtained through `CadTrimService.GetRemovedIntervalByBoundaries`, which delegates to `CadCurveSplitService.GetPickedInterval` and therefore uses the same cut collection, native curve adapters and interval selection rules as the final Trim operation.
+
+`ToolPreviewDescriptor` now carries `HighlightedEntityKind`. `TrimTool` marks highlighted entities as `ToolPreviewHighlightKind.Removal`, while existing modify previews such as Extend keep the default emphasis style. `CadToolPreviewRenderer` renders removal highlights with a red dashed pen, making the part to be cut visually distinct from added/modified preview geometry.
+
+
+---
+
+## Preview UX: Trim uses entity-only snaps
+
+`TrimTool` now implements `ISnapModeProvider` and returns `SnapKind.EntityOnly` for all Trim phases. Trim is an entity/side selection workflow, so geometric snaps such as endpoint, midpoint, center, quadrant, intersection, nearest, perpendicular, tangent and grid are disabled while the command is active. This keeps the UI from showing vertex/point snap markers during Trim and makes the active selection intent clearer.
+
+`TrimTool` also recognizes `EllipticalArcEntity` as a supported cutting edge/target in the tool-level support check, matching the native curve-editing services.
+
+
+---
+
+## Curve editing: EXTEND with native elliptical boundaries
+
+`CadEntityIntersectionService.IntersectInfiniteLineWithEntity` now supports `EllipseEntity` and `EllipticalArcEntity` directly. It computes infinite-line/ellipse intersections analytically and filters points against the elliptical-arc sweep when needed. `IntersectCircleWithEntity` also routes `EllipseEntity` and `EllipticalArcEntity` through the native circle/ellipse intersection helpers.
+
+This improves `CadExtendService` for these supported scenarios:
+
+- `LineEntity` extended to an `EllipseEntity` boundary;
+- open `PolylineEntity` endpoint extended to an `EllipticalArcEntity` boundary;
+- `ArcEntity` extended to an `EllipseEntity` boundary.
+
+The added tests assert that the resulting endpoints remain on the native ellipse/elliptical arc and do not depend on sampled fallback geometry.
+
+
+---
+
+## Curve editing: native Bezier spline Trim/Break
+
+Open `BezierSplineEntity` is now connected to `CadCurveSplitService` at command level. `CadTrimService` and `CadBreakService` no longer convert supported open spline Trim/Break results to `PolylineEntity`; they return native `BezierSplineEntity` fragments through `BezierSplineCurveAdapter` and `BezierSplineSplitService`. Closed spline editing remains intentionally deferred/no-op. Intersection discovery can still use the existing approximation path, but the cut is projected back to the Bezier parameter before fragment creation.
+
+# Latest handoff note
+
+## Curve editing: BezierSplineSplitService foundation
+
+`BezierSplineSplitService` has been introduced as the first native spline-preservation step. It uses De Casteljau subdivision on open `BezierSplineEntity` control polygons so spline editing can eventually return native `BezierSplineEntity` fragments instead of permanent `PolylineEntity` approximations.
+
+Current scope:
+
+- `SplitAt(spline, t)` returns two native open Bezier spline fragments sharing the exact De Casteljau break point;
+- `ExtractInterval(spline, t0, t1)` returns the native Bezier interval between two parameters;
+- `RemoveInterval(spline, t0, t1)` returns the two native outer fragments around a removed interval;
+- closed spline splitting is intentionally deferred and currently returns no fragments.
+
+Added tests in `BezierSplineSplitServiceTests` verify native output, shared split points, endpoint correctness for extracted intervals, outer fragment creation, metadata preservation, endpoint no-op behavior and closed-spline deferral.
+
+This phase does not yet connect splines to `ICurveAdapter`, TRIM or BREAK. The next planned phase is `BezierSplineCurveAdapter`, followed by native spline Trim/Break.
+
+
+---
+
+# Latest handoff note
+
+## Curve editing: native ellipse/polyline intersection consolidation
+
+`CadEntityIntersectionService` now handles `PolylineEntity` against `EllipseEntity` and `EllipticalArcEntity` with analytic line-segment/ellipse intersections per polyline segment. This complements the existing native `LineEntity` support and avoids relying on sampled ellipse segments for Trim boundaries made from polylines.
+
+Added precision tests covering direct polyline/ellipse intersections, polyline/elliptical-arc sweep filtering, and Trim results that remain native `EllipticalArcEntity` fragments with geometric endpoints on the source ellipse.
+
+Remaining curve-editing priorities:
+1. BezierSplineCurveAdapter.
+2. Native spline Trim/Break.
+3. Richer `CadIntersectionPoint` records.
+4. EXTEND on the same native curve model.
+5. Cleanup of remaining permanent polyline fallbacks.
+6. Preview UX.
+
+---
+
+# Latest handoff note
+
+## Curve editing: native ellipse/elliptical arc Trim and Break foundation
+
+`CadCurveSplitService` now has adapters for `EllipseEntity` and `EllipticalArcEntity`. Trim on full ellipses and existing elliptical arcs can now return native `EllipticalArcEntity` fragments instead of permanent `PolylineEntity` approximations. Break Between Points on full ellipses and Break on existing elliptical arcs also route through the shared split pipeline.
+
+One-point Break on a full closed ellipse remains a deliberate no-op, matching the current full-circle behavior, until a safe full-sweep/open-closed conic arc convention is introduced. Intersections may still be discovered through sampled segments, but the edited geometry is rebuilt from native ellipse parameters.
+
+Added focused tests to verify that Trim/Break on ellipse workflows do not create `PolylineEntity` results.
+
+---
+
+﻿# Latest handoff note
+
+## v0.8.5 stabilization: delete marks dimensions stale
+
+Deleting model geometry now marks remaining non-associative dimensions as stale, matching the existing behavior used by modify, replace and transform commands. `DeleteEntitiesCommand` captures the previous dimension stale state before deletion, marks dimensions stale only when model geometry is removed, and restores the captured state on undo. Deleting dimension annotations alone does not mark other dimensions stale.
+
+Added focused core tests for delete-driven stale marking, undo restoration and the dimension-only deletion case.
+
+---
+
+# Latest handoff note
+
+## v0.8.5 DXF SPLINE import
+
+Implemented first-pass DXF `SPLINE` import. Readable control-point splines are imported as editable `BezierSplineEntity` instances, preserving the OpenCad2D Bezier workflow and enabling round-trips for OpenCad2D-exported SPLINE entities. Closed spline flags are respected. Fit-point-only SPLINE entities are imported as `PolylineEntity` approximations with an informational diagnostic, because OpenCad2D does not yet evaluate external NURBS knot vectors or rational weights. Added focused importer tests for open control-point splines, closed splines, fit-point-only fallback and malformed point data.
+
+Remaining DXF spline limitation: full external NURBS fidelity is still future work.
+
+---
+
+# Latest handoff note
+
+## v0.8.x final documentation and release consolidation
+
+The v0.8.x baseline is now ready for final local validation and GitHub release preparation. Polygon, Ellipse, MTEXT and Bezier Spline are complete in the current baseline, including command aliases, rendering/preview, persistence, export coverage and focused tests.
+
+Important implementation notes for future work:
+
+- regular polygons are stored as closed `PolylineEntity` instances;
+- ellipse partial edit results currently become open `PolylineEntity` approximations because there is no `EllipseArcEntity`;
+- Bezier spline Trim/Break/Offset workflows use sampled polyline approximation, so edited fragments currently become `PolylineEntity` results;
+- DXF import supports `MTEXT`, full `ELLIPSE` entities and first-pass `SPLINE` control-point import;
+- release notes are consolidated in `docs/release-v0.8.md`, with a GitHub-ready draft in `docs/release-v0.8-final.md`.
+
+Recommended final validation before publishing:
+
+```bash
+dotnet build OpenCad2D.sln
+dotnet test OpenCad2D.sln --no-build
 ```
 
-Completed in the Modify Tools UX cleanup:
+---
 
-- Deselect command/button added;
-- Point icon simplified to a small cross;
-- Text and MTEXT hit testing includes their bounding boxes;
-- Delete behavior:
-  - existing selection is deleted immediately;
-  - no selection starts a multi-pick Delete flow;
-  - Enter/right click confirms deletion;
-- TRIM, EXTEND and FILLET show selected boundaries/first entity as persistent overlays;
-- FILLET entity selection uses EntityOnly snap;
-- POLYLINE can be finished with right click when enough points exist;
-- Polygon sides prompt can be confirmed with right click/Enter;
-- Fillet radius prompt can be confirmed with right click/Enter;
-- Mirror `Delete source objects? <No>` can be confirmed with right click/Enter;
-- Ellipse axis input uses the snap-resolved point, not the raw mouse position;
-- Rect Sides numeric second-side input now creates the exact typed side length and has stronger perimeter/side-length tests.
+# Latest handoff note
 
-Remaining Modify Tools UX work:
+## Mirror tool
 
-1. Offset workflow:
-   - typed distance;
-   - two-click measured distance;
-   - stored last distance;
-   - right-click/Enter default when available;
-   - clear first-run behavior when no distance exists;
-   - EntityOnly target selection;
-   - side selection and preview.
+Implemented `MirrorTool` as a command-driven modify tool before the v0.9 roadmap. The workflow is:
 
-2. Final consistency pass:
-   - right-click/Enter/Esc behavior across remaining draw/modify tools;
-   - phase-specific snap modes;
-   - command messages;
-   - preview semantics.
+```text
+MIRROR: Select objects to mirror:
+MIRROR: Specify first point of mirror line:
+MIRROR: Specify second point of mirror line:
+MIRROR: Delete source objects? [Yes/No] <No>:
+```
 
-Reference docs:
+The tool supports preselection or select-first workflow, typed coordinates for the two mirror-axis points, a live mirrored preview while choosing the second axis point, and the final `Yes`/`No` option. Empty Enter defaults to `No`, so the source entities are kept and mirrored copies are added. `Yes` mirrors the selected source entities in place through `MirrorEntitiesCommand`. The UI has a `Mirror` button in the Modify/Edit group and command aliases are `MIRROR` and `MI`.
 
-- `docs/modify-tools.md`;
-- `docs/commands.md`;
-- `docs/roadmap.md`.
+Roadmap status: dimension export, Mirror, Polygon, Ellipse, multiline text, Spline and final documentation/release cleanup are complete for the v0.8.x baseline.
 
 ---
 
-## Save/export UX checkpoint
+# Latest handoff note
 
-Current policy:
+## Dimension export stabilization
 
-- Save/Save As writes the native editable `.opencad2d.json` file;
-- Save/Save As updates `CurrentFilePath`;
-- Save/Save As clears the dirty state;
-- Export creates a derived SVG/DXF/PDF/PNG file;
-- Export does not update `CurrentFilePath`;
-- Export does not clear dirty state;
-- Export messages clarify that the native editable project may still need saving.
+PDF export now supports all current dimension entities as graphical primitives plus text:
 
-Reference doc:
+- horizontal and vertical linear dimensions;
+- aligned dimensions;
+- radius and diameter dimensions;
+- angular dimensions with segmented arc output.
 
-- `docs/export.md`.
+SVG and DXF dimension coverage already existed and remains based on graphical primitives. PDF export now mirrors that approach and includes tests for each dimension type. PDF text escaping now writes WinAnsi octal escapes for non-ASCII dimension symbols such as degree (`°`) and diameter (`Ø`), and the PDF font resource declares `/Encoding /WinAnsiEncoding`.
 
----
-
-## Current roadmap summary
-
-Immediate next work:
-
-1. finish Offset workflow;
-2. run final Modify Tools UX consistency pass;
-3. complete manual curve-editing regression checklist;
-4. verify persistence/export/import after native elliptical arcs and open spline fragments;
-5. review Property Panel for curve entities;
-6. perform performance/robustness smoke pass;
-7. update final v0.9 docs and release notes;
-8. prepare v0.9 release artifact.
-
-The active roadmap has been cleaned. Old v0.7/v0.8 implementation logs are no longer duplicated in `docs/roadmap.md`; completed historical work is summarized as completed foundations.
+Roadmap status before v0.9: Mirror, Polygon, Ellipse, multiline text, Spline and final v0.8.x documentation/release cleanup are complete.
 
 ---
 
-## Important deferred items
+# Latest handoff note
 
-- closed Bezier spline editing;
-- Break Point convention for full circles/full ellipses;
-- true associative dimensions;
-- blocks;
-- hatch;
-- raster references;
-- advanced NURBS fidelity;
-- autosave/recovery v2;
-- installer/package polish;
-- full v1.0 user manual.
+## Startup template stabilization
+
+The app now starts from a clean native template instead of seeding a sample drawing in `MainWindowViewModel`.
+
+Implemented changes:
+
+- `MainWindow.axaml` opens maximized by default through `WindowState="Maximized"`.
+- `MainWindowViewModel` calls `LoadDefaultTemplate()` during construction and in `NewDocument()`.
+- The template is `src/OpenCad2D.App/Templates/default.opencad2d.json`.
+- `OpenCad2D.App.csproj` copies `Templates/**` to the output directory.
+- The default template contains line formats, text formats, one dimension style and the default CAD layers, with no entities.
+- If the template cannot be loaded, the view-model falls back to an internal empty document with the built-in layers.
+- `MainWindowViewModelDefaultDrawingTests` now verifies that startup is empty instead of expecting the old sample drawing.
+
 
 ---
 
-## Development conventions to keep
+## Curve editing stabilization - Break service delegation phase
 
-- Prefer small phases with focused tests.
-- Do not mix large geometry refactors with UI-only cleanup unless required.
-- Keep native curve preservation policy explicit when touching TRIM/BREAK/EXTEND/OFFSET.
-- For project modifications, provide a zip containing only added/modified files.
-- Do not include `.patch` files unless explicitly requested.
-- Keep `docs/ai-handoff.md` current after each meaningful phase.
+`CadBreakService` now delegates base native entities to `CadCurveSplitService` instead of maintaining separate break fragmentation logic for the same cases.
+
+Delegated cases:
+
+- `BreakAtPoint`: `LineEntity`, `ArcEntity`, `PolylineEntity`
+- `BreakBetweenPoints`: `LineEntity`, `CircleEntity`, `ArcEntity`, `PolylineEntity`
+
+The intentional exception remains one-point break on a full `CircleEntity`, which still returns no fragments. The supported circle workflow is `BreakBetweenPoints`, returning a native `ArcEntity` complement. This avoids introducing a near-360-degree arc representation before that behavior is deliberately designed.
+
+Temporary fallback cases kept unchanged:
+
+- `EllipseEntity` still returns open `PolylineEntity` approximations.
+- `BezierSplineEntity` still breaks its polyline approximation.
+
+New tests added to lock the shared point/projection behavior through `CadBreakService`:
+
+- `CadBreakServiceTests.BreakAtPoint_WithLine_ShouldCreateTwoLinesSharingProjectedPoint`
+- `CadBreakServiceTests.BreakBetweenPoints_WithLine_ShouldRemoveMiddleSegmentUsingProjectedPoints`
+
+
+---
+
+## Curve editing stabilization - Line trim delegation phase
+
+`CadTrimService.TrimLineByBoundaries` now delegates line target fragmentation to `CadCurveSplitService`.
+
+This removes the remaining separate line-specific trim fragmentation path for the native base entities and aligns `LineEntity` with the same `CurveCut` / `CurveInterval` pipeline already used by `CircleEntity`, `ArcEntity`, `PolylineEntity`, and `CadBreakService`.
+
+Important precision rule preserved by this phase:
+
+- line fragments use the projected/shared `CurveCut.Point` directly as their resulting endpoint;
+- mutual line trims therefore produce exactly matching endpoint coordinates when they come from the same geometric intersection;
+- tolerances are still used to classify cuts, filter endpoints, and remove degenerate fragments, but not to justify keeping intended coincident vertices as different coordinates.
+
+New tests added:
+
+- `CadTrimServiceTests.TrimLine_ByBoundary_ShouldReuseSharedIntersectionPointAsEndpoint`
+- `CadTrimServiceTests.TrimTwoLinesMutually_ShouldCreateExactlyMatchingSharedEndpoint`
+
+
+---
+
+## Curve editing stabilization - EllipticalArcEntity foundation phase
+
+Added the first native model object required to remove permanent ellipse degradation during future Trim/Break operations:
+
+- `EllipticalArcEntity`
+- `EntityKind.EllipticalArc`
+
+The entity uses the same native ellipse definition as `EllipseEntity`:
+
+- `Center`
+- `MajorAxis`
+- `MinorRadius`
+- `StartParameterRadians`
+- `EndParameterRadians`
+- `IsCounterClockwise`
+
+Superseded status: this phase was foundational only at the time it was written. The later phases have since added rendering, persistence, export support, `EllipseCurveAdapter`, `EllipticalArcCurveAdapter`, and TRIM/BREAK wiring for native ellipse fragments. The former `EllipseEntity -> PolylineEntity` editing fallback has been removed for supported ellipse edits.
+
+Core tests added:
+
+- `EllipticalArcEntityTests.Constructor_ShouldPreserveNativeEllipseDefinitionAndParameters`
+- `EllipticalArcEntityTests.GetSamplePoints_ShouldFollowDirectedSweepAndIncludeEndpoints`
+- `EllipticalArcEntityTests.WithLayer_ShouldPreserveGeometry`
+
+
+---
+
+## Curve editing stabilization - EllipticalArc infrastructure phase
+
+`EllipticalArcEntity` is now wired into the application infrastructure so future native ellipse Trim/Break results can be displayed, saved and exported before the command services start producing them.
+
+Added support:
+
+- screen rendering in `CadEntityRenderer` using the entity's directed sample points;
+- JSON persistence with `EllipticalArcEntityDto` and the `EllipticalArc` type discriminator;
+- serializer/deserializer mapping in `JsonDocumentSerializer`;
+- SVG export as a native `<path>` elliptical arc command;
+- DXF export as a partial `ELLIPSE` entity using group codes `41` and `42` for the start/end parameters;
+- PDF export using the current sampled-line strategy, matching the existing ellipse/spline export approach.
+
+New tests added:
+
+- `EllipticalArcRoundTripTests.SerializeDeserialize_ShouldPreserveEllipticalArcEntity`
+- `EllipticalArcRoundTripTests.JsonRoundTrip_ShouldPreserveEllipticalArcDtoType`
+- `SvgExporterTests.Export_WhenDocumentContainsEllipticalArc_ShouldWritePathElement`
+- `DxfExporterTests.Export_WhenDocumentContainsEllipticalArc_ShouldWritePartialEllipseEntity`
+
+Important limitation that still remains by design:
+
+- Superseded: `CadTrimService` and `CadBreakService` now return `EllipticalArcEntity` for supported ellipse editing. The former `EllipseEntity -> PolylineEntity` editing fallback has been removed.
+
+
+
+---
+
+## Curve editing stabilization - EllipticalArc consolidation tests
+
+Added focused precision tests for native ellipse editing results. The new tests verify that Trim and Break on `EllipseEntity` / `EllipticalArcEntity` keep native geometry rather than returning permanent `PolylineEntity` approximations.
+
+New test file:
+
+- `tests/OpenCad2D.Core.Tests/EllipticalArcEditingPrecisionTests.cs`
+
+Covered scenarios:
+
+- full ellipse Trim with two line boundaries returns native `EllipticalArcEntity` fragments;
+- full ellipse Trim endpoints lie on both the source ellipse and the vertical line boundaries;
+- `EllipticalArcEntity` Trim by line keeps native endpoint geometry;
+- `EllipticalArcEntity` Break At Point creates two native fragments sharing the break point within tolerance;
+- `EllipticalArcEntity` Break Between Points removes the middle segment while preserving center, major axis and minor radius.
+
+This phase does not add new spline behavior. The next planned phase remains improving native/non-degrading intersections for `EllipseEntity` and `EllipticalArcEntity` with `LineEntity` and `PolylineEntity`, followed by `BezierSplineSplitService`.
+
+
+---
+
+## Curve editing stabilization - Ellipse/Circle shared intersections
+
+Improved native intersection handling for ellipse-based entities against circular entities. The goal is to avoid the manual issue where trimming an ellipse with a circle produced endpoints that were visibly separated from the circle by a large amount because the operation fell back to independent sampled approximations.
+
+Updated behavior:
+
+- `CircleEntity <-> EllipseEntity` now uses a native ellipse-parameter root search against the circle equation;
+- `CircleEntity <-> EllipticalArcEntity` uses the same native calculation and filters results by the elliptical arc sweep;
+- `ArcEntity <-> EllipseEntity` filters native circle/ellipse intersections by the circular arc sweep;
+- `ArcEntity <-> EllipticalArcEntity` filters by both the circular arc sweep and the elliptical arc sweep.
+
+The returned point is produced from the ellipse parameter and validated against the circle radius. This gives both the ellipse adapter and the circle/arc adapter the same shared geometric cut point, preventing large mismatches after Trim.
+
+New precision tests were added to `EllipticalArcEditingPrecisionTests` for:
+
+- `IntersectCircleEllipse_ShouldReturnPointsOnBothNativeCurves`;
+- `TrimEllipse_ByCircleBoundary_ShouldKeepEndpointsOnCircleAndEllipse`;
+- `TrimCircle_ByEllipseBoundary_ShouldKeepEndpointsOnCircleAndEllipse`.
+
+
+
+## 2026-05-20 - BezierSplineCurveAdapter foundation
+
+The shared curve editing pipeline now has a `BezierSplineCurveAdapter` for open `BezierSplineEntity`.
+
+Implemented behavior:
+
+- `DefaultCurveAdapterFactory` creates a spline adapter for `BezierSplineEntity`;
+- open spline split/remove operations use native Bezier parameters `0..1`;
+- fragments are rebuilt through `BezierSplineSplitService`, preserving `BezierSplineEntity`;
+- closed splines remain deliberately deferred and return no fragments;
+- new `CadCurveSplitServiceTests` verify native split, remove-between and remove-picked behavior for splines.
+
+Important limitation:
+
+- Superseded: TRIM/BREAK services now route supported open spline editing through `CadCurveSplitService` and `BezierSplineSplitService`; the command-level permanent `PolylineEntity` fallback for supported open splines has been removed.
+
+## 2026-05-20 - CadIntersectionPoint rich intersection foundation
+
+Added the first implementation layer for richer CAD intersections, without replacing the existing `Intersect(...)` API yet.
+
+New types:
+
+- `CadIntersectionPoint` in `OpenCad2D.Core.Editing`;
+- `CadIntersectionKind` in `OpenCad2D.Core.Editing`.
+
+`CadIntersectionPoint` stores:
+
+- one shared `Point2D` that explicit-vertex entities can reuse directly;
+- `FirstParameter` on the first entity;
+- `SecondParameter` on the second entity;
+- an intersection kind classification;
+- convenience `FirstCut` and `SecondCut` values for the shared split pipeline.
+
+`CadEntityIntersectionService.IntersectDetailed(...)` now wraps the existing intersection points and projects them onto both entities through `DefaultCurveAdapterFactory`. This preserves compatibility while giving future TRIM/BREAK/EXTEND work access to native curve parameters and a single shared point.
+
+New tests in `CadEntityIntersectionDetailedTests` verify:
+
+- line/line intersections return a single shared point plus native parameters;
+- endpoint intersections are classified as `Endpoint`;
+- line/circle intersections expose both line parameters and circle angular parameters;
+- circle/ellipse intersections reuse the same point for both `CurveCut` values and keep points on both native curves.
+
+This phase is intentionally additive. The existing `CadTrimService` and `CadBreakService` still call their current APIs. The next refactor step can progressively replace target-side point projection with `CadIntersectionPoint.FirstCut` / `SecondCut` where the command already knows which entity is the target.
+
+
+## Curve editing stabilization - EXTEND native elliptical arc phase
+
+Extended `CadExtendService` to support `EllipticalArcEntity` targets.
+
+Behavior added:
+
+```text
+EllipticalArcEntity + boundary -> EllipticalArcEntity
+```
+
+The service discovers candidate intersections using the full ellipse definition, chooses the nearest valid intersection outside the current elliptical-arc sweep in the picked extension direction, converts that point to the native ellipse parameter, and rebuilds the result as an `EllipticalArcEntity`.
+
+`ExtendTool` now accepts `EllipticalArcEntity` as a target and creates highlighted preview fragments for the newly added elliptical-arc portion.
+
+Regression tests added:
+
+```text
+ExtendEllipticalArc_ToLineBoundary_ShouldExtendPickedEndWithNativeGeometry
+ExtendEllipticalArc_ToLineBoundary_ShouldExtendPickedStartWithNativeGeometry
+ExtendEllipse_ShouldReturnNull
+```
+
+Full `EllipseEntity` targets remain unsupported for EXTEND because closed curves have no natural extension endpoint. `BezierSplineEntity` EXTEND remains deferred.
+
+
+## 2026-05-20 - Permanent Polyline fallback cleanup for curve editing
+
+Cleaned up the old command-level TRIM/BREAK fallback implementations that permanently converted native curve edits into `PolylineEntity` results.
+
+Changed files:
+
+```text
+src/OpenCad2D.Core/Editing/CadTrimService.cs
+src/OpenCad2D.Core/Editing/CadBreakService.cs
+docs/curve-editing.md
+docs/ai-handoff.md
+```
+
+`CadTrimService` is now a thin dispatcher over the shared curve-editing pipeline for supported targets: line, circle, arc, ellipse, elliptical arc, polyline and open Bezier spline. It collects boundary intersections, filters endpoints where needed, and delegates final interval removal to `CadCurveSplitService`. The obsolete private fragment builders for line, circle, arc, ellipse-as-polyline and polyline-as-two-point-fragments were removed.
+
+`CadBreakService` is now similarly reduced to the public Break At Point / Break Between Points dispatch. It delegates supported open/native entities to `CadCurveSplitService`; full `CircleEntity` and `EllipseEntity` still intentionally return no result for one-point break until a full-sweep-open-arc policy is defined.
+
+Current policy after cleanup:
+
+- source polylines, rectangles and polygons may legitimately produce `PolylineEntity` fragments;
+- full ellipses and elliptical arcs produce `EllipticalArcEntity` fragments;
+- supported open Bezier splines produce `BezierSplineEntity` fragments;
+- unsupported closed splines are deferred/no-op rather than silently degraded;
+- sampled geometry remains allowed only for preview/discovery/projection, not as the permanent edited result when a native representation exists.
+
+
+## 2026-05-20 - Save versus Export UX clarity
+
+Clarified the UX distinction between native Save and external Export.
+
+Changed files:
+
+```text
+src/OpenCad2D.App/ViewModels/MainWindowViewModel.cs
+tests/OpenCad2D.App.Tests/MainWindowViewModelExportSaveSemanticsTests.cs
+docs/export.md
+docs/architecture.md
+docs/ai-handoff.md
+```
+
+`ExportSvgToFile`, `ExportDxfToFile` and `ExportPdfToFile` still do not update `CurrentFilePath`, do not call `MarkSaved()` and do not clear the dirty state. This remains the correct data-integrity policy because SVG/PDF/DXF are derived outputs, not the editable native OpenCad2D project.
+
+The post-export status message now explicitly says that the export did not save the editable OpenCad2D project. It distinguishes three cases:
+
+- no native file path yet: tell the user to use Save As;
+- native file exists but the drawing is dirty: tell the user unsaved project changes remain and to use Save;
+- native file exists and the drawing is clean: tell the user the native drawing is already saved.
+
+Added App tests proving SVG/DXF/PDF export do not change `CurrentFilePath` and do not clear `IsDirty`, plus coverage for the never-saved and already-saved message variants.
+
+
+## Latest update - BREAK removal preview
+
+Added a native BREAK Segment removal preview path. `CadCurveSplitService` now exposes `GetIntervalBetweenPoints`, `CadBreakService` exposes `GetRemovedSegmentBetweenPoints`, and `BreakBetweenPointsTool` implements `IToolPreviewDescriptorProvider`. During second-point preview, the tool returns regular preview entities for the remaining fragments and a `Removal` highlight for the interval that will be cut away. The app renderer already draws `Removal` highlights with the dashed red preview pen introduced for TRIM.
+
+### 2026-05-20 - Preview UX command-line clarification
+
+The Preview UX pass now aligns command-line messages with the visual preview semantics:
+
+- TRIM reports that the dashed portion will be removed.
+- BREAK Segment reports that the dashed portion between break points will be removed.
+- EXTEND reports that the highlighted portion will be added.
+- BREAK Segment explicitly warns that for closed curves the order of picked points defines which interval is removed.
+- EXTEND tool boundary support now matches the native intersection work: line, circle, arc, ellipse, elliptical arc and polyline boundaries are accepted. EXTEND targets remain endpoint-based only: line, arc, elliptical arc and open polyline.
+
+Keep this distinction in future UX work: complete closed curves can be boundaries, but they are not EXTEND targets unless a separate open-at-point policy is introduced.
+
+### 2026-05-20 - Modify tools UX cleanup: Rotate/Scale selection phase
+
+Started the Modify Tools UX cleanup pass after the curve-editing regression checklist. `RotateTool` and `ScaleTool` now follow the same selection-first interaction model already used by Move, Copy and Mirror:
+
+- when no entities are selected, the tool enters `WaitingForEntitySelection` instead of immediately rejecting the command;
+- entity-selection mode uses `SnapKind.EntityOnly`;
+- Enter confirms the selected entities and moves to the base-point prompt;
+- geometric point phases use geometric snaps with entity snap masked out, avoiding accidental entity-only snap behavior while choosing transformation points.
+
+Files touched in this pass:
+
+```text
+src/OpenCad2D.Tools/Editing/RotateTool.cs
+src/OpenCad2D.Tools/Editing/RotateToolState.cs
+src/OpenCad2D.Tools/Editing/ScaleTool.cs
+src/OpenCad2D.Tools/Editing/ScaleToolState.cs
+tests/OpenCad2D.Tools.Tests/RotateToolTests.cs
+tests/OpenCad2D.Tools.Tests/ScaleToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+### 2026-05-20 - Modify Tools UX cleanup: Deselect action and confirmation policy
+
+Started the broader Modify Tools UX policy pass requested after the curve-editing stabilization work. The intended interaction model is now documented in `docs/modify-tools.md`:
+
+- left click provides graphical input or entity picking;
+- right click confirms or advances the current prompt when a valid default/selection exists;
+- Enter is the keyboard equivalent of right click for prompts;
+- Esc cancels the current phase or clears selection when applicable;
+- entity-selection phases use `SnapKind.EntityOnly`;
+- geometric point phases use geometric snaps.
+
+Added an explicit Deselect action in the Select panel. `MainWindowViewModel.DeselectAll()` delegates to `CadActionController.DeselectAll()`, clears the current selection, refreshes the property panel and preserves the cleared selection for `Select Last` through the existing `SelectionSet.Clear()` behavior. Command-line aliases are `DESELECT`, `CLEARSELECTION` and `CS`. The Point tool icon was changed from a circle to a small cross marker to better communicate point placement while staying consistent with the existing StreamGeometry icon style.
+
+Files touched in this pass:
+
+```text
+src/OpenCad2D.Tools/Common/CadActionController.cs
+src/OpenCad2D.App/ViewModels/MainWindowViewModel.cs
+src/OpenCad2D.App/MainWindow.axaml
+src/OpenCad2D.App/MainWindow.axaml.cs
+src/OpenCad2D.App/Resources/Icons.axaml
+tests/OpenCad2D.Tools.Tests/CadActionControllerTests.cs
+tests/OpenCad2D.App.Tests/MainWindowViewModelCommandLineTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+
+### 2026-05-20 - Modify Tools UX cleanup: text hit testing and Delete tool
+
+Continued the Modify Tools UX cleanup after Deselect/Point icon. Text selection has been improved for both `TextEntity` and `MultilineTextEntity`: `GetClosestPoint` now clamps to the estimated bounding box instead of returning only the insertion point. This lets hit testing/select-by-point succeed when the user clicks anywhere inside the text bounding box, which is the intended CAD behavior for annotations.
+
+`DeleteTool` now implements `ISnapModeProvider` and uses `SnapKind.EntityOnly` during entity-picking. Existing behavior is preserved for selected entities: `Execute` deletes the current selection with `DeleteEntitiesCommand` and clears the selection. When no selection exists, the tool can pick a text/mtext entity by bounding-box hit and then Enter confirms deletion.
+
+Files touched:
+
+```text
+src/OpenCad2D.Core/Entities/TextEntity.cs
+src/OpenCad2D.Core/Entities/MultilineTextEntity.cs
+src/OpenCad2D.Tools/Editing/DeleteTool.cs
+tests/OpenCad2D.Interaction.Tests/HitTestServiceTests.cs
+tests/OpenCad2D.Tools.Tests/DeleteToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+### 2026-05-20 - Modify Tools UX cleanup: Delete multi-pick and right-click confirmation
+
+Refined `DeleteTool` to match the requested CAD workflow. If entities are already selected when Delete is invoked, the tool deletes them immediately through `DeleteEntitiesCommand`. If no selection exists, Delete now enters a multi-pick phase: left click toggles entities in the pending delete selection, and Enter or right click confirms the deletion. The selection phase remains `SnapKind.EntityOnly`, and text/mtext can still be selected through their bounding boxes.
+
+Added `ToolController.ConfirmActiveToolCommand()` so canvas right-click can submit an empty confirmation to active `ICommandDrivenTool` tools. `CadCanvas` now routes right-click to the active command-driven tool when possible and only falls back to repeat-last-command for tools that do not consume command prompts. This starts applying the documented right-click-confirmation policy at the input layer.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Editing/DeleteTool.cs
+src/OpenCad2D.Tools/Common/ToolController.cs
+src/OpenCad2D.App/Controls/CadCanvas.cs
+tests/OpenCad2D.Tools.Tests/DeleteToolTests.cs
+tests/OpenCad2D.Tools.Tests/ToolControllerIntegrationTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+### 2026-05-20 - Modify Tools UX cleanup: persistent boundary/first-entity highlights
+
+Added persistent command-state highlights for selection-oriented modify tools. `ToolPreviewDescriptor` now supports additional semantic `ToolPreviewEntityOverlay` collections so a tool can show state entities independently from its primary preview and from Removal/Addition highlights.
+
+Applied the model to:
+
+- `TrimTool`: selected cutting edges are emitted as `Emphasis` overlays; the removable interval remains a dashed `Removal` highlight.
+- `ExtendTool`: the selected boundary entity is emitted as an `Emphasis` overlay; the extension interval remains an `Addition` highlight.
+- `FilletTool`: the first selected line is emitted as an `Emphasis` overlay while waiting for the second line, and the tool now uses `SnapKind.EntityOnly` during line selection.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Common/ToolPreviewDescriptor.cs
+src/OpenCad2D.Tools/Common/ToolPreviewEntityOverlay.cs
+src/OpenCad2D.App/Rendering/CadToolPreviewRenderer.cs
+src/OpenCad2D.Tools/Editing/TrimTool.cs
+src/OpenCad2D.Tools/Editing/ExtendTool.cs
+src/OpenCad2D.Tools/Editing/FilletTool.cs
+tests/OpenCad2D.Tools.Tests/TrimToolTests.cs
+tests/OpenCad2D.Tools.Tests/ExtendToolTests.cs
+tests/OpenCad2D.Tools.Tests/FilletToolTests.cs
+tests/OpenCad2D.Tools.Tests/ToolPreviewEntityProviderTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+### 2026-05-20 - Modify Tools UX cleanup: Polyline right-click finish
+
+Aligned `PolylineTool` with the global command confirmation policy. While collecting vertices, right-click is routed through `ToolController.ConfirmActiveToolCommand()` as an empty confirmation and now finishes the open polyline exactly like Enter when at least two vertices exist. With fewer than two vertices the tool remains active and reports that at least two points are required. The in-tool prompt text now mentions `Enter/right-click` explicitly.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Drawing/PolylineTool.cs
+tests/OpenCad2D.Tools.Tests/PolylineToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+
+### 2026-05-20 - Modify Tools UX cleanup: right-click defaults for Polygon, Fillet and Mirror
+
+Aligned prompt confirmation behavior with the documented CAD-style policy. `PolygonTool` already accepted empty confirmation at the side-count prompt and now has explicit controller-level coverage for right-click/Enter using the default side count. `MirrorTool` already accepted empty confirmation at `Delete source objects? <No>` and now has controller-level coverage for right-click/Enter keeping source objects. `FilletTool` now exposes the radius prompt as `Specify fillet radius <r>` with empty confirmation enabled; right-click/Enter keeps the current radius and returns to first-line selection. The existing trim-mode confirmation remains unchanged.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Editing/FilletTool.cs
+tests/OpenCad2D.Tools.Tests/PolygonToolTests.cs
+tests/OpenCad2D.Tools.Tests/FilletToolTests.cs
+tests/OpenCad2D.Tools.Tests/MirrorToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+### 2026-05-20 - Modify Tools UX cleanup: Ellipse uses snap-resolved pointer points
+
+Fixed `EllipseTool` so pointer-based center/axis/minor-radius input and preview updates resolve active object snaps before updating tool state. The major-axis endpoint now uses the snapped point rather than the raw mouse position, which prevents the ellipse inclination from being taken from the unsnapped cursor when endpoint/midpoint/grid snaps are active. Command-line point input remains exact and bypasses snapping, matching the established command-input policy.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Drawing/EllipseTool.cs
+tests/OpenCad2D.Tools.Tests/EllipseToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+
+
+## 2026-05-21 - Rectangle Sides exact typed height correction
+
+RectangleBySidesTool now treats typed distance input during the second-side phase as an exact length. The cursor/current point only chooses which side of the first segment the rectangle grows toward. This prevents the typed value from being recombined with the current mouse projection, which previously allowed values such as `100` to create a second side with the current mouse distance instead of the typed distance.
+
+
+- Fixed Rectangle Sides command input semantics: after the first side is defined, a plain numeric value is treated as an exact second-side length even when the application resolves direct-distance input into a point before passing it to the tool. Regression tests now verify both side lengths and perimeter (`P = 2A + 2B`) so incorrect projected heights are caught.

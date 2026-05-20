@@ -28,6 +28,86 @@ public sealed class OffsetToolTests
     }
 
     [Fact]
+    public void ConfirmDistancePrompt_WithoutPreviousDistance_ShouldStayWaitingForDistance()
+    {
+        OffsetTool.ResetLastDistanceForTests();
+        var context = CreateContext();
+        var tool = new OffsetTool();
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Confirm(string.Empty),
+            context);
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(OffsetToolState.WaitingForDistance, tool.State);
+        Assert.Contains("No previous offset distance", result.Message);
+    }
+
+    [Fact]
+    public void ConfirmDistancePrompt_WithPreviousDistance_ShouldUseLastDistance()
+    {
+        OffsetTool.ResetLastDistanceForTests();
+        var firstContext = CreateContext();
+        var firstTool = new OffsetTool();
+        firstTool.HandleCommandInput(CommandInputSubmission.FromDistance("7", 7), firstContext);
+
+        var secondContext = CreateContext();
+        var secondTool = new OffsetTool();
+
+        ToolResult result = secondTool.HandleCommandInput(
+            CommandInputSubmission.Confirm(string.Empty),
+            secondContext);
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(OffsetToolState.WaitingForEntity, secondTool.State);
+        Assert.Equal(7, secondTool.Distance);
+        Assert.Contains("remains 7", result.Message);
+    }
+
+    [Fact]
+    public void PointerDistanceInput_WithTwoClicks_ShouldStoreMeasuredDistance()
+    {
+        OffsetTool.ResetLastDistanceForTests();
+        var context = CreateContext();
+        var tool = new OffsetTool();
+
+        ToolResult first = tool.OnPointerPressed(context, new PointerInfo(new Point2D(1, 2)));
+        ToolResult second = tool.OnPointerPressed(context, new PointerInfo(new Point2D(4, 6)));
+
+        Assert.Equal(ToolResultKind.Started, first.Kind);
+        Assert.Equal(ToolResultKind.Started, second.Kind);
+        Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
+        Assert.Equal(5, tool.Distance);
+        Assert.Null(context.CurrentBasePoint);
+    }
+
+    [Fact]
+    public void GetActiveSnapKind_WhenSelectingEntity_ShouldUseEntityOnlySnap()
+    {
+        var context = CreateContext(enabledSnaps: SnapKind.All | SnapKind.Entity);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+
+        Assert.Equal(SnapKind.EntityOnly, tool.GetActiveSnapKind(context));
+    }
+
+    [Fact]
+    public void GetActiveSnapKind_WhenChoosingSide_ShouldExcludeEntitySnap()
+    {
+        CadDocument document = new();
+        var line = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        document.AddEntity(line);
+        var context = CreateContext(document, enabledSnaps: SnapKind.All | SnapKind.Entity);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(SnapKind.All, tool.GetActiveSnapKind(context));
+    }
+
+    [Fact]
     public void OffsetLine_ShouldCreateParallelLineOnPickedSide()
     {
         CadDocument document = new();
@@ -351,12 +431,15 @@ public sealed class OffsetToolTests
             $"Expected {expected}, actual {actual}.");
     }
 
-    private static ToolContext CreateContext(CadDocument? document = null)
+    private static ToolContext CreateContext(
+        CadDocument? document = null,
+        SnapKind enabledSnaps = SnapKind.None)
     {
         return new ToolContext(
             document ?? new CadDocument(),
             new CommandHistory(),
             new SnapService(),
+            enabledSnaps: enabledSnaps,
             selectionTolerance: 5);
     }
 }

@@ -182,46 +182,53 @@ Features:
 
 ## Offset
 
-Offset is the next active UX/geometry stabilization target. The current command exists, but its workflow must be rebuilt to follow the shared confirmation policy before v0.9 is released.
-
-Target workflow:
+Workflow:
 
 ```text
-OFFSET: Specify offset distance or two points <last>:
+OFFSET: Specify offset distance or first distance point <last>:
+OFFSET: Specify second distance point or type distance:
 OFFSET: Select object to offset:
 OFFSET: Specify side to offset:
 ```
 
-Required behavior:
+Distance input rules:
 
-- typed numeric input sets the offset distance and stores it as the last distance;
-- two picked points measure the offset distance and store it as the last distance;
-- right click/Enter uses the last distance when one exists;
-- first run with no stored distance must show a clear message instead of guessing;
-- target selection must use `SnapKind.EntityOnly`;
-- side selection uses graphical input;
-- preview should show the offset result before commit.
+- a typed positive distance immediately becomes the current offset distance;
+- two graphical clicks can be used to measure the distance;
+- after a distance has been provided, Enter or right-click can reuse the last offset distance shown in `<...>`;
+- on first use, Enter/right-click without a previous distance shows a clear message and does not advance;
+- object selection uses `SnapKind.EntityOnly`;
+- side selection uses geometric snaps and excludes entity-only snap.
 
-Current geometry scope to preserve/review:
+Targets:
 
 - Line;
 - Circle;
 - Arc;
-- straight-segment open/closed Polyline.
+- straight-segment open/closed Polyline;
+- Bezier Spline, offset through sampled polyline approximation.
 
-Native-geometry policy:
+Rules:
 
-- do not introduce silent permanent degradation of supported native curves;
-- true offsets of ellipses, elliptical arcs and Bezier splines are not generally the same native curve type, so they need an explicit documented policy before being presented as fully supported;
-- sampled approximations may be acceptable only when explicitly documented as approximations, not as hidden fallback behavior.
+- line offset creates a parallel line;
+- circle/arc offset changes radius based on picked side;
+- polyline/spline approximation offset uses miter joins with a conservative miter limit;
+- very sharp joins fall back to a bevel-style corner instead of creating long spikes;
+- invalid or degenerate results are rejected;
+- live preview is shown while choosing the side.
 
-Deferred Offset options:
+Future work:
 
 - configurable join style;
 - rounded joins;
 - advanced self-intersection cleanup;
-- polyline bulge/arc-segment offset support;
+- polyline bulge/arc segment support;
 - Multiple/Through/Erase/Layer options.
+
+Current active cleanup status:
+
+- Phase A completed: distance input workflow, two-click distance measurement, reusable last distance and right-click/Enter default confirmation.
+- Next phases: target/side workflow polish, richer previews and geometry support policy review.
 
 ---
 
@@ -329,14 +336,11 @@ Current rules:
 This keeps three different concepts visually distinct: command state entities, geometry that will be removed, and geometry that will be added.
 
 
-## Rectangle Sides exact typed second side
+### Rectangle Sides exact second-side length
 
-After the first side is defined, Rectangle Sides accepts either a second-side point or a typed distance.
+After the first side is defined, the Rectangle Sides tool accepts either a second-side point or a typed distance. When a distance is typed, the current mouse side only determines the sign/direction of the second side; the typed value is used as the exact side length. For example, after a first side from `(0,0)` to `(100,0)`, typing `100` creates a rectangle with a second side exactly 100 units long, regardless of the current mouse distance.
 
-When a distance is typed, the current mouse position or snap point is used only to choose the side of the first segment. The typed value is the exact second-side length. The resulting rectangle must satisfy:
 
-```text
-P = 2A + 2B
-```
+### Rectangle Sides exact typed second side length
 
-where `A` is the first side and `B` is the typed second-side length.
+When the first side is already defined, a plain numeric command input such as `100` defines the exact second-side length. The current mouse position or snap point is used only to choose the side of the first segment. The resulting rectangle must therefore satisfy `P = 2A + 2B`, where `A` is the first side and `B` is the typed second-side length.

@@ -3,6 +3,7 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
 
@@ -12,11 +13,14 @@ namespace OpenCad2D.Tools.Editing;
 /// Creates parallel/constant-distance copies of supported entities.
 /// Supports lines, circles, arcs, straight-segment polylines and sampled Bezier splines with miter joins.
 /// </summary>
-public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
+public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, ISnapModeProvider
 {
     private const double MiterLimitRatio = 10.0;
 
+    private static double? s_lastDistance;
+
     private double? _distance;
+    private Point2D? _distanceFirstPoint;
     private ToolPickedEntityInput? _pickedEntity;
     private CadEntity? _previewEntity;
     private Point2D? _currentSidePoint;
@@ -27,7 +31,29 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
     public double? Distance => _distance;
 
+    public double? LastDistance => s_lastDistance;
+
+    public Point2D? DistanceFirstPoint => _distanceFirstPoint;
+
     public Point2D? CurrentSidePoint => _currentSidePoint;
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            OffsetToolState.WaitingForEntity => SnapKind.EntityOnly,
+            OffsetToolState.WaitingForDistance or OffsetToolState.WaitingForDistanceSecondPoint => context.EnabledSnaps & ~SnapKind.Entity,
+            OffsetToolState.WaitingForSidePoint => context.EnabledSnaps & ~SnapKind.Entity,
+            _ => context.EnabledSnaps
+        };
+    }
+
+    public static void ResetLastDistanceForTests()
+    {
+        s_lastDistance = null;
+    }
 
     public CadEntity? GetPreviewEntity()
     {
@@ -51,9 +77,19 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         {
             OffsetToolState.WaitingForDistance => new CommandPromptState(
                 "OFFSET",
-                "Specify offset distance",
+                s_lastDistance is null
+                    ? "Specify offset distance or first distance point"
+                    : $"Specify offset distance or first distance point <{FormatDistance(s_lastDistance.Value)}>",
                 CommandInputKind.Distance,
-                placeholder: "Distance, for example 100"),
+                placeholder: s_lastDistance is null
+                    ? "Distance, for example 100, or click first point"
+                    : "Distance, first point, Enter or right-click for default"),
+
+            OffsetToolState.WaitingForDistanceSecondPoint => new CommandPromptState(
+                "OFFSET",
+                "Specify second distance point or type distance",
+                CommandInputKind.Point,
+                placeholder: "Click second point or type a distance"),
 
             OffsetToolState.WaitingForEntity => new CommandPromptState(
                 "OFFSET",
@@ -78,11 +114,30 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
 
-        if (State == OffsetToolState.WaitingForDistance &&
-            input.Kind == CommandInputSubmissionKind.Distance &&
-            input.Distance is not null)
+        if (State == OffsetToolState.WaitingForDistance)
         {
-            return AcceptDistance(context, input.Distance.Value);
+            if (input.Kind == CommandInputSubmissionKind.Distance && input.Distance is not null)
+            {
+                return AcceptDistance(context, input.Distance.Value, "Select object to offset.");
+            }
+
+            if (input.Kind == CommandInputSubmissionKind.Confirm)
+            {
+                return ConfirmLastDistance(context);
+            }
+        }
+
+        if (State == OffsetToolState.WaitingForDistanceSecondPoint)
+        {
+            if (input.Kind == CommandInputSubmissionKind.Distance && input.Distance is not null)
+            {
+                return AcceptDistance(context, input.Distance.Value, "Select object to offset.");
+            }
+
+            if (input.Kind == CommandInputSubmissionKind.Point && input.Point is not null)
+            {
+                return AcceptMeasuredDistance(context, input.Point.Value);
+            }
         }
 
         if (State == OffsetToolState.WaitingForSidePoint &&
@@ -94,7 +149,8 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         return State switch
         {
-            OffsetToolState.WaitingForDistance => ToolResult.None("Specify a positive offset distance."),
+            OffsetToolState.WaitingForDistance => ToolResult.None("Specify a positive offset distance, two distance points, or confirm the previous distance."),
+            OffsetToolState.WaitingForDistanceSecondPoint => ToolResult.None("Specify the second distance point or type a positive offset distance."),
             OffsetToolState.WaitingForEntity => ToolResult.None("Select a line, circle, arc, polyline or spline from the drawing canvas."),
             OffsetToolState.WaitingForSidePoint => ToolResult.None("Specify the side to offset by clicking or typing a point."),
             _ => ToolResult.None()
@@ -110,7 +166,8 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         return State switch
         {
-            OffsetToolState.WaitingForDistance => ToolResult.None("Type the offset distance in the command input."),
+            OffsetToolState.WaitingForDistance => AcceptFirstDistancePoint(context, pointer.ModelPoint),
+            OffsetToolState.WaitingForDistanceSecondPoint => AcceptMeasuredDistance(context, pointer.ModelPoint),
             OffsetToolState.WaitingForEntity => AcceptEntity(context, pointer.ModelPoint),
             OffsetToolState.WaitingForSidePoint => CreateOffset(context, pointer.ModelPoint),
             _ => ToolResult.None()
@@ -152,9 +209,45 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         return ToolResult.None("Offset tool deactivated.");
     }
 
+    private ToolResult AcceptFirstDistancePoint(
+        ToolContext context,
+        Point2D point)
+    {
+        _distanceFirstPoint = point;
+        context.CurrentBasePoint = point;
+        State = OffsetToolState.WaitingForDistanceSecondPoint;
+
+        return ToolResult.Started("Specify second distance point or type distance.");
+    }
+
+    private ToolResult AcceptMeasuredDistance(
+        ToolContext context,
+        Point2D secondPoint)
+    {
+        if (_distanceFirstPoint is null)
+        {
+            State = OffsetToolState.WaitingForDistance;
+            return ToolResult.None("Specify first distance point first.");
+        }
+
+        double measuredDistance = _distanceFirstPoint.Value.DistanceTo(secondPoint);
+        return AcceptDistance(context, measuredDistance, $"Offset distance set to {FormatDistance(measuredDistance)}. Select object to offset.");
+    }
+
+    private ToolResult ConfirmLastDistance(ToolContext context)
+    {
+        if (s_lastDistance is null)
+        {
+            return ToolResult.None("No previous offset distance. Specify a distance first.");
+        }
+
+        return AcceptDistance(context, s_lastDistance.Value, $"Offset distance remains {FormatDistance(s_lastDistance.Value)}. Select object to offset.");
+    }
+
     private ToolResult AcceptDistance(
         ToolContext context,
-        double distance)
+        double distance,
+        string successMessage)
     {
         if (distance <= 0 || context.GeometryTolerance.IsDistanceZero(distance))
         {
@@ -162,11 +255,13 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         }
 
         _distance = distance;
+        s_lastDistance = distance;
+        _distanceFirstPoint = null;
         _pickedEntity = null;
         State = OffsetToolState.WaitingForEntity;
         context.CurrentBasePoint = null;
 
-        return ToolResult.Started("Select object to offset.");
+        return ToolResult.Started(successMessage);
     }
 
     private ToolResult AcceptEntity(
@@ -714,9 +809,15 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         _previewEntity = null;
     }
 
+    private static string FormatDistance(double value)
+    {
+        return value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     private void Reset(ToolContext context)
     {
         _distance = null;
+        _distanceFirstPoint = null;
         _pickedEntity = null;
         _previewEntity = null;
         _currentSidePoint = null;
