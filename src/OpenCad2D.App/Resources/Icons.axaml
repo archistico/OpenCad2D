@@ -7,7 +7,7 @@
     <StreamGeometry x:Key="IconAbout">M12 9h.01 M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14 M11 12h1v4h1</StreamGeometry>
 
     <!-- Align.svg -->
-    <StreamGeometry x:Key="IconAlign">M20 20h-15.269a.731 .731 0 0 1 -.517 -1.249l14.537 -14.537a.731 .731 0 0 1 1.249 .517v15.269</StreamGeometry>
+    <StreamGeometry x:Key="IconAlign">M4 15h4v4h-4z M16 5h4v4h-4z M8 16l8 -8 M12 8h4 M16 8v4</StreamGeometry>
 
     <!-- Align_Bottom.svg -->
     <StreamGeometry x:Key="IconAlignBottom">M4 20l16 0 M9 6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v8a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2l0 -8</StreamGeometry>
@@ -67,10 +67,10 @@
     <StreamGeometry x:Key="IconJoin">M4 18l6 -6 M14 12l6 -6 M10 12h4 M12 10l2 2l-2 2 M4 18a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0 M10.5 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0 M17 6a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0</StreamGeometry>
 
     <!-- Diameter_Dim.svg -->
-    <StreamGeometry x:Key="IconDiameterDim">M21 19h-18l9 -15 M20.615 15.171h.015 M19.515 11.771h.015 M17.715 8.671h.015 M15.415 5.971h.015</StreamGeometry>
+    <StreamGeometry x:Key="IconDiameterDim">M4 12a8 8 0 1 0 16 0a8 8 0 1 0 -16 0 M4 12h16 M7 9l-3 3l3 3 M17 9l3 3l-3 3 M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0</StreamGeometry>
 
     <!-- Distance.svg -->
-    <StreamGeometry x:Key="IconDistance">M18 9l3 3l-3 3 M15 12h6 M6 9l-3 3l3 3 M3 12h6</StreamGeometry>
+    <StreamGeometry x:Key="IconDistance">M6 8v8 M18 8v8 M6 12h12 M9 9l-3 3l3 3 M15 9l3 3l-3 3 M6 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M18 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0</StreamGeometry>
 
     <!-- Distribute_H.svg -->
     <StreamGeometry x:Key="IconDistributeH">M20 20h-2a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h2 M4 20h2a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2 M12 8v8</StreamGeometry>
@@ -154,7 +154,7 @@
     <StreamGeometry x:Key="IconProps">M4 5a1 1 0 0 1 1 -1h14a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-14a1 1 0 0 1 -1 -1l0 -2 M4 13a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v6a1 1 0 0 1 -1 1h-4a1 1 0 0 1 -1 -1l0 -6 M14 12l6 0 M14 16l6 0 M14 20l6 0</StreamGeometry>
 
     <!-- Radius_Dim.svg -->
-    <StreamGeometry x:Key="IconRadiusDim">M21 19h-18l9 -15 M20.615 15.171h.015 M19.515 11.771h.015 M17.715 8.671h.015 M15.415 5.971h.015</StreamGeometry>
+    <StreamGeometry x:Key="IconRadiusDim">M4 12a8 8 0 1 0 16 0a8 8 0 1 0 -16 0 M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M12 12l5 -5 M14.5 7h2.5v2.5</StreamGeometry>
 
     <!-- Rect_Sides.svg -->
     <StreamGeometry x:Key="IconRectSides">M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -14</StreamGeometry>
@@ -202,10 +202,10 @@
     <StreamGeometry x:Key="IconTextFormats">M4 20l3 0 M14 20l7 0 M6.9 15l6.9 0 M10.2 6.3l5.8 13.7 M5 20l6 -16l2 0l7 16</StreamGeometry>
 
     <!-- To_Back.svg -->
-    <StreamGeometry x:Key="IconToBack">M14 12l6 -3l-8 -4l-8 4l6 3 M10 12l-6 3l8 4l8 -4l-6 -3l-2 1l-2 -1</StreamGeometry>
+    <StreamGeometry x:Key="IconToBack">M4 20h16 M6 8h8v4h-8z M10 12h8v4h-8z M15 5h4v4h-4z M17 9v7 M15 14l2 2l2 -2</StreamGeometry>
 
     <!-- To_Front.svg -->
-    <StreamGeometry x:Key="IconToFront">M12 5l-8 4l8 4l8 -4l-8 -4 M10 12l-6 3l8 4l8 -4l-6 -3</StreamGeometry>
+    <StreamGeometry x:Key="IconToFront">M4 4h16 M10 9h8v4h-8z M6 13h8v4h-8z M5 15h4v4h-4z M7 15v-7 M5 10l2 -2l2 2</StreamGeometry>
 
     <!-- Trim.svg -->
     <StreamGeometry x:Key="IconTrim">M20 4v16 M4 6h12 M10 12h6 M6 18h10</StreamGeometry>
