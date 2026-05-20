@@ -42,7 +42,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
                 "EXTEND",
                 "Select boundary entity",
                 CommandInputKind.Selection,
-                placeholder: "Click a line, circle, arc or polyline boundary"),
+                placeholder: "Click a line, circle, arc, ellipse, elliptical arc or polyline boundary"),
 
             ExtendToolState.WaitingForTargetEntity => new CommandPromptState(
                 "EXTEND",
@@ -63,7 +63,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
 
         return State == ExtendToolState.WaitingForBoundaryEntity
             ? ToolResult.None("Select a boundary entity from the drawing canvas.")
-            : ToolResult.None("Select an entity to extend from the drawing canvas.");
+            : ToolResult.None("Select the endpoint side to extend from the drawing canvas.");
     }
 
     public ToolResult OnPointerPressed(
@@ -101,8 +101,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         UpdatePreview(context, pointer.ModelPoint);
 
         return HasPreview
-            ? ToolResult.Updated("Extend preview updated.")
-            : ToolResult.None("Select an entity endpoint that can be extended to the boundary.");
+            ? ToolResult.Updated("Extend preview updated. Highlighted portion will be added.")
+            : ToolResult.None("Select an extendable endpoint that reaches the boundary from the picked side.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -145,7 +145,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
 
         return new ToolPreviewDescriptor(
             entities: GetPreviewEntities(),
-            highlightedEntities: GetHighlightedPreviewEntities());
+            highlightedEntities: GetHighlightedPreviewEntities(),
+            highlightedEntityKind: ToolPreviewHighlightKind.Addition);
     }
 
     private ToolResult AcceptBoundaryEntity(
@@ -165,7 +166,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
 
         if (!IsSupportedBoundaryEntity(entity))
         {
-            return ToolResult.None("Extend supports line, circle, arc and polyline boundaries.");
+            return ToolResult.None("Extend supports lines, circles, arcs, ellipses, elliptical arcs and polylines as boundaries.");
         }
 
         if (!context.Document.IsEntityVisible(entity))
@@ -182,7 +183,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Started(
-            "Select an entity to extend to the boundary.");
+            "Select the endpoint side to extend. Highlighted preview shows the portion that will be added.");
     }
 
     private ToolResult AcceptTargetEntity(
@@ -213,7 +214,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
 
         if (!IsSupportedTargetEntity(entity))
         {
-            return ToolResult.None("Extend supports lines, arcs, elliptical arcs and open polylines as targets.");
+            return ToolResult.None("Extend supports lines, arcs, elliptical arcs and open polylines as targets. Closed curves cannot be extended.");
         }
 
         if (!context.Document.IsEntitySelectable(entity))
@@ -230,7 +231,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         if (extendedEntity is null)
         {
             return ToolResult.None(
-                "The selected entity cannot be extended to the boundary from the picked side.");
+                "No valid extension reaches the boundary from the picked endpoint side.");
         }
 
         context.Commands.Execute(
@@ -246,7 +247,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Completed(
-            "Entity extended. Select another entity to extend, or press Escape.");
+            "Entity extended. Select another endpoint side to extend, or press Escape.");
     }
 
     private void UpdatePreview(
@@ -543,7 +544,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
 
     private static bool IsSupportedBoundaryEntity(CadEntity entity)
     {
-        return entity is LineEntity or CircleEntity or ArcEntity or PolylineEntity;
+        return entity is LineEntity or CircleEntity or ArcEntity or EllipseEntity or EllipticalArcEntity or PolylineEntity;
     }
 
     private static bool IsSupportedTargetEntity(CadEntity entity)

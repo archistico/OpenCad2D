@@ -47,7 +47,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
                 "BREAK",
                 "Select entity",
                 CommandInputKind.Selection,
-                placeholder: "Click a line, arc, circle or polyline"),
+                placeholder: "Click a line, arc, circle, ellipse, elliptical arc, polyline or open spline"),
 
             BreakBetweenPointsToolState.WaitingForFirstBreakPoint => new CommandPromptState(
                 "BREAK",
@@ -133,8 +133,8 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
             point);
 
         return HasPreview
-            ? ToolResult.Updated("Break segment preview updated.")
-            : ToolResult.None("Second break point must be different and inside the target entity.");
+            ? ToolResult.Updated("Break Segment preview updated. Dashed portion will be removed.")
+            : ToolResult.None("Second break point must be different and on the target entity.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -210,7 +210,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         Point2D basePoint = entity.GetClosestPoint(pointer.ModelPoint);
         context.CurrentBasePoint = basePoint;
 
-        return ToolResult.Started("Specify first break point on entity.");
+        return ToolResult.Started("Specify first break point on entity. For closed curves, point order defines which side is removed.");
     }
 
     private ToolResult AcceptFirstBreakPoint(
@@ -249,7 +249,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         State = BreakBetweenPointsToolState.WaitingForSecondBreakPoint;
         context.CurrentBasePoint = _firstBreakPoint;
 
-        return ToolResult.Updated("Specify second break point on entity.");
+        return ToolResult.Updated("Specify second break point. The dashed preview shows the segment that will be removed.");
     }
 
     private ToolResult AcceptSecondBreakPoint(
@@ -283,7 +283,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         if (segments.Count == 0)
         {
             return ToolResult.None(
-                "Break points must be different and inside the target entity.");
+                "Break points must be different and on the target entity.");
         }
 
         context.Commands.Execute(

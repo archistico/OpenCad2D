@@ -345,6 +345,26 @@ public sealed class BreakBetweenPointsToolTests
 
 
 
+
+    [Fact]
+    public void PointerMove_WithPreview_ShouldExplainDashedRemoval()
+    {
+        var context = CreateContextWithLine(out _);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(3, 0)));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(7, 0)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal(
+            "Break Segment preview updated. Dashed portion will be removed.",
+            result.Message);
+    }
+
     [Fact]
     public void GetPreviewDescriptor_OnCircle_ShouldHighlightRemovedArcAsRemoval()
     {

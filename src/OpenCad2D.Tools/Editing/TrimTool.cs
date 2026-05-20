@@ -148,8 +148,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         UpdatePreview(context, pointer.ModelPoint);
 
         return HasPreview
-            ? ToolResult.Updated("Trim preview updated.")
-            : ToolResult.None("Select an entity part that can be trimmed by the boundary.");
+            ? ToolResult.Updated("Trim preview updated. Dashed portion will be removed.")
+            : ToolResult.None("Select a removable side of an entity that intersects the cutting edge.");
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -231,7 +231,7 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Started(
-            "Select an entity side to trim by the boundary, or Ctrl-click a second cutting edge.");
+            "Select the side to remove. The dashed preview shows the portion that will be trimmed, or Ctrl-click another cutting edge.");
     }
 
     private ToolResult AcceptTargetEntity(
@@ -304,8 +304,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         {
             return ToolResult.None(
                 _boundaryEntities.Count > 1
-                    ? "The selected entity cannot be trimmed by the selected cutting edges from the picked side."
-                    : "The selected entity cannot be trimmed by the boundary from the picked side.");
+                    ? "No removable interval was found from the picked side. Pick a side between or outside the selected cutting edges."
+                    : "No removable interval was found from the picked side. Pick the side that crosses the cutting edge.");
         }
 
         context.Commands.Execute(
@@ -352,7 +352,7 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Started(
-            $"Cutting edge selected ({_boundaryEntities.Count}). Select the target portion to trim or Ctrl-click another cutting edge.");
+            $"Cutting edge selected ({_boundaryEntities.Count}). Select the side to remove; dashed preview shows the trimmed portion.");
     }
 
     private ToolResult UseAllVisibleCuttingEdges(ToolContext context)
@@ -380,7 +380,7 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         context.CurrentBasePoint = null;
 
         return ToolResult.Started(
-            $"Using all visible supported entities as cutting edges ({cuttingEdges.Count}). Select an entity side to trim.");
+            $"Using all visible supported entities as cutting edges ({cuttingEdges.Count}). Select the side to remove; dashed preview shows the trimmed portion.");
     }
 
     private ToolResult UndoLastTrim(ToolContext context)
@@ -402,7 +402,7 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         _highlightPreviewEntities = Array.Empty<CadEntity>();
         context.CurrentBasePoint = null;
 
-        return ToolResult.Updated("Last trim operation undone. Select another entity side to trim.");
+        return ToolResult.Updated("Last trim operation undone. Select another side to remove; dashed preview shows the trimmed portion.");
     }
 
     private void UpdatePreview(

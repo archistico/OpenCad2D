@@ -269,6 +269,29 @@ public sealed class TrimToolTests
         Assert.Null(context.CurrentBasePoint);
     }
 
+
+    [Fact]
+    public void PointerMove_WithPreview_ShouldExplainDashedRemoval()
+    {
+        ToolContext context = CreateContextWithBoundaryAndTarget(
+            out _,
+            out _);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(8, 0)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal(
+            "Trim preview updated. Dashed portion will be removed.",
+            result.Message);
+    }
+
     private static ToolContext CreateContext()
     {
         return new ToolContext(
@@ -587,3 +610,4 @@ public sealed class TrimToolAdvancedCommandInputTests
         return context;
     }
 }
+

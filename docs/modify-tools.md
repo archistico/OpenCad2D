@@ -212,3 +212,27 @@ Future work:
 Break Segment now exposes a semantic preview descriptor while the second break point is being chosen. The remaining native fragments are shown as normal preview geometry, while the interval that will be removed is emitted as a `Removal` highlight so the application can render it with the same dashed removal style used by TRIM.
 
 The preview uses `CadBreakService.GetRemovedSegmentBetweenPoints`, which delegates to `CadCurveSplitService.GetIntervalBetweenPoints`; therefore the displayed removal interval is built from the same native curve adapters used by the final BREAK operation.
+
+
+## Preview semantics for modify tools
+
+Modify tools use semantic preview highlights so that the user can distinguish the effect before confirming the command:
+
+- `Trim` and `Break Segment` highlight the interval that will be removed as `Removal`; the renderer draws it dashed.
+- `Extend` highlights the new interval that will be added as `Addition`; the renderer draws it as a solid added-geometry highlight.
+- Other generic transient highlights can keep `Emphasis`.
+
+The preview must remain consistent with the geometry service used by the final command. A dashed or highlighted interval should not be computed with a separate approximation if the final command uses native curve parameters.
+
+
+## Preview UX clarification for modify commands
+
+TRIM, BREAK and EXTEND now use explicit preview semantics so the command line and canvas describe the same operation:
+
+- TRIM highlights the portion that will be removed with a dashed removal preview.
+- BREAK Segment highlights the interval between the two break points with a dashed removal preview.
+- EXTEND highlights the portion that will be added with an addition preview.
+
+For closed curves, BREAK Segment uses the order of the two picked points to determine which interval is removed. The command message should make this explicit because closed curves have two possible paths between the same two points.
+
+EXTEND accepts boundary entities that can produce native intersection points, including lines, circles, arcs, ellipses, elliptical arcs and polylines. Targets remain limited to entities with extendable endpoints: lines, arcs, elliptical arcs and open polylines. Closed curves such as circles, complete ellipses and closed polylines are intentionally rejected as EXTEND targets because they do not have a natural endpoint.

@@ -104,6 +104,31 @@ public sealed class ExtendToolTests
         Assert.Equal(new Point2D(10, 0), extension.End);
     }
 
+
+    [Fact]
+    public void GetPreviewDescriptor_AfterBoundary_ShouldMarkExtensionSegmentAsAddition()
+    {
+        var context = CreateContextWithBoundaryAndTarget(
+            out _,
+            out _);
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 2)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(ToolPreviewHighlightKind.Addition, descriptor.HighlightedEntityKind);
+        LineEntity extension = Assert.IsType<LineEntity>(Assert.Single(descriptor.HighlightedEntities));
+        Assert.Equal(new Point2D(5, 0), extension.Start);
+        Assert.Equal(new Point2D(10, 0), extension.End);
+    }
+
     [Fact]
     public void SecondPointerPress_NearEnd_ShouldExtendLineToBoundary()
     {
@@ -312,6 +337,62 @@ public sealed class ExtendToolTests
         Assert.Equal(new Point2D(10, 0), extension.End);
     }
 
+
+    [Fact]
+    public void FirstPointerPress_OnEllipseBoundary_ShouldSelectBoundaryEllipse()
+    {
+        ToolContext context = CreateContext();
+        var boundary = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+
+        context.Document.AddEntity(boundary);
+        var tool = new ExtendTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(ExtendToolState.WaitingForTargetEntity, tool.State);
+        Assert.Equal(boundary.Id, tool.BoundaryEntityId);
+        Assert.Equal(
+            "Select the endpoint side to extend. Highlighted preview shows the portion that will be added.",
+            result.Message);
+    }
+
+    [Fact]
+    public void PointerMove_WithPreview_ShouldExplainHighlightedAddition()
+    {
+        ToolContext context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(10, -5),
+            new Point2D(10, 5));
+        var target = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(5, 0));
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal(
+            "Extend preview updated. Highlighted portion will be added.",
+            result.Message);
+    }
+
     [Fact]
     public void SecondPointerPress_OnClosedPolylineTarget_ShouldReturnClearMessage()
     {
@@ -342,7 +423,7 @@ public sealed class ExtendToolTests
 
         Assert.Equal(ToolResultKind.None, result.Kind);
         Assert.Equal(
-            "Extend supports lines, arcs, elliptical arcs and open polylines as targets.",
+            "Extend supports lines, arcs, elliptical arcs and open polylines as targets. Closed curves cannot be extended.",
             result.Message);
     }
 
@@ -371,7 +452,7 @@ public sealed class ExtendToolTests
 
         Assert.Equal(ToolResultKind.None, result.Kind);
         Assert.Equal(
-            "Extend supports lines, arcs, elliptical arcs and open polylines as targets.",
+            "Extend supports lines, arcs, elliptical arcs and open polylines as targets. Closed curves cannot be extended.",
             result.Message);
     }
 

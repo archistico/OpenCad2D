@@ -44,7 +44,7 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPrevie
                 "BREAKPOINT",
                 "Select entity",
                 CommandInputKind.Selection,
-                placeholder: "Click a line, arc or polyline"),
+                placeholder: "Click a line, arc, elliptical arc, polyline or open spline"),
 
             BreakAtPointToolState.WaitingForBreakPoint => new CommandPromptState(
                 "BREAKPOINT",
@@ -174,9 +174,9 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPrevie
             return ToolResult.None("Break Point is not applicable to circles. Use Break Segment with two points instead.");
         }
 
-        if (entity is not LineEntity and not ArcEntity and not EllipseEntity and not PolylineEntity and not BezierSplineEntity)
+        if (entity is not LineEntity and not ArcEntity and not EllipseEntity and not EllipticalArcEntity and not PolylineEntity and not BezierSplineEntity)
         {
-            return ToolResult.None("Break Point supports lines, arcs, ellipses and polylines only.");
+            return ToolResult.None("Break Point supports lines, arcs, elliptical arcs, ellipses, polylines and open splines only.");
         }
 
         if (!context.Document.IsEntitySelectable(entity))
@@ -192,7 +192,7 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPrevie
         context.CurrentBasePoint = basePoint;
 
         return ToolResult.Started(
-            "Specify break point on entity.");
+            "Specify break point on entity. The point will be projected to the native curve.");
     }
 
     private ToolResult AcceptBreakPoint(

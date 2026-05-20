@@ -1,3 +1,22 @@
+## Preview UX: Extend added interval is highlighted as addition
+
+`ExtendTool` now marks the highlighted extension segment with `ToolPreviewHighlightKind.Addition` instead of the generic emphasis highlight. This keeps preview semantics explicit:
+
+- `Addition` = geometry that will be added by Extend.
+- `Removal` = geometry that will be removed by Trim/Break.
+- `Emphasis` = generic highlighted transient geometry.
+
+`CadToolPreviewRenderer` renders addition highlights with a dedicated solid green pen, while removal highlights remain red and dashed. The full extended replacement entity is still drawn as a normal preview entity; the added portion only is highlighted with the addition style.
+
+Validation note: this environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
 ## Preview UX: Trim removed interval is dashed
 
 `TrimTool` now previews the exact native interval that will be removed, not only the kept replacement geometry. The removed interval is obtained through `CadTrimService.GetRemovedIntervalByBoundaries`, which delegates to `CadCurveSplitService.GetPickedInterval` and therefore uses the same cut collection, native curve adapters and interval selection rules as the final Trim operation.
@@ -2944,3 +2963,15 @@ dotnet test
 ## Latest update - BREAK removal preview
 
 Added a native BREAK Segment removal preview path. `CadCurveSplitService` now exposes `GetIntervalBetweenPoints`, `CadBreakService` exposes `GetRemovedSegmentBetweenPoints`, and `BreakBetweenPointsTool` implements `IToolPreviewDescriptorProvider`. During second-point preview, the tool returns regular preview entities for the remaining fragments and a `Removal` highlight for the interval that will be cut away. The app renderer already draws `Removal` highlights with the dashed red preview pen introduced for TRIM.
+
+### 2026-05-20 - Preview UX command-line clarification
+
+The Preview UX pass now aligns command-line messages with the visual preview semantics:
+
+- TRIM reports that the dashed portion will be removed.
+- BREAK Segment reports that the dashed portion between break points will be removed.
+- EXTEND reports that the highlighted portion will be added.
+- BREAK Segment explicitly warns that for closed curves the order of picked points defines which interval is removed.
+- EXTEND tool boundary support now matches the native intersection work: line, circle, arc, ellipse, elliptical arc and polyline boundaries are accepted. EXTEND targets remain endpoint-based only: line, arc, elliptical arc and open polyline.
+
+Keep this distinction in future UX work: complete closed curves can be boundaries, but they are not EXTEND targets unless a separate open-at-point policy is introduced.

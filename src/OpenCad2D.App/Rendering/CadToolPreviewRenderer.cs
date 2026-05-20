@@ -32,6 +32,9 @@ public sealed class CadToolPreviewRenderer
     private readonly Pen _modifyPreviewHighlightPen = new(
         new SolidColorBrush(Color.FromRgb(255, 90, 90)),
         2.5);
+    private readonly Pen _additionPreviewHighlightPen = new(
+        new SolidColorBrush(Color.FromRgb(100, 220, 120)),
+        2.5);
     private readonly Pen _removalPreviewHighlightPen = new(
         new SolidColorBrush(Color.FromRgb(255, 90, 90)),
         2.5,
@@ -195,9 +198,12 @@ public sealed class CadToolPreviewRenderer
 
     private Pen GetHighlightedEntityPen(ToolPreviewHighlightKind kind)
     {
-        return kind == ToolPreviewHighlightKind.Removal
-            ? _removalPreviewHighlightPen
-            : _modifyPreviewHighlightPen;
+        return kind switch
+        {
+            ToolPreviewHighlightKind.Addition => _additionPreviewHighlightPen,
+            ToolPreviewHighlightKind.Removal => _removalPreviewHighlightPen,
+            _ => _modifyPreviewHighlightPen
+        };
     }
 
     private void DrawPreviewLine(

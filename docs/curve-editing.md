@@ -790,3 +790,25 @@ Sampling is still allowed for preview, snapping, broad-phase discovery or unsupp
 Break Segment previews must distinguish the geometry that will remain from the interval that will be removed. Remaining fragments may be shown as regular transient entities, but the removed interval must be exposed as `ToolPreviewHighlightKind.Removal` so UI renderers can draw it as a dashed removal preview.
 
 The removed preview interval must be produced by the shared curve-splitting pipeline, not by a separate sampled approximation, so preview and final geometry stay consistent for lines, arcs, circles, polylines, ellipses, elliptical arcs and supported open Bezier splines.
+
+
+## Preview consistency rule
+
+Preview geometry for Trim, Break and Extend must be generated from the same native curve-editing pipeline used by the final command.
+
+- Removed intervals are represented with `ToolPreviewHighlightKind.Removal`.
+- Added extension intervals are represented with `ToolPreviewHighlightKind.Addition`.
+- The full replacement entity may be previewed normally, but the operation-specific interval must be highlighted separately.
+
+This prevents misleading previews where a sampled or visually approximate interval differs from the entity that will be committed to the document.
+
+
+## Command-line UX for native curve editing
+
+The command line must reinforce the same geometric rule used by the editing services: the preview is not decorative, it describes the interval that will be removed or added by the next click.
+
+- TRIM messages should refer to the picked side and the dashed removed portion.
+- BREAK Segment messages should refer to the first and second break points, with the dashed interval being the removed portion.
+- EXTEND messages should refer to the endpoint side and the highlighted added portion.
+
+This is especially important for circles, ellipses, closed polylines and polygons because two valid intervals may exist between two points. The user must be guided by both the preview and the command text.
