@@ -319,3 +319,13 @@ Current rules:
 - FILLET entity picking uses `SnapKind.EntityOnly` for both the first-line and second-line phases, because geometric endpoint/midpoint snaps are not useful when the command expects objects.
 
 This keeps three different concepts visually distinct: command state entities, geometry that will be removed, and geometry that will be added.
+
+
+### Rectangle Sides exact second-side length
+
+After the first side is defined, the Rectangle Sides tool accepts either a second-side point or a typed distance. When a distance is typed, the current mouse side only determines the sign/direction of the second side; the typed value is used as the exact side length. For example, after a first side from `(0,0)` to `(100,0)`, typing `100` creates a rectangle with a second side exactly 100 units long, regardless of the current mouse distance.
+
+
+### Rectangle Sides exact typed second side length
+
+When the first side is already defined, a plain numeric command input such as `100` defines the exact second-side length. The current mouse position or snap point is used only to choose the side of the first segment. The resulting rectangle must therefore satisfy `P = 2A + 2B`, where `A` is the first side and `B` is the typed second-side length.

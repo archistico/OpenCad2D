@@ -7,6 +7,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -267,6 +268,106 @@ public sealed class RectangleBySidesToolTests
         Assert.Equal(0, context.Document.Entities.Count);
     }
 
+
+    [Fact]
+    public void CommandDistance_ForSecondSide_ShouldUseExactTypedLength()
+    {
+        var context = CreateContext();
+        var tool = new RectangleBySidesTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(100, 0)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(25, 43)));
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromDistance("100", 100),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        var rectangle = Assert.Single(
+            context.Document.Entities.All.OfType<PolylineEntity>());
+
+        Assert.Equal(new Point2D(100, 100), rectangle.Vertices[2]);
+        Assert.Equal(new Point2D(0, 100), rectangle.Vertices[3]);
+        AssertRectangleDimensions(rectangle, expectedFirstSide: 100, expectedSecondSide: 100);
+    }
+
+    [Fact]
+    public void CommandPointResolvedFromDirectDistance_ForSecondSide_ShouldUseExactTypedDistanceNotResolvedPointProjection()
+    {
+        var context = CreateContext();
+        var tool = new RectangleBySidesTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(100, 0)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(25, 43)));
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint(
+                "100",
+                new Point2D(91.858085112, 39.498976598),
+                distance: 100),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        var rectangle = Assert.Single(
+            context.Document.Entities.All.OfType<PolylineEntity>());
+
+        Assert.Equal(new Point2D(100, 100), rectangle.Vertices[2]);
+        Assert.Equal(new Point2D(0, 100), rectangle.Vertices[3]);
+        AssertRectangleDimensions(rectangle, expectedFirstSide: 100, expectedSecondSide: 100);
+    }
+
+    [Fact]
+    public void CommandDistance_ForSecondSide_ShouldKeepMouseSideAndExactTypedLength()
+    {
+        var context = CreateContext();
+        var tool = new RectangleBySidesTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(100, 0)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(25, -43)));
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromDistance("100", 100),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        var rectangle = Assert.Single(
+            context.Document.Entities.All.OfType<PolylineEntity>());
+
+        Assert.Equal(new Point2D(100, -100), rectangle.Vertices[2]);
+        Assert.Equal(new Point2D(0, -100), rectangle.Vertices[3]);
+        AssertRectangleDimensions(rectangle, expectedFirstSide: 100, expectedSecondSide: 100);
+    }
+
     [Fact]
     public void SecondPointerPress_WithPolarTracking_ShouldConstrainFirstSide()
     {
@@ -347,6 +448,31 @@ public sealed class RectangleBySidesToolTests
         Assert.Null(tool.CurrentPoint);
         Assert.Equal(0, context.Document.Entities.Count);
     }
+
+
+    private static double GetPerimeter(PolylineEntity rectangle)
+    {
+        Assert.True(rectangle.IsClosed);
+        Assert.Equal(4, rectangle.Vertices.Count);
+
+        return rectangle.Vertices[0].DistanceTo(rectangle.Vertices[1]) +
+            rectangle.Vertices[1].DistanceTo(rectangle.Vertices[2]) +
+            rectangle.Vertices[2].DistanceTo(rectangle.Vertices[3]) +
+            rectangle.Vertices[3].DistanceTo(rectangle.Vertices[0]);
+    }
+
+    private static void AssertRectangleDimensions(
+        PolylineEntity rectangle,
+        double expectedFirstSide,
+        double expectedSecondSide)
+    {
+        Assert.Equal(expectedFirstSide, rectangle.Vertices[0].DistanceTo(rectangle.Vertices[1]), 9);
+        Assert.Equal(expectedSecondSide, rectangle.Vertices[1].DistanceTo(rectangle.Vertices[2]), 9);
+        Assert.Equal(expectedFirstSide, rectangle.Vertices[2].DistanceTo(rectangle.Vertices[3]), 9);
+        Assert.Equal(expectedSecondSide, rectangle.Vertices[3].DistanceTo(rectangle.Vertices[0]), 9);
+        Assert.Equal(2 * expectedFirstSide + 2 * expectedSecondSide, GetPerimeter(rectangle), 9);
+    }
+
 
     private static ToolContext CreateContext(
         CadDocument? document = null,

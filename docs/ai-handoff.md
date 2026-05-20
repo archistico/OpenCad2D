@@ -661,3 +661,11 @@ docs/modify-tools.md
 docs/ai-handoff.md
 ```
 
+
+
+## 2026-05-21 - Rectangle Sides exact typed height correction
+
+RectangleBySidesTool now treats typed distance input during the second-side phase as an exact length. The cursor/current point only chooses which side of the first segment the rectangle grows toward. This prevents the typed value from being recombined with the current mouse projection, which previously allowed values such as `100` to create a second side with the current mouse distance instead of the typed distance.
+
+
+- Fixed Rectangle Sides command input semantics: after the first side is defined, a plain numeric value is treated as an exact second-side length even when the application resolves direct-distance input into a point before passing it to the tool. Regression tests now verify both side lengths and perimeter (`P = 2A + 2B`) so incorrect projected heights are caught.

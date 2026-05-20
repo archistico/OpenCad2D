@@ -3,6 +3,7 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Drawing;
 
@@ -10,7 +11,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// Interactive tool used to draw a rectangular closed polyline from a start point,
 /// a first side endpoint and a point defining the opposite side distance.
 /// </summary>
-public sealed class RectangleBySidesTool : ICadTool, IToolPreviewEntityProvider
+public sealed class RectangleBySidesTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private Point2D? _startPoint;
     private Point2D? _firstSideEndPoint;
@@ -26,6 +27,85 @@ public sealed class RectangleBySidesTool : ICadTool, IToolPreviewEntityProvider
     public Point2D? FirstSideEndPoint => _firstSideEndPoint;
 
     public Point2D? CurrentPoint => _currentPoint;
+
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            RectangleBySidesToolState.WaitingForStartPoint => new CommandPromptState(
+                "RECTSIDES",
+                "Specify first corner",
+                CommandInputKind.Point,
+                placeholder: "100,50"),
+
+            RectangleBySidesToolState.WaitingForFirstSideEndPoint => new CommandPromptState(
+                "RECTSIDES",
+                "Specify first side endpoint",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0   |   @100<45"),
+
+            RectangleBySidesToolState.WaitingForSecondSidePoint => new CommandPromptState(
+                "RECTSIDES",
+                "Specify second side point or type exact length",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   distance"),
+
+            _ => new CommandPromptState(
+                "RECTSIDES",
+                "Specify first corner",
+                CommandInputKind.Point,
+                placeholder: "100,50")
+        };
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (State == RectangleBySidesToolState.WaitingForSecondSidePoint &&
+            IsExactSecondSideLengthInput(input))
+        {
+            return SelectSecondSideLength(context, input.Distance!.Value);
+        }
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "RECTSIDES expects a point or distance input.");
+        }
+
+        return SubmitResolvedPoint(context, input.Point.Value);
+    }
+
+    private static bool IsExactSecondSideLengthInput(CommandInputSubmission input)
+    {
+        if (input.Distance is null)
+        {
+            return false;
+        }
+
+        if (input.Kind == CommandInputSubmissionKind.Distance)
+        {
+            return true;
+        }
+
+        if (input.Kind != CommandInputSubmissionKind.Point)
+        {
+            return false;
+        }
+
+        string rawText = input.RawText.Trim();
+
+        return rawText.Length > 0 &&
+            !rawText.StartsWith('@') &&
+            !rawText.Contains(',') &&
+            !rawText.Contains('<');
+    }
 
     public bool HasPreview =>
         GetFirstSidePreviewEntity() is not null ||
@@ -52,6 +132,20 @@ public sealed class RectangleBySidesTool : ICadTool, IToolPreviewEntityProvider
                 context,
                 pointer),
 
+            _ => ToolResult.None()
+        };
+    }
+
+
+    private ToolResult SubmitResolvedPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        return State switch
+        {
+            RectangleBySidesToolState.WaitingForStartPoint => SelectStartPoint(context, point),
+            RectangleBySidesToolState.WaitingForFirstSideEndPoint => SelectFirstSideEndPoint(context, point),
+            RectangleBySidesToolState.WaitingForSecondSidePoint => SelectSecondSidePoint(context, point),
             _ => ToolResult.None()
         };
     }
@@ -174,6 +268,13 @@ public sealed class RectangleBySidesTool : ICadTool, IToolPreviewEntityProvider
             basePoint: null,
             applyAngleConstraint: false);
 
+        return SelectStartPoint(context, point);
+    }
+
+    private ToolResult SelectStartPoint(
+        ToolContext context,
+        Point2D point)
+    {
         _startPoint = point;
         _currentPoint = point;
         context.CurrentBasePoint = point;
@@ -197,6 +298,19 @@ public sealed class RectangleBySidesTool : ICadTool, IToolPreviewEntityProvider
             pointer.ModelPoint,
             _startPoint,
             applyAngleConstraint: true);
+
+        return SelectFirstSideEndPoint(context, point);
+    }
+
+    private ToolResult SelectFirstSideEndPoint(
+        ToolContext context,
+        Point2D point)
+    {
+        if (_startPoint is null)
+        {
+            throw new InvalidOperationException(
+                "Rectangle Sides tool is waiting for first side endpoint but start point is missing.");
+        }
 
         if (context.GeometryTolerance.ArePointsEqual(
                 _startPoint.Value,
@@ -229,10 +343,63 @@ public sealed class RectangleBySidesTool : ICadTool, IToolPreviewEntityProvider
             _startPoint,
             applyAngleConstraint: false);
 
+        return SelectSecondSidePoint(context, point);
+    }
+
+    private ToolResult SelectSecondSidePoint(
+        ToolContext context,
+        Point2D point)
+    {
+        if (_startPoint is null || _firstSideEndPoint is null)
+        {
+            throw new InvalidOperationException(
+                "Rectangle Sides tool is waiting for second side point but previous points are missing.");
+        }
+
         if (!TryCreateRectangleEntity(
                 _startPoint.Value,
                 _firstSideEndPoint.Value,
                 point,
+                context.Creation.CurrentLayerId,
+                out PolylineEntity? rectangle))
+        {
+            return ToolResult.None("Second side length must be greater than zero.");
+        }
+
+        context.Commands.Execute(
+            context.Document,
+            new AddEntityCommand(rectangle));
+
+        Reset(context);
+
+        return ToolResult.Completed("Rectangle Sides created.");
+    }
+
+
+    private ToolResult SelectSecondSideLength(
+        ToolContext context,
+        double length)
+    {
+        if (_startPoint is null || _firstSideEndPoint is null)
+        {
+            throw new InvalidOperationException(
+                "Rectangle Sides tool is waiting for second side length but previous points are missing.");
+        }
+
+        if (length <= context.GeometryTolerance.Distance)
+        {
+            return ToolResult.None("Second side length must be greater than zero.");
+        }
+
+        double signedHeight = DetermineSecondSideSign(
+            _startPoint.Value,
+            _firstSideEndPoint.Value,
+            _currentPoint) * length;
+
+        if (!TryCreateRectangleEntityFromSignedHeight(
+                _startPoint.Value,
+                _firstSideEndPoint.Value,
+                signedHeight,
                 context.Creation.CurrentLayerId,
                 out PolylineEntity? rectangle))
         {
@@ -291,6 +458,67 @@ public sealed class RectangleBySidesTool : ICadTool, IToolPreviewEntityProvider
             layerId: layerId);
 
         return true;
+    }
+
+
+    private static bool TryCreateRectangleEntityFromSignedHeight(
+        Point2D startPoint,
+        Point2D firstSideEndPoint,
+        double signedHeight,
+        OpenCad2D.Core.Identifiers.LayerId? layerId,
+        out PolylineEntity rectangle)
+    {
+        Vector2D firstSide = startPoint.VectorTo(firstSideEndPoint);
+        double firstSideLength = firstSide.Length;
+
+        if (OpenCad2D.Geometry.Tolerance.IsZero(firstSideLength) ||
+            OpenCad2D.Geometry.Tolerance.IsZero(signedHeight))
+        {
+            rectangle = null!;
+            return false;
+        }
+
+        Vector2D firstSideDirection = firstSide / firstSideLength;
+        Vector2D secondSide = firstSideDirection.PerpendicularLeft() * signedHeight;
+
+        var vertices = new[]
+        {
+            startPoint,
+            firstSideEndPoint,
+            firstSideEndPoint + secondSide,
+            startPoint + secondSide
+        };
+
+        rectangle = new PolylineEntity(
+            vertices,
+            isClosed: true,
+            layerId: layerId);
+
+        return true;
+    }
+
+    private static double DetermineSecondSideSign(
+        Point2D startPoint,
+        Point2D firstSideEndPoint,
+        Point2D? currentPoint)
+    {
+        if (currentPoint is null)
+        {
+            return 1.0;
+        }
+
+        Vector2D firstSide = startPoint.VectorTo(firstSideEndPoint);
+        double firstSideLength = firstSide.Length;
+
+        if (OpenCad2D.Geometry.Tolerance.IsZero(firstSideLength))
+        {
+            return 1.0;
+        }
+
+        Vector2D perpendicularDirection = (firstSide / firstSideLength).PerpendicularLeft();
+        double signedDistance = startPoint.VectorTo(currentPoint.Value).Dot(perpendicularDirection);
+
+        return signedDistance < 0 ? -1.0 : 1.0;
     }
 
     private static Point2D ResolveInputPoint(
