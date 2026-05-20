@@ -1,253 +1,148 @@
 # OpenCad2D v0.9 stabilization plan
 
-This document is the working plan for the v0.9 release-candidate cycle.
+This document is the active working plan for the v0.9 release-candidate cycle.
 
-The goal of v0.9 is not to add another large group of CAD features. The goal is to make the current v0.8.x foundation reliable enough to approach the first stable v1.0 release with confidence.
-
-v0.9 should therefore prioritize:
-
-- predictable user workflows;
-- regression tests around existing behavior;
-- external DXF compatibility records with exact viewer versions;
-- complete user/developer documentation;
-- safe performance review;
-- release packaging discipline.
-
-Large features such as blocks, hatch, raster references, richer native DXF `DIMENSION` support, autosave/recovery v2 and advanced NURBS fidelity are intentionally deferred.
+v0.9 is a stabilization release. The goal is to make the existing CAD foundation predictable, precise and safe before moving toward v1.0. New large feature families are deferred unless they are required to stabilize existing workflows.
 
 ---
 
-## Current baseline before v0.9
+## Stabilization principles
 
-The v0.8.x line already includes the core CAD baseline needed for stabilization:
+1. **Native precision first**  
+   CAD editing operations should modify native entities using native curve parameters. Sampling may support preview or coarse discovery, but sampled geometry must not become the permanent result when a native representation exists.
 
-- clean startup from `Templates/default.opencad2d.json`;
-- maximized main window on startup;
-- native `.opencad2d.json` save/load;
-- document-level drafting settings persisted in the drawing file;
-- document recovery for partially invalid native files;
-- SVG, DXF and PDF export;
-- ASCII DXF import for the current practical 2D entity set;
-- layers, line formats, text formats and dimension styles;
-- editable Property Panel v2 for supported properties, including MTEXT;
-- independent draw order / Z-order;
-- command input with aliases, coordinates, relative/polar input, history and first-pass autocomplete;
-- snapping, grid snapping, Ortho mode and Polar Tracking;
-- drawing tools for points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and Bezier splines;
-- dimension tools for horizontal, vertical, aligned, radius, diameter and angular dimensions;
-- transform/modify tools including Move, Copy, Rotate, Scale, Align, Break, Trim, Extend, Offset, Fillet and Mirror;
-- align/distribute object tools;
-- measure tools;
-- tool-provided preview descriptors/entities, so active tool previews no longer require concrete app-renderer dispatch;
-- minimal application logging for tool/UI exceptions.
+2. **Predictable command UX**  
+   Left click provides graphical input. Right click and Enter confirm the current phase when a valid default, value or selection exists. Esc cancels the current phase.
+
+3. **Entity selection is explicit**  
+   Phases that select entities should use EntityOnly snapping and should visibly highlight acquired entities.
+
+4. **Export is not Save**  
+   SVG/PDF/DXF/PNG exports are derived files. They must not replace the native current file path and must not clear the drawing dirty state.
+
+5. **Small testable phases**  
+   Every stabilization step should have focused tests and documentation updates.
 
 ---
 
-## Completed stabilization work inherited from v0.8.x
+## Completed stabilization checkpoints
 
-| Area | Status | Notes |
-|---|---|---|
-| Runtime safety | Done | Canvas pointer input has guarded async execution and tool/UI exceptions are logged before status reporting. |
-| Dialog reentrancy | Done | TEXT/MTEXT dialog reentrancy uses a non-blocking guard. |
-| Save/reopen workflow | Done | End-to-end native persistence coverage exists for the current entity set. |
-| Import/modify/export workflow | Done | DXF import -> modify -> export regression coverage exists. |
-| Default startup | Done | The app starts from a clean template and falls back to safe defaults if the template is invalid. |
-| Draw order | Done | Draw order is independent from layers and is undoable. |
-| Dimension stale marker | Done | Non-associative dimensions are conservatively marked stale after geometry-changing operations. |
-| Command UX | Done | Command history and first-pass autocomplete are implemented. |
-| DXF import coverage | Done for v0.8.x scope | LWPOLYLINE bulge arcs, full ELLIPSE and readable SPLINE data are handled with documented limitations. |
-| DXF export coverage | Done for v0.8.x scope | SPLINE export writes degree, knot count and knot-vector data. |
-| Preview architecture | Done | Active tool previews are exposed through `IToolPreviewDescriptorProvider` / `IToolPreviewEntityProvider`. |
-| MTEXT editing | Done | MTEXT text, insertion, rotation, text format and reference width are editable through the Property Panel. |
+| Checkpoint | Status | Notes |
+|---|---:|---|
+| Native curve editing foundation | Done | `CurveCut`, `CurveInterval`, `ICurveAdapter`, `CadCurveSplitService` and adapter-backed splitting are in place. |
+| TRIM/BREAK precision | Done | Supported curves use native parameters and shared cut points; line endpoints are reused exactly where applicable. |
+| Multi-boundary curve trim | Done | Circle/Arc trim with multiple boundaries is stabilized for the supported workflows. |
+| EllipticalArcEntity | Done | Native partial ellipses are represented by `EllipticalArcEntity` with rendering, snapping, persistence and export support. |
+| Ellipse TRIM/BREAK | Done | Ellipse edits now produce native elliptical arcs rather than permanent polyline fragments. |
+| Open Bezier TRIM/BREAK | Done | Open Bezier spline edits preserve `BezierSplineEntity` fragments where supported. |
+| Rich intersections | Done, incremental | `CadIntersectionPoint` records shared points and native parameters; additional adoption remains optional/incremental. |
+| EXTEND native alignment | Done for supported targets | EXTEND uses the native model for supported lines/arcs/polylines/elliptical arcs and native elliptical boundaries. |
+| Preview UX | Done for TRIM/BREAK/EXTEND | Dashed removal previews and addition highlights are implemented. |
+| Save/export clarity | Done | Export messages clarify that the editable native project may still need saving. |
+| Modify-tool UX policy | In progress, mostly done | Deselect, Delete multipick, right-click confirmations, entity-only snap phases and selected-boundary highlights are implemented for the covered tools. |
 
 ---
 
-## v0.9 working phases
+## Active work: Modify Tools UX cleanup
 
-### Phase 0 - Documentation alignment
+Completed in this block:
 
-Status: completed by the v0.9 planning pass.
+- Deselect command/button;
+- Point icon simplified to a small cross;
+- Text/MTEXT bounding-box hit testing;
+- Delete existing selection immediately or multi-pick then Enter/right-click;
+- TRIM/EXTEND/FILLET selected boundary/first entity overlays;
+- FILLET entity-selection phases use EntityOnly snap;
+- POLYLINE right-click finish;
+- Polygon/Fillet/Mirror right-click default confirmations;
+- Ellipse axis input uses snap-resolved points;
+- Rect Sides typed second-side length creates the exact requested length.
 
-- [x] Roadmap re-triaged against the actual v0.8.x state.
-- [x] Already completed items removed from the active v0.9 backlog.
-- [x] Post-v1.0 feature backlog cleaned so completed entity types are not listed as future work.
-- [x] Known limitations focused on real current limitations.
-- [x] Handoff updated with the v0.9 starting point and first implementation target.
+Remaining in this block:
 
-### Curve editing precision gate
+1. **Offset workflow**
+   - typed distance;
+   - two-point measured distance;
+   - stored last distance;
+   - right-click/Enter default when available;
+   - clear first-run message when no default exists;
+   - EntityOnly target selection;
+   - side selection and preview.
 
-Status: substantially completed for the current supported native entity set.
+2. **Final UX consistency pass**
+   - right-click/Enter/Esc behavior across draw/modify tools;
+   - snap mode by phase;
+   - command messages;
+   - preview semantics.
 
-Reference: `docs/curve-editing.md`.
+3. **Documentation sync**
+   - update `docs/commands.md` and `docs/modify-tools.md` after Offset is finalized.
 
-This work intentionally interrupted the original v0.9 sequence because it protects CAD correctness: Trim, Break and first Extend refinements now use native curve parameters, shared cut points and adapter-backed interval splitting instead of command-specific sampled polyline fallbacks.
+---
 
-Completed implementation sequence:
+## Validation work before v0.9
 
-1. `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`.
-2. Line, Circle, Arc and Polyline adapters.
-3. Break Point / Break Segment migration to the shared split service.
-4. Trim migration and Circle/Arc multi-boundary stabilization.
-5. `EllipticalArcEntity` with rendering, persistence, snapping and export infrastructure.
-6. Native ellipse Trim/Break using `EllipticalArcEntity`.
-7. Native Bezier split and open-spline Trim/Break preservation.
-8. Rich `CadIntersectionPoint` records with shared point and native parameters.
-9. EXTEND refinements on the same native model for supported targets and boundaries.
-10. Removal of obsolete permanent-polyline fallbacks for supported native curve edits.
-11. Preview UX alignment: dashed removal preview for Trim/Break and addition highlight for Extend.
-12. Save/Export UX clarification so derived exports cannot be confused with native project saves.
+### Curve editing manual regression
 
-Current supported edit results:
+Use:
 
-- lines remain line fragments with shared explicit endpoints;
-- circles and arcs produce native arcs;
-- polylines, rectangles and polygons represented as closed polylines produce polyline fragments;
-- ellipses and elliptical arcs produce native `EllipticalArcEntity` fragments;
-- open Bezier splines produce native `BezierSplineEntity` fragments;
-- closed Bezier spline splitting remains deferred/no-op.
+```text
+docs/testing/curve-editing-regression-v0.9.md
+```
 
-Remaining deferred work for later v0.9/v1.0 planning:
+Validate TRIM, BREAK, EXTEND, shared cut points, native ellipse/spline preservation, persistence and export.
 
-- closed spline editing policy;
-- full-circle/full-ellipse Break Point convention, if wanted;
-- Offset review under the same native-geometry preservation principle;
-- further adoption of rich intersections where it simplifies command code;
-- broader release-candidate validation and external DXF viewer checks.
+### Export/import compatibility
 
-### Phase 1 - Local application/session settings
+Validate a representative drawing containing:
 
-Document-level drafting settings are already stored in `.opencad2d.json`. v0.9 now includes a first small local settings layer, separate from drawing content.
-
-Implemented local settings scope:
-
-- last opened native drawing file path;
-- last open directory;
-- last save directory;
-- last export directory;
-- recent native drawing files, capped to a small stable list.
-
-Implemented behavior:
-
-- missing settings file uses defaults;
-- partial settings file uses defaults for missing values;
-- corrupt settings file does not prevent startup;
-- local settings are not written into `.opencad2d.json`;
-- settings save/load/fallback behavior is covered by app tests.
-
-Deferred local settings:
-
-- window size/position;
-- panel widths;
-- theme preference;
-- shortcut preferences.
-
-These are intentionally deferred until they can be added without making startup fragile.
-
-### Phase 2 - Undo/redo audit
-
-The project already has command-based undo/redo, but v0.9 should audit the full current user-facing workflow.
-
-Audit groups:
-
-- drawing tools: Point, Text, MTEXT, Line, Rectangle, Circle, Arc, Ellipse, Polyline, Polygon, Spline and dimensions;
-- transform/modify tools: Move, Copy, Rotate, Scale, Mirror, Align, Distribute, Break, Trim, Extend, Offset and Fillet;
-- Property Panel edits;
-- Layer Manager, Line Format Manager, Text Format Manager and draw-order operations.
-
-For each primary operation, verify:
-
-1. operation changes the document as expected;
-2. Undo restores the previous state;
-3. Redo restores the operation result;
-4. selection and dirty state remain coherent where applicable.
-
-### Phase 3 - Export workflow hardening
-
-Existing export tests should be expanded into release-candidate workflows.
-
-Required workflows:
-
-- draw -> annotate -> export DXF;
-- draw -> annotate -> export SVG;
-- draw -> annotate -> export PDF;
-- import DXF -> modify -> export DXF regression remains green.
-
-The mixed drawing should include:
-
-- multiple layers;
-- line formats, lineweights and dash patterns;
+- multiple layers and line formats;
 - text and MTEXT;
-- current dimension types;
-- circles, arcs, ellipses, polylines, polygons and splines;
-- representative modified geometry.
+- dimensions;
+- lines, circles, arcs, ellipses, elliptical arcs, polylines, polygons and open splines;
+- geometry produced by TRIM/BREAK/EXTEND.
 
-### Phase 4 - DXF compatibility audit
+Export to:
 
-The compatibility sample set already exists. v0.9 should record exact external validation details instead of generic smoke-check notes.
+- SVG;
+- PDF;
+- DXF.
 
-Record for each viewer:
-
-- viewer name;
-- exact version;
-- operating system;
-- test date;
-- sample file result: pass / partial / fail;
-- visual notes when relevant.
-
-Minimum target viewers:
+Open DXF samples in:
 
 - LibreCAD;
-- QCAD.
+- QCAD;
+- optionally Autodesk DWG TrueView.
 
-Optional:
+Record exact viewer versions and results.
 
-- Autodesk DWG TrueView.
+### Property Panel review
 
-### Phase 5 - Performance review
+Review core editable/read-only properties for:
 
-This phase is measurement-first.
+- Arc;
+- Ellipse;
+- EllipticalArc;
+- Polyline;
+- BezierSpline;
+- Text;
+- MTEXT.
+
+### Performance/robustness smoke pass
 
 Review:
 
-- rendering/repaint behavior;
-- large file open and viewport interaction;
-- snap and hit testing on dense drawings;
-- export time for representative files.
+- selection and hit testing on denser drawings;
+- snaps and intersections with many entities;
+- preview performance;
+- degenerate geometry cases;
+- export time for representative drawings.
 
-Allowed v0.9 fixes:
+---
 
-- avoid obvious repeated calculations;
-- guard degenerate geometry cases;
-- improve small hot paths when tests stay stable;
-- add regression tests for discovered performance-related correctness bugs.
+## v0.9 release gate
 
-Deferred:
-
-- major renderer rewrite;
-- major spatial-index rewrite;
-- speculative caching with complex invalidation.
-
-### Phase 6 - Documentation completion
-
-Required user docs:
-
-- installation guide;
-- first-use guide;
-- import/export guide;
-- shortcuts/command input guide;
-- known limitations;
-- v0.9 release notes.
-
-Required developer docs:
-
-- architecture overview updated with current module boundaries;
-- tools/commands docs updated with preview-provider conventions;
-- persistence and export docs updated with current capabilities;
-- handoff kept current after each v0.9 milestone.
-
-### Phase 7 - Release gate
-
-The v0.9 release gate is:
+Before preparing a v0.9 release artifact:
 
 ```powershell
 dotnet clean
@@ -255,58 +150,29 @@ dotnet restore
 dotnet build
 dotnet test
 git status
+make zip
 ```
 
-Only after the release gate passes locally:
+Then manually verify:
 
-```powershell
-git add README.md docs samples src tests
-git commit -m "docs: prepare OpenCad2D v0.9 release candidate"
-git tag -a v0.9.0 -m "OpenCad2D v0.9.0"
-git push
-git push origin v0.9.0
-```
+- generated zip name/date;
+- archive contains only the intended source/docs/tests/release files;
+- README and roadmap are current;
+- known limitations are current;
+- release notes describe completed work and deferred items honestly.
 
 ---
 
-## v0.9 completion checklist
+## Deferred beyond v0.9 unless required
 
-```text
-[x] Local settings scope decided
-[x] Local settings storage implemented
-[x] Local settings fallback tests added
-[ ] Undo/redo audit completed for drawing tools
-[ ] Undo/redo audit completed for modify tools
-[ ] Undo/redo audit completed for Property Panel and manager edits
-[ ] DXF export E2E workflow completed
-[ ] SVG export E2E workflow completed
-[ ] PDF export E2E workflow completed
-[ ] LibreCAD exact compatibility audit recorded
-[ ] QCAD exact compatibility audit recorded
-[ ] Optional TrueView compatibility audit recorded
-[ ] Rendering performance reviewed
-[ ] Large-file behavior reviewed
-[ ] Snap/hit-test behavior reviewed
-[ ] User documentation completed
-[ ] Developer documentation completed
-[ ] v0.9 release notes completed
-[ ] Full clean/build/test release gate passed
-[ ] GitHub release package prepared
-[ ] v0.9.0 tag published
-```
-
----
-
-## Do not include in v0.9 unless required by a blocking bug
-
-- Hatch/campiture.
-- Blocks/symbols.
-- Raster reference images.
-- PNG export.
-- SVG import.
-- Associative dimensions.
-- Native DXF `DIMENSION` import/export.
-- Advanced Trim modes: Fence, Crossing, Edge, Project, Erase.
-- Advanced Fillet pairs: Line-Arc, Arc-Arc and polyline fillet.
-- Full NURBS knot/weight evaluation.
-- Large UI redesign.
+- closed Bezier spline editing;
+- full-circle/full-ellipse Break Point convention;
+- true associative dimensions;
+- blocks;
+- hatch;
+- raster references;
+- advanced NURBS fidelity;
+- autosave/recovery v2;
+- major renderer or spatial-index rewrite;
+- installer/package polish;
+- full v1.0 user manual.

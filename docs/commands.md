@@ -27,6 +27,20 @@ Common command types:
 
 ---
 
+
+## Confirmation policy
+
+Interactive tools follow the shared CAD confirmation policy:
+
+```text
+Left click  -> graphical input or entity pick
+Right click -> confirm/advance the current phase when a valid default, value or selection exists
+Enter       -> keyboard equivalent of right click for command prompts
+Esc         -> cancel the current phase
+```
+
+A tool must not guess a missing value. If a prompt has no valid default yet, right click/Enter should show a clear message instead of committing an operation.
+
 ## Command input aliases
 
 Aliases are case-insensitive.
@@ -38,6 +52,7 @@ Aliases are case-insensitive.
 | Select | `SELECT`, `S` |
 | Select All | `SELECTALL`, `SA`, `ALL` |
 | Select Last | `SELECTLAST`, `SL`, `LAST` |
+| Deselect | `DESELECT`, `CLEARSELECTION`, `CS` |
 
 `Select Last` restores the previous effective selection before deselection, not the last created entity.
 

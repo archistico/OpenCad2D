@@ -32,13 +32,13 @@ OpenCad2D currently supports a complete early CAD workflow:
 - independent draw order / Z-order, separate from layers;
 - CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input, direct distances, command history navigation and first-pass autocomplete;
 - object snapping, grid snapping, Ortho mode and Polar Tracking;
-- selection, Select All and Select Last;
+- selection, Select All, Select Last and Deselect;
 - drawing tools for points, single-line text, multiline text, lines, rectangles, circles, ellipses, arcs, polylines, polygons and Bezier splines;
 - dimension tools for horizontal, vertical, aligned, radius, diameter and angular dimensions, with stale-state marking after geometry modifications;
 - transform tools: move, copy, rotate, scale and point-based align;
 - modify tools: delete, break point, break segment, trim, extend, offset and fillet;
-- trim and break support for lines, arcs, circles where applicable, ellipses, polylines, polygons and sampled Bezier splines;
-- offset for lines, circles, arcs, straight-segment polylines and sampled Bezier splines, including preview and miter-limit fallback for sharp polyline corners;
+- trim and break support based on native curve parameters for lines, arcs, circles where applicable, ellipses, elliptical arcs, polylines, polygons and open Bezier splines;
+- offset for lines, circles, arcs, straight-segment polylines and sampled Bezier splines, currently pending a v0.9 workflow/native-geometry review;
 - line-line fillet with radius option, live preview, Trim/NoTrim modes and radius `0` sharp-corner join in Trim mode;
 - align object tools: left, right, top and bottom;
 - distribute object tools: horizontal and vertical distribution by centers;
@@ -49,7 +49,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - tool-provided preview descriptor/entity protocols that keep active tool preview logic out of the app renderer;
 - minimal application logging for tool/UI exceptions.
 
-See `docs/release-v0.8.md` for the current release notes.
+See `docs/roadmap.md` and `docs/stabilization-v0.9-plan.md` for the active v0.9 stabilization plan.
 
 ---
 
@@ -163,12 +163,10 @@ Important documents:
 | `docs/application-settings.md` | document settings and local settings separation |
 | `docs/draw-order.md` | Z-order behavior |
 | `docs/persistence.md` | native file format and recovery rules |
-| `docs/release-v0.8.md` | current release notes |
-| `docs/release-v0.8-final.md` | GitHub-ready v0.8.x final release draft |
 | `docs/stabilization-v0.9-plan.md` | v0.9 release-candidate stabilization plan |
 | `docs/ai-handoff.md` | current handoff for future development |
 
-Historical milestone notes before v0.8 are no longer needed in the active documentation set.
+Historical milestone details are intentionally kept out of the active roadmap; use Git history and release notes for old implementation logs.
 
 ---
 
