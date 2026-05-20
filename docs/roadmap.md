@@ -81,19 +81,30 @@ OpenCad2D currently includes:
 
 ### Curve editing precision gate
 
-Before continuing with broader roadmap work, Trim and Break should be consolidated around the native curve-editing rules in `docs/curve-editing.md`.
+Trim, Break and the first Extend refinements have been consolidated around the native curve-editing rules in `docs/curve-editing.md`. This gate was allowed to interrupt the broader roadmap because it protects CAD precision and prevents permanent degradation of native curves.
 
-Planned phases:
+Completed phases:
 
 - [x] document the native parameter and shared cut-point policy;
-- [ ] introduce `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`;
-- [ ] implement Line, Circle, Arc and Polyline adapters;
-- [ ] rebuild Break Point and Break Segment on top of the shared split service;
-- [ ] rebuild Trim target fragmentation on top of the shared split service;
-- [ ] stabilize multi-boundary Circle/Arc Trim;
-- [ ] add precision tests proving reciprocal line trims share exact endpoints and native arc/circle results stay parametric;
-- [ ] add `EllipticalArcEntity` so ellipse Trim/Break no longer degrades to polyline fragments;
-- [ ] add native Bezier split support so spline Trim/Break can preserve spline geometry where possible.
+- [x] introduce `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`;
+- [x] implement Line, Circle, Arc and Polyline adapters;
+- [x] rebuild Break Point and Break Segment on top of the shared split service;
+- [x] rebuild Trim target fragmentation on top of the shared split service;
+- [x] stabilize multi-boundary Circle/Arc Trim;
+- [x] add precision tests proving reciprocal line trims share exact endpoints and native arc/circle results stay parametric;
+- [x] add `EllipticalArcEntity` so ellipse Trim/Break no longer degrades to polyline fragments;
+- [x] add native Bezier split support so open spline Trim/Break can preserve spline geometry where possible;
+- [x] add richer `CadIntersectionPoint` records with shared point and native parameters;
+- [x] align EXTEND with the native curve model for supported targets/boundaries;
+- [x] remove obsolete command-level permanent-polyline fallbacks for supported native curves;
+- [x] add Preview UX semantics for dashed removal intervals and highlighted extension intervals.
+
+Remaining deferred items:
+
+- [ ] define a policy for closed Bezier spline splitting;
+- [ ] decide whether full-circle/full-ellipse Break Point should create a full-sweep open arc convention;
+- [ ] continue adopting rich intersection records in command paths where useful;
+- [ ] review Offset for the same native-geometry preservation policy.
 
 ---
 

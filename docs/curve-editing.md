@@ -1,6 +1,6 @@
 # Curve editing architecture
 
-This document defines the precision and topology rules for OpenCad2D curve-editing operations before the next implementation pass on Trim, Break and related modify tools.
+This document defines the precision and topology rules for OpenCad2D curve-editing operations. It is the binding reference for Trim, Break, Extend and future curve-editing work.
 
 The goal is to keep OpenCad2D precise enough for CAD work while still allowing pragmatic internal algorithms for preview, hit testing and coarse search.
 
@@ -126,7 +126,7 @@ CircleEntity            -> CircleCurveAdapter
 ArcEntity               -> ArcCurveAdapter
 PolylineEntity          -> PolylineCurveAdapter
 EllipseEntity           -> EllipseCurveAdapter
-EllipticalArcEntity     -> EllipticalArcCurveAdapter, future
+EllipticalArcEntity     -> EllipticalArcCurveAdapter
 BezierSplineEntity      -> BezierSplineCurveAdapter
 ```
 
@@ -271,7 +271,7 @@ This keeps Trim and Break results native while avoiding permanent sampled-polyli
 
 ## EllipticalArcEntity native ellipse-arc foundation
 
-`EllipticalArcEntity` is the native entity planned for partial ellipse results. It represents an ellipse segment by preserving the same mathematical definition as `EllipseEntity` plus a directed parameter interval.
+`EllipticalArcEntity` is the native entity used for partial ellipse results. It represents an ellipse segment by preserving the same mathematical definition as `EllipseEntity` plus a directed parameter interval.
 
 Native definition:
 
@@ -341,12 +341,12 @@ For rectangles and regular polygons, editing treats them as closed polylines. On
 |---|---|---|
 | Line | native fragments | native `LineEntity` fragments using shared cut points |
 | Rectangle | closed polyline style editing | open `PolylineEntity` fragments after break/trim |
-| Circle | partial support; multi-boundary Trim needs stabilization | `ArcEntity` fragments from native angular parameters |
-| Arc | partial support; multi-boundary Trim needs stabilization | `ArcEntity` fragments from native sweep parameters |
+| Circle | native Trim/Break Segment support, including multi-boundary Trim | `ArcEntity` fragments from native angular parameters |
+| Arc | native Trim/Break support, including multi-boundary Trim | `ArcEntity` fragments from native sweep parameters |
 | Polyline | native polyline fragments | native `PolylineEntity` fragments using inserted shared cut vertices |
 | Polygon | stored as closed `PolylineEntity` | open `PolylineEntity` fragments after break/trim |
 | Ellipse | native Trim and Break Between Points are implemented | `EllipticalArcEntity` fragments from native ellipse parameters |
-| Spline | fragments currently become polyline approximations in modify workflows | `BezierSplineEntity` fragments where the current Bezier model allows native splitting |
+| Spline | open Bezier Trim/Break returns native fragments; closed splines deferred | `BezierSplineEntity` fragments where the current Bezier model allows native splitting |
 
 ---
 
@@ -364,13 +364,13 @@ Sampling may be used for:
 
 Sampling must not be the final source of edited geometry when a native representation exists or is being introduced.
 
-Allowed temporary exception:
+Current remaining exceptions are limited and explicit:
 
 ```text
-Ellipse editing now uses `EllipseCurveAdapter` and `EllipticalArcCurveAdapter` for native Trim and Break Between Points results. `EllipticalArcEntity` is supported by rendering, persistence and export. Spline editing still requires native Bezier split support.
+Closed BezierSplineEntity editing remains deferred/no-op.
+One-point Break on full closed circles and full closed ellipses remains deferred until a full-sweep open-arc convention is defined.
+Offset still needs a dedicated native-geometry preservation review.
 ```
-
-This exception must remain visible in known limitations and should be removed once the native curve pipeline is complete.
 
 ---
 
@@ -389,8 +389,8 @@ BreakPolylineAtIntersection_ShouldInsertSharedIntersectionVertex
 TrimCircleWithMultipleBoundaries_ShouldCreateNativeArcFragments
 TrimArcWithMultipleBoundaries_ShouldCreateNativeArcFragments
 BreakClosedPolylineBetweenPoints_ShouldCreateOpenPolylineWithoutMicroGap
-TrimEllipseWithLine_ShouldCreateEllipticalArcFragment, after EllipticalArcEntity exists
-BreakBezierSplineAtPoint_ShouldCreateBezierSplineFragments, after native split exists
+TrimEllipseWithLine_ShouldCreateEllipticalArcFragment
+BreakBezierSplineAtPoint_ShouldCreateBezierSplineFragments
 ```
 
 For explicit-vertex entities that should meet at the same intersection, tests should assert exact coordinate equality of the resulting values, not only distance within tolerance.
@@ -406,67 +406,36 @@ For parametric entities, tests should assert:
 
 ---
 
-## Implementation phases
+## Implementation status
 
-### Phase 1 - Documentation and design lock
+The first native curve-editing stabilization pass is implemented for the current supported entity set.
 
-- Add this document.
-- Link it from README, architecture, modify-tools and known limitations.
-- Treat the native parameter/shared cut point rule as binding for future Trim/Break work.
+Completed foundation:
 
-### Phase 2 - Shared split foundation
+- `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`;
+- adapters for Line, Circle, Arc, Polyline, Ellipse, EllipticalArc and open BezierSpline;
+- `CadIntersectionPoint` with shared point, native parameters, kind and ready-to-use `CurveCut` values;
+- command-level Trim and Break delegation to the shared split service;
+- native `EllipticalArcEntity` with rendering, persistence, snapping and export support;
+- `BezierSplineSplitService` for open Bezier splitting with De Casteljau;
+- cleanup of obsolete permanent-polyline fallbacks for supported native curves;
+- Preview UX semantics for removal and addition intervals.
 
-- Introduce `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`.
-- Implement adapters for Line, Circle, Arc and Polyline.
-- Add interval/split tests independent from UI tools.
+Current edit results:
 
-### Phase 3 - Break stabilization
+```text
+LineEntity                 -> LineEntity fragments
+CircleEntity               -> ArcEntity fragments
+ArcEntity                  -> ArcEntity fragments
+PolylineEntity             -> PolylineEntity fragments
+Rectangle/Polygon          -> PolylineEntity fragments because they are polyline-based contours
+EllipseEntity              -> EllipticalArcEntity fragments
+EllipticalArcEntity        -> EllipticalArcEntity fragments
+Open BezierSplineEntity    -> BezierSplineEntity fragments
+Closed BezierSplineEntity  -> deferred / no fragments
+```
 
-- Rebuild Break Point and Break Segment on top of `CadCurveSplitService`.
-- Support Line, Circle where applicable, Arc, Polyline, closed Polyline/Polygon and Rectangle-as-Polyline behavior.
-- Add preview tests and undo/redo regression tests.
-
-### Phase 4 - Trim stabilization
-
-- Rebuild Trim target fragmentation on top of `CadCurveSplitService`.
-- Collect all valid boundary cuts before interval removal.
-- Stabilize multi-boundary Circle and Arc Trim.
-- Add shared-point and native-fragment precision tests.
-
-Current implementation status for the base native set:
-
-- `LineEntity` trim delegates to `CadCurveSplitService` and reuses shared cut points as explicit endpoints.
-- `CircleEntity` trim delegates to `CadCurveSplitService` and returns native `ArcEntity` fragments.
-- `ArcEntity` trim delegates to `CadCurveSplitService` and returns native `ArcEntity` fragments.
-- `PolylineEntity`, including closed polyline/polygon-style contours, delegates to `CadCurveSplitService` and returns open `PolylineEntity` fragments when the contour is broken.
-
-### Phase 5 - Native ellipse arcs
-
-- `EllipticalArcEntity` exists and is wired into rendering, persistence, SVG, DXF and PDF export.
-- Add `EllipseCurveAdapter` and `EllipticalArcCurveAdapter`.
-- Change Trim/Break on ellipses so they return native elliptical arc fragments instead of polylines.
-
-### Phase 6 - Native Bezier splitting
-
-- `BezierSplineSplitService` now exists for open `BezierSplineEntity` curves and uses De Casteljau subdivision.
-- Current service responsibilities:
-  - split an open Bezier spline at native parameter `t`;
-  - extract a native interval `t0..t1`;
-  - remove an interval and return native outer Bezier fragments.
-- Closed spline splitting is intentionally deferred.
-- Next steps:
-  - add `BezierSplineCurveAdapter`;
-  - change Trim/Break on supported open splines so they return spline fragments instead of polylines.
-
-### Phase 7 - Cleanup and documentation sync
-
-- Remove obsolete permanent-polyline fallbacks where native representations exist.
-- Keep sampled fallback only where still intentionally documented.
-- Update known limitations, modify-tool docs, tests and handoff.
-
----
-
-## Non-goals for the first pass
+## Remaining non-goals / deferred work
 
 The first pass should not attempt to implement all advanced CAD editing modes.
 

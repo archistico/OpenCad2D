@@ -51,21 +51,31 @@ The v0.8 line mitigates this by marking dimensions as potentially stale after ge
 
 ## Snapping
 
-Intersection snaps for `BezierSplineEntity` are still supported through sampled polyline approximations. `EllipseEntity` and `EllipticalArcEntity` now have native line-segment intersection support for line and polyline editing boundaries, but snapping and unsupported curve-pair intersections may still use sampled/coarse helpers until the richer intersection model is introduced.
+Intersection snaps for `BezierSplineEntity` may still use sampled polyline approximations. `EllipseEntity` and `EllipticalArcEntity` now have native line/polyline and circle/arc intersection support in the editing pipeline, but some snapping and unsupported curve-pair helpers may still use sampled/coarse paths.
 
 ---
 
 
 ## Curve editing precision
 
-Trim and Break currently support the main editable entity set, but the next stabilization pass should consolidate them around the native curve-editing architecture documented in `docs/curve-editing.md`.
+Trim and Break now use the shared native curve-editing pipeline for the current supported entity set. The main command-level permanent-polyline fallbacks for ellipses and supported open Bezier splines have been removed.
 
-Known current limits:
+Current supported results:
 
-- advanced Trim/Break behavior is now routed through the shared interval-based implementation for lines, circles, arcs, polylines, full ellipses and elliptical arcs;
-- ellipse Trim and Break Between Points now return native `EllipticalArcEntity` fragments instead of permanent polyline approximations; line and polyline editing boundaries use native line-segment/ellipse intersections; one-point Break on a full closed ellipse remains deferred until a full-sweep arc convention is defined;
-- spline Trim/Break/Offset workflows can still use sampled polyline approximations where native Bezier splitting has not been implemented;
-- sampled approximations may be used for preview and coarse search, but should not remain the final source of edited geometry once a native representation exists.
+- line Trim/Break returns native `LineEntity` fragments and reuses shared cut points for explicit endpoints;
+- circle Trim/Break Segment returns native `ArcEntity` fragments;
+- arc Trim/Break returns native `ArcEntity` fragments;
+- polyline, rectangle and polygon editing returns `PolylineEntity` fragments because those sources are polyline-based;
+- ellipse Trim and Break Between Points return native `EllipticalArcEntity` fragments;
+- existing `EllipticalArcEntity` Trim/Break returns native `EllipticalArcEntity` fragments;
+- open Bezier spline Trim/Break returns native `BezierSplineEntity` fragments.
+
+Known remaining limits:
+
+- one-point Break on full closed circles and full closed ellipses remains deferred until a safe full-sweep open-arc convention is defined;
+- closed Bezier spline editing remains deferred/no-op;
+- Offset still needs a dedicated native-geometry preservation review, especially for spline workflows;
+- sampled approximations may still be used for preview, snapping, broad-phase discovery or unsupported import cases, but supported edit commands should project/refine cuts back to native parameters before creating final geometry.
 
 Target rule:
 

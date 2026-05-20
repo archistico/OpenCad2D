@@ -74,27 +74,45 @@ Status: completed by the v0.9 planning pass.
 - [x] Known limitations focused on real current limitations.
 - [x] Handoff updated with the v0.9 starting point and first implementation target.
 
-### Curve editing precision interruption
+### Curve editing precision gate
 
-Before continuing the broader v0.9 checklist, the active design decision is to stabilize Trim and Break around native curve parameters and shared cut points.
+Status: substantially completed for the current supported native entity set.
 
 Reference: `docs/curve-editing.md`.
 
-This work is allowed to temporarily interrupt the original v0.9 sequence because it protects CAD correctness:
+This work intentionally interrupted the original v0.9 sequence because it protects CAD correctness: Trim, Break and first Extend refinements now use native curve parameters, shared cut points and adapter-backed interval splitting instead of command-specific sampled polyline fallbacks.
 
-- Trim/Break should not permanently degrade native curves through sampled polyline approximations when a native representation can exist;
-- reciprocal edits on explicit-vertex entities must reuse a shared intersection point instead of creating nearly coincident endpoints;
-- multi-boundary Circle/Arc Trim should be implemented through a shared interval pipeline instead of special-case early exits;
-- ellipse and spline degradation should remain documented until `EllipticalArcEntity` and native Bezier splitting are implemented.
-
-Recommended first implementation sequence:
+Completed implementation sequence:
 
 1. `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`.
 2. Line, Circle, Arc and Polyline adapters.
-3. Break Point / Break Segment migration.
+3. Break Point / Break Segment migration to the shared split service.
 4. Trim migration and Circle/Arc multi-boundary stabilization.
-5. `EllipticalArcEntity` and native ellipse Trim/Break.
-6. Native Bezier split and spline Trim/Break preservation.
+5. `EllipticalArcEntity` with rendering, persistence, snapping and export infrastructure.
+6. Native ellipse Trim/Break using `EllipticalArcEntity`.
+7. Native Bezier split and open-spline Trim/Break preservation.
+8. Rich `CadIntersectionPoint` records with shared point and native parameters.
+9. EXTEND refinements on the same native model for supported targets and boundaries.
+10. Removal of obsolete permanent-polyline fallbacks for supported native curve edits.
+11. Preview UX alignment: dashed removal preview for Trim/Break and addition highlight for Extend.
+12. Save/Export UX clarification so derived exports cannot be confused with native project saves.
+
+Current supported edit results:
+
+- lines remain line fragments with shared explicit endpoints;
+- circles and arcs produce native arcs;
+- polylines, rectangles and polygons represented as closed polylines produce polyline fragments;
+- ellipses and elliptical arcs produce native `EllipticalArcEntity` fragments;
+- open Bezier splines produce native `BezierSplineEntity` fragments;
+- closed Bezier spline splitting remains deferred/no-op.
+
+Remaining deferred work for later v0.9/v1.0 planning:
+
+- closed spline editing policy;
+- full-circle/full-ellipse Break Point convention, if wanted;
+- Offset review under the same native-geometry preservation principle;
+- further adoption of rich intersections where it simplifies command code;
+- broader release-candidate validation and external DXF viewer checks.
 
 ### Phase 1 - Local application/session settings
 

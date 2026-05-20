@@ -221,7 +221,7 @@ CAD editing operations modify native entities using native geometric parameters.
 Sampling is allowed only as temporary support and must not become the permanent source of edited geometry when a native representation exists.
 ```
 
-Future Trim/Break work should route target fragmentation through a shared curve-splitting pipeline:
+Trim and Break target fragmentation is routed through the shared curve-splitting pipeline:
 
 ```text
 CadTrimService / CadBreakService
@@ -230,11 +230,11 @@ CadTrimService / CadBreakService
 -> native entity fragments
 ```
 
-The command services should not duplicate per-entity splitting logic. They should collect intersections or break points, convert them into target-side `CurveCut` values, and ask the split service to build the fragments to keep.
+`CadExtendService` follows the same native-geometry direction for supported targets and boundaries. Command services should not duplicate per-entity splitting logic. They should collect intersections or break points, convert them into target-side `CurveCut` values, and ask the split service or target-specific native extension logic to build the final entity.
 
-When one intersection modifies multiple explicit-vertex entities, the intersection point must be computed once and reused as the same logical `Point2D` value for all resulting endpoints/vertices. This avoids micro-gaps after reciprocal Trim/Extend-style operations.
+When one intersection modifies multiple explicit-vertex entities, the intersection point must be computed once and reused as the same logical `Point2D` value for all resulting endpoints/vertices. This avoids micro-gaps after reciprocal Trim/Extend-style operations. `CadIntersectionPoint` carries the shared point plus native parameters for both participating entities.
 
-See `docs/curve-editing.md` for the detailed rules, expected adapter model and implementation phases.
+See `docs/curve-editing.md` for the detailed rules, current supported entity set and deferred work.
 
 ---
 
