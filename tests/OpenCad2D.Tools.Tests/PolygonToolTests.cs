@@ -226,6 +226,20 @@ public sealed class PolygonToolTests
         Assert.Equal(CommandInputKind.PointOrDistance, vertexPrompt.ExpectedInput);
     }
 
+
+    [Fact]
+    public void ToolControllerConfirmActiveToolCommand_AtSidesPrompt_ShouldUseDefaultSideCount()
+    {
+        var context = CreateContext();
+        var tool = new PolygonTool();
+        var controller = new ToolController(context, tool);
+
+        ToolResult result = controller.ConfirmActiveToolCommand();
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(PolygonToolState.WaitingForCenter, tool.State);
+        Assert.Equal(PolygonTool.DefaultSideCount, tool.SideCount);
+    }
     private static ToolContext CreateContext()
     {
         return new ToolContext(

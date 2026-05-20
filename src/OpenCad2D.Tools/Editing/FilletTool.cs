@@ -97,8 +97,9 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
             FilletToolState.WaitingForRadius => new CommandPromptState(
                 "FILLET",
-                "Specify fillet radius",
+                $"Specify fillet radius <{_radius:0.###}>",
                 CommandInputKind.Number,
+                acceptsEmptyEnter: true,
                 placeholder: "Radius, for example 10 or 0"),
 
             FilletToolState.WaitingForTrimMode => new CommandPromptState(
@@ -148,11 +149,20 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             return ToolResult.Started($"Specify trim mode <{FormatTrimMode()}>.");
         }
 
-        if (State == FilletToolState.WaitingForRadius &&
-            input.Kind == CommandInputSubmissionKind.Number &&
-            input.Number is not null)
+        if (State == FilletToolState.WaitingForRadius)
         {
-            return AcceptRadius(context, input.Number.Value);
+            if (input.Kind == CommandInputSubmissionKind.Confirm)
+            {
+                State = FilletToolState.WaitingForFirstEntityOrRadius;
+                context.CurrentBasePoint = null;
+                return ToolResult.Started($"Fillet radius remains {_radius:0.###}. Select first line.");
+            }
+
+            if (input.Kind == CommandInputSubmissionKind.Number &&
+                input.Number is not null)
+            {
+                return AcceptRadius(context, input.Number.Value);
+            }
         }
 
         if (State == FilletToolState.WaitingForTrimMode)

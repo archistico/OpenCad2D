@@ -209,6 +209,33 @@ public sealed class MirrorToolTests
         Assert.Equal(line.Id, document.Entities.All.Single().Id);
     }
 
+
+    [Fact]
+    public void ToolControllerConfirmActiveToolCommand_AtDeleteSourcePrompt_ShouldKeepSourceObjects()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var line = new LineEntity(
+            new Point2D(1, 2),
+            new Point2D(3, 2));
+
+        document.AddEntity(line);
+        selection.Select(line.Id);
+
+        var context = CreateContext(document, selection);
+        var tool = new MirrorTool();
+        var controller = new ToolController(context, tool);
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 10)));
+
+        ToolResult result = controller.ConfirmActiveToolCommand();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(2, document.Entities.All.Count);
+        Assert.Contains(document.Entities.All, entity => entity.Id == line.Id);
+    }
     private static ToolContext CreateContext(
         CadDocument? document = null,
         SelectionSet? selectionSet = null,

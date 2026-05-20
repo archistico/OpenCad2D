@@ -1,6 +1,8 @@
 using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
 
@@ -29,7 +31,11 @@ public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEnti
         ArgumentNullException.ThrowIfNull(context);
 
 
-        return SubmitPoint(context, pointer.ModelPoint);
+        Point2D point = ResolveInputPoint(
+            context,
+            pointer.ModelPoint);
+
+        return SubmitPoint(context, point);
     }
 
     public ToolResult OnPointerMoved(ToolContext context, PointerInfo pointer)
@@ -42,7 +48,10 @@ public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEnti
             return ToolResult.None();
         }
 
-        CurrentPoint = pointer.ModelPoint;
+        CurrentPoint = ResolveInputPoint(
+            context,
+            pointer.ModelPoint);
+
         return ToolResult.Updated();
     }
 
@@ -218,6 +227,47 @@ public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEnti
         Reset();
         context.CurrentBasePoint = null;
         return ToolResult.Completed("Ellipse created.");
+    }
+
+    private Point2D ResolveInputPoint(
+        ToolContext context,
+        Point2D cursorPoint)
+    {
+        Point2D? basePoint = State switch
+        {
+            EllipseToolState.WaitingForMajorAxis => Center,
+            EllipseToolState.WaitingForMinorRadius => Center,
+            _ => context.CurrentBasePoint
+        };
+
+        return ApplySnap(
+            context,
+            cursorPoint,
+            basePoint);
+    }
+
+    private static Point2D ApplySnap(
+        ToolContext context,
+        Point2D cursorPoint,
+        Point2D? basePoint)
+    {
+        if (context.EnabledSnaps == SnapKind.None ||
+            Tolerance.IsZero(context.SnapTolerance))
+        {
+            return cursorPoint;
+        }
+
+        var request = new SnapRequest(
+            context.Document,
+            cursorPoint,
+            context.SnapTolerance,
+            context.EnabledSnaps,
+            basePoint,
+            context.GridSettings);
+
+        SnapCandidate? candidate = context.SnapService.Snap(request);
+
+        return candidate?.Point ?? cursorPoint;
     }
 
     private double GetMinorRadius(Point2D point)

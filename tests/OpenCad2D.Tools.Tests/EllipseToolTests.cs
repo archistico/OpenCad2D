@@ -164,11 +164,80 @@ public sealed class EllipseToolTests
         Assert.Equal(CommandInputKind.PointOrDistance, thirdPrompt.ExpectedInput);
     }
 
-    private static ToolContext CreateContext(CadDocument? document = null)
+    [Fact]
+    public void MajorAxisPointerPress_WithEndpointSnap_ShouldUseSnappedAxisPoint()
+    {
+        var document = new CadDocument();
+
+        var existingLine = new LineEntity(
+            new Point2D(100, 100),
+            new Point2D(200, 100));
+
+        document.AddEntity(existingLine);
+
+        var context = CreateContext(
+            document,
+            enabledSnaps: SnapKind.Endpoint,
+            snapTolerance: 5);
+
+        var tool = new EllipseTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(199, 101)));
+
+        Assert.Equal(new Point2D(200, 100), tool.MajorAxisPoint);
+        Assert.Equal(new Point2D(200, 100), tool.CurrentPoint);
+    }
+
+    [Fact]
+    public void MajorAxisPointerMove_WithEndpointSnap_ShouldPreviewSnappedAxisPoint()
+    {
+        var document = new CadDocument();
+
+        var existingLine = new LineEntity(
+            new Point2D(100, 100),
+            new Point2D(200, 100));
+
+        document.AddEntity(existingLine);
+
+        var context = CreateContext(
+            document,
+            enabledSnaps: SnapKind.Endpoint,
+            snapTolerance: 5);
+
+        var tool = new EllipseTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(199, 101)));
+
+        Assert.Equal(new Point2D(200, 100), tool.CurrentPoint);
+
+        EllipseEntity preview = Assert.IsType<EllipseEntity>(
+            Assert.Single(tool.GetPreviewEntities(context)));
+
+        Assert.Equal(new Vector2D(200, 100), preview.MajorAxis);
+    }
+
+    private static ToolContext CreateContext(
+        CadDocument? document = null,
+        SnapKind enabledSnaps = SnapKind.None,
+        double snapTolerance = 0)
     {
         return new ToolContext(
             document ?? new CadDocument(),
             new CommandHistory(),
-            new SnapService());
+            new SnapService(),
+            enabledSnaps: enabledSnaps,
+            snapTolerance: snapTolerance);
     }
 }

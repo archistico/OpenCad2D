@@ -631,3 +631,33 @@ tests/OpenCad2D.Tools.Tests/PolylineToolTests.cs
 docs/modify-tools.md
 docs/ai-handoff.md
 ```
+
+
+### 2026-05-20 - Modify Tools UX cleanup: right-click defaults for Polygon, Fillet and Mirror
+
+Aligned prompt confirmation behavior with the documented CAD-style policy. `PolygonTool` already accepted empty confirmation at the side-count prompt and now has explicit controller-level coverage for right-click/Enter using the default side count. `MirrorTool` already accepted empty confirmation at `Delete source objects? <No>` and now has controller-level coverage for right-click/Enter keeping source objects. `FilletTool` now exposes the radius prompt as `Specify fillet radius <r>` with empty confirmation enabled; right-click/Enter keeps the current radius and returns to first-line selection. The existing trim-mode confirmation remains unchanged.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Editing/FilletTool.cs
+tests/OpenCad2D.Tools.Tests/PolygonToolTests.cs
+tests/OpenCad2D.Tools.Tests/FilletToolTests.cs
+tests/OpenCad2D.Tools.Tests/MirrorToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+
+### 2026-05-20 - Modify Tools UX cleanup: Ellipse uses snap-resolved pointer points
+
+Fixed `EllipseTool` so pointer-based center/axis/minor-radius input and preview updates resolve active object snaps before updating tool state. The major-axis endpoint now uses the snapped point rather than the raw mouse position, which prevents the ellipse inclination from being taken from the unsnapped cursor when endpoint/midpoint/grid snaps are active. Command-line point input remains exact and bypasses snapping, matching the established command-input policy.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Drawing/EllipseTool.cs
+tests/OpenCad2D.Tools.Tests/EllipseToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```
+

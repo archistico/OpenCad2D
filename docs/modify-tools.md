@@ -17,7 +17,9 @@ Esc         -> cancel the current phase; when idle, clear selection where applic
 
 Right click is not a generic cancel action. It advances or completes the current phase only when the tool can do so safely. If a command requires a value and no default exists yet, the tool must show a clear message instead of guessing.
 
-Entity-selection phases should use `SnapKind.EntityOnly`. Geometric point phases should use the normal geometric snap set. Numeric prompts may be completed by typing a value, by supported graphical input, or by confirming the proposed value shown in angle brackets such as `<N>` or `<10>`.
+Entity-selection phases should use `SnapKind.EntityOnly`. Geometric point phases should use the normal geometric snap set. Numeric prompts may be completed by typing a value, by supported graphical input, or by confirming the proposed value shown in angle brackets such as `<N>` or `<10>`. Current confirmations explicitly covered by this policy include Polygon side count, Fillet radius/trim mode, Mirror delete-source choice, Polyline finish and Delete multi-pick confirmation.
+
+When a tool acquires a geometric point from pointer input, it must use the snap-resolved point, not the raw cursor position. This applies to every point collection phase, including center points, axis endpoints, radius points, rectangle corners, polyline vertices and preview updates. Command-line coordinates are already explicit and should remain exact.
 
 The Select area includes explicit selection actions:
 
@@ -221,7 +223,7 @@ Workflow:
 
 ```text
 FILLET: Select first line or [Radius/Trim] <r> (Trim):
-FILLET: Specify fillet radius:
+FILLET: Specify fillet radius <r>:
 FILLET: Specify trim mode <Trim>:
 FILLET: Select second line:
 ```
@@ -233,6 +235,8 @@ Targets:
 Rules:
 
 - Radius option sets the active fillet radius;
+- right click/Enter at the radius prompt confirms the current radius shown in `<...>`;
+- right click/Enter at the trim-mode prompt confirms the current trim mode;
 - radius `0` creates a sharp-corner join;
 - radius greater than `0` creates a tangent arc;
 - while selecting the second line, Fillet shows a live preview of the final result;

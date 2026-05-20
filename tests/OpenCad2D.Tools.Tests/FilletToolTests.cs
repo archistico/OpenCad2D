@@ -248,6 +248,40 @@ public sealed class FilletToolTests
         Assert.Same(horizontal, Assert.Single(overlay.Entities));
     }
 
+
+    [Fact]
+    public void ConfirmAtRadiusPrompt_ShouldKeepCurrentRadiusAndReturnToEntitySelection()
+    {
+        var context = CreateContext();
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Confirm(string.Empty),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(FilletToolState.WaitingForFirstEntityOrRadius, tool.State);
+        Assert.Equal(0, tool.Radius);
+        Assert.Equal("Fillet radius remains 0. Select first line.", result.Message);
+    }
+
+    [Fact]
+    public void ToolControllerConfirmActiveToolCommand_AtRadiusPrompt_ShouldKeepCurrentRadius()
+    {
+        var context = CreateContext();
+        var tool = new FilletTool();
+        var controller = new ToolController(context, tool);
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+
+        ToolResult result = controller.ConfirmActiveToolCommand();
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(FilletToolState.WaitingForFirstEntityOrRadius, tool.State);
+        Assert.Equal(0, tool.Radius);
+    }
     private static ToolContext CreateContext(CadDocument? document = null)
     {
         return new ToolContext(
