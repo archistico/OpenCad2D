@@ -191,7 +191,23 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         return new ToolPreviewDescriptor(
             entities: GetPreviewEntities(),
             highlightedEntities: GetHighlightedPreviewEntities(),
-            highlightedEntityKind: ToolPreviewHighlightKind.Removal);
+            highlightedEntityKind: ToolPreviewHighlightKind.Removal,
+            entityOverlays: GetSelectedBoundaryOverlays());
+    }
+
+    private IReadOnlyList<ToolPreviewEntityOverlay> GetSelectedBoundaryOverlays()
+    {
+        if (_boundaryEntities.Count == 0)
+        {
+            return Array.Empty<ToolPreviewEntityOverlay>();
+        }
+
+        return new[]
+        {
+            new ToolPreviewEntityOverlay(
+                _boundaryEntities,
+                ToolPreviewHighlightKind.Emphasis)
+        };
     }
 
     private ToolResult AcceptBoundaryEntity(

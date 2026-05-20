@@ -286,3 +286,16 @@ Delete follows the entity-selection policy used by Modify tools:
 - text and multiline text can be picked by clicking anywhere inside their estimated bounding box.
 
 Text hit testing intentionally uses the estimated text bounding box rather than only the insertion point. This makes text behave like a selectable annotation object in Move, Copy, Delete and other selection-driven workflows.
+
+## Boundary and first-entity selection feedback
+
+Selection-oriented modify phases should give persistent visual feedback after the user selects an entity that remains active in the command state.
+
+Current rules:
+
+- TRIM highlights selected cutting edges as `Emphasis` overlays while the removable interval remains a separate dashed `Removal` highlight.
+- EXTEND highlights the selected boundary entity as an `Emphasis` overlay while the added interval remains a separate `Addition` highlight.
+- FILLET highlights the first selected line as an `Emphasis` overlay while waiting for the second line.
+- FILLET entity picking uses `SnapKind.EntityOnly` for both the first-line and second-line phases, because geometric endpoint/midpoint snaps are not useful when the command expects objects.
+
+This keeps three different concepts visually distinct: command state entities, geometry that will be removed, and geometry that will be added.

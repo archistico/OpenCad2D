@@ -591,3 +591,30 @@ tests/OpenCad2D.Tools.Tests/ToolControllerIntegrationTests.cs
 docs/modify-tools.md
 docs/ai-handoff.md
 ```
+
+### 2026-05-20 - Modify Tools UX cleanup: persistent boundary/first-entity highlights
+
+Added persistent command-state highlights for selection-oriented modify tools. `ToolPreviewDescriptor` now supports additional semantic `ToolPreviewEntityOverlay` collections so a tool can show state entities independently from its primary preview and from Removal/Addition highlights.
+
+Applied the model to:
+
+- `TrimTool`: selected cutting edges are emitted as `Emphasis` overlays; the removable interval remains a dashed `Removal` highlight.
+- `ExtendTool`: the selected boundary entity is emitted as an `Emphasis` overlay; the extension interval remains an `Addition` highlight.
+- `FilletTool`: the first selected line is emitted as an `Emphasis` overlay while waiting for the second line, and the tool now uses `SnapKind.EntityOnly` during line selection.
+
+Files touched:
+
+```text
+src/OpenCad2D.Tools/Common/ToolPreviewDescriptor.cs
+src/OpenCad2D.Tools/Common/ToolPreviewEntityOverlay.cs
+src/OpenCad2D.App/Rendering/CadToolPreviewRenderer.cs
+src/OpenCad2D.Tools/Editing/TrimTool.cs
+src/OpenCad2D.Tools/Editing/ExtendTool.cs
+src/OpenCad2D.Tools/Editing/FilletTool.cs
+tests/OpenCad2D.Tools.Tests/TrimToolTests.cs
+tests/OpenCad2D.Tools.Tests/ExtendToolTests.cs
+tests/OpenCad2D.Tools.Tests/FilletToolTests.cs
+tests/OpenCad2D.Tools.Tests/ToolPreviewEntityProviderTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```

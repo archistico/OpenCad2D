@@ -301,6 +301,26 @@ public sealed class TrimToolTests
             selectionTolerance: 0.5);
     }
 
+
+    [Fact]
+    public void GetPreviewDescriptor_AfterBoundarySelection_ShouldHighlightSelectedBoundary()
+    {
+        var context = CreateContextWithBoundaryAndTarget(
+            out LineEntity boundary,
+            out _);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+        ToolPreviewEntityOverlay overlay = Assert.Single(descriptor.EntityOverlays);
+
+        Assert.Equal(ToolPreviewHighlightKind.Emphasis, overlay.Kind);
+        Assert.Same(boundary, Assert.Single(overlay.Entities));
+    }
+
     private static ToolContext CreateContextWithBoundaryAndTarget(
         out LineEntity boundary,
         out LineEntity target)

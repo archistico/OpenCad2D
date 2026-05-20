@@ -583,12 +583,17 @@ public sealed class ToolPreviewEntityProviderTests
             new BoundingBox2D(0, 0, 5, 5),
             ToolPreviewWindowKind.Zoom);
 
+        var overlay = new ToolPreviewEntityOverlay(
+            new[] { highlighted },
+            ToolPreviewHighlightKind.Emphasis);
+
         var descriptor = new ToolPreviewDescriptor(
             entities: new[] { entity },
             highlightedEntities: new[] { highlighted },
             lines: new[] { line },
             markers: new[] { marker },
-            windows: new[] { window });
+            windows: new[] { window },
+            entityOverlays: new[] { overlay });
 
         Assert.False(descriptor.IsEmpty);
         Assert.Same(entity, Assert.Single(descriptor.Entities));
@@ -598,6 +603,7 @@ public sealed class ToolPreviewEntityProviderTests
         Assert.Equal(marker, Assert.Single(descriptor.Markers));
         Assert.Equal(ToolPreviewMarkerShape.Square, Assert.Single(descriptor.Markers).Shape);
         Assert.Equal(window, Assert.Single(descriptor.Windows));
+        Assert.Same(overlay, Assert.Single(descriptor.EntityOverlays));
     }
 
 

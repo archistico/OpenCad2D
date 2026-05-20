@@ -173,6 +173,14 @@ public sealed class CadToolPreviewRenderer
             descriptor.HighlightedEntities,
             GetHighlightedEntityPen(descriptor.HighlightedEntityKind));
 
+        foreach (ToolPreviewEntityOverlay overlay in descriptor.EntityOverlays)
+        {
+            DrawEntitiesPreview(
+                context,
+                overlay.Entities,
+                GetHighlightedEntityPen(overlay.Kind));
+        }
+
         foreach (ToolPreviewLine line in descriptor.Lines)
         {
             DrawPreviewLine(

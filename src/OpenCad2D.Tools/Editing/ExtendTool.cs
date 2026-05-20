@@ -146,7 +146,23 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         return new ToolPreviewDescriptor(
             entities: GetPreviewEntities(),
             highlightedEntities: GetHighlightedPreviewEntities(),
-            highlightedEntityKind: ToolPreviewHighlightKind.Addition);
+            highlightedEntityKind: ToolPreviewHighlightKind.Addition,
+            entityOverlays: GetSelectedBoundaryOverlays());
+    }
+
+    private IReadOnlyList<ToolPreviewEntityOverlay> GetSelectedBoundaryOverlays()
+    {
+        if (_boundaryEntity is null)
+        {
+            return Array.Empty<ToolPreviewEntityOverlay>();
+        }
+
+        return new[]
+        {
+            new ToolPreviewEntityOverlay(
+                new[] { _boundaryEntity },
+                ToolPreviewHighlightKind.Emphasis)
+        };
     }
 
     private ToolResult AcceptBoundaryEntity(

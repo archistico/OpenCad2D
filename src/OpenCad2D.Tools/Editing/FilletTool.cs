@@ -4,6 +4,7 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
 
@@ -13,7 +14,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Creates a tangent fillet between two lines.
 /// v0.8 supports Line-Line with Radius and Radius=0 corner joining.
 /// </summary>
-public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
+public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, ISnapModeProvider, IToolPreviewDescriptorProvider
 {
     private const double MinimumPracticalFilletAngleRadians = 1e-6;
 
@@ -31,6 +32,39 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
     public bool TrimEnabled => _trimEnabled;
 
     public EntityId? FirstEntityId => _firstPick?.EntityId;
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State is FilletToolState.WaitingForFirstEntityOrRadius or FilletToolState.WaitingForSecondEntity
+            ? SnapKind.EntityOnly
+            : SnapKind.None;
+    }
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new ToolPreviewDescriptor(
+            entities: GetPreviewEntities(),
+            entityOverlays: GetSelectedEntityOverlays());
+    }
+
+    private IReadOnlyList<ToolPreviewEntityOverlay> GetSelectedEntityOverlays()
+    {
+        if (_firstPick is null)
+        {
+            return Array.Empty<ToolPreviewEntityOverlay>();
+        }
+
+        return new[]
+        {
+            new ToolPreviewEntityOverlay(
+                new[] { _firstPick.Entity },
+                ToolPreviewHighlightKind.Emphasis)
+        };
+    }
 
     public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
     {
@@ -277,7 +311,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         State = FilletToolState.WaitingForSecondEntity;
         context.CurrentBasePoint = pick.ClosestPoint;
 
-        return ToolResult.Started("Select second line.");
+        return ToolResult.Started("First fillet object selected. Select second line.");
     }
 
     private ToolResult AcceptSecondLine(

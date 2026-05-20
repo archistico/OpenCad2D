@@ -208,6 +208,46 @@ public sealed class FilletToolTests
         Assert.Equal(2, document.Entities.All.Count());
     }
 
+
+    [Fact]
+    public void GetActiveSnapKind_WhenSelectingEntities_ShouldUseEntityOnlySnap()
+    {
+        var context = CreateContext();
+        var tool = new FilletTool();
+
+        Assert.Equal(SnapKind.EntityOnly, tool.GetActiveSnapKind(context));
+
+        var first = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var second = new LineEntity(new Point2D(10, 0), new Point2D(10, 10));
+        context.Document.AddEntity(first);
+        context.Document.AddEntity(second);
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(SnapKind.EntityOnly, tool.GetActiveSnapKind(context));
+    }
+
+    [Fact]
+    public void GetPreviewDescriptor_AfterFirstLine_ShouldHighlightSelectedFirstEntity()
+    {
+        CadDocument document = new();
+        var horizontal = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var vertical = new LineEntity(new Point2D(10, 0), new Point2D(10, 10));
+        document.AddEntity(horizontal);
+        document.AddEntity(vertical);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        var provider = Assert.IsAssignableFrom<IToolPreviewDescriptorProvider>(tool);
+        ToolPreviewDescriptor descriptor = provider.GetPreviewDescriptor(context);
+        ToolPreviewEntityOverlay overlay = Assert.Single(descriptor.EntityOverlays);
+
+        Assert.Equal(ToolPreviewHighlightKind.Emphasis, overlay.Kind);
+        Assert.Same(horizontal, Assert.Single(overlay.Entities));
+    }
+
     private static ToolContext CreateContext(CadDocument? document = null)
     {
         return new ToolContext(
