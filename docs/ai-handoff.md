@@ -681,3 +681,8 @@ RectangleBySidesTool now treats typed distance input during the second-side phas
 
 
 - Fixed Rectangle Sides command input semantics: after the first side is defined, a plain numeric value is treated as an exact second-side length even when the application resolves direct-distance input into a point before passing it to the tool. Regression tests now verify both side lengths and perimeter (`P = 2A + 2B`) so incorrect projected heights are caught.
+
+
+## Current checkpoint — Offset UX phase B
+
+Offset distance input is stable and the target/side workflow now exposes semantic previews: the selected offset target is kept highlighted as `Emphasis`, while the transient offset result is highlighted as `Addition`. After creating an offset entity, the tool returns to target selection and keeps the same distance so repeated offsets are fast.

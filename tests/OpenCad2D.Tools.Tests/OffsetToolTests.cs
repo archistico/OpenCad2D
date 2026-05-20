@@ -424,6 +424,73 @@ public sealed class OffsetToolTests
         Assert.True(offset.Vertices.Count > 10);
     }
 
+
+    [Fact]
+    public void GetPreviewDescriptor_AfterEntitySelection_ShouldHighlightSelectedTarget()
+    {
+        CadDocument document = new();
+        var line = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        document.AddEntity(line);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        ToolPreviewEntityOverlay overlay = Assert.Single(descriptor.EntityOverlays);
+        Assert.Equal(ToolPreviewHighlightKind.Emphasis, overlay.Kind);
+        Assert.Same(line, Assert.Single(overlay.Entities));
+        Assert.Empty(descriptor.HighlightedEntities);
+    }
+
+    [Fact]
+    public void GetPreviewDescriptor_AfterPointerMove_ShouldHighlightOffsetPreviewAsAddition()
+    {
+        CadDocument document = new();
+        var line = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        document.AddEntity(line);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        ToolResult move = tool.OnPointerMoved(context, new PointerInfo(new Point2D(5, 2)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(ToolResultKind.Updated, move.Kind);
+        Assert.Contains("Highlighted preview", move.Message);
+        Assert.Equal(ToolPreviewHighlightKind.Addition, descriptor.HighlightedEntityKind);
+        LineEntity preview = Assert.IsType<LineEntity>(Assert.Single(descriptor.HighlightedEntities));
+        AssertPointNear(new Point2D(0, 2), preview.Start);
+        AssertPointNear(new Point2D(10, 2), preview.End);
+        ToolPreviewEntityOverlay overlay = Assert.Single(descriptor.EntityOverlays);
+        Assert.Same(line, Assert.Single(overlay.Entities));
+    }
+
+    [Fact]
+    public void CreateOffset_AfterSideSelection_ShouldReturnToEntitySelectionWithSameDistance()
+    {
+        CadDocument document = new();
+        var first = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var second = new LineEntity(new Point2D(0, 10), new Point2D(10, 10));
+        document.AddEntity(first);
+        document.AddEntity(second);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        ToolResult created = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 2)));
+
+        Assert.Equal(ToolResultKind.Completed, created.Kind);
+        Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
+        Assert.Equal(2, tool.Distance);
+    }
+
     private static void AssertPointNear(Point2D expected, Point2D actual)
     {
         Assert.True(

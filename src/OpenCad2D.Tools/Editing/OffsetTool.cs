@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// Creates parallel/constant-distance copies of supported entities.
 /// Supports lines, circles, arcs, straight-segment polylines and sampled Bezier splines with miter joins.
 /// </summary>
-public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, ISnapModeProvider
+public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, IToolPreviewDescriptorProvider, ISnapModeProvider
 {
     private const double MiterLimitRatio = 10.0;
 
@@ -67,6 +67,31 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         return _previewEntity is null
             ? Array.Empty<CadEntity>()
             : new[] { _previewEntity };
+    }
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new ToolPreviewDescriptor(
+            highlightedEntities: GetPreviewEntities(context),
+            highlightedEntityKind: ToolPreviewHighlightKind.Addition,
+            entityOverlays: GetSelectedTargetOverlays());
+    }
+
+    private IReadOnlyList<ToolPreviewEntityOverlay> GetSelectedTargetOverlays()
+    {
+        if (_pickedEntity is null)
+        {
+            return Array.Empty<ToolPreviewEntityOverlay>();
+        }
+
+        return new[]
+        {
+            new ToolPreviewEntityOverlay(
+                new[] { _pickedEntity.Entity },
+                ToolPreviewHighlightKind.Emphasis)
+        };
     }
 
     public CommandPromptState GetPromptState(ToolContext context)
@@ -191,7 +216,7 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             pointer.ModelPoint);
 
         return _previewEntity is not null
-            ? ToolResult.Updated("Offset preview updated.")
+            ? ToolResult.Updated("Offset preview updated. Highlighted preview shows the entity that will be created.")
             : ToolResult.None("Cannot preview offset on the selected side.");
     }
 
@@ -284,7 +309,7 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         State = OffsetToolState.WaitingForSidePoint;
         context.CurrentBasePoint = picked.ClosestPoint;
 
-        return ToolResult.Started("Specify side to offset.");
+        return ToolResult.Started("Offset target selected. Specify side to offset.");
     }
 
     private ToolResult CreateOffset(

@@ -344,3 +344,8 @@ After the first side is defined, the Rectangle Sides tool accepts either a secon
 ### Rectangle Sides exact typed second side length
 
 When the first side is already defined, a plain numeric command input such as `100` defines the exact second-side length. The current mouse position or snap point is used only to choose the side of the first segment. The resulting rectangle must therefore satisfy `P = 2A + 2B`, where `A` is the first side and `B` is the typed second-side length.
+
+
+### Offset target/side preview
+
+Offset now separates its workflow into distance, target selection and side selection phases. Target selection uses `EntityOnly` snapping and the selected target remains highlighted while the user chooses the side. Moving the pointer on either side of the target displays the offset result as an `Addition` preview; clicking the side creates the offset and keeps the tool active so another entity can be offset with the same distance.
