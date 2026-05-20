@@ -34,6 +34,42 @@ The App owns file dialogs and error dialogs. The exporter owns file content gene
 
 ---
 
+
+## Save versus Export UX policy
+
+Save and Export are intentionally different operations.
+
+```text
+Save / Save As
+-> writes the native editable .opencad2d.json document
+-> updates CurrentFilePath
+-> clears the dirty state
+
+Export SVG / PDF / DXF / PNG
+-> writes a derived external file
+-> does not update CurrentFilePath
+-> does not clear the dirty state
+-> does not mark the drawing as saved
+```
+
+This separation protects source data. Exported files may be final or interchange representations and may not preserve every native OpenCad2D editing feature.
+
+After a successful export, the App must clearly tell the user that export did not save the editable OpenCad2D project. The status message must distinguish these cases:
+
+```text
+Native project never saved
+-> tell the user to use Save As
+
+Native project saved but dirty
+-> tell the user that unsaved project changes remain
+
+Native project saved and clean
+-> tell the user that the native drawing is already saved
+```
+
+The export message is informational and non-modal. The existing close-warning flow remains responsible for preventing accidental loss of unsaved native project data.
+
+---
 ## SVG export
 
 Current SVG export is implemented by `SvgExporter`.

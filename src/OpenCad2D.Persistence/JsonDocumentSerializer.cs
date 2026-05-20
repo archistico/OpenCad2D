@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.Json;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
@@ -594,6 +594,20 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 MinorRadius = ellipse.MinorRadius
             },
 
+            EllipticalArcEntity ellipticalArc => new EllipticalArcEntityDto
+            {
+                Id = ellipticalArc.Id.ToString(),
+                LayerId = ellipticalArc.LayerId.Value,
+                CenterX = ellipticalArc.Center.X,
+                CenterY = ellipticalArc.Center.Y,
+                MajorAxisX = ellipticalArc.MajorAxis.X,
+                MajorAxisY = ellipticalArc.MajorAxis.Y,
+                MinorRadius = ellipticalArc.MinorRadius,
+                StartParameterRadians = ellipticalArc.StartParameterRadians,
+                EndParameterRadians = ellipticalArc.EndParameterRadians,
+                IsCounterClockwise = ellipticalArc.IsCounterClockwise
+            },
+
             ArcEntity arc => new ArcEntityDto
             {
                 Id = arc.Id.ToString(),
@@ -956,6 +970,18 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     new Point2D(ellipse.CenterX, ellipse.CenterY),
                     new Vector2D(ellipse.MajorAxisX, ellipse.MajorAxisY),
                     ellipse.MinorRadius,
+                    id,
+                    layerId),
+
+            EllipticalArcEntityDto ellipticalArc => ellipticalArc.MinorRadius <= 0 || new Vector2D(ellipticalArc.MajorAxisX, ellipticalArc.MajorAxisY).Length <= 0
+                ? null
+                : new EllipticalArcEntity(
+                    new Point2D(ellipticalArc.CenterX, ellipticalArc.CenterY),
+                    new Vector2D(ellipticalArc.MajorAxisX, ellipticalArc.MajorAxisY),
+                    ellipticalArc.MinorRadius,
+                    ellipticalArc.StartParameterRadians,
+                    ellipticalArc.EndParameterRadians,
+                    ellipticalArc.IsCounterClockwise,
                     id,
                     layerId),
 

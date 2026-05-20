@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Interaction.Snapping;
@@ -70,6 +70,11 @@ public sealed class EndpointSnapProvider : ISnapProvider
             case ArcEntity arc:
                 yield return arc.Geometry.StartPoint;
                 yield return arc.Geometry.EndPoint;
+                break;
+
+            case EllipticalArcEntity ellipticalArc:
+                yield return ellipticalArc.StartPoint;
+                yield return ellipticalArc.EndPoint;
                 break;
         }
     }

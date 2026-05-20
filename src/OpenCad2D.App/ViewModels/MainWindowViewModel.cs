@@ -618,12 +618,39 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         RegisterExportedFile(filePath);
 
-        SetMessage($"Exported SVG '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities). Use Save to save the native drawing.");
+        SetMessage(BuildExportCompletedMessage(
+            "SVG",
+            Path.GetFileName(filePath),
+            $"{result.ExportedEntityCount} entities"));
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));
 
         return result;
+    }
+
+
+    private string BuildExportCompletedMessage(
+        string formatName,
+        string fileName,
+        string details)
+    {
+        string message = $"Exported {formatName} '{fileName}' ({details}). This export does not save the editable OpenCad2D project.";
+
+        if (string.IsNullOrWhiteSpace(CurrentFilePath))
+        {
+            message += " The editable OpenCad2D project has not been saved yet; use Save As to preserve the native drawing.";
+        }
+        else if (IsDirty)
+        {
+            message += " Unsaved project changes remain; use Save to preserve the native drawing.";
+        }
+        else
+        {
+            message += " The native drawing is already saved.";
+        }
+
+        return message;
     }
 
 
@@ -689,7 +716,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         RegisterExportedFile(filePath);
 
-        SetMessage($"Exported DXF '{Path.GetFileName(filePath)}' ({result.ExportedEntityCount} entities). Use Save to save the native drawing.");
+        SetMessage(BuildExportCompletedMessage(
+            "DXF",
+            Path.GetFileName(filePath),
+            $"{result.ExportedEntityCount} entities"));
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));
@@ -728,11 +758,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         RegisterExportedFile(filePath);
 
-        SetMessage(
-            $"Exported PDF '{Path.GetFileName(filePath)}' " +
-            $"({result.ExportedEntityCount} entities, " +
+        SetMessage(BuildExportCompletedMessage(
+            "PDF",
+            Path.GetFileName(filePath),
+            $"{result.ExportedEntityCount} entities, " +
             $"{options.PageSize} {options.Orientation}, " +
-            $"margin {options.MarginMillimeters:0.##} mm). Use Save to save the native drawing.");
+            $"margin {options.MarginMillimeters:0.##} mm"));
         OnPropertiesChanged(
             nameof(LastMessage),
             nameof(StatusText));

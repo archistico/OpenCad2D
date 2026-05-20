@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using OpenCad2D.Persistence.Dto;
 
@@ -32,6 +32,7 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
             EntityTypeNames.Line => root.Deserialize<LineEntityDto>(options),
             EntityTypeNames.Circle => root.Deserialize<CircleEntityDto>(options),
             EntityTypeNames.Ellipse => root.Deserialize<EllipseEntityDto>(options),
+            EntityTypeNames.EllipticalArc => root.Deserialize<EllipticalArcEntityDto>(options),
             EntityTypeNames.Arc => root.Deserialize<ArcEntityDto>(options),
             EntityTypeNames.Polyline => root.Deserialize<PolylineEntityDto>(options),
             EntityTypeNames.BezierSpline => root.Deserialize<BezierSplineEntityDto>(options),
@@ -96,6 +97,10 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
 
             case EllipseEntityDto ellipse:
                 JsonSerializer.Serialize(writer, ellipse, options);
+                break;
+
+            case EllipticalArcEntityDto ellipticalArc:
+                JsonSerializer.Serialize(writer, ellipticalArc, options);
                 break;
 
             case ArcEntityDto arc:

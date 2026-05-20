@@ -7,6 +7,51 @@ namespace OpenCad2D.Core.Tests;
 public sealed class CadBreakServiceTests
 {
     [Fact]
+    public void BreakAtPoint_WithLine_ShouldCreateTwoLinesSharingProjectedPoint()
+    {
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakAtPoint(
+            line,
+            new Point2D(5, 2));
+
+        Assert.Equal(2, result.Count);
+
+        var first = Assert.IsType<LineEntity>(result[0]);
+        var second = Assert.IsType<LineEntity>(result[1]);
+
+        Assert.Equal(new Point2D(0, 0), first.Start);
+        Assert.Equal(new Point2D(5, 0), first.End);
+        Assert.Equal(first.End, second.Start);
+        Assert.Equal(new Point2D(10, 0), second.End);
+    }
+
+    [Fact]
+    public void BreakBetweenPoints_WithLine_ShouldRemoveMiddleSegmentUsingProjectedPoints()
+    {
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakBetweenPoints(
+            line,
+            new Point2D(3, 2),
+            new Point2D(7, -2));
+
+        Assert.Equal(2, result.Count);
+
+        var first = Assert.IsType<LineEntity>(result[0]);
+        var second = Assert.IsType<LineEntity>(result[1]);
+
+        Assert.Equal(new Point2D(0, 0), first.Start);
+        Assert.Equal(new Point2D(3, 0), first.End);
+        Assert.Equal(new Point2D(7, 0), second.Start);
+        Assert.Equal(new Point2D(10, 0), second.End);
+    }
+
+    [Fact]
     public void BreakAtPoint_WithArc_ShouldCreateTwoArcs()
     {
         var arc = new ArcEntity(
@@ -357,7 +402,7 @@ public sealed class CadBreakServiceTests
     }
 
     [Fact]
-    public void BreakAtPoint_WithEllipse_ShouldOpenEllipseAsPolyline()
+    public void BreakAtPoint_WithEllipse_ShouldRemainNoOpUntilFullSweepArcPolicyExists()
     {
         var ellipse = new EllipseEntity(
             new Point2D(0, 0),
@@ -368,16 +413,11 @@ public sealed class CadBreakServiceTests
             ellipse,
             new Point2D(10, 0));
 
-        PolylineEntity opened = Assert.IsType<PolylineEntity>(Assert.Single(result));
-
-        Assert.False(opened.IsClosed);
-        Assert.True(opened.Vertices.Count > 8);
-        Assert.True(opened.Vertices.First().DistanceTo(new Point2D(10, 0)) <= 1.0e-6);
-        Assert.True(opened.Vertices.Last().DistanceTo(new Point2D(10, 0)) <= 1.0e-6);
+        Assert.Empty(result);
     }
 
     [Fact]
-    public void BreakBetweenPoints_WithEllipse_ShouldRemoveMinorArcAndReturnPolyline()
+    public void BreakBetweenPoints_WithEllipse_ShouldRemoveMinorArcAndReturnNativeEllipticalArc()
     {
         var ellipse = new EllipseEntity(
             new Point2D(0, 0),
@@ -389,12 +429,13 @@ public sealed class CadBreakServiceTests
             new Point2D(10, 0),
             new Point2D(0, 5));
 
-        PolylineEntity remaining = Assert.IsType<PolylineEntity>(Assert.Single(result));
+        EllipticalArcEntity remaining = Assert.IsType<EllipticalArcEntity>(Assert.Single(result));
 
-        Assert.False(remaining.IsClosed);
-        Assert.True(remaining.Vertices.Count > 8);
-        Assert.True(remaining.Vertices.First().DistanceTo(new Point2D(0, 5)) <= 1.0e-6);
-        Assert.True(remaining.Vertices.Last().DistanceTo(new Point2D(10, 0)) <= 1.0e-6);
+        Assert.True(remaining.StartPoint.DistanceTo(new Point2D(0, 5)) <= 1.0e-6);
+        Assert.True(remaining.EndPoint.DistanceTo(new Point2D(10, 0)) <= 1.0e-6);
+        Assert.Equal(ellipse.Center, remaining.Center);
+        Assert.Equal(ellipse.MajorAxis, remaining.MajorAxis);
+        Assert.Equal(ellipse.MinorRadius, remaining.MinorRadius);
     }
 
     [Fact]
@@ -424,7 +465,7 @@ public sealed class CadBreakServiceTests
     }
 
     [Fact]
-    public void BreakAtPoint_WithBezierSpline_ShouldReturnPolylineApproximationFragments()
+    public void BreakAtPoint_WithBezierSpline_ShouldReturnNativeBezierFragments()
     {
         var spline = new BezierSplineEntity(new[]
         {
@@ -437,12 +478,17 @@ public sealed class CadBreakServiceTests
             spline,
             new Point2D(5, 5));
 
-        Assert.NotEmpty(result);
-        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
+        Assert.Equal(2, result.Count);
+        BezierSplineEntity first = Assert.IsType<BezierSplineEntity>(result[0]);
+        BezierSplineEntity second = Assert.IsType<BezierSplineEntity>(result[1]);
+
+        Assert.True(first.ControlPoints[^1].DistanceTo(new Point2D(5, 5)) <= 1.0e-6);
+        Assert.Equal(first.ControlPoints[^1], second.ControlPoints[0]);
+        Assert.DoesNotContain(result, entity => entity is PolylineEntity);
     }
 
     [Fact]
-    public void BreakBetweenPoints_WithBezierSpline_ShouldReturnPolylineApproximationFragments()
+    public void BreakBetweenPoints_WithBezierSpline_ShouldReturnNativeBezierFragments()
     {
         var spline = new BezierSplineEntity(new[]
         {
@@ -456,8 +502,54 @@ public sealed class CadBreakServiceTests
             new Point2D(2.5, 3.75),
             new Point2D(7.5, 3.75));
 
-        Assert.NotEmpty(result);
-        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
+        Assert.Equal(2, result.Count);
+        BezierSplineEntity first = Assert.IsType<BezierSplineEntity>(result[0]);
+        BezierSplineEntity second = Assert.IsType<BezierSplineEntity>(result[1]);
+
+        Assert.True(first.ControlPoints[^1].DistanceTo(new Point2D(2.5, 3.75)) <= 1.0e-6);
+        Assert.True(second.ControlPoints[0].DistanceTo(new Point2D(7.5, 3.75)) <= 1.0e-6);
+        Assert.DoesNotContain(result, entity => entity is PolylineEntity);
     }
+
+    [Fact]
+    public void BreakEllipseBetweenPoints_ShouldCreateNativeEllipticalArc()
+    {
+        var ellipse = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakBetweenPoints(
+            ellipse,
+            new Point2D(0, 5),
+            new Point2D(0, -5));
+
+        EllipticalArcEntity arc = Assert.Single(result.OfType<EllipticalArcEntity>());
+
+        Assert.Equal(ellipse.Center, arc.Center);
+        Assert.Equal(ellipse.MajorAxis, arc.MajorAxis);
+        Assert.Equal(ellipse.MinorRadius, arc.MinorRadius);
+        Assert.DoesNotContain(result, entity => entity is PolylineEntity);
+    }
+
+    [Fact]
+    public void BreakEllipticalArcAtPoint_ShouldCreateTwoNativeEllipticalArcs()
+    {
+        var arc = new EllipticalArcEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5,
+            0,
+            Math.PI);
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakAtPoint(
+            arc,
+            new Point2D(0, 5));
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, entity => Assert.IsType<EllipticalArcEntity>(entity));
+        Assert.DoesNotContain(result, entity => entity is PolylineEntity);
+    }
+
 
 }

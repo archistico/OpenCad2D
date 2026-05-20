@@ -35,7 +35,7 @@ Known limits:
 - native DXF `DIMENSION` import/export remains future work; current OpenCad2D dimensions export as graphical primitives;
 - custom DXF `LTYPE` generation for arbitrary line format dash patterns is future work;
 - `LWPOLYLINE` bulge import preserves curved geometry as separate native line/arc entities, but does not preserve the original compound polyline topology;
-- full DXF `ELLIPSE` entities import as native `EllipseEntity`; partial DXF ellipses import as open polyline approximations until a native ellipse-arc entity exists;
+- full DXF `ELLIPSE` entities import as native `EllipseEntity`; native `EllipticalArcEntity` exists for edited partial ellipses, while DXF partial-ellipse import may still require a dedicated native importer pass;
 - readable DXF `SPLINE` control points import as `BezierSplineEntity`; fit-point-only splines import as polyline approximations; full external NURBS knot/weight evaluation is not implemented yet;
 - broad compatibility should be re-checked periodically with recorded LibreCAD, QCAD and Autodesk viewer versions.
 
@@ -51,7 +51,28 @@ The v0.8 line mitigates this by marking dimensions as potentially stale after ge
 
 ## Snapping
 
-Intersection snaps for `EllipseEntity` and `BezierSplineEntity` are supported through sampled polyline approximations. This is practical for the current interactive workflow but is not yet an exact analytic/NURBS intersection solver.
+Intersection snaps for `BezierSplineEntity` are still supported through sampled polyline approximations. `EllipseEntity` and `EllipticalArcEntity` now have native line-segment intersection support for line and polyline editing boundaries, but snapping and unsupported curve-pair intersections may still use sampled/coarse helpers until the richer intersection model is introduced.
+
+---
+
+
+## Curve editing precision
+
+Trim and Break currently support the main editable entity set, but the next stabilization pass should consolidate them around the native curve-editing architecture documented in `docs/curve-editing.md`.
+
+Known current limits:
+
+- advanced Trim/Break behavior is now routed through the shared interval-based implementation for lines, circles, arcs, polylines, full ellipses and elliptical arcs;
+- ellipse Trim and Break Between Points now return native `EllipticalArcEntity` fragments instead of permanent polyline approximations; line and polyline editing boundaries use native line-segment/ellipse intersections; one-point Break on a full closed ellipse remains deferred until a full-sweep arc convention is defined;
+- spline Trim/Break/Offset workflows can still use sampled polyline approximations where native Bezier splitting has not been implemented;
+- sampled approximations may be used for preview and coarse search, but should not remain the final source of edited geometry once a native representation exists.
+
+Target rule:
+
+```text
+CAD editing operations modify native entities using native geometric parameters.
+Shared intersections used by multiple explicit-vertex entities must reuse the same cut point to avoid micro-gaps.
+```
 
 ---
 

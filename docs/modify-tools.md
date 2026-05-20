@@ -4,17 +4,33 @@ Modify tools change existing geometry. Tools own workflow state; geometry calcul
 
 ---
 
+
+## Native curve-editing policy
+
+Trim and Break are being consolidated around the shared curve-editing architecture described in `docs/curve-editing.md`.
+
+Binding rule for future implementation:
+
+```text
+CAD editing operations modify native entities using native geometric parameters.
+Sampling is allowed only as temporary support, never as the permanent source of edited geometry when a native representation exists.
+```
+
+For explicit-vertex entities such as lines and polylines, shared intersections should be reused directly as resulting endpoints or inserted vertices. For parametric entities such as circles, arcs and elliptical arcs, the native curve parameter rebuilds the resulting entity while the shared point is used as validation/refinement input. Open Bezier spline splitting is now native; closed spline editing remains deferred.
+
+---
+
 ## Break Point
 
-Targets:
+Current targets:
 
 - Line;
 - Arc;
 - Ellipse;
 - Polyline;
-- Bezier Spline, converted to an open polyline approximation.
+- Bezier Spline, open splines are split natively.
 
-Circle is not applicable; use Break Segment for circles. Ellipse Break Point opens the ellipse into an approximated open polyline starting and ending at the break point.
+Circle is not applicable in the current Break Point workflow; use Break Segment for circles. Full-ellipse Break Point is intentionally a no-op until a stable full-sweep elliptical arc convention exists. Existing `EllipticalArcEntity` instances can be broken into native elliptical arc fragments. Open Bezier splines are split natively; closed splines remain deferred.
 
 Workflow:
 
@@ -29,14 +45,14 @@ The picked point is projected onto the target entity. Degenerate pieces are reje
 
 ## Break Segment
 
-Targets:
+Current targets:
 
 - Line;
 - Arc;
 - Circle;
 - Ellipse;
 - Polyline;
-- Bezier Spline, converted to an open polyline approximation.
+- Bezier Spline, open splines are split natively.
 
 Workflow:
 
@@ -46,7 +62,7 @@ BREAK: Specify first break point:
 BREAK: Specify second break point:
 ```
 
-For circles, the minor arc between the two projected points is removed. For ellipses, the removed portion is approximated and the remaining ellipse path is returned as an open polyline. Open polylines can be broken on internal segments. Closed polylines and regular polygons are opened and the shortest path between points is removed.
+For circles, the minor arc between the two projected points is removed and the result is a native `ArcEntity`. For ellipses, the removed portion is represented by native `EllipticalArcEntity` fragments rather than permanent polyline approximations. Open polylines can be broken on internal segments. Closed polylines and regular polygons are opened and the shortest path between points is removed.
 
 ---
 
@@ -57,12 +73,15 @@ Boundary support:
 - Line;
 - Circle;
 - Arc;
+- Ellipse;
+- Elliptical Arc;
 - Polyline.
 
 Target support:
 
 - Line;
 - Arc;
+- Elliptical Arc;
 - open Polyline.
 
 Workflow:
@@ -84,6 +103,7 @@ Cutting-edge support:
 - Circle;
 - Arc;
 - Ellipse;
+- Elliptical Arc;
 - Polyline.
 
 Target support:
@@ -92,8 +112,9 @@ Target support:
 - Circle;
 - Arc;
 - Ellipse;
+- Elliptical Arc;
 - Polyline;
-- Bezier Spline, converted to polyline approximation fragments.
+- Bezier Spline, open splines are returned as native spline fragments.
 
 Workflow:
 
@@ -111,8 +132,9 @@ Features:
 - command remains active for repeated trims until cancelled or confirmed;
 - open and closed polylines, including regular polygons stored as closed `PolylineEntity`, can be trimmed;
 - trimmed polyline/polygon fragments are returned as open `PolylineEntity` fragments;
-- trimmed ellipse fragments are returned as open polyline approximations because the model currently has a full `EllipseEntity` but no partial ellipse-arc entity;
-- trimmed spline fragments are returned as open polyline approximations, preserving layer/style/draw-order metadata.
+- trimmed ellipse fragments are returned as native `EllipticalArcEntity` fragments;
+- trimmed open spline fragments are returned as native `BezierSplineEntity` fragments, preserving layer/style/draw-order metadata;
+- current architecture: Trim uses `CadCurveSplitService` and `ICurveAdapter` so line/polyline outputs reuse shared cut points, circle/arc outputs remain native arcs, ellipse outputs become native elliptical arcs, and open spline outputs remain native Bezier fragments. During Trim, the active snap set is `SnapKind.EntityOnly`: geometric point snaps such as endpoint, midpoint, center, quadrant, intersection, nearest, perpendicular, tangent and grid are intentionally disabled because Trim is an entity/side selection workflow.
 
 ---
 

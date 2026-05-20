@@ -21,6 +21,46 @@ public sealed class CadTrimServiceTests
         Assert.All(result, entity => Assert.IsType<LineEntity>(entity));
     }
 
+
+    [Fact]
+    public void TrimLine_ByBoundary_ShouldReuseSharedIntersectionPointAsEndpoint()
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var boundary = new LineEntity(new Point2D(5, -5), new Point2D(5, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(8, 0));
+
+        LineEntity kept = Assert.IsType<LineEntity>(Assert.Single(result));
+
+        Assert.Equal(new Point2D(0, 0), kept.Start);
+        Assert.Equal(new Point2D(5, 0), kept.End);
+    }
+
+    [Fact]
+    public void TrimTwoLinesMutually_ShouldCreateExactlyMatchingSharedEndpoint()
+    {
+        var horizontal = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var vertical = new LineEntity(new Point2D(5, -5), new Point2D(5, 5));
+
+        LineEntity trimmedHorizontal = Assert.IsType<LineEntity>(Assert.Single(
+            CadTrimService.TrimByBoundary(
+                horizontal,
+                vertical,
+                new Point2D(8, 0))));
+
+        LineEntity trimmedVertical = Assert.IsType<LineEntity>(Assert.Single(
+            CadTrimService.TrimByBoundary(
+                vertical,
+                horizontal,
+                new Point2D(5, -3))));
+
+        Assert.Equal(trimmedHorizontal.End, trimmedVertical.Start);
+        Assert.Equal(new Point2D(5, 0), trimmedHorizontal.End);
+    }
+
     [Fact]
     public void TrimCircle_ByLineBoundary_ShouldCreateArcFragments()
     {
@@ -97,22 +137,17 @@ public sealed class CadTrimServiceTests
             boundary,
             new Point2D(10, 8));
 
-        Assert.Equal(2, result.Count);
-        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
-        Assert.Contains(
-            result.OfType<PolylineEntity>(),
-            polyline => polyline.Vertices.SequenceEqual(new[]
+        PolylineEntity kept = Assert.IsType<PolylineEntity>(Assert.Single(result));
+
+        Assert.False(kept.IsClosed);
+        Assert.Equal(
+            new[]
             {
                 new Point2D(0, 0),
-                new Point2D(10, 0)
-            }));
-        Assert.Contains(
-            result.OfType<PolylineEntity>(),
-            polyline => polyline.Vertices.SequenceEqual(new[]
-            {
                 new Point2D(10, 0),
                 new Point2D(10, 5)
-            }));
+            },
+            kept.Vertices);
     }
 
     [Fact]
@@ -175,7 +210,7 @@ public sealed class CadTrimServiceTests
     }
 
     [Fact]
-    public void TrimEllipse_ByLineBoundary_ShouldCreatePolylineFragment()
+    public void TrimEllipse_ByLineBoundary_ShouldCreateNativeEllipticalArcFragment()
     {
         var target = new EllipseEntity(
             new Point2D(0, 0),
@@ -188,16 +223,40 @@ public sealed class CadTrimServiceTests
             boundary,
             new Point2D(10, 0));
 
-        PolylineEntity polyline = Assert.Single(result.OfType<PolylineEntity>());
+        EllipticalArcEntity arc = Assert.IsType<EllipticalArcEntity>(Assert.Single(result));
 
-        Assert.False(polyline.IsClosed);
-        Assert.True(polyline.Vertices.Count > 2);
-        Assert.Contains(polyline.Vertices, point => Math.Abs(point.X) <= 1.0e-6 && Math.Abs(point.Y - 5) <= 1.0e-6);
-        Assert.Contains(polyline.Vertices, point => Math.Abs(point.X) <= 1.0e-6 && Math.Abs(point.Y + 5) <= 1.0e-6);
+        Assert.True(arc.StartPoint.DistanceTo(new Point2D(0, 5)) <= 1.0e-6);
+        Assert.True(arc.EndPoint.DistanceTo(new Point2D(0, -5)) <= 1.0e-6);
+        Assert.Equal(target.Center, arc.Center);
+        Assert.Equal(target.MajorAxis, arc.MajorAxis);
+        Assert.Equal(target.MinorRadius, arc.MinorRadius);
     }
 
     [Fact]
-    public void TrimBezierSpline_ByLineBoundary_ShouldCreatePolylineFragments()
+    public void TrimBezierSpline_ByLineBoundary_ShouldCreateNativeBezierFragments()
+    {
+        var target = new BezierSplineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 10),
+            new Point2D(10, 0)
+        });
+        var boundary = new LineEntity(new Point2D(5, -5), new Point2D(5, 15));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(3, 4));
+
+        BezierSplineEntity fragment = Assert.IsType<BezierSplineEntity>(Assert.Single(result));
+
+        Assert.Equal(3, fragment.ControlPoints.Count);
+        Assert.True(fragment.ControlPoints[0].DistanceTo(new Point2D(5, 5)) <= 1.0e-6);
+        Assert.True(fragment.ControlPoints[^1].DistanceTo(new Point2D(10, 0)) <= 1.0e-6);
+    }
+
+    [Fact]
+    public void TrimBezierSpline_ByLineBoundary_ShouldNotCreatePolylineEntity()
     {
         var target = new BezierSplineEntity(new[]
         {
@@ -213,7 +272,7 @@ public sealed class CadTrimServiceTests
             new Point2D(3, 4));
 
         Assert.NotEmpty(result);
-        Assert.All(result, entity => Assert.IsType<PolylineEntity>(entity));
+        Assert.DoesNotContain(result, entity => entity is PolylineEntity);
     }
 }
 
@@ -295,4 +354,104 @@ public sealed class CadTrimServiceTwoBoundaryTests
         Assert.Equal(new Point2D(0, 0), kept.Start);
         Assert.Equal(new Point2D(5, 0), kept.End);
     }
+}
+
+public sealed class CadTrimServiceCurveSplitPipelineTests
+{
+    [Fact]
+    public void TrimCircle_ByTwoLineBoundaries_ShouldRemovePickedIntervalAndKeepNativeArcs()
+    {
+        var target = new CircleEntity(new Point2D(0, 0), 10);
+        var leftBoundary = new LineEntity(new Point2D(-5, -20), new Point2D(-5, 20));
+        var rightBoundary = new LineEntity(new Point2D(5, -20), new Point2D(5, 20));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundaries(
+            target,
+            new CadEntity[] { leftBoundary, rightBoundary },
+            new Point2D(0, 10));
+
+        Assert.Equal(3, result.Count);
+        Assert.All(result, entity => Assert.IsType<ArcEntity>(entity));
+        Assert.All(result.OfType<ArcEntity>(), arc =>
+        {
+            Assert.Equal(target.Center, arc.Center);
+            Assert.Equal(target.Radius, arc.Radius);
+        });
+    }
+
+    [Fact]
+    public void TrimArc_ByTwoLineBoundaries_ShouldRemovePickedIntervalAndKeepNativeArcs()
+    {
+        var target = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(180));
+        var rightBoundary = new LineEntity(new Point2D(5, -20), new Point2D(5, 20));
+        var leftBoundary = new LineEntity(new Point2D(-5, -20), new Point2D(-5, 20));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundaries(
+            target,
+            new CadEntity[] { rightBoundary, leftBoundary },
+            new Point2D(0, 10));
+
+        Assert.Equal(2, result.Count);
+        Assert.All(result, entity => Assert.IsType<ArcEntity>(entity));
+        Assert.All(result.OfType<ArcEntity>(), arc =>
+        {
+            Assert.Equal(target.Center, arc.Center);
+            Assert.Equal(target.Radius, arc.Radius);
+        });
+    }
+    [Fact]
+    public void TrimEllipse_ByLineBoundary_ShouldCreateNativeEllipticalArcFragment()
+    {
+        var target = new EllipseEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5);
+        var boundary = new LineEntity(
+            new Point2D(0, -10),
+            new Point2D(0, 10));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(10, 0));
+
+        EllipticalArcEntity arc = Assert.Single(result.OfType<EllipticalArcEntity>());
+
+        Assert.Equal(target.Center, arc.Center);
+        Assert.Equal(target.MajorAxis, arc.MajorAxis);
+        Assert.Equal(target.MinorRadius, arc.MinorRadius);
+        Assert.DoesNotContain(result, entity => entity is PolylineEntity);
+    }
+
+    [Fact]
+    public void TrimEllipticalArc_ByLineBoundary_ShouldCreateNativeEllipticalArcFragments()
+    {
+        var target = new EllipticalArcEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5,
+            0,
+            Math.PI);
+        var boundary = new LineEntity(
+            new Point2D(0, -10),
+            new Point2D(0, 10));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(5, 4));
+
+        EllipticalArcEntity arc = Assert.Single(result.OfType<EllipticalArcEntity>());
+
+        Assert.Equal(target.Center, arc.Center);
+        Assert.Equal(target.MajorAxis, arc.MajorAxis);
+        Assert.Equal(target.MinorRadius, arc.MinorRadius);
+        Assert.DoesNotContain(result, entity => entity is PolylineEntity);
+    }
+
+
 }

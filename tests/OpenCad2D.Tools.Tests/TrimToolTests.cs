@@ -22,6 +22,35 @@ public sealed class TrimToolTests
         Assert.False(tool.HasPreview);
     }
 
+
+    [Fact]
+    public void GetActiveSnapKind_ShouldUseEntityOnlySnap()
+    {
+        var context = CreateContext();
+        var tool = new TrimTool();
+
+        SnapKind activeSnaps = tool.GetActiveSnapKind(context);
+
+        Assert.Equal(SnapKind.EntityOnly, activeSnaps);
+    }
+
+    [Fact]
+    public void GetActiveSnapKind_AfterBoundarySelection_ShouldKeepEntityOnlySnap()
+    {
+        var context = CreateContextWithBoundaryAndTarget(
+            out _,
+            out _);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        SnapKind activeSnaps = tool.GetActiveSnapKind(context);
+
+        Assert.Equal(SnapKind.EntityOnly, activeSnaps);
+    }
+
     [Fact]
     public void FirstPointerPress_WithoutLine_ShouldNotStartTool()
     {

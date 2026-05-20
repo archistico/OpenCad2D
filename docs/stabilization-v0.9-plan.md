@@ -74,6 +74,28 @@ Status: completed by the v0.9 planning pass.
 - [x] Known limitations focused on real current limitations.
 - [x] Handoff updated with the v0.9 starting point and first implementation target.
 
+### Curve editing precision interruption
+
+Before continuing the broader v0.9 checklist, the active design decision is to stabilize Trim and Break around native curve parameters and shared cut points.
+
+Reference: `docs/curve-editing.md`.
+
+This work is allowed to temporarily interrupt the original v0.9 sequence because it protects CAD correctness:
+
+- Trim/Break should not permanently degrade native curves through sampled polyline approximations when a native representation can exist;
+- reciprocal edits on explicit-vertex entities must reuse a shared intersection point instead of creating nearly coincident endpoints;
+- multi-boundary Circle/Arc Trim should be implemented through a shared interval pipeline instead of special-case early exits;
+- ellipse and spline degradation should remain documented until `EllipticalArcEntity` and native Bezier splitting are implemented.
+
+Recommended first implementation sequence:
+
+1. `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`.
+2. Line, Circle, Arc and Polyline adapters.
+3. Break Point / Break Segment migration.
+4. Trim migration and Circle/Arc multi-boundary stabilization.
+5. `EllipticalArcEntity` and native ellipse Trim/Break.
+6. Native Bezier split and spline Trim/Break preservation.
+
 ### Phase 1 - Local application/session settings
 
 Document-level drafting settings are already stored in `.opencad2d.json`. v0.9 now includes a first small local settings layer, separate from drawing content.

@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Interaction.Snapping;
@@ -50,6 +50,10 @@ public sealed class MidpointSnapProvider : ISnapProvider
                 yield return GetArcMidpoint(arc.Geometry);
                 break;
 
+            case EllipticalArcEntity ellipticalArc:
+                yield return ellipticalArc.GetPointAt(GetEllipticalArcMidParameter(ellipticalArc));
+                break;
+
             case BezierSplineEntity spline:
                 foreach (LineSegment2D segment in spline.ToPolylineApproximation().Geometry.GetSegments())
                 {
@@ -58,6 +62,15 @@ public sealed class MidpointSnapProvider : ISnapProvider
 
                 break;
         }
+    }
+
+    private static double GetEllipticalArcMidParameter(EllipticalArcEntity ellipticalArc)
+    {
+        double signedSweep = ellipticalArc.IsCounterClockwise
+            ? ellipticalArc.SweepRadians
+            : -ellipticalArc.SweepRadians;
+
+        return ellipticalArc.StartParameterRadians + signedSweep / 2.0;
     }
 
     private static Point2D GetArcMidpoint(Arc2D arc)

@@ -142,6 +142,13 @@ public sealed class CadEntityRenderer
                     pen);
                 break;
 
+            case EllipticalArcEntity ellipticalArc:
+                DrawEllipticalArc(
+                    context,
+                    ellipticalArc,
+                    pen);
+                break;
+
             case ArcEntity arc:
                 DrawArc(
                     context,
@@ -491,6 +498,22 @@ public sealed class CadEntityRenderer
                 pen,
                 ToScreenPoint(start),
                 ToScreenPoint(end));
+        }
+    }
+
+    private void DrawEllipticalArc(
+        DrawingContext context,
+        EllipticalArcEntity ellipticalArc,
+        Pen pen)
+    {
+        IReadOnlyList<Point2D> points = ellipticalArc.GetSamplePoints();
+
+        for (int i = 0; i < points.Count - 1; i++)
+        {
+            context.DrawLine(
+                pen,
+                ToScreenPoint(points[i]),
+                ToScreenPoint(points[i + 1]));
         }
     }
 

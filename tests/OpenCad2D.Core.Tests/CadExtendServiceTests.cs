@@ -157,4 +157,185 @@ public sealed class CadExtendServiceTests
         Assert.Null(result);
     }
 
+    [Fact]
+    public void ExtendEllipticalArc_ToLineBoundary_ShouldExtendPickedEndWithNativeGeometry()
+    {
+        var target = new EllipticalArcEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5,
+            0,
+            Math.PI / 2.0);
+        var boundary = new LineEntity(new Point2D(-10, -10), new Point2D(-10, 10));
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            target.EndPoint);
+
+        EllipticalArcEntity arc = Assert.IsType<EllipticalArcEntity>(result);
+
+        Assert.Equal(target.Center, arc.Center);
+        Assert.Equal(target.MajorAxis, arc.MajorAxis);
+        Assert.Equal(target.MinorRadius, arc.MinorRadius);
+        Assert.Equal(target.StartParameterRadians, arc.StartParameterRadians);
+        Assert.True(Math.Abs(arc.EndPoint.X + 10.0) < 1e-9);
+        Assert.True(Math.Abs(arc.EndPoint.Y) < 1e-9);
+    }
+
+    [Fact]
+    public void ExtendEllipticalArc_ToLineBoundary_ShouldExtendPickedStartWithNativeGeometry()
+    {
+        var target = new EllipticalArcEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5,
+            0,
+            Math.PI / 2.0);
+        var boundary = new LineEntity(new Point2D(-20, -5), new Point2D(20, -5));
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            target.StartPoint);
+
+        EllipticalArcEntity arc = Assert.IsType<EllipticalArcEntity>(result);
+
+        Assert.Equal(target.Center, arc.Center);
+        Assert.Equal(target.MajorAxis, arc.MajorAxis);
+        Assert.Equal(target.MinorRadius, arc.MinorRadius);
+        Assert.Equal(target.EndParameterRadians, arc.EndParameterRadians);
+        Assert.True(Math.Abs(arc.StartPoint.X) < 1e-9);
+        Assert.True(Math.Abs(arc.StartPoint.Y + 5.0) < 1e-9);
+    }
+
+    [Fact]
+    public void ExtendEllipse_ShouldReturnNull()
+    {
+        var target = new EllipseEntity(new Point2D(0, 0), new Vector2D(10, 0), 5);
+        var boundary = new LineEntity(new Point2D(20, -5), new Point2D(20, 5));
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            new Point2D(10, 0));
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void ExtendLine_ToEllipseBoundary_ShouldReuseNativeEllipseIntersectionPoint()
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(5, 0));
+        var boundary = new EllipseEntity(new Point2D(0, 0), new Vector2D(10, 0), 5);
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            target.End);
+
+        LineEntity line = Assert.IsType<LineEntity>(result);
+
+        Assert.Equal(target.Start, line.Start);
+        Assert.Equal(new Point2D(10, 0), line.End);
+        AssertPointOnEllipse(boundary, line.End);
+    }
+
+    [Fact]
+    public void ExtendOpenPolyline_ToEllipticalArcBoundary_ShouldReuseNativeEllipseIntersectionPoint()
+    {
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 0)
+        });
+        var boundary = new EllipticalArcEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5,
+            -Math.PI / 2.0,
+            Math.PI / 2.0);
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            new Point2D(5, 0));
+
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(result);
+
+        Assert.Equal(new Point2D(0, 0), polyline.Vertices[0]);
+        Assert.Equal(new Point2D(10, 0), polyline.Vertices[^1]);
+        AssertPointOnEllipse(boundary, polyline.Vertices[^1]);
+    }
+
+    [Fact]
+    public void ExtendArc_ToEllipseBoundary_ShouldUseNativeCircleEllipseIntersection()
+    {
+        var target = new ArcEntity(
+            new Point2D(0, 0),
+            5,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+        var boundary = new EllipseEntity(new Point2D(0, 0), new Vector2D(10, 0), 3);
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            target.Geometry.StartPoint);
+
+        ArcEntity arc = Assert.IsType<ArcEntity>(result);
+
+        Assert.Equal(target.Center, arc.Center);
+        Assert.Equal(target.Radius, arc.Radius);
+        Assert.Equal(target.EndAngle, arc.EndAngle);
+        Assert.True(arc.StartAngle.NormalizePositive().Degrees > 300);
+        AssertPointOnEllipse(boundary, arc.Geometry.StartPoint);
+        Assert.True(Math.Abs(arc.Geometry.StartPoint.DistanceTo(target.Center) - target.Radius) < 1e-9);
+    }
+
+
+    private static void AssertPointOnEllipse(
+        EllipseEntity ellipse,
+        Point2D point)
+    {
+        AssertPointOnEllipse(
+            ellipse.Center,
+            ellipse.MajorDirection,
+            ellipse.MajorRadius,
+            ellipse.MinorAxis.Normalize(),
+            ellipse.MinorRadius,
+            point);
+    }
+
+    private static void AssertPointOnEllipse(
+        EllipticalArcEntity arc,
+        Point2D point)
+    {
+        AssertPointOnEllipse(
+            arc.Center,
+            arc.MajorDirection,
+            arc.MajorRadius,
+            arc.MinorAxis.Normalize(),
+            arc.MinorRadius,
+            point);
+    }
+
+    private static void AssertPointOnEllipse(
+        Point2D center,
+        Vector2D majorDirection,
+        double majorRadius,
+        Vector2D minorDirection,
+        double minorRadius,
+        Point2D point)
+    {
+        Vector2D fromCenter = center.VectorTo(point);
+        double localX = fromCenter.Dot(majorDirection) / majorRadius;
+        double localY = fromCenter.Dot(minorDirection) / minorRadius;
+        double equation = localX * localX + localY * localY;
+
+        Assert.True(
+            Math.Abs(equation - 1.0) <= 1e-8,
+            $"Expected point {point} to lie on the source ellipse; equation value was {equation}.");
+    }
+
 }

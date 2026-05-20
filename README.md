@@ -156,6 +156,7 @@ Important documents:
 | `docs/architecture.md` | project structure and dependency rules |
 | `docs/roadmap.md` | current roadmap, completed stabilization work and next milestones |
 | `docs/commands.md` | commands, aliases and undoable command rules |
+| `docs/curve-editing.md` | Trim/Break curve-editing architecture, native precision and shared cut-point rules |
 | `docs/command-input.md` | command input syntax and tool workflow |
 | `docs/tools.md` | tool behavior, workflow rules and preview-provider conventions |
 | `docs/line-formats.md` | line format and line style pattern rules |

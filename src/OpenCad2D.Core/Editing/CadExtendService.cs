@@ -24,6 +24,11 @@ public static class CadExtendService
         {
             LineEntity line => ExtendLine(line, boundary, targetPickPoint, effectiveTolerance),
             ArcEntity arc => ExtendArc(arc, boundary, targetPickPoint, effectiveTolerance),
+            EllipticalArcEntity ellipticalArc => ExtendEllipticalArc(
+                ellipticalArc,
+                boundary,
+                targetPickPoint,
+                effectiveTolerance),
             PolylineEntity polyline when !polyline.IsClosed => ExtendPolyline(
                 polyline,
                 boundary,
@@ -109,6 +114,62 @@ public static class CadExtendService
             target.Radius,
             pickedStart ? candidateAngle : target.StartAngle,
             pickedStart ? target.EndAngle : candidateAngle,
+            target.IsCounterClockwise,
+            target.Id,
+            target.LayerId,
+            target.Style,
+            target.IsVisible,
+            target.IsLocked,
+            target.DrawOrder);
+    }
+
+    private static CadEntity? ExtendEllipticalArc(
+        EllipticalArcEntity target,
+        CadEntity boundary,
+        Point2D pickPoint,
+        GeometryTolerance tolerance)
+    {
+        var fullEllipse = new EllipseEntity(
+            target.Center,
+            target.MajorAxis,
+            target.MinorRadius);
+
+        IReadOnlyList<Point2D> intersections = CadEntityIntersectionService
+            .Intersect(fullEllipse, boundary, tolerance);
+
+        if (intersections.Count == 0)
+        {
+            return null;
+        }
+
+        bool pickedStart = pickPoint.DistanceTo(target.StartPoint) <=
+                           pickPoint.DistanceTo(target.EndPoint);
+
+        Point2D? candidate = FindBestEllipticalArcExtensionPoint(
+            target,
+            intersections,
+            pickedStart,
+            tolerance);
+
+        if (candidate is null)
+        {
+            return null;
+        }
+
+        double candidateParameter = GetEllipseParameter(
+            target.Center,
+            target.MajorDirection,
+            target.MajorRadius,
+            target.MinorAxis.Normalize(),
+            target.MinorRadius,
+            candidate.Value);
+
+        return new EllipticalArcEntity(
+            target.Center,
+            target.MajorAxis,
+            target.MinorRadius,
+            pickedStart ? candidateParameter : target.StartParameterRadians,
+            pickedStart ? target.EndParameterRadians : candidateParameter,
             target.IsCounterClockwise,
             target.Id,
             target.LayerId,
@@ -228,6 +289,95 @@ public static class CadExtendService
             .OrderBy(item => item.Distance)
             .Select(item => (Point2D?)item.Point)
             .FirstOrDefault();
+    }
+
+    private static Point2D? FindBestEllipticalArcExtensionPoint(
+        EllipticalArcEntity arc,
+        IReadOnlyList<Point2D> intersections,
+        bool pickedStart,
+        GeometryTolerance tolerance)
+    {
+        return intersections
+            .Select(point => new
+            {
+                Point = point,
+                Parameter = GetEllipseParameter(
+                    arc.Center,
+                    arc.MajorDirection,
+                    arc.MajorRadius,
+                    arc.MinorAxis.Normalize(),
+                    arc.MinorRadius,
+                    point)
+            })
+            .Where(item => !IsParameterOnEllipticalArc(arc, item.Parameter, tolerance))
+            .Select(item => new
+            {
+                item.Point,
+                Distance = GetEllipticalArcExtensionDistance(arc, item.Parameter, pickedStart)
+            })
+            .Where(item => item.Distance > tolerance.Angle)
+            .OrderBy(item => item.Distance)
+            .Select(item => (Point2D?)item.Point)
+            .FirstOrDefault();
+    }
+
+    private static bool IsParameterOnEllipticalArc(
+        EllipticalArcEntity arc,
+        double parameter,
+        GeometryTolerance tolerance)
+    {
+        double distanceFromStart = GetDirectedParameterDistance(
+            arc.StartParameterRadians,
+            parameter,
+            arc.IsCounterClockwise);
+
+        return distanceFromStart >= -tolerance.Angle &&
+               distanceFromStart <= arc.SweepRadians + tolerance.Angle;
+    }
+
+    private static double GetEllipticalArcExtensionDistance(
+        EllipticalArcEntity arc,
+        double parameter,
+        bool pickedStart)
+    {
+        if (pickedStart)
+        {
+            return arc.IsCounterClockwise
+                ? ClockwiseDistance(arc.StartParameterRadians, parameter)
+                : CounterClockwiseDistance(arc.StartParameterRadians, parameter);
+        }
+
+        return arc.IsCounterClockwise
+            ? CounterClockwiseDistance(arc.EndParameterRadians, parameter)
+            : ClockwiseDistance(arc.EndParameterRadians, parameter);
+    }
+
+    private static double GetEllipseParameter(
+        Point2D center,
+        Vector2D majorDirection,
+        double majorRadius,
+        Vector2D minorDirection,
+        double minorRadius,
+        Point2D point)
+    {
+        Vector2D fromCenter = center.VectorTo(point);
+        double localX = fromCenter.Dot(majorDirection) / majorRadius;
+        double localY = fromCenter.Dot(minorDirection) / minorRadius;
+
+        return NormalizeRadians(Math.Atan2(localY, localX));
+    }
+
+    private static double GetDirectedParameterDistance(
+        double startParameter,
+        double endParameter,
+        bool isCounterClockwise)
+    {
+        double start = NormalizeRadians(startParameter);
+        double end = NormalizeRadians(endParameter);
+
+        return isCounterClockwise
+            ? CounterClockwiseDistance(start, end)
+            : ClockwiseDistance(start, end);
     }
 
     private static double GetAngularExtensionDistance(

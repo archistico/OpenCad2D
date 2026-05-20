@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Dimensions.Rendering;
 using OpenCad2D.Core.Documents;
@@ -345,6 +345,15 @@ public sealed class DxfExporter : IDxfExporter
                         contentBounds);
                     break;
 
+                case EllipticalArcEntity ellipticalArc:
+                    WriteEllipticalArc(
+                        writer,
+                        layer.Name,
+                        ellipticalArc,
+                        contentBounds,
+                        options);
+                    break;
+
                 case ArcEntity arc:
                     WriteArc(
                         writer,
@@ -660,6 +669,47 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(40, ellipse.MinorRadius / ellipse.MajorRadius);
         writer.WriteGroup(41, 0.0);
         writer.WriteGroup(42, Math.Tau);
+    }
+
+    private static void WriteEllipticalArc(
+        DxfDocumentWriter writer,
+        string layerName,
+        EllipticalArcEntity ellipticalArc,
+        BoundingBox2D? contentBounds,
+        DxfExportOptions options)
+    {
+        Point2D center = ToDxfPoint(
+            ellipticalArc.Center,
+            contentBounds);
+        Point2D majorEnd = ToDxfPoint(
+            ellipticalArc.Center + ellipticalArc.MajorAxis,
+            contentBounds);
+        Vector2D dxfMajorAxis = center.VectorTo(majorEnd);
+
+        double startParameter = NormalizeRadians(ellipticalArc.StartParameterRadians);
+        double endParameter = NormalizeRadians(ellipticalArc.EndParameterRadians);
+        bool dxfArcIsCounterClockwise = ToDxfCounterClockwise(
+            ellipticalArc.IsCounterClockwise,
+            options);
+
+        if (!dxfArcIsCounterClockwise)
+        {
+            (startParameter, endParameter) = (endParameter, startParameter);
+        }
+
+        writer.WriteGroup(0, "ELLIPSE");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, center.X);
+        writer.WriteGroup(20, center.Y);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(11, dxfMajorAxis.X);
+        writer.WriteGroup(21, dxfMajorAxis.Y);
+        writer.WriteGroup(31, 0.0);
+        writer.WriteGroup(40, ellipticalArc.MinorRadius / ellipticalArc.MajorRadius);
+        writer.WriteGroup(41, startParameter);
+        writer.WriteGroup(42, endParameter);
     }
 
     private static void WriteArc(
@@ -992,6 +1042,12 @@ public sealed class DxfExporter : IDxfExporter
         }
 
         return format;
+    }
+
+    private static double NormalizeRadians(double radians)
+    {
+        double value = radians % Math.Tau;
+        return value < 0.0 ? value + Math.Tau : value;
     }
 
     private static double NormalizeDegrees(double degrees)

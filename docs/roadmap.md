@@ -18,6 +18,7 @@ Legend:
 
 Before the first stable release, OpenCad2D should prioritize user trust and predictable workflows over new advanced geometry features:
 
+- [ ] stabilize Trim/Break around native curve parameters and shared cut points (`docs/curve-editing.md`);
 - [~] persist application/session settings;
 - [x] start with a clean drawing loaded from `Templates/default.opencad2d.json`;
 - [x] open the main window maximized by default;
@@ -77,6 +78,24 @@ OpenCad2D currently includes:
 ---
 
 ## Current stabilization phase
+
+### Curve editing precision gate
+
+Before continuing with broader roadmap work, Trim and Break should be consolidated around the native curve-editing rules in `docs/curve-editing.md`.
+
+Planned phases:
+
+- [x] document the native parameter and shared cut-point policy;
+- [ ] introduce `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`;
+- [ ] implement Line, Circle, Arc and Polyline adapters;
+- [ ] rebuild Break Point and Break Segment on top of the shared split service;
+- [ ] rebuild Trim target fragmentation on top of the shared split service;
+- [ ] stabilize multi-boundary Circle/Arc Trim;
+- [ ] add precision tests proving reciprocal line trims share exact endpoints and native arc/circle results stay parametric;
+- [ ] add `EllipticalArcEntity` so ellipse Trim/Break no longer degrades to polyline fragments;
+- [ ] add native Bezier split support so spline Trim/Break can preserve spline geometry where possible.
+
+---
 
 ### Startup and default template
 

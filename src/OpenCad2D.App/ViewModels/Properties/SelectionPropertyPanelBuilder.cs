@@ -161,6 +161,7 @@ public sealed class SelectionPropertyPanelBuilder
             LineEntity line => BuildLineGeometrySection(workspace, line, setMessage, refresh),
             CircleEntity circle => BuildCircleGeometrySection(workspace, circle, setMessage, refresh),
             EllipseEntity ellipse => BuildEllipseGeometrySection(ellipse),
+            EllipticalArcEntity ellipticalArc => BuildEllipticalArcGeometrySection(ellipticalArc),
             PolylineEntity polyline => BuildPolylineGeometrySection(workspace, polyline, setMessage, refresh),
             BezierSplineEntity spline => BuildBezierSplineGeometrySection(spline),
             ArcEntity arc => BuildArcGeometrySection(workspace, arc, setMessage, refresh),
@@ -417,6 +418,23 @@ public sealed class SelectionPropertyPanelBuilder
                 Row("Minor radius", PropertyValueFormatter.FormatLength(ellipse.MinorRadius)),
                 Row("Rotation", PropertyValueFormatter.FormatAngleDegrees(ellipse.RotationDegrees)),
                 Row("Bounds", $"{PropertyValueFormatter.FormatLength(ellipse.GetBoundingBox().Width)} × {PropertyValueFormatter.FormatLength(ellipse.GetBoundingBox().Height)}")
+            });
+    }
+
+    private static PropertySectionViewModel BuildEllipticalArcGeometrySection(EllipticalArcEntity ellipticalArc)
+    {
+        return new PropertySectionViewModel(
+            "Geometry",
+            new[]
+            {
+                Row("Center", PropertyValueFormatter.FormatPoint(ellipticalArc.Center)),
+                Row("Major radius", PropertyValueFormatter.FormatLength(ellipticalArc.MajorRadius)),
+                Row("Minor radius", PropertyValueFormatter.FormatLength(ellipticalArc.MinorRadius)),
+                Row("Rotation", PropertyValueFormatter.FormatAngleDegrees(ellipticalArc.RotationRadians * 180.0 / Math.PI)),
+                Row("Start parameter", PropertyValueFormatter.FormatAngleDegrees(ellipticalArc.StartParameterRadians * 180.0 / Math.PI)),
+                Row("End parameter", PropertyValueFormatter.FormatAngleDegrees(ellipticalArc.EndParameterRadians * 180.0 / Math.PI)),
+                Row("Sweep", PropertyValueFormatter.FormatAngleDegrees(ellipticalArc.SweepRadians * 180.0 / Math.PI)),
+                Row("Direction", ellipticalArc.IsCounterClockwise ? "Counter-clockwise" : "Clockwise")
             });
     }
 
@@ -1019,6 +1037,7 @@ public sealed class SelectionPropertyPanelBuilder
             LineEntity => "Line",
             CircleEntity => "Circle",
             EllipseEntity => "Ellipse",
+            EllipticalArcEntity => "Elliptical Arc",
             PolylineEntity => "Polyline",
             BezierSplineEntity => "Spline",
             ArcEntity => "Arc",

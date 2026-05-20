@@ -512,6 +512,37 @@ public sealed class DxfExporterTests
         Assert.Contains("10\n5\n20\n9\n30\n0", content);
     }
 
+    [Fact]
+    public void Export_WhenDocumentContainsEllipticalArc_ShouldWritePartialEllipseEntity()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new EllipticalArcEntity(
+            new Point2D(5, 6),
+            new Vector2D(10, 0),
+            4,
+            0,
+            Math.PI / 2.0,
+            isCounterClockwise: true));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(
+            document,
+            new DxfExportOptions
+            {
+                UseCadViewerCoordinateSystem = false
+            });
+        string content = Normalize(result.Content);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Contains("0\nELLIPSE", content);
+        Assert.Contains("10\n5\n20\n6", content);
+        Assert.Contains("11\n10", content);
+        Assert.Contains("40\n0.4", content);
+        Assert.Contains("41\n0", content);
+        Assert.Contains("42\n1.570796326794", content);
+    }
+
     private static string Normalize(string value)
     {
         return value.Replace("\r\n", "\n");

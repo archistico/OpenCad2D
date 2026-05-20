@@ -4,6 +4,7 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
 
@@ -12,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Trims editable entities against a selected boundary entity.
 /// </summary>
-public sealed class TrimTool : ICadTool, ICommandDrivenTool, IToolPreviewDescriptorProvider
+public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, IToolPreviewDescriptorProvider
 {
     private readonly List<CadEntity> _boundaryEntities = new();
     private EntityId? _boundaryEntityId;
@@ -38,6 +39,14 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool, IToolPreviewDescrip
     public bool HasPreview =>
         State == TrimToolState.WaitingForTargetEntity &&
         _previewEntities.Count > 0;
+
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return SnapKind.EntityOnly;
+    }
 
 
     public CommandPromptState GetPromptState(ToolContext context)
@@ -201,7 +210,7 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool, IToolPreviewDescrip
 
         if (!IsSupportedEntity(entity))
         {
-            return ToolResult.None("Trim supports lines, circles, arcs, ellipses, polylines and splines.");
+            return ToolResult.None("Trim supports lines, circles, arcs, ellipses, elliptical arcs, polylines and splines.");
         }
 
         if (!context.Document.IsEntityVisible(entity))
@@ -269,7 +278,7 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool, IToolPreviewDescrip
 
         if (!IsSupportedEntity(entity))
         {
-            return ToolResult.None("Trim supports lines, circles, arcs, ellipses, polylines and splines.");
+            return ToolResult.None("Trim supports lines, circles, arcs, ellipses, elliptical arcs, polylines and splines.");
         }
 
         if (!context.Document.IsEntitySelectable(entity))
@@ -326,7 +335,7 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool, IToolPreviewDescrip
 
         if (!IsSupportedEntity(entity))
         {
-            return ToolResult.None("Trim supports lines, circles, arcs, ellipses, polylines and splines as cutting edges.");
+            return ToolResult.None("Trim supports lines, circles, arcs, ellipses, elliptical arcs, polylines and splines as cutting edges.");
         }
 
         if (!context.Document.IsEntityVisible(entity))
@@ -588,7 +597,7 @@ public sealed class TrimTool : ICadTool, ICommandDrivenTool, IToolPreviewDescrip
 
     private static bool IsSupportedEntity(CadEntity entity)
     {
-        return entity is LineEntity or CircleEntity or ArcEntity or EllipseEntity or PolylineEntity or BezierSplineEntity;
+        return entity is LineEntity or CircleEntity or ArcEntity or EllipseEntity or EllipticalArcEntity or PolylineEntity or BezierSplineEntity;
     }
 
     private void Reset(ToolContext? context = null)

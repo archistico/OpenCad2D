@@ -1,4 +1,4 @@
-﻿namespace OpenCad2D.Core.Entities;
+namespace OpenCad2D.Core.Entities;
 
 /// <summary>
 /// Identifies the concrete kind of a CAD entity.
@@ -17,6 +17,7 @@ public enum EntityKind
     Line,
     Circle,
     Ellipse,
+    EllipticalArc,
     Arc,
     Polyline,
     BezierSpline

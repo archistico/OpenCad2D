@@ -80,6 +80,28 @@ public sealed class SvgExporterTests
     }
 
     [Fact]
+    public void Export_WhenDocumentContainsEllipticalArc_ShouldWritePathElement()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new EllipticalArcEntity(
+            new Point2D(50, 50),
+            new Vector2D(25, 0),
+            10,
+            0,
+            Math.PI / 2.0,
+            isCounterClockwise: true));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Contains("<path ", result.Content);
+        Assert.Contains(" A 25 10 ", result.Content);
+        Assert.DoesNotContain("<polygon ", result.Content);
+    }
+
+    [Fact]
     public void Export_WhenDocumentContainsOpenPolyline_ShouldWritePolylineElement()
     {
         var document = new CadDocument();

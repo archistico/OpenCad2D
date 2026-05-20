@@ -387,6 +387,13 @@ public sealed class SvgExporter : ISvgExporter
                 height,
                 margin),
 
+            EllipticalArcEntity ellipticalArc => ExportEllipticalArc(
+                ellipticalArc,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
             PolylineEntity polyline => ExportPolyline(
                 polyline,
                 lineFormat,
@@ -644,6 +651,38 @@ public sealed class SvgExporter : ISvgExporter
             }));
 
         return $"  <polygon points=\"{points}\" {StrokeAttributes(lineFormat)} />";
+    }
+
+    private static string ExportEllipticalArc(
+        EllipticalArcEntity ellipticalArc,
+        LineFormat lineFormat,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        Point2D start = ToSvgPoint(
+            ellipticalArc.StartPoint,
+            bounds,
+            svgHeight,
+            margin);
+
+        Point2D end = ToSvgPoint(
+            ellipticalArc.EndPoint,
+            bounds,
+            svgHeight,
+            margin);
+
+        int largeArcFlag = ellipticalArc.SweepRadians > Math.PI
+            ? 1
+            : 0;
+
+        int sweepFlag = ellipticalArc.IsCounterClockwise
+            ? 1
+            : 0;
+
+        double rotationDegrees = ellipticalArc.RotationRadians * 180.0 / Math.PI;
+
+        return $"  <path d=\"M {Format(start.X)} {Format(start.Y)} A {Format(ellipticalArc.MajorRadius)} {Format(ellipticalArc.MinorRadius)} {Format(rotationDegrees)} {largeArcFlag} {sweepFlag} {Format(end.X)} {Format(end.Y)}\" {StrokeAttributes(lineFormat)} />";
     }
 
     private static string ExportBezierSpline(

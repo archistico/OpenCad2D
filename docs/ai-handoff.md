@@ -1,3 +1,99 @@
+## Preview UX: Trim uses entity-only snaps
+
+`TrimTool` now implements `ISnapModeProvider` and returns `SnapKind.EntityOnly` for all Trim phases. Trim is an entity/side selection workflow, so geometric snaps such as endpoint, midpoint, center, quadrant, intersection, nearest, perpendicular, tangent and grid are disabled while the command is active. This keeps the UI from showing vertex/point snap markers during Trim and makes the active selection intent clearer.
+
+`TrimTool` also recognizes `EllipticalArcEntity` as a supported cutting edge/target in the tool-level support check, matching the native curve-editing services.
+
+Validation note: this environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
+## Curve editing: EXTEND with native elliptical boundaries
+
+`CadEntityIntersectionService.IntersectInfiniteLineWithEntity` now supports `EllipseEntity` and `EllipticalArcEntity` directly. It computes infinite-line/ellipse intersections analytically and filters points against the elliptical-arc sweep when needed. `IntersectCircleWithEntity` also routes `EllipseEntity` and `EllipticalArcEntity` through the native circle/ellipse intersection helpers.
+
+This improves `CadExtendService` for these supported scenarios:
+
+- `LineEntity` extended to an `EllipseEntity` boundary;
+- open `PolylineEntity` endpoint extended to an `EllipticalArcEntity` boundary;
+- `ArcEntity` extended to an `EllipseEntity` boundary.
+
+The added tests assert that the resulting endpoints remain on the native ellipse/elliptical arc and do not depend on sampled fallback geometry.
+
+Validation note: this environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
+## Curve editing: native Bezier spline Trim/Break
+
+Open `BezierSplineEntity` is now connected to `CadCurveSplitService` at command level. `CadTrimService` and `CadBreakService` no longer convert supported open spline Trim/Break results to `PolylineEntity`; they return native `BezierSplineEntity` fragments through `BezierSplineCurveAdapter` and `BezierSplineSplitService`. Closed spline editing remains intentionally deferred/no-op. Intersection discovery can still use the existing approximation path, but the cut is projected back to the Bezier parameter before fragment creation.
+
+# Latest handoff note
+
+## Curve editing: BezierSplineSplitService foundation
+
+`BezierSplineSplitService` has been introduced as the first native spline-preservation step. It uses De Casteljau subdivision on open `BezierSplineEntity` control polygons so spline editing can eventually return native `BezierSplineEntity` fragments instead of permanent `PolylineEntity` approximations.
+
+Current scope:
+
+- `SplitAt(spline, t)` returns two native open Bezier spline fragments sharing the exact De Casteljau break point;
+- `ExtractInterval(spline, t0, t1)` returns the native Bezier interval between two parameters;
+- `RemoveInterval(spline, t0, t1)` returns the two native outer fragments around a removed interval;
+- closed spline splitting is intentionally deferred and currently returns no fragments.
+
+Added tests in `BezierSplineSplitServiceTests` verify native output, shared split points, endpoint correctness for extracted intervals, outer fragment creation, metadata preservation, endpoint no-op behavior and closed-spline deferral.
+
+This phase does not yet connect splines to `ICurveAdapter`, TRIM or BREAK. The next planned phase is `BezierSplineCurveAdapter`, followed by native spline Trim/Break.
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
+# Latest handoff note
+
+## Curve editing: native ellipse/polyline intersection consolidation
+
+`CadEntityIntersectionService` now handles `PolylineEntity` against `EllipseEntity` and `EllipticalArcEntity` with analytic line-segment/ellipse intersections per polyline segment. This complements the existing native `LineEntity` support and avoids relying on sampled ellipse segments for Trim boundaries made from polylines.
+
+Added precision tests covering direct polyline/ellipse intersections, polyline/elliptical-arc sweep filtering, and Trim results that remain native `EllipticalArcEntity` fragments with geometric endpoints on the source ellipse.
+
+Remaining curve-editing priorities:
+1. BezierSplineCurveAdapter.
+2. Native spline Trim/Break.
+3. Richer `CadIntersectionPoint` records.
+4. EXTEND on the same native curve model.
+5. Cleanup of remaining permanent polyline fallbacks.
+6. Preview UX.
+
+---
+
+# Latest handoff note
+
+## Curve editing: native ellipse/elliptical arc Trim and Break foundation
+
+`CadCurveSplitService` now has adapters for `EllipseEntity` and `EllipticalArcEntity`. Trim on full ellipses and existing elliptical arcs can now return native `EllipticalArcEntity` fragments instead of permanent `PolylineEntity` approximations. Break Between Points on full ellipses and Break on existing elliptical arcs also route through the shared split pipeline.
+
+One-point Break on a full closed ellipse remains a deliberate no-op, matching the current full-circle behavior, until a safe full-sweep/open-closed conic arc convention is introduced. Intersections may still be discovered through sampled segments, but the edited geometry is rebuilt from native ellipse parameters.
+
+Added focused tests to verify that Trim/Break on ellipse workflows do not create `PolylineEntity` results.
+
+---
+
 ﻿# Latest handoff note
 
 ## v0.8.5 stabilization: delete marks dimensions stale
@@ -2411,3 +2507,421 @@ Validation note: this environment did not have the `dotnet` command available, s
 ### Third-party icon licensing
 
 Toolbar icons are derived from Tabler Icons SVG assets and converted to Avalonia `StreamGeometry` resources. Tabler Icons is licensed under the MIT License. Keep `LICENSES/Tabler-Icons-MIT.txt` and `docs/third-party-notices.md` with the repository/distribution when these icon resources are included.
+
+
+## 2026-05-20 - Curve editing precision design lock
+
+Prepared the documentation foundation for the next Trim/Break stabilization pass before continuing the broader roadmap.
+
+New document:
+
+- `docs/curve-editing.md`
+
+The new architecture rule is now explicit:
+
+```text
+CAD editing operations modify native entities using native geometric parameters.
+Sampling is allowed only as temporary support and must not become the permanent source of edited geometry when a native representation exists.
+Shared intersections used by multiple explicit-vertex entities must reuse the same cut point to avoid micro-gaps and nearly coincident vertices.
+```
+
+Documentation updates:
+
+- `README.md` links the new curve-editing architecture document.
+- `docs/architecture.md` now includes the curve-editing precision boundary.
+- `docs/modify-tools.md` distinguishes current Trim/Break behavior from the target native-parameter pipeline.
+- `docs/known-limitations.md` now calls out current ellipse/spline approximation limits and the target native preservation policy.
+- `docs/roadmap.md` adds a curve-editing precision gate before broader v0.9/v1.0 work.
+- `docs/stabilization-v0.9-plan.md` records that the Trim/Break precision work may temporarily interrupt the original v0.9 sequence because it protects CAD correctness.
+
+Planned implementation sequence:
+
+1. Introduce `CurveCut`, `CurveInterval`, `ICurveAdapter`, `ICurveAdapterFactory` and `CadCurveSplitService`.
+2. Implement adapters for `LineEntity`, `CircleEntity`, `ArcEntity` and `PolylineEntity`.
+3. Rebuild Break Point and Break Segment on top of `CadCurveSplitService`.
+4. Rebuild Trim target fragmentation on the same pipeline and stabilize multi-boundary Circle/Arc Trim.
+5. Add precision tests such as `TrimTwoLinesMutually_ShouldShareExactEndpoint`, `TrimLineWithArc_ShouldUseSharedIntersectionPointForLineEndpoint`, `TrimArcWithLine_ShouldKeepArcEndpointOnCircleAndNearSharedPoint` and `BreakPolylineAtIntersection_ShouldInsertSharedIntersectionVertex`.
+6. Add `EllipticalArcEntity` so ellipse Trim/Break can return native elliptical arc fragments.
+7. Add native Bezier splitting so supported spline Trim/Break operations can preserve spline fragments instead of returning polyline approximations.
+
+Important implementation constraint:
+
+- For explicit-vertex output (`LineEntity`, `PolylineEntity`, rectangle/polygon converted to open polylines), use `CurveCut.Point` directly as the endpoint or inserted vertex.
+- For parametric output (`CircleEntity` -> `ArcEntity`, `ArcEntity`, future `EllipticalArcEntity`, future native spline fragments), use `CurveCut.Parameter` to rebuild the native curve and validate the rebuilt endpoint against `CurveCut.Point` within tolerance.
+
+---
+
+## Curve editing stabilization phase started
+
+Initial implementation work has started for the shared curve editing architecture described in `docs/curve-editing.md`.
+
+Added the first native curve splitting pipeline in `OpenCad2D.Core.Editing.Curves`:
+
+- `CurveCut` stores a native curve parameter plus the shared geometric point for a cut.
+- `CurveInterval` stores kept intervals between two cuts.
+- `ICurveAdapter` defines the native parametric interface used by editing operations.
+- `ICurveAdapterFactory` and `DefaultCurveAdapterFactory` currently support `LineEntity`, `CircleEntity` and `ArcEntity`.
+- `CadCurveSplitService` provides the first shared operations for splitting at a point, removing between two points and removing the picked interval between cuts.
+
+`CadTrimService` now routes `CircleEntity` and `ArcEntity` trimming through `CadCurveSplitService`, removing the previous early exit for multiple boundaries on those entity types. This is the first concrete step toward shared TRIM/BREAK behavior.
+
+New tests were added for:
+
+- direct `CadCurveSplitService` behavior on line, circle and arc;
+- circle TRIM with two line boundaries;
+- arc TRIM with two line boundaries.
+
+Current scope notes:
+
+- The new curve split pipeline is deliberately limited to line, circle and arc in this phase.
+- Existing polyline, ellipse and spline behavior remains unchanged.
+- Ellipse and spline still require the planned native follow-up work (`EllipticalArcEntity` and native Bezier split) before their permanent polyline fallback can be removed.
+- The local environment used for this handoff did not provide the `dotnet` CLI, so compilation and tests must be run by the developer locally.
+
+---
+
+## Curve editing stabilization - Polyline adapter phase
+
+Extended the shared curve editing pipeline with `PolylineEntity` support in `DefaultCurveAdapterFactory`.
+
+New behavior in the adapter-backed pipeline:
+
+- open polylines use cumulative path length as their native curve parameter;
+- closed polylines/polygons use the same cumulative path length with `Period = TotalLength`;
+- inserted cut points are reused directly as explicit vertices, preserving shared `Point2D` values;
+- fragments keep intermediate native polyline vertices instead of degrading into one two-point polyline per segment;
+- closed polyline/polygon edits return open `PolylineEntity` fragments.
+
+`CadTrimService.TrimPolylineByBoundaries` now delegates polyline target fragmentation to `CadCurveSplitService`. This means rectangle/polygon-like closed polylines start using the same interval pipeline already introduced for circle and arc trimming.
+
+Tests added/updated:
+
+- `CadCurveSplitServiceTests.SplitAtPoint_WithOpenPolyline_ShouldCreateTwoPolylineFragmentsSharingProjectedVertex`
+- `CadCurveSplitServiceTests.RemoveBetweenPoints_WithOpenPolyline_ShouldRemoveMiddlePathAndPreserveNativeVertices`
+- `CadCurveSplitServiceTests.RemoveBetweenPoints_WithClosedPolylinePolygon_ShouldReturnOpenPolylineAroundRemainingPath`
+- `CadTrimServiceTests.TrimOpenPolyline_ByLineBoundaryOnSecondSegment_ShouldCreatePolylineFragments` now expects a single continuous polyline fragment that preserves the corner vertex, instead of two disconnected two-point fragments.
+
+Validation note: this environment still does not provide the `dotnet` CLI, so run the full local validation with:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
+## Curve editing stabilization - Break service delegation phase
+
+`CadBreakService` now delegates base native entities to `CadCurveSplitService` instead of maintaining separate break fragmentation logic for the same cases.
+
+Delegated cases:
+
+- `BreakAtPoint`: `LineEntity`, `ArcEntity`, `PolylineEntity`
+- `BreakBetweenPoints`: `LineEntity`, `CircleEntity`, `ArcEntity`, `PolylineEntity`
+
+The intentional exception remains one-point break on a full `CircleEntity`, which still returns no fragments. The supported circle workflow is `BreakBetweenPoints`, returning a native `ArcEntity` complement. This avoids introducing a near-360-degree arc representation before that behavior is deliberately designed.
+
+Temporary fallback cases kept unchanged:
+
+- `EllipseEntity` still returns open `PolylineEntity` approximations.
+- `BezierSplineEntity` still breaks its polyline approximation.
+
+New tests added to lock the shared point/projection behavior through `CadBreakService`:
+
+- `CadBreakServiceTests.BreakAtPoint_WithLine_ShouldCreateTwoLinesSharingProjectedPoint`
+- `CadBreakServiceTests.BreakBetweenPoints_WithLine_ShouldRemoveMiddleSegmentUsingProjectedPoints`
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
+## Curve editing stabilization - Line trim delegation phase
+
+`CadTrimService.TrimLineByBoundaries` now delegates line target fragmentation to `CadCurveSplitService`.
+
+This removes the remaining separate line-specific trim fragmentation path for the native base entities and aligns `LineEntity` with the same `CurveCut` / `CurveInterval` pipeline already used by `CircleEntity`, `ArcEntity`, `PolylineEntity`, and `CadBreakService`.
+
+Important precision rule preserved by this phase:
+
+- line fragments use the projected/shared `CurveCut.Point` directly as their resulting endpoint;
+- mutual line trims therefore produce exactly matching endpoint coordinates when they come from the same geometric intersection;
+- tolerances are still used to classify cuts, filter endpoints, and remove degenerate fragments, but not to justify keeping intended coincident vertices as different coordinates.
+
+New tests added:
+
+- `CadTrimServiceTests.TrimLine_ByBoundary_ShouldReuseSharedIntersectionPointAsEndpoint`
+- `CadTrimServiceTests.TrimTwoLinesMutually_ShouldCreateExactlyMatchingSharedEndpoint`
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
+## Curve editing stabilization - EllipticalArcEntity foundation phase
+
+Added the first native model object required to remove permanent ellipse degradation during future Trim/Break operations:
+
+- `EllipticalArcEntity`
+- `EntityKind.EllipticalArc`
+
+The entity uses the same native ellipse definition as `EllipseEntity`:
+
+- `Center`
+- `MajorAxis`
+- `MinorRadius`
+- `StartParameterRadians`
+- `EndParameterRadians`
+- `IsCounterClockwise`
+
+Superseded status: this phase was foundational only at the time it was written. The later phases have since added rendering, persistence, export support, `EllipseCurveAdapter`, `EllipticalArcCurveAdapter`, and TRIM/BREAK wiring for native ellipse fragments. The former `EllipseEntity -> PolylineEntity` editing fallback has been removed for supported ellipse edits.
+
+Core tests added:
+
+- `EllipticalArcEntityTests.Constructor_ShouldPreserveNativeEllipseDefinitionAndParameters`
+- `EllipticalArcEntityTests.GetSamplePoints_ShouldFollowDirectedSweepAndIncludeEndpoints`
+- `EllipticalArcEntityTests.WithLayer_ShouldPreserveGeometry`
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
+## Curve editing stabilization - EllipticalArc infrastructure phase
+
+`EllipticalArcEntity` is now wired into the application infrastructure so future native ellipse Trim/Break results can be displayed, saved and exported before the command services start producing them.
+
+Added support:
+
+- screen rendering in `CadEntityRenderer` using the entity's directed sample points;
+- JSON persistence with `EllipticalArcEntityDto` and the `EllipticalArc` type discriminator;
+- serializer/deserializer mapping in `JsonDocumentSerializer`;
+- SVG export as a native `<path>` elliptical arc command;
+- DXF export as a partial `ELLIPSE` entity using group codes `41` and `42` for the start/end parameters;
+- PDF export using the current sampled-line strategy, matching the existing ellipse/spline export approach.
+
+New tests added:
+
+- `EllipticalArcRoundTripTests.SerializeDeserialize_ShouldPreserveEllipticalArcEntity`
+- `EllipticalArcRoundTripTests.JsonRoundTrip_ShouldPreserveEllipticalArcDtoType`
+- `SvgExporterTests.Export_WhenDocumentContainsEllipticalArc_ShouldWritePathElement`
+- `DxfExporterTests.Export_WhenDocumentContainsEllipticalArc_ShouldWritePartialEllipseEntity`
+
+Important limitation that still remains by design:
+
+- Superseded: `CadTrimService` and `CadBreakService` now return `EllipticalArcEntity` for supported ellipse editing. The former `EllipseEntity -> PolylineEntity` editing fallback has been removed.
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+
+---
+
+## Curve editing stabilization - EllipticalArc consolidation tests
+
+Added focused precision tests for native ellipse editing results. The new tests verify that Trim and Break on `EllipseEntity` / `EllipticalArcEntity` keep native geometry rather than returning permanent `PolylineEntity` approximations.
+
+New test file:
+
+- `tests/OpenCad2D.Core.Tests/EllipticalArcEditingPrecisionTests.cs`
+
+Covered scenarios:
+
+- full ellipse Trim with two line boundaries returns native `EllipticalArcEntity` fragments;
+- full ellipse Trim endpoints lie on both the source ellipse and the vertical line boundaries;
+- `EllipticalArcEntity` Trim by line keeps native endpoint geometry;
+- `EllipticalArcEntity` Break At Point creates two native fragments sharing the break point within tolerance;
+- `EllipticalArcEntity` Break Between Points removes the middle segment while preserving center, major axis and minor radius.
+
+This phase does not add new spline behavior. The next planned phase remains improving native/non-degrading intersections for `EllipseEntity` and `EllipticalArcEntity` with `LineEntity` and `PolylineEntity`, followed by `BezierSplineSplitService`.
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+---
+
+## Curve editing stabilization - Ellipse/Circle shared intersections
+
+Improved native intersection handling for ellipse-based entities against circular entities. The goal is to avoid the manual issue where trimming an ellipse with a circle produced endpoints that were visibly separated from the circle by a large amount because the operation fell back to independent sampled approximations.
+
+Updated behavior:
+
+- `CircleEntity <-> EllipseEntity` now uses a native ellipse-parameter root search against the circle equation;
+- `CircleEntity <-> EllipticalArcEntity` uses the same native calculation and filters results by the elliptical arc sweep;
+- `ArcEntity <-> EllipseEntity` filters native circle/ellipse intersections by the circular arc sweep;
+- `ArcEntity <-> EllipticalArcEntity` filters by both the circular arc sweep and the elliptical arc sweep.
+
+The returned point is produced from the ellipse parameter and validated against the circle radius. This gives both the ellipse adapter and the circle/arc adapter the same shared geometric cut point, preventing large mismatches after Trim.
+
+New precision tests were added to `EllipticalArcEditingPrecisionTests` for:
+
+- `IntersectCircleEllipse_ShouldReturnPointsOnBothNativeCurves`;
+- `TrimEllipse_ByCircleBoundary_ShouldKeepEndpointsOnCircleAndEllipse`;
+- `TrimCircle_ByEllipseBoundary_ShouldKeepEndpointsOnCircleAndEllipse`.
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+
+## 2026-05-20 - BezierSplineCurveAdapter foundation
+
+The shared curve editing pipeline now has a `BezierSplineCurveAdapter` for open `BezierSplineEntity`.
+
+Implemented behavior:
+
+- `DefaultCurveAdapterFactory` creates a spline adapter for `BezierSplineEntity`;
+- open spline split/remove operations use native Bezier parameters `0..1`;
+- fragments are rebuilt through `BezierSplineSplitService`, preserving `BezierSplineEntity`;
+- closed splines remain deliberately deferred and return no fragments;
+- new `CadCurveSplitServiceTests` verify native split, remove-between and remove-picked behavior for splines.
+
+Important limitation:
+
+- Superseded: TRIM/BREAK services now route supported open spline editing through `CadCurveSplitService` and `BezierSplineSplitService`; the command-level permanent `PolylineEntity` fallback for supported open splines has been removed.
+
+## 2026-05-20 - CadIntersectionPoint rich intersection foundation
+
+Added the first implementation layer for richer CAD intersections, without replacing the existing `Intersect(...)` API yet.
+
+New types:
+
+- `CadIntersectionPoint` in `OpenCad2D.Core.Editing`;
+- `CadIntersectionKind` in `OpenCad2D.Core.Editing`.
+
+`CadIntersectionPoint` stores:
+
+- one shared `Point2D` that explicit-vertex entities can reuse directly;
+- `FirstParameter` on the first entity;
+- `SecondParameter` on the second entity;
+- an intersection kind classification;
+- convenience `FirstCut` and `SecondCut` values for the shared split pipeline.
+
+`CadEntityIntersectionService.IntersectDetailed(...)` now wraps the existing intersection points and projects them onto both entities through `DefaultCurveAdapterFactory`. This preserves compatibility while giving future TRIM/BREAK/EXTEND work access to native curve parameters and a single shared point.
+
+New tests in `CadEntityIntersectionDetailedTests` verify:
+
+- line/line intersections return a single shared point plus native parameters;
+- endpoint intersections are classified as `Endpoint`;
+- line/circle intersections expose both line parameters and circle angular parameters;
+- circle/ellipse intersections reuse the same point for both `CurveCut` values and keep points on both native curves.
+
+This phase is intentionally additive. The existing `CadTrimService` and `CadBreakService` still call their current APIs. The next refactor step can progressively replace target-side point projection with `CadIntersectionPoint.FirstCut` / `SecondCut` where the command already knows which entity is the target.
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+## Curve editing stabilization - EXTEND native elliptical arc phase
+
+Extended `CadExtendService` to support `EllipticalArcEntity` targets.
+
+Behavior added:
+
+```text
+EllipticalArcEntity + boundary -> EllipticalArcEntity
+```
+
+The service discovers candidate intersections using the full ellipse definition, chooses the nearest valid intersection outside the current elliptical-arc sweep in the picked extension direction, converts that point to the native ellipse parameter, and rebuilds the result as an `EllipticalArcEntity`.
+
+`ExtendTool` now accepts `EllipticalArcEntity` as a target and creates highlighted preview fragments for the newly added elliptical-arc portion.
+
+Regression tests added:
+
+```text
+ExtendEllipticalArc_ToLineBoundary_ShouldExtendPickedEndWithNativeGeometry
+ExtendEllipticalArc_ToLineBoundary_ShouldExtendPickedStartWithNativeGeometry
+ExtendEllipse_ShouldReturnNull
+```
+
+Full `EllipseEntity` targets remain unsupported for EXTEND because closed curves have no natural extension endpoint. `BezierSplineEntity` EXTEND remains deferred.
+
+
+## 2026-05-20 - Permanent Polyline fallback cleanup for curve editing
+
+Cleaned up the old command-level TRIM/BREAK fallback implementations that permanently converted native curve edits into `PolylineEntity` results.
+
+Changed files:
+
+```text
+src/OpenCad2D.Core/Editing/CadTrimService.cs
+src/OpenCad2D.Core/Editing/CadBreakService.cs
+docs/curve-editing.md
+docs/ai-handoff.md
+```
+
+`CadTrimService` is now a thin dispatcher over the shared curve-editing pipeline for supported targets: line, circle, arc, ellipse, elliptical arc, polyline and open Bezier spline. It collects boundary intersections, filters endpoints where needed, and delegates final interval removal to `CadCurveSplitService`. The obsolete private fragment builders for line, circle, arc, ellipse-as-polyline and polyline-as-two-point-fragments were removed.
+
+`CadBreakService` is now similarly reduced to the public Break At Point / Break Between Points dispatch. It delegates supported open/native entities to `CadCurveSplitService`; full `CircleEntity` and `EllipseEntity` still intentionally return no result for one-point break until a full-sweep-open-arc policy is defined.
+
+Current policy after cleanup:
+
+- source polylines, rectangles and polygons may legitimately produce `PolylineEntity` fragments;
+- full ellipses and elliptical arcs produce `EllipticalArcEntity` fragments;
+- supported open Bezier splines produce `BezierSplineEntity` fragments;
+- unsupported closed splines are deferred/no-op rather than silently degraded;
+- sampled geometry remains allowed only for preview/discovery/projection, not as the permanent edited result when a native representation exists.
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```
+
+## 2026-05-20 - Save versus Export UX clarity
+
+Clarified the UX distinction between native Save and external Export.
+
+Changed files:
+
+```text
+src/OpenCad2D.App/ViewModels/MainWindowViewModel.cs
+tests/OpenCad2D.App.Tests/MainWindowViewModelExportSaveSemanticsTests.cs
+docs/export.md
+docs/architecture.md
+docs/ai-handoff.md
+```
+
+`ExportSvgToFile`, `ExportDxfToFile` and `ExportPdfToFile` still do not update `CurrentFilePath`, do not call `MarkSaved()` and do not clear the dirty state. This remains the correct data-integrity policy because SVG/PDF/DXF are derived outputs, not the editable native OpenCad2D project.
+
+The post-export status message now explicitly says that the export did not save the editable OpenCad2D project. It distinguishes three cases:
+
+- no native file path yet: tell the user to use Save As;
+- native file exists but the drawing is dirty: tell the user unsaved project changes remain and to use Save;
+- native file exists and the drawing is clean: tell the user the native drawing is already saved.
+
+Added App tests proving SVG/DXF/PDF export do not change `CurrentFilePath` and do not clear `IsDirty`, plus coverage for the never-saved and already-saved message variants.
+
+Validation note: this handoff environment still does not provide the `dotnet` CLI. Run locally:
+
+```bash
+dotnet build
+dotnet test
+```

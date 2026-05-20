@@ -342,7 +342,7 @@ public sealed class ExtendToolTests
 
         Assert.Equal(ToolResultKind.None, result.Kind);
         Assert.Equal(
-            "Extend supports lines, arcs and open polylines as targets.",
+            "Extend supports lines, arcs, elliptical arcs and open polylines as targets.",
             result.Message);
     }
 
@@ -371,7 +371,7 @@ public sealed class ExtendToolTests
 
         Assert.Equal(ToolResultKind.None, result.Kind);
         Assert.Equal(
-            "Extend supports lines, arcs and open polylines as targets.",
+            "Extend supports lines, arcs, elliptical arcs and open polylines as targets.",
             result.Message);
     }
 

@@ -209,6 +209,35 @@ This ensures:
 
 ---
 
+
+## Curve editing precision boundary
+
+Trim, Break and related modify operations must preserve native geometry and shared topology.
+
+The project-level rule is:
+
+```text
+CAD editing operations modify native entities using native geometric parameters.
+Sampling is allowed only as temporary support and must not become the permanent source of edited geometry when a native representation exists.
+```
+
+Future Trim/Break work should route target fragmentation through a shared curve-splitting pipeline:
+
+```text
+CadTrimService / CadBreakService
+-> CadCurveSplitService
+-> ICurveAdapter
+-> native entity fragments
+```
+
+The command services should not duplicate per-entity splitting logic. They should collect intersections or break points, convert them into target-side `CurveCut` values, and ask the split service to build the fragments to keep.
+
+When one intersection modifies multiple explicit-vertex entities, the intersection point must be computed once and reused as the same logical `Point2D` value for all resulting endpoints/vertices. This avoids micro-gaps after reciprocal Trim/Extend-style operations.
+
+See `docs/curve-editing.md` for the detailed rules, expected adapter model and implementation phases.
+
+---
+
 ## Commands
 
 User-facing document changes should go through commands.
@@ -283,6 +312,8 @@ Export must not:
 - call `MarkSaved()`;
 - clear the dirty marker;
 - mutate the document.
+
+The App must make this distinction visible after export. A successful export message should explicitly state that export did not save the editable OpenCad2D project and should tell the user whether Save/Save As is still needed for the native `.opencad2d.json` drawing.
 
 SVG export uses visible document bounds to build the `viewBox`, writes a background rectangle matching the dark canvas and keeps the same visual Y orientation as the OpenCad2D canvas.
 

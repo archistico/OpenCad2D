@@ -213,7 +213,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
 
         if (!IsSupportedTargetEntity(entity))
         {
-            return ToolResult.None("Extend supports lines, arcs and open polylines as targets.");
+            return ToolResult.None("Extend supports lines, arcs, elliptical arcs and open polylines as targets.");
         }
 
         if (!context.Document.IsEntitySelectable(entity))
@@ -313,6 +313,9 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
             (ArcEntity sourceArc, ArcEntity extendedArc) =>
                 CreateArcExtendHighlightEntities(sourceArc, extendedArc, tolerance),
 
+            (EllipticalArcEntity sourceArc, EllipticalArcEntity extendedArc) =>
+                CreateEllipticalArcExtendHighlightEntities(sourceArc, extendedArc, tolerance),
+
             (PolylineEntity sourcePolyline, PolylineEntity extendedPolyline) =>
                 CreatePolylineExtendHighlightEntities(sourcePolyline, extendedPolyline, tolerance),
 
@@ -374,6 +377,30 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         return Array.Empty<CadEntity>();
     }
 
+    private static IReadOnlyList<CadEntity> CreateEllipticalArcExtendHighlightEntities(
+        EllipticalArcEntity sourceArc,
+        EllipticalArcEntity extendedArc,
+        GeometryTolerance tolerance)
+    {
+        if (!tolerance.ArePointsEqual(sourceArc.StartPoint, extendedArc.StartPoint))
+        {
+            return CreateHighlightEllipticalArc(
+                sourceArc,
+                extendedArc.StartParameterRadians,
+                sourceArc.StartParameterRadians);
+        }
+
+        if (!tolerance.ArePointsEqual(sourceArc.EndPoint, extendedArc.EndPoint))
+        {
+            return CreateHighlightEllipticalArc(
+                sourceArc,
+                sourceArc.EndParameterRadians,
+                extendedArc.EndParameterRadians);
+        }
+
+        return Array.Empty<CadEntity>();
+    }
+
     private static IReadOnlyList<CadEntity> CreatePolylineExtendHighlightEntities(
         PolylineEntity sourcePolyline,
         PolylineEntity extendedPolyline,
@@ -424,6 +451,28 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
                 source.Radius,
                 startAngle,
                 endAngle,
+                source.IsCounterClockwise,
+                layerId: source.LayerId,
+                style: source.Style,
+                isVisible: source.IsVisible,
+                isLocked: source.IsLocked,
+                drawOrder: source.DrawOrder)
+        };
+    }
+
+    private static IReadOnlyList<CadEntity> CreateHighlightEllipticalArc(
+        EllipticalArcEntity source,
+        double startParameterRadians,
+        double endParameterRadians)
+    {
+        return new[]
+        {
+            new EllipticalArcEntity(
+                source.Center,
+                source.MajorAxis,
+                source.MinorRadius,
+                startParameterRadians,
+                endParameterRadians,
                 source.IsCounterClockwise,
                 layerId: source.LayerId,
                 style: source.Style,
@@ -499,7 +548,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
 
     private static bool IsSupportedTargetEntity(CadEntity entity)
     {
-        return entity is LineEntity or ArcEntity or PolylineEntity { IsClosed: false };
+        return entity is LineEntity or ArcEntity or EllipticalArcEntity or PolylineEntity { IsClosed: false };
     }
 
     private void Reset(ToolContext? context = null)

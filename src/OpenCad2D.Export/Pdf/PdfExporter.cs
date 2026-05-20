@@ -251,6 +251,13 @@ public sealed class PdfExporter : IPdfExporter
                     context);
                 break;
 
+            case EllipticalArcEntity ellipticalArc:
+                WriteEllipticalArc(
+                    builder,
+                    ellipticalArc,
+                    context);
+                break;
+
             case PointEntity point:
                 WriteCircle(
                     builder,
@@ -448,6 +455,33 @@ public sealed class PdfExporter : IPdfExporter
         }
 
         builder.AppendLine("h");
+        builder.AppendLine("S");
+    }
+
+    private static void WriteEllipticalArc(
+        StringBuilder builder,
+        EllipticalArcEntity ellipticalArc,
+        PdfExportContext context)
+    {
+        IReadOnlyList<Point2D> points = ellipticalArc.GetSamplePoints();
+        if (points.Count == 0)
+        {
+            return;
+        }
+
+        Point2D first = ToPdfPoint(
+            points[0],
+            context);
+        builder.AppendLine($"{Format(first.X)} {Format(first.Y)} m");
+
+        foreach (Point2D modelPoint in points.Skip(1))
+        {
+            Point2D point = ToPdfPoint(
+                modelPoint,
+                context);
+            builder.AppendLine($"{Format(point.X)} {Format(point.Y)} l");
+        }
+
         builder.AppendLine("S");
     }
 
