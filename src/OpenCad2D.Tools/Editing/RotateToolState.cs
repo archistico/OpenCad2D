@@ -5,6 +5,7 @@ namespace OpenCad2D.Tools.Editing;
 /// </summary>
 public enum RotateToolState
 {
+    WaitingForEntitySelection,
     WaitingForBasePoint,
     WaitingForReferencePoint,
     WaitingForDestinationPoint

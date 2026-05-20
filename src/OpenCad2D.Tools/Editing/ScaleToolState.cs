@@ -5,6 +5,7 @@ namespace OpenCad2D.Tools.Editing;
 /// </summary>
 public enum ScaleToolState
 {
+    WaitingForEntitySelection,
     WaitingForBasePoint,
     WaitingForReferencePoint,
     WaitingForDestinationPoint

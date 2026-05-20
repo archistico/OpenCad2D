@@ -236,3 +236,15 @@ TRIM, BREAK and EXTEND now use explicit preview semantics so the command line an
 For closed curves, BREAK Segment uses the order of the two picked points to determine which interval is removed. The command message should make this explicit because closed curves have two possible paths between the same two points.
 
 EXTEND accepts boundary entities that can produce native intersection points, including lines, circles, arcs, ellipses, elliptical arcs and polylines. Targets remain limited to entities with extendable endpoints: lines, arcs, elliptical arcs and open polylines. Closed curves such as circles, complete ellipses and closed polylines are intentionally rejected as EXTEND targets because they do not have a natural endpoint.
+
+## Modify tools selection-first UX
+
+Interactive modify tools should follow the same selection-first pattern where practical:
+
+- if a compatible selection already exists, the tool starts directly at its first geometric input;
+- if no entities are selected, the tool enters an entity-selection phase;
+- during entity selection, only entity selection snaps should be active;
+- after confirming the selection, geometric snaps return for point input;
+- command-line prompts should tell the user whether they are selecting entities or specifying geometry.
+
+This pass aligns `RotateTool` and `ScaleTool` with the existing Move, Copy and Mirror behavior. They now support selecting entities after the command starts, use `EntityOnly` snapping during that selection phase, and then continue with their base/reference/destination workflow.

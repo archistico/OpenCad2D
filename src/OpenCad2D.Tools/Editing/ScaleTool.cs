@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Interactive tool used to uniformly scale the current selection around a base point.
 /// </summary>
-public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
+public sealed class ScaleTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, IKeyboardAwareTool, IToolPreviewEntityProvider
 {
     private Point2D? _basePoint;
     private Point2D? _referencePoint;
@@ -45,18 +45,17 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!context.Selection.HasSelection)
-        {
-            return new CommandPromptState(
-                "SCALE",
-                "Select objects before scaling",
-                CommandInputKind.Selection,
-                acceptsEmptyEnter: true,
-                placeholder: "Select objects, then run SCALE again");
-        }
+        EnsureInitialState(context);
 
         return State switch
         {
+            ScaleToolState.WaitingForEntitySelection => new CommandPromptState(
+                "SCALE",
+                "Select objects to scale",
+                CommandInputKind.Selection,
+                acceptsEmptyEnter: true,
+                placeholder: "Click objects, then press Enter"),
+
             ScaleToolState.WaitingForBasePoint => new CommandPromptState(
                 "SCALE",
                 "Specify base point",
@@ -86,9 +85,16 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
 
-        if (!context.Selection.HasSelection)
+        EnsureInitialState(context);
+
+        if (State == ScaleToolState.WaitingForEntitySelection)
         {
-            return ToolResult.None("Select entities before running Scale.");
+            if (input.Kind == CommandInputSubmissionKind.Confirm)
+            {
+                return ConfirmEntitySelection(context);
+            }
+
+            return ToolResult.None("Select entities to scale, then press Enter.");
         }
 
         if (State == ScaleToolState.WaitingForDestinationPoint &&
@@ -119,14 +125,14 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
-        if (!context.Selection.HasSelection)
-        {
-            Reset(context);
+        EnsureInitialState(context);
 
-            return ToolResult.None("No entities selected.");
+        if (State == ScaleToolState.WaitingForEntitySelection)
+        {
+            return SelectEntityToScale(context, pointer);
         }
 
-        Point2D point = ApplySnap(
+        Point2D point = ApplyGeometricSnap(
             context,
             pointer.ModelPoint,
             _basePoint);
@@ -153,6 +159,8 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
+        EnsureInitialState(context);
+
         if (State != ScaleToolState.WaitingForDestinationPoint ||
             _basePoint is null ||
             _referencePoint is null)
@@ -160,7 +168,7 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
             return ToolResult.None();
         }
 
-        Point2D point = ApplySnap(
+        Point2D point = ApplyGeometricSnap(
             context,
             pointer.ModelPoint,
             _basePoint);
@@ -194,6 +202,37 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         return ToolResult.None("Scale tool deactivated.");
     }
 
+    public bool TryHandleKey(
+        ToolContext context,
+        CadToolKey key,
+        out ToolResult result)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        if (State == ScaleToolState.WaitingForEntitySelection &&
+            key == CadToolKey.Enter)
+        {
+            result = ConfirmEntitySelection(context);
+            return result.Changed;
+        }
+
+        result = ToolResult.None();
+        return false;
+    }
+
+    public SnapKind GetActiveSnapKind(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        return State == ScaleToolState.WaitingForEntitySelection
+            ? SnapKind.EntityOnly
+            : context.EnabledSnaps;
+    }
+
     public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -217,6 +256,13 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         ToolContext context,
         Point2D point)
     {
+        if (!context.Selection.HasSelection)
+        {
+            State = ScaleToolState.WaitingForEntitySelection;
+
+            return ToolResult.Started("Select entities to scale.");
+        }
+
         _basePoint = point;
         _referencePoint = null;
         _currentDestinationPoint = null;
@@ -353,12 +399,69 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         return _currentFactor > 0;
     }
 
-    private static Point2D ApplySnap(
+    public ToolResult ConfirmEntitySelection(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        EnsureInitialState(context);
+
+        if (State != ScaleToolState.WaitingForEntitySelection)
+        {
+            return ToolResult.None();
+        }
+
+        if (!context.Selection.HasSelection)
+        {
+            return ToolResult.None("Select entities to scale.");
+        }
+
+        State = ScaleToolState.WaitingForBasePoint;
+
+        return ToolResult.Started("Specify base point for scaling.");
+    }
+
+    private ToolResult SelectEntityToScale(
+        ToolContext context,
+        PointerInfo pointer)
+    {
+        EntityId? selectedId = pointer.IsControlPressed
+            ? context.Selection.Service.SelectNextByPoint(
+                context.Document,
+                pointer.ModelPoint,
+                context.Selection.Tolerance,
+                context.Selection.Set.LastSelectedId)
+            : context.Selection.Service.SelectByPoint(
+                context.Document,
+                pointer.ModelPoint,
+                context.Selection.Tolerance);
+
+        if (selectedId is null)
+        {
+            return ToolResult.None("Select entities to scale, then press Enter.");
+        }
+
+        if (pointer.IsShiftPressed)
+        {
+            context.Selection.Set.Toggle(selectedId.Value);
+        }
+        else
+        {
+            context.Selection.Set.ReplaceWith(selectedId.Value);
+        }
+
+        return ToolResult.Updated(pointer.IsControlPressed
+            ? "Overlapping entity selected. Press Enter to specify base point."
+            : "Entity selected. Press Enter to specify base point.");
+    }
+
+    private static Point2D ApplyGeometricSnap(
         ToolContext context,
         Point2D cursorPoint,
         Point2D? basePoint)
     {
-        if (context.EnabledSnaps == SnapKind.None ||
+        SnapKind enabledSnaps = context.EnabledSnaps & ~SnapKind.Entity;
+
+        if (enabledSnaps == SnapKind.None ||
             Tolerance.IsZero(context.SnapTolerance))
         {
             return cursorPoint;
@@ -368,7 +471,7 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
             context.Document,
             cursorPoint,
             context.SnapTolerance,
-            context.EnabledSnaps,
+            enabledSnaps,
             basePoint,
             context.GridSettings);
 
@@ -387,13 +490,33 @@ public sealed class ScaleTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
             second);
     }
 
+    private void EnsureInitialState(ToolContext context)
+    {
+        if (_basePoint is not null)
+        {
+            return;
+        }
+
+        if (State == ScaleToolState.WaitingForEntitySelection &&
+            context.Selection.HasSelection)
+        {
+            return;
+        }
+
+        State = context.Selection.HasSelection
+            ? ScaleToolState.WaitingForBasePoint
+            : ScaleToolState.WaitingForEntitySelection;
+    }
+
     private void Reset(ToolContext? context = null)
     {
         _basePoint = null;
         _referencePoint = null;
         _currentDestinationPoint = null;
         _currentFactor = 1.0;
-        State = ScaleToolState.WaitingForBasePoint;
+        State = context is not null && !context.Selection.HasSelection
+            ? ScaleToolState.WaitingForEntitySelection
+            : ScaleToolState.WaitingForBasePoint;
 
         if (context is not null)
         {

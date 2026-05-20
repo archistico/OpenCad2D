@@ -1,23 +1,5 @@
 # Latest handoff note
 
-## Manual regression checklist for curve editing v0.9
-
-Added `docs/testing/curve-editing-regression-v0.9.md` as the manual verification checklist for the v0.9 curve-editing stabilization block.
-
-The checklist covers TRIM, BREAK AT POINT, BREAK SEGMENT, EXTEND, shared intersection / micro-gap checks, `EllipticalArcEntity`, open `BezierSplineEntity`, persistence, SVG/PDF/DXF export, DXF import smoke checks, property panel behavior, preview UX, command messages, and performance smoke tests.
-
-It also records the known deferred items:
-- BreakAtPoint on full `CircleEntity`;
-- BreakAtPoint on full `EllipseEntity`;
-- closed Bezier spline editing;
-- ellipse/spline offset policy;
-- DXF partial ELLIPSE import mapping to `EllipticalArcEntity`.
-
-
----
-
-## Previous checkpoint
-
 ## v0.9 curve editing and preview UX checkpoint
 
 The curve-editing stabilization block is now substantially complete for the current supported native entity set. `CadCurveSplitService`, `ICurveAdapter`, `CurveCut`, `CurveInterval` and the richer `CadIntersectionPoint` model are in place. TRIM and BREAK now preserve native geometry for lines, circles, arcs, polylines, full ellipses, elliptical arcs and open Bezier splines. Permanent command-level fallback from ellipses or supported open splines to `PolylineEntity` has been removed.
@@ -523,3 +505,25 @@ The Preview UX pass now aligns command-line messages with the visual preview sem
 - EXTEND tool boundary support now matches the native intersection work: line, circle, arc, ellipse, elliptical arc and polyline boundaries are accepted. EXTEND targets remain endpoint-based only: line, arc, elliptical arc and open polyline.
 
 Keep this distinction in future UX work: complete closed curves can be boundaries, but they are not EXTEND targets unless a separate open-at-point policy is introduced.
+
+### 2026-05-20 - Modify tools UX cleanup: Rotate/Scale selection phase
+
+Started the Modify Tools UX cleanup pass after the curve-editing regression checklist. `RotateTool` and `ScaleTool` now follow the same selection-first interaction model already used by Move, Copy and Mirror:
+
+- when no entities are selected, the tool enters `WaitingForEntitySelection` instead of immediately rejecting the command;
+- entity-selection mode uses `SnapKind.EntityOnly`;
+- Enter confirms the selected entities and moves to the base-point prompt;
+- geometric point phases use geometric snaps with entity snap masked out, avoiding accidental entity-only snap behavior while choosing transformation points.
+
+Files touched in this pass:
+
+```text
+src/OpenCad2D.Tools/Editing/RotateTool.cs
+src/OpenCad2D.Tools/Editing/RotateToolState.cs
+src/OpenCad2D.Tools/Editing/ScaleTool.cs
+src/OpenCad2D.Tools/Editing/ScaleToolState.cs
+tests/OpenCad2D.Tools.Tests/RotateToolTests.cs
+tests/OpenCad2D.Tools.Tests/ScaleToolTests.cs
+docs/modify-tools.md
+docs/ai-handoff.md
+```

@@ -24,7 +24,7 @@ public sealed class ScaleToolTests
     }
 
     [Fact]
-    public void FirstPointerPress_WithoutSelection_ShouldNotStartTool()
+    public void FirstPointerPress_WithoutSelection_ShouldEnterEntitySelection()
     {
         var context = CreateContext();
         var tool = new ScaleTool();
@@ -34,8 +34,52 @@ public sealed class ScaleToolTests
             new PointerInfo(new Point2D(0, 0)));
 
         Assert.Equal(ToolResultKind.None, result.Kind);
-        Assert.Equal(ScaleToolState.WaitingForBasePoint, tool.State);
+        Assert.Equal(ScaleToolState.WaitingForEntitySelection, tool.State);
         Assert.Null(context.CurrentBasePoint);
+    }
+
+    [Fact]
+    public void FirstPointerPress_WithoutInitialSelection_ShouldSelectEntityFirst()
+    {
+        var context = CreateContextWithLine();
+        var tool = new ScaleTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal(ScaleToolState.WaitingForEntitySelection, tool.State);
+        Assert.True(context.Selection.HasSelection);
+    }
+
+    [Fact]
+    public void ConfirmEntitySelection_AfterSelectingEntity_ShouldAskForBasePoint()
+    {
+        var context = CreateContextWithLine();
+        var tool = new ScaleTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.ConfirmEntitySelection(context);
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(ScaleToolState.WaitingForBasePoint, tool.State);
+        Assert.Contains("base point", result.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void GetActiveSnapKind_WhenSelectingEntities_ShouldUseEntityOnlySnap()
+    {
+        var context = CreateContext();
+        context.EnabledSnaps = SnapKind.Endpoint | SnapKind.Entity;
+        var tool = new ScaleTool();
+
+        SnapKind snapKind = tool.GetActiveSnapKind(context);
+
+        Assert.Equal(SnapKind.EntityOnly, snapKind);
     }
 
     [Fact]
@@ -202,6 +246,24 @@ public sealed class ScaleToolTests
             new CadDocument(),
             new CommandHistory(),
             new SnapService());
+    }
+
+    private static ToolContext CreateContextWithLine()
+    {
+        var document = new CadDocument();
+        var commandHistory = new CommandHistory();
+        var context = new ToolContext(
+            document,
+            commandHistory,
+            new SnapService());
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+
+        return context;
     }
 
     private static ToolContext CreateContextWithSelectedLine()
