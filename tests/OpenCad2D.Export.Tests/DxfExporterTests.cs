@@ -275,6 +275,114 @@ public sealed class DxfExporterTests
     }
 
 
+
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledCircle_ShouldWriteSolidHatchWithLayerFillColor()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("Filled");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "Filled",
+            fillColor: CadColor.FromRgb(255, 204, 0)));
+
+        document.AddEntity(new CircleEntity(
+            new Point2D(5, 6),
+            12.5,
+            layerId: layerId,
+            isFilled: true));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(document);
+        string content = Normalize(result.Content);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Contains("0\nCIRCLE", content);
+        Assert.Contains("0\nHATCH", content);
+        Assert.Contains("2\nSOLID", content);
+        Assert.Contains("420\n16763904", content);
+        Assert.Contains("72\n2", content);
+        Assert.Contains("10\n5\n20\n6\n40\n12.5", content);
+    }
+
+    [Fact]
+    public void Export_WhenDocumentContainsNotFilledCircle_ShouldNotWriteHatch()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new CircleEntity(
+            new Point2D(5, 6),
+            12.5));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(document);
+        string content = Normalize(result.Content);
+
+        Assert.Contains("0\nCIRCLE", content);
+        Assert.DoesNotContain("0\nHATCH", content);
+    }
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledClosedPolyline_ShouldWriteSolidHatchWithLayerFillColor()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("FilledPolylines");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "FilledPolylines",
+            fillColor: CadColor.FromRgb(32, 58, 90)));
+
+        document.AddEntity(new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 20)
+            },
+            isClosed: true,
+            layerId: layerId,
+            isFilled: true));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(document);
+        string content = Normalize(result.Content);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Contains("0\nLWPOLYLINE", content);
+        Assert.Contains("0\nHATCH", content);
+        Assert.Contains("2\nSOLID", content);
+        Assert.Contains("420\n2112090", content);
+        Assert.Contains("92\n7", content);
+        Assert.Contains("93\n3", content);
+    }
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledOpenPolyline_ShouldNotWriteHatch()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 20)
+            },
+            isFilled: true));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(document);
+        string content = Normalize(result.Content);
+
+        Assert.Contains("0\nLWPOLYLINE", content);
+        Assert.DoesNotContain("0\nHATCH", content);
+    }
+
     [Fact]
     public void Export_WithModelCoordinateSystem_ShouldNotFlipYCoordinates()
     {

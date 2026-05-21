@@ -335,6 +335,12 @@ public sealed class DxfExporter : IDxfExporter
                         layer.Name,
                         circle,
                         contentBounds);
+                    WriteCircleHatchIfFilled(
+                        writer,
+                        layer.Name,
+                        layer.FillColor,
+                        circle,
+                        contentBounds);
                     break;
 
                 case EllipseEntity ellipse:
@@ -367,6 +373,12 @@ public sealed class DxfExporter : IDxfExporter
                     WritePolyline(
                         writer,
                         layer.Name,
+                        polyline,
+                        contentBounds);
+                    WritePolylineHatchIfFilled(
+                        writer,
+                        layer.Name,
+                        layer.FillColor,
                         polyline,
                         contentBounds);
                     break;
@@ -647,6 +659,39 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(40, circle.Radius);
     }
 
+    private static void WriteCircleHatchIfFilled(
+        DxfDocumentWriter writer,
+        string layerName,
+        CadColor fillColor,
+        CircleEntity circle,
+        BoundingBox2D? contentBounds)
+    {
+        if (!circle.IsFilled)
+        {
+            return;
+        }
+
+        Point2D center = ToDxfPoint(
+            circle.Center,
+            contentBounds);
+
+        WriteHatchHeader(
+            writer,
+            layerName,
+            fillColor);
+        writer.WriteGroup(91, 1);
+        writer.WriteGroup(92, 1);
+        writer.WriteGroup(93, 1);
+        writer.WriteGroup(72, 2);
+        writer.WriteGroup(10, center.X);
+        writer.WriteGroup(20, center.Y);
+        writer.WriteGroup(40, circle.Radius);
+        writer.WriteGroup(50, 0.0);
+        writer.WriteGroup(51, 360.0);
+        writer.WriteGroup(73, 1);
+        WriteHatchFooter(writer);
+    }
+
     private static void WriteEllipse(
         DxfDocumentWriter writer,
         string layerName,
@@ -779,6 +824,70 @@ public sealed class DxfExporter : IDxfExporter
             writer.WriteGroup(10, dxfVertex.X);
             writer.WriteGroup(20, dxfVertex.Y);
         }
+    }
+
+    private static void WritePolylineHatchIfFilled(
+        DxfDocumentWriter writer,
+        string layerName,
+        CadColor fillColor,
+        PolylineEntity polyline,
+        BoundingBox2D? contentBounds)
+    {
+        if (!polyline.IsFilled || !polyline.IsClosed)
+        {
+            return;
+        }
+
+        WriteHatchHeader(
+            writer,
+            layerName,
+            fillColor);
+        writer.WriteGroup(91, 1);
+        writer.WriteGroup(92, 7);
+        writer.WriteGroup(72, 0);
+        writer.WriteGroup(73, 1);
+        writer.WriteGroup(93, polyline.Vertices.Count);
+
+        foreach (Point2D vertex in polyline.Vertices)
+        {
+            Point2D dxfVertex = ToDxfPoint(
+                vertex,
+                contentBounds);
+
+            writer.WriteGroup(10, dxfVertex.X);
+            writer.WriteGroup(20, dxfVertex.Y);
+        }
+
+        WriteHatchFooter(writer);
+    }
+
+    private static void WriteHatchHeader(
+        DxfDocumentWriter writer,
+        string layerName,
+        CadColor fillColor)
+    {
+        writer.WriteGroup(0, "HATCH");
+        writer.WriteGroup(8, layerName);
+        writer.WriteGroup(62, DxfColorMapper.ToAci(fillColor));
+        writer.WriteGroup(420, DxfColorMapper.ToTrueColor(fillColor));
+        writer.WriteGroup(100, "AcDbHatch");
+        writer.WriteGroup(10, 0.0);
+        writer.WriteGroup(20, 0.0);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(210, 0.0);
+        writer.WriteGroup(220, 0.0);
+        writer.WriteGroup(230, 1.0);
+        writer.WriteGroup(2, "SOLID");
+        writer.WriteGroup(70, 1);
+        writer.WriteGroup(71, 0);
+    }
+
+    private static void WriteHatchFooter(DxfDocumentWriter writer)
+    {
+        writer.WriteGroup(97, 0);
+        writer.WriteGroup(75, 0);
+        writer.WriteGroup(76, 1);
+        writer.WriteGroup(98, 0);
     }
 
 
