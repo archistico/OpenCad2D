@@ -112,6 +112,39 @@ public sealed class TrimToolTests
 
 
     [Fact]
+    public void PointerMove_WhenTargetHasNoIntersection_ShouldReturnGranularStatusMessage()
+    {
+        var context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(15, -5),
+            new Point2D(15, 5));
+
+        var target = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(15, 0)));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(8, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(
+            "No trim intersection found between the selected line and the cutting edge. Pick an entity that crosses the cutting edge.",
+            result.Message);
+        Assert.False(tool.HasPreview);
+    }
+
+    [Fact]
     public void PointerMove_AfterBoundary_ShouldExposeHighlightedRemovedSegment()
     {
         var context = CreateContextWithBoundaryAndTarget(

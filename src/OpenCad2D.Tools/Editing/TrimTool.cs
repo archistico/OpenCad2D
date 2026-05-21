@@ -151,7 +151,7 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
         return HasPreview
             ? ToolResult.Updated("Trim preview updated. Dashed portion will be removed.")
-            : ToolResult.None("Select a removable side of an entity that intersects the cutting edge.");
+            : ToolResult.None(BuildTrimPreviewFailureMessage(context, pointer.ModelPoint));
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -233,6 +233,52 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         }
 
         return overlays;
+    }
+
+
+    private string BuildTrimPreviewFailureMessage(
+        ToolContext context,
+        Point2D point)
+    {
+        EntityId? selectedId = SelectEntityByPoint(
+            context,
+            point);
+
+        if (selectedId is null)
+        {
+            return "Select a removable side of an entity that intersects the cutting edge.";
+        }
+
+        if (!_usesAllVisibleCuttingEdges &&
+            _boundaryEntities.Any(boundary => selectedId.Value.Equals(boundary.Id)))
+        {
+            return "Target entity must be different from the selected cutting edge.";
+        }
+
+        CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
+
+        if (!IsSupportedEntity(entity))
+        {
+            return "Trim supports lines, circles, arcs, ellipses, elliptical arcs, polylines and splines.";
+        }
+
+        if (!context.Document.IsEntitySelectable(entity))
+        {
+            return "Target entity is not editable.";
+        }
+
+        IReadOnlyList<CadEntity> effectiveBoundaries = GetEffectiveBoundariesForTarget(entity);
+
+        if (effectiveBoundaries.Count == 0)
+        {
+            return "No cutting edge is available for the selected target entity.";
+        }
+
+        return EditingStatusMessageBuilder.BuildTrimFailureMessage(
+            entity,
+            effectiveBoundaries,
+            point,
+            context.GeometryTolerance);
     }
 
     private ToolResult AcceptBoundaryEntity(

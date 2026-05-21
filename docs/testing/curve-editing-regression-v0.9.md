@@ -112,6 +112,8 @@ Expected message categories:
 
 When a result is `Deferred`, it is acceptable only if the message explains the limitation and no geometry is modified.
 
+The same rule applies while hovering: if TRIM or EXTEND cannot produce a preview over a hovered target, the status text should explain the likely cause instead of falling back to a generic “select a valid entity” message.
+
 ## Come usare la checklist
 
 Per ogni prova, segnare:

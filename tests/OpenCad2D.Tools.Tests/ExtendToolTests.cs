@@ -527,6 +527,38 @@ public sealed class ExtendToolTests
 
 
     [Fact]
+    public void PointerMove_WhenBoundaryDoesNotIntersectProjection_ShouldReturnGranularStatusMessage()
+    {
+        ToolContext context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(10, 5),
+            new Point2D(10, 10));
+        var target = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(5, 0));
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 7)));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(
+            "No extension possible: the projected line does not intersect the selected line boundary.",
+            result.Message);
+        Assert.False(tool.HasPreview);
+    }
+
+    [Fact]
     public void SecondPointerPress_WhenBoundaryDoesNotIntersectProjection_ShouldReturnGranularStatusMessage()
     {
         ToolContext context = CreateContext();

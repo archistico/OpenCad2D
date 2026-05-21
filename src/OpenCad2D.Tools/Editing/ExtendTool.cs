@@ -112,7 +112,7 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
 
         return HasPreview
             ? ToolResult.Updated("Extend preview updated. Highlighted portion will be added.")
-            : ToolResult.None("Select an extendable endpoint that reaches the boundary from the picked side.");
+            : ToolResult.None(BuildExtendPreviewFailureMessage(context, pointer.ModelPoint));
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -196,6 +196,49 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         }
 
         return overlays;
+    }
+
+
+    private string BuildExtendPreviewFailureMessage(
+        ToolContext context,
+        Point2D point)
+    {
+        if (_boundaryEntity is null)
+        {
+            return "Select a boundary entity before choosing a target endpoint side.";
+        }
+
+        EntityId? selectedId = SelectEntityByPoint(
+            context,
+            point);
+
+        if (selectedId is null)
+        {
+            return "Select an extendable endpoint that reaches the boundary from the picked side.";
+        }
+
+        if (selectedId.Value.Equals(_boundaryEntity.Id))
+        {
+            return "Target entity must be different from the boundary entity.";
+        }
+
+        CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
+
+        if (!IsSupportedTargetEntity(entity))
+        {
+            return "Extend supports lines, arcs, elliptical arcs and open polylines as targets. Closed curves cannot be extended.";
+        }
+
+        if (!context.Document.IsEntitySelectable(entity))
+        {
+            return "Target entity is not editable.";
+        }
+
+        return EditingStatusMessageBuilder.BuildExtendFailureMessage(
+            entity,
+            _boundaryEntity,
+            point,
+            context.GeometryTolerance);
     }
 
     private ToolResult AcceptBoundaryEntity(
