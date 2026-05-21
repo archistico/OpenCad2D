@@ -255,7 +255,11 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         if (extendedEntity is null)
         {
             return ToolResult.None(
-                "No valid extension reaches the boundary from the picked endpoint side.");
+                EditingStatusMessageBuilder.BuildExtendFailureMessage(
+                    entity,
+                    _boundaryEntity,
+                    pointer.ModelPoint,
+                    context.GeometryTolerance));
         }
 
         context.Commands.Execute(

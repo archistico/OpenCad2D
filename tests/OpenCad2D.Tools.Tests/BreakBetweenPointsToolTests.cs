@@ -418,6 +418,30 @@ public sealed class BreakBetweenPointsToolTests
         Assert.Equal(new Point2D(10, 0), lines[1].End);
     }
 
+
+    [Fact]
+    public void BreakBetweenPoints_WithCoincidentPoints_ShouldReturnGranularStatusMessage()
+    {
+        ToolContext context = CreateContextWithLine(out _);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(3, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(3, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(
+            "Break points are too close together. Pick two distinct points on the entity.",
+            result.Message);
+    }
+
     private static ToolContext CreateContext()
     {
         return new ToolContext(

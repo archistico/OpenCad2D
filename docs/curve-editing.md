@@ -781,3 +781,18 @@ The command line must reinforce the same geometric rule used by the editing serv
 - EXTEND messages should refer to the endpoint side and the highlighted added portion.
 
 This is especially important for circles, ellipses, closed polylines and polygons because two valid intervals may exist between two points. The user must be guided by both the preview and the command text.
+
+---
+
+## Implemented command status - granular failure messages
+
+Curve-editing commands must not fail silently when the geometric service cannot produce an edit result.
+
+The current command layer now distinguishes the most common failure categories for manual regression work:
+
+- `TRIM`: no intersection with the active cutting edge versus an existing intersection that does not produce a removable interval from the picked side;
+- `BREAKPOINT`: point outside the selected entity versus point too close to an endpoint, vertex or unstable split location;
+- `BREAK`: coincident break points, second point outside the selected entity, closed-curve segment removal limitations and spline limitations;
+- `EXTEND`: projected target does not intersect the boundary versus the boundary being reachable only from the opposite endpoint side.
+
+These messages are produced at command level by `EditingStatusMessageBuilder`, leaving the low-level geometry services focused on returning edited entities or an empty result. This keeps the regression checklist easier to execute because a failed operation now indicates whether the problem is user input, unsupported topology or a real geometric bug.

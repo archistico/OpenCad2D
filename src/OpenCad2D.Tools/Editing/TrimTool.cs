@@ -319,9 +319,11 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         if (trimmedEntities.Count == 0)
         {
             return ToolResult.None(
-                _boundaryEntities.Count > 1
-                    ? "No removable interval was found from the picked side. Pick a side between or outside the selected cutting edges."
-                    : "No removable interval was found from the picked side. Pick the side that crosses the cutting edge.");
+                EditingStatusMessageBuilder.BuildTrimFailureMessage(
+                    entity,
+                    effectiveBoundaries,
+                    pointer.ModelPoint,
+                    context.GeometryTolerance));
         }
 
         context.Commands.Execute(

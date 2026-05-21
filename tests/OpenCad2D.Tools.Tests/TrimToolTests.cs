@@ -292,6 +292,39 @@ public sealed class TrimToolTests
             result.Message);
     }
 
+
+    [Fact]
+    public void SecondPointerPress_WhenNoIntersection_ShouldReturnGranularStatusMessage()
+    {
+        ToolContext context = CreateContext();
+
+        var boundary = new LineEntity(
+            new Point2D(15, -5),
+            new Point2D(15, 5));
+
+        var target = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        context.Document.AddEntity(boundary);
+        context.Document.AddEntity(target);
+
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(15, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(8, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(
+            "No trim intersection found between the selected line and the cutting edge. Pick an entity that crosses the cutting edge.",
+            result.Message);
+    }
+
     private static ToolContext CreateContext()
     {
         return new ToolContext(
@@ -488,6 +521,7 @@ public sealed class TrimToolTwoBoundaryTests
         Assert.Equal(new Point2D(10, 0), restored.End);
     }
 
+
     private static ToolContext CreateContext()
     {
         return new ToolContext(
@@ -594,6 +628,7 @@ public sealed class TrimToolAdvancedCommandInputTests
         Assert.Equal(TrimToolState.WaitingForBoundaryEntity, tool.State);
         Assert.Null(tool.BoundaryEntityId);
     }
+
 
     private static ToolContext CreateContext()
     {

@@ -1,3 +1,7 @@
+# Latest handoff note - curve editing status messages
+
+Added a command-level granular status-message pass for complex curve editing. `EditingStatusMessageBuilder` now supplies clearer failure messages for TRIM, BREAKPOINT, BREAK and EXTEND when geometry services return no editable result. This is intended to support the v0.9 curve-editing regression checklist by distinguishing no intersection, wrong picked side, point too close to endpoint/vertex, closed spline limitations and unsupported segment-removal cases.
+
 # OpenCad2D AI handoff
 
 This file is the current technical handoff for continuing OpenCad2D work. It should be updated after each meaningful refactor or feature phase.

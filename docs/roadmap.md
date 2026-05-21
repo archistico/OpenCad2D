@@ -261,3 +261,11 @@ Candidate v1.0 gates:
 - [x] Live graphical preview in the Dimension Style Manager.
 - [x] Property panel dimension style selector for selected dimensions.
 - [x] Text/terminator fit controls are implemented; tolerances and alternate units remain future work.
+## v0.9 curve-editing regression support
+
+- [x] Add granular command status messages for complex curve-editing failures.
+  - TRIM now distinguishes missing intersections from picked-side interval failures.
+  - BREAK POINT now explains endpoint/vertex/tolerance split failures.
+  - BREAK SEGMENT now explains coincident points, off-entity second points and unsupported closed spline cases.
+  - EXTEND now distinguishes no projected boundary intersection from wrong endpoint-side selection.
+

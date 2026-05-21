@@ -374,6 +374,31 @@ public sealed class BreakAtPointToolAdvancedTests
         Assert.Equal(3, restored.Vertices.Count);
     }
 
+
+    [Fact]
+    public void BreakAtPoint_AtLineEndpoint_ShouldReturnGranularEndpointMessage()
+    {
+        var context = CreateContextWithEntity(
+            new LineEntity(
+                new Point2D(0, 0),
+                new Point2D(10, 0)),
+            out _);
+        var tool = new BreakAtPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(
+            "Break point is too close to an endpoint or intersection tolerance. Pick an interior point on the entity.",
+            result.Message);
+    }
+
     private static ToolContext CreateContextWithEntity(
         CadEntity entity,
         out CadEntity addedEntity)

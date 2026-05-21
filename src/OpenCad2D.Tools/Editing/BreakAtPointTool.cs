@@ -238,7 +238,10 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPrevie
         if (segments.Count == 0)
         {
             return ToolResult.None(
-                "Break point must be inside the target entity and not too close to an endpoint.");
+                EditingStatusMessageBuilder.BuildBreakAtPointFailureMessage(
+                    _targetEntity,
+                    point,
+                    context.GeometryTolerance));
         }
 
         context.Commands.Execute(

@@ -292,7 +292,11 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         if (segments.Count == 0)
         {
             return ToolResult.None(
-                "Break points must be different and on the target entity.");
+                EditingStatusMessageBuilder.BuildBreakBetweenPointsFailureMessage(
+                    _targetEntity,
+                    _firstBreakPoint.Value,
+                    point,
+                    context.GeometryTolerance));
         }
 
         context.Commands.Execute(
