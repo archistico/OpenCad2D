@@ -57,7 +57,7 @@
             <Setter Property="Stretch" Value="Uniform" />
             <Setter Property="Stroke" Value="#FFE650" />
             <Setter Property="Fill" Value="Transparent" />
-            <Setter Property="StrokeThickness" Value="1.5" />
+            <Setter Property="StrokeThickness" Value="1.15" />
             <Setter Property="StrokeLineCap" Value="Round" />
             <Setter Property="StrokeJoin" Value="Round" />
             <Setter Property="VerticalAlignment" Value="Center" />
