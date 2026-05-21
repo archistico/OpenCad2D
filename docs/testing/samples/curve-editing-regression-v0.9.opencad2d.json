@@ -1,0 +1,317 @@
+{
+  "version": 1,
+  "savedAt": "2026-05-21T20:17:04.7272627\u002B00:00",
+  "settings": {
+    "currentLayerId": "0",
+    "currentTextFormatId": "Standard",
+    "currentDimensionStyleId": "Standard",
+    "grid": {
+      "kind": "Rectangular",
+      "isVisible": true,
+      "minorStep": 10,
+      "majorStep": 50,
+      "originX": 0,
+      "originY": 0,
+      "minimumScreenSpacing": 8,
+      "maximumScreenSpacing": 220,
+      "isometricAngleDegrees": 30
+    },
+    "snapping": {
+      "isEnabled": true,
+      "enabledModes": [
+        "Endpoint",
+        "Midpoint",
+        "Center",
+        "Quadrant",
+        "Intersection",
+        "Perpendicular",
+        "Tangent",
+        "Grid"
+      ],
+      "tolerance": 8
+    },
+    "drafting": {
+      "isOrthoEnabled": false,
+      "polarTracking": {
+        "isEnabled": false,
+        "stepDegrees": 90
+      }
+    }
+  },
+  "viewport": {
+    "panX": 327.37189666036556,
+    "panY": 295.12608695652165,
+    "zoom": 0.7561436672967865
+  },
+  "lineFormats": [
+    {
+      "id": "Continuous",
+      "name": "Continua",
+      "color": "#FFFFFF",
+      "lineWeight": 1,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "color": "#A0A0A0",
+      "lineWeight": 0.8,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "color": "#FFFFFF",
+      "lineWeight": 2,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Axis",
+      "name": "Asse",
+      "color": "#FF0000",
+      "lineWeight": 0.75,
+      "lineStyle": "DashDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4
+      ]
+    },
+    {
+      "id": "Dashed",
+      "name": "Tratteggiata",
+      "color": "#FFFF00",
+      "lineWeight": 0.75,
+      "lineStyle": "Dashed",
+      "dashPattern": [
+        8,
+        4
+      ]
+    },
+    {
+      "id": "DashDotDot",
+      "name": "Tratto due punti",
+      "color": "#00C8FF",
+      "lineWeight": 0.5,
+      "lineStyle": "DashDotDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4,
+        1,
+        4
+      ]
+    },
+    {
+      "id": "DashDot",
+      "name": "Tratto e punto",
+      "color": "#00FF00",
+      "lineWeight": 0.75,
+      "lineStyle": "DashDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4
+      ]
+    }
+  ],
+  "textFormats": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "fontFamily": "Arial",
+      "height": 10,
+      "color": "#FFFFFF",
+      "isBold": false,
+      "isItalic": false
+    },
+    {
+      "id": "Title",
+      "name": "Title",
+      "fontFamily": "Arial",
+      "height": 18,
+      "color": "#FFFFFF",
+      "isBold": true,
+      "isItalic": false
+    },
+    {
+      "id": "Annotation",
+      "name": "Annotation",
+      "fontFamily": "Arial",
+      "height": 8,
+      "color": "#FFFF00",
+      "isBold": false,
+      "isItalic": false
+    },
+    {
+      "id": "Small",
+      "name": "Small",
+      "fontFamily": "Arial",
+      "height": 6,
+      "color": "#B4B4B4",
+      "isBold": false,
+      "isItalic": false
+    }
+  ],
+  "dimensionStyles": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "textFormatId": "Annotation",
+      "arrowSize": 4,
+      "arrowSymbol": "ClosedArrow",
+      "textRotationMode": "Readable",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": 2,
+      "extensionLineOffset": 1.5,
+      "extensionLineOvershoot": 2,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": "",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    },
+    {
+      "id": "Architectural",
+      "name": "Architectural",
+      "textFormatId": "Annotation",
+      "arrowSize": 4,
+      "arrowSymbol": "ArchitecturalTick",
+      "textRotationMode": "Readable",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": -2,
+      "extensionLineOffset": 1.5,
+      "extensionLineOvershoot": 2,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": " m",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    },
+    {
+      "id": "Mechanical",
+      "name": "Mechanical",
+      "textFormatId": "Annotation",
+      "arrowSize": 3,
+      "arrowSymbol": "ClosedFilledTriangle",
+      "textRotationMode": "Horizontal",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": 2,
+      "extensionLineOffset": 1,
+      "extensionLineOvershoot": 1.5,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": " mm",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    }
+  ],
+  "layers": [
+    {
+      "id": "0",
+      "name": "0",
+      "lineFormatId": "Continuous",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FFFFFF",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "lineFormatId": "Annotations",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#A0A0A0",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "lineFormatId": "Walls",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FFFFFF",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Axis",
+      "name": "Axis",
+      "lineFormatId": "Axis",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FF0000",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Construction lines",
+      "name": "Construction lines",
+      "lineFormatId": "Dashed",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FFFF00",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Regression geometry",
+      "name": "Regression geometry",
+      "lineFormatId": "Continuous",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#404040",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Regression boundary",
+      "name": "Regression boundary",
+      "lineFormatId": "Axis",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#803030",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Regression locked",
+      "name": "Regression locked",
+      "lineFormatId": "Dashed",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#606000",
+      "isVisible": true,
+      "isLocked": true
+    },
+    {
+      "id": "Regression hidden",
+      "name": "Regression hidden",
+      "lineFormatId": "Dashed",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#004050",
+      "isVisible": false,
+      "isLocked": false
+    }
+  ],
+  "entities": []
+}

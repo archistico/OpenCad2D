@@ -35,7 +35,19 @@ Criterio pratico: se trovi un bug grave o ripetibile, fermati e annotalo bene in
 
 ### File di prova consigliato
 
-Creare un singolo disegno manuale chiamato, ad esempio:
+Per cominciare subito la sessione è disponibile un file sample già pronto:
+
+```text
+docs/testing/samples/curve-editing-regression-v0.9.opencad2d.json
+```
+
+Per la passata serale usare anche il foglio operativo:
+
+```text
+docs/testing/curve-editing-evening-run-2026-05-21.md
+```
+
+In alternativa, creare un singolo disegno manuale chiamato, ad esempio:
 
 ```text
 curve-editing-regression-v0.9.opencad2d.json

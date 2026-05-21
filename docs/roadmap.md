@@ -135,7 +135,7 @@ Current limits:
 
 Status: [~] manual validation in progress.
 
-Reference: `docs/testing/curve-editing-regression-v0.9.md`. The checklist now includes a focused evening execution plan, a suggested manual test drawing and a bug report template.
+Reference: `docs/testing/curve-editing-regression-v0.9.md`. The focused evening run sheet is `docs/testing/curve-editing-evening-run-2026-05-21.md`; the prepared sample drawing is `docs/testing/samples/curve-editing-regression-v0.9.opencad2d.json`.
 
 Validate:
 

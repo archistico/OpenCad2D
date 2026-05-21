@@ -202,8 +202,8 @@ Implementation notes:
 ## Current next work
 
 1. Validate Explode/Join manually in the UI after local build/test.
-2. Execute the focused evening pass in `docs/testing/curve-editing-regression-v0.9.md`, starting from PREP/TRIM/BREAK/EXTEND and recording reproducible bugs before adding new code.
-3. Export/import compatibility pass for SVG/PDF/DXF, including manual HATCH validation in LibreCAD/QCAD.
+2. Execute the focused evening pass using `docs/testing/curve-editing-evening-run-2026-05-21.md` and the sample drawing `docs/testing/samples/curve-editing-regression-v0.9.opencad2d.json`; record reproducible bugs before adding new code.
+3. After the evening pass, triage any Blocker/High curve editing bugs before moving to the export/import compatibility pass for SVG/PDF/DXF, including manual HATCH validation in LibreCAD/QCAD.
 4. Manual UI check of Property Panel combo boxes and compact polyline vertices.
 5. Release preparation for v0.9.
 
