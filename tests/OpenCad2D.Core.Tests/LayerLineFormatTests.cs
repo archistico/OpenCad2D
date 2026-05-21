@@ -63,3 +63,57 @@ public sealed class LayerLineFormatTests
         Assert.Equal(layer.IsLocked, changed.IsLocked);
     }
 }
+
+public sealed class LayerFillColorTests
+{
+    [Fact]
+    public void Constructor_ShouldDefaultFillColorToLineColor()
+    {
+        var color = CadColor.FromRgb(12, 34, 56);
+
+        var layer = new Layer(
+            new LayerId("Filled"),
+            "Filled",
+            color: color);
+
+        Assert.Equal(color, layer.FillColor);
+    }
+
+    [Fact]
+    public void Constructor_ShouldStoreExplicitFillColor()
+    {
+        var fillColor = CadColor.FromRgb(80, 90, 100);
+
+        var layer = new Layer(
+            new LayerId("Filled"),
+            "Filled",
+            LineFormatId.Continuous,
+            fillColor: fillColor);
+
+        Assert.Equal(fillColor, layer.FillColor);
+    }
+
+    [Fact]
+    public void WithFillColor_ShouldKeepLayerDataAndChangeFillColor()
+    {
+        var layer = new Layer(
+            new LayerId("Walls"),
+            "Walls",
+            LineFormatId.Walls,
+            isVisible: false,
+            isLocked: true);
+
+        var fillColor = CadColor.FromRgb(10, 20, 30);
+
+        Layer changed = layer.WithFillColor(fillColor);
+
+        Assert.Equal(layer.Id, changed.Id);
+        Assert.Equal(layer.Name, changed.Name);
+        Assert.Equal(layer.LineFormatId, changed.LineFormatId);
+        Assert.Equal(layer.Color, changed.Color);
+        Assert.Equal(layer.LineWeight, changed.LineWeight);
+        Assert.Equal(layer.IsVisible, changed.IsVisible);
+        Assert.Equal(layer.IsLocked, changed.IsLocked);
+        Assert.Equal(fillColor, changed.FillColor);
+    }
+}

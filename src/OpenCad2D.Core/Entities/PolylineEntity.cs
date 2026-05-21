@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Operations;
 using OpenCad2D.Geometry.Primitives;
@@ -9,7 +9,7 @@ namespace OpenCad2D.Core.Entities;
 /// <summary>
 /// CAD entity representing a polyline made of straight segments.
 /// </summary>
-public sealed class PolylineEntity : CadEntity
+public sealed class PolylineEntity : CadEntity, IFillableEntity
 {
     public PolylineEntity(
         IEnumerable<Point2D> vertices,
@@ -19,7 +19,8 @@ public sealed class PolylineEntity : CadEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        bool isFilled = false)
         : base(
             id ?? EntityId.New(),
             layerId ?? LayerId.Default,
@@ -29,6 +30,7 @@ public sealed class PolylineEntity : CadEntity
             drawOrder)
     {
         Geometry = new Polyline2D(vertices, isClosed);
+        IsFilled = isFilled;
     }
 
     public Polyline2D Geometry { get; }
@@ -36,6 +38,8 @@ public sealed class PolylineEntity : CadEntity
     public IReadOnlyList<Point2D> Vertices => Geometry.Vertices;
 
     public bool IsClosed => Geometry.IsClosed;
+
+    public bool IsFilled { get; }
 
     public override EntityKind Kind => EntityKind.Polyline;
 
@@ -68,7 +72,8 @@ public sealed class PolylineEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsFilled);
     }
 
     public override CadEntity WithId(EntityId id)
@@ -81,7 +86,8 @@ public sealed class PolylineEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsFilled);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -94,6 +100,21 @@ public sealed class PolylineEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsFilled);
+    }
+
+    public CadEntity WithFill(bool isFilled)
+    {
+        return new PolylineEntity(
+            Vertices,
+            IsClosed,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder,
+            isFilled);
     }
 }

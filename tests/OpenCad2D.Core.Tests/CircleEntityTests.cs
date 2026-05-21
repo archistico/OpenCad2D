@@ -79,3 +79,61 @@ public sealed class CircleEntityTests
         Assert.Equal(20, transformed.Radius, precision: 10);
     }
 }
+public sealed class CircleEntityFillTests
+{
+    [Fact]
+    public void Constructor_ShouldDefaultFillToFalse()
+    {
+        var entity = new CircleEntity(
+            new Point2D(0, 0),
+            10);
+
+        Assert.False(entity.IsFilled);
+        Assert.IsAssignableFrom<IFillableEntity>(entity);
+    }
+
+    [Fact]
+    public void WithFill_ShouldReturnCircleWithRequestedFillAndSameGeometry()
+    {
+        var entity = new CircleEntity(
+            new Point2D(2, 3),
+            10);
+
+        var changed = Assert.IsType<CircleEntity>(entity.WithFill(true));
+
+        Assert.True(changed.IsFilled);
+        Assert.Equal(entity.Center, changed.Center);
+        Assert.Equal(entity.Radius, changed.Radius);
+        Assert.Equal(entity.Id, changed.Id);
+        Assert.Equal(entity.LayerId, changed.LayerId);
+    }
+
+    [Fact]
+    public void Transform_ShouldPreserveFill()
+    {
+        var entity = new CircleEntity(
+            new Point2D(0, 0),
+            10,
+            isFilled: true);
+
+        var transformed = Assert.IsType<CircleEntity>(
+            entity.Transform(Matrix2D.Translation(5, 2)));
+
+        Assert.True(transformed.IsFilled);
+    }
+
+    [Fact]
+    public void WithLayer_ShouldPreserveFill()
+    {
+        var entity = new CircleEntity(
+            new Point2D(0, 0),
+            10,
+            isFilled: true);
+
+        var changed = Assert.IsType<CircleEntity>(
+            entity.WithLayer(new LayerId("Walls")));
+
+        Assert.True(changed.IsFilled);
+        Assert.Equal(new LayerId("Walls"), changed.LayerId);
+    }
+}

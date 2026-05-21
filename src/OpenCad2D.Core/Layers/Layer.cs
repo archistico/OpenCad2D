@@ -16,7 +16,8 @@ public sealed class Layer
         string name,
         LineFormatId lineFormatId,
         bool isVisible = true,
-        bool isLocked = false)
+        bool isLocked = false,
+        CadColor? fillColor = null)
         : this(
             id,
             name,
@@ -24,7 +25,8 @@ public sealed class Layer
             CadColor.FromRgb(255, 255, 255),
             LineWeight.FromMillimeters(0.25),
             isVisible,
-            isLocked)
+            isLocked,
+            fillColor)
     {
     }
 
@@ -38,7 +40,8 @@ public sealed class Layer
         CadColor? color = null,
         LineWeight? lineWeight = null,
         bool isVisible = true,
-        bool isLocked = false)
+        bool isLocked = false,
+        CadColor? fillColor = null)
         : this(
             id,
             name,
@@ -46,7 +49,8 @@ public sealed class Layer
             color ?? CadColor.FromRgb(255, 255, 255),
             lineWeight ?? LineWeight.FromMillimeters(0.25),
             isVisible,
-            isLocked)
+            isLocked,
+            fillColor)
     {
     }
 
@@ -57,7 +61,8 @@ public sealed class Layer
         CadColor color,
         LineWeight lineWeight,
         bool isVisible,
-        bool isLocked)
+        bool isLocked,
+        CadColor? fillColor = null)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -78,6 +83,7 @@ public sealed class Layer
         LineFormatId = lineFormatId;
         Color = color;
         LineWeight = lineWeight;
+        FillColor = fillColor ?? color;
         IsVisible = isVisible;
         IsLocked = isLocked;
     }
@@ -103,6 +109,11 @@ public sealed class Layer
     /// </summary>
     public LineWeight LineWeight { get; }
 
+    /// <summary>
+    /// Gets the solid fill color used by fillable entities on this layer.
+    /// </summary>
+    public CadColor FillColor { get; }
+
     public bool IsVisible { get; }
 
     public bool IsLocked { get; }
@@ -116,7 +127,8 @@ public sealed class Layer
             Color,
             LineWeight,
             IsVisible,
-            IsLocked);
+            IsLocked,
+            FillColor);
     }
 
     public Layer WithLineFormat(LineFormatId lineFormatId)
@@ -128,7 +140,8 @@ public sealed class Layer
             Color,
             LineWeight,
             IsVisible,
-            IsLocked);
+            IsLocked,
+            FillColor);
     }
 
     public Layer WithAppearance(
@@ -142,7 +155,21 @@ public sealed class Layer
             color,
             lineWeight,
             IsVisible,
-            IsLocked);
+            IsLocked,
+            FillColor);
+    }
+
+    public Layer WithFillColor(CadColor fillColor)
+    {
+        return new Layer(
+            Id,
+            Name,
+            LineFormatId,
+            Color,
+            LineWeight,
+            IsVisible,
+            IsLocked,
+            fillColor);
     }
 
     public Layer WithVisibility(bool isVisible)
@@ -154,7 +181,8 @@ public sealed class Layer
             Color,
             LineWeight,
             isVisible,
-            IsLocked);
+            IsLocked,
+            FillColor);
     }
 
     public Layer WithLocked(bool isLocked)
@@ -166,7 +194,8 @@ public sealed class Layer
             Color,
             LineWeight,
             IsVisible,
-            isLocked);
+            isLocked,
+            FillColor);
     }
 
     public static Layer Default => new(

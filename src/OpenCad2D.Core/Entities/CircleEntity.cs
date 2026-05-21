@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Operations;
 using OpenCad2D.Geometry.Primitives;
@@ -9,7 +9,7 @@ namespace OpenCad2D.Core.Entities;
 /// <summary>
 /// CAD entity representing a circle.
 /// </summary>
-public sealed class CircleEntity : CadEntity
+public sealed class CircleEntity : CadEntity, IFillableEntity
 {
     public CircleEntity(
         Point2D center,
@@ -19,7 +19,8 @@ public sealed class CircleEntity : CadEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        bool isFilled = false)
         : base(
             id ?? EntityId.New(),
             layerId ?? LayerId.Default,
@@ -29,6 +30,7 @@ public sealed class CircleEntity : CadEntity
             drawOrder)
     {
         Geometry = new Circle2D(center, radius);
+        IsFilled = isFilled;
     }
 
     public Circle2D Geometry { get; }
@@ -36,6 +38,8 @@ public sealed class CircleEntity : CadEntity
     public Point2D Center => Geometry.Center;
 
     public double Radius => Geometry.Radius;
+
+    public bool IsFilled { get; }
 
     public override EntityKind Kind => EntityKind.Circle;
 
@@ -70,7 +74,8 @@ public sealed class CircleEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsFilled);
     }
 
     public override CadEntity WithId(EntityId id)
@@ -83,7 +88,8 @@ public sealed class CircleEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsFilled);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -96,6 +102,21 @@ public sealed class CircleEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            IsFilled);
+    }
+
+    public CadEntity WithFill(bool isFilled)
+    {
+        return new CircleEntity(
+            Center,
+            Radius,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder,
+            isFilled);
     }
 }
