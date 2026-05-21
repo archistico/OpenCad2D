@@ -50,6 +50,21 @@ internal static class EditingStatusMessageBuilder
         Point2D projectedPoint = target.GetClosestPoint(breakPoint);
         double distance = projectedPoint.DistanceTo(breakPoint);
 
+        if (IsNearBreakAtPointSingularity(target, projectedPoint, tolerance))
+        {
+            return target switch
+            {
+                PolylineEntity =>
+                    "Break point is too close to a polyline vertex or endpoint. Pick inside a segment, away from vertices.",
+
+                BezierSplineEntity =>
+                    "Break point is too close to the spline endpoint or cannot be projected onto a stable spline segment. Pick an interior point on the open spline.",
+
+                _ =>
+                    "Break point is too close to an endpoint or intersection tolerance. Pick an interior point on the entity."
+            };
+        }
+
         if (distance > tolerance.Distance)
         {
             return $"Break point is not on the selected {GetEntityName(target)}. Pick directly on the entity or enable object snaps.";
@@ -79,12 +94,15 @@ internal static class EditingStatusMessageBuilder
     {
         ArgumentNullException.ThrowIfNull(target);
 
-        if (firstBreakPoint.DistanceTo(secondBreakPoint) <= tolerance.Distance)
+        Point2D projectedFirstPoint = target.GetClosestPoint(firstBreakPoint);
+        Point2D projectedSecondPoint = target.GetClosestPoint(secondBreakPoint);
+
+        if (firstBreakPoint.DistanceTo(secondBreakPoint) <= tolerance.Distance ||
+            projectedFirstPoint.DistanceTo(projectedSecondPoint) <= tolerance.Distance)
         {
             return "Break points are too close together. Pick two distinct points on the entity.";
         }
 
-        Point2D projectedSecondPoint = target.GetClosestPoint(secondBreakPoint);
         double distance = projectedSecondPoint.DistanceTo(secondBreakPoint);
 
         if (distance > tolerance.Distance)
@@ -139,6 +157,44 @@ internal static class EditingStatusMessageBuilder
         };
 
         return $"The boundary intersects the projected {GetEntityName(target)}, but not beyond the picked {endpointHint}. Pick the opposite endpoint side or choose a farther boundary.";
+    }
+
+    private static bool IsNearBreakAtPointSingularity(
+        CadEntity target,
+        Point2D projectedPoint,
+        GeometryTolerance tolerance)
+    {
+        return target switch
+        {
+            LineEntity line =>
+                IsNear(projectedPoint, line.Start, tolerance) ||
+                IsNear(projectedPoint, line.End, tolerance),
+
+            ArcEntity arc =>
+                IsNear(projectedPoint, arc.Geometry.StartPoint, tolerance) ||
+                IsNear(projectedPoint, arc.Geometry.EndPoint, tolerance),
+
+            EllipticalArcEntity ellipticalArc =>
+                IsNear(projectedPoint, ellipticalArc.StartPoint, tolerance) ||
+                IsNear(projectedPoint, ellipticalArc.EndPoint, tolerance),
+
+            PolylineEntity polyline =>
+                polyline.Vertices.Any(vertex => IsNear(projectedPoint, vertex, tolerance)),
+
+            BezierSplineEntity spline when spline.ControlPoints.Count > 0 =>
+                IsNear(projectedPoint, spline.ControlPoints[0], tolerance) ||
+                IsNear(projectedPoint, spline.ControlPoints[^1], tolerance),
+
+            _ => false
+        };
+    }
+
+    private static bool IsNear(
+        Point2D a,
+        Point2D b,
+        GeometryTolerance tolerance)
+    {
+        return a.DistanceTo(b) <= tolerance.Distance;
     }
 
     private static int CountIntersections(

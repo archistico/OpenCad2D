@@ -77,6 +77,27 @@ public sealed class BreakAtPointToolTests
     }
 
     [Fact]
+    public void PointerMove_AtLineEndpoint_ShouldReturnGranularEndpointMessage()
+    {
+        var context = CreateContextWithLine(out _);
+        var tool = new BreakAtPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(
+            "Break point is too close to an endpoint or intersection tolerance. Pick an interior point on the entity.",
+            result.Message);
+        Assert.False(tool.HasPreview);
+    }
+
+    [Fact]
     public void GetPreviewDescriptor_AfterTargetSelection_ShouldHighlightSelectedTarget()
     {
         var context = CreateContextWithLine(out LineEntity line);

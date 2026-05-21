@@ -289,3 +289,10 @@ TRIM and EXTEND preview descriptors now keep the hovered target visible as an `E
 TRIM and EXTEND now reuse the granular curve-editing status-message logic during hover, not only after a failed commit click. When the pointer is over a target but no preview can be built, TRIM reports the same missing-intersection/picked-side/unsupported/non-editable reasons that the commit would report. EXTEND does the same for no projected boundary intersection, wrong endpoint side, unsupported closed targets and non-editable targets.
 
 The evening regression sheet now includes `PREVIEW-TRIM-03` and `PREVIEW-EXT-03` so manual testing checks both valid previews and clear no-preview feedback.
+
+
+### 2026-05-21 - Curve editing BREAK hover status follow-up
+
+- BREAK POINT invalid hover positions now reuse `EditingStatusMessageBuilder.BuildBreakAtPointFailureMessage(...)` instead of the generic “inside target entity” message.
+- BREAK SEGMENT invalid second-point hover positions now reuse `EditingStatusMessageBuilder.BuildBreakBetweenPointsFailureMessage(...)` instead of the generic “different and on target entity” message.
+- Regression docs now require invalid BREAK previews to report the same reason as the commit click.

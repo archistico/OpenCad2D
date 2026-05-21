@@ -362,6 +362,7 @@ Questi controlli vanno fatti zoomando molto e usando snap/quote quando possibile
 |---|---|---|---|---|
 | UX-01 | TRIM preview | Parte rimossa tratteggiata |  |  |
 | UX-02 | BREAK preview | Segmento rimosso tratteggiato |  |  |
+| UX-02B | BREAK preview non valida | Nessuna preview e messaggio granulare, ad esempio punto coincidente o troppo vicino a endpoint/vertice |  |  |
 | UX-03 | EXTEND preview | Parte aggiunta evidenziata |  |  |
 | UX-04 | Messaggio TRIM | Cita chiaramente la parte tratteggiata da rimuovere |  |  |
 | UX-05 | Messaggio BREAK Segment | Cita il segmento tratteggiato da rimuovere |  |  |

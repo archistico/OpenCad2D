@@ -50,6 +50,8 @@ Questa passata verifica che i comandi mostrino il contesto visuale corretto prim
 | PREVIEW-BRKPT-02 | BREAK AT POINT | Hover su punto valido | Due segmenti di anteprima + marker sul punto proiettato |  |  |
 | PREVIEW-BRKSEG-01 | BREAK SEGMENT | Primo punto scelto | Target evidenziato + marker sul primo punto |  |  |
 | PREVIEW-BRKSEG-02 | BREAK SEGMENT | Hover secondo punto valido | Intervallo rimosso tratteggiato + marker sui due punti |  |  |
+| PREVIEW-BRKPT-03 | BREAK AT POINT | Hover su endpoint/vertice non valido | Nessuna preview; messaggio granulare identico al click di commit |  |  |
+| PREVIEW-BRKSEG-03 | BREAK SEGMENT | Hover secondo punto coincidente/non valido | Nessuna preview; messaggio granulare identico al click di commit |  |  |
 | PREVIEW-TRIM-01 | TRIM | Boundary selezionata | Boundary ancora evidenziata durante la scelta del target |  |  |
 | PREVIEW-TRIM-02 | TRIM | Hover su target valido | Boundary + target evidenziati; tratto rimosso tratteggiato; marker hot sul lato scelto |  |  |
 | PREVIEW-TRIM-03 | TRIM | Hover su target non tagliabile | Nessuna preview permanente; messaggio granulare identico alla causa del fallimento |  |  |

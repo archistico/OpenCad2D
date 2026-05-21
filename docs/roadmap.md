@@ -270,3 +270,6 @@ Candidate v1.0 gates:
   - BREAK SEGMENT now explains coincident points, off-entity second points and unsupported closed spline cases.
   - EXTEND now distinguishes no projected boundary intersection from wrong endpoint-side selection.
 
+
+
+- Curve editing regression: BREAK hover failures now reuse the same granular messages as commit failures.

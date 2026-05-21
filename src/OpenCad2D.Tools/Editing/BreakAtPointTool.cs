@@ -127,7 +127,11 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPrevie
 
         return HasPreview
             ? ToolResult.Updated("Break point preview updated.")
-            : ToolResult.None("Break point must be inside the target entity.");
+            : ToolResult.None(
+                EditingStatusMessageBuilder.BuildBreakAtPointFailureMessage(
+                    _targetEntity,
+                    point,
+                    context.GeometryTolerance));
     }
 
     public ToolResult Cancel(ToolContext context)

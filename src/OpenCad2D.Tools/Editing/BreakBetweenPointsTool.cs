@@ -143,7 +143,12 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
 
         return HasPreview
             ? ToolResult.Updated("Break Segment preview updated. Dashed portion will be removed.")
-            : ToolResult.None("Second break point must be different and on the target entity.");
+            : ToolResult.None(
+                EditingStatusMessageBuilder.BuildBreakBetweenPointsFailureMessage(
+                    _targetEntity,
+                    _firstBreakPoint.Value,
+                    point,
+                    context.GeometryTolerance));
     }
 
     public ToolResult Cancel(ToolContext context)
