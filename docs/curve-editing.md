@@ -821,3 +821,12 @@ Current message categories include:
 
 Manual testing reference: `docs/testing/curve-editing-regression-v0.9.md`.
 
+
+
+## Status-message/preview-feedback consolidation
+
+TRIM, BREAK AT POINT, BREAK SEGMENT and EXTEND now share the same principle for failed commits and invalid hover previews: when the operation is not possible, the status message should explain the specific reason rather than failing silently or using a generic selection prompt.
+
+Covered feedback categories include missing intersections, picked-side intervals that cannot be removed, endpoint/vertex tolerance failures, off-entity break points, coincident break points, unsupported closed spline cases, non-editable targets and EXTEND boundaries reachable only from the opposite endpoint.
+
+The automated tests cover the primary invalid-hover and failed-commit paths. Manual regression should now focus mainly on confirming that the resulting geometry, undo/redo behavior and micro-gap behavior match the preview.

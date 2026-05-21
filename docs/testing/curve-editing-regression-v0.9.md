@@ -94,6 +94,9 @@ Note/screenshot:
 
 The curve-editing tools must never fail silently. During regression testing, verify both the geometry result and the command/status feedback shown to the user.
 
+Automated coverage status: the granular status-message and invalid-hover feedback checks are passing for TRIM, BREAK AT POINT, BREAK SEGMENT and EXTEND. During manual regression, treat this section as a quick smoke check before focusing on the actual geometry edits.
+
+
 Expected message categories:
 
 | Area | Scenario | Expected feedback |
@@ -112,7 +115,7 @@ Expected message categories:
 
 When a result is `Deferred`, it is acceptable only if the message explains the limitation and no geometry is modified.
 
-The same rule applies while hovering: if TRIM or EXTEND cannot produce a preview over a hovered target, the status text should explain the likely cause instead of falling back to a generic “select a valid entity” message.
+The same rule applies while hovering: if TRIM, BREAK AT POINT, BREAK SEGMENT or EXTEND cannot produce a preview over a hovered target, the status text should explain the likely cause instead of falling back to a generic “select a valid entity” message. The automated regression suite now covers the main invalid-hover paths; manual validation should still verify that the user-facing wording is understandable in the real UI.
 
 ## Come usare la checklist
 

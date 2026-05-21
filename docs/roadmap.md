@@ -133,7 +133,7 @@ Current limits:
 
 ### 4. Curve editing regression checklist
 
-Status: [~] manual validation in progress. Status-message regression checks have been added to the evening run sheet.
+Status: [~] manual validation in progress. Status-message and preview-feedback regression checks are now covered by tests and included in the evening run sheet.
 
 Reference: `docs/testing/curve-editing-regression-v0.9.md`. The focused evening run sheet is `docs/testing/curve-editing-evening-run-2026-05-21.md`; the prepared sample drawing is `docs/testing/samples/curve-editing-regression-v0.9.opencad2d.json`.
 
@@ -145,7 +145,7 @@ Validate:
 - [ ] shared endpoints/no micro-gaps after reciprocal edits;
 - [ ] persistence/export of edited elliptical arcs and spline fragments;
 - [x] granular command failure messages for TRIM / BREAK / EXTEND;
-- [~] preview behavior and visual consistency during manual regression; Break target overlays/markers plus TRIM/EXTEND target overlays, hot picked-side markers and granular no-preview status messages are now covered by tests.
+- [x] preview-feedback consistency for TRIM / BREAK / EXTEND invalid hover cases is covered by tests; manual regression still has to validate the full geometry results.
 
 ### 5. Export/import compatibility pass
 
@@ -270,6 +270,7 @@ Candidate v1.0 gates:
   - BREAK SEGMENT now explains coincident points, off-entity second points and unsupported closed spline cases.
   - EXTEND now distinguishes no projected boundary intersection from wrong endpoint-side selection.
 
+- [x] Preview no-op feedback is consistent with commit-click feedback for TRIM, BREAK POINT, BREAK SEGMENT and EXTEND.
+  - Invalid hover positions no longer fall back to generic messages when the failure reason is known.
+  - BREAK endpoint and coincident-point hover regressions are covered by passing tests.
 
-
-- Curve editing regression: BREAK hover failures now reuse the same granular messages as commit failures.

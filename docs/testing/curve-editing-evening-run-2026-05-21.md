@@ -40,6 +40,8 @@ Prima dei test distruttivi, verificare che i comandi segnalino chiaramente i cas
 
 Se un comando non modifica nulla ma mostra un messaggio chiaro e coerente, segnare `OK`. Se non modifica nulla e non spiega perché, segnare `Bug` anche se la geometria resta integra.
 
+Nota dopo la correzione dei test: Passata 0 e Passata 0.5 sono ora coperte anche da test automatici per i casi principali. Questa sera vanno usate come smoke check rapido; il tempo principale dovrebbe andare su TRIM base, BREAK, EXTEND e micro-gap reali.
+
 ## Passata 0.5 — Preview visiva comune
 
 Questa passata verifica che i comandi mostrino il contesto visuale corretto prima di modificare il disegno.
