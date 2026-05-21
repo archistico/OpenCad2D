@@ -38,11 +38,11 @@ The following foundations are considered complete for the active roadmap. Older 
 |---|---:|---|
 | Core geometry/document model | [x] | Geometry primitives, entities, layers, line formats, text formats, dimension styles, command history and undo/redo are in place. |
 | Application shell | [x] | Avalonia canvas, file command bar, top CAD bar, left tool panel, property panel, command row, snap bar and status bar are established. |
-| Native persistence | [x] | `.opencad2d.json` save/load, dirty state, save-changes prompt, partial recovery and viewport/document settings persistence are implemented. |
-| Export/import baseline | [x] | SVG, PDF and DXF export exist; ASCII DXF import covers the practical 2D entity set currently supported. |
+| Native persistence | [x] | `.opencad2d.json` save/load, dirty state, save-changes prompt, partial recovery, viewport/document settings persistence and layer/entity fill persistence are implemented. |
+| Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; ASCII DXF import covers the practical 2D entity set currently supported. |
 | Command input | [x] | Aliases, prompt phases, coordinate input, relative/polar input, direct distances, history and first-pass autocomplete are implemented. |
 | Drafting aids | [x] | Snap system, grid, Ortho, Polar Tracking, Zoom Window, Zoom Extents, pan and crosshair are implemented. |
-| Draw tools baseline | [x] | Points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and open Bezier splines are supported. |
+| Draw tools baseline | [x] | Points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and open Bezier splines are supported. Rectangles and polygons are closed polylines for fill/editing purposes. |
 | Dimensions baseline | [x] | Horizontal, vertical, aligned, radius, diameter and angular dimensions exist, with conservative stale marking after model edits. |
 | Transform tools | [x] | Move, Copy, Rotate, Scale, Mirror and point-based Align are usable and tested. |
 | Selection and hit testing | [x] | Selection, Select All, Select Last, Deselect, entity cycling, text/MTEXT bounding-box hit testing and locked/hidden layer behavior are implemented. |
@@ -106,7 +106,32 @@ Geometry policy:
 - ellipse, elliptical arc and Bezier spline offset is deferred because their true offsets are not the same native curve type;
 - unsupported advanced curves return clear messages and create no silent permanent polyline approximation.
 
-### 3. Curve editing regression checklist
+
+### 3. Solid fill for closed entities
+
+Status: [x] completed for the current solid-fill scope.
+
+Completed:
+
+- [x] added `Layer.FillColor` as the layer-owned fill color;
+- [x] added `IsFilled` to `CircleEntity` and `PolylineEntity`;
+- [x] preserved fill state across entity replacement, layer changes and transforms;
+- [x] persisted layer fill color and entity fill state in `.opencad2d.json`;
+- [x] rendered solid fill on the canvas for filled circles and closed polylines;
+- [x] exposed `Fill: None/Solid` in the Property Panel for circles and closed polylines;
+- [x] exposed layer fill color in the Layer Manager with a color picker and `#RRGGBB` text field;
+- [x] exported solid fill to SVG and PDF;
+- [x] exported solid fill to DXF as targeted `SOLID` HATCH records for filled circles and closed polylines.
+
+Current limits:
+
+- no transparency;
+- no hatch/pattern selection;
+- no per-entity fill color;
+- open polylines never render/export fill;
+- general editable hatch workflows remain future work.
+
+### 4. Curve editing regression checklist
 
 Status: [ ] manual validation pending.
 
@@ -121,19 +146,19 @@ Validate:
 - [ ] persistence/export of edited elliptical arcs and spline fragments;
 - [ ] command messages and previews.
 
-### 4. Export/import compatibility pass
+### 5. Export/import compatibility pass
 
 Status: [ ] planned.
 
 Tasks:
 
 - [ ] save/reopen edited drawings containing `EllipticalArcEntity` and open spline fragments;
-- [ ] export mixed drawings to SVG/PDF/DXF;
-- [ ] manually open DXF samples in LibreCAD and QCAD;
+- [ ] export mixed drawings to SVG/PDF/DXF, including filled circles and filled closed polylines;
+- [ ] manually open DXF samples in LibreCAD and QCAD, including generated SOLID HATCH records;
 - [ ] record viewer versions, OS, date and pass/partial/fail notes;
 - [ ] decide whether DXF partial ELLIPSE import should map directly to `EllipticalArcEntity` in v0.9 or remain deferred.
 
-### 5. Property Panel curve review
+### 6. Property Panel curve review
 
 Status: [ ] planned.
 
@@ -146,7 +171,7 @@ Check that the Property Panel exposes coherent editable/read-only properties for
 - [ ] BezierSpline;
 - [ ] Text and MTEXT after bounding-box hit-test changes.
 
-### 6. Performance and robustness pass
+### 7. Performance and robustness pass
 
 Status: [ ] planned.
 
@@ -158,7 +183,7 @@ Review:
 - [ ] degenerate geometry handling;
 - [ ] tolerance deduplication around intersections.
 
-### 7. Documentation and release gate
+### 8. Documentation and release gate
 
 Status: [ ] planned.
 
@@ -202,7 +227,7 @@ These are valid future tasks but should not block the current stabilization flow
 - [>] Break Point convention for full circles/full ellipses as almost-full open arcs;
 - [>] true associative dimensions;
 - [>] blocks;
-- [>] hatch;
+- [>] general hatch/pattern tools beyond the current solid fill support;
 - [>] raster references;
 - [>] advanced NURBS fidelity;
 - [>] autosave/recovery v2;

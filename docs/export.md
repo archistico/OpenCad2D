@@ -82,9 +82,9 @@ Supported entities:
 PointEntity               -> small marker
 TextEntity                -> <text>
 LineEntity                -> <line>
-CircleEntity              -> <circle>
+CircleEntity              -> <circle>, optionally filled
 Polyline open             -> <polyline>
-Polyline closed           -> <polygon>
+Polyline closed           -> <polygon>, optionally filled
 ArcEntity                 -> <path>
 Horizontal dimension      -> lines + text
 Vertical dimension        -> lines + text
@@ -112,10 +112,10 @@ text fill        -> TextFormat.Color referenced by TextEntity.TextFormatId
 dimension text   -> DimensionStyle.TextFormatId -> TextFormat
 text font        -> TextFormat.FontFamily
 text size        -> TextFormat.Height
-fill             -> none for closed geometry for now
+fill             -> Layer.FillColor for filled circles and filled closed polylines; none otherwise
 ```
 
-This matches the project rule that entity appearance comes from the layer's reusable line format, not from per-entity overrides.
+This matches the project rule that stroke appearance comes from the layer's reusable line format, while solid fill color comes from the layer itself.
 
 ---
 
@@ -182,10 +182,10 @@ PointEntity               -> POINT
 TextEntity                -> TEXT
 MultilineTextEntity       -> MTEXT
 LineEntity                -> LINE
-CircleEntity              -> CIRCLE
+CircleEntity              -> CIRCLE, plus HATCH when filled
 EllipseEntity             -> ELLIPSE
 ArcEntity                 -> ARC
-PolylineEntity            -> LWPOLYLINE
+PolylineEntity            -> LWPOLYLINE, plus HATCH when closed and filled
 BezierSplineEntity        -> SPLINE
 Horizontal dimension      -> LINE + TEXT graphical primitives
 Vertical dimension        -> LINE + TEXT graphical primitives
@@ -215,6 +215,7 @@ hidden layer entities -> ignored by default
 visible locked layers -> exported
 entity color/style/weight -> BYLAYER
 layer color/style/weight -> resolved from LineFormat
+fill hatch color -> resolved from Layer.FillColor
 ```
 
 `DxfExportOptions.IncludeHiddenLayers` can include entities on hidden layers when explicitly enabled.
@@ -252,6 +253,30 @@ Entities use:
 ```
 
 If a layer references a missing line format, the exporter falls back to `Continuous`.
+
+---
+
+## Solid fill export
+
+Solid fill is currently supported for circles and closed polylines. Rectangles and polygons use the closed-polyline path.
+
+Model rules:
+
+```text
+CircleEntity.IsFilled
+PolylineEntity.IsFilled + PolylineEntity.IsClosed
+Layer.FillColor
+```
+
+Export behavior:
+
+```text
+SVG -> fill attribute with Layer.FillColor
+PDF -> fill-and-stroke path for supported filled entities
+DXF -> separate SOLID HATCH entity plus the normal border entity
+```
+
+Open polylines and unsupported entity types always export without fill. Stroke remains controlled by line formats.
 
 ---
 
@@ -426,6 +451,7 @@ horizontal, vertical and aligned dimensions export as LINE + TEXT graphical prim
 radius and diameter dimensions export as LINE + TEXT graphical primitives
 angular dimensions export as LINE + ARC + TEXT graphical primitives
 dimension primitives use BYLAYER properties
+solid HATCH records for filled circles and closed polylines
 ```
 
 These tests do not replace manual validation in LibreCAD, QCAD and Autodesk DWG TrueView. They are intended to catch structural regressions before external viewer testing.
@@ -439,14 +465,14 @@ Possible improvements:
 - export selected entities only;
 - SVG layer groups using `<g>`;
 - transparent background option in the UI;
-- fill export once layer fill color is implemented;
 - SVG layer groups using line format metadata where useful;
+- user-editable hatch/pattern definitions beyond the current solid fill support;
 - export settings dialog;
 - DXF export options dialog;
 - export selected entities only;
 - native DXF `DIMENSION` export after the internal dimension model is stable;
-- hatches and blocks for DXF when the model supports them;
-- PDF export.
+- blocks for DXF when the model supports them;
+- PNG export.
 
 
 ## v0.4 dimension export status

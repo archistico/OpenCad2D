@@ -57,10 +57,10 @@ Supported PDF output includes:
 | OpenCad2D entity | PDF output |
 |---|---|
 | `LineEntity` | vector line |
-| `CircleEntity` | cubic Bézier circle approximation |
+| `CircleEntity` | cubic Bézier circle approximation, with optional solid fill |
 | `PointEntity` | small marker |
 | `ArcEntity` | segmented vector path |
-| `PolylineEntity` | vector polyline / closed path |
+| `PolylineEntity` | vector polyline / closed path, with optional solid fill for closed polylines |
 | `TextEntity` | text output using built-in PDF font fallback |
 | horizontal/vertical/aligned dimensions | graphical lines/arrows + measurement text |
 | radius/diameter dimensions | graphical leader/arrow lines + measurement text |
@@ -77,6 +77,21 @@ visible normal layers -> exported
 ```
 
 `PdfExportOptions.IncludeHiddenLayers` can include hidden-layer entities when explicitly enabled.
+
+---
+
+## Solid fill
+
+PDF export supports solid fill for:
+
+```text
+CircleEntity with IsFilled = true
+closed PolylineEntity with IsFilled = true
+```
+
+Rectangles and polygons follow the closed-polyline path. Open polylines are stroked only, even if an internal fill flag is present.
+
+The fill color is resolved from `Layer.FillColor`; the stroke color, lineweight and line style remain resolved from the layer's `LineFormatId`. Filled paths use PDF fill-and-stroke output so the border remains visible.
 
 ---
 
@@ -160,6 +175,7 @@ basic PDF structure
 file writing
 page size/orientation behavior
 line/circle/text output
+solid fill for circles and closed polylines
 hidden-layer handling
 print-friendly color conversion
 Y orientation regression

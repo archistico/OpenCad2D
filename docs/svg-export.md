@@ -20,7 +20,7 @@ PolylineEntity
 basic dimensions as graphical primitives
 ```
 
-The SVG exporter uses layer line formats for stroke color, line weight and dash pattern. Text export uses the document text format referenced by each `TextEntity`.
+The SVG exporter uses layer line formats for stroke color, line weight and dash pattern. Text export uses the document text format referenced by each `TextEntity`. Supported filled closed entities use `Layer.FillColor`.
 
 ---
 
@@ -33,6 +33,27 @@ CanvasDark   -> preserves the OpenCad2D dark canvas look
 White        -> useful for print-friendly diagrams and vector editors
 Transparent  -> useful for websites, documentation and compositing
 ```
+
+---
+
+## Solid fill
+
+SVG export supports solid fill for:
+
+```text
+CircleEntity with IsFilled = true
+closed PolylineEntity with IsFilled = true
+```
+
+Rectangles and polygons are exported through the closed-polyline path. Open polylines always write `fill="none"`.
+
+Fill color is resolved from the entity layer:
+
+```text
+Entity -> LayerId -> Layer.FillColor
+```
+
+Stroke remains independent and continues to come from the layer line format.
 
 ---
 

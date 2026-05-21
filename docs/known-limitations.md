@@ -36,13 +36,30 @@ Known limits:
 - binary DXF is not supported;
 - DWG is intentionally not supported;
 - `BLOCK` / `INSERT` are not supported yet;
-- `HATCH`, `IMAGE` and `LEADER` are not supported yet;
+- general editable `HATCH`, `IMAGE` and `LEADER` workflows are not supported yet; export has a limited `SOLID` HATCH path for filled circles and closed polylines;
 - native DXF `DIMENSION` import/export remains future work; current OpenCad2D dimensions export as graphical primitives;
 - custom DXF `LTYPE` generation for arbitrary line format dash patterns is future work;
 - `LWPOLYLINE` bulge import preserves curved geometry as separate native line/arc entities, but does not preserve the original compound polyline topology;
 - full DXF `ELLIPSE` entities import as native `EllipseEntity`; edited partial ellipses are represented internally as `EllipticalArcEntity`, while DXF partial-ellipse import still needs a dedicated native importer pass if required for v0.9;
 - readable DXF `SPLINE` control points import as `BezierSplineEntity`; fit-point-only splines import as approximations; full external NURBS knot/weight evaluation is not implemented yet;
 - broad compatibility should be checked and recorded with exact LibreCAD/QCAD/Autodesk viewer versions before v0.9 release.
+
+---
+
+## Solid fill
+
+Solid fill currently supports only:
+
+- Circle;
+- closed Polyline, including rectangles and polygons represented as closed polylines.
+
+Current intentional limits:
+
+- no transparency;
+- no hatch/pattern selection;
+- no per-entity fill color;
+- no fill for arcs, ellipses, elliptical arcs, splines, text or dimensions;
+- DXF fill export is limited to generated `SOLID` HATCH records for the supported closed entities.
 
 ---
 

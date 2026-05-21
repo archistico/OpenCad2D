@@ -8,7 +8,7 @@ This file is the current technical handoff for continuing OpenCad2D work. It sho
 
 OpenCad2D is in the v0.9 stabilization cycle. The active goal is to make the existing 2D CAD foundation predictable, precise and release-ready before moving toward v1.0.
 
-Current work area: Dimension Style System UI and drafting configuration before v0.9 planning.
+Current work area: v0.9 stabilization after completing the first solid-fill pass for closed entities.
 
 ---
 
@@ -18,8 +18,8 @@ The following areas are considered stable enough to be summarized rather than re
 
 - core document/entity/layer/line-format model;
 - Avalonia app shell, canvas, command row, snap/status UI and tool panels;
-- native `.opencad2d.json` persistence;
-- SVG/PDF/DXF export baseline and ASCII DXF import baseline;
+- native `.opencad2d.json` persistence, including layer fill color and fill flags for supported entities;
+- SVG/PDF/DXF export baseline, including solid fill output for supported closed entities, and ASCII DXF import baseline;
 - draw tools for lines, rectangles, circles, arcs, ellipses, polylines, polygons, text, MTEXT, points and open Bezier splines;
 - dimensions baseline;
 - selection, entity cycling, Select All, Select Last and Deselect;
@@ -46,6 +46,39 @@ Current implemented baseline:
 - dimension style changes are applied through `UpdateDimensionStylesCommand`, so they are undoable and keep the current style synchronized with the document/tool context.
 
 Next planned step: add a live preview to the Dimension Style Manager and then wire the dimension style selector into the property panel for selected dimensions.
+
+---
+
+## Solid fill checkpoint
+
+The first solid-fill pass is implemented for the current scope.
+
+Model rules:
+
+- `Layer.FillColor` owns the fill color;
+- `CircleEntity.IsFilled` enables/disables solid fill for circles;
+- `PolylineEntity.IsFilled` enables/disables solid fill only when `PolylineEntity.IsClosed` is true;
+- rectangles and polygons are handled as closed polylines;
+- entities do not store their own fill color;
+- open polylines never render/export fill.
+
+UI/rendering/export state:
+
+- canvas rendering fills supported entities with `Layer.FillColor`;
+- selected filled entities keep their fill color and only change stroke highlight color;
+- Property Panel exposes `Fill: None/Solid` for circles and closed polylines;
+- Layer Manager exposes fill color through a color picker plus `#RRGGBB`;
+- native persistence stores `LayerDto.FillColor`, `CircleEntityDto.IsFilled` and `PolylineEntityDto.IsFilled`;
+- SVG and PDF export write fill for supported filled entities;
+- DXF export writes targeted `SOLID` HATCH records for filled circles and closed polylines.
+
+Deferred fill work:
+
+- transparency;
+- hatch/pattern definitions;
+- general hatch editing tools;
+- fill for additional entity types;
+- manual DXF viewer validation of generated HATCH output.
 
 ---
 
@@ -170,7 +203,7 @@ Implementation notes:
 
 1. Validate Explode/Join manually in the UI after local build/test.
 2. Complete/execute `docs/testing/curve-editing-regression-v0.9.md`.
-3. Export/import compatibility pass for SVG/PDF/DXF.
+3. Export/import compatibility pass for SVG/PDF/DXF, including manual HATCH validation in LibreCAD/QCAD.
 4. Manual UI check of Property Panel combo boxes and compact polyline vertices.
 5. Release preparation for v0.9.
 

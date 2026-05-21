@@ -14,11 +14,12 @@ Current layer responsibilities:
 Id
 Name
 LineFormatId
+FillColor
 IsVisible
 IsLocked
 ```
 
-The visual stroke is resolved through the document's `LineFormatCollection`:
+Stroke appearance is resolved through the document's `LineFormatCollection`:
 
 ```text
 Entity -> LayerId -> Layer -> LineFormatId -> LineFormat
@@ -33,7 +34,13 @@ LineWeight
 LineStyle
 ```
 
-This means several layers can share the same visual format, and a single edit to the format can update all layers that use it.
+Solid fill appearance is resolved directly from the selected entity's layer:
+
+```text
+Entity -> LayerId -> Layer -> FillColor
+```
+
+This means several layers can share the same stroke format while still using different fill colors.
 
 ---
 
@@ -42,12 +49,12 @@ This means several layers can share the same visual format, and a single edit to
 The current rule is:
 
 ```text
-entities store geometry + layer reference
-layers reference reusable appearance formats
+entities store geometry + layer reference + supported fill on/off state
+layers reference reusable stroke formats and store fill color
 line formats store visual stroke information
 ```
 
-Individual entities should not carry their own active color, line weight or line style in this phase.
+Individual entities should not carry their own active color, fill color, line weight or line style in this phase.
 
 This avoids ambiguity between per-entity overrides and layer-based appearance. It also keeps rendering, SVG export and persistence simpler.
 
@@ -79,9 +86,10 @@ It allows editing:
 - visibility;
 - locked state;
 - current layer;
-- selected line format.
+- selected line format;
+- fill color through a color picker and `#RRGGBB` text field.
 
-It no longer edits color and line weight directly. Those values belong to line formats and are edited in the Line Format Manager.
+It no longer edits stroke color and line weight directly. Those values belong to line formats and are edited in the Line Format Manager. Fill color is intentionally layer-owned because it is independent from stroke appearance.
 
 Rules:
 
@@ -138,9 +146,12 @@ Then the renderer uses:
 format.Color
 format.LineWeight
 format.LineStyle
+layer.FillColor when the entity supports and enables solid fill
 ```
 
-Selected entities keep the same line weight and line style. Selection changes only the highlight color.
+Supported solid-fill entities are `CircleEntity` and closed `PolylineEntity` instances, including rectangles and polygons represented as closed polylines. Open polylines never render fill, even if a stale fill flag exists internally.
+
+Selected entities keep the same line weight, line style and fill color. Selection changes only the stroke highlight color.
 
 ---
 
@@ -152,13 +163,16 @@ SVG export uses the same resolution rule as the canvas:
 Entity -> Layer -> LineFormat
 ```
 
-SVG attributes are generated from the resolved format:
+SVG attributes are generated from the resolved format and layer fill color:
 
 ```text
 stroke           -> LineFormat.Color
 stroke-width     -> LineFormat.LineWeight
 stroke-dasharray -> LineStyleDashPattern, omitted for Continuous
+fill             -> Layer.FillColor for supported filled closed entities
 ```
+
+Unsupported or not-filled geometry writes `fill="none"`.
 
 Hidden layers are ignored. Locked visible layers are exported normally.
 
@@ -181,7 +195,7 @@ The resolved format is written on the DXF layer record:
 370  lineweight
 ```
 
-Entities are exported as `BYLAYER`, so their visible appearance comes from the DXF layer table, not from per-entity overrides.
+Entities are exported as `BYLAYER`, so their stroke appearance comes from the DXF layer table, not from per-entity overrides. Filled closed circles and polylines additionally write a `HATCH` entity with a solid pattern and color derived from `Layer.FillColor`.
 
 Hidden layers are written with a negative ACI color in the layer table. Hidden-layer entities are ignored by default.
 
@@ -189,7 +203,7 @@ Hidden layers are written with a negative ACI color in the layer table. Hidden-l
 
 ## Persistence
 
-Native persistence stores line formats in the document and stores only `LineFormatId` on layers.
+Native persistence stores line formats in the document and stores `LineFormatId` plus `FillColor` on layers.
 
 Conceptually:
 
@@ -209,9 +223,9 @@ Old color and line weight layer fields are legacy compatibility data only. They 
 Future layer/model appearance work may add:
 
 ```text
-FillColor
+fill transparency
+hatch/pattern definitions
 DrawOrder
-per-layer fill behavior
 text formats
 dimension formats
 ```

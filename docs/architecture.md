@@ -344,10 +344,10 @@ Layer responsibilities:
 - `LineFormatId`;
 - visibility;
 - locked state;
-- future fill color;
+- `FillColor`;
 - future draw order.
 
-Stroke appearance is resolved through `Document.LineFormats`, not directly from layer color/weight fields.
+Stroke appearance is resolved through `Document.LineFormats`, not directly from layer color/weight fields. Solid fill color is resolved from `Layer.FillColor`.
 
 Current layer rule:
 
@@ -379,7 +379,7 @@ LineWeight
 LineStyle
 ```
 
-Rendering and SVG export must resolve appearance through this path. They must not use per-entity style overrides for the current layer-based appearance model.
+Rendering and SVG/PDF/DXF export must resolve stroke appearance through this path. They must not use per-entity style overrides for the current layer-based stroke model. Solid fill uses the entity fill flag plus `Layer.FillColor`.
 
 Dash patterns are defined by `LineStyleDashPattern` in model units and are scaled by the viewport when rendered on screen.
 
@@ -440,7 +440,7 @@ Rendering and SVG export resolve stroke appearance through this path:
 Entity -> LayerId -> Layer -> LineFormatId -> LineFormat
 ```
 
-The layer is the only source of visual stroke appearance for entities in the current phase. Entity-level style overrides are intentionally out of scope.
+The layer line format is the only source of visual stroke appearance for entities in the current phase. The layer is also the only source of solid fill color. Entity-level color/style overrides are intentionally out of scope; supported entities store only whether fill is enabled.
 
 The `Assegna` top-bar action changes the `LayerId` of selected entities to the current layer through an undoable replacement command. It must preserve entity geometry and ids.
 

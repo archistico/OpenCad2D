@@ -11,7 +11,7 @@ The native format is intended for OpenCad2D editing fidelity. It is not a DXF/DW
 The native document stores:
 
 - document version;
-- layers;
+- layers, including `FillColor`;
 - line formats;
 - text formats;
 - dimension styles;
@@ -35,6 +35,35 @@ Compatibility:
 - if `dashPattern` is missing, it is derived from `lineStyle`;
 - if `dashPattern` is invalid, recovery falls back to the style default;
 - empty `dashPattern` means continuous line.
+
+---
+
+## Layer fill and entity fill state
+
+The native format stores layer fill color separately from reusable stroke line formats:
+
+```text
+LayerDto.FillColor
+LayerDto.LineFormatId
+```
+
+Supported filled entities store only whether solid fill is enabled:
+
+```text
+CircleEntityDto.IsFilled
+PolylineEntityDto.IsFilled
+```
+
+The actual fill color remains layer-based and is resolved at render/export time from `Layer.FillColor`.
+
+Compatibility rules:
+
+```text
+missing LayerDto.FillColor -> default from the layer line format color
+missing IsFilled on old entities -> false
+```
+
+This keeps old drawings visually unchanged when reopened.
 
 ---
 

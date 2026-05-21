@@ -1,4 +1,4 @@
-﻿# DXF Export
+# DXF Export
 
 OpenCad2D can export the visible model-space drawing to an ASCII DXF file.
 
@@ -33,14 +33,14 @@ Supported entity mappings:
 | `TextEntity` | `TEXT` |
 | `MultilineTextEntity` | `MTEXT` with text height and reference width (`40`/`41`) |
 | `LineEntity` | `LINE` |
-| `CircleEntity` | `CIRCLE` |
+| `CircleEntity` | `CIRCLE`, plus `HATCH` when solid fill is enabled |
 | `ArcEntity` | `ARC` |
 | `EllipseEntity` | `ELLIPSE` |
-| `PolylineEntity` | `LWPOLYLINE` |
+| `PolylineEntity` | `LWPOLYLINE`, plus `HATCH` for closed solid-filled polylines |
 | `BezierSplineEntity` | `SPLINE` with open-uniform knot vector |
 | basic dimensions | graphical primitives: `LINE`, `ARC`, `TEXT` |
 
-Hatches, blocks, layouts and paper space are not exported yet.
+General hatch editing, blocks, layouts and paper space are not exported yet. A limited solid `HATCH` export exists for filled circles and closed polylines.
 
 
 ## MTEXT reference width
@@ -178,6 +178,27 @@ Locked layers are exported as locked layer records in the `LAYER` table and thei
 ---
 
 
+## Solid fill / HATCH export
+
+DXF export supports solid fill for:
+
+```text
+CircleEntity with IsFilled = true
+closed PolylineEntity with IsFilled = true
+```
+
+The geometric border is exported as before (`CIRCLE` or `LWPOLYLINE`). The fill is emitted as a separate `HATCH` entity using the `SOLID` pattern.
+
+Fill color is resolved from the entity layer:
+
+```text
+Entity -> LayerId -> Layer.FillColor
+```
+
+The HATCH writes both nearest ACI color and true-color RGB data where applicable. Open polylines and not-filled entities do not write HATCH records. This is a targeted fill export path, not a full user-editable hatch subsystem.
+
+---
+
 ## SPLINE export
 
 `BezierSplineEntity` is exported as a DXF `SPLINE` entity. The exporter writes:
@@ -248,7 +269,8 @@ Current DXF tests cover:
 - entity `BYLAYER` properties;
 - hidden layer records;
 - missing line format fallback;
-- Y flip behavior.
+- Y flip behavior;
+- solid HATCH output for filled circles and closed polylines.
 
 ---
 
