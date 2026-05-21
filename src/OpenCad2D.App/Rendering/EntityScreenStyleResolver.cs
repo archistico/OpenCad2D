@@ -34,7 +34,19 @@ public static class EntityScreenStyleResolver
             color,
             Math.Max(0, lineFormat.LineWeight.Millimeters),
             lineFormat.LineStyle,
-            lineFormat.DashPattern);
+            lineFormat.DashPattern,
+            IsFillEnabled(entity),
+            layer.FillColor);
+    }
+
+    private static bool IsFillEnabled(CadEntity entity)
+    {
+        return entity switch
+        {
+            CircleEntity circle => circle.IsFilled,
+            PolylineEntity polyline => polyline.IsClosed && polyline.IsFilled,
+            _ => false
+        };
     }
 
     private static LineFormat ResolveLineFormat(

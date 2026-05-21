@@ -40,7 +40,8 @@ public sealed class CadEntityRenderer
         CadWorkspace workspace,
         CadEntity entity,
         Pen pen,
-        bool isSelected = false)
+        bool isSelected = false,
+        IBrush? fillBrush = null)
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(workspace);
@@ -128,7 +129,7 @@ public sealed class CadEntityRenderer
 
             case CircleEntity circle:
                 context.DrawEllipse(
-                    null,
+                    fillBrush,
                     pen,
                     ToScreenPoint(circle.Center),
                     _viewport.ModelLengthToScreen(circle.Radius),
@@ -160,7 +161,8 @@ public sealed class CadEntityRenderer
                 DrawPolyline(
                     context,
                     polyline,
-                    pen);
+                    pen,
+                    fillBrush);
                 break;
 
             case BezierSplineEntity spline:
@@ -548,9 +550,20 @@ public sealed class CadEntityRenderer
     private void DrawPolyline(
         DrawingContext context,
         PolylineEntity polyline,
-        Pen pen)
+        Pen pen,
+        IBrush? fillBrush)
     {
         IReadOnlyList<Point2D> vertices = polyline.Vertices;
+
+        if (fillBrush is not null && polyline.IsClosed && vertices.Count > 2)
+        {
+            DrawClosedPolylineGeometry(
+                context,
+                vertices,
+                pen,
+                fillBrush);
+            return;
+        }
 
         for (int i = 0; i < vertices.Count - 1; i++)
         {
@@ -567,6 +580,34 @@ public sealed class CadEntityRenderer
                 ToScreenPoint(vertices[^1]),
                 ToScreenPoint(vertices[0]));
         }
+    }
+
+    private void DrawClosedPolylineGeometry(
+        DrawingContext context,
+        IReadOnlyList<Point2D> vertices,
+        Pen pen,
+        IBrush fillBrush)
+    {
+        var geometry = new StreamGeometry();
+
+        using (StreamGeometryContext geometryContext = geometry.Open())
+        {
+            geometryContext.BeginFigure(
+                ToScreenPoint(vertices[0]),
+                true);
+
+            for (int i = 1; i < vertices.Count; i++)
+            {
+                geometryContext.LineTo(ToScreenPoint(vertices[i]));
+            }
+
+            geometryContext.EndFigure(true);
+        }
+
+        context.DrawGeometry(
+            fillBrush,
+            pen,
+            geometry);
     }
 
     private void DrawArc(

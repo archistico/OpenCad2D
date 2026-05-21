@@ -40,6 +40,7 @@ public sealed class CadCanvas : Control
     private Point? _pointerScreenPoint;
     private bool _isPointerInside;
     private readonly Dictionary<PenCacheKey, Pen> _penCache = new();
+    private readonly Dictionary<BrushCacheKey, IBrush> _brushCache = new();
     private readonly record struct PenCacheKey(
         byte R,
         byte G,
@@ -47,6 +48,10 @@ public sealed class CadCanvas : Control
         double Thickness,
         string DashPatternKey,
         double Scale);
+    private readonly record struct BrushCacheKey(
+        byte R,
+        byte G,
+        byte B);
     private const double GridLineDetectionTolerance = 1e-6;
     private bool _isPanning;
     private readonly AsyncReentrancyGuard _textInputDialogGuard = new();
@@ -167,13 +172,15 @@ public sealed class CadCanvas : Control
             Pen pen = GetOrCreateEntityPen(
                 entity,
                 isSelected);
+            IBrush? fillBrush = GetOrCreateEntityFillBrush(entity);
 
             _entityRenderer.DrawEntity(
                 context,
                 Workspace,
                 entity,
                 pen,
-                isSelected);
+                isSelected,
+                fillBrush);
         }
 
         DrawActiveToolPreview(context);
@@ -280,6 +287,45 @@ public sealed class CadCanvas : Control
         _penCache.Add(key, pen);
 
         return pen;
+    }
+
+    private IBrush? GetOrCreateEntityFillBrush(CadEntity entity)
+    {
+        if (Workspace is null)
+        {
+            return null;
+        }
+
+        EntityScreenStyle screenStyle = EntityScreenStyleResolver.Resolve(
+            Workspace.Document,
+            entity,
+            isSelected: false);
+
+        if (!screenStyle.IsFillEnabled)
+        {
+            return null;
+        }
+
+        CadColor fillColor = screenStyle.FillColor;
+        var key = new BrushCacheKey(
+            fillColor.R,
+            fillColor.G,
+            fillColor.B);
+
+        if (_brushCache.TryGetValue(key, out IBrush? cachedBrush))
+        {
+            return cachedBrush;
+        }
+
+        var brush = new SolidColorBrush(
+            Color.FromRgb(
+                fillColor.R,
+                fillColor.G,
+                fillColor.B));
+
+        _brushCache.Add(key, brush);
+
+        return brush;
     }
 
     private DashStyle? CreateDashStyle(IReadOnlyList<double> modelPattern)

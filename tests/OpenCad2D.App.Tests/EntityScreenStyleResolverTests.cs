@@ -94,3 +94,125 @@ public sealed class EntityScreenStyleResolverTests
         Assert.Equal(LineStyle.DashDot, style.LineStyle);
     }
 }
+
+public sealed class EntityScreenStyleResolverFillTests
+{
+    [Fact]
+    public void Resolve_FilledCircle_ShouldEnableFillAndUseLayerFillColor()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("FillLayer");
+        CadColor fillColor = CadColor.FromRgb(10, 20, 30);
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "Fill layer",
+            LineFormatId.Continuous,
+            fillColor: fillColor));
+
+        var entity = new CircleEntity(
+            new Point2D(5, 5),
+            3,
+            layerId: layerId,
+            isFilled: true);
+
+        EntityScreenStyle style = EntityScreenStyleResolver.Resolve(
+            document,
+            entity,
+            isSelected: false);
+
+        Assert.True(style.IsFillEnabled);
+        Assert.Equal(fillColor, style.FillColor);
+    }
+
+    [Fact]
+    public void Resolve_NotFilledCircle_ShouldDisableFill()
+    {
+        var document = new CadDocument();
+        var entity = new CircleEntity(
+            new Point2D(5, 5),
+            3,
+            isFilled: false);
+
+        EntityScreenStyle style = EntityScreenStyleResolver.Resolve(
+            document,
+            entity,
+            isSelected: false);
+
+        Assert.False(style.IsFillEnabled);
+    }
+
+    [Fact]
+    public void Resolve_FilledClosedPolyline_ShouldEnableFill()
+    {
+        var document = new CadDocument();
+        var entity = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10),
+                new Point2D(0, 10)
+            },
+            isClosed: true,
+            isFilled: true);
+
+        EntityScreenStyle style = EntityScreenStyleResolver.Resolve(
+            document,
+            entity,
+            isSelected: false);
+
+        Assert.True(style.IsFillEnabled);
+    }
+
+    [Fact]
+    public void Resolve_FilledOpenPolyline_ShouldDisableFill()
+    {
+        var document = new CadDocument();
+        var entity = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            },
+            isClosed: false,
+            isFilled: true);
+
+        EntityScreenStyle style = EntityScreenStyleResolver.Resolve(
+            document,
+            entity,
+            isSelected: false);
+
+        Assert.False(style.IsFillEnabled);
+    }
+
+    [Fact]
+    public void Resolve_FilledSelectedCircle_ShouldKeepLayerFillColor()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("SelectedFillLayer");
+        CadColor fillColor = CadColor.FromRgb(70, 80, 90);
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "Selected fill layer",
+            LineFormatId.Continuous,
+            fillColor: fillColor));
+
+        var entity = new CircleEntity(
+            new Point2D(5, 5),
+            3,
+            layerId: layerId,
+            isFilled: true);
+
+        EntityScreenStyle style = EntityScreenStyleResolver.Resolve(
+            document,
+            entity,
+            isSelected: true);
+
+        Assert.Equal(CadColor.FromRgb(0, 191, 255), style.Color);
+        Assert.True(style.IsFillEnabled);
+        Assert.Equal(fillColor, style.FillColor);
+    }
+}

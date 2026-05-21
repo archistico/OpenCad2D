@@ -7,4 +7,6 @@ public readonly record struct EntityScreenStyle(
     CadColor Color,
     double LineWeight,
     LineStyle LineStyle,
-    IReadOnlyList<double> DashPattern);
+    IReadOnlyList<double> DashPattern,
+    bool IsFillEnabled,
+    CadColor FillColor);
