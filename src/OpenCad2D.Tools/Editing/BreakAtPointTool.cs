@@ -13,7 +13,7 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Breaks a supported entity at a picked point.
 /// </summary>
-public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, ISnapModeProvider
+public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, IToolPreviewDescriptorProvider, ISnapModeProvider
 {
     private EntityId? _targetEntityId;
     private CadEntity? _targetEntity;
@@ -160,6 +160,47 @@ public sealed class BreakAtPointTool : ICadTool, ICommandDrivenTool, IToolPrevie
         return _previewSegments
             .Cast<CadEntity>()
             .ToList();
+    }
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new ToolPreviewDescriptor(
+            entities: GetPreviewEntities(),
+            markers: GetBreakPointMarkers(),
+            entityOverlays: GetSelectedTargetOverlays());
+    }
+
+    private IReadOnlyList<ToolPreviewMarker> GetBreakPointMarkers()
+    {
+        if (_currentBreakPoint is null || _previewSegments.Count == 0)
+        {
+            return Array.Empty<ToolPreviewMarker>();
+        }
+
+        return new[]
+        {
+            new ToolPreviewMarker(
+                _currentBreakPoint.Value,
+                ToolPreviewMarkerKind.Hot,
+                ToolPreviewMarkerShape.Circle)
+        };
+    }
+
+    private IReadOnlyList<ToolPreviewEntityOverlay> GetSelectedTargetOverlays()
+    {
+        if (_targetEntity is null)
+        {
+            return Array.Empty<ToolPreviewEntityOverlay>();
+        }
+
+        return new[]
+        {
+            new ToolPreviewEntityOverlay(
+                new[] { _targetEntity },
+                ToolPreviewHighlightKind.Emphasis)
+        };
     }
 
     private ToolResult AcceptTargetEntity(

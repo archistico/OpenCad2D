@@ -22,6 +22,37 @@ Se emerge un bug **Blocker** o **High**, fermare la prova del gruppo corrente, c
 | RUN-PREP-04 | Verificare che lo zoom mostri tutti i gruppi di geometrie |  |  |
 | RUN-PREP-05 | Provare un Undo/Redo semplice prima dei comandi distruttivi |  |  |
 
+
+## Passata 0 — Messaggistica di stato
+
+Prima dei test distruttivi, verificare che i comandi segnalino chiaramente i casi non eseguibili. Questa passata serve a distinguere un vero bug geometrico da un caso correttamente rifiutato.
+
+| ID | Comando | Caso | Risultato atteso | Stato | Note |
+|---|---|---|---|---|---|
+| MSG-TRIM-01 | TRIM | Target senza intersezione con cutting edge | Messaggio "No trim intersection..." o equivalente; nessuna modifica |  |  |
+| MSG-TRIM-02 | TRIM | Pick sul lato non rimovibile | Messaggio che spiega che il lato scelto non produce un intervallo rimovibile |  |  |
+| MSG-BRKPT-01 | BREAK AT POINT | Pick fuori entità | Messaggio che dice che il punto non è sull'entità |  |  |
+| MSG-BRKPT-02 | BREAK AT POINT | Pick troppo vicino a endpoint/vertice | Messaggio che invita a scegliere un punto interno lontano da endpoint/vertici |  |  |
+| MSG-BRKSEG-01 | BREAK SEGMENT | Due punti troppo vicini | Messaggio che richiede due punti distinti |  |  |
+| MSG-BRKSEG-02 | BREAK SEGMENT | Secondo punto fuori entità | Messaggio che dice che il secondo punto non è sull'entità |  |  |
+| MSG-EXT-01 | EXTEND | Boundary non raggiungibile dalla proiezione | Messaggio "No extension possible..." o equivalente; nessuna modifica |  |  |
+| MSG-EXT-02 | EXTEND | Boundary raggiungibile solo dall'altro endpoint | Messaggio che suggerisce di scegliere il lato/opposto endpoint |  |  |
+
+Se un comando non modifica nulla ma mostra un messaggio chiaro e coerente, segnare `OK`. Se non modifica nulla e non spiega perché, segnare `Bug` anche se la geometria resta integra.
+
+## Passata 0.5 — Preview visiva comune
+
+Questa passata verifica che i comandi mostrino il contesto visuale corretto prima di modificare il disegno.
+
+| ID | Comando | Caso | Risultato atteso | Stato | Note |
+|---|---|---|---|---|---|
+| PREVIEW-BRKPT-01 | BREAK AT POINT | Target selezionato, prima del punto | Target evidenziato come contesto; nessuna geometria permanente |  |  |
+| PREVIEW-BRKPT-02 | BREAK AT POINT | Hover su punto valido | Due segmenti di anteprima + marker sul punto proiettato |  |  |
+| PREVIEW-BRKSEG-01 | BREAK SEGMENT | Primo punto scelto | Target evidenziato + marker sul primo punto |  |  |
+| PREVIEW-BRKSEG-02 | BREAK SEGMENT | Hover secondo punto valido | Intervallo rimosso tratteggiato + marker sui due punti |  |  |
+| PREVIEW-TRIM-01 | TRIM | Boundary selezionata | Boundary ancora evidenziata durante la scelta del target |  |  |
+| PREVIEW-EXT-01 | EXTEND | Boundary selezionata | Boundary ancora evidenziata durante la scelta del target |  |  |
+
 ## Passata 1 — TRIM base
 
 | ID checklist | Caso | Stato | Bug ID / Note |

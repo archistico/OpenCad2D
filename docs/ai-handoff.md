@@ -1,224 +1,279 @@
-# Latest handoff note - curve editing status messages
+# OpenCad2D roadmap
 
-Added a command-level granular status-message pass for complex curve editing. `EditingStatusMessageBuilder` now supplies clearer failure messages for TRIM, BREAKPOINT, BREAK and EXTEND when geometry services return no editable result. This is intended to support the v0.9 curve-editing regression checklist by distinguishing no intersection, wrong picked side, point too close to endpoint/vertex, closed spline limitations and unsupported segment-removal cases.
+This roadmap tracks the active development path from the current v0.9 stabilization work toward the first stable v1.0 release.
 
-# OpenCad2D AI handoff
+OpenCad2D grows in small, testable phases. Each phase should compile, pass the relevant tests, update documentation and leave a clear handoff before the next phase begins.
 
-This file is the current technical handoff for continuing OpenCad2D work. It should be updated after each meaningful refactor or feature phase.
+Legend:
+
+```text
+[x] completed and stabilized
+[~] in progress / partially stabilized
+[ ] planned
+[>] deferred beyond the current release target
+```
 
 ---
 
-## Current focus
+## Current release target: v0.9 stabilization
 
-OpenCad2D is in the v0.9 stabilization cycle. The active goal is to make the existing 2D CAD foundation predictable, precise and release-ready before moving toward v1.0.
+v0.9 is a stabilization release. Its goal is not to add a large new feature group, but to make the current CAD foundation predictable, precise and safe enough to move toward v1.0.
 
-Current work area: v0.9 stabilization after completing the first solid-fill pass for closed entities.
+Primary v0.9 themes:
+
+- native curve editing precision;
+- predictable modify-tool UX;
+- reliable save/export behavior;
+- DXF/SVG/PDF compatibility checks;
+- documented limitations;
+- clean release packaging.
 
 ---
 
 ## Completed foundations
 
-The following areas are considered stable enough to be summarized rather than repeated in full historical detail:
+The following foundations are considered complete for the active roadmap. Older implementation details are intentionally not repeated here; see Git history and release notes for historical milestones.
 
-- core document/entity/layer/line-format model;
-- Avalonia app shell, canvas, command row, snap/status UI and tool panels;
-- native `.opencad2d.json` persistence, including layer fill color and fill flags for supported entities;
-- SVG/PDF/DXF export baseline, including solid fill output for supported closed entities, and ASCII DXF import baseline;
-- draw tools for lines, rectangles, circles, arcs, ellipses, polylines, polygons, text, MTEXT, points and open Bezier splines;
-- dimensions baseline;
-- selection, entity cycling, Select All, Select Last and Deselect;
-- Text/MTEXT bounding-box hit testing;
-- Save/Export UX clarity: export does not replace native save and does not clear dirty state.
-
----
-
-## Dimension Style System checkpoint
-
-Dimension styles are now being promoted from a basic rendering helper to a document-level drafting system.
-
-Current implemented baseline:
-
-- `CadDocument.CurrentDimensionStyleId` stores the current dimension style;
-- `ToolCreationContext.CurrentDimensionStyleId` is used by dimension tools when creating new dimensions;
-- dimension style persistence includes the current dimension style id in document settings;
-- `DimensionStyle` supports generic prefix/suffix plus radius and diameter prefixes;
-- `DimensionStyle` now also stores arrow symbol, text rotation mode and preferred dimension line offset;
-- `DimensionGeometryBuilder` resolves readable dimension text rotations and supports closed arrow, open arrow, architectural tick, dot and no terminator symbols;
-- dimension text is treated as center-anchored for canvas, SVG, PDF and DXF graphical dimension export;
-- a first `DimensionStyleManagerWindow` is available from the top bar near Layers, Line Formats and Text Formats;
-- the manager supports adding/removing non-built-in unused styles, setting the current style, and editing text format, unit precision/separator, generic prefix/suffix, R/Ø prefixes, symbol type/size, text rotation mode and main offsets;
-- dimension style changes are applied through `UpdateDimensionStylesCommand`, so they are undoable and keep the current style synchronized with the document/tool context.
-
-Next planned step: add a live preview to the Dimension Style Manager and then wire the dimension style selector into the property panel for selected dimensions.
+| Area | Status | Notes |
+|---|---:|---|
+| Core geometry/document model | [x] | Geometry primitives, entities, layers, line formats, text formats, dimension styles, command history and undo/redo are in place. |
+| Application shell | [x] | Avalonia canvas, file command bar, top CAD bar, left tool panel, property panel, command row, snap bar and status bar are established. |
+| Native persistence | [x] | `.opencad2d.json` save/load, dirty state, save-changes prompt, partial recovery, viewport/document settings persistence and layer/entity fill persistence are implemented. |
+| Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; ASCII DXF import covers the practical 2D entity set currently supported. |
+| Command input | [x] | Aliases, prompt phases, coordinate input, relative/polar input, direct distances, history and first-pass autocomplete are implemented. |
+| Drafting aids | [x] | Snap system, grid, Ortho, Polar Tracking, Zoom Window, Zoom Extents, pan and crosshair are implemented. |
+| Draw tools baseline | [x] | Points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and open Bezier splines are supported. Rectangles and polygons are closed polylines for fill/editing purposes. |
+| Dimensions baseline | [x] | Horizontal, vertical, aligned, radius, diameter and angular dimensions exist, with conservative stale marking after model edits. |
+| Transform tools | [x] | Move, Copy, Rotate, Scale, Mirror and point-based Align are usable and tested. |
+| Selection and hit testing | [x] | Selection, Select All, Select Last, Deselect, entity cycling, text/MTEXT bounding-box hit testing and locked/hidden layer behavior are implemented. |
+| Native curve editing | [x] | TRIM, BREAK and supported EXTEND flows use native parameters, shared cut points and adapter-backed splitting for supported curves. |
+| Elliptical arcs | [x] | `EllipticalArcEntity` exists with rendering, snapping, persistence and SVG/PDF/DXF export support. |
+| Open Bezier split | [x] | Open Bezier splines can be split/extracted natively and are no longer permanently degraded to polylines in TRIM/BREAK. |
+| Preview UX base | [x] | TRIM/BREAK removal previews are dashed; EXTEND addition previews are highlighted; selected boundaries stay visible. |
+| Save/export UX clarity | [x] | Export creates derived files and does not clear dirty state or replace the current native file path; user messages make this explicit. |
+| Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
+| Explode / Join essentials | [x] | EXPLODE converts selected polylines into lines; JOIN converts connected selected lines into polylines, with command aliases, buttons, undo and targeted tests. |
 
 ---
 
-## Solid fill checkpoint
+## Active v0.9 work
 
-The first solid-fill pass is implemented for the current scope.
+### 1. Modify Tools UX cleanup
 
-Model rules:
+Status: [x] completed for current v0.9 UX cleanup scope.
 
-- `Layer.FillColor` owns the fill color;
-- `CircleEntity.IsFilled` enables/disables solid fill for circles;
-- `PolylineEntity.IsFilled` enables/disables solid fill only when `PolylineEntity.IsClosed` is true;
-- rectangles and polygons are handled as closed polylines;
-- entities do not store their own fill color;
-- open polylines never render/export fill.
+Completed:
 
-UI/rendering/export state:
+- [x] documented the shared confirmation policy: left click for graphical input, right click/Enter to confirm valid defaults or current selections, Esc to cancel;
+- [x] added Deselect command/button and refreshed the Point icon;
+- [x] made Text and MTEXT selectable from their bounding boxes;
+- [x] fixed Delete so it deletes the existing selection immediately, or allows multi-pick selection followed by Enter/right click;
+- [x] added persistent boundary/first-entity highlights for TRIM, EXTEND and FILLET;
+- [x] made FILLET entity selection use EntityOnly snapping;
+- [x] allowed right click to finish POLYLINE when enough vertices exist;
+- [x] allowed right click/Enter defaults for Polygon sides, Fillet radius and Mirror delete-source prompt;
+- [x] fixed Ellipse axis input to use snap-resolved points;
+- [x] fixed Rect Sides numeric second-side input so typed values create the exact requested side length.
+- [x] completed final pass for right-click/Enter messaging, selection-phase EntityOnly snap policy and state-cleanup expectations across the remaining primary tools.
+- [x] added essential Explode and Join tools before v0.9 planning: `EXPLODE`/`X` and `JOIN`/`J`.
 
-- canvas rendering fills supported entities with `Layer.FillColor`;
-- selected filled entities keep their fill color and only change stroke highlight color;
-- Property Panel exposes `Fill: None/Solid` for circles and closed polylines;
-- Layer Manager exposes fill color through a color picker plus `#RRGGBB`;
-- native persistence stores `LayerDto.FillColor`, `CircleEntityDto.IsFilled` and `PolylineEntityDto.IsFilled`;
-- SVG and PDF export write fill for supported filled entities;
-- DXF export writes targeted `SOLID` HATCH records for filled circles and closed polylines.
+Completed Offset cleanup:
 
-Deferred fill work:
+- [x] rebuilt Offset workflow around typed distance, two-point distance, last distance and right-click/Enter default confirmation;
+- [x] added Offset target highlight and addition preview;
+- [x] made Offset geometry support explicit: lines, circles, arcs and straight-segment polylines are supported; ellipses, elliptical arcs and Bezier splines are deferred with clear messages;
+- [x] ran the final pass over remaining tools for consistent right-click/Enter/Esc behavior and phase-specific snap modes;
+- [x] updated command/tool docs after final UX consistency pass.
 
-- transparency;
-- hatch/pattern definitions;
-- general hatch editing tools;
-- fill for additional entity types;
-- manual DXF viewer validation of generated HATCH output.
+### 2. Offset stabilization
+
+Status: [x] completed for v0.9 scope.
+
+Completed behavior:
+
+- [x] first use requires a typed distance or two picked distance points;
+- [x] typed distance stores the last offset distance;
+- [x] two picked points measure and store the last offset distance;
+- [x] right click/Enter uses the last stored distance when one exists;
+- [x] target selection uses EntityOnly snap;
+- [x] side selection uses graphical input;
+- [x] preview clearly shows the offset result before confirmation;
+- [x] supported geometry and limitations are documented.
+
+Geometry policy:
+
+- line/circle/arc/polyline offset is supported and tested;
+- ellipse, elliptical arc and Bezier spline offset is deferred because their true offsets are not the same native curve type;
+- unsupported advanced curves return clear messages and create no silent permanent polyline approximation.
+
+
+### 3. Solid fill for closed entities
+
+Status: [x] completed for the current solid-fill scope.
+
+Completed:
+
+- [x] added `Layer.FillColor` as the layer-owned fill color;
+- [x] added `IsFilled` to `CircleEntity` and `PolylineEntity`;
+- [x] preserved fill state across entity replacement, layer changes and transforms;
+- [x] persisted layer fill color and entity fill state in `.opencad2d.json`;
+- [x] rendered solid fill on the canvas for filled circles and closed polylines;
+- [x] exposed `Fill: None/Solid` in the Property Panel for circles and closed polylines;
+- [x] exposed layer fill color in the Layer Manager with a color picker and `#RRGGBB` text field;
+- [x] exported solid fill to SVG and PDF;
+- [x] exported solid fill to DXF as targeted `SOLID` HATCH records for filled circles and closed polylines.
+
+Current limits:
+
+- no transparency;
+- no hatch/pattern selection;
+- no per-entity fill color;
+- open polylines never render/export fill;
+- general editable hatch workflows remain future work.
+
+### 4. Curve editing regression checklist
+
+Status: [~] manual validation in progress. Status-message regression checks have been added to the evening run sheet.
+
+Reference: `docs/testing/curve-editing-regression-v0.9.md`. The focused evening run sheet is `docs/testing/curve-editing-evening-run-2026-05-21.md`; the prepared sample drawing is `docs/testing/samples/curve-editing-regression-v0.9.opencad2d.json`.
+
+Validate:
+
+- [ ] TRIM on lines, circles, arcs, polylines, ellipses, elliptical arcs and open Bezier splines;
+- [ ] BREAK AT POINT and BREAK SEGMENT on supported entities;
+- [ ] EXTEND on supported targets/boundaries;
+- [ ] shared endpoints/no micro-gaps after reciprocal edits;
+- [ ] persistence/export of edited elliptical arcs and spline fragments;
+- [x] granular command failure messages for TRIM / BREAK / EXTEND;
+- [~] preview behavior and visual consistency during manual regression; Break target overlays and break-point markers are now covered by tests.
+
+### 5. Export/import compatibility pass
+
+Status: [ ] planned.
+
+Tasks:
+
+- [ ] save/reopen edited drawings containing `EllipticalArcEntity` and open spline fragments;
+- [ ] export mixed drawings to SVG/PDF/DXF, including filled circles and filled closed polylines;
+- [ ] manually open DXF samples in LibreCAD and QCAD, including generated SOLID HATCH records;
+- [ ] record viewer versions, OS, date and pass/partial/fail notes;
+- [ ] decide whether DXF partial ELLIPSE import should map directly to `EllipticalArcEntity` in v0.9 or remain deferred.
+
+### 6. Property Panel curve review
+
+Status: [ ] planned.
+
+Check that the Property Panel exposes coherent editable/read-only properties for:
+
+- [ ] Arc;
+- [ ] Ellipse;
+- [ ] EllipticalArc;
+- [ ] Polyline;
+- [ ] BezierSpline;
+- [ ] Text and MTEXT after bounding-box hit-test changes.
+
+### 7. Performance and robustness pass
+
+Status: [ ] planned.
+
+Review:
+
+- [ ] snap/hit testing on denser drawings;
+- [ ] TRIM/BREAK/EXTEND with multiple boundaries;
+- [ ] preview performance;
+- [ ] degenerate geometry handling;
+- [ ] tolerance deduplication around intersections.
+
+### 8. Documentation and release gate
+
+Status: [ ] planned.
+
+Before tagging v0.9:
+
+- [ ] update README current status;
+- [ ] update commands/tools docs after Offset and final UX pass;
+- [ ] update known limitations;
+- [ ] update release notes;
+- [ ] run full build/test locally;
+- [ ] run `make zip` and inspect archive contents;
+- [ ] prepare GitHub release notes.
 
 ---
-
-## Native curve editing checkpoint
-
-The curve-editing stabilization block is complete for the current supported native entity set.
-
-Important types/services now in place:
-
-- `CadCurveSplitService`;
-- `ICurveAdapter` and adapter-backed curve splitting;
-- `CurveCut` and `CurveInterval`;
-- richer `CadIntersectionPoint` with shared point and native parameters;
-- `EllipticalArcEntity`;
-- `BezierSplineSplitService`.
-
-Current behavior:
-
-- `LineEntity` edits preserve native line fragments and reuse shared cut points as explicit endpoints;
-- `CircleEntity` TRIM/BREAK Segment results become native `ArcEntity` fragments;
-- `ArcEntity` remains native arc fragments;
-- `PolylineEntity`, including rectangles/polygons represented as closed polylines, remains polyline geometry;
-- `EllipseEntity` TRIM/BREAK Segment results become native `EllipticalArcEntity` fragments;
-- `EllipticalArcEntity` remains native elliptical arc fragments;
-- open `BezierSplineEntity` TRIM/BREAK results remain native Bezier spline fragments through De Casteljau splitting;
-- closed Bezier spline editing is intentionally deferred/no-op.
-
-The command-level permanent `PolylineEntity` fallback has been removed for supported ellipse and open-spline TRIM/BREAK operations.
-
----
-
-## Preview UX checkpoint
-
-Preview semantics are now explicit:
-
-- `Removal`: geometry that will be removed, used by TRIM and BREAK Segment, rendered dashed;
-- `Addition`: geometry that will be added, used by EXTEND and OFFSET previews;
-- `Emphasis`: selected boundary/target/first entity overlays.
-
-TRIM uses entity-only snap. TRIM, EXTEND and FILLET keep selected boundaries/first entities visibly highlighted.
-
----
-
-## Modify Tools UX checkpoint
-
-Established UX policy:
-
-- left click provides graphical input or entity selection;
-- right click confirms/advances the current phase when a valid default, value or selection exists;
-- Enter is equivalent to right click for command prompts;
-- Esc cancels the current phase;
-- entity-selection phases use `SnapKind.EntityOnly`;
-- point-input phases use geometric snaps.
-
-Completed Modify UX work:
-
-- Deselect command/button and aliases `DESELECT`, `CLEARSELECTION`, `CS`;
-- Point icon simplified to a small cross;
-- Delete tool deletes existing selection immediately, or multi-picks entities and confirms with Enter/right click;
-- Rotate and Scale can initiate entity selection when no selection is active;
-- TRIM/EXTEND/FILLET selected boundary/first-entity highlights;
-- FILLET entity selection uses EntityOnly snap;
-- POLYLINE can finish with right click when enough vertices exist;
-- Polygon sides, Fillet radius and Mirror delete-source prompts accept right click/Enter defaults;
-- Ellipse axis input uses snap-resolved points;
-- Rect Sides numeric second-side input creates the exact typed side length;
-- Offset workflow accepts typed distance, two picked distance points, stored last distance and right-click/Enter default confirmation.
-- Final Modify Tools UX pass completed for the primary tool set: right-click/Enter messaging, EntityOnly selection phases, geometric snap phases and transient-state cleanup expectations are documented and covered by targeted tests.
-- Break Point, Break Segment, Extend and Align now explicitly expose phase-specific snap modes through `ISnapModeProvider`.
-- Added `ExplodeTool` and `JoinTool` as essential pre-v0.9 modify tools. Explode turns selected straight-segment polylines into line entities; Join turns connected selected line chains into open/closed polylines. Both use EntityOnly selection, Enter/right-click confirmation, command aliases and single-step undo.
-
----
-
-## Offset checkpoint
-
-Offset is stabilized for the v0.9 scope.
-
-Supported targets:
-
-- `LineEntity`;
-- `CircleEntity`;
-- `ArcEntity`;
-- straight-segment open/closed `PolylineEntity`.
-
-Deferred targets:
-
-- `EllipseEntity` and `EllipticalArcEntity`: a true offset is not another exact ellipse;
-- `BezierSplineEntity`: a true offset is not another exact Bezier spline.
-
-The previous spline offset path that silently produced a sampled `PolylineEntity` approximation has been removed. Unsupported advanced curves return a clear deferred-support message and create no geometry.
-
-Offset workflow:
-
-1. specify distance by typed value, two clicks, or right click/Enter with a previous distance;
-2. select target with EntityOnly snap;
-3. choose side graphically;
-4. preview is shown as an Addition highlight;
-5. after creating an offset, the tool returns to target selection and keeps the same distance.
-
----
-
 
 ## Property Panel final cleanup checkpoint
 
-Current state:
+Completed:
 
-- `Layer id` is a combo-box row populated from the current document layer ids.
-- `Dimension style` is a combo-box row populated from the current document dimension styles.
-- Polyline `Closed` is a `Yes`/`No` combo-box row.
-- Selected polylines show a compact `Vertices` section with at most 4 editable rows.
-- Each polyline vertex row uses a single `X, Y` value, for example `10.5, 20`.
-- If a polyline has more than 4 vertices, the panel adds a `More vertices` row with the hidden count.
-- Per-vertex insert/delete action rows were intentionally removed from the compact Property Panel list; they should return later in a dedicated vertex editor UI, not mixed into the lightweight property list.
+- [x] `Layer id` is exposed as a combo box populated from document layer ids.
+- [x] `Dimension style` is exposed as a combo box populated from document dimension styles.
+- [x] Polyline `Closed` is exposed as a `Yes`/`No` combo box.
+- [x] Polyline vertices are shown in a compact `Vertices` section.
+- [x] Polyline vertex rows use a single editable `X, Y` value instead of separate X/Y fields.
+- [x] The polyline vertex list is capped to the first 4 displayed vertices.
+- [x] A `More vertices` row reports hidden vertices to keep the Property Panel responsive.
+- [x] Per-vertex insert/delete rows were removed from the compact Property Panel section to avoid UI weight and confusion.
 
-Implementation notes:
+Deferred / future UI polish:
 
-- `PropertyRowViewModel` already supports combo-box rows through `Options`, `IsComboBox` and `IsTextBox`.
-- `SelectionPropertyPanelBuilder` is the current source of truth for Property Panel rows.
-- Keep the compact vertex list lightweight; avoid creating hundreds of editable rows for dense polylines.
+- [>] Dedicated vertex editor dialog/table for larger polylines.
+- [>] Insert/delete/reorder vertex actions in a dedicated UI instead of the compact Property Panel list.
+- [>] Broader enum/boolean audit for future entity properties.
 
-## Current next work
 
-1. Validate Explode/Join manually in the UI after local build/test.
-2. Execute the focused evening pass using `docs/testing/curve-editing-evening-run-2026-05-21.md` and the sample drawing `docs/testing/samples/curve-editing-regression-v0.9.opencad2d.json`; record reproducible bugs before adding new code.
-3. After the evening pass, triage any Blocker/High curve editing bugs before moving to the export/import compatibility pass for SVG/PDF/DXF, including manual HATCH validation in LibreCAD/QCAD.
-4. Manual UI check of Property Panel combo boxes and compact polyline vertices.
-5. Release preparation for v0.9.
+## Deferred beyond the active v0.9 scope
+
+These are valid future tasks but should not block the current stabilization flow unless they become critical bugs.
+
+- [>] closed Bezier spline splitting/editing policy;
+- [>] Break Point convention for full circles/full ellipses as almost-full open arcs;
+- [>] true associative dimensions;
+- [>] blocks;
+- [>] general hatch/pattern tools beyond the current solid fill support;
+- [>] raster references;
+- [>] advanced NURBS fidelity;
+- [>] autosave/recovery v2;
+- [>] major renderer rewrite;
+- [>] broad spatial-index rewrite unless performance testing proves it necessary;
+- [>] installer/package polish;
+- [>] complete user manual for v1.0.
 
 ---
 
-## Intentional deferred items
+## v1.0 candidate focus
 
-- closed Bezier spline editing;
-- Break Point on complete circles/ellipses until a full-sweep open-arc convention is defined;
-- true offset support for ellipses, elliptical arcs and Bezier splines;
-- rounded/configurable Offset joins and advanced self-intersection cleanup;
-- DXF partial ELLIPSE import mapping directly to `EllipticalArcEntity`, unless chosen for v0.9;
-- broader adoption of `CadIntersectionPoint` in paths where it adds value;
-- spatial indexing/performance pass for large drawings.
+After v0.9 stabilizes, v1.0 should focus on finishing the professional baseline rather than adding many new entity families.
+
+Candidate v1.0 gates:
+
+- [x] Offset workflow and documented offset limitations are stable;
+- [ ] DXF import/export compatibility pass is recorded;
+- [x] Property Panel coverage is coherent for the current primary entity/property set;
+- [ ] command UX is consistent across major draw/modify tools;
+- [ ] user-facing documentation is complete enough for first external users;
+- [ ] release artifact and versioning workflow are repeatable.
+
+
+## Dimension Style System checkpoint
+
+- [x] Document-level current dimension style.
+- [x] Dimension style persistence for prefix/suffix, symbols, rotation mode and offsets.
+- [x] Center-anchored dimension text rendering/export.
+- [x] First Dimension Style Manager UI near Layer/Line/Text Formats.
+- [x] Live graphical preview in the Dimension Style Manager.
+- [x] Property panel dimension style selector for selected dimensions.
+- [x] Text/terminator fit controls are implemented; tolerances and alternate units remain future work.
+## v0.9 curve-editing regression support
+
+- [x] Add granular command status messages for complex curve-editing failures.
+  - TRIM now distinguishes missing intersections from picked-side interval failures.
+  - BREAK POINT now explains endpoint/vertex/tolerance split failures.
+  - BREAK SEGMENT now explains coincident points, off-entity second points and unsupported closed spline cases.
+  - EXTEND now distinguishes no projected boundary intersection from wrong endpoint-side selection.
+
+## 2026-05-21 — Curve-editing preview descriptor follow-up
+
+Break Point now implements `IToolPreviewDescriptorProvider`. Its descriptor keeps the selected target visible as an Emphasis overlay and shows a Hot marker at the projected native break point when a valid preview exists.
+
+Break Segment descriptors now also keep the selected target visible as an Emphasis overlay. They show a Primary marker at the first break point and a Hot marker at the projected second break point when a removable interval preview exists.
+
+This aligns BREAK previews with the existing TRIM/EXTEND rule: selected context geometry remains visible while the operation-specific preview uses semantic highlighting/markers. Next manual regression should include the new `Passata 0.5 — Preview visiva comune` checks in `docs/testing/curve-editing-evening-run-2026-05-21.md`.

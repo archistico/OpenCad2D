@@ -127,6 +127,74 @@ public sealed class BreakBetweenPointsToolTests
     }
 
     [Fact]
+    public void GetPreviewDescriptor_AfterTargetSelection_ShouldHighlightSelectedTarget()
+    {
+        var context = CreateContextWithLine(out LineEntity line);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+        ToolPreviewEntityOverlay overlay = Assert.Single(descriptor.EntityOverlays);
+
+        Assert.Equal(ToolPreviewHighlightKind.Emphasis, overlay.Kind);
+        Assert.Same(line, Assert.Single(overlay.Entities));
+        Assert.Empty(descriptor.Markers);
+    }
+
+    [Fact]
+    public void GetPreviewDescriptor_AfterFirstBreakPoint_ShouldShowFirstBreakPointMarker()
+    {
+        var context = CreateContextWithLine(out LineEntity line);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(3, 0)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        ToolPreviewMarker marker = Assert.Single(descriptor.Markers);
+        Assert.Equal(new Point2D(3, 0), marker.Position);
+        Assert.Equal(ToolPreviewMarkerKind.Primary, marker.Kind);
+
+        ToolPreviewEntityOverlay overlay = Assert.Single(descriptor.EntityOverlays);
+        Assert.Same(line, Assert.Single(overlay.Entities));
+    }
+
+    [Fact]
+    public void GetPreviewDescriptor_AfterSecondPointPreview_ShouldShowBothBreakPointMarkers()
+    {
+        var context = CreateContextWithLine(out _);
+        var tool = new BreakBetweenPointsTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(3, 0)));
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(7, 2)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(2, descriptor.Markers.Count);
+        Assert.Contains(
+            descriptor.Markers,
+            marker => marker.Position == new Point2D(3, 0) && marker.Kind == ToolPreviewMarkerKind.Primary);
+        Assert.Contains(
+            descriptor.Markers,
+            marker => marker.Position == new Point2D(7, 0) && marker.Kind == ToolPreviewMarkerKind.Hot);
+    }
+
+    [Fact]
     public void ThirdPointerPress_ShouldRemoveSegmentBetweenBreakPoints()
     {
         var context = CreateContextWithLine(out LineEntity originalLine);

@@ -767,9 +767,11 @@ Preview geometry for Trim, Break and Extend must be generated from the same nati
 
 - Removed intervals are represented with `ToolPreviewHighlightKind.Removal`.
 - Added extension intervals are represented with `ToolPreviewHighlightKind.Addition`.
+- Selected cutting edges, boundaries or break targets remain visible as `ToolPreviewHighlightKind.Emphasis` overlays while the command waits for the next point/entity.
+- Break-point commands show point markers so the user can see the projected native point that will be used by the operation.
 - The full replacement entity may be previewed normally, but the operation-specific interval must be highlighted separately.
 
-This prevents misleading previews where a sampled or visually approximate interval differs from the entity that will be committed to the document.
+This prevents misleading previews where a sampled or visually approximate interval differs from the entity that will be committed to the document. It also prevents the selected target/boundary from visually disappearing while hovering dense geometry.
 
 
 ## Command-line UX for native curve editing
@@ -796,3 +798,22 @@ The current command layer now distinguishes the most common failure categories f
 - `EXTEND`: projected target does not intersect the boundary versus the boundary being reachable only from the opposite endpoint side.
 
 These messages are produced at command level by `EditingStatusMessageBuilder`, leaving the low-level geometry services focused on returning edited entities or an empty result. This keeps the regression checklist easier to execute because a failed operation now indicates whether the problem is user input, unsupported topology or a real geometric bug.
+
+## Command status messages
+
+Curve-editing commands should return explicit status messages when an operation cannot be completed. This is part of the v0.9 regression criteria: a no-op is acceptable only when the limitation is communicated clearly and the document is left unchanged.
+
+Current message categories include:
+
+- TRIM with no intersection between target and cutting edge;
+- TRIM where intersections exist but the picked side cannot produce a removable interval;
+- BREAK AT POINT where the pick is outside the selected entity;
+- BREAK AT POINT where the pick is too close to an endpoint, vertex, or unstable tolerance area;
+- BREAK SEGMENT with coincident or too-close break points;
+- BREAK SEGMENT where the second point is outside the selected entity;
+- unsupported closed-spline split/removal workflows;
+- EXTEND where the projected target does not intersect the boundary;
+- EXTEND where the boundary is reachable only from the opposite endpoint side.
+
+Manual testing reference: `docs/testing/curve-editing-regression-v0.9.md`.
+

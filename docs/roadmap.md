@@ -133,7 +133,7 @@ Current limits:
 
 ### 4. Curve editing regression checklist
 
-Status: [~] manual validation in progress.
+Status: [~] manual validation in progress. Status-message regression checks have been added to the evening run sheet.
 
 Reference: `docs/testing/curve-editing-regression-v0.9.md`. The focused evening run sheet is `docs/testing/curve-editing-evening-run-2026-05-21.md`; the prepared sample drawing is `docs/testing/samples/curve-editing-regression-v0.9.opencad2d.json`.
 
@@ -144,7 +144,8 @@ Validate:
 - [ ] EXTEND on supported targets/boundaries;
 - [ ] shared endpoints/no micro-gaps after reciprocal edits;
 - [ ] persistence/export of edited elliptical arcs and spline fragments;
-- [ ] command messages and previews.
+- [x] granular command failure messages for TRIM / BREAK / EXTEND;
+- [~] preview behavior and visual consistency during manual regression; Break target overlays and break-point markers are now covered by tests.
 
 ### 5. Export/import compatibility pass
 

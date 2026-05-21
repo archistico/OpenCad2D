@@ -183,7 +183,47 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         return new ToolPreviewDescriptor(
             entities: _previewSegments,
             highlightedEntities: _removedPreviewSegments,
-            highlightedEntityKind: ToolPreviewHighlightKind.Removal);
+            highlightedEntityKind: ToolPreviewHighlightKind.Removal,
+            markers: GetBreakPointMarkers(),
+            entityOverlays: GetSelectedTargetOverlays());
+    }
+
+    private IReadOnlyList<ToolPreviewMarker> GetBreakPointMarkers()
+    {
+        var markers = new List<ToolPreviewMarker>();
+
+        if (_firstBreakPoint is not null)
+        {
+            markers.Add(new ToolPreviewMarker(
+                _firstBreakPoint.Value,
+                ToolPreviewMarkerKind.Primary,
+                ToolPreviewMarkerShape.Circle));
+        }
+
+        if (_currentSecondBreakPoint is not null && _removedPreviewSegments.Count > 0)
+        {
+            markers.Add(new ToolPreviewMarker(
+                _currentSecondBreakPoint.Value,
+                ToolPreviewMarkerKind.Hot,
+                ToolPreviewMarkerShape.Circle));
+        }
+
+        return markers;
+    }
+
+    private IReadOnlyList<ToolPreviewEntityOverlay> GetSelectedTargetOverlays()
+    {
+        if (_targetEntity is null)
+        {
+            return Array.Empty<ToolPreviewEntityOverlay>();
+        }
+
+        return new[]
+        {
+            new ToolPreviewEntityOverlay(
+                new[] { _targetEntity },
+                ToolPreviewHighlightKind.Emphasis)
+        };
     }
 
     private ToolResult AcceptTargetEntity(

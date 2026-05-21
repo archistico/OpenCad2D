@@ -77,6 +77,49 @@ public sealed class BreakAtPointToolTests
     }
 
     [Fact]
+    public void GetPreviewDescriptor_AfterTargetSelection_ShouldHighlightSelectedTarget()
+    {
+        var context = CreateContextWithLine(out LineEntity line);
+        var tool = new BreakAtPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+        ToolPreviewEntityOverlay overlay = Assert.Single(descriptor.EntityOverlays);
+
+        Assert.Equal(ToolPreviewHighlightKind.Emphasis, overlay.Kind);
+        Assert.Same(line, Assert.Single(overlay.Entities));
+        Assert.Empty(descriptor.Markers);
+    }
+
+    [Fact]
+    public void GetPreviewDescriptor_AfterPointerMove_ShouldShowBreakPointMarker()
+    {
+        var context = CreateContextWithLine(out LineEntity line);
+        var tool = new BreakAtPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(4, 2)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(2, descriptor.Entities.Count);
+        ToolPreviewMarker marker = Assert.Single(descriptor.Markers);
+        Assert.Equal(new Point2D(4, 0), marker.Position);
+        Assert.Equal(ToolPreviewMarkerKind.Hot, marker.Kind);
+        Assert.Equal(ToolPreviewMarkerShape.Circle, marker.Shape);
+
+        ToolPreviewEntityOverlay overlay = Assert.Single(descriptor.EntityOverlays);
+        Assert.Same(line, Assert.Single(overlay.Entities));
+    }
+
+    [Fact]
     public void SecondPointerPress_InsideLine_ShouldBreakLineIntoTwoLines()
     {
         var context = CreateContextWithLine(out LineEntity originalLine);

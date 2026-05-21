@@ -89,6 +89,29 @@ Gravità: Blocker / High / Medium / Low
 Note/screenshot:
 ```
 
+
+## Status messaging checks for complex geometry
+
+The curve-editing tools must never fail silently. During regression testing, verify both the geometry result and the command/status feedback shown to the user.
+
+Expected message categories:
+
+| Area | Scenario | Expected feedback |
+|---|---|---|
+| TRIM | Target does not intersect the selected cutting edge | Message states that no trim intersection was found and suggests selecting crossing geometry. |
+| TRIM | Intersections exist, but the picked side cannot be removed | Message states that the picked side does not produce a removable interval and suggests picking the valid side. |
+| TRIM | Closed spline target | Message states that closed splines cannot be trimmed yet and suggests using an open spline or conversion/explode workflow. |
+| BREAK AT POINT | Pick is not on the selected entity | Message states that the break point is not on the entity and suggests picking directly on the entity or enabling snaps. |
+| BREAK AT POINT | Pick is too close to endpoint/vertex | Message states that the point is too close to an endpoint, vertex, or tolerance-sensitive area. |
+| BREAK AT POINT | Closed spline target | Message states that Break Point does not support closed splines yet. |
+| BREAK SEGMENT | Two break points are coincident or too close | Message states that two distinct points are required. |
+| BREAK SEGMENT | Second point is not on the selected entity | Message states that the second break point is not on the entity. |
+| BREAK SEGMENT | Closed spline segment removal | Message states that closed spline segment removal is not supported yet. |
+| EXTEND | Projected target does not intersect the boundary | Message states that no extension is possible because the projected entity does not intersect the boundary. |
+| EXTEND | Boundary is reachable only from the opposite side | Message states that the boundary intersects the projected entity, but not beyond the picked endpoint side. |
+
+When a result is `Deferred`, it is acceptable only if the message explains the limitation and no geometry is modified.
+
 ## Come usare la checklist
 
 Per ogni prova, segnare:
@@ -403,3 +426,11 @@ Questi controlli vanno fatti zoomando molto e usando snap/quote quando possibile
 | Build / commit |  |
 | Esito complessivo |  |
 | Pronto per fase successiva | Sì / No |
+
+
+## Preview/status invariants
+
+- Selected TRIM cutting edges, EXTEND boundaries and BREAK targets stay visible as emphasis overlays.
+- BREAK point previews show projected point markers.
+- Removal previews use removal styling; addition previews use addition styling.
+- No-op results must show a clear status message and leave the document unchanged.
