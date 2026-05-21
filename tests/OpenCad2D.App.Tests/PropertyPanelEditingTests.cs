@@ -369,6 +369,131 @@ public sealed class PropertyPanelEditingTests
     }
 
 
+
+    [Fact]
+    public void PropertyPanel_ForCircle_ShouldExposeFillComboBox()
+    {
+        var viewModel = new MainWindowViewModel();
+        var circle = new CircleEntity(
+            new Point2D(0, 0),
+            10,
+            isFilled: true);
+        viewModel.Workspace.Document.AddEntity(circle);
+
+        SelectEntity(viewModel, circle);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Fill");
+
+        Assert.True(row.IsEditable);
+        Assert.True(row.IsComboBox);
+        Assert.False(row.IsTextBox);
+        Assert.Equal("Solid", row.Value);
+        Assert.Equal(new[] { "None", "Solid" }, row.Options);
+    }
+
+    [Fact]
+    public void PropertyPanel_ForClosedPolyline_ShouldExposeFillComboBox()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5)
+            },
+            isClosed: true,
+            isFilled: true);
+        viewModel.Workspace.Document.AddEntity(polyline);
+
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Fill");
+
+        Assert.True(row.IsEditable);
+        Assert.True(row.IsComboBox);
+        Assert.False(row.IsTextBox);
+        Assert.Equal("Solid", row.Value);
+        Assert.Equal(new[] { "None", "Solid" }, row.Options);
+    }
+
+    [Fact]
+    public void PropertyPanel_ForOpenPolyline_ShouldNotExposeFillComboBox()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5)
+            },
+            isClosed: false,
+            isFilled: true);
+        viewModel.Workspace.Document.AddEntity(polyline);
+
+        SelectEntity(viewModel, polyline);
+
+        PropertySectionViewModel geometry = FindSection(viewModel, "Geometry");
+
+        Assert.DoesNotContain(geometry.Rows, row => row.Name == "Fill");
+    }
+
+    [Fact]
+    public void ApplyCommand_ForCircleFill_ShouldUpdateFillAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var circle = new CircleEntity(
+            new Point2D(0, 0),
+            10);
+        viewModel.Workspace.Document.AddEntity(circle);
+        SelectEntity(viewModel, circle);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Fill");
+        row.EditableValue = "Solid";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<CircleEntity>(viewModel.Workspace.Document.Entities.GetRequired(circle.Id));
+        Assert.True(updated.IsFilled);
+        Assert.Equal("Circle fill updated.", viewModel.LastMessage);
+        Assert.True(viewModel.Workspace.CommandHistory.CanUndo);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<CircleEntity>(viewModel.Workspace.Document.Entities.GetRequired(circle.Id));
+        Assert.False(restored.IsFilled);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForClosedPolylineFill_ShouldUpdateFillAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5)
+            },
+            isClosed: true);
+        viewModel.Workspace.Document.AddEntity(polyline);
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Fill");
+        row.EditableValue = "Solid";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.True(updated.IsFilled);
+        Assert.Equal("Polyline fill updated.", viewModel.LastMessage);
+        Assert.True(viewModel.Workspace.CommandHistory.CanUndo);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.False(restored.IsFilled);
+    }
+
     [Fact]
     public void PropertyPanel_ForDimensionStyle_ShouldUseComboBoxOptions()
     {

@@ -16,6 +16,7 @@ public sealed class SelectionPropertyPanelBuilder
 {
     private const int MaxPolylineVerticesInPropertyPanel = 4;
     private static readonly string[] YesNoOptions = ["Yes", "No"];
+    private static readonly string[] FillOptions = ["None", "Solid"];
     public PropertyPanelViewModel Build(
         CadWorkspace workspace,
         Action<string>? setMessage = null,
@@ -411,6 +412,7 @@ public sealed class SelectionPropertyPanelBuilder
                 EditableRow("Center X", PropertyValueFormatter.FormatCoordinate(circle.Center.X), value => ReplaceCircleCoordinate(workspace, circle.Id, value, updateX: true, setMessage, refresh)),
                 EditableRow("Center Y", PropertyValueFormatter.FormatCoordinate(circle.Center.Y), value => ReplaceCircleCoordinate(workspace, circle.Id, value, updateX: false, setMessage, refresh)),
                 EditableRow("Radius", PropertyValueFormatter.FormatCoordinate(circle.Radius), value => ReplaceCircleRadius(workspace, circle.Id, value, setMessage, refresh)),
+                ComboRow("Fill", FormatFill(circle.IsFilled), FillOptions, value => ReplaceCircleFill(workspace, circle.Id, value, setMessage, refresh)),
                 Row("Diameter", PropertyValueFormatter.FormatLength(diameter)),
                 Row("Area", PropertyValueFormatter.FormatArea(area)),
                 Row("Circumference", PropertyValueFormatter.FormatLength(circumference))
@@ -462,9 +464,19 @@ public sealed class SelectionPropertyPanelBuilder
                 FormatYesNo(polyline.IsClosed),
                 isEditable: true,
                 value => ReplacePolylineClosed(workspace, polyline.Id, value, setMessage, refresh),
-                YesNoOptions),
-            Row("Length", PropertyValueFormatter.FormatLength(GetPolylineLength(polyline)))
+                YesNoOptions)
         };
+
+        if (polyline.IsClosed)
+        {
+            rows.Add(ComboRow(
+                "Fill",
+                FormatFill(polyline.IsFilled),
+                FillOptions,
+                value => ReplacePolylineFill(workspace, polyline.Id, value, setMessage, refresh)));
+        }
+
+        rows.Add(Row("Length", PropertyValueFormatter.FormatLength(GetPolylineLength(polyline))));
 
         if (polyline.IsClosed && polyline.Vertices.Count >= 3)
         {
@@ -694,7 +706,7 @@ public sealed class SelectionPropertyPanelBuilder
 
         ReplaceEntity(
             workspace,
-            new CircleEntity(center, circle.Radius, circle.Id, circle.LayerId, circle.Style, circle.IsVisible, circle.IsLocked, circle.DrawOrder),
+            new CircleEntity(center, circle.Radius, circle.Id, circle.LayerId, circle.Style, circle.IsVisible, circle.IsLocked, circle.DrawOrder, circle.IsFilled),
             "Circle updated.",
             setMessage,
             refresh);
@@ -716,8 +728,24 @@ public sealed class SelectionPropertyPanelBuilder
 
         ReplaceEntity(
             workspace,
-            new CircleEntity(circle.Center, radius, circle.Id, circle.LayerId, circle.Style, circle.IsVisible, circle.IsLocked, circle.DrawOrder),
+            new CircleEntity(circle.Center, radius, circle.Id, circle.LayerId, circle.Style, circle.IsVisible, circle.IsLocked, circle.DrawOrder, circle.IsFilled),
             "Circle updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceCircleFill(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<CircleEntity>(workspace, entityId, setMessage, out CircleEntity circle) ||
+            !TryParseFill(value, setMessage, out bool isFilled))
+        {
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            circle.WithFill(isFilled),
+            "Circle fill updated.",
             setMessage,
             refresh);
     }
@@ -959,7 +987,7 @@ public sealed class SelectionPropertyPanelBuilder
 
         ReplaceEntity(
             workspace,
-            new PolylineEntity(vertices, polyline.IsClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder),
+            new PolylineEntity(vertices, polyline.IsClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder, polyline.IsFilled),
             "Polyline vertex updated.",
             setMessage,
             refresh);
@@ -981,8 +1009,30 @@ public sealed class SelectionPropertyPanelBuilder
 
         ReplaceEntity(
             workspace,
-            new PolylineEntity(polyline.Vertices, isClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder),
+            new PolylineEntity(polyline.Vertices, isClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder, isClosed && polyline.IsFilled),
             "Polyline updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplacePolylineFill(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<PolylineEntity>(workspace, entityId, setMessage, out PolylineEntity polyline) ||
+            !TryParseFill(value, setMessage, out bool isFilled))
+        {
+            return;
+        }
+
+        if (!polyline.IsClosed)
+        {
+            setMessage?.Invoke("Only closed polylines can be filled.");
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            polyline.WithFill(isFilled),
+            "Polyline fill updated.",
             setMessage,
             refresh);
     }
@@ -1202,6 +1252,32 @@ public sealed class SelectionPropertyPanelBuilder
     private static string FormatYesNo(bool value)
     {
         return value ? "Yes" : "No";
+    }
+
+    private static string FormatFill(bool isFilled)
+    {
+        return isFilled ? "Solid" : "None";
+    }
+
+    private static bool TryParseFill(string value, Action<string>? setMessage, out bool isFilled)
+    {
+        string normalized = value.Trim().ToLowerInvariant();
+
+        if (normalized is "solid" or "yes" or "true" or "1")
+        {
+            isFilled = true;
+            return true;
+        }
+
+        if (normalized is "none" or "no" or "false" or "0")
+        {
+            isFilled = false;
+            return true;
+        }
+
+        isFilled = false;
+        setMessage?.Invoke("Invalid fill value. Use None or Solid.");
+        return false;
     }
 
     private static bool TryParseBoolean(string value, Action<string>? setMessage, out bool result)
