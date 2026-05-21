@@ -92,6 +92,7 @@ public sealed class SvgExporter : ISvgExporter
                 string? svgElement = ExportEntity(
                     document,
                     entity,
+                    layer,
                     lineFormat,
                     contentBounds,
                     width,
@@ -184,6 +185,7 @@ public sealed class SvgExporter : ISvgExporter
                 string? svgElement = ExportEntity(
                     document,
                     entity,
+                    layer,
                     lineFormat,
                     contentBounds,
                     width,
@@ -292,6 +294,7 @@ public sealed class SvgExporter : ISvgExporter
     private static string? ExportEntity(
         CadDocument document,
         CadEntity entity,
+        Layer layer,
         LineFormat lineFormat,
         BoundingBox2D? contentBounds,
         double width,
@@ -375,6 +378,7 @@ public sealed class SvgExporter : ISvgExporter
 
             CircleEntity circle => ExportCircle(
                 circle,
+                layer,
                 lineFormat,
                 contentBounds.Value,
                 height,
@@ -396,6 +400,7 @@ public sealed class SvgExporter : ISvgExporter
 
             PolylineEntity polyline => ExportPolyline(
                 polyline,
+                layer,
                 lineFormat,
                 contentBounds.Value,
                 height,
@@ -616,6 +621,7 @@ public sealed class SvgExporter : ISvgExporter
 
     private static string ExportCircle(
         CircleEntity circle,
+        Layer layer,
         LineFormat lineFormat,
         BoundingBox2D bounds,
         double svgHeight,
@@ -627,7 +633,11 @@ public sealed class SvgExporter : ISvgExporter
             svgHeight,
             margin);
 
-        return $"  <circle cx=\"{Format(center.X)}\" cy=\"{Format(center.Y)}\" r=\"{Format(circle.Radius)}\" {StrokeAttributes(lineFormat)} />";
+        CadColor? fillColor = circle.IsFilled
+            ? layer.FillColor
+            : null;
+
+        return $"  <circle cx=\"{Format(center.X)}\" cy=\"{Format(center.Y)}\" r=\"{Format(circle.Radius)}\" {StrokeAttributes(lineFormat, fillColor)} />";
     }
 
     private static string ExportEllipse(
@@ -711,6 +721,7 @@ public sealed class SvgExporter : ISvgExporter
 
     private static string ExportPolyline(
         PolylineEntity polyline,
+        Layer layer,
         LineFormat lineFormat,
         BoundingBox2D bounds,
         double svgHeight,
@@ -733,7 +744,11 @@ public sealed class SvgExporter : ISvgExporter
             ? "polygon"
             : "polyline";
 
-        return $"  <{tagName} points=\"{points}\" {StrokeAttributes(lineFormat)} />";
+        CadColor? fillColor = polyline.IsClosed && polyline.IsFilled
+            ? layer.FillColor
+            : null;
+
+        return $"  <{tagName} points=\"{points}\" {StrokeAttributes(lineFormat, fillColor)} />";
     }
 
     private static string ExportArc(
@@ -882,13 +897,16 @@ public sealed class SvgExporter : ISvgExporter
         return LineFormatCollection.Default.GetById(LineFormatCollection.Default.All[0].Id);
     }
 
-    private static string StrokeAttributes(LineFormat lineFormat)
+    private static string StrokeAttributes(
+        LineFormat lineFormat,
+        CadColor? fillColor = null)
     {
         var attributes = new StringBuilder();
 
         attributes.Append($"stroke=\"{ToHex(lineFormat.Color)}\" ");
         attributes.Append($"stroke-width=\"{Format(lineFormat.LineWeight.Millimeters)}\" ");
-        attributes.Append("fill=\"none\" vector-effect=\"non-scaling-stroke\"");
+        attributes.Append($"fill=\"{(fillColor.HasValue ? ToHex(fillColor.Value) : "none")}\" ");
+        attributes.Append("vector-effect=\"non-scaling-stroke\"");
 
         IReadOnlyList<double> dashPattern = lineFormat.DashPattern;
 

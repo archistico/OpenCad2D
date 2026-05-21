@@ -61,6 +61,61 @@ public sealed class SvgExporterTests
         Assert.Contains("r=\"25\"", result.Content);
     }
 
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledCircle_ShouldWriteLayerFillColor()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("FilledCircleLayer");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "FilledCircleLayer",
+            LineFormatId.Continuous,
+            fillColor: CadColor.FromRgb(12, 34, 56)));
+
+        document.AddEntity(new CircleEntity(
+            new Point2D(50, 50),
+            25,
+            layerId: layerId,
+            isFilled: true));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+        string circleElement = GetSingleSvgElement(result.Content, "circle");
+
+        Assert.Contains("fill=\"#0C2238\"", circleElement);
+        Assert.Contains("stroke=\"#FFFFFF\"", circleElement);
+    }
+
+    [Fact]
+    public void Export_WhenDocumentContainsNotFilledCircle_ShouldWriteFillNone()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("NotFilledCircleLayer");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "NotFilledCircleLayer",
+            LineFormatId.Continuous,
+            fillColor: CadColor.FromRgb(12, 34, 56)));
+
+        document.AddEntity(new CircleEntity(
+            new Point2D(50, 50),
+            25,
+            layerId: layerId,
+            isFilled: false));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+        string circleElement = GetSingleSvgElement(result.Content, "circle");
+
+        Assert.Contains("fill=\"none\"", circleElement);
+        Assert.DoesNotContain("fill=\"#0C2238\"", circleElement);
+    }
+
     [Fact]
     public void Export_WhenDocumentContainsEllipse_ShouldWritePolygonApproximation()
     {
@@ -142,6 +197,70 @@ public sealed class SvgExporterTests
         Assert.Equal(1, result.ExportedEntityCount);
         Assert.Contains("<polygon ", result.Content);
         Assert.DoesNotContain("<polyline ", result.Content);
+    }
+
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledClosedPolyline_ShouldWriteLayerFillColor()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("FilledPolylineLayer");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "FilledPolylineLayer",
+            LineFormatId.Continuous,
+            fillColor: CadColor.FromRgb(90, 80, 70)));
+
+        document.AddEntity(new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            },
+            isClosed: true,
+            layerId: layerId,
+            isFilled: true));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+        string polygonElement = GetSingleSvgElement(result.Content, "polygon");
+
+        Assert.Contains("fill=\"#5A5046\"", polygonElement);
+    }
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledOpenPolyline_ShouldWriteFillNone()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("OpenPolylineLayer");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "OpenPolylineLayer",
+            LineFormatId.Continuous,
+            fillColor: CadColor.FromRgb(90, 80, 70)));
+
+        document.AddEntity(new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            },
+            isClosed: false,
+            layerId: layerId,
+            isFilled: true));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+        string polylineElement = GetSingleSvgElement(result.Content, "polyline");
+
+        Assert.Contains("fill=\"none\"", polylineElement);
+        Assert.DoesNotContain("fill=\"#5A5046\"", polylineElement);
     }
 
     [Fact]
@@ -547,6 +666,16 @@ public sealed class SvgExporterTests
         Assert.Contains("<g id=\"layer-Walls\" data-layer-name=\"Walls\">", result.Content);
         Assert.Contains("<g id=\"layer-Furniture\" data-layer-name=\"Furniture\">", result.Content);
         Assert.Contains("</g>", result.Content);
+    }
+
+    private static string GetSingleSvgElement(
+        string content,
+        string elementName)
+    {
+        return content
+            .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Single(line => line.Contains($"<{elementName} "))
+            .Trim();
     }
 
 }
