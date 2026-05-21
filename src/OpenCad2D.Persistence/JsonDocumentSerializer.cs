@@ -462,6 +462,7 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             Id = layer.Id.Value,
             Name = layer.Name,
             LineFormatId = layer.LineFormatId.Value,
+            FillColor = ToHex(layer.FillColor),
             IsVisible = layer.IsVisible,
             IsLocked = layer.IsLocked
         };
@@ -597,7 +598,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 LayerId = circle.LayerId.Value,
                 CenterX = circle.Center.X,
                 CenterY = circle.Center.Y,
-                Radius = circle.Radius
+                Radius = circle.Radius,
+                IsFilled = circle.IsFilled
             },
 
             EllipseEntity ellipse => new EllipseEntityDto
@@ -642,6 +644,7 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 Id = polyline.Id.ToString(),
                 LayerId = polyline.LayerId.Value,
                 IsClosed = polyline.IsClosed,
+                IsFilled = polyline.IsFilled,
                 Vertices = polyline.Vertices
                     .Select(vertex => new PointDto
                     {
@@ -924,12 +927,19 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             lineFormatId = LineFormatId.Continuous;
         }
 
+        CadColor defaultFillColor = lineFormats.TryGetById(lineFormatId, out LineFormat? lineFormat) && lineFormat is not null
+            ? lineFormat.Color
+            : CadColor.FromRgb(255, 255, 255);
+
+        CadColor fillColor = FromHexOrDefault(dto.FillColor, defaultFillColor);
+
         return new Layer(
             new LayerId(dto.Id),
             string.IsNullOrWhiteSpace(dto.Name) ? dto.Id : dto.Name,
             lineFormatId,
             dto.IsVisible,
-            dto.IsLocked);
+            dto.IsLocked,
+            fillColor);
     }
 
     private static CadEntity? FromDto(EntityDto dto)
@@ -1047,7 +1057,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 new Point2D(circle.CenterX, circle.CenterY),
                 circle.Radius,
                 id,
-                layerId),
+                layerId,
+                isFilled: circle.IsFilled),
 
             EllipseEntityDto ellipse => ellipse.MinorRadius <= 0 || new Vector2D(ellipse.MajorAxisX, ellipse.MajorAxisY).Length <= 0
                 ? null
@@ -1083,7 +1094,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 polyline.Vertices.Select(vertex => new Point2D(vertex.X, vertex.Y)),
                 polyline.IsClosed,
                 id,
-                layerId),
+                layerId,
+                isFilled: polyline.IsFilled),
 
             BezierSplineEntityDto spline => spline.ControlPoints.Count < 2
                 ? null
@@ -1131,6 +1143,41 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
     private static string ToHex(CadColor color)
     {
         return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+
+    private static CadColor FromHexOrDefault(
+        string? value,
+        CadColor defaultColor)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return defaultColor;
+        }
+
+        string hex = value.Trim();
+
+        if (hex.StartsWith('#'))
+        {
+            hex = hex[1..];
+        }
+
+        if (hex.Length != 6)
+        {
+            return defaultColor;
+        }
+
+        try
+        {
+            byte r = Convert.ToByte(hex[0..2], 16);
+            byte g = Convert.ToByte(hex[2..4], 16);
+            byte b = Convert.ToByte(hex[4..6], 16);
+
+            return CadColor.FromRgb(r, g, b);
+        }
+        catch (FormatException)
+        {
+            return defaultColor;
+        }
     }
 
     private static CadColor FromHex(string? value)

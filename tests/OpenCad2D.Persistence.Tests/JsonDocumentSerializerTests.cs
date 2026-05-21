@@ -741,3 +741,275 @@ public sealed class JsonDocumentSerializerLineFormatDashPatternTests
         Assert.Equal(new[] { 8.0, 4.0 }, format.DashPattern);
     }
 }
+
+public sealed class JsonDocumentSerializerFillTests
+{
+    [Fact]
+    public void Serialize_ShouldPersistLayerFillColor()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var document = new CadDocument();
+        LayerId layerId = new("FillLayer");
+
+        document.Layers.Add(
+            new Layer(
+                layerId,
+                "Fill layer",
+                LineFormatId.Continuous,
+                fillColor: CadColor.FromRgb(12, 34, 56)));
+
+        DocumentDto dto = serializer.Serialize(
+            document,
+            layerId.Value,
+            new ViewportStateDto());
+
+        LayerDto layerDto = Assert.Single(
+            dto.Layers,
+            layer => layer.Id == layerId.Value);
+
+        Assert.Equal("#0C2238", layerDto.FillColor);
+    }
+
+    [Fact]
+    public void Deserialize_ShouldRestoreLayerFillColor()
+    {
+        var serializer = new JsonDocumentSerializer();
+        LayerId layerId = new("FillLayer");
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = layerId.Value
+            },
+            Layers =
+            {
+                new LayerDto
+                {
+                    Id = layerId.Value,
+                    Name = "Fill layer",
+                    LineFormatId = LineFormatId.Continuous.Value,
+                    FillColor = "#0C2238"
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        Layer layer = document.Layers.GetRequired(layerId);
+
+        Assert.Equal(CadColor.FromRgb(12, 34, 56), layer.FillColor);
+    }
+
+    [Fact]
+    public void Deserialize_LayerWithoutFillColor_ShouldDefaultToLineFormatColor()
+    {
+        var serializer = new JsonDocumentSerializer();
+        LayerId layerId = new("AxisLayer");
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = layerId.Value
+            },
+            Layers =
+            {
+                new LayerDto
+                {
+                    Id = layerId.Value,
+                    Name = "Axis layer",
+                    LineFormatId = LineFormatId.Axis.Value
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        Layer layer = document.Layers.GetRequired(layerId);
+
+        Assert.Equal(CadColor.FromRgb(255, 0, 0), layer.FillColor);
+    }
+
+    [Fact]
+    public void Serialize_ShouldPersistFilledCircle()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var document = new CadDocument();
+        var circle = new CircleEntity(
+            new Point2D(10, 20),
+            30,
+            isFilled: true);
+
+        document.AddEntity(circle);
+
+        DocumentDto dto = serializer.Serialize(
+            document,
+            LayerId.Default.Value,
+            new ViewportStateDto());
+
+        CircleEntityDto circleDto = Assert.IsType<CircleEntityDto>(Assert.Single(dto.Entities));
+
+        Assert.True(circleDto.IsFilled);
+    }
+
+    [Fact]
+    public void Deserialize_ShouldRestoreFilledCircle()
+    {
+        var serializer = new JsonDocumentSerializer();
+        EntityId entityId = EntityId.New();
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = LayerId.Default.Value
+            },
+            Entities =
+            {
+                new CircleEntityDto
+                {
+                    Id = entityId.ToString(),
+                    LayerId = LayerId.Default.Value,
+                    CenterX = 10,
+                    CenterY = 20,
+                    Radius = 30,
+                    IsFilled = true
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        CircleEntity circle = Assert.IsType<CircleEntity>(Assert.Single(document.Entities.All));
+
+        Assert.True(circle.IsFilled);
+    }
+
+    [Fact]
+    public void Serialize_ShouldPersistFilledPolyline()
+    {
+        var serializer = new JsonDocumentSerializer();
+        var document = new CadDocument();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10),
+                new Point2D(0, 10)
+            },
+            isClosed: true,
+            isFilled: true);
+
+        document.AddEntity(polyline);
+
+        DocumentDto dto = serializer.Serialize(
+            document,
+            LayerId.Default.Value,
+            new ViewportStateDto());
+
+        PolylineEntityDto polylineDto = Assert.IsType<PolylineEntityDto>(Assert.Single(dto.Entities));
+
+        Assert.True(polylineDto.IsFilled);
+    }
+
+    [Fact]
+    public void Deserialize_ShouldRestoreFilledPolyline()
+    {
+        var serializer = new JsonDocumentSerializer();
+        EntityId entityId = EntityId.New();
+
+        var dto = new DocumentDto
+        {
+            Version = JsonDocumentSerializer.CurrentVersion,
+            Settings = new DocumentSettingsDto
+            {
+                CurrentLayerId = LayerId.Default.Value
+            },
+            Entities =
+            {
+                new PolylineEntityDto
+                {
+                    Id = entityId.ToString(),
+                    LayerId = LayerId.Default.Value,
+                    IsClosed = true,
+                    IsFilled = true,
+                    Vertices =
+                    {
+                        new PointDto { X = 0, Y = 0 },
+                        new PointDto { X = 10, Y = 0 },
+                        new PointDto { X = 10, Y = 10 },
+                        new PointDto { X = 0, Y = 10 }
+                    }
+                }
+            }
+        };
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All));
+
+        Assert.True(polyline.IsFilled);
+    }
+
+    [Fact]
+    public void Deserialize_EntitiesWithoutIsFilled_ShouldDefaultToFalse()
+    {
+        const string json = """
+        {
+          "version": 1,
+          "settings": {
+            "currentLayerId": "0"
+          },
+          "entities": [
+            {
+              "type": "Circle",
+              "id": "11111111-1111-1111-1111-111111111111",
+              "layerId": "0",
+              "centerX": 0,
+              "centerY": 0,
+              "radius": 5
+            },
+            {
+              "type": "Polyline",
+              "id": "22222222-2222-2222-2222-222222222222",
+              "layerId": "0",
+              "isClosed": true,
+              "vertices": [
+                { "x": 0, "y": 0 },
+                { "x": 10, "y": 0 },
+                { "x": 10, "y": 10 }
+              ]
+            }
+          ]
+        }
+        """;
+
+        DocumentDto dto = JsonDocumentSerializer.FromJson(json);
+        var serializer = new JsonDocumentSerializer();
+
+        CadDocument document = serializer.Deserialize(
+            dto,
+            out _,
+            out _);
+
+        Assert.All(document.Entities.All.OfType<IFillableEntity>(), entity =>
+            Assert.False(entity.IsFilled));
+    }
+}

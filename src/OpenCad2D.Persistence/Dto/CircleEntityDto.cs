@@ -15,4 +15,6 @@ public sealed class CircleEntityDto : EntityDto
     public double CenterY { get; set; }
 
     public double Radius { get; set; }
+
+    public bool IsFilled { get; set; }
 }

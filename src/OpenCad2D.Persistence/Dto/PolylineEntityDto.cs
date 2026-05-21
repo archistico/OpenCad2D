@@ -12,5 +12,7 @@ public sealed class PolylineEntityDto : EntityDto
 
     public bool IsClosed { get; set; }
 
+    public bool IsFilled { get; set; }
+
     public List<PointDto> Vertices { get; set; } = new();
 }

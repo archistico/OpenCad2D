@@ -26,6 +26,12 @@ public sealed class LayerDto
     /// </summary>
     public double? LineWeight { get; set; }
 
+    /// <summary>
+    /// Solid fill color used by fillable entities on this layer.
+    /// Missing values are resolved from the layer line format color for backward compatibility.
+    /// </summary>
+    public string? FillColor { get; set; }
+
     public bool IsVisible { get; set; } = true;
 
     public bool IsLocked { get; set; }
