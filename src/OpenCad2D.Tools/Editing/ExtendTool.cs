@@ -18,6 +18,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
     private EntityId? _boundaryEntityId;
     private CadEntity? _boundaryEntity;
     private EntityId? _previewTargetEntityId;
+    private CadEntity? _previewTargetEntity;
+    private Point2D? _previewPickPoint;
     private CadEntity? _previewEntity;
     private IReadOnlyList<CadEntity> _highlightPreviewEntities = Array.Empty<CadEntity>();
 
@@ -155,22 +157,45 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
             entities: GetPreviewEntities(),
             highlightedEntities: GetHighlightedPreviewEntities(),
             highlightedEntityKind: ToolPreviewHighlightKind.Addition,
-            entityOverlays: GetSelectedBoundaryOverlays());
+            markers: GetPreviewMarkers(),
+            entityOverlays: GetPreviewEntityOverlays());
     }
 
-    private IReadOnlyList<ToolPreviewEntityOverlay> GetSelectedBoundaryOverlays()
+    private IReadOnlyList<ToolPreviewMarker> GetPreviewMarkers()
     {
-        if (_boundaryEntity is null)
+        if (_previewPickPoint is null || _highlightPreviewEntities.Count == 0)
         {
-            return Array.Empty<ToolPreviewEntityOverlay>();
+            return Array.Empty<ToolPreviewMarker>();
         }
 
         return new[]
         {
-            new ToolPreviewEntityOverlay(
-                new[] { _boundaryEntity },
-                ToolPreviewHighlightKind.Emphasis)
+            new ToolPreviewMarker(
+                _previewPickPoint.Value,
+                ToolPreviewMarkerKind.Hot,
+                ToolPreviewMarkerShape.Circle)
         };
+    }
+
+    private IReadOnlyList<ToolPreviewEntityOverlay> GetPreviewEntityOverlays()
+    {
+        var overlays = new List<ToolPreviewEntityOverlay>();
+
+        if (_boundaryEntity is not null)
+        {
+            overlays.Add(new ToolPreviewEntityOverlay(
+                new[] { _boundaryEntity },
+                ToolPreviewHighlightKind.Emphasis));
+        }
+
+        if (_previewTargetEntity is not null && _highlightPreviewEntities.Count > 0)
+        {
+            overlays.Add(new ToolPreviewEntityOverlay(
+                new[] { _previewTargetEntity },
+                ToolPreviewHighlightKind.Emphasis));
+        }
+
+        return overlays;
     }
 
     private ToolResult AcceptBoundaryEntity(
@@ -201,6 +226,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         _boundaryEntityId = entity.Id;
         _boundaryEntity = entity;
         _previewTargetEntityId = null;
+        _previewTargetEntity = null;
+        _previewPickPoint = null;
         _previewEntity = null;
         _highlightPreviewEntities = Array.Empty<CadEntity>();
         State = ExtendToolState.WaitingForTargetEntity;
@@ -270,6 +297,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
                 "Extend entity"));
 
         _previewTargetEntityId = null;
+        _previewTargetEntity = null;
+        _previewPickPoint = null;
         _previewEntity = null;
         _highlightPreviewEntities = Array.Empty<CadEntity>();
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
@@ -285,6 +314,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         if (_boundaryEntity is null)
         {
             _previewTargetEntityId = null;
+            _previewTargetEntity = null;
+            _previewPickPoint = null;
             _previewEntity = null;
             _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
@@ -298,6 +329,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
             selectedId.Value.Equals(_boundaryEntity.Id))
         {
             _previewTargetEntityId = null;
+            _previewTargetEntity = null;
+            _previewPickPoint = null;
             _previewEntity = null;
             _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
@@ -309,6 +342,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
             !context.Document.IsEntitySelectable(entity))
         {
             _previewTargetEntityId = null;
+            _previewTargetEntity = null;
+            _previewPickPoint = null;
             _previewEntity = null;
             _highlightPreviewEntities = Array.Empty<CadEntity>();
             return;
@@ -326,6 +361,12 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
                 entity,
                 _previewEntity,
                 context.GeometryTolerance);
+        _previewTargetEntity = _highlightPreviewEntities.Count == 0
+            ? null
+            : entity;
+        _previewPickPoint = _highlightPreviewEntities.Count == 0
+            ? null
+            : entity.GetClosestPoint(point);
     }
 
 
@@ -585,6 +626,8 @@ public sealed class ExtendTool : ICadTool, ICommandDrivenTool, IToolPreviewDescr
         _boundaryEntityId = null;
         _boundaryEntity = null;
         _previewTargetEntityId = null;
+        _previewTargetEntity = null;
+        _previewPickPoint = null;
         _previewEntity = null;
         _highlightPreviewEntities = Array.Empty<CadEntity>();
         State = ExtendToolState.WaitingForBoundaryEntity;

@@ -19,6 +19,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
     private EntityId? _boundaryEntityId;
     private EntityId? _secondBoundaryEntityId;
     private CadEntity? _boundaryEntity;
+    private CadEntity? _previewTargetEntity;
+    private Point2D? _previewPickPoint;
     private IReadOnlyList<CadEntity> _previewEntities = Array.Empty<CadEntity>();
     private IReadOnlyList<CadEntity> _highlightPreviewEntities = Array.Empty<CadEntity>();
     private int _trimOperationsExecuted;
@@ -192,22 +194,45 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
             entities: GetPreviewEntities(),
             highlightedEntities: GetHighlightedPreviewEntities(),
             highlightedEntityKind: ToolPreviewHighlightKind.Removal,
-            entityOverlays: GetSelectedBoundaryOverlays());
+            markers: GetPreviewMarkers(),
+            entityOverlays: GetPreviewEntityOverlays());
     }
 
-    private IReadOnlyList<ToolPreviewEntityOverlay> GetSelectedBoundaryOverlays()
+    private IReadOnlyList<ToolPreviewMarker> GetPreviewMarkers()
     {
-        if (_boundaryEntities.Count == 0)
+        if (_previewPickPoint is null || _highlightPreviewEntities.Count == 0)
         {
-            return Array.Empty<ToolPreviewEntityOverlay>();
+            return Array.Empty<ToolPreviewMarker>();
         }
 
         return new[]
         {
-            new ToolPreviewEntityOverlay(
-                _boundaryEntities,
-                ToolPreviewHighlightKind.Emphasis)
+            new ToolPreviewMarker(
+                _previewPickPoint.Value,
+                ToolPreviewMarkerKind.Hot,
+                ToolPreviewMarkerShape.Circle)
         };
+    }
+
+    private IReadOnlyList<ToolPreviewEntityOverlay> GetPreviewEntityOverlays()
+    {
+        var overlays = new List<ToolPreviewEntityOverlay>();
+
+        if (_boundaryEntities.Count > 0)
+        {
+            overlays.Add(new ToolPreviewEntityOverlay(
+                _boundaryEntities,
+                ToolPreviewHighlightKind.Emphasis));
+        }
+
+        if (_previewTargetEntity is not null && _highlightPreviewEntities.Count > 0)
+        {
+            overlays.Add(new ToolPreviewEntityOverlay(
+                new[] { _previewTargetEntity },
+                ToolPreviewHighlightKind.Emphasis));
+        }
+
+        return overlays;
     }
 
     private ToolResult AcceptBoundaryEntity(
@@ -243,6 +268,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         _secondBoundaryEntityId = null;
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
+        _previewTargetEntity = null;
+        _previewPickPoint = null;
         State = TrimToolState.WaitingForTargetEntity;
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
@@ -336,6 +363,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
+        _previewTargetEntity = null;
+        _previewPickPoint = null;
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Completed(
@@ -367,6 +396,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         _secondBoundaryEntityId = entity.Id;
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
+        _previewTargetEntity = null;
+        _previewPickPoint = null;
         context.CurrentBasePoint = entity.GetClosestPoint(pointer.ModelPoint);
 
         return ToolResult.Started(
@@ -394,6 +425,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
             : null;
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
+        _previewTargetEntity = null;
+        _previewPickPoint = null;
         State = TrimToolState.WaitingForTargetEntity;
         context.CurrentBasePoint = null;
 
@@ -418,6 +451,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         _trimOperationsExecuted--;
         _previewEntities = Array.Empty<CadEntity>();
         _highlightPreviewEntities = Array.Empty<CadEntity>();
+        _previewTargetEntity = null;
+        _previewPickPoint = null;
         context.CurrentBasePoint = null;
 
         return ToolResult.Updated("Last trim operation undone. Select another side to remove; dashed preview shows the trimmed portion.");
@@ -431,6 +466,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         {
             _previewEntities = Array.Empty<CadEntity>();
             _highlightPreviewEntities = Array.Empty<CadEntity>();
+            _previewTargetEntity = null;
+            _previewPickPoint = null;
             return;
         }
 
@@ -444,6 +481,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         {
             _previewEntities = Array.Empty<CadEntity>();
             _highlightPreviewEntities = Array.Empty<CadEntity>();
+            _previewTargetEntity = null;
+            _previewPickPoint = null;
             return;
         }
 
@@ -454,6 +493,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         {
             _previewEntities = Array.Empty<CadEntity>();
             _highlightPreviewEntities = Array.Empty<CadEntity>();
+            _previewTargetEntity = null;
+            _previewPickPoint = null;
             return;
         }
 
@@ -463,6 +504,8 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         {
             _previewEntities = Array.Empty<CadEntity>();
             _highlightPreviewEntities = Array.Empty<CadEntity>();
+            _previewTargetEntity = null;
+            _previewPickPoint = null;
             return;
         }
 
@@ -476,6 +519,12 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
             effectiveBoundaries,
             point,
             context.GeometryTolerance);
+        _previewTargetEntity = _highlightPreviewEntities.Count == 0
+            ? null
+            : entity;
+        _previewPickPoint = _highlightPreviewEntities.Count == 0
+            ? null
+            : entity.GetClosestPoint(point);
     }
 
 

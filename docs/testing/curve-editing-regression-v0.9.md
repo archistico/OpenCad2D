@@ -431,6 +431,8 @@ Questi controlli vanno fatti zoomando molto e usando snap/quote quando possibile
 ## Preview/status invariants
 
 - Selected TRIM cutting edges, EXTEND boundaries and BREAK targets stay visible as emphasis overlays.
+- TRIM previews show the selected cutting edge, hovered target and hot picked-side marker when the removal preview is valid.
+- EXTEND previews show the selected boundary, hovered target and hot picked-endpoint marker when the addition preview is valid.
 - BREAK point previews show projected point markers.
 - Removal previews use removal styling; addition previews use addition styling.
 - No-op results must show a clear status message and leave the document unchanged.

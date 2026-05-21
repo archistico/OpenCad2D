@@ -145,7 +145,7 @@ Validate:
 - [ ] shared endpoints/no micro-gaps after reciprocal edits;
 - [ ] persistence/export of edited elliptical arcs and spline fragments;
 - [x] granular command failure messages for TRIM / BREAK / EXTEND;
-- [~] preview behavior and visual consistency during manual regression; Break target overlays and break-point markers are now covered by tests.
+- [~] preview behavior and visual consistency during manual regression; Break target overlays/markers plus TRIM/EXTEND target overlays and hot picked-side markers are now covered by tests.
 
 ### 5. Export/import compatibility pass
 

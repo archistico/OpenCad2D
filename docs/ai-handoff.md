@@ -145,7 +145,7 @@ Validate:
 - [ ] shared endpoints/no micro-gaps after reciprocal edits;
 - [ ] persistence/export of edited elliptical arcs and spline fragments;
 - [x] granular command failure messages for TRIM / BREAK / EXTEND;
-- [~] preview behavior and visual consistency during manual regression; Break target overlays and break-point markers are now covered by tests.
+- [~] preview behavior and visual consistency during manual regression; Break target overlays/markers plus TRIM/EXTEND target overlays and hot picked-side markers are now covered by tests.
 
 ### 5. Export/import compatibility pass
 
@@ -277,3 +277,8 @@ Break Point now implements `IToolPreviewDescriptorProvider`. Its descriptor keep
 Break Segment descriptors now also keep the selected target visible as an Emphasis overlay. They show a Primary marker at the first break point and a Hot marker at the projected second break point when a removable interval preview exists.
 
 This aligns BREAK previews with the existing TRIM/EXTEND rule: selected context geometry remains visible while the operation-specific preview uses semantic highlighting/markers. Next manual regression should include the new `Passata 0.5 — Preview visiva comune` checks in `docs/testing/curve-editing-evening-run-2026-05-21.md`.
+
+
+## 2026-05-21 — TRIM/EXTEND preview target markers
+
+TRIM and EXTEND preview descriptors now keep the hovered target visible as an `Emphasis` overlay when a valid preview exists. TRIM also emits a Hot marker on the picked side that would be removed; EXTEND emits a Hot marker on the picked endpoint side that would be extended. This completes the visual context rule for the manual curve-editing regression pass: boundary/target context remains visible, and the operation-specific interval is still rendered with Removal or Addition semantics.

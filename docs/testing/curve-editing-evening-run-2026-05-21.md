@@ -51,7 +51,9 @@ Questa passata verifica che i comandi mostrino il contesto visuale corretto prim
 | PREVIEW-BRKSEG-01 | BREAK SEGMENT | Primo punto scelto | Target evidenziato + marker sul primo punto |  |  |
 | PREVIEW-BRKSEG-02 | BREAK SEGMENT | Hover secondo punto valido | Intervallo rimosso tratteggiato + marker sui due punti |  |  |
 | PREVIEW-TRIM-01 | TRIM | Boundary selezionata | Boundary ancora evidenziata durante la scelta del target |  |  |
+| PREVIEW-TRIM-02 | TRIM | Hover su target valido | Boundary + target evidenziati; tratto rimosso tratteggiato; marker hot sul lato scelto |  |  |
 | PREVIEW-EXT-01 | EXTEND | Boundary selezionata | Boundary ancora evidenziata durante la scelta del target |  |  |
+| PREVIEW-EXT-02 | EXTEND | Hover su endpoint valido | Boundary + target evidenziati; tratto aggiunto evidenziato; marker hot sull'endpoint scelto |  |  |
 
 ## Passata 1 — TRIM base
 

@@ -354,6 +354,40 @@ public sealed class TrimToolTests
         Assert.Same(boundary, Assert.Single(overlay.Entities));
     }
 
+    [Fact]
+    public void GetPreviewDescriptor_WithValidPreview_ShouldHighlightTargetAndMarkPickedSide()
+    {
+        var context = CreateContextWithBoundaryAndTarget(
+            out LineEntity boundary,
+            out LineEntity target);
+        var tool = new TrimTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(3, 0)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(2, descriptor.EntityOverlays.Count);
+        Assert.Contains(descriptor.EntityOverlays, overlay =>
+            overlay.Kind == ToolPreviewHighlightKind.Emphasis &&
+            overlay.Entities.Count == 1 &&
+            ReferenceEquals(boundary, overlay.Entities[0]));
+        Assert.Contains(descriptor.EntityOverlays, overlay =>
+            overlay.Kind == ToolPreviewHighlightKind.Emphasis &&
+            overlay.Entities.Count == 1 &&
+            ReferenceEquals(target, overlay.Entities[0]));
+
+        ToolPreviewMarker marker = Assert.Single(descriptor.Markers);
+        Assert.Equal(new Point2D(3, 0), marker.Position);
+        Assert.Equal(ToolPreviewMarkerKind.Hot, marker.Kind);
+        Assert.Equal(ToolPreviewMarkerShape.Circle, marker.Shape);
+    }
+
     private static ToolContext CreateContextWithBoundaryAndTarget(
         out LineEntity boundary,
         out LineEntity target)

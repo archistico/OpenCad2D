@@ -130,6 +130,40 @@ public sealed class ExtendToolTests
     }
 
     [Fact]
+    public void GetPreviewDescriptor_WithValidPreview_ShouldHighlightTargetAndMarkPickedEndpoint()
+    {
+        var context = CreateContextWithBoundaryAndTarget(
+            out LineEntity boundary,
+            out LineEntity target);
+        var tool = new ExtendTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 2)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(5, 0)));
+
+        ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
+
+        Assert.Equal(2, descriptor.EntityOverlays.Count);
+        Assert.Contains(descriptor.EntityOverlays, overlay =>
+            overlay.Kind == ToolPreviewHighlightKind.Emphasis &&
+            overlay.Entities.Count == 1 &&
+            ReferenceEquals(boundary, overlay.Entities[0]));
+        Assert.Contains(descriptor.EntityOverlays, overlay =>
+            overlay.Kind == ToolPreviewHighlightKind.Emphasis &&
+            overlay.Entities.Count == 1 &&
+            ReferenceEquals(target, overlay.Entities[0]));
+
+        ToolPreviewMarker marker = Assert.Single(descriptor.Markers);
+        Assert.Equal(new Point2D(5, 0), marker.Position);
+        Assert.Equal(ToolPreviewMarkerKind.Hot, marker.Kind);
+        Assert.Equal(ToolPreviewMarkerShape.Circle, marker.Shape);
+    }
+
+    [Fact]
     public void SecondPointerPress_NearEnd_ShouldExtendLineToBoundary()
     {
         var context = CreateContextWithBoundaryAndTarget(

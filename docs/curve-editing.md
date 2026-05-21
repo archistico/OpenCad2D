@@ -768,6 +768,8 @@ Preview geometry for Trim, Break and Extend must be generated from the same nati
 - Removed intervals are represented with `ToolPreviewHighlightKind.Removal`.
 - Added extension intervals are represented with `ToolPreviewHighlightKind.Addition`.
 - Selected cutting edges, boundaries or break targets remain visible as `ToolPreviewHighlightKind.Emphasis` overlays while the command waits for the next point/entity.
+- TRIM and EXTEND previews keep the hovered target visible as an emphasis overlay when a valid preview exists.
+- TRIM and EXTEND previews show a hot point marker on the picked side/endpoint so the next commit point is explicit.
 - Break-point commands show point markers so the user can see the projected native point that will be used by the operation.
 - The full replacement entity may be previewed normally, but the operation-specific interval must be highlighted separately.
 
