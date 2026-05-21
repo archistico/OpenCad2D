@@ -16,6 +16,67 @@ Obiettivo principale:
 > Le operazioni CAD devono modificare entità native usando parametri geometrici nativi.  
 > Il campionamento è ammesso solo come supporto provvisorio, mai come fonte definitiva della geometria modificata.
 
+
+## Sessione consigliata per questa sera
+
+Questa sessione non deve cercare di completare tutta la checklist. L'obiettivo è fare una prima passata utile, concentrata sui comandi che hanno più probabilità di rivelare regressioni dopo i refactor recenti.
+
+Ordine consigliato:
+
+1. **Preparazione e smoke test**: completare `PREP-01` → `PREP-05`.
+2. **TRIM base**: completare `TRIM-GEN-*`, `TRIM-LINE-*`, `TRIM-CIRC-*`.
+3. **TRIM curve avanzate**: completare `TRIM-ELL-*` e `TRIM-SPL-*` se il tempo lo permette.
+4. **BREAK**: completare almeno `BRKPT-01` → `BRKPT-05` e `BRKSEG-01` → `BRKSEG-09`.
+5. **EXTEND**: completare `EXT-01` → `EXT-14`, segnando subito i casi su curve chiuse come OK solo se il messaggio è chiaro.
+6. **Micro-gap**: completare almeno `GAP-01` → `GAP-06`, zoomando molto sulle intersezioni.
+7. **Chiusura sessione**: compilare `Bug trovati`, `Deferred confermati` e la tabella `Risultato finale regression`, anche se parziale.
+
+Criterio pratico: se trovi un bug grave o ripetibile, fermati e annotalo bene invece di continuare a spuntare casi. Per questa fase è più utile un bug riproducibile con pochi passi che una checklist completata superficialmente.
+
+### File di prova consigliato
+
+Creare un singolo disegno manuale chiamato, ad esempio:
+
+```text
+curve-editing-regression-v0.9.opencad2d.json
+```
+
+Contenuto minimo consigliato:
+
+- due linee incrociate;
+- una linea che attraversa un cerchio;
+- una linea che attraversa un arco;
+- una polilinea aperta con almeno 4 vertici;
+- un rettangolo/poligono come polilinea chiusa;
+- una ellisse completa;
+- un arco ellittico;
+- una Bezier aperta;
+- almeno due layer, uno normale e uno locked/hidden per i test di selezione.
+
+Salvare una copia prima di ogni gruppo di prove distruttive, oppure usare Undo/Redo sistematicamente dopo ogni comando.
+
+### Priorità bug
+
+| Gravità | Quando usarla | Esempi |
+|---|---|---|
+| Blocker | impedisce di continuare la sessione | crash, eccezione, file non più apribile |
+| High | comando produce geometria sbagliata o perde il tipo nativo | ellisse trasformata in polilinea, trim lato sbagliato |
+| Medium | comportamento scorretto ma aggirabile | preview incoerente, messaggio confuso, undo parziale |
+| Low | dettaglio UX o documentale | testo non chiaro, piccolo problema visivo |
+
+### Template bug consigliato
+
+```text
+ID: BUG-xx
+Comando: TRIM / BREAK AT POINT / BREAK SEGMENT / EXTEND
+Entità coinvolte:
+Passi per riprodurre:
+Risultato atteso:
+Risultato ottenuto:
+Gravità: Blocker / High / Medium / Low
+Note/screenshot:
+```
+
 ## Come usare la checklist
 
 Per ogni prova, segnare:

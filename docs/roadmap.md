@@ -133,9 +133,9 @@ Current limits:
 
 ### 4. Curve editing regression checklist
 
-Status: [ ] manual validation pending.
+Status: [~] manual validation in progress.
 
-Reference: `docs/testing/curve-editing-regression-v0.9.md`.
+Reference: `docs/testing/curve-editing-regression-v0.9.md`. The checklist now includes a focused evening execution plan, a suggested manual test drawing and a bug report template.
 
 Validate:
 

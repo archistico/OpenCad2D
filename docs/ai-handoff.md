@@ -202,7 +202,7 @@ Implementation notes:
 ## Current next work
 
 1. Validate Explode/Join manually in the UI after local build/test.
-2. Complete/execute `docs/testing/curve-editing-regression-v0.9.md`.
+2. Execute the focused evening pass in `docs/testing/curve-editing-regression-v0.9.md`, starting from PREP/TRIM/BREAK/EXTEND and recording reproducible bugs before adding new code.
 3. Export/import compatibility pass for SVG/PDF/DXF, including manual HATCH validation in LibreCAD/QCAD.
 4. Manual UI check of Property Panel combo boxes and compact polyline vertices.
 5. Release preparation for v0.9.
