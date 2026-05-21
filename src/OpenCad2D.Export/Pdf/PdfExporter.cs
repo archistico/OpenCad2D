@@ -81,6 +81,7 @@ public sealed class PdfExporter : IPdfExporter
                 contentBuilder,
                 document,
                 entity,
+                layer,
                 lineFormat,
                 context);
         }
@@ -218,6 +219,7 @@ public sealed class PdfExporter : IPdfExporter
         StringBuilder builder,
         CadDocument document,
         CadEntity entity,
+        Layer layer,
         LineFormat lineFormat,
         PdfExportContext context)
     {
@@ -241,6 +243,7 @@ public sealed class PdfExporter : IPdfExporter
                     builder,
                     circle.Center,
                     circle.Radius,
+                    circle.IsFilled ? layer.FillColor : null,
                     context);
                 break;
 
@@ -263,6 +266,7 @@ public sealed class PdfExporter : IPdfExporter
                     builder,
                     point.Position,
                     PointMarkerRadius / Math.Max(context.Scale, 0.0001),
+                    null,
                     context);
                 break;
 
@@ -270,6 +274,7 @@ public sealed class PdfExporter : IPdfExporter
                 WritePolyline(
                     builder,
                     polyline,
+                    polyline.IsClosed && polyline.IsFilled ? layer.FillColor : null,
                     context);
                 break;
 
@@ -376,6 +381,18 @@ public sealed class PdfExporter : IPdfExporter
         builder.AppendLine($"[{dashArray}] 0 d");
     }
 
+    private static void ApplyFill(
+        StringBuilder builder,
+        CadColor fillColor,
+        PdfExportContext context)
+    {
+        CadColor color = GetExportColor(
+            fillColor,
+            context.UsePrintFriendlyColors);
+
+        builder.AppendLine($"{Format(color.R / 255.0)} {Format(color.G / 255.0)} {Format(color.B / 255.0)} rg");
+    }
+
     private static CadColor GetExportColor(
         CadColor color,
         bool usePrintFriendlyColors)
@@ -414,6 +431,7 @@ public sealed class PdfExporter : IPdfExporter
         StringBuilder builder,
         Point2D center,
         double radius,
+        CadColor? fillColor,
         PdfExportContext context)
     {
         Point2D c = ToPdfPoint(
@@ -427,7 +445,10 @@ public sealed class PdfExporter : IPdfExporter
         builder.AppendLine($"{Format(c.X - k)} {Format(c.Y + r)} {Format(c.X - r)} {Format(c.Y + k)} {Format(c.X - r)} {Format(c.Y)} c");
         builder.AppendLine($"{Format(c.X - r)} {Format(c.Y - k)} {Format(c.X - k)} {Format(c.Y - r)} {Format(c.X)} {Format(c.Y - r)} c");
         builder.AppendLine($"{Format(c.X + k)} {Format(c.Y - r)} {Format(c.X + r)} {Format(c.Y - k)} {Format(c.X + r)} {Format(c.Y)} c");
-        builder.AppendLine("S");
+        WriteFillOrStrokePath(
+            builder,
+            fillColor,
+            context);
     }
 
     private static void WriteEllipse(
@@ -488,6 +509,7 @@ public sealed class PdfExporter : IPdfExporter
     private static void WritePolyline(
         StringBuilder builder,
         PolylineEntity polyline,
+        CadColor? fillColor,
         PdfExportContext context)
     {
         if (polyline.Vertices.Count == 0)
@@ -512,6 +534,27 @@ public sealed class PdfExporter : IPdfExporter
         if (polyline.IsClosed)
         {
             builder.AppendLine("h");
+        }
+
+        WriteFillOrStrokePath(
+            builder,
+            fillColor,
+            context);
+    }
+
+    private static void WriteFillOrStrokePath(
+        StringBuilder builder,
+        CadColor? fillColor,
+        PdfExportContext context)
+    {
+        if (fillColor.HasValue)
+        {
+            ApplyFill(
+                builder,
+                fillColor.Value,
+                context);
+            builder.AppendLine("B");
+            return;
         }
 
         builder.AppendLine("S");

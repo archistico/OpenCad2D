@@ -83,6 +83,128 @@ public sealed class PdfExporterTests
         Assert.Contains("S", content);
     }
 
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledCircle_ShouldWriteFillColorAndFillStrokePath()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("FilledCircleLayer");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "FilledCircleLayer",
+            LineFormatId.Continuous,
+            fillColor: CadColor.FromRgb(12, 34, 56)));
+
+        document.AddEntity(new CircleEntity(
+            new Point2D(50, 50),
+            25,
+            layerId: layerId,
+            isFilled: true));
+
+        var exporter = new PdfExporter();
+
+        PdfExportResult result = exporter.Export(document);
+        string content = ToAscii(result.Content);
+
+        Assert.Contains("0.047 0.133 0.22 rg", content);
+        Assert.Contains("B", content);
+    }
+
+    [Fact]
+    public void Export_WhenDocumentContainsNotFilledCircle_ShouldStrokeOnly()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("NotFilledCircleLayer");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "NotFilledCircleLayer",
+            LineFormatId.Continuous,
+            fillColor: CadColor.FromRgb(12, 34, 56)));
+
+        document.AddEntity(new CircleEntity(
+            new Point2D(50, 50),
+            25,
+            layerId: layerId,
+            isFilled: false));
+
+        var exporter = new PdfExporter();
+
+        PdfExportResult result = exporter.Export(document);
+        string content = ToAscii(result.Content);
+
+        Assert.DoesNotContain("0.047 0.133 0.22 rg", content);
+        Assert.DoesNotContain("\nB\n", content);
+        Assert.Contains("S", content);
+    }
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledClosedPolyline_ShouldWriteFillColorAndFillStrokePath()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("FilledPolylineLayer");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "FilledPolylineLayer",
+            LineFormatId.Continuous,
+            fillColor: CadColor.FromRgb(90, 80, 70)));
+
+        document.AddEntity(new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            },
+            isClosed: true,
+            layerId: layerId,
+            isFilled: true));
+
+        var exporter = new PdfExporter();
+
+        PdfExportResult result = exporter.Export(document);
+        string content = ToAscii(result.Content);
+
+        Assert.Contains("0.353 0.314 0.275 rg", content);
+        Assert.Contains("h", content);
+        Assert.Contains("B", content);
+    }
+
+    [Fact]
+    public void Export_WhenDocumentContainsFilledOpenPolyline_ShouldStrokeOnly()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("OpenPolylineLayer");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "OpenPolylineLayer",
+            LineFormatId.Continuous,
+            fillColor: CadColor.FromRgb(90, 80, 70)));
+
+        document.AddEntity(new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            },
+            isClosed: false,
+            layerId: layerId,
+            isFilled: true));
+
+        var exporter = new PdfExporter();
+
+        PdfExportResult result = exporter.Export(document);
+        string content = ToAscii(result.Content);
+
+        Assert.DoesNotContain("0.353 0.314 0.275 rg", content);
+        Assert.DoesNotContain("\nB\n", content);
+        Assert.Contains("S", content);
+    }
+
     [Fact]
     public void Export_WhenDocumentContainsText_ShouldWritePdfTextObject()
     {
