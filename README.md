@@ -29,7 +29,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - local application settings for last opened file metadata, recent files and last open/save/export folders;
 - document recovery for partially invalid native files;
 - New, Open, Save and Save As;
-- SVG, DXF and PDF export, including solid fill for closed circles/polylines, DXF HATCH output, DXF SPLINE knot-vector output and MTEXT reference width;
+- SVG, DXF and PDF export, including DXF SPLINE knot-vector output and MTEXT reference width;
 - ASCII DXF import for core 2D entities, layer tables, MTEXT, LWPOLYLINE bulge arcs, ELLIPSE and readable SPLINE entities;
 - layers with visibility and locking;
 - reusable line formats with color, lineweight, line style and custom dash pattern values;
@@ -48,7 +48,6 @@ OpenCad2D currently supports a complete early CAD workflow:
 - trim and break support based on native curve parameters for lines, arcs, circles where applicable, ellipses, elliptical arcs, polylines, polygons and open Bezier splines;
 - offset for lines, circles, arcs and straight-segment polylines;
 - line-line fillet with radius option, live preview, Trim/NoTrim modes and radius `0` sharp-corner join in Trim mode;
-- layer-based solid fill for closed circles and closed polylines, with `Fill: None/Solid` in the Property Panel and a layer Fill color picker;
 - align object tools: left, right, top and bottom;
 - distribute object tools: horizontal and vertical distribution by centers;
 - measure tools for distance, entity properties, angles and closed-polyline areas;
@@ -129,8 +128,8 @@ OpenCad2D saves native drawings as:
 
 The native file stores:
 
-- entities, including fill state for supported closed entities;
-- layers, including layer fill color;
+- entities;
+- layers;
 - line formats;
 - text formats;
 - dimension styles;
@@ -187,19 +186,7 @@ OpenCad2D is released under the GPL-3.0-or-later license. See `LICENSE`.
 
 ## Credits
 
-Created with love by Emilie Rollandin.
-
-- Dimension Styles manager for configurable dimension text, units, classic terminator symbols, offsets, live preview and left-readable vertical dimension text.
-
-
-Dimension styles include built-in Standard, Architectural and Mechanical presets with configurable text, symbols, units and orientation.
-
-
-Dimension text fit rules keep labels readable on short dimensions by moving text outside the measured span when needed.
-
-
-Dimension terminator fit rules can keep arrows/ticks inside or move them outside when a dimension is too short.
-
+Created by Emilie Rollandin.
 
 ## Current limitations and planned improvements
 
@@ -221,7 +208,6 @@ OpenCad2D is currently in the v0.9 stabilization cycle. Recent completed work in
 - classic dimension terminators including arrows, triangles, dots, architectural ticks and slash symbols;
 - left-readable vertical dimension text according to the current OpenCad2D convention;
 - bugfixes for Break Point on full ellipses, TRIM open-polyline endpoint filtering and Offset polyline side detection;
-- cleanup of obsolete TRIM highlight helper code and clearer Fillet branch-parameter documentation;
-- layer-based solid fill for closed circles and closed polylines, including Property Panel control, Layer Manager fill color picker and SVG/PDF/DXF export.
+- cleanup of obsolete TRIM highlight helper code and clearer Fillet branch-parameter documentation.
 
 The next planning step is v0.9 scope consolidation: decide which remaining polish items are required before the next public release and which are deferred to v1.0.
