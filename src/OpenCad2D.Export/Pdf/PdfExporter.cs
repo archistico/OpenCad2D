@@ -675,6 +675,8 @@ public sealed class PdfExporter : IPdfExporter
             text.Position,
             context);
         double fontSize = Math.Max(1.0, textFormat.Height * context.Scale);
+        double estimatedTextWidth = text.Text.Length * fontSize * 0.6;
+        double estimatedTextHeight = fontSize;
         double radians = -text.RotationDegrees * Math.PI / 180.0;
         double cos = Math.Cos(radians);
         double sin = Math.Sin(radians);
@@ -683,6 +685,7 @@ public sealed class PdfExporter : IPdfExporter
         builder.AppendLine($"{Format(color.R / 255.0)} {Format(color.G / 255.0)} {Format(color.B / 255.0)} rg");
         builder.AppendLine($"/F1 {Format(fontSize)} Tf");
         builder.AppendLine($"{Format(cos)} {Format(sin)} {Format(-sin)} {Format(cos)} {Format(point.X)} {Format(point.Y)} Tm");
+        builder.AppendLine($"{Format(-estimatedTextWidth / 2.0)} {Format(-estimatedTextHeight / 2.0)} Td");
         builder.AppendLine($"({EscapePdfString(text.Text)}) Tj");
         builder.AppendLine("ET");
     }

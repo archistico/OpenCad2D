@@ -475,7 +475,7 @@ public sealed class SvgExporter : ISvgExporter
         string fontWeight = textFormat.IsBold ? "bold" : "normal";
         string fontStyle = textFormat.IsItalic ? "italic" : "normal";
 
-        builder.Append($"  <text x=\"{Format(textPoint.X)}\" y=\"{Format(textPoint.Y)}\" font-family=\"{Escape(textFormat.FontFamily)}\" font-size=\"{Format(textFormat.Height)}\" font-weight=\"{fontWeight}\" font-style=\"{fontStyle}\" fill=\"{ToHex(textFormat.Color)}\" transform=\"rotate({Format(svgRotation)} {Format(textPoint.X)} {Format(textPoint.Y)})\">{Escape(model.Text.Text)}</text>");
+        builder.Append($"  <text x=\"{Format(textPoint.X)}\" y=\"{Format(textPoint.Y)}\" font-family=\"{Escape(textFormat.FontFamily)}\" font-size=\"{Format(textFormat.Height)}\" font-weight=\"{fontWeight}\" font-style=\"{fontStyle}\" fill=\"{ToHex(textFormat.Color)}\" text-anchor=\"middle\" dominant-baseline=\"central\" transform=\"rotate({Format(svgRotation)} {Format(textPoint.X)} {Format(textPoint.Y)})\">{Escape(model.Text.Text)}</text>");
 
         return builder.ToString().TrimEnd();
     }

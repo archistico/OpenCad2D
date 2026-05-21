@@ -1,3 +1,4 @@
+using OpenCad2D.Interaction.Snapping;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -7,7 +8,7 @@ namespace OpenCad2D.App.Settings;
 
 public sealed class ApplicationSettings
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
     public const int DefaultRecentFileLimit = 10;
 
     public int SchemaVersion { get; set; } = CurrentSchemaVersion;
@@ -20,7 +21,15 @@ public sealed class ApplicationSettings
 
     public string? LastExportDirectory { get; set; }
 
+    public bool ReopenLastFileOnStartup { get; set; }
+
+    public ApplicationGridSettings? DefaultGrid { get; set; }
+
+    public ApplicationSnapSettings? DefaultSnapping { get; set; }
+
     public List<string> RecentFiles { get; set; } = new();
+
+    public bool HasLastOpenedFile => !string.IsNullOrWhiteSpace(LastOpenedFilePath);
 
     public ApplicationSettings Normalize()
     {
@@ -29,6 +38,8 @@ public sealed class ApplicationSettings
         LastOpenDirectory = NormalizeDirectory(LastOpenDirectory);
         LastSaveDirectory = NormalizeDirectory(LastSaveDirectory);
         LastExportDirectory = NormalizeDirectory(LastExportDirectory);
+        DefaultGrid = DefaultGrid?.Normalize();
+        DefaultSnapping = DefaultSnapping?.Normalize();
         RecentFiles = NormalizeRecentFiles(RecentFiles);
         return this;
     }
@@ -72,6 +83,20 @@ public sealed class ApplicationSettings
         }
 
         LastExportDirectory = NormalizeDirectory(Path.GetDirectoryName(normalizedPath));
+        return Normalize();
+    }
+
+    public ApplicationSettings CaptureDraftingDefaults(
+        GridSettings gridSettings,
+        SnapKind enabledSnaps,
+        double snapTolerance)
+    {
+        ArgumentNullException.ThrowIfNull(gridSettings);
+
+        DefaultGrid = ApplicationGridSettings.FromGridSettings(gridSettings);
+        DefaultSnapping = ApplicationSnapSettings.FromSnapSettings(
+            enabledSnaps,
+            snapTolerance);
         return Normalize();
     }
 

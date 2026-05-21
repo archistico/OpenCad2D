@@ -1,4 +1,5 @@
 using OpenCad2D.App.Settings;
+using OpenCad2D.Interaction.Snapping;
 
 namespace OpenCad2D.App.Tests;
 
@@ -63,6 +64,73 @@ public sealed class ApplicationSettingsTests
         Assert.Equal(
             Path.Combine(Path.GetTempPath(), "OpenCad2D", "Drawings", "0.opencad2d.json"),
             settings.RecentFiles[0]);
+    }
+
+
+    [Fact]
+    public void CaptureDraftingDefaults_ShouldStoreGridAndSnapSettings()
+    {
+        var settings = new ApplicationSettings();
+        var grid = new GridSettings(
+            step: 2,
+            originX: 1,
+            originY: 3,
+            isVisible: false,
+            majorStep: 10,
+            minimumScreenSpacing: 6,
+            maximumScreenSpacing: 120,
+            kind: GridKind.Isometric,
+            isometricAngleDegrees: 35);
+
+        settings.CaptureDraftingDefaults(
+            grid,
+            SnapKind.Endpoint | SnapKind.Grid,
+            12);
+
+        Assert.NotNull(settings.DefaultGrid);
+        Assert.Equal("Isometric", settings.DefaultGrid.Kind);
+        Assert.False(settings.DefaultGrid.IsVisible);
+        Assert.Equal(2, settings.DefaultGrid.MinorStep);
+        Assert.NotNull(settings.DefaultSnapping);
+        Assert.True(settings.DefaultSnapping.IsEnabled);
+        Assert.Equal(12, settings.DefaultSnapping.Tolerance);
+        Assert.Contains("Endpoint", settings.DefaultSnapping.EnabledModes);
+        Assert.Contains("Grid", settings.DefaultSnapping.EnabledModes);
+    }
+
+    [Fact]
+    public void Normalize_WithInvalidDraftingDefaults_ShouldUseSafeValues()
+    {
+        var settings = new ApplicationSettings
+        {
+            DefaultGrid = new ApplicationGridSettings
+            {
+                Kind = "Invalid",
+                MinorStep = -1,
+                MajorStep = 0,
+                MinimumScreenSpacing = -1,
+                MaximumScreenSpacing = -1,
+                IsometricAngleDegrees = 180
+            },
+            DefaultSnapping = new ApplicationSnapSettings
+            {
+                Tolerance = -1,
+                EnabledModes = new List<string>
+                {
+                    "Endpoint",
+                    "Invalid"
+                }
+            }
+        };
+
+        settings.Normalize();
+
+        Assert.Equal("Rectangular", settings.DefaultGrid!.Kind);
+        Assert.Equal(10, settings.DefaultGrid.MinorStep);
+        Assert.True(settings.DefaultGrid.MaximumScreenSpacing > settings.DefaultGrid.MinimumScreenSpacing);
+        Assert.Equal(30, settings.DefaultGrid.IsometricAngleDegrees);
+        Assert.Equal(8, settings.DefaultSnapping!.Tolerance);
+        Assert.Equal(new[] { "Endpoint" }, settings.DefaultSnapping.EnabledModes);
     }
 
     [Fact]

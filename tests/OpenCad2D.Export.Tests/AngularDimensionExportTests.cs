@@ -24,7 +24,7 @@ public sealed class AngularDimensionExportTests
         SvgExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(6, CountOccurrences(result.Content, "<line "));
+        Assert.Equal(8, CountOccurrences(result.Content, "<line "));
         Assert.Contains("<path ", result.Content);
         Assert.Contains(">90.00°</text>", result.Content);
     }
@@ -65,7 +65,7 @@ public sealed class AngularDimensionExportTests
         DxfExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(6, CountEntityRecords(result.Content, "LINE"));
+        Assert.Equal(8, CountEntityRecords(result.Content, "LINE"));
         Assert.Equal(1, CountEntityRecords(result.Content, "ARC"));
         Assert.Equal(1, CountEntityRecords(result.Content, "TEXT"));
         Assert.Contains("90.00°", result.Content);

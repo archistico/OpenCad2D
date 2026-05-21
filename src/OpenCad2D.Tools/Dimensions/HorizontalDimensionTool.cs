@@ -75,6 +75,7 @@ public sealed class HorizontalDimensionTool : ThreePointDimensionToolBase
             secondPoint,
             dimensionLinePoint,
             DimensionOrientation.Horizontal,
+            dimensionStyleId: context.Creation.CurrentDimensionStyleId,
             layerId: context.Creation.CurrentLayerId);
 
         context.Commands.Execute(

@@ -11,6 +11,8 @@ public sealed class DocumentSettingsDto
 
     public string CurrentTextFormatId { get; set; } = "Standard";
 
+    public string CurrentDimensionStyleId { get; set; } = "Standard";
+
     public DocumentGridSettingsDto Grid { get; set; } = new();
 
     public DocumentSnapSettingsDto Snapping { get; set; } = new();

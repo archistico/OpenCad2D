@@ -14,14 +14,14 @@ public sealed class DimensionRoundTripTests
     {
         var serializer = new JsonDocumentSerializer();
         var document = new CadDocument();
-        var customStyleId = new DimensionStyleId("Architectural");
+        var customStyleId = new DimensionStyleId("CustomRoundTrip");
 
         document.ReplaceDimensionStyles(new DimensionStyleCollection(new[]
         {
             DimensionStyleCollection.Default.GetById(DimensionStyleId.Standard),
             new DimensionStyle(
                 customStyleId,
-                "Architectural",
+                "Custom RoundTrip",
                 TextFormatId.Annotation,
                 arrowSize: 5,
                 textOffset: 3,
@@ -29,8 +29,17 @@ public sealed class DimensionRoundTripTests
                 extensionLineOvershoot: 2,
                 decimalPlaces: 1,
                 decimalSeparator: ",",
-                suffix: " mm")
+                suffix: " mm",
+                prefix: "≈ ",
+                radiusPrefix: "R",
+                diameterPrefix: "Ø",
+                arrowSymbol: DimensionArrowSymbol.ClosedFilledTriangle,
+                textRotationMode: DimensionTextRotationMode.Horizontal,
+                dimensionLineOffset: 12,
+                textFitMode: DimensionTextFitMode.AlwaysOutside,
+                terminatorFitMode: DimensionTerminatorFitMode.AlwaysOutside)
         }));
+        document.SetCurrentDimensionStyle(customStyleId);
 
         var dimension = new LinearDimensionEntity(
             new Point2D(0, 0),
@@ -57,7 +66,16 @@ public sealed class DimensionRoundTripTests
         Assert.Equal(5, restoredStyle.ArrowSize);
         Assert.Equal(1, restoredStyle.DecimalPlaces);
         Assert.Equal(",", restoredStyle.DecimalSeparator);
+        Assert.Equal("≈ ", restoredStyle.Prefix);
         Assert.Equal(" mm", restoredStyle.Suffix);
+        Assert.Equal("R", restoredStyle.RadiusPrefix);
+        Assert.Equal("Ø", restoredStyle.DiameterPrefix);
+        Assert.Equal(DimensionArrowSymbol.ClosedFilledTriangle, restoredStyle.ArrowSymbol);
+        Assert.Equal(DimensionTextRotationMode.Horizontal, restoredStyle.TextRotationMode);
+        Assert.Equal(12, restoredStyle.DimensionLineOffset);
+        Assert.Equal(DimensionTextFitMode.AlwaysOutside, restoredStyle.TextFitMode);
+        Assert.Equal(DimensionTerminatorFitMode.AlwaysOutside, restoredStyle.TerminatorFitMode);
+        Assert.Equal(customStyleId, restored.CurrentDimensionStyleId);
 
         var restoredDimension = Assert.IsType<LinearDimensionEntity>(restored.Entities.GetRequired(dimension.Id));
         Assert.Equal(dimension.FirstPoint, restoredDimension.FirstPoint);

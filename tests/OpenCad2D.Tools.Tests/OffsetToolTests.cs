@@ -7,6 +7,7 @@ using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Input;
+using System.Reflection;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -471,6 +472,42 @@ public sealed class OffsetToolTests
 
 
     [Fact]
+    public void DeterminePolylineOffsetSide_WithVeryShortSegmentAndClearSidePoint_ShouldUseNormalizedSignedDistance()
+    {
+        int side = InvokeDeterminePolylineOffsetSide(
+            new[]
+            {
+                new LineSegment2D(new Point2D(0, 0), new Point2D(0.01, 0))
+            },
+            new Point2D(0.005, -0.1),
+            new GeometryTolerance(
+                distance: 0.001,
+                angle: 1e-10,
+                parameter: 1e-12,
+                vectorLength: 1e-12));
+
+        Assert.Equal(-1, side);
+    }
+
+    [Fact]
+    public void DeterminePolylineOffsetSide_WithLongSegmentAndNearLinePoint_ShouldUseDistanceTolerance()
+    {
+        int side = InvokeDeterminePolylineOffsetSide(
+            new[]
+            {
+                new LineSegment2D(new Point2D(0, 0), new Point2D(100, 0))
+            },
+            new Point2D(50, 0.0005),
+            new GeometryTolerance(
+                distance: 0.001,
+                angle: 1e-10,
+                parameter: 1e-12,
+                vectorLength: 1e-12));
+
+        Assert.Equal(1, side);
+    }
+
+    [Fact]
     public void GetPreviewDescriptor_AfterEntitySelection_ShouldHighlightSelectedTarget()
     {
         CadDocument document = new();
@@ -534,6 +571,21 @@ public sealed class OffsetToolTests
         Assert.Equal(ToolResultKind.Completed, created.Kind);
         Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
         Assert.Equal(2, tool.Distance);
+    }
+
+    private static int InvokeDeterminePolylineOffsetSide(
+        IReadOnlyList<LineSegment2D> segments,
+        Point2D sidePoint,
+        GeometryTolerance tolerance)
+    {
+        MethodInfo method = typeof(OffsetTool).GetMethod(
+            "DeterminePolylineOffsetSide",
+            BindingFlags.NonPublic | BindingFlags.Static)
+            ?? throw new InvalidOperationException("DeterminePolylineOffsetSide was not found.");
+
+        return (int)method.Invoke(
+            null,
+            new object[] { segments, sidePoint, tolerance })!;
     }
 
     private static void AssertPointNear(Point2D expected, Point2D actual)

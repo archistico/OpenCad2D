@@ -46,6 +46,7 @@ public sealed class RadiusDimensionTool : RadialDimensionToolBase
             center,
             pointOnCircle,
             textPoint,
+            dimensionStyleId: context.Creation.CurrentDimensionStyleId,
             layerId: context.Creation.CurrentLayerId);
 
         context.Commands.Execute(

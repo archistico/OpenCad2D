@@ -1,0 +1,267 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dimensionStyles="clr-namespace:OpenCad2D.App.ViewModels.DimensionStyles"
+        xmlns:controls="clr-namespace:OpenCad2D.App.Controls"
+        x:Class="OpenCad2D.App.DimensionStyleManagerWindow"
+        x:DataType="dimensionStyles:DimensionStyleManagerWindowViewModel"
+        Title="Dimension Style Manager"
+        Icon="/Assets/app-icon.ico"
+        Width="1180"
+        Height="720"
+        MinWidth="1040"
+        MinHeight="620"
+        WindowStartupLocation="CenterOwner"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.header-cell">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBox.format-input">
+            <Setter Property="Background" Value="#252526" />
+            <Setter Property="Foreground" Value="#EEEEEE" />
+            <Setter Property="BorderBrush" Value="#3A3A3A" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="5,2" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
+        <Style Selector="ComboBox.format-combo">
+            <Setter Property="Background" Value="#252526" />
+            <Setter Property="Foreground" Value="#EEEEEE" />
+            <Setter Property="BorderBrush" Value="#3A3A3A" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="5,2" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="BorderBrush" Value="#555555" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="74" />
+        </Style>
+
+        <Style Selector="TextBlock.cell-label">
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto,Auto"
+          Margin="10">
+
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    Margin="0,0,0,8">
+            <Button Classes="dialog-button"
+                    Content="Add"
+                    Click="AddStyle_Click" />
+
+            <Button Classes="dialog-button"
+                    Content="Delete"
+                    IsEnabled="{Binding CanDeleteSelectedStyle}"
+                    Click="DeleteStyle_Click" />
+
+            <Button Classes="dialog-button"
+                    Content="Set current"
+                    IsEnabled="{Binding CanSetCurrentStyle}"
+                    Click="SetCurrent_Click" />
+
+            <TextBlock Text="{Binding CurrentStyleText}"
+                       Foreground="#FFE650"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0" />
+
+            <TextBlock Text="Dimension styles control text, units, symbols and line offsets for new and existing dimensions."
+                       Foreground="#AAAAAA"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0" />
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                BorderBrush="#3A3A3A"
+                BorderThickness="1"
+                Background="#202020">
+            <Grid RowDefinitions="Auto,*">
+                <Border Grid.Row="0"
+                        Background="#2D2D30"
+                        Padding="7,5">
+                    <Grid ColumnDefinitions="150,180,82,82,98,98,98,70,68,75,75,88,120,120,125,70"
+                          ColumnSpacing="6">
+                        <TextBlock Grid.Column="0" Classes="header-cell" Text="Name" />
+                        <TextBlock Grid.Column="1" Classes="header-cell" Text="Text format" />
+                        <TextBlock Grid.Column="2" Classes="header-cell" Text="Arrow" />
+                        <TextBlock Grid.Column="3" Classes="header-cell" Text="Text off." />
+                        <TextBlock Grid.Column="4" Classes="header-cell" Text="Ext. off." />
+                        <TextBlock Grid.Column="5" Classes="header-cell" Text="Ext. over." />
+                        <TextBlock Grid.Column="6" Classes="header-cell" Text="Dim off." />
+                        <TextBlock Grid.Column="7" Classes="header-cell" Text="Dec." />
+                        <TextBlock Grid.Column="8" Classes="header-cell" Text="Sep." />
+                        <TextBlock Grid.Column="9" Classes="header-cell" Text="Prefix" />
+                        <TextBlock Grid.Column="10" Classes="header-cell" Text="Suffix" />
+                        <TextBlock Grid.Column="11" Classes="header-cell" Text="Symbol" />
+                        <TextBlock Grid.Column="12" Classes="header-cell" Text="Text rotation" />
+                        <TextBlock Grid.Column="13" Classes="header-cell" Text="Text fit" />
+                        <TextBlock Grid.Column="14" Classes="header-cell" Text="Term. fit" />
+                        <TextBlock Grid.Column="15" Classes="header-cell" Text="Type" />
+                    </Grid>
+                </Border>
+
+                <ListBox Grid.Row="1"
+                         ItemsSource="{Binding Styles}"
+                         SelectedItem="{Binding SelectedStyle}"
+                         Background="#202020"
+                         BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="dimensionStyles:EditableDimensionStyleViewModel">
+                            <Border Padding="7,4">
+                                <Grid ColumnDefinitions="150,180,82,82,98,98,98,70,68,75,75,88,120,120,125,70"
+                                      ColumnSpacing="6">
+                                    <TextBox Grid.Column="0"
+                                             Classes="format-input"
+                                             Text="{Binding Name, Mode=TwoWay}" />
+
+                                    <ComboBox Grid.Column="1"
+                                              Classes="format-combo"
+                                              ItemsSource="{Binding TextFormatOptions}"
+                                              SelectedItem="{Binding SelectedTextFormat, Mode=TwoWay}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate x:DataType="dimensionStyles:TextFormatOptionViewModel">
+                                                <TextBlock Text="{Binding DisplayText}" />
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+
+                                    <TextBox Grid.Column="2"
+                                             Classes="format-input"
+                                             Text="{Binding ArrowSizeText, Mode=TwoWay}" />
+
+                                    <TextBox Grid.Column="3"
+                                             Classes="format-input"
+                                             Text="{Binding TextOffsetText, Mode=TwoWay}" />
+
+                                    <TextBox Grid.Column="4"
+                                             Classes="format-input"
+                                             Text="{Binding ExtensionLineOffsetText, Mode=TwoWay}" />
+
+                                    <TextBox Grid.Column="5"
+                                             Classes="format-input"
+                                             Text="{Binding ExtensionLineOvershootText, Mode=TwoWay}" />
+
+                                    <TextBox Grid.Column="6"
+                                             Classes="format-input"
+                                             Text="{Binding DimensionLineOffsetText, Mode=TwoWay}" />
+
+                                    <TextBox Grid.Column="7"
+                                             Classes="format-input"
+                                             Text="{Binding DecimalPlacesText, Mode=TwoWay}" />
+
+                                    <TextBox Grid.Column="8"
+                                             Classes="format-input"
+                                             Text="{Binding DecimalSeparator, Mode=TwoWay}" />
+
+                                    <TextBox Grid.Column="9"
+                                             Classes="format-input"
+                                             Text="{Binding Prefix, Mode=TwoWay}" />
+
+                                    <TextBox Grid.Column="10"
+                                             Classes="format-input"
+                                             Text="{Binding Suffix, Mode=TwoWay}" />
+
+                                    <ComboBox Grid.Column="11"
+                                              Classes="format-combo"
+                                              ItemsSource="{Binding ArrowSymbols}"
+                                              SelectedItem="{Binding ArrowSymbol, Mode=TwoWay}" />
+
+                                    <ComboBox Grid.Column="12"
+                                              Classes="format-combo"
+                                              ItemsSource="{Binding TextRotationModes}"
+                                              SelectedItem="{Binding TextRotationMode, Mode=TwoWay}" />
+
+                                    <ComboBox Grid.Column="13"
+                                              Classes="format-combo"
+                                              ItemsSource="{Binding TextFitModes}"
+                                              SelectedItem="{Binding TextFitMode, Mode=TwoWay}" />
+
+                                    <ComboBox Grid.Column="14"
+                                              Classes="format-combo"
+                                              ItemsSource="{Binding TerminatorFitModes}"
+                                              SelectedItem="{Binding TerminatorFitMode, Mode=TwoWay}" />
+
+                                    <TextBlock Grid.Column="15"
+                                               Classes="cell-label"
+                                               Text="{Binding BuiltInText}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="2"
+                BorderBrush="#3A3A3A"
+                BorderThickness="1"
+                Background="#202020"
+                Margin="0,8,0,0">
+            <controls:DimensionStylePreviewControl DimensionStyle="{Binding SelectedStyle}"
+                                                   Height="160" />
+        </Border>
+
+        <StackPanel Grid.Row="3"
+                    Orientation="Vertical"
+                    Margin="0,8,0,0"
+                    Spacing="6">
+            <Grid ColumnDefinitions="Auto,95,Auto,95,Auto"
+                  ColumnSpacing="6">
+                <TextBlock Grid.Column="0"
+                           Classes="cell-label"
+                           Text="Radius prefix:" />
+                <TextBox Grid.Column="1"
+                         Classes="format-input"
+                         Text="{Binding SelectedStyle.RadiusPrefix, Mode=TwoWay}" />
+
+                <TextBlock Grid.Column="2"
+                           Classes="cell-label"
+                           Text="Diameter prefix:" />
+                <TextBox Grid.Column="3"
+                         Classes="format-input"
+                         Text="{Binding SelectedStyle.DiameterPrefix, Mode=TwoWay}" />
+
+                <TextBlock Grid.Column="4"
+                           Foreground="#AAAAAA"
+                           FontSize="11"
+                           VerticalAlignment="Center"
+                           Text="Use these for automatic R and Ø dimension labels." />
+            </Grid>
+
+            <TextBlock Text="{Binding ValidationMessage}"
+                       Foreground="#F48771"
+                       IsVisible="{Binding HasValidationMessage}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="4"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="6"
+                    Margin="0,12,0,0">
+            <Button Classes="dialog-button"
+                    Content="Cancel"
+                    Click="Cancel_Click" />
+
+            <Button Classes="dialog-button"
+                    Content="OK"
+                    Click="Ok_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

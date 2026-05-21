@@ -29,6 +29,133 @@ public sealed class PropertyPanelEditingTests
         Assert.False(row.IsEditable);
     }
 
+
+    [Fact]
+    public void PropertyPanel_LayerId_ShouldExposeLayerOptions()
+    {
+        var viewModel = new MainWindowViewModel();
+        viewModel.Workspace.Document.Layers.Add(new Layer(new LayerId("TestLayer"), "TestLayer"));
+        var point = new PointEntity(new Point2D(0, 0));
+        viewModel.Workspace.Document.AddEntity(point);
+
+        SelectEntity(viewModel, point);
+
+        PropertyRowViewModel layerRow = FindRow(viewModel, "Layer id");
+
+        Assert.True(layerRow.IsEditable);
+        Assert.True(layerRow.IsComboBox);
+        Assert.False(layerRow.IsTextBox);
+        Assert.Contains("0", layerRow.Options);
+        Assert.Contains("TestLayer", layerRow.Options);
+    }
+
+
+    [Fact]
+    public void PropertyPanel_ForPolyline_ShouldShowEditableVertexCoordinateRows()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10.5, 0),
+                new Point2D(10.5, 4.25)
+            });
+        viewModel.Workspace.Document.AddEntity(polyline);
+
+        SelectEntity(viewModel, polyline);
+
+        PropertySectionViewModel section = FindSection(viewModel, "Vertices");
+
+        Assert.Equal(3, section.Rows.Count);
+        Assert.Equal("Vertex 1", section.Rows[0].Name);
+        Assert.Equal("0, 0", section.Rows[0].Value);
+        Assert.Equal("Vertex 2", section.Rows[1].Name);
+        Assert.Equal("10.5, 0", section.Rows[1].Value);
+        Assert.Equal("Vertex 3", section.Rows[2].Name);
+        Assert.Equal("10.5, 4.25", section.Rows[2].Value);
+        Assert.All(section.Rows, row => Assert.True(row.IsEditable));
+    }
+
+
+    [Fact]
+    public void PropertyPanel_ForLargePolyline_ShouldLimitDisplayedVertexRows()
+    {
+        var viewModel = new MainWindowViewModel();
+        var vertices = Enumerable.Range(0, 40)
+            .Select(index => new Point2D(index, 0))
+            .ToArray();
+        var polyline = new PolylineEntity(vertices);
+        viewModel.Workspace.Document.AddEntity(polyline);
+
+        SelectEntity(viewModel, polyline);
+
+        PropertySectionViewModel section = FindSection(viewModel, "Vertices");
+
+        Assert.Equal(5, section.Rows.Count);
+        Assert.Equal("Vertex 1", section.Rows[0].Name);
+        Assert.Equal("Vertex 4", section.Rows[3].Name);
+        Assert.Equal("More vertices", section.Rows[4].Name);
+        Assert.Contains("36 hidden", section.Rows[4].Value);
+    }
+
+
+    [Fact]
+    public void ApplyCommand_ForPolylineVertex_ShouldReplacePolylineAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5)
+            });
+        viewModel.Workspace.Document.AddEntity(polyline);
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Vertex 2");
+        row.EditableValue = "12.5, 0";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.Equal(new Point2D(12.5, 0), updated.Vertices[1]);
+        Assert.Equal("Polyline vertex updated.", viewModel.LastMessage);
+        Assert.True(viewModel.Workspace.CommandHistory.CanUndo);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.Equal(new Point2D(10, 0), restored.Vertices[1]);
+    }
+
+
+    [Fact]
+    public void PropertyPanel_ForPolylineClosed_ShouldExposeYesNoComboBox()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5)
+            },
+            isClosed: true);
+        viewModel.Workspace.Document.AddEntity(polyline);
+
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindSection(viewModel, "Geometry")
+            .Rows.Single(row => row.Name == "Closed");
+
+        Assert.True(row.IsEditable);
+        Assert.True(row.IsComboBox);
+        Assert.False(row.IsTextBox);
+        Assert.Equal("Yes", row.Value);
+        Assert.Equal(new[] { "Yes", "No" }, row.Options);
+    }
+
     [Fact]
     public void ApplyCommand_ForPointX_ShouldReplaceEntityAndSupportUndo()
     {
@@ -241,6 +368,57 @@ public sealed class PropertyPanelEditingTests
         Assert.False(restored.IsClosed);
     }
 
+
+    [Fact]
+    public void PropertyPanel_ForDimensionStyle_ShouldUseComboBoxOptions()
+    {
+        var viewModel = new MainWindowViewModel();
+        var dimension = new LinearDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(100, 0),
+            new Point2D(0, 20),
+            DimensionOrientation.Horizontal);
+        viewModel.Workspace.Document.AddEntity(dimension);
+        SelectEntity(viewModel, dimension);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Dimension style");
+
+        Assert.True(row.IsEditable);
+        Assert.False(row.IsTextBox);
+        Assert.True(row.IsComboBox);
+        Assert.Equal("Standard", row.EditableValue);
+        Assert.Contains("Standard", row.Options);
+        Assert.Contains("Architectural", row.Options);
+        Assert.Contains("Mechanical", row.Options);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForDimensionStyleCombo_ShouldReplaceDimensionAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var dimension = new LinearDimensionEntity(
+            new Point2D(0, 0),
+            new Point2D(100, 0),
+            new Point2D(0, 20),
+            DimensionOrientation.Horizontal);
+        viewModel.Workspace.Document.AddEntity(dimension);
+        SelectEntity(viewModel, dimension);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Dimension style");
+        row.EditableValue = "Architectural";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<LinearDimensionEntity>(viewModel.Workspace.Document.Entities.GetRequired(dimension.Id));
+        Assert.Equal(DimensionStyleId.Architectural, updated.DimensionStyleId);
+        Assert.Equal("Dimension style updated.", viewModel.LastMessage);
+        Assert.True(viewModel.Workspace.CommandHistory.CanUndo);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<LinearDimensionEntity>(viewModel.Workspace.Document.Entities.GetRequired(dimension.Id));
+        Assert.Equal(DimensionStyleId.Standard, restored.DimensionStyleId);
+    }
+
     [Fact]
     public void ApplyCommand_ForDimensionTextOverride_ShouldReplaceDimensionAndSupportUndo()
     {
@@ -372,6 +550,14 @@ public sealed class PropertyPanelEditingTests
     {
         viewModel.Workspace.SelectionSet.ReplaceWith(entity.Id);
         viewModel.RefreshPropertyPanel();
+    }
+
+    private static PropertySectionViewModel FindSection(
+        MainWindowViewModel viewModel,
+        string title)
+    {
+        return viewModel.PropertyPanel.Sections
+            .Single(section => section.Title == title);
     }
 
     private static PropertyRowViewModel FindRow(

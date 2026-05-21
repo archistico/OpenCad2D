@@ -14,6 +14,8 @@ namespace OpenCad2D.App.ViewModels.Properties;
 
 public sealed class SelectionPropertyPanelBuilder
 {
+    private const int MaxPolylineVerticesInPropertyPanel = 4;
+    private static readonly string[] YesNoOptions = ["Yes", "No"];
     public PropertyPanelViewModel Build(
         CadWorkspace workspace,
         Action<string>? setMessage = null,
@@ -77,9 +79,10 @@ public sealed class SelectionPropertyPanelBuilder
                 {
                     Row("Type", GetEntityTypeName(entity)),
                     Row("Layer", layer.Name),
-                    EditableRow(
+                    ComboRow(
                         "Layer id",
                         entity.LayerId.Value,
+                        GetLayerIdOptions(workspace),
                         value => ReplaceEntityLayer(
                             workspace,
                             entity.Id,
@@ -94,6 +97,12 @@ public sealed class SelectionPropertyPanelBuilder
         };
 
         sections.Add(BuildGeometrySection(workspace, entity, setMessage, refresh));
+
+        if (entity is PolylineEntity polyline)
+        {
+            sections.Add(BuildPolylineVerticesSection(workspace, polyline, setMessage, refresh));
+        }
+
         sections.Add(BuildBoundsSection(entity.GetBoundingBox()));
 
         return new PropertyPanelViewModel(
@@ -347,9 +356,10 @@ public sealed class SelectionPropertyPanelBuilder
         rows.Add(Row(
             "Status",
             dimension.IsStale ? "Potentially stale" : "Checked"));
-        rows.Add(EditableRow(
+        rows.Add(ComboRow(
             "Dimension style",
-            dimension.DimensionStyleId.Value,
+            GetDimensionStyleDisplayName(workspace, dimension.DimensionStyleId),
+            workspace.Document.DimensionStyles.All.Select(style => style.Name),
             value => ReplaceDimensionStyle(workspace, dimension.Id, value, setMessage, refresh)));
         rows.Add(EditableRow(
             "Text override",
@@ -447,7 +457,12 @@ public sealed class SelectionPropertyPanelBuilder
         var rows = new List<PropertyRowViewModel>
         {
             Row("Vertices", polyline.Vertices.Count.ToString(CultureInfo.InvariantCulture)),
-            EditableRow("Closed", PropertyValueFormatter.FormatBoolean(polyline.IsClosed), value => ReplacePolylineClosed(workspace, polyline.Id, value, setMessage, refresh)),
+            new PropertyRowViewModel(
+                "Closed",
+                FormatYesNo(polyline.IsClosed),
+                isEditable: true,
+                value => ReplacePolylineClosed(workspace, polyline.Id, value, setMessage, refresh),
+                YesNoOptions),
             Row("Length", PropertyValueFormatter.FormatLength(GetPolylineLength(polyline)))
         };
 
@@ -458,6 +473,51 @@ public sealed class SelectionPropertyPanelBuilder
 
         return new PropertySectionViewModel(
             "Geometry",
+            rows);
+    }
+
+    private static PropertySectionViewModel BuildPolylineVerticesSection(
+        CadWorkspace workspace,
+        PolylineEntity polyline,
+        Action<string>? setMessage,
+        Action? refresh)
+    {
+        var rows = new List<PropertyRowViewModel>();
+        int displayedVertexCount = Math.Min(
+            polyline.Vertices.Count,
+            MaxPolylineVerticesInPropertyPanel);
+
+        for (int index = 0; index < displayedVertexCount; index++)
+        {
+            Point2D vertex = polyline.Vertices[index];
+            int vertexIndex = index;
+
+            rows.Add(EditableRow(
+                $"Vertex {index + 1}",
+                FormatVertexValue(vertex),
+                value => ReplacePolylineVertex(
+                    workspace,
+                    polyline.Id,
+                    vertexIndex,
+                    value,
+                    setMessage,
+                    refresh)));
+        }
+
+        if (polyline.Vertices.Count > displayedVertexCount)
+        {
+            rows.Add(Row(
+                "More vertices",
+                $"{polyline.Vertices.Count - displayedVertexCount} hidden to keep the Property Panel responsive."));
+        }
+
+        if (rows.Count == 0)
+        {
+            rows.Add(Row("Vertices", "No vertices"));
+        }
+
+        return new PropertySectionViewModel(
+            "Vertices",
             rows);
     }
 
@@ -869,6 +929,42 @@ public sealed class SelectionPropertyPanelBuilder
             refresh);
     }
 
+    private static void ReplacePolylineVertex(
+        CadWorkspace workspace,
+        EntityId entityId,
+        int vertexIndex,
+        string value,
+        Action<string>? setMessage,
+        Action? refresh)
+    {
+        if (!TryGetEditableEntity<PolylineEntity>(workspace, entityId, setMessage, out PolylineEntity polyline) ||
+            !TryParseVertex(value, setMessage, out Point2D vertex))
+        {
+            return;
+        }
+
+        if (vertexIndex < 0 || vertexIndex >= polyline.Vertices.Count)
+        {
+            setMessage?.Invoke("Polyline vertex was not found.");
+            return;
+        }
+
+        List<Point2D> vertices = polyline.Vertices.ToList();
+        vertices[vertexIndex] = vertex;
+
+        if (!ValidatePolylineVertices(vertices, polyline.IsClosed, setMessage))
+        {
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            new PolylineEntity(vertices, polyline.IsClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder),
+            "Polyline vertex updated.",
+            setMessage,
+            refresh);
+    }
+
     private static void ReplacePolylineClosed(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
     {
         if (!TryGetEditableEntity<PolylineEntity>(workspace, entityId, setMessage, out PolylineEntity polyline) ||
@@ -914,6 +1010,41 @@ public sealed class SelectionPropertyPanelBuilder
         ReplaceEntity(workspace, entity.WithLayer(layerId), "Entity layer updated.", setMessage, refresh);
     }
 
+    private static bool ValidatePolylineVertices(
+        IReadOnlyList<Point2D> vertices,
+        bool isClosed,
+        Action<string>? setMessage)
+    {
+        int minimumVertexCount = isClosed ? 3 : 2;
+
+        if (vertices.Count < minimumVertexCount)
+        {
+            setMessage?.Invoke(isClosed
+                ? "A closed polyline requires at least three vertices."
+                : "A polyline requires at least two vertices.");
+            return false;
+        }
+
+        for (int index = 1; index < vertices.Count; index++)
+        {
+            if (vertices[index - 1].DistanceTo(vertices[index]) <= 1e-9)
+            {
+                setMessage?.Invoke("Polyline vertices must not create zero-length consecutive segments.");
+                return false;
+            }
+        }
+
+        if (isClosed &&
+            vertices.Count > 1 &&
+            vertices[^1].DistanceTo(vertices[0]) <= 1e-9)
+        {
+            setMessage?.Invoke("Closed polyline first and last vertices must not be identical.");
+            return false;
+        }
+
+        return true;
+    }
+
     private static void ReplaceDimensionStyle(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
     {
         if (!TryGetEditableEntity<DimensionEntity>(workspace, entityId, setMessage, out DimensionEntity dimension))
@@ -921,14 +1052,56 @@ public sealed class SelectionPropertyPanelBuilder
             return;
         }
 
-        var styleId = new DimensionStyleId(value.Trim());
-        if (string.IsNullOrWhiteSpace(styleId.Value) || !workspace.Document.DimensionStyles.Contains(styleId))
+        if (!TryResolveDimensionStyleId(workspace, value, out DimensionStyleId styleId))
         {
             setMessage?.Invoke("Dimension style was not found.");
             return;
         }
 
         ReplaceEntity(workspace, RecreateDimension(dimension, styleId, dimension.TextOverride), "Dimension style updated.", setMessage, refresh);
+    }
+
+    private static string GetDimensionStyleDisplayName(
+        CadWorkspace workspace,
+        DimensionStyleId styleId)
+    {
+        return workspace.Document.DimensionStyles.TryGetById(styleId, out DimensionStyle? style) &&
+               style is not null
+            ? style.Name
+            : styleId.Value;
+    }
+
+    private static bool TryResolveDimensionStyleId(
+        CadWorkspace workspace,
+        string value,
+        out DimensionStyleId styleId)
+    {
+        string trimmed = value.Trim();
+        styleId = new DimensionStyleId(trimmed);
+
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return false;
+        }
+
+        if (workspace.Document.DimensionStyles.Contains(styleId))
+        {
+            return true;
+        }
+
+        DimensionStyle? styleByName = workspace.Document.DimensionStyles.All
+            .FirstOrDefault(style => string.Equals(
+                style.Name,
+                trimmed,
+                StringComparison.OrdinalIgnoreCase));
+
+        if (styleByName is null)
+        {
+            return false;
+        }
+
+        styleId = styleByName.Id;
+        return true;
     }
 
     private static void ReplaceDimensionTextOverride(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
@@ -982,6 +1155,39 @@ public sealed class SelectionPropertyPanelBuilder
         return true;
     }
 
+    private static IReadOnlyList<string> GetLayerIdOptions(CadWorkspace workspace)
+    {
+        return workspace.Document.Layers.All
+            .Select(layer => layer.Id.Value)
+            .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static string FormatVertexValue(Point2D vertex)
+    {
+        return $"{PropertyValueFormatter.FormatCoordinate(vertex.X)}, {PropertyValueFormatter.FormatCoordinate(vertex.Y)}";
+    }
+
+    private static bool TryParseVertex(string value, Action<string>? setMessage, out Point2D vertex)
+    {
+        vertex = Point2D.Origin;
+
+        string[] parts = value.Split(
+            ',',
+            StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+        if (parts.Length != 2 ||
+            !double.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out double x) ||
+            !double.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out double y))
+        {
+            setMessage?.Invoke("Invalid vertex value. Use X, Y with point as decimal separator, for example 10.5, 20.");
+            return false;
+        }
+
+        vertex = new Point2D(x, y);
+        return true;
+    }
+
     private static bool TryParseDouble(string value, Action<string>? setMessage, out double result)
     {
         if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out result))
@@ -991,6 +1197,11 @@ public sealed class SelectionPropertyPanelBuilder
 
         setMessage?.Invoke("Invalid numeric value. Use point as decimal separator, for example 10.5.");
         return false;
+    }
+
+    private static string FormatYesNo(bool value)
+    {
+        return value ? "Yes" : "No";
     }
 
     private static bool TryParseBoolean(string value, Action<string>? setMessage, out bool result)
@@ -1053,5 +1264,14 @@ public sealed class SelectionPropertyPanelBuilder
     private static PropertyRowViewModel EditableRow(string name, string value, Action<string> apply)
     {
         return new PropertyRowViewModel(name, value, isEditable: true, apply);
+    }
+
+    private static PropertyRowViewModel ComboRow(
+        string name,
+        string value,
+        IEnumerable<string> options,
+        Action<string> apply)
+    {
+        return new PropertyRowViewModel(name, value, isEditable: true, apply, options);
     }
 }

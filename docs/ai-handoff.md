@@ -8,7 +8,7 @@ This file is the current technical handoff for continuing OpenCad2D work. It sho
 
 OpenCad2D is in the v0.9 stabilization cycle. The active goal is to make the existing 2D CAD foundation predictable, precise and release-ready before moving toward v1.0.
 
-Current work area: final v0.9 validation after completing the Modify Tools UX cleanup pass.
+Current work area: Dimension Style System UI and drafting configuration before v0.9 planning.
 
 ---
 
@@ -25,6 +25,27 @@ The following areas are considered stable enough to be summarized rather than re
 - selection, entity cycling, Select All, Select Last and Deselect;
 - Text/MTEXT bounding-box hit testing;
 - Save/Export UX clarity: export does not replace native save and does not clear dirty state.
+
+---
+
+## Dimension Style System checkpoint
+
+Dimension styles are now being promoted from a basic rendering helper to a document-level drafting system.
+
+Current implemented baseline:
+
+- `CadDocument.CurrentDimensionStyleId` stores the current dimension style;
+- `ToolCreationContext.CurrentDimensionStyleId` is used by dimension tools when creating new dimensions;
+- dimension style persistence includes the current dimension style id in document settings;
+- `DimensionStyle` supports generic prefix/suffix plus radius and diameter prefixes;
+- `DimensionStyle` now also stores arrow symbol, text rotation mode and preferred dimension line offset;
+- `DimensionGeometryBuilder` resolves readable dimension text rotations and supports closed arrow, open arrow, architectural tick, dot and no terminator symbols;
+- dimension text is treated as center-anchored for canvas, SVG, PDF and DXF graphical dimension export;
+- a first `DimensionStyleManagerWindow` is available from the top bar near Layers, Line Formats and Text Formats;
+- the manager supports adding/removing non-built-in unused styles, setting the current style, and editing text format, unit precision/separator, generic prefix/suffix, R/Ø prefixes, symbol type/size, text rotation mode and main offsets;
+- dimension style changes are applied through `UpdateDimensionStylesCommand`, so they are undoable and keep the current style synchronized with the document/tool context.
+
+Next planned step: add a live preview to the Dimension Style Manager and then wire the dimension style selector into the property panel for selected dimensions.
 
 ---
 
@@ -126,12 +147,31 @@ Offset workflow:
 
 ---
 
+
+## Property Panel final cleanup checkpoint
+
+Current state:
+
+- `Layer id` is a combo-box row populated from the current document layer ids.
+- `Dimension style` is a combo-box row populated from the current document dimension styles.
+- Polyline `Closed` is a `Yes`/`No` combo-box row.
+- Selected polylines show a compact `Vertices` section with at most 4 editable rows.
+- Each polyline vertex row uses a single `X, Y` value, for example `10.5, 20`.
+- If a polyline has more than 4 vertices, the panel adds a `More vertices` row with the hidden count.
+- Per-vertex insert/delete action rows were intentionally removed from the compact Property Panel list; they should return later in a dedicated vertex editor UI, not mixed into the lightweight property list.
+
+Implementation notes:
+
+- `PropertyRowViewModel` already supports combo-box rows through `Options`, `IsComboBox` and `IsTextBox`.
+- `SelectionPropertyPanelBuilder` is the current source of truth for Property Panel rows.
+- Keep the compact vertex list lightweight; avoid creating hundreds of editable rows for dense polylines.
+
 ## Current next work
 
 1. Validate Explode/Join manually in the UI after local build/test.
 2. Complete/execute `docs/testing/curve-editing-regression-v0.9.md`.
 3. Export/import compatibility pass for SVG/PDF/DXF.
-4. Property Panel curve review.
+4. Manual UI check of Property Panel combo boxes and compact polyline vertices.
 5. Release preparation for v0.9.
 
 ---

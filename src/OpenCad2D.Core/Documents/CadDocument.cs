@@ -19,6 +19,7 @@ public sealed class CadDocument
         LineFormats = LineFormatCollection.Default;
         TextFormats = TextFormatCollection.Default;
         DimensionStyles = DimensionStyleCollection.Default;
+        CurrentDimensionStyleId = DimensionStyleId.Standard;
         Entities = new EntityCollection();
     }
 
@@ -29,6 +30,8 @@ public sealed class CadDocument
     public TextFormatCollection TextFormats { get; }
 
     public DimensionStyleCollection DimensionStyles { get; }
+
+    public DimensionStyleId CurrentDimensionStyleId { get; private set; }
 
     public EntityCollection Entities { get; }
 
@@ -51,6 +54,24 @@ public sealed class CadDocument
         ArgumentNullException.ThrowIfNull(dimensionStyles);
 
         DimensionStyles.ReplaceAll(dimensionStyles.All);
+
+        if (!DimensionStyles.Contains(CurrentDimensionStyleId))
+        {
+            CurrentDimensionStyleId = DimensionStyles.Contains(DimensionStyleId.Standard)
+                ? DimensionStyleId.Standard
+                : DimensionStyles.All[0].Id;
+        }
+    }
+
+    public void SetCurrentDimensionStyle(DimensionStyleId dimensionStyleId)
+    {
+        if (!DimensionStyles.Contains(dimensionStyleId))
+        {
+            throw new InvalidOperationException(
+                $"Cannot set current dimension style because style '{dimensionStyleId}' does not exist.");
+        }
+
+        CurrentDimensionStyleId = dimensionStyleId;
     }
 
     public void AddEntity(CadEntity entity)

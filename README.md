@@ -6,6 +6,14 @@ The project explores how to build a small but serious 2D CAD system from the gro
 
 OpenCad2D is not intended to replace mature CAD applications yet. The current goal is to create a precise, fast, testable and understandable 2D CAD foundation.
 
+## A long-running personal project
+
+OpenCad2D is not a disposable AI-generated experiment. Its roots go back more than twenty years, to when I first started writing C# and imagining how a personal 2D CAD system could be built from the ground up.
+
+For a long time, the project existed as separate pieces: geometry experiments, drawing ideas, editing tools, file-format tests, interface prototypes and many small lessons accumulated over years of programming. What changed recently is that AI-assisted development finally made it possible to bring those fragments together, review them, refactor them and turn them into a coherent, tested and working application.
+
+AI is part of the process, but it is not the author of the vision. OpenCad2D remains a human-led project: shaped by long-term interest in CAD, by practical software design choices, by tests, by manual validation and by a clear preference for a precise, understandable and open 2D drafting tool.
+
 ![OpenCad2D screenshot](screenshot/screenshot_UI_1.png)
 
 ---
@@ -179,3 +187,39 @@ OpenCad2D is released under the GPL-3.0-or-later license. See `LICENSE`.
 ## Credits
 
 Created with love by Emilie Rollandin.
+
+- Dimension Styles manager for configurable dimension text, units, classic terminator symbols, offsets, live preview and left-readable vertical dimension text.
+
+
+Dimension styles include built-in Standard, Architectural and Mechanical presets with configurable text, symbols, units and orientation.
+
+
+Dimension text fit rules keep labels readable on short dimensions by moving text outside the measured span when needed.
+
+
+Dimension terminator fit rules can keep arrows/ticks inside or move them outside when a dimension is too short.
+
+
+## Current limitations and planned improvements
+
+OpenCad2D is intentionally transparent about what is already solid and what still needs refinement.
+
+- **Polyline numeric editing**: polylines can be edited visually through canvas grips, but the Property Panel does not yet provide a tabular editor for individual vertices. A future vertex table will allow precise X/Y correction for each point.
+- **Non-associative dimensions**: dimensions store their own measured points and dimension-line geometry. When the measured entity is later moved, scaled or edited, the dimension value does not update automatically. OpenCad2D can mark dimensions as potentially stale after geometry changes, but users must update or recreate them manually.
+- **Local user settings**: basic local settings exist, but the next step is a more complete startup configuration flow for default grid/snap preferences, recent paths and last-file behavior.
+
+
+## Current stabilization checkpoint
+
+OpenCad2D is currently in the v0.9 stabilization cycle. Recent completed work includes:
+
+- Dimension Styles with built-in `Standard`, `Architectural` and `Mechanical` presets;
+- a Dimension Style Manager with live preview based on the same `DimensionGeometryBuilder` used by real dimensions;
+- property-panel dimension style selection through a combo box;
+- configurable dimension text and terminator fit rules for short dimensions;
+- classic dimension terminators including arrows, triangles, dots, architectural ticks and slash symbols;
+- left-readable vertical dimension text according to the current OpenCad2D convention;
+- bugfixes for Break Point on full ellipses, TRIM open-polyline endpoint filtering and Offset polyline side detection;
+- cleanup of obsolete TRIM highlight helper code and clearer Fillet branch-parameter documentation.
+
+The next planning step is v0.9 scope consolidation: decide which remaining polish items are required before the next public release and which are deferred to v1.0.

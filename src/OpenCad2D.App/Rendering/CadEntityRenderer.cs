@@ -309,6 +309,10 @@ public sealed class CadEntityRenderer
             fontSize,
             brush);
 
+        Point centeredInsertionPoint = new(
+            insertionPoint.X - (formattedText.Width / 2.0),
+            insertionPoint.Y - (formattedText.Height / 2.0));
+
         using (context.PushTransform(CadTextTransform.CreateCadRotationAt(
                    text.RotationDegrees,
                    insertionPoint.X,
@@ -316,7 +320,7 @@ public sealed class CadEntityRenderer
         {
             context.DrawText(
                 formattedText,
-                insertionPoint);
+                centeredInsertionPoint);
         }
     }
 

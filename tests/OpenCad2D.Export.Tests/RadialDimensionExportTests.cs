@@ -22,7 +22,7 @@ public sealed class RadialDimensionExportTests
         SvgExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(4, CountOccurrences(result.Content, "<line "));
+        Assert.Equal(5, CountOccurrences(result.Content, "<line "));
         Assert.Contains("<text ", result.Content);
         Assert.Contains(">R 10.00</text>", result.Content);
     }
@@ -41,7 +41,7 @@ public sealed class RadialDimensionExportTests
         SvgExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(6, CountOccurrences(result.Content, "<line "));
+        Assert.Equal(8, CountOccurrences(result.Content, "<line "));
         Assert.Contains("<text ", result.Content);
         Assert.Contains(">Ø 20.00</text>", result.Content);
     }
@@ -60,7 +60,7 @@ public sealed class RadialDimensionExportTests
         DxfExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(4, CountEntityRecords(result.Content, "LINE"));
+        Assert.Equal(5, CountEntityRecords(result.Content, "LINE"));
         Assert.Equal(1, CountEntityRecords(result.Content, "TEXT"));
         Assert.Contains("R 10.00", result.Content);
     }
@@ -79,7 +79,7 @@ public sealed class RadialDimensionExportTests
         DxfExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(6, CountEntityRecords(result.Content, "LINE"));
+        Assert.Equal(8, CountEntityRecords(result.Content, "LINE"));
         Assert.Equal(1, CountEntityRecords(result.Content, "TEXT"));
         Assert.Contains("Ø 20.00", result.Content);
     }

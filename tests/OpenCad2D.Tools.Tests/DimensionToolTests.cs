@@ -2,6 +2,7 @@ using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -241,10 +242,41 @@ public sealed class DimensionToolTests
         Assert.Empty(context.Document.Entities.All);
     }
 
-    private static ToolContext CreateContext()
+
+    [Fact]
+    public void HorizontalDimensionTool_ShouldAssignCurrentDimensionStyle()
+    {
+        var document = new CadDocument();
+        var customStyleId = new DimensionStyleId("Architectural");
+        document.ReplaceDimensionStyles(new DimensionStyleCollection(new[]
+        {
+            DimensionStyleCollection.Default.GetById(DimensionStyleId.Standard),
+            new DimensionStyle(
+                customStyleId,
+                "Architectural",
+                TextFormatId.Annotation,
+                arrowSize: 4,
+                textOffset: 2,
+                extensionLineOffset: 1.5,
+                extensionLineOvershoot: 2,
+                decimalPlaces: 2,
+                suffix: " m")
+        }));
+        document.SetCurrentDimensionStyle(customStyleId);
+        ToolContext context = CreateContext(document);
+        var tool = new HorizontalDimensionTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(100, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(50, 20)));
+
+        var dimension = Assert.Single(context.Document.Entities.All.OfType<LinearDimensionEntity>());
+        Assert.Equal(customStyleId, dimension.DimensionStyleId);
+    }
+    private static ToolContext CreateContext(CadDocument? document = null)
     {
         return new ToolContext(
-            new CadDocument(),
+            document ?? new CadDocument(),
             new CommandHistory(),
             new SnapService());
     }

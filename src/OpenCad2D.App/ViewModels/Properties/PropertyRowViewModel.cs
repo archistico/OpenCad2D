@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 
@@ -16,7 +18,8 @@ public sealed class PropertyRowViewModel : INotifyPropertyChanged
             name,
             value,
             isEditable: false,
-            apply: null)
+            apply: null,
+            options: null)
     {
     }
 
@@ -25,6 +28,21 @@ public sealed class PropertyRowViewModel : INotifyPropertyChanged
         string value,
         bool isEditable,
         Action<string>? apply)
+        : this(
+            name,
+            value,
+            isEditable,
+            apply,
+            options: null)
+    {
+    }
+
+    public PropertyRowViewModel(
+        string name,
+        string value,
+        bool isEditable,
+        Action<string>? apply,
+        IEnumerable<string>? options)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -37,6 +55,9 @@ public sealed class PropertyRowViewModel : INotifyPropertyChanged
         Value = value ?? string.Empty;
         _editableValue = Value;
         IsEditable = isEditable;
+        Options = options?.ToList() ?? (IReadOnlyList<string>)Array.Empty<string>();
+        IsComboBox = IsEditable && Options.Count > 0;
+        IsTextBox = IsEditable && !IsComboBox;
         ApplyCommand = new PropertyRowCommand(
             () => apply?.Invoke(EditableValue),
             () => IsEditable && apply is not null);
@@ -47,6 +68,12 @@ public sealed class PropertyRowViewModel : INotifyPropertyChanged
     public string Value { get; }
 
     public bool IsEditable { get; }
+
+    public bool IsTextBox { get; }
+
+    public bool IsComboBox { get; }
+
+    public IReadOnlyList<string> Options { get; }
 
     public string EditableValue
     {

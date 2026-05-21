@@ -29,3 +29,6 @@ else
 endif
 
 z: clean zip
+
+artifacts:
+	dotnet publish src\OpenCad2D.App\OpenCad2D.App.csproj -c Release -r win-x64 --self-contained true -o artifacts\OpenCad2D-win-x64

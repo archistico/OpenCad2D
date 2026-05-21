@@ -23,6 +23,7 @@ public sealed class ToolContext
         SelectionService? selectionService = null,
         GridSettings? gridSettings = null,
         LayerId? currentLayerId = null,
+        DimensionStyleId? currentDimensionStyleId = null,
         SnapKind enabledSnaps = SnapKind.None,
         double snapTolerance = 0,
         double selectionTolerance = 5,
@@ -56,7 +57,8 @@ public sealed class ToolContext
             geometryTolerance ?? GeometryTolerance.Default);
 
         Creation = new ToolCreationContext(
-            currentLayerId ?? LayerId.Default);
+            currentLayerId ?? LayerId.Default,
+            currentDimensionStyleId ?? document.CurrentDimensionStyleId);
 
         AngleConstraintSettings = angleConstraintSettings ?? AngleConstraintSettings.Off;
     }
@@ -109,6 +111,12 @@ public sealed class ToolContext
     {
         get => Creation.CurrentLayerId;
         set => Creation.CurrentLayerId = value;
+    }
+
+    public DimensionStyleId CurrentDimensionStyleId
+    {
+        get => Creation.CurrentDimensionStyleId;
+        set => Creation.CurrentDimensionStyleId = value;
     }
 
     public SnapKind EnabledSnaps

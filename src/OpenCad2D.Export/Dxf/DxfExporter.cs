@@ -433,11 +433,16 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(10, textPosition.X);
         writer.WriteGroup(20, textPosition.Y);
         writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(11, textPosition.X);
+        writer.WriteGroup(21, textPosition.Y);
+        writer.WriteGroup(31, 0.0);
         writer.WriteGroup(40, textFormat.Height);
         writer.WriteGroup(1, model.Text.Text);
         writer.WriteGroup(50, ToDxfRotationDegrees(
             model.Text.RotationDegrees,
             options));
+        writer.WriteGroup(72, 1);
+        writer.WriteGroup(73, 2);
         writer.WriteGroup(7, textFormat.Name);
     }
 

@@ -5,8 +5,10 @@ using OpenCad2D.Geometry.Primitives;
 namespace OpenCad2D.Core.Editing;
 
 /// <summary>
-/// Provides trim operations for line entities.
+/// Legacy line-only trim helper retained for compatibility with older internal callers.
+/// Production TRIM tools use <see cref="CadTrimService"/> instead.
 /// </summary>
+[Obsolete("Use CadTrimService for production trim operations.")]
 public static class LineTrimService
 {
     public static IReadOnlyList<LineEntity> TrimByBoundary(

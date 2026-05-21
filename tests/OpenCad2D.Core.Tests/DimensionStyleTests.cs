@@ -18,7 +18,10 @@ public sealed class DimensionStyleTests
             extensionLineOvershoot: 2,
             decimalPlaces: 2,
             decimalSeparator: ",",
-            suffix: " mm");
+            suffix: " mm",
+            prefix: "~",
+            radiusPrefix: "R",
+            diameterPrefix: "D");
 
         Assert.Equal(new DimensionStyleId("Architectural"), style.Id);
         Assert.Equal("Architectural", style.Name);
@@ -29,7 +32,27 @@ public sealed class DimensionStyleTests
         Assert.Equal(2, style.ExtensionLineOvershoot);
         Assert.Equal(2, style.DecimalPlaces);
         Assert.Equal(",", style.DecimalSeparator);
+        Assert.Equal("~", style.Prefix);
         Assert.Equal(" mm", style.Suffix);
+        Assert.Equal("R", style.RadiusPrefix);
+        Assert.Equal("D", style.DiameterPrefix);
+    }
+
+
+    [Fact]
+    public void Constructor_WithNegativeTextOffset_ShouldAllowValue()
+    {
+        var style = new DimensionStyle(
+            DimensionStyleId.Standard,
+            "Standard",
+            TextFormatId.Annotation,
+            arrowSize: 4,
+            textOffset: -2,
+            extensionLineOffset: 1.5,
+            extensionLineOvershoot: 2,
+            decimalPlaces: 2);
+
+        Assert.Equal(-2, style.TextOffset);
     }
 
     [Fact]

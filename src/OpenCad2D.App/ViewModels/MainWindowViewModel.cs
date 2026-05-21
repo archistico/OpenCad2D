@@ -1,3 +1,4 @@
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -1666,6 +1667,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         Workspace.MarkDocumentChanged();
+        CaptureAndSaveDraftingDefaults();
 
         SetMessage($"Snap settings updated: {Workspace.Context.EnabledSnaps}");
 
@@ -1702,10 +1704,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+    public ToolResult ApplyDimensionStyleChanges(
+        IEnumerable<DimensionStyle> dimensionStyles,
+        DimensionStyleId currentDimensionStyleId)
+    {
+        ToolResult result = Workspace.ApplyDimensionStyleChanges(
+            dimensionStyles,
+            currentDimensionStyleId);
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+
     public ToolResult ApplyGridSettings(GridSettings gridSettings)
     {
         ToolResult result = Workspace.SetGridSettings(gridSettings);
         Workspace.MarkDocumentChanged();
+        CaptureAndSaveDraftingDefaults();
 
         SetLastResult(result);
         OnPropertiesChanged(
@@ -2095,6 +2113,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 document,
                 new LayerId(currentLayerId));
             ApplyDocumentSettings(dto.Settings);
+            ApplyApplicationDraftingDefaults();
 
             _currentFilePath = null;
             SetMessage("Default template loaded.");
@@ -2120,6 +2139,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         Workspace.NewDocument();
         EnsureDefaultCadLayers();
+        ApplyApplicationDraftingDefaults();
         Workspace.MarkSaved();
         _currentFilePath = null;
         SetMessage("Default template unavailable; using internal defaults.");
@@ -2144,6 +2164,31 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         Workspace.Document.Layers.Add(layer);
     }
 
+
+    private void ApplyApplicationDraftingDefaults()
+    {
+        if (_applicationSettings.DefaultGrid is not null)
+        {
+            Workspace.SetGridSettings(_applicationSettings.DefaultGrid.ToGridSettings());
+        }
+
+        if (_applicationSettings.DefaultSnapping is not null)
+        {
+            Workspace.Context.EnabledSnaps = _applicationSettings.DefaultSnapping.ToSnapKind();
+            Workspace.Context.SnapTolerance = GetPositiveOrDefault(
+                _applicationSettings.DefaultSnapping.Tolerance,
+                Workspace.Context.SnapTolerance);
+        }
+    }
+
+    private void CaptureAndSaveDraftingDefaults()
+    {
+        _applicationSettings.CaptureDraftingDefaults(
+            Workspace.GridSettings,
+            Workspace.Context.EnabledSnaps,
+            Workspace.Context.SnapTolerance);
+        SaveApplicationSettings();
+    }
 
     private void RegisterOpenedFile(string filePath)
     {

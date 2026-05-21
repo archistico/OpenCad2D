@@ -33,7 +33,10 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         {
             Version = CurrentVersion,
             SavedAt = DateTimeOffset.UtcNow.ToString("O", CultureInfo.InvariantCulture),
-            Settings = NormalizeSettings(settings, currentLayerId),
+            Settings = NormalizeSettings(
+                settings,
+                currentLayerId,
+                document.CurrentDimensionStyleId.Value),
             Viewport = new ViewportStateDto
             {
                 PanX = viewport.PanX,
@@ -83,6 +86,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
 
         DimensionStyleCollection dimensionStyles = FromDimensionStyleDtos(dto.DimensionStyles);
         document.ReplaceDimensionStyles(dimensionStyles);
+        SetCurrentDimensionStyleFromSettings(
+            document,
+            dto.Settings.CurrentDimensionStyleId);
 
         foreach (LayerDto layerDto in dto.Layers)
         {
@@ -151,6 +157,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
 
         DimensionStyleCollection dimensionStyles = FromDimensionStyleDtos(dto.DimensionStyles);
         document.ReplaceDimensionStyles(dimensionStyles);
+        SetCurrentDimensionStyleFromSettings(
+            document,
+            dto.Settings.CurrentDimensionStyleId);
 
         foreach (LayerDto layerDto in dto.Layers)
         {
@@ -429,12 +438,20 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             Name = style.Name,
             TextFormatId = style.TextFormatId.Value,
             ArrowSize = style.ArrowSize,
+            ArrowSymbol = style.ArrowSymbol.ToString(),
+            TextRotationMode = style.TextRotationMode.ToString(),
+            TextFitMode = style.TextFitMode.ToString(),
+            TerminatorFitMode = style.TerminatorFitMode.ToString(),
+            DimensionLineOffset = style.DimensionLineOffset,
             TextOffset = style.TextOffset,
             ExtensionLineOffset = style.ExtensionLineOffset,
             ExtensionLineOvershoot = style.ExtensionLineOvershoot,
             DecimalPlaces = style.DecimalPlaces,
             DecimalSeparator = style.DecimalSeparator,
-            Suffix = style.Suffix
+            Prefix = style.Prefix,
+            Suffix = style.Suffix,
+            RadiusPrefix = style.RadiusPrefix,
+            DiameterPrefix = style.DiameterPrefix
         };
     }
 
@@ -768,6 +785,25 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         return new TextFormatCollection(formats);
     }
 
+    private static void SetCurrentDimensionStyleFromSettings(
+        CadDocument document,
+        string? currentDimensionStyleId)
+    {
+        DimensionStyleId requestedStyleId = string.IsNullOrWhiteSpace(currentDimensionStyleId)
+            ? DimensionStyleId.Standard
+            : new DimensionStyleId(currentDimensionStyleId);
+
+        if (document.DimensionStyles.Contains(requestedStyleId))
+        {
+            document.SetCurrentDimensionStyle(requestedStyleId);
+            return;
+        }
+
+        document.SetCurrentDimensionStyle(document.DimensionStyles.Contains(DimensionStyleId.Standard)
+            ? DimensionStyleId.Standard
+            : document.DimensionStyles.All[0].Id);
+    }
+
     private static DimensionStyleCollection FromDimensionStyleDtos(IReadOnlyCollection<DimensionStyleDto>? dtos)
     {
         if (dtos is null || dtos.Count == 0)
@@ -797,12 +833,20 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 name,
                 textFormatId,
                 dto.ArrowSize <= 0 ? 4.0 : dto.ArrowSize,
-                dto.TextOffset < 0 ? 2.0 : dto.TextOffset,
+                dto.TextOffset,
                 dto.ExtensionLineOffset < 0 ? 1.5 : dto.ExtensionLineOffset,
                 dto.ExtensionLineOvershoot < 0 ? 2.0 : dto.ExtensionLineOvershoot,
                 dto.DecimalPlaces < 0 ? 2 : Math.Min(dto.DecimalPlaces, 8),
                 string.IsNullOrWhiteSpace(dto.DecimalSeparator) ? "." : dto.DecimalSeparator,
-                dto.Suffix ?? string.Empty));
+                dto.Suffix ?? string.Empty,
+                dto.Prefix ?? string.Empty,
+                dto.RadiusPrefix ?? "R ",
+                dto.DiameterPrefix ?? "Ø ",
+                ParseDimensionArrowSymbol(dto.ArrowSymbol),
+                ParseDimensionTextRotationMode(dto.TextRotationMode),
+                dto.DimensionLineOffset < 0 ? 8.0 : dto.DimensionLineOffset,
+                ParseDimensionTextFitMode(dto.TextFitMode),
+                ParseDimensionTerminatorFitMode(dto.TerminatorFitMode)));
         }
 
         if (styles.Count == 0)
@@ -818,6 +862,47 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         }
 
         return new DimensionStyleCollection(styles);
+    }
+
+
+    private static DimensionArrowSymbol ParseDimensionArrowSymbol(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out DimensionArrowSymbol result)
+            ? result
+            : DimensionArrowSymbol.ClosedArrow;
+    }
+
+    private static DimensionTextRotationMode ParseDimensionTextRotationMode(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out DimensionTextRotationMode result)
+            ? result
+            : DimensionTextRotationMode.Readable;
+    }
+
+    private static DimensionTextFitMode ParseDimensionTextFitMode(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out DimensionTextFitMode result)
+            ? result
+            : DimensionTextFitMode.OutsideWhenNeeded;
+    }
+
+    private static DimensionTerminatorFitMode ParseDimensionTerminatorFitMode(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out DimensionTerminatorFitMode result)
+            ? result
+            : DimensionTerminatorFitMode.OutsideWhenNeeded;
     }
 
     private static Layer FromDto(
@@ -1083,7 +1168,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
 
     private static DocumentSettingsDto NormalizeSettings(
         DocumentSettingsDto? settings,
-        string currentLayerId)
+        string currentLayerId,
+        string currentDimensionStyleId)
     {
         DocumentSettingsDto normalized = settings ?? new DocumentSettingsDto
         {
@@ -1104,6 +1190,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         {
             normalized.CurrentTextFormatId = TextFormatId.Standard.Value;
         }
+
+        normalized.CurrentDimensionStyleId = currentDimensionStyleId;
 
         return normalized;
     }

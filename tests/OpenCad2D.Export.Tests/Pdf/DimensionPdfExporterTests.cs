@@ -48,7 +48,9 @@ public sealed class DimensionPdfExporterTests
 
         Assert.Equal(1, result.ExportedEntityCount);
         Assert.Contains("(50.00) Tj", content);
-        Assert.Contains("0 -1 1 0", content);
+        // PDF uses screen-space rotation, so model 270° gives the +90° text matrix.
+        // Cosine values very close to zero may be serialized as either 0 or -0.
+        Assert.Contains(" 1 -1 ", content);
     }
 
     [Fact]

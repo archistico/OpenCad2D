@@ -1,4 +1,5 @@
 using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -31,6 +32,7 @@ public sealed class CadWorkspace
         ToolRegistry? toolRegistry = null,
         GridSettings? gridSettings = null,
         LayerId? currentLayerId = null,
+        DimensionStyleId? currentDimensionStyleId = null,
         SnapKind enabledSnaps = SnapKind.None,
         double snapTolerance = 0,
         double selectionTolerance = 5,
@@ -49,6 +51,16 @@ public sealed class CadWorkspace
         GridSettings = gridSettings ?? new GridSettings();
         GripProviders = new GripProviderRegistry();
 
+        DimensionStyleId resolvedDimensionStyleId = currentDimensionStyleId ?? Document.CurrentDimensionStyleId;
+        if (Document.DimensionStyles.Contains(resolvedDimensionStyleId))
+        {
+            Document.SetCurrentDimensionStyle(resolvedDimensionStyleId);
+        }
+        else
+        {
+            resolvedDimensionStyleId = Document.CurrentDimensionStyleId;
+        }
+
         Context = new ToolContext(
             Document,
             CommandHistory,
@@ -57,6 +69,7 @@ public sealed class CadWorkspace
             selectionService: SelectionService,
             gridSettings: GridSettings,
             currentLayerId: currentLayerId ?? LayerId.Default,
+            currentDimensionStyleId: resolvedDimensionStyleId,
             enabledSnaps: enabledSnaps,
             snapTolerance: snapTolerance,
             selectionTolerance: selectionTolerance,
@@ -104,6 +117,16 @@ public sealed class CadWorkspace
     {
         get => Context.CurrentLayerId;
         set => Context.CurrentLayerId = value;
+    }
+
+    public DimensionStyleId CurrentDimensionStyleId
+    {
+        get => Context.CurrentDimensionStyleId;
+        set
+        {
+            Document.SetCurrentDimensionStyle(value);
+            Context.CurrentDimensionStyleId = value;
+        }
     }
 
     public CoordinateSystem2D CurrentUcs
@@ -164,6 +187,7 @@ public sealed class CadWorkspace
         CurrentLayerId = document.Layers.Contains(currentLayerId)
             ? currentLayerId
             : LayerId.Default;
+        Context.CurrentDimensionStyleId = document.CurrentDimensionStyleId;
 
         ToolController.SetActiveToolWithoutDeactivating(
             new SelectionTool());
@@ -406,6 +430,47 @@ public sealed class CadWorkspace
         ClearSelectionOfNonSelectableEntities();
 
         return ToolResult.Completed("Text formats updated.");
+    }
+
+
+    public ToolResult ApplyDimensionStyleChanges(
+        IEnumerable<DimensionStyle> dimensionStyles,
+        DimensionStyleId currentDimensionStyleId)
+    {
+        ArgumentNullException.ThrowIfNull(dimensionStyles);
+
+        List<DimensionStyle> dimensionStyleList = dimensionStyles.ToList();
+
+        if (dimensionStyleList.Count == 0)
+        {
+            return ToolResult.None("Dimension style manager requires at least one style.");
+        }
+
+        if (!dimensionStyleList.Any(style => style.Id == DimensionStyleId.Standard))
+        {
+            return ToolResult.None("The Standard dimension style is required.");
+        }
+
+        if (!dimensionStyleList.Any(style => style.Id == currentDimensionStyleId))
+        {
+            return ToolResult.None("The current dimension style must exist in the style list.");
+        }
+
+        var command = new UpdateDimensionStylesCommand(
+            Document.DimensionStyles.All.ToList(),
+            dimensionStyleList,
+            Document.CurrentDimensionStyleId,
+            currentDimensionStyleId);
+
+        CommandHistory.Execute(
+            Document,
+            command);
+
+        Context.CurrentDimensionStyleId = Document.CurrentDimensionStyleId;
+
+        ClearSelectionOfNonSelectableEntities();
+
+        return ToolResult.Completed("Dimension styles updated.");
     }
 
 

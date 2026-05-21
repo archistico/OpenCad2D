@@ -17,7 +17,15 @@ public sealed class DimensionStyle
         double extensionLineOvershoot,
         int decimalPlaces,
         string decimalSeparator = ".",
-        string suffix = "")
+        string suffix = "",
+        string prefix = "",
+        string radiusPrefix = "R ",
+        string diameterPrefix = "Ø ",
+        DimensionArrowSymbol arrowSymbol = DimensionArrowSymbol.ClosedArrow,
+        DimensionTextRotationMode textRotationMode = DimensionTextRotationMode.Readable,
+        double dimensionLineOffset = 8.0,
+        DimensionTextFitMode textFitMode = DimensionTextFitMode.OutsideWhenNeeded,
+        DimensionTerminatorFitMode terminatorFitMode = DimensionTerminatorFitMode.OutsideWhenNeeded)
     {
         if (string.IsNullOrWhiteSpace(id.Value))
         {
@@ -48,14 +56,6 @@ public sealed class DimensionStyle
                 "Dimension style arrow size must be greater than zero.");
         }
 
-        if (textOffset < 0)
-        {
-            throw new ArgumentOutOfRangeException(
-                nameof(textOffset),
-                textOffset,
-                "Dimension style text offset cannot be negative.");
-        }
-
         if (extensionLineOffset < 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -80,6 +80,14 @@ public sealed class DimensionStyle
                 "Dimension style decimal places must be between 0 and 8.");
         }
 
+        if (dimensionLineOffset < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(dimensionLineOffset),
+                dimensionLineOffset,
+                "Dimension style dimension line offset cannot be negative.");
+        }
+
         string resolvedSeparator = string.IsNullOrWhiteSpace(decimalSeparator)
             ? "."
             : decimalSeparator.Trim();
@@ -100,7 +108,15 @@ public sealed class DimensionStyle
         ExtensionLineOvershoot = extensionLineOvershoot;
         DecimalPlaces = decimalPlaces;
         DecimalSeparator = resolvedSeparator;
+        Prefix = prefix ?? string.Empty;
         Suffix = suffix ?? string.Empty;
+        RadiusPrefix = radiusPrefix ?? string.Empty;
+        DiameterPrefix = diameterPrefix ?? string.Empty;
+        ArrowSymbol = arrowSymbol;
+        TextRotationMode = textRotationMode;
+        DimensionLineOffset = dimensionLineOffset;
+        TextFitMode = textFitMode;
+        TerminatorFitMode = terminatorFitMode;
     }
 
     public DimensionStyleId Id { get; }
@@ -121,9 +137,38 @@ public sealed class DimensionStyle
 
     public string DecimalSeparator { get; }
 
+    public string Prefix { get; }
+
     public string Suffix { get; }
 
-    public bool IsBuiltIn => Id == DimensionStyleId.Standard;
+    public string RadiusPrefix { get; }
+
+    public string DiameterPrefix { get; }
+
+    public DimensionArrowSymbol ArrowSymbol { get; }
+
+    public DimensionTextRotationMode TextRotationMode { get; }
+
+    /// <summary>
+    /// Preferred default distance between measured points and a dimension line.
+    /// Interactive tools may still override this by using the explicitly picked dimension line point.
+    /// </summary>
+    public double DimensionLineOffset { get; }
+
+    /// <summary>
+    /// Controls whether dimension text stays inside the measured span or moves outside when space is tight.
+    /// </summary>
+    public DimensionTextFitMode TextFitMode { get; }
+
+    /// <summary>
+    /// Controls whether dimension terminators stay inside the measured span or move outside when space is tight.
+    /// </summary>
+    public DimensionTerminatorFitMode TerminatorFitMode { get; }
+
+    public bool IsBuiltIn =>
+        Id == DimensionStyleId.Standard ||
+        Id == DimensionStyleId.Architectural ||
+        Id == DimensionStyleId.Mechanical;
 
     public DimensionStyle WithName(string name)
     {
@@ -137,7 +182,15 @@ public sealed class DimensionStyle
             ExtensionLineOvershoot,
             DecimalPlaces,
             DecimalSeparator,
-            Suffix);
+            Suffix,
+            Prefix,
+            RadiusPrefix,
+            DiameterPrefix,
+            ArrowSymbol,
+            TextRotationMode,
+            DimensionLineOffset,
+            TextFitMode,
+            TerminatorFitMode);
     }
 
     public DimensionStyle WithGeometry(
@@ -156,14 +209,25 @@ public sealed class DimensionStyle
             extensionLineOvershoot,
             DecimalPlaces,
             DecimalSeparator,
-            Suffix);
+            Suffix,
+            Prefix,
+            RadiusPrefix,
+            DiameterPrefix,
+            ArrowSymbol,
+            TextRotationMode,
+            DimensionLineOffset,
+            TextFitMode,
+            TerminatorFitMode);
     }
 
     public DimensionStyle WithText(
         TextFormatId textFormatId,
         int decimalPlaces,
         string decimalSeparator,
-        string suffix)
+        string suffix,
+        string? prefix = null,
+        string? radiusPrefix = null,
+        string? diameterPrefix = null)
     {
         return new DimensionStyle(
             Id,
@@ -175,6 +239,134 @@ public sealed class DimensionStyle
             ExtensionLineOvershoot,
             decimalPlaces,
             decimalSeparator,
-            suffix);
+            suffix,
+            prefix ?? Prefix,
+            radiusPrefix ?? RadiusPrefix,
+            diameterPrefix ?? DiameterPrefix,
+            ArrowSymbol,
+            TextRotationMode,
+            DimensionLineOffset,
+            TextFitMode,
+            TerminatorFitMode);
     }
+
+    public DimensionStyle WithSymbols(
+        DimensionArrowSymbol arrowSymbol,
+        double arrowSize)
+    {
+        return new DimensionStyle(
+            Id,
+            Name,
+            TextFormatId,
+            arrowSize,
+            TextOffset,
+            ExtensionLineOffset,
+            ExtensionLineOvershoot,
+            DecimalPlaces,
+            DecimalSeparator,
+            Suffix,
+            Prefix,
+            RadiusPrefix,
+            DiameterPrefix,
+            arrowSymbol,
+            TextRotationMode,
+            DimensionLineOffset,
+            TextFitMode,
+            TerminatorFitMode);
+    }
+
+    public DimensionStyle WithOrientation(DimensionTextRotationMode textRotationMode)
+    {
+        return new DimensionStyle(
+            Id,
+            Name,
+            TextFormatId,
+            ArrowSize,
+            TextOffset,
+            ExtensionLineOffset,
+            ExtensionLineOvershoot,
+            DecimalPlaces,
+            DecimalSeparator,
+            Suffix,
+            Prefix,
+            RadiusPrefix,
+            DiameterPrefix,
+            ArrowSymbol,
+            textRotationMode,
+            DimensionLineOffset,
+            TextFitMode,
+            TerminatorFitMode);
+    }
+
+    public DimensionStyle WithDimensionLineOffset(double dimensionLineOffset)
+    {
+        return new DimensionStyle(
+            Id,
+            Name,
+            TextFormatId,
+            ArrowSize,
+            TextOffset,
+            ExtensionLineOffset,
+            ExtensionLineOvershoot,
+            DecimalPlaces,
+            DecimalSeparator,
+            Suffix,
+            Prefix,
+            RadiusPrefix,
+            DiameterPrefix,
+            ArrowSymbol,
+            TextRotationMode,
+            dimensionLineOffset,
+            TextFitMode,
+            TerminatorFitMode);
+    }
+
+    public DimensionStyle WithTextFitMode(DimensionTextFitMode textFitMode)
+    {
+        return new DimensionStyle(
+            Id,
+            Name,
+            TextFormatId,
+            ArrowSize,
+            TextOffset,
+            ExtensionLineOffset,
+            ExtensionLineOvershoot,
+            DecimalPlaces,
+            DecimalSeparator,
+            Suffix,
+            Prefix,
+            RadiusPrefix,
+            DiameterPrefix,
+            ArrowSymbol,
+            TextRotationMode,
+            DimensionLineOffset,
+            textFitMode,
+            TerminatorFitMode);
+    }
+
+
+    public DimensionStyle WithTerminatorFitMode(DimensionTerminatorFitMode terminatorFitMode)
+    {
+        return new DimensionStyle(
+            Id,
+            Name,
+            TextFormatId,
+            ArrowSize,
+            TextOffset,
+            ExtensionLineOffset,
+            ExtensionLineOvershoot,
+            DecimalPlaces,
+            DecimalSeparator,
+            Suffix,
+            Prefix,
+            RadiusPrefix,
+            DiameterPrefix,
+            ArrowSymbol,
+            TextRotationMode,
+            DimensionLineOffset,
+            TextFitMode,
+            terminatorFitMode);
+    }
+
+
 }

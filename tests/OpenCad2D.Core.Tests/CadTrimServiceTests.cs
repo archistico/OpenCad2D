@@ -122,6 +122,42 @@ public sealed class CadTrimServiceTests
 
 
     [Fact]
+    public void TrimOpenPolyline_WithBoundaryAtStartEndpoint_ShouldIgnoreEndpointIntersection()
+    {
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0)
+        });
+        var boundary = new LineEntity(new Point2D(0, -5), new Point2D(0, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(5, 0));
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public void TrimOpenPolyline_WithBoundaryAtEndEndpoint_ShouldIgnoreEndpointIntersection()
+    {
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0)
+        });
+        var boundary = new LineEntity(new Point2D(10, -5), new Point2D(10, 5));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(5, 0));
+
+        Assert.Empty(result);
+    }
+
+    [Fact]
     public void TrimOpenPolyline_ByLineBoundaryOnSecondSegment_ShouldCreatePolylineFragments()
     {
         var target = new PolylineEntity(new[]

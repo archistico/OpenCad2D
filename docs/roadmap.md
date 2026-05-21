@@ -174,6 +174,26 @@ Before tagging v0.9:
 
 ---
 
+## Property Panel final cleanup checkpoint
+
+Completed:
+
+- [x] `Layer id` is exposed as a combo box populated from document layer ids.
+- [x] `Dimension style` is exposed as a combo box populated from document dimension styles.
+- [x] Polyline `Closed` is exposed as a `Yes`/`No` combo box.
+- [x] Polyline vertices are shown in a compact `Vertices` section.
+- [x] Polyline vertex rows use a single editable `X, Y` value instead of separate X/Y fields.
+- [x] The polyline vertex list is capped to the first 4 displayed vertices.
+- [x] A `More vertices` row reports hidden vertices to keep the Property Panel responsive.
+- [x] Per-vertex insert/delete rows were removed from the compact Property Panel section to avoid UI weight and confusion.
+
+Deferred / future UI polish:
+
+- [>] Dedicated vertex editor dialog/table for larger polylines.
+- [>] Insert/delete/reorder vertex actions in a dedicated UI instead of the compact Property Panel list.
+- [>] Broader enum/boolean audit for future entity properties.
+
+
 ## Deferred beyond the active v0.9 scope
 
 These are valid future tasks but should not block the current stabilization flow unless they become critical bugs.
@@ -201,7 +221,18 @@ Candidate v1.0 gates:
 
 - [x] Offset workflow and documented offset limitations are stable;
 - [ ] DXF import/export compatibility pass is recorded;
-- [ ] Property Panel coverage is coherent for primary entities;
+- [x] Property Panel coverage is coherent for the current primary entity/property set;
 - [ ] command UX is consistent across major draw/modify tools;
 - [ ] user-facing documentation is complete enough for first external users;
 - [ ] release artifact and versioning workflow are repeatable.
+
+
+## Dimension Style System checkpoint
+
+- [x] Document-level current dimension style.
+- [x] Dimension style persistence for prefix/suffix, symbols, rotation mode and offsets.
+- [x] Center-anchored dimension text rendering/export.
+- [x] First Dimension Style Manager UI near Layer/Line/Text Formats.
+- [x] Live graphical preview in the Dimension Style Manager.
+- [x] Property panel dimension style selector for selected dimensions.
+- [x] Text/terminator fit controls are implemented; tolerances and alternate units remain future work.

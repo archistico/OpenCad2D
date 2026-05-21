@@ -69,6 +69,11 @@
     <!-- Diameter_Dim.svg -->
     <StreamGeometry x:Key="IconDiameterDim">M4 12a8 8 0 1 0 16 0a8 8 0 1 0 -16 0 M4 12h16 M7 9l-3 3l3 3 M17 9l3 3l-3 3 M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0</StreamGeometry>
 
+
+
+    <!-- Dimension_Styles.svg: dimension style manager icon. -->
+    <StreamGeometry x:Key="IconDimensionStyles">M4 17h16 M6 14l-2 3l2 3 M18 14l2 3l-2 3 M6 7h12 M8 4l-2 3l2 3 M16 4l2 3l-2 3 M9 12h6 M12 9v6</StreamGeometry>
+
     <!-- Distance.svg -->
     <StreamGeometry x:Key="IconDistance">M6 8v8 M18 8v8 M6 12h12 M9 9l-3 3l3 3 M15 9l3 3l-3 3 M6 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M18 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0</StreamGeometry>
 

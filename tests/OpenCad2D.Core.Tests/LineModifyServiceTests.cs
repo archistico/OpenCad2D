@@ -153,7 +153,7 @@ public sealed class LineModifyServiceTests
     }
 
     [Fact]
-    public void TrimByBoundary_WhenPickedRightSide_ShouldKeepLeftSide()
+    public void CadTrimByBoundary_WhenPickedRightSide_ShouldKeepLeftSide()
     {
         var target = new LineEntity(
             new Point2D(0, 0),
@@ -163,18 +163,18 @@ public sealed class LineModifyServiceTests
             new Point2D(5, -5),
             new Point2D(5, 5));
 
-        IReadOnlyList<LineEntity> result = LineTrimService.TrimByBoundary(
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
             target,
             boundary,
             new Point2D(8, 0));
 
-        Assert.Single(result);
-        Assert.Equal(new Point2D(0, 0), result[0].Start);
-        Assert.Equal(new Point2D(5, 0), result[0].End);
+        LineEntity kept = Assert.IsType<LineEntity>(Assert.Single(result));
+        Assert.Equal(new Point2D(0, 0), kept.Start);
+        Assert.Equal(new Point2D(5, 0), kept.End);
     }
 
     [Fact]
-    public void TrimByBoundary_WhenPickedLeftSide_ShouldKeepRightSide()
+    public void CadTrimByBoundary_WhenPickedLeftSide_ShouldKeepRightSide()
     {
         var target = new LineEntity(
             new Point2D(0, 0),
@@ -184,18 +184,18 @@ public sealed class LineModifyServiceTests
             new Point2D(5, -5),
             new Point2D(5, 5));
 
-        IReadOnlyList<LineEntity> result = LineTrimService.TrimByBoundary(
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
             target,
             boundary,
             new Point2D(2, 0));
 
-        Assert.Single(result);
-        Assert.Equal(new Point2D(5, 0), result[0].Start);
-        Assert.Equal(new Point2D(10, 0), result[0].End);
+        LineEntity kept = Assert.IsType<LineEntity>(Assert.Single(result));
+        Assert.Equal(new Point2D(5, 0), kept.Start);
+        Assert.Equal(new Point2D(10, 0), kept.End);
     }
 
     [Fact]
-    public void TrimByBoundary_WhenBoundaryDoesNotIntersectTargetSegment_ShouldReturnEmpty()
+    public void CadTrimByBoundary_WhenBoundaryDoesNotIntersectTargetSegment_ShouldReturnEmpty()
     {
         var target = new LineEntity(
             new Point2D(0, 0),
@@ -205,7 +205,7 @@ public sealed class LineModifyServiceTests
             new Point2D(15, -5),
             new Point2D(15, 5));
 
-        IReadOnlyList<LineEntity> result = LineTrimService.TrimByBoundary(
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
             target,
             boundary,
             new Point2D(8, 0));

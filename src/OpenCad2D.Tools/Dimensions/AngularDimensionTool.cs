@@ -106,6 +106,7 @@ public sealed class AngularDimensionTool : ICadTool
             _secondRayPoint.Value,
             point,
             isCounterClockwise,
+            dimensionStyleId: context.Creation.CurrentDimensionStyleId,
             layerId: context.Creation.CurrentLayerId);
 
         context.Commands.Execute(

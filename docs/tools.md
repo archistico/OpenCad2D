@@ -269,3 +269,26 @@ The shared styling lives in `MainWindow.axaml` through the `icon-button-content`
 The toolbar icons are derived from Tabler Icons SVG assets and converted to Avalonia `StreamGeometry` resources. Tabler Icons is licensed under the MIT License.
 
 When distributing OpenCad2D with these icons, keep the Tabler Icons copyright and MIT license notice in `LICENSES/Tabler-Icons-MIT.txt` and keep the attribution summary in `docs/third-party-notices.md`.
+
+
+Polyline vertex editing in the Property Panel is capped for responsiveness: up to 25 vertices are shown with editable coordinate/action rows, followed by a `More vertices` note for larger polylines. This avoids creating hundreds or thousands of controls in the right panel.
+
+
+Polyline Property Panel performance: for large polylines, coordinate rows are shown for up to 25 vertices, while insert/delete action rows are hidden when the polyline has more than 10 vertices. This keeps selection and panel refresh responsive.
+
+
+Property Panel update: `Layer id` is exposed as a combo box populated from the document layers. Polyline vertices are displayed as a single editable `X, Y` value per vertex. To keep the panel responsive, only the first 4 vertices are shown, followed by a `More vertices` note when needed.
+
+
+Property Panel vertex list simplification: the `Vertices` section now shows only the first 4 polyline vertices as compact editable `X, Y` rows, followed by `More vertices` when applicable. Insert/delete/reorder actions are intentionally kept out of this section for now to keep the UI responsive and readable.
+
+
+Property Panel: polyline `Closed` is exposed as a `Yes`/`No` combo box instead of a free text field.
+
+
+Property Panel final cleanup:
+
+- `Layer id` uses a combo box populated from document layer ids.
+- `Dimension style` uses a combo box populated from document dimension styles.
+- Polyline `Closed` uses a Yes/No combo box.
+- Polyline vertices are shown in a compact `Vertices` section as editable `X, Y` rows, capped to the first 4 vertices with a `More vertices` note.

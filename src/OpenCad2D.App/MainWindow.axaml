@@ -389,6 +389,21 @@
                                 </Grid>
                             </Button>
 
+
+
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Open the Dimension Style Manager"
+                            Click="DimensionStyles_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDimensionStyles}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Dim styles..." />
+                                </Grid>
+                            </Button>
+
                     <Button Classes="global-button"
                             ToolTip.Tip="Configure grid display and spacing"
                             Click="Grid_Click" >
@@ -1345,8 +1360,16 @@
                                                         <TextBox Grid.Column="1"
                                                                  MinHeight="26"
                                                                  Padding="5,2"
-                                                                 IsVisible="{Binding IsEditable}"
+                                                                 IsVisible="{Binding IsTextBox}"
                                                                  Text="{Binding EditableValue, Mode=TwoWay}" />
+
+                                                        <ComboBox Grid.Column="1"
+                                                                  MinHeight="26"
+                                                                  Padding="5,2"
+                                                                  HorizontalAlignment="Stretch"
+                                                                  IsVisible="{Binding IsComboBox}"
+                                                                  ItemsSource="{Binding Options}"
+                                                                  SelectedItem="{Binding EditableValue, Mode=TwoWay}" />
 
                                                         <Button Grid.Column="2"
                                                                 Classes="global-button"

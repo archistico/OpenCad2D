@@ -284,6 +284,48 @@ public sealed class BreakAtPointToolAdvancedTests
     }
 
     [Fact]
+    public void BreakAtPoint_WithFullEllipse_ShouldReturnClearNotApplicableMessage()
+    {
+        var context = CreateContextWithEntity(
+            new EllipseEntity(
+                new Point2D(0, 0),
+                new Vector2D(10, 0),
+                5),
+            out _);
+        var tool = new BreakAtPointTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Contains("not applicable to full ellipses", result.Message!);
+        Assert.Equal(BreakAtPointToolState.WaitingForTargetEntity, tool.State);
+    }
+
+    [Fact]
+    public void BreakAtPoint_WithEllipticalArc_ShouldAcceptTarget()
+    {
+        var context = CreateContextWithEntity(
+            new EllipticalArcEntity(
+                new Point2D(0, 0),
+                new Vector2D(10, 0),
+                5,
+                0,
+                Math.PI),
+            out CadEntity original);
+        var tool = new BreakAtPointTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(original.Id, tool.TargetEntityId);
+        Assert.Equal(BreakAtPointToolState.WaitingForBreakPoint, tool.State);
+    }
+
+    [Fact]
     public void BreakAtPoint_WithCircle_ShouldReturnClearNotApplicableMessage()
     {
         var context = CreateContextWithEntity(

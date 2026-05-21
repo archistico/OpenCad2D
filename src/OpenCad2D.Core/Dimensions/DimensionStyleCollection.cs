@@ -109,6 +109,54 @@ public sealed class DimensionStyleCollection
             extensionLineOvershoot: 2.0,
             decimalPlaces: 2,
             decimalSeparator: ".",
-            suffix: string.Empty);
+            suffix: string.Empty,
+            prefix: string.Empty,
+            radiusPrefix: "R ",
+            diameterPrefix: "Ø ",
+            arrowSymbol: DimensionArrowSymbol.ClosedArrow,
+            textRotationMode: DimensionTextRotationMode.Readable,
+            dimensionLineOffset: 8.0,
+            textFitMode: DimensionTextFitMode.OutsideWhenNeeded,
+            terminatorFitMode: DimensionTerminatorFitMode.OutsideWhenNeeded);
+
+        yield return new DimensionStyle(
+            DimensionStyleId.Architectural,
+            "Architectural",
+            TextFormatId.Annotation,
+            arrowSize: 4.0,
+            textOffset: -2.0,
+            extensionLineOffset: 1.5,
+            extensionLineOvershoot: 2.0,
+            decimalPlaces: 2,
+            decimalSeparator: ".",
+            suffix: " m",
+            prefix: string.Empty,
+            radiusPrefix: "R ",
+            diameterPrefix: "Ø ",
+            arrowSymbol: DimensionArrowSymbol.ArchitecturalTick,
+            textRotationMode: DimensionTextRotationMode.Readable,
+            dimensionLineOffset: 8.0,
+            textFitMode: DimensionTextFitMode.OutsideWhenNeeded,
+            terminatorFitMode: DimensionTerminatorFitMode.OutsideWhenNeeded);
+
+        yield return new DimensionStyle(
+            DimensionStyleId.Mechanical,
+            "Mechanical",
+            TextFormatId.Annotation,
+            arrowSize: 3.0,
+            textOffset: 2.0,
+            extensionLineOffset: 1.0,
+            extensionLineOvershoot: 1.5,
+            decimalPlaces: 2,
+            decimalSeparator: ".",
+            suffix: " mm",
+            prefix: string.Empty,
+            radiusPrefix: "R ",
+            diameterPrefix: "Ø ",
+            arrowSymbol: DimensionArrowSymbol.ClosedFilledTriangle,
+            textRotationMode: DimensionTextRotationMode.Horizontal,
+            dimensionLineOffset: 8.0,
+            textFitMode: DimensionTextFitMode.OutsideWhenNeeded,
+            terminatorFitMode: DimensionTerminatorFitMode.OutsideWhenNeeded);
     }
 }

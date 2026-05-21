@@ -247,7 +247,7 @@ public static class CadTrimService
         Point2D pickPoint,
         GeometryTolerance tolerance)
     {
-        IReadOnlyList<Point2D> intersections = CollectIntersections(
+        IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
             tolerance);
@@ -290,6 +290,11 @@ public static class CadTrimService
             BezierSplineEntity spline when !spline.IsClosed => intersections
                 .Where(point => !tolerance.ArePointsEqual(point, spline.ControlPoints[0]) &&
                                 !tolerance.ArePointsEqual(point, spline.ControlPoints[^1]))
+                .ToList(),
+
+            PolylineEntity polyline when !polyline.IsClosed && polyline.Vertices.Count > 0 => intersections
+                .Where(point => !tolerance.ArePointsEqual(point, polyline.Vertices[0]) &&
+                                !tolerance.ArePointsEqual(point, polyline.Vertices[^1]))
                 .ToList(),
 
             _ => intersections

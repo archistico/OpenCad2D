@@ -24,7 +24,7 @@ public sealed class DimensionExportTests
         SvgExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(7, CountOccurrences(result.Content, "<line "));
+        Assert.Equal(9, CountOccurrences(result.Content, "<line "));
         Assert.Contains("<text ", result.Content);
         Assert.Contains(">100.00</text>", result.Content);
         Assert.Contains("font-size=\"8\"", result.Content);
@@ -46,9 +46,10 @@ public sealed class DimensionExportTests
         SvgExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(7, CountOccurrences(result.Content, "<line "));
+        Assert.Equal(9, CountOccurrences(result.Content, "<line "));
         Assert.Contains(">50.00</text>", result.Content);
-        Assert.Contains("rotate(-90", result.Content);
+        // SVG uses screen-space rotation, so model 270° is exported as -270°.
+        Assert.Contains("rotate(-270", result.Content);
     }
 
     [Fact]
@@ -65,7 +66,7 @@ public sealed class DimensionExportTests
         SvgExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(7, CountOccurrences(result.Content, "<line "));
+        Assert.Equal(9, CountOccurrences(result.Content, "<line "));
         Assert.Contains(">5.00</text>", result.Content);
         Assert.Contains("<text ", result.Content);
     }
@@ -91,7 +92,7 @@ public sealed class DimensionExportTests
             "TEXT"));
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(7, lineRecords.Count);
+        Assert.Equal(9, lineRecords.Count);
         Assert.Contains(textRecord, group => group.Code == 1 && group.Value == "100.00");
         Assert.Contains(textRecord, group => group.Code == 40 && group.Value == "8");
         Assert.Contains(textRecord, group => group.Code == 7 && group.Value == "Annotation");
@@ -115,7 +116,8 @@ public sealed class DimensionExportTests
             "TEXT"));
 
         Assert.Contains(textRecord, group => group.Code == 1 && group.Value == "50.00");
-        Assert.Contains(textRecord, group => group.Code == 50 && group.Value == "270");
+        // DXF default export flips Y for CAD viewers, so model 270° becomes DXF 90°.
+        Assert.Contains(textRecord, group => group.Code == 50 && group.Value == "90");
     }
 
     [Fact]
@@ -138,7 +140,7 @@ public sealed class DimensionExportTests
             "TEXT"));
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(7, lineRecords.Count);
+        Assert.Equal(9, lineRecords.Count);
         Assert.Contains(textRecord, group => group.Code == 1 && group.Value == "5.00");
     }
 

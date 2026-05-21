@@ -7,13 +7,18 @@ namespace OpenCad2D.Tools.Common;
 /// </summary>
 public sealed class ToolCreationContext
 {
-    public ToolCreationContext(LayerId currentLayerId)
+    public ToolCreationContext(
+        LayerId currentLayerId,
+        DimensionStyleId currentDimensionStyleId)
     {
         CurrentLayerId = currentLayerId;
         CurrentTextFormatId = TextFormatId.Standard;
+        CurrentDimensionStyleId = currentDimensionStyleId;
     }
 
     public LayerId CurrentLayerId { get; set; }
 
     public TextFormatId CurrentTextFormatId { get; set; }
+
+    public DimensionStyleId CurrentDimensionStyleId { get; set; }
 }

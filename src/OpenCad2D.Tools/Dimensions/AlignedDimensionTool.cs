@@ -46,6 +46,7 @@ public sealed class AlignedDimensionTool : ThreePointDimensionToolBase
             firstPoint,
             secondPoint,
             dimensionLinePoint,
+            dimensionStyleId: context.Creation.CurrentDimensionStyleId,
             layerId: context.Creation.CurrentLayerId);
 
         context.Commands.Execute(

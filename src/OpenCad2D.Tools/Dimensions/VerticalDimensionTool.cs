@@ -75,6 +75,7 @@ public sealed class VerticalDimensionTool : ThreePointDimensionToolBase
             secondPoint,
             dimensionLinePoint,
             DimensionOrientation.Vertical,
+            dimensionStyleId: context.Creation.CurrentDimensionStyleId,
             layerId: context.Creation.CurrentLayerId);
 
         context.Commands.Execute(

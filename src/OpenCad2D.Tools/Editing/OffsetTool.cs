@@ -557,13 +557,19 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         }
 
         Vector2D direction = closestSegment.Start.VectorTo(closestSegment.End);
-        double cross = direction.Cross(closestSegment.Start.VectorTo(sidePoint));
-        if (tolerance.IsDistanceZero(cross))
+        double length = direction.Length;
+        if (tolerance.IsVectorLengthZero(length))
         {
             return 1;
         }
 
-        return cross >= 0 ? 1 : -1;
+        double signedDistance = direction.Cross(closestSegment.Start.VectorTo(sidePoint)) / length;
+        if (tolerance.IsDistanceZero(signedDistance))
+        {
+            return 1;
+        }
+
+        return signedDistance > 0 ? 1 : -1;
     }
 
     private static List<Point2D> BuildOpenOffsetVertices(

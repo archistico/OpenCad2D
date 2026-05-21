@@ -13,6 +13,7 @@ using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.App.ViewModels.Grid;
 using OpenCad2D.App.ViewModels.LineFormats;
 using OpenCad2D.App.ViewModels.TextFormats;
+using OpenCad2D.App.ViewModels.DimensionStyles;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.Export.Dxf.Import;
 using OpenCad2D.Export.Pdf;
@@ -1440,6 +1441,35 @@ public partial class MainWindow : Window
         CadCanvas.InvalidateVisual();
         CadCanvas.Focus();
     }
+
+    private async void DimensionStyles_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        var dialogViewModel = new DimensionStyleManagerWindowViewModel(
+            _viewModel.Workspace.Document);
+
+        var dialog = new DimensionStyleManagerWindow(dialogViewModel);
+
+        DimensionStyleManagerResult? result = await dialog.ShowDialog<DimensionStyleManagerResult?>(this);
+
+        if (result is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        ToolResult toolResult = _viewModel.ApplyDimensionStyleChanges(
+            result.DimensionStyles,
+            result.CurrentDimensionStyleId);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
 
 
 

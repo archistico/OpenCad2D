@@ -313,7 +313,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         if (pick is null)
         {
-            return ToolResult.None("Select a visible, unlocked line as first fillet object.");
+            return ToolResult.None("Fillet currently supports visible, unlocked lines only. Select the first line.");
         }
 
         _firstPick = pick;
@@ -553,6 +553,8 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         LineEntity line,
         Point2D point)
     {
+        // Intentionally not clamped to [0, 1]: fillet uses the infinite-line
+        // parameter to decide which branch from the intersection point is being picked.
         Vector2D direction = line.Start.VectorTo(line.End);
         double lengthSquared = direction.LengthSquared;
 
