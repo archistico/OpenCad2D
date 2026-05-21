@@ -1,20 +1,28 @@
+using Avalonia.Media;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace OpenCad2D.App.ViewModels.Layers;
 
 public sealed class EditableLayerViewModel : INotifyPropertyChanged
 {
+    private static readonly Regex ColorHexRegex = new(
+        "^#[0-9A-Fa-f]{6}$",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     private string _name;
     private bool _isCurrent;
     private bool _isVisible;
     private bool _isLocked;
+    private string _fillColorHex;
     private LineFormatOptionViewModel _selectedLineFormat;
 
     public EditableLayerViewModel(
@@ -26,7 +34,8 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
         LineFormatId selectedLineFormatId,
         IReadOnlyList<LineFormatOptionViewModel> availableLineFormats,
         bool isDefault,
-        int entityCount)
+        int entityCount,
+        CadColor? fillColor = null)
     {
         ArgumentNullException.ThrowIfNull(availableLineFormats);
 
@@ -42,6 +51,7 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
         _isCurrent = isCurrent;
         _isVisible = isVisible;
         _isLocked = isLocked;
+        _fillColorHex = ToHex(fillColor ?? CadColor.FromRgb(255, 255, 255));
         AvailableLineFormats = availableLineFormats;
         _selectedLineFormat = availableLineFormats.FirstOrDefault(format => format.Id == selectedLineFormatId) ??
                               availableLineFormats.FirstOrDefault(format => format.Id == LineFormatId.Continuous) ??
@@ -123,6 +133,56 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
         }
     }
 
+
+    public string FillColorHex
+    {
+        get => _fillColorHex;
+        set
+        {
+            string normalized = value?.Trim() ?? string.Empty;
+
+            if (_fillColorHex == normalized)
+            {
+                return;
+            }
+
+            _fillColorHex = normalized;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(FillColor));
+            OnPropertyChanged(nameof(FillColorBrush));
+        }
+    }
+
+    public Color FillColor
+    {
+        get
+        {
+            if (!TryParseColor(FillColorHex, out CadColor color))
+            {
+                color = CadColor.FromRgb(80, 80, 80);
+            }
+
+            return Color.FromRgb(color.R, color.G, color.B);
+        }
+        set
+        {
+            FillColorHex = ToHex(CadColor.FromRgb(value.R, value.G, value.B));
+        }
+    }
+
+    public IBrush FillColorBrush
+    {
+        get
+        {
+            if (!TryParseColor(FillColorHex, out CadColor color))
+            {
+                color = CadColor.FromRgb(80, 80, 80);
+            }
+
+            return new SolidColorBrush(Color.FromRgb(color.R, color.G, color.B));
+        }
+    }
+
     public LineFormatOptionViewModel SelectedLineFormat
     {
         get => _selectedLineFormat;
@@ -143,12 +203,15 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
 
     public Layer ToLayer()
     {
+        TryParseColor(FillColorHex, out CadColor fillColor);
+
         return new Layer(
             Id,
             Name.Trim(),
             SelectedLineFormat.Id,
             IsVisible,
-            IsLocked);
+            IsLocked,
+            fillColor);
     }
 
     public string? Validate()
@@ -156,6 +219,11 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
         if (string.IsNullOrWhiteSpace(Name))
         {
             return "Layer name cannot be empty.";
+        }
+
+        if (!TryParseColor(FillColorHex, out _))
+        {
+            return $"Layer '{Name}' has an invalid fill color. Use #RRGGBB.";
         }
 
         if (SelectedLineFormat is null)
@@ -179,6 +247,31 @@ public sealed class EditableLayerViewModel : INotifyPropertyChanged
         }
 
         return null;
+    }
+
+
+    private static string ToHex(CadColor color)
+    {
+        return $"#{color.R:X2}{color.G:X2}{color.B:X2}";
+    }
+
+    private static bool TryParseColor(
+        string colorHex,
+        out CadColor color)
+    {
+        color = CadColor.FromRgb(0, 0, 0);
+
+        if (!ColorHexRegex.IsMatch(colorHex))
+        {
+            return false;
+        }
+
+        byte r = byte.Parse(colorHex.Substring(1, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+        byte g = byte.Parse(colorHex.Substring(3, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+        byte b = byte.Parse(colorHex.Substring(5, 2), NumberStyles.HexNumber, CultureInfo.InvariantCulture);
+
+        color = CadColor.FromRgb(r, g, b);
+        return true;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

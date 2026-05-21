@@ -39,7 +39,8 @@ public sealed class LayerManagerWindowViewModel : INotifyPropertyChanged
                     layer.LineFormatId,
                     LineFormats,
                     layer.Id == LayerId.Default,
-                    document.Entities.All.Count(entity => entity.LayerId == layer.Id))));
+                    document.Entities.All.Count(entity => entity.LayerId == layer.Id),
+                    layer.FillColor)));
 
         SelectedLayer = Layers.FirstOrDefault(layer => layer.IsCurrent) ?? Layers.FirstOrDefault();
     }

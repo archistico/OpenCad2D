@@ -5,9 +5,9 @@
         x:DataType="layers:LayerManagerWindowViewModel"
         Title="Layer Manager"
         Icon="/Assets/app-icon.ico"
-        Width="900"
+        Width="1020"
         Height="460"
-        MinWidth="760"
+        MinWidth="900"
         MinHeight="380"
         WindowStartupLocation="CenterOwner"
         Background="#1E1E1E">
@@ -84,14 +84,15 @@
                 <Border Grid.Row="0"
                         Background="#2D2D30"
                         Padding="7,5">
-                    <Grid ColumnDefinitions="70,190,80,80,290,70"
+                    <Grid ColumnDefinitions="70,180,75,75,270,130,70"
                           ColumnSpacing="6">
                         <TextBlock Grid.Column="0" Classes="header-cell" Text="Current" />
                         <TextBlock Grid.Column="1" Classes="header-cell" Text="Name" />
                         <TextBlock Grid.Column="2" Classes="header-cell" Text="Visible" />
                         <TextBlock Grid.Column="3" Classes="header-cell" Text="Locked" />
                         <TextBlock Grid.Column="4" Classes="header-cell" Text="Line format" />
-                        <TextBlock Grid.Column="5" Classes="header-cell" Text="Entities" />
+                        <TextBlock Grid.Column="5" Classes="header-cell" Text="Fill color" />
+                        <TextBlock Grid.Column="6" Classes="header-cell" Text="Entities" />
                     </Grid>
                 </Border>
 
@@ -104,7 +105,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="layers:EditableLayerViewModel">
                             <Border Padding="7,4">
-                                <Grid ColumnDefinitions="70,190,80,80,290,70"
+                                <Grid ColumnDefinitions="70,180,75,75,270,130,70"
                                       ColumnSpacing="6">
                                     <RadioButton Grid.Column="0"
                                                  IsChecked="{Binding IsCurrent, Mode=TwoWay}"
@@ -146,7 +147,22 @@
                                         </ComboBox.ItemTemplate>
                                     </ComboBox>
 
-                                    <TextBlock Grid.Column="5"
+                                    <StackPanel Grid.Column="5"
+                                                Orientation="Horizontal"
+                                                Spacing="5">
+                                        <Border Width="14"
+                                                Height="14"
+                                                Background="{Binding FillColorBrush}"
+                                                BorderBrush="#666666"
+                                                BorderThickness="1"
+                                                VerticalAlignment="Center" />
+
+                                        <TextBox Classes="layer-input"
+                                                 Text="{Binding FillColorHex, Mode=TwoWay}"
+                                                 Width="86" />
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="6"
                                                Classes="cell-label"
                                                Text="{Binding EntityCount}"
                                                HorizontalAlignment="Right" />
