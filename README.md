@@ -6,6 +6,8 @@ The project explores how to build a small but serious 2D CAD system from the gro
 
 OpenCad2D is not intended to replace mature CAD applications yet. The current goal is to create a precise, fast, testable and understandable 2D CAD foundation.
 
+![OpenCad2D screenshot](screenshot/screenshot_UI_1.png)
+
 ## A long-running personal project
 
 OpenCad2D is not a disposable AI-generated experiment. Its roots go back more than twenty years, to when I first started writing C# and imagining how a personal 2D CAD system could be built from the ground up.
@@ -14,7 +16,6 @@ For a long time, the project existed as separate pieces: geometry experiments, d
 
 AI is part of the process, but it is not the author of the vision. OpenCad2D remains a human-led project: shaped by long-term interest in CAD, by practical software design choices, by tests, by manual validation and by a clear preference for a precise, understandable and open 2D drafting tool.
 
-![OpenCad2D screenshot](screenshot/screenshot_UI_1.png)
 
 ---
 
@@ -176,17 +177,6 @@ Important documents:
 
 Historical milestone details are intentionally kept out of the active roadmap; use Git history and release notes for old implementation logs.
 
----
-
-## License
-
-OpenCad2D is released under the GPL-3.0-or-later license. See `LICENSE`.
-
----
-
-## Credits
-
-Created by Emilie Rollandin.
 
 ## Current limitations and planned improvements
 
@@ -211,3 +201,34 @@ OpenCad2D is currently in the v0.9 stabilization cycle. Recent completed work in
 - cleanup of obsolete TRIM highlight helper code and clearer Fillet branch-parameter documentation.
 
 The next planning step is v0.9 scope consolidation: decide which remaining polish items are required before the next public release and which are deferred to v1.0.
+
+## Info files
+
+| Language | Files | Code | Comments | Blank | Total |
+|---|---:|---:|---:|---:|---:|
+| C# | 625 | 81845 | 1750 | 18257 | 101852 |
+| CSS | 4 | 1138 | 18 | 40 | 1196 |
+| XML/XAML | 16 | 286 | 0 | 64 | 350 |
+| HTML | 2 | 2 | 0 | 0 | 2 |
+| **Total** | **647** | **83271** | **1768** | **18361** | **103400** |
+
+### Metrics
+
+- Comment ratio: 1.71 %
+- Blank ratio: 17.76 %
+- Code ratio: 80.53 %
+- Average lines/file: 159.81
+- Largest file: E:\sviluppo\2026 OpenCad2D\src\OpenCad2D.App\ViewModels\MainWindowViewModel.cs (2246 lines)
+
+
+---
+
+## License
+
+OpenCad2D is released under the GPL-3.0-or-later license. See `LICENSE`.
+
+---
+
+## Credits
+
+Created by Emilie Rollandin.

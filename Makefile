@@ -2,7 +2,7 @@
 
 run:
 	dotnet run --project src/OpenCad2D.App
-
+	
 build:
 	dotnet build
 
