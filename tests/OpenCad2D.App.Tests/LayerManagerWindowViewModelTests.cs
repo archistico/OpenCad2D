@@ -1,4 +1,5 @@
 using System.Linq;
+using Avalonia.Media;
 using OpenCad2D.App.ViewModels.Layers;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Identifiers;
@@ -171,6 +172,50 @@ public sealed class LayerManagerWindowViewModelTests
         Assert.Equal(
             "Layer 'Filled' has an invalid fill color. Use #RRGGBB.",
             viewModel.ValidationMessage);
+    }
+
+    [Fact]
+    public void EditableLayer_FillColorPickerColor_ShouldUpdateFillColorHex()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("filled");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "Filled",
+            LineFormatId.Continuous));
+
+        var viewModel = new LayerManagerWindowViewModel(
+            document,
+            layerId);
+
+        EditableLayerViewModel layer = viewModel.Layers.Single(item => item.Id == layerId);
+
+        layer.FillColor = Color.FromRgb(0x44, 0x55, 0x66);
+
+        Assert.Equal("#445566", layer.FillColorHex);
+    }
+
+    [Fact]
+    public void EditableLayer_FillColorHex_ShouldUpdateFillColorPickerColor()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("filled");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "Filled",
+            LineFormatId.Continuous));
+
+        var viewModel = new LayerManagerWindowViewModel(
+            document,
+            layerId);
+
+        EditableLayerViewModel layer = viewModel.Layers.Single(item => item.Id == layerId);
+
+        layer.FillColorHex = "#112233";
+
+        Assert.Equal(Color.FromRgb(0x11, 0x22, 0x33), layer.FillColor);
     }
 
 }
