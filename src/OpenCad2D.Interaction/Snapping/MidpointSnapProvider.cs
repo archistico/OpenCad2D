@@ -61,7 +61,23 @@ public sealed class MidpointSnapProvider : ISnapProvider
                 }
 
                 break;
+
+            case ImageReferenceEntity imageReference:
+                yield return Midpoint(imageReference.BottomLeft, imageReference.BottomRight);
+                yield return Midpoint(imageReference.BottomRight, imageReference.TopRight);
+                yield return Midpoint(imageReference.TopRight, imageReference.TopLeft);
+                yield return Midpoint(imageReference.TopLeft, imageReference.BottomLeft);
+                break;
         }
+    }
+
+    private static Point2D Midpoint(
+        Point2D first,
+        Point2D second)
+    {
+        return new Point2D(
+            (first.X + second.X) / 2.0,
+            (first.Y + second.Y) / 2.0);
     }
 
     private static double GetEllipticalArcMidParameter(EllipticalArcEntity ellipticalArc)

@@ -76,6 +76,14 @@ public sealed class EndpointSnapProvider : ISnapProvider
                 yield return ellipticalArc.StartPoint;
                 yield return ellipticalArc.EndPoint;
                 break;
+
+            case ImageReferenceEntity imageReference:
+                foreach (Point2D corner in imageReference.GetCorners())
+                {
+                    yield return corner;
+                }
+
+                break;
         }
     }
 }

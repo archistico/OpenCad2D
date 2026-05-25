@@ -226,7 +226,7 @@ Without a base point, contextual snap providers return no candidates.
 
 Endpoint snapping finds endpoints of entities.
 
-It currently supports line endpoints, polyline vertices and arc endpoints.
+It currently supports line endpoints, polyline vertices, arc endpoints and raster image reference corners.
 
 This is one of the most important snaps because it allows the user to connect geometry precisely.
 
@@ -238,13 +238,15 @@ Midpoint snapping finds the middle point of a line segment.
 
 For polylines, each segment can provide a midpoint.
 
+For raster image references, each image border can provide a midpoint.
+
 For arcs, the provider calculates the angular midpoint of the arc.
 
 ---
 
 ## Center snapping
 
-Center snapping finds the center of circles and arcs.
+Center snapping finds the center of circles, arcs and raster image references.
 
 This is useful when drawing from or toward circular geometry.
 
@@ -276,7 +278,7 @@ Future work can replace the sampled curve path with exact analytic/NURBS-specifi
 
 ## Nearest snapping
 
-Nearest snapping finds the closest point on an entity to the cursor.
+Nearest snapping finds the closest point on an entity to the cursor. For raster image references, the closest point is evaluated on the image rectangle border, not inside the filled image area.
 
 It is more generic than endpoint, midpoint or intersection snapping.
 

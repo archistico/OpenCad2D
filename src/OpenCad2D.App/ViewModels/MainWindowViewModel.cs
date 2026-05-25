@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Commands;
+﻿using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Documents;
@@ -323,6 +323,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public bool HasSingleSelectedImageReference =>
         GetSingleSelectedImageReference() is not null;
+
+    public int MissingImageReferenceCount =>
+        GetMissingImageReferences().Count;
+
+    public bool HasMissingImageReferences =>
+        MissingImageReferenceCount > 0;
 
     public string LastMessage =>
         _lastMessage;
@@ -766,6 +772,84 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+    public ToolResult RelinkFirstMissingImageReference(
+        string filePath,
+        int pixelWidth,
+        int pixelHeight)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "Image file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        ImageReferenceEntity? imageReference = GetSingleSelectedImageReference();
+
+        if (imageReference is not null && File.Exists(imageReference.FilePath))
+        {
+            imageReference = null;
+        }
+
+        imageReference ??= GetMissingImageReferences().FirstOrDefault();
+
+        if (imageReference is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                "No missing image reference was found in the current drawing.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        ImageReferenceEntity replacement = imageReference.WithFilePath(
+            filePath,
+            pixelWidth,
+            pixelHeight);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new ReplaceEntitiesCommand(replacement));
+
+        Workspace.SelectionSet.ReplaceWith(replacement.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Missing image reference relinked to '{Path.GetFileName(filePath)}'.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult SelectNextMissingImageReference()
+    {
+        ImageReferenceEntity? missingImageReference = GetMissingImageReferences().FirstOrDefault();
+
+        if (missingImageReference is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                "No missing image reference was found in the current drawing.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        Workspace.SelectionSet.ReplaceWith(missingImageReference.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Selected missing image reference '{Path.GetFileName(missingImageReference.FilePath)}'.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     public ToolResult ResetSelectedImageReferenceAspectRatio()
     {
         ImageReferenceEntity? selectedImageReference = GetSingleSelectedImageReference();
@@ -824,6 +908,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         return Workspace.Document.Entities.GetRequired(entityId) as ImageReferenceEntity;
+    }
+
+    private IReadOnlyList<ImageReferenceEntity> GetMissingImageReferences()
+    {
+        return Workspace.Document.Entities.All
+            .OfType<ImageReferenceEntity>()
+            .Where(imageReference => !File.Exists(imageReference.FilePath))
+            .ToList();
     }
 
 
@@ -1289,6 +1381,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(EntityCount),
             nameof(SelectedCount),
             nameof(HasSingleSelectedImageReference),
+            nameof(MissingImageReferenceCount),
+            nameof(HasMissingImageReferences),
             nameof(IsDirty),
             nameof(TitleText),
             nameof(FileStatusText),
@@ -1983,6 +2077,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(IsPropertyPanelVisible),
             nameof(PropertyPanel),
             nameof(HasSingleSelectedImageReference),
+            nameof(MissingImageReferenceCount),
+            nameof(HasMissingImageReferences),
             nameof(IsDirty),
             nameof(TitleText),
             nameof(FileStatusText),

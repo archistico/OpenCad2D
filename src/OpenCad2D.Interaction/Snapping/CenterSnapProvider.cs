@@ -19,6 +19,7 @@ public sealed class CenterSnapProvider : ISnapProvider
                 CircleEntity circle => circle.Center,
                 EllipseEntity ellipse => ellipse.Center,
                 ArcEntity arc => arc.Center,
+                ImageReferenceEntity imageReference => imageReference.Center,
                 _ => null
             };
 

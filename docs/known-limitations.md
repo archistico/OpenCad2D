@@ -1,4 +1,4 @@
-# Known Limitations
+﻿# Known Limitations
 
 OpenCad2D is in the v0.9 stabilization track before the first stable v1.0 release. The following limitations should remain visible until they are resolved.
 
@@ -147,7 +147,7 @@ OpenCad2D supports basic PNG/JPG attachment as external references. The drawing 
 
 Current limitations:
 
-- moving or renaming the image file outside the drawing folder still breaks the live raster preview until the path is restored or relinked with Replace Image / the editable File property;
+- moving or renaming the image file outside the drawing folder still breaks the live raster preview, but the drawing now warns about missing references on open and they can be restored with Relink Missing, Replace Image, or the editable File property;
 - there is no reference manager/relink dialog yet;
 - Reset Aspect depends on stored pixel metadata; very old/corrupt image references without pixel dimensions cannot infer the natural aspect ratio;
 - SVG export writes an external `<image href="...">` link;

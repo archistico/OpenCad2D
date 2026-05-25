@@ -1,4 +1,4 @@
-<Window xmlns="https://github.com/avaloniaui"
+﻿<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:OpenCad2D.App.Controls"
         xmlns:vm="clr-namespace:OpenCad2D.App.ViewModels"
@@ -249,7 +249,18 @@
                                 </Grid>
                             </Button>
 
-
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Relink the selected missing image, or the first missing image in the drawing"
+                            Click="RelinkMissingImage_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconImage}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Relink Missing" />
+                                </Grid>
+                            </Button>
 
                     <Button Classes="global-button"
                             ToolTip.Tip="Reset the selected image to its natural PNG/JPG aspect ratio"

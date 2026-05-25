@@ -374,3 +374,39 @@ Manual checks:
 3. Close and reopen: the raster should render normally.
 4. Move the drawing together with the `images/` folder and reopen: the reference should still resolve.
 5. Open an older drawing that contains absolute image paths and verify it remains compatible.
+
+### 2026-05-25 — Missing image reference workflow
+
+Follow-up workflow refinement for external raster references:
+
+- `MainWindowViewModel` now exposes `MissingImageReferenceCount` and `HasMissingImageReferences`, computed from the current `ImageReferenceEntity` file paths.
+- Opening a drawing now warns the user when one or more external raster references cannot be found.
+- Added a `Relink Missing` toolbar action. It relinks the selected missing image reference, or the first missing image reference in the document, to a newly chosen PNG/JPG while preserving the existing CAD geometry: center, size, rotation and layer state remain unchanged.
+- Added `SelectNextMissingImageReference()` in the view model for diagnostics/testability and future UI workflows.
+- Added App tests for missing-reference counting, selecting the first missing image and relinking while preserving geometry.
+
+Manual checks:
+
+1. Attach an image, save, then rename or move the external PNG/JPG.
+2. Reopen the drawing and verify that a missing-reference warning is shown.
+3. Use `Relink Missing` and select the new image file.
+4. Verify the raster reappears in the same CAD position, size and rotation.
+5. Save/reopen again and verify the warning no longer appears.
+
+### 2026-05-25 — Raster image snap support
+
+Follow-up snapping refinement for external raster references:
+
+- `EndpointSnapProvider` now exposes the four corners of `ImageReferenceEntity` as endpoint snap candidates.
+- `MidpointSnapProvider` now exposes the midpoint of each image border.
+- `CenterSnapProvider` now exposes the image rectangle center.
+- `ImageReferenceEntity.GetClosestPoint(...)` now returns the closest point on the image border, so nearest snap works on the rectangle outline instead of returning an arbitrary point inside the filled raster area.
+- Added interaction tests for endpoint, midpoint, center and nearest snapping on image references.
+
+Manual checks:
+
+1. Attach an image.
+2. Enable Endpoint and verify snap markers on the four corners.
+3. Enable Midpoint and verify snap markers on the four border midpoints.
+4. Enable Center and verify the center snap.
+5. Enable Nearest and verify the cursor snaps to the image border.

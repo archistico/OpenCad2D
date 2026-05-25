@@ -1,4 +1,4 @@
-using Avalonia.Controls;
+﻿using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
@@ -154,6 +154,8 @@ public partial class MainWindow : Window
 
             CadCanvas.ApplyViewportState(viewportState);
             RefreshAllUiAfterDocumentChange();
+
+            await ShowMissingImageReferencesWarningIfNeededAsync();
         }
         catch (DocumentLoadException exception)
         {
@@ -351,6 +353,72 @@ public partial class MainWindow : Window
         {
             await ShowMessageAsync(
                 "Replace image failed",
+                exception.Message);
+        }
+    }
+
+
+    private async void RelinkMissingImage_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (!_viewModel.HasMissingImageReferences)
+        {
+            await ShowMessageAsync(
+                "Relink missing image",
+                "No missing image reference was found in the current drawing.");
+            return;
+        }
+
+        try
+        {
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
+                {
+                    Title = "Relink missing raster image",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { RasterImageFileType }
+                });
+
+            if (files.Count == 0)
+            {
+                return;
+            }
+
+            string? filePath = files[0].TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Relink missing image",
+                    "Only local image files are supported in this version.");
+                return;
+            }
+
+            using var bitmap = new Bitmap(filePath);
+
+            ToolResult result = _viewModel.RelinkFirstMissingImageReference(
+                filePath,
+                bitmap.PixelSize.Width,
+                bitmap.PixelSize.Height);
+
+            RefreshAllUiAfterDocumentChange();
+            CadCanvas.InvalidateVisual();
+
+            if (!result.Changed)
+            {
+                await ShowMessageAsync(
+                    "Relink missing image",
+                    result.Message ?? "The missing image reference could not be relinked.");
+                return;
+            }
+
+            RefreshStatus();
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Relink missing image failed",
                 exception.Message);
         }
     }
@@ -694,6 +762,24 @@ public partial class MainWindow : Window
 
         _closeConfirmed = true;
         Close();
+    }
+
+    private async Task ShowMissingImageReferencesWarningIfNeededAsync()
+    {
+        int missingCount = _viewModel.MissingImageReferenceCount;
+
+        if (missingCount <= 0)
+        {
+            return;
+        }
+
+        string noun = missingCount == 1
+            ? "image reference is"
+            : "image references are";
+
+        await ShowMessageAsync(
+            "Missing image references",
+            $"{missingCount} external {noun} missing. Use Relink Missing to attach the correct PNG/JPG file while keeping the existing position, size and rotation.");
     }
 
     private async Task ShowMessageAsync(

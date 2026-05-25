@@ -276,11 +276,6 @@ public sealed class ImageReferenceEntity : CadEntity
 
     public override Point2D GetClosestPoint(Point2D point)
     {
-        if (Contains(point))
-        {
-            return point;
-        }
-
         return GetEdges()
             .Select(edge => DistanceService.ClosestPointOnSegment(point, edge))
             .OrderBy(candidate => candidate.DistanceTo(point))
