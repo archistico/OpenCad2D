@@ -356,3 +356,21 @@ Manual checks:
 3. Select the image and use `Reset Aspect`.
 4. Verify the center and rotation stay stable while height returns to the pixel aspect ratio.
 5. Try `Reset Aspect` with no image selected and verify the explanatory message.
+
+### 2026-05-25 — Image reference relative path persistence
+
+Follow-up persistence refinement for external raster references:
+
+- Added `ExternalReferencePathHelper` in `OpenCad2D.Persistence`.
+- `JsonDocumentSerializer.SaveToFile(...)` now normalizes image reference paths before writing JSON. Fully qualified image paths are stored relative to the `.opencad2d.json` document folder whenever possible.
+- `JsonDocumentSerializer.LoadFromFile(...)` now resolves relative image paths against the folder containing the loaded drawing before deserialization.
+- Existing absolute paths remain supported for compatibility and for references that cannot be safely relativized.
+- Added persistence tests for saving an attached image as a relative path and loading a relative image path as a resolved full path.
+
+Manual checks:
+
+1. Save a drawing next to an `images/` folder and attach `images/plan.png`.
+2. Inspect the `.opencad2d.json`: the image path should be similar to `images/plan.png`, not a machine-specific absolute path.
+3. Close and reopen: the raster should render normally.
+4. Move the drawing together with the `images/` folder and reopen: the reference should still resolve.
+5. Open an older drawing that contains absolute image paths and verify it remains compatible.

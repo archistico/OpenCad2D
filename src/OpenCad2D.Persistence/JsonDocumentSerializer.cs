@@ -298,6 +298,10 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 Directory.CreateDirectory(directory);
             }
 
+            ExternalReferencePathHelper.MakeImageReferencePathsRelativeToDocument(
+                dto,
+                filePath);
+
             string json = JsonSerializer.Serialize(dto, JsonOptions);
 
             File.WriteAllText(filePath, json);
@@ -335,6 +339,10 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             {
                 throw new UnsupportedDocumentVersionException(dto.Version);
             }
+
+            ExternalReferencePathHelper.ResolveImageReferencePathsAgainstDocument(
+                dto,
+                filePath);
 
             return dto;
         }
