@@ -261,3 +261,25 @@ The following are intentionally deferred unless explicitly promoted later:
 - In-place block editing.
 - Associative hatch updates after boundary edits.
 - Raster image embedding in native files.
+
+## v0.8.110 — Blocks foundation
+
+Implemented as the first structural block milestone:
+
+- `BlockDefinitionId`
+- `BlockDefinition`
+- `BlockDefinitionCollection`
+- `BlockReferenceEntity`
+- `CadDocument.BlockDefinitions`
+- JSON persistence for block definitions and block references
+- canvas rendering of block references by transforming contained entities
+- selection/hit testing through the transformed definition bounding box
+
+This milestone intentionally does not yet include the full block UI. The next blocks-focused milestones should add:
+
+- create block from selection
+- insert block from existing definition
+- block manager
+- edit block definition workflow
+- explode block
+- snaps against transformed block contents

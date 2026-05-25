@@ -21,5 +21,6 @@ public enum EntityKind
     Arc,
     Polyline,
     BezierSpline,
-    ImageReference
+    ImageReference,
+    BlockReference
 }

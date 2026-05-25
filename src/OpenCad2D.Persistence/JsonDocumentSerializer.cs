@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
@@ -55,6 +56,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             Layers = document.Layers.All
                 .Select(ToDto)
                 .ToList(),
+            BlockDefinitions = document.BlockDefinitions.All
+                .Select(ToDto)
+                .ToList(),
             Entities = document.Entities.All
                 .Select(ToDto)
                 .Where(dto => dto is not null)
@@ -101,6 +105,25 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             else
             {
                 document.Layers.Add(layer);
+            }
+        }
+
+        foreach (BlockDefinitionDto blockDefinitionDto in dto.BlockDefinitions)
+        {
+            BlockDefinition? blockDefinition = FromDto(blockDefinitionDto);
+
+            if (blockDefinition is null)
+            {
+                continue;
+            }
+
+            if (document.BlockDefinitions.Contains(blockDefinition.Id))
+            {
+                document.BlockDefinitions.Replace(blockDefinition);
+            }
+            else
+            {
+                document.BlockDefinitions.Add(blockDefinition);
             }
         }
 
@@ -181,6 +204,33 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 issues.Add(new DocumentRecoveryIssue(
                     DocumentRecoverySeverity.Warning,
                     "LAYER_SKIPPED",
+                    exception.Message));
+            }
+        }
+
+        foreach (BlockDefinitionDto blockDefinitionDto in dto.BlockDefinitions)
+        {
+            try
+            {
+                BlockDefinition? blockDefinition = FromDto(blockDefinitionDto);
+
+                if (blockDefinition is not null)
+                {
+                    if (document.BlockDefinitions.Contains(blockDefinition.Id))
+                    {
+                        document.BlockDefinitions.Replace(blockDefinition);
+                    }
+                    else
+                    {
+                        document.BlockDefinitions.Add(blockDefinition);
+                    }
+                }
+            }
+            catch (DocumentLoadException exception)
+            {
+                issues.Add(new DocumentRecoveryIssue(
+                    DocumentRecoverySeverity.Warning,
+                    "BLOCK_DEFINITION_SKIPPED",
                     exception.Message));
             }
         }
@@ -476,6 +526,20 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
         };
     }
 
+    private static BlockDefinitionDto ToDto(BlockDefinition definition)
+    {
+        return new BlockDefinitionDto
+        {
+            Id = definition.Id.Value,
+            Name = definition.Name,
+            Entities = definition.Entities
+                .Select(ToDto)
+                .Where(dto => dto is not null)
+                .Cast<EntityDto>()
+                .ToList()
+        };
+    }
+
     private static EntityDto? ToDto(CadEntity entity)
     {
         return entity switch
@@ -689,6 +753,23 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 HeightVectorY = imageReference.HeightVector.Y,
                 PixelWidth = imageReference.PixelWidth,
                 PixelHeight = imageReference.PixelHeight
+            },
+
+            BlockReferenceEntity blockReference => new BlockReferenceEntityDto
+            {
+                Id = blockReference.Id.ToString(),
+                LayerId = blockReference.LayerId.Value,
+                BlockDefinitionId = blockReference.BlockDefinitionId.Value,
+                InsertionX = blockReference.InsertionPoint.X,
+                InsertionY = blockReference.InsertionPoint.Y,
+                XAxisX = blockReference.XAxis.X,
+                XAxisY = blockReference.XAxis.Y,
+                YAxisX = blockReference.YAxis.X,
+                YAxisY = blockReference.YAxis.Y,
+                DefinitionMinX = blockReference.DefinitionBounds.MinX,
+                DefinitionMinY = blockReference.DefinitionBounds.MinY,
+                DefinitionMaxX = blockReference.DefinitionBounds.MaxX,
+                DefinitionMaxY = blockReference.DefinitionBounds.MaxY
             },
 
             _ => null
@@ -965,6 +1046,31 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             fillColor);
     }
 
+    private static BlockDefinition? FromDto(BlockDefinitionDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Id) || string.IsNullOrWhiteSpace(dto.Name))
+        {
+            return null;
+        }
+
+        var entities = new List<CadEntity>();
+
+        foreach (EntityDto entityDto in dto.Entities)
+        {
+            CadEntity? entity = FromDto(entityDto);
+
+            if (entity is not null)
+            {
+                entities.Add(entity);
+            }
+        }
+
+        return new BlockDefinition(
+            new BlockDefinitionId(dto.Id),
+            dto.Name,
+            entities);
+    }
+
     private static CadEntity? FromDto(EntityDto dto)
     {
         if (dto is UnknownEntityDto)
@@ -1139,6 +1245,23 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     new Vector2D(imageReference.HeightVectorX, imageReference.HeightVectorY),
                     imageReference.PixelWidth,
                     imageReference.PixelHeight,
+                    id,
+                    layerId),
+
+            BlockReferenceEntityDto blockReference => string.IsNullOrWhiteSpace(blockReference.BlockDefinitionId) ||
+                new Vector2D(blockReference.XAxisX, blockReference.XAxisY).Length <= 0 ||
+                new Vector2D(blockReference.YAxisX, blockReference.YAxisY).Length <= 0
+                ? null
+                : new BlockReferenceEntity(
+                    new BlockDefinitionId(blockReference.BlockDefinitionId),
+                    new Point2D(blockReference.InsertionX, blockReference.InsertionY),
+                    new Vector2D(blockReference.XAxisX, blockReference.XAxisY),
+                    new Vector2D(blockReference.YAxisX, blockReference.YAxisY),
+                    new BoundingBox2D(
+                        blockReference.DefinitionMinX,
+                        blockReference.DefinitionMinY,
+                        blockReference.DefinitionMaxX,
+                        blockReference.DefinitionMaxY),
                     id,
                     layerId),
 

@@ -18,6 +18,7 @@
 
 # VS Code
 .vscode/
+.codex/
 
 # Test results
 TestResults/

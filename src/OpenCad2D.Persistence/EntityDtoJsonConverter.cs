@@ -37,6 +37,7 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
             EntityTypeNames.Polyline => root.Deserialize<PolylineEntityDto>(options),
             EntityTypeNames.BezierSpline => root.Deserialize<BezierSplineEntityDto>(options),
             EntityTypeNames.ImageReference => root.Deserialize<ImageReferenceEntityDto>(options),
+            EntityTypeNames.BlockReference => root.Deserialize<BlockReferenceEntityDto>(options),
             _ => new UnknownEntityDto
             {
                 Type = type ?? string.Empty,
@@ -118,6 +119,10 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
 
             case ImageReferenceEntityDto imageReference:
                 JsonSerializer.Serialize(writer, imageReference, options);
+                break;
+
+            case BlockReferenceEntityDto blockReference:
+                JsonSerializer.Serialize(writer, blockReference, options);
                 break;
 
             case UnknownEntityDto unknown:

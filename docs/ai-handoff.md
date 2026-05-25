@@ -515,3 +515,17 @@ Implemented the first native OpenCad2D import workflow. The toolbar exposes `Imp
 The workflow now uses a pending placement step. After file selection, v0.8.102 shows a small options dialog with uniform `Scale` and `Rotation °`. The imported drawing is then committed when the user clicks an insertion point in the canvas; an active snap candidate is used when available. Escape cancels the pending import without changing the document.
 
 Deferred refinements: live import preview, command-line alias and a dedicated import report window.
+
+## Blocks foundation — v0.8.110
+
+The project now has the first block model layer:
+
+- `BlockDefinitionId` in `OpenCad2D.Core/Identifiers`.
+- `BlockDefinition` and `BlockDefinitionCollection` in `OpenCad2D.Core/Blocks`.
+- `BlockReferenceEntity` in `OpenCad2D.Core/Entities`.
+- `CadDocument.BlockDefinitions` stores reusable definitions separately from drawing entities.
+- `EntityKind.BlockReference` identifies block reference entities.
+- JSON persistence supports `blockDefinitions` at document level and `BlockReference` entities.
+- `CadEntityRenderer` can render a block reference by transforming definition entities into world coordinates.
+
+This is intentionally a foundation checkpoint. UI workflows for creating, inserting, editing and exploding blocks are still pending.

@@ -1,4 +1,5 @@
 using OpenCad2D.Core.Collections;
+using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -20,6 +21,7 @@ public sealed class CadDocument
         TextFormats = TextFormatCollection.Default;
         DimensionStyles = DimensionStyleCollection.Default;
         CurrentDimensionStyleId = DimensionStyleId.Standard;
+        BlockDefinitions = new BlockDefinitionCollection();
         Entities = new EntityCollection();
     }
 
@@ -32,6 +34,8 @@ public sealed class CadDocument
     public DimensionStyleCollection DimensionStyles { get; }
 
     public DimensionStyleId CurrentDimensionStyleId { get; private set; }
+
+    public BlockDefinitionCollection BlockDefinitions { get; }
 
     public EntityCollection Entities { get; }
 
@@ -84,6 +88,8 @@ public sealed class CadDocument
                 $"Cannot add entity because layer '{entity.LayerId}' does not exist.");
         }
 
+        EnsureReferencedBlockDefinitionExists(entity);
+
         Entities.Add(entity);
     }
 
@@ -106,6 +112,8 @@ public sealed class CadDocument
             throw new InvalidOperationException(
                 $"Cannot replace entity because layer '{entity.LayerId}' does not exist.");
         }
+
+        EnsureReferencedBlockDefinitionExists(entity);
 
         CadEntity existingEntity = Entities.GetRequired(entity.Id);
 
@@ -200,6 +208,23 @@ public sealed class CadDocument
     {
         return OrderByDrawOrder(
             Entities.Query(area).Where(IsEntitySelectable));
+    }
+
+
+    private void EnsureReferencedBlockDefinitionExists(CadEntity entity)
+    {
+        if (entity is not BlockReferenceEntity blockReference)
+        {
+            return;
+        }
+
+        if (BlockDefinitions.Contains(blockReference.BlockDefinitionId))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException(
+            $"Cannot use block reference because definition '{blockReference.BlockDefinitionId}' does not exist.");
     }
 
     private static IEnumerable<CadEntity> OrderByDrawOrder(IEnumerable<CadEntity> entities)

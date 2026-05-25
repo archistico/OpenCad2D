@@ -21,5 +21,7 @@ public sealed class DocumentDto
 
     public List<LayerDto> Layers { get; set; } = new();
 
+    public List<BlockDefinitionDto> BlockDefinitions { get; set; } = new();
+
     public List<EntityDto> Entities { get; set; } = new();
 }

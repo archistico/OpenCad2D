@@ -23,4 +23,6 @@ public static class EntityTypeNames
     public const string BezierSpline = "BezierSpline";
 
     public const string ImageReference = "ImageReference";
+
+    public const string BlockReference = "BlockReference";
 }

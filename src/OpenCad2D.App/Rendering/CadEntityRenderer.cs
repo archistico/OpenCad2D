@@ -181,9 +181,100 @@ public sealed class CadEntityRenderer
                     imageReference,
                     pen);
                 break;
+
+            case BlockReferenceEntity blockReference:
+                DrawBlockReference(
+                    context,
+                    workspace,
+                    blockReference,
+                    pen,
+                    isSelected,
+                    fillBrush);
+                break;
         }
     }
 
+
+    private void DrawBlockReference(
+        DrawingContext context,
+        CadWorkspace workspace,
+        BlockReferenceEntity blockReference,
+        Pen pen,
+        bool isSelected,
+        IBrush? fillBrush)
+    {
+        if (!workspace.Document.BlockDefinitions.TryGet(blockReference.BlockDefinitionId, out var definition) || definition is null)
+        {
+            DrawMissingBlockPlaceholder(
+                context,
+                blockReference,
+                pen);
+            return;
+        }
+
+        foreach (CadEntity entity in definition.Entities)
+        {
+            CadEntity transformedEntity = blockReference.TransformContainedEntity(entity);
+
+            DrawEntity(
+                context,
+                workspace,
+                transformedEntity,
+                pen,
+                isSelected,
+                fillBrush);
+        }
+
+        if (isSelected)
+        {
+            DrawBlockBounds(
+                context,
+                blockReference,
+                pen);
+        }
+    }
+
+    private void DrawMissingBlockPlaceholder(
+        DrawingContext context,
+        BlockReferenceEntity blockReference,
+        Pen pen)
+    {
+        DrawBlockBounds(
+            context,
+            blockReference,
+            pen);
+
+        Point center = ToScreenPoint(blockReference.GetBoundingBox().Center);
+
+        var text = new FormattedText(
+            "Missing block",
+            CultureInfo.InvariantCulture,
+            FlowDirection.LeftToRight,
+            Typeface.Default,
+            12,
+            pen.Brush ?? Brushes.White);
+
+        context.DrawText(
+            text,
+            center);
+    }
+
+    private void DrawBlockBounds(
+        DrawingContext context,
+        BlockReferenceEntity blockReference,
+        Pen pen)
+    {
+        BoundingBox2D bounds = blockReference.DefinitionBounds;
+        Point2D bottomLeft = blockReference.LocalToWorldMatrix.Transform(new Point2D(bounds.MinX, bounds.MinY));
+        Point2D bottomRight = blockReference.LocalToWorldMatrix.Transform(new Point2D(bounds.MaxX, bounds.MinY));
+        Point2D topRight = blockReference.LocalToWorldMatrix.Transform(new Point2D(bounds.MaxX, bounds.MaxY));
+        Point2D topLeft = blockReference.LocalToWorldMatrix.Transform(new Point2D(bounds.MinX, bounds.MaxY));
+
+        context.DrawLine(pen, ToScreenPoint(bottomLeft), ToScreenPoint(bottomRight));
+        context.DrawLine(pen, ToScreenPoint(bottomRight), ToScreenPoint(topRight));
+        context.DrawLine(pen, ToScreenPoint(topRight), ToScreenPoint(topLeft));
+        context.DrawLine(pen, ToScreenPoint(topLeft), ToScreenPoint(bottomLeft));
+    }
 
     private void DrawImageReference(
         DrawingContext context,
