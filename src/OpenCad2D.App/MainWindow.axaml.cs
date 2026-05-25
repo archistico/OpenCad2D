@@ -295,6 +295,66 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void ReplaceImage_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (!_viewModel.HasSingleSelectedImageReference)
+        {
+            await ShowMessageAsync(
+                "Replace image",
+                "Select exactly one image reference before replacing or relinking its file.");
+            return;
+        }
+
+        try
+        {
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
+                {
+                    Title = "Replace / relink raster image",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { RasterImageFileType }
+                });
+
+            if (files.Count == 0)
+            {
+                return;
+            }
+
+            string? filePath = files[0].TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Replace image",
+                    "Only local image files are supported in this version.");
+                return;
+            }
+
+            using var bitmap = new Bitmap(filePath);
+
+            ToolResult result = _viewModel.ReplaceSelectedImageReference(
+                filePath,
+                bitmap.PixelSize.Width,
+                bitmap.PixelSize.Height);
+
+            RefreshAllUiAfterDocumentChange();
+            CadCanvas.InvalidateVisual();
+
+            if (result.Changed)
+            {
+                RefreshStatus();
+            }
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Replace image failed",
+                exception.Message);
+        }
+    }
+
     private async void Save_Click(
         object? sender,
         RoutedEventArgs e)

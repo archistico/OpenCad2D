@@ -237,6 +237,19 @@
                             </Button>
 
                     <Button Classes="global-button"
+                            ToolTip.Tip="Replace or relink the selected external image reference"
+                            Click="ReplaceImage_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconImage}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Replace Image" />
+                                </Grid>
+                            </Button>
+
+                    <Button Classes="global-button"
                             ToolTip.Tip="Save the current drawing"
                             Click="Save_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">

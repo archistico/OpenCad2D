@@ -321,6 +321,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public PropertyPanelViewModel PropertyPanel =>
         _propertyPanel;
 
+    public bool HasSingleSelectedImageReference =>
+        GetSingleSelectedImageReference() is not null;
+
     public string LastMessage =>
         _lastMessage;
 
@@ -716,6 +719,69 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         return result;
     }
+
+    public ToolResult ReplaceSelectedImageReference(
+        string filePath,
+        int pixelWidth,
+        int pixelHeight)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "Image file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        ImageReferenceEntity? selectedImageReference = GetSingleSelectedImageReference();
+
+        if (selectedImageReference is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                "Select exactly one image reference before replacing/relinking its file.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        var replacement = selectedImageReference.WithFilePath(
+            filePath,
+            pixelWidth,
+            pixelHeight);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new ReplaceEntitiesCommand(replacement));
+
+        Workspace.SelectionSet.ReplaceWith(replacement.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Image reference relinked to '{Path.GetFileName(filePath)}'.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    private ImageReferenceEntity? GetSingleSelectedImageReference()
+    {
+        if (Workspace.SelectionSet.SelectedIds.Count != 1)
+        {
+            return null;
+        }
+
+        EntityId entityId = Workspace.SelectionSet.SelectedIds.First();
+
+        if (!Workspace.Document.Entities.Contains(entityId))
+        {
+            return null;
+        }
+
+        return Workspace.Document.Entities.GetRequired(entityId) as ImageReferenceEntity;
+    }
+
 
     public DxfImportResult ImportDxfFromFile(string filePath)
     {
@@ -1178,6 +1244,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(EntityCount),
             nameof(SelectedCount),
+            nameof(HasSingleSelectedImageReference),
             nameof(IsDirty),
             nameof(TitleText),
             nameof(FileStatusText),
@@ -1871,6 +1938,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CommandPromptText),
             nameof(IsPropertyPanelVisible),
             nameof(PropertyPanel),
+            nameof(HasSingleSelectedImageReference),
             nameof(IsDirty),
             nameof(TitleText),
             nameof(FileStatusText),
@@ -1905,6 +1973,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         OnPropertiesChanged(
             nameof(SelectedCount),
+            nameof(HasSingleSelectedImageReference),
             nameof(PropertyPanel),
             nameof(LastMessage),
             nameof(StatusText));

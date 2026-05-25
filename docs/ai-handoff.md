@@ -322,3 +322,20 @@ Recommended manual checks:
 3. Move, copy, rotate, scale and mirror the reference.
 4. Hide/lock the layer and verify rendering/selection behavior is consistent with other entities.
 5. Rename or move the external image and reopen the drawing; the placeholder rectangle should remain visible/selectable.
+
+
+### 2026-05-25 — Image reference editing and relinking
+
+Follow-up improvements for external raster references:
+
+- `ImageReferenceEntity` now exposes helper methods for relinking, origin edits, size edits and rotation edits while keeping the external-reference model intact.
+- The Property Panel exposes editable fields for the selected image reference: file path, origin X/Y, width, height and rotation. Edits are applied through normal replace-entity commands, so undo/redo remains coherent.
+- Added a `Replace Image` toolbar action. It requires exactly one selected image reference, opens the same PNG/JPG picker and relinks the selected entity while preserving its current drawing geometry. Pixel dimensions are refreshed from the newly selected raster file.
+- Added tests for relinking, rotation around center, size-preserving vector direction, and ViewModel relink behavior.
+
+Manual checks:
+
+1. Attach a PNG/JPG, select it and change width/height/rotation from the Property Panel.
+2. Use Replace Image on a selected reference and verify geometry is preserved while the visual raster changes.
+3. Try Replace Image with no selected image and verify the explanatory message is shown.
+4. Undo/redo Property Panel edits and Replace Image.

@@ -91,6 +91,109 @@ public sealed class ImageReferenceEntity : CadEntity
 
     public double Height => HeightVector.Length;
 
+    public double RotationDegrees => Math.Atan2(WidthVector.Y, WidthVector.X) * 180.0 / Math.PI;
+
+    public ImageReferenceEntity WithFilePath(
+        string filePath,
+        int pixelWidth,
+        int pixelHeight)
+    {
+        return new ImageReferenceEntity(
+            filePath,
+            Origin,
+            WidthVector,
+            HeightVector,
+            pixelWidth,
+            pixelHeight,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder);
+    }
+
+    public ImageReferenceEntity WithOrigin(Point2D origin)
+    {
+        return new ImageReferenceEntity(
+            FilePath,
+            origin,
+            WidthVector,
+            HeightVector,
+            PixelWidth,
+            PixelHeight,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder);
+    }
+
+    public ImageReferenceEntity WithSize(
+        double width,
+        double height)
+    {
+        if (width <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(width),
+                "Image width must be greater than zero.");
+        }
+
+        if (height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(height),
+                "Image height must be greater than zero.");
+        }
+
+        Vector2D widthDirection = WidthVector.Normalize();
+        Vector2D heightDirection = HeightVector.Normalize();
+
+        return new ImageReferenceEntity(
+            FilePath,
+            Origin,
+            widthDirection * width,
+            heightDirection * height,
+            PixelWidth,
+            PixelHeight,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder);
+    }
+
+    public ImageReferenceEntity WithRotationDegrees(double rotationDegrees)
+    {
+        double radians = rotationDegrees * Math.PI / 180.0;
+        Vector2D widthDirection = new(Math.Cos(radians), Math.Sin(radians));
+        double orientationSign = WidthVector.Cross(HeightVector) < 0 ? -1.0 : 1.0;
+        Vector2D heightDirection = orientationSign > 0
+            ? widthDirection.PerpendicularLeft()
+            : widthDirection.PerpendicularRight();
+        Point2D center = Center;
+        Vector2D widthVector = widthDirection * Width;
+        Vector2D heightVector = heightDirection * Height;
+        Point2D origin = center - ((widthVector + heightVector) / 2.0);
+
+        return new ImageReferenceEntity(
+            FilePath,
+            origin,
+            widthVector,
+            heightVector,
+            PixelWidth,
+            PixelHeight,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder);
+    }
+
     public override EntityKind Kind => EntityKind.ImageReference;
 
     public IReadOnlyList<Point2D> GetCorners()

@@ -147,7 +147,7 @@ OpenCad2D supports basic PNG/JPG attachment as external references. The drawing 
 
 Current limitations:
 
-- moving or renaming the image file breaks the live raster preview until the path is restored;
+- moving or renaming the image file breaks the live raster preview until the path is restored or relinked with Replace Image / the editable File property;
 - there is no reference manager/relink dialog yet;
 - SVG export writes an external `<image href="...">` link;
 - DXF and PDF export do not yet emit raster image content.

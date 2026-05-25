@@ -60,4 +60,66 @@ public sealed class ImageReferenceEntityTests
         Assert.Equal(300, moved.PixelWidth);
         Assert.Equal(400, moved.PixelHeight);
     }
+
+
+    [Fact]
+    public void WithFilePath_ShouldRelinkExternalReferenceWithoutChangingGeometry()
+    {
+        var entity = new ImageReferenceEntity(
+            "old.png",
+            new Point2D(1, 2),
+            new Vector2D(3, 0),
+            new Vector2D(0, 4),
+            pixelWidth: 300,
+            pixelHeight: 400);
+
+        ImageReferenceEntity relinked = entity.WithFilePath(
+            "new.jpg",
+            pixelWidth: 1200,
+            pixelHeight: 800);
+
+        Assert.Equal("new.jpg", relinked.FilePath);
+        Assert.Equal(entity.Origin, relinked.Origin);
+        Assert.Equal(entity.WidthVector, relinked.WidthVector);
+        Assert.Equal(entity.HeightVector, relinked.HeightVector);
+        Assert.Equal(1200, relinked.PixelWidth);
+        Assert.Equal(800, relinked.PixelHeight);
+    }
+
+    [Fact]
+    public void WithRotationDegrees_ShouldRotateAroundCenter()
+    {
+        var entity = new ImageReferenceEntity(
+            "plan.png",
+            Point2D.Origin,
+            new Vector2D(10, 0),
+            new Vector2D(0, 4));
+
+        ImageReferenceEntity rotated = entity.WithRotationDegrees(90);
+
+        Assert.Equal(entity.Center.X, rotated.Center.X, precision: 6);
+        Assert.Equal(entity.Center.Y, rotated.Center.Y, precision: 6);
+        Assert.Equal(10, rotated.Width, precision: 6);
+        Assert.Equal(4, rotated.Height, precision: 6);
+        Assert.Equal(0, rotated.WidthVector.X, precision: 6);
+        Assert.Equal(10, rotated.WidthVector.Y, precision: 6);
+        Assert.Equal(-4, rotated.HeightVector.X, precision: 6);
+        Assert.Equal(0, rotated.HeightVector.Y, precision: 6);
+    }
+
+    [Fact]
+    public void WithSize_ShouldPreserveVectorDirections()
+    {
+        var entity = new ImageReferenceEntity(
+            "plan.png",
+            Point2D.Origin,
+            new Vector2D(0, 10),
+            new Vector2D(-4, 0));
+
+        ImageReferenceEntity resized = entity.WithSize(20, 8);
+
+        Assert.Equal(new Vector2D(0, 20), resized.WidthVector);
+        Assert.Equal(new Vector2D(-8, 0), resized.HeightVector);
+    }
+
 }

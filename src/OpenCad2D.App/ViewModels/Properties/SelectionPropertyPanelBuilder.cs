@@ -174,7 +174,7 @@ public sealed class SelectionPropertyPanelBuilder
             EllipticalArcEntity ellipticalArc => BuildEllipticalArcGeometrySection(ellipticalArc),
             PolylineEntity polyline => BuildPolylineGeometrySection(workspace, polyline, setMessage, refresh),
             BezierSplineEntity spline => BuildBezierSplineGeometrySection(spline),
-            ImageReferenceEntity imageReference => BuildImageReferenceGeometrySection(imageReference),
+            ImageReferenceEntity imageReference => BuildImageReferenceGeometrySection(workspace, imageReference, setMessage, refresh),
             ArcEntity arc => BuildArcGeometrySection(workspace, arc, setMessage, refresh),
             _ => new PropertySectionViewModel(
                 "Geometry",
@@ -549,7 +549,11 @@ public sealed class SelectionPropertyPanelBuilder
     }
 
 
-    private static PropertySectionViewModel BuildImageReferenceGeometrySection(ImageReferenceEntity imageReference)
+    private static PropertySectionViewModel BuildImageReferenceGeometrySection(
+        CadWorkspace workspace,
+        ImageReferenceEntity imageReference,
+        Action<string>? setMessage,
+        Action? refresh)
     {
         double area = Math.Abs(imageReference.WidthVector.Cross(imageReference.HeightVector));
 
@@ -557,11 +561,14 @@ public sealed class SelectionPropertyPanelBuilder
             "Image Reference",
             new[]
             {
-                Row("File", imageReference.FilePath),
+                EditableRow("File", imageReference.FilePath, value => ReplaceImageReferenceFilePath(workspace, imageReference.Id, value, setMessage, refresh)),
                 Row("Origin", PropertyValueFormatter.FormatPoint(imageReference.Origin)),
+                EditableRow("Origin X", PropertyValueFormatter.FormatCoordinate(imageReference.Origin.X), value => ReplaceImageReferenceOriginCoordinate(workspace, imageReference.Id, value, updateX: true, setMessage, refresh)),
+                EditableRow("Origin Y", PropertyValueFormatter.FormatCoordinate(imageReference.Origin.Y), value => ReplaceImageReferenceOriginCoordinate(workspace, imageReference.Id, value, updateX: false, setMessage, refresh)),
                 Row("Center", PropertyValueFormatter.FormatPoint(imageReference.Center)),
-                Row("Width", PropertyValueFormatter.FormatLength(imageReference.Width)),
-                Row("Height", PropertyValueFormatter.FormatLength(imageReference.Height)),
+                EditableRow("Width", PropertyValueFormatter.FormatLength(imageReference.Width), value => ReplaceImageReferenceWidth(workspace, imageReference.Id, value, setMessage, refresh)),
+                EditableRow("Height", PropertyValueFormatter.FormatLength(imageReference.Height), value => ReplaceImageReferenceHeight(workspace, imageReference.Id, value, setMessage, refresh)),
+                EditableRow("Rotation", PropertyValueFormatter.FormatCoordinate(imageReference.RotationDegrees), value => ReplaceImageReferenceRotation(workspace, imageReference.Id, value, setMessage, refresh)),
                 Row("Area", PropertyValueFormatter.FormatArea(area)),
                 Row("Pixels", $"{imageReference.PixelWidth} x {imageReference.PixelHeight}")
             });
@@ -915,6 +922,109 @@ public sealed class SelectionPropertyPanelBuilder
         ReplaceEntity(workspace, text.WithReferenceWidth(referenceWidth), "Multiline text reference width updated.", setMessage, refresh);
     }
 
+
+    private static void ReplaceImageReferenceFilePath(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<ImageReferenceEntity>(workspace, entityId, setMessage, out ImageReferenceEntity imageReference))
+        {
+            return;
+        }
+
+        string filePath = value.Trim();
+
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            setMessage?.Invoke("Image file path cannot be empty.");
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            imageReference.WithFilePath(filePath, imageReference.PixelWidth, imageReference.PixelHeight),
+            "Image reference path updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceImageReferenceOriginCoordinate(CadWorkspace workspace, EntityId entityId, string value, bool updateX, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<ImageReferenceEntity>(workspace, entityId, setMessage, out ImageReferenceEntity imageReference) ||
+            !TryParseDouble(value, setMessage, out double coordinate))
+        {
+            return;
+        }
+
+        Point2D origin = updateX
+            ? new Point2D(coordinate, imageReference.Origin.Y)
+            : new Point2D(imageReference.Origin.X, coordinate);
+
+        ReplaceEntity(
+            workspace,
+            imageReference.WithOrigin(origin),
+            "Image reference origin updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceImageReferenceWidth(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<ImageReferenceEntity>(workspace, entityId, setMessage, out ImageReferenceEntity imageReference) ||
+            !TryParseDouble(value, setMessage, out double width))
+        {
+            return;
+        }
+
+        if (width <= 0)
+        {
+            setMessage?.Invoke("Image width must be greater than zero.");
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            imageReference.WithSize(width, imageReference.Height),
+            "Image reference width updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceImageReferenceHeight(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<ImageReferenceEntity>(workspace, entityId, setMessage, out ImageReferenceEntity imageReference) ||
+            !TryParseDouble(value, setMessage, out double height))
+        {
+            return;
+        }
+
+        if (height <= 0)
+        {
+            setMessage?.Invoke("Image height must be greater than zero.");
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            imageReference.WithSize(imageReference.Width, height),
+            "Image reference height updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceImageReferenceRotation(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<ImageReferenceEntity>(workspace, entityId, setMessage, out ImageReferenceEntity imageReference) ||
+            !TryParseDouble(value, setMessage, out double rotationDegrees))
+        {
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            imageReference.WithRotationDegrees(rotationDegrees),
+            "Image reference rotation updated.",
+            setMessage,
+            refresh);
+    }
 
     private static void ReplaceArcCoordinate(CadWorkspace workspace, EntityId entityId, string value, bool updateX, Action<string>? setMessage, Action? refresh)
     {
