@@ -1,6 +1,6 @@
 # OpenCad2D roadmap
 
-This roadmap tracks the active development path from the current v0.9 stabilization work toward the first stable v1.0 release.
+This roadmap tracks the active development path from the current extended v0.8 line toward the next stabilization gate and, later, the first stable v1.0 release.
 
 OpenCad2D grows in small, testable phases. Each phase should compile, pass the relevant tests, update documentation and leave a clear handoff before the next phase begins.
 
@@ -15,11 +15,28 @@ Legend:
 
 ---
 
-## Current release target: v0.9 stabilization
+## Current release target: v0.8.100+ expansion line
 
-v0.9 is a stabilization release. Its goal is not to add a large new feature group, but to make the current CAD foundation predictable, precise and safe enough to move toward v1.0.
+The v0.9 stabilization gate is deferred. The project will continue inside the v0.8 line, using v0.8.100+ milestones for larger drafting foundations before the next general stabilization release.
 
-Primary v0.9 themes:
+Primary v0.8.100+ themes:
+
+- import another `.opencad2d.json` drawing into the current document;
+- reusable block definitions and block references;
+- architectural symbols and technical drafting helpers;
+- stair plan/elevation/front-elevation generation;
+- explicit-boundary hatch and fill workflows;
+- careful documentation/specification before implementation.
+
+See `docs/roadmap-v0.8.100.md` for the detailed v0.8.100+ plan and `docs/specs/` for milestone specifications.
+
+---
+
+## Deferred target: v0.9 stabilization
+
+v0.9 remains the next stabilization release after the v0.8.100+ expansion line. Its goal is not to add another large feature group, but to make the expanded CAD foundation predictable, precise and safe enough to move toward v1.0.
+
+Primary future v0.9 themes:
 
 - native curve editing precision;
 - predictable modify-tool UX;
@@ -58,7 +75,28 @@ The following foundations are considered complete for the active roadmap. Older 
 
 ---
 
-## Active v0.9 work
+## Active v0.8.100+ specification plan
+
+Status: [~] planning/specification.
+
+The following milestones are planned before the future v0.9 stabilization gate:
+
+| Milestone | Status | Specification | Goal |
+|---|---:|---|---|
+| v0.8.100 | [ ] | `docs/specs/v0.8.100-import-drawing.md` | Import another `.opencad2d.json` drawing into the current document. |
+| v0.8.110 | [ ] | `docs/specs/v0.8.110-blocks.md` | Introduce block definitions, block references and persistence. |
+| v0.8.115 | [ ] | `docs/specs/v0.8.110-blocks.md` | Add Create Block, Insert Block, Edit Block and Explode workflows. |
+| v0.8.120 | [ ] | `docs/specs/v0.8.120-architectural-symbols.md` | Add north symbol, metric scale, section/elevation markers and title block helpers. |
+| v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
+| v0.8.140 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add explicit-boundary hatch/solid fill entity. |
+| v0.8.150 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add holes/islands and composite hatch boundaries. |
+| v0.8.160+ | [ ] | `docs/roadmap-v0.8.100.md` | Consolidate the expanded v0.8 line before the next release gate. |
+
+Implementation should follow the order above. Import Drawing and Blocks are foundations; architectural symbols and stairs should build on blocks where useful; hatch is deferred because robust boundary recognition is the most geometry-sensitive part of the plan.
+
+---
+
+## Legacy v0.9 stabilization backlog
 
 ### 1. Modify Tools UX cleanup
 

@@ -60,7 +60,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - tool-provided preview descriptor/entity protocols that keep active tool preview logic out of the app renderer;
 - minimal application logging for tool/UI exceptions.
 
-See `docs/roadmap.md` and `docs/stabilization-v0.9-plan.md` for the active v0.9 stabilization plan.
+See `docs/roadmap.md`, `docs/roadmap-v0.8.100.md` and the milestone specifications in `docs/specs/` for the active v0.8.100+ development plan. The v0.9 stabilization gate is deferred until the expanded v0.8 line is consolidated.
 
 ---
 
@@ -167,6 +167,8 @@ Important documents:
 |---|---|
 | `docs/architecture.md` | project structure and dependency rules |
 | `docs/roadmap.md` | current roadmap, completed stabilization work and next milestones |
+| `docs/roadmap-v0.8.100.md` | extended v0.8.100+ roadmap before the next stabilization gate |
+| `docs/specs/` | detailed specifications for import drawing, blocks, symbols, stairs and hatch milestones |
 | `docs/commands.md` | commands, aliases and undoable command rules |
 | `docs/curve-editing.md` | Trim/Break curve-editing architecture, native precision and shared cut-point rules |
 | `docs/command-input.md` | command input syntax and tool workflow |

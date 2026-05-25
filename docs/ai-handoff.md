@@ -478,3 +478,31 @@ Added release preparation files:
 - `docs/release-publish-v0.9.md`
 
 Before tagging v0.9, run the full build/test gate and perform the manual smoke tests listed in `docs/release-checklist-v0.9.md`, especially the external image-reference workflow and SVG/DXF/PDF export expectations.
+
+
+---
+
+## Current planning pivot — v0.8.100+ expansion line
+
+The project is intentionally staying in the v0.8 line before the next v0.9 stabilization gate. The next work should be treated as v0.8.100+ milestones, not as an immediate v0.9 release.
+
+The planned order is:
+
+1. `v0.8.100` — Import another `.opencad2d.json` drawing into the current document.
+2. `v0.8.110` — Block model with `BlockDefinition` and `BlockReferenceEntity`.
+3. `v0.8.115` — Block tools: Create Block, Insert Block, Edit Block, Explode and minimal Block Manager.
+4. `v0.8.120` — Architectural symbols: north symbol, metric scale, section/elevation markers and title block/testalino helpers.
+5. `v0.8.130` — Stair tools for plan, side elevation and front elevation, including optional slab/structure line.
+6. `v0.8.140+` — Hatch/fill system with explicit boundaries first, then holes/islands and composite boundaries.
+7. `v0.8.160+` — Consolidation before the future v0.9 release gate.
+
+Detailed planning documents added for this pivot:
+
+- `docs/roadmap-v0.8.100.md`
+- `docs/specs/v0.8.100-import-drawing.md`
+- `docs/specs/v0.8.110-blocks.md`
+- `docs/specs/v0.8.120-architectural-symbols.md`
+- `docs/specs/v0.8.130-stairs.md`
+- `docs/specs/v0.8.140-hatch.md`
+
+Important implementation opinion preserved from planning: do not start with AutoCAD-style click-inside hatch detection. Start with explicit selected boundaries, because robust automatic boundary detection requires graph construction, curve intersections, virtual splitting and face extraction. Blocks should be implemented before symbol/stair libraries so that generated architectural content can reuse definitions instead of becoming disconnected one-off geometry.
