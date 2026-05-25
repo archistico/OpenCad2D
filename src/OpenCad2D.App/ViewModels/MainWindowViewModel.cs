@@ -36,6 +36,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 {
     private const string DefaultTemplateRelativePath = "Templates/default.opencad2d.json";
 
+    private PendingOpenCad2DImport? _pendingOpenCad2DImport;
+
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
@@ -1222,7 +1224,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
-    public ToolResult ImportDrawingFromFile(string filePath)
+    public bool IsImportDrawingPlacementPending => _pendingOpenCad2DImport is not null;
+
+    public ToolResult BeginImportDrawingPlacementFromFile(
+        string filePath,
+        OpenCad2DImportPlacementOptions? options = null)
     {
         if (string.IsNullOrWhiteSpace(filePath))
         {
@@ -1234,26 +1240,104 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         DocumentDto dto = _documentSerializer.LoadFromFile(filePath);
         DocumentRecoveryResult recovery = _documentSerializer.DeserializeWithRecovery(dto);
 
-        var merger = new OpenCad2DImportMerger();
-        OpenCad2DImportMergeResult mergeResult = merger.Merge(
-            Workspace.Document,
-            recovery.Document);
+        _pendingOpenCad2DImport = new PendingOpenCad2DImport(
+            filePath,
+            recovery,
+            options ?? OpenCad2DImportPlacementOptions.Default);
 
-        Workspace.CommandHistory.Execute(
-            Workspace.Document,
-            mergeResult.Command);
+        ToolResult result = ToolResult.Started(
+            $"Import drawing '{Path.GetFileName(filePath)}': specify insertion point.");
 
-        if (mergeResult.ImportedEntities.Count > 0)
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult CommitPendingImportDrawing(Point2D insertionPoint)
+    {
+        if (_pendingOpenCad2DImport is null)
         {
-            Workspace.SelectionSet.ReplaceWith(
-                mergeResult.ImportedEntities.Select(entity => entity.Id));
-        }
-        else
-        {
-            Workspace.SelectionSet.Clear();
+            return ToolResult.None();
         }
 
-        Workspace.EnsureCurrentLayerIsUsable();
+        PendingOpenCad2DImport pendingImport = _pendingOpenCad2DImport;
+        _pendingOpenCad2DImport = null;
+
+        OpenCad2DImportMergeResult mergeResult = MergeImportedDocument(
+            pendingImport.Recovery.Document,
+            insertionPoint,
+            pendingImport.Options);
+
+        ApplyImportedEntitiesSelection(mergeResult);
+
+        string recoverySuffix = pendingImport.Recovery.HasIssues
+            ? $" Recovery: {pendingImport.Recovery.RecoveredEntityCount} recovered, {pendingImport.Recovery.SkippedEntityCount} skipped."
+            : string.Empty;
+
+        ToolResult result = ToolResult.Completed(
+            $"Imported OpenCad2D drawing '{Path.GetFileName(pendingImport.FilePath)}' " +
+            $"({mergeResult.ImportedEntityCount} entities, " +
+            $"{mergeResult.AddedLayerCount} layers, " +
+            $"{mergeResult.AddedLineFormatCount} line formats, " +
+            $"scale {pendingImport.Options.Scale:0.###}, " +
+            $"rotation {pendingImport.Options.RotationDegrees:0.###}°)." +
+            recoverySuffix);
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+
+        return result;
+    }
+
+    public ToolResult CancelPendingImportDrawing()
+    {
+        if (_pendingOpenCad2DImport is null)
+        {
+            return ToolResult.None();
+        }
+
+        _pendingOpenCad2DImport = null;
+
+        ToolResult result = ToolResult.Cancelled("Import drawing cancelled.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult ImportDrawingFromFile(string filePath)
+    {
+        return ImportDrawingFromFile(
+            filePath,
+            Point2D.Origin,
+            OpenCad2DImportPlacementOptions.Default);
+    }
+
+    public ToolResult ImportDrawingFromFile(
+        string filePath,
+        Point2D insertionPoint,
+        OpenCad2DImportPlacementOptions? options = null)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "OpenCad2D import file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        DocumentDto dto = _documentSerializer.LoadFromFile(filePath);
+        DocumentRecoveryResult recovery = _documentSerializer.DeserializeWithRecovery(dto);
+        OpenCad2DImportPlacementOptions placementOptions = options ?? OpenCad2DImportPlacementOptions.Default;
+
+        OpenCad2DImportMergeResult mergeResult = MergeImportedDocument(
+            recovery.Document,
+            insertionPoint,
+            placementOptions);
+
+        ApplyImportedEntitiesSelection(mergeResult);
 
         string recoverySuffix = recovery.HasIssues
             ? $" Recovery: {recovery.RecoveredEntityCount} recovered, {recovery.SkippedEntityCount} skipped."
@@ -1271,6 +1355,41 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         NotifyFileStateChanged();
 
         return result;
+    }
+
+    private OpenCad2DImportMergeResult MergeImportedDocument(
+        CadDocument importedDocument,
+        Point2D insertionPoint,
+        OpenCad2DImportPlacementOptions options)
+    {
+        var merger = new OpenCad2DImportMerger();
+        OpenCad2DImportMergeResult mergeResult = merger.Merge(
+            Workspace.Document,
+            importedDocument,
+            insertionPoint,
+            options.Scale,
+            options.RotationDegrees);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            mergeResult.Command);
+
+        Workspace.EnsureCurrentLayerIsUsable();
+
+        return mergeResult;
+    }
+
+    private void ApplyImportedEntitiesSelection(OpenCad2DImportMergeResult mergeResult)
+    {
+        if (mergeResult.ImportedEntities.Count > 0)
+        {
+            Workspace.SelectionSet.ReplaceWith(
+                mergeResult.ImportedEntities.Select(entity => entity.Id));
+        }
+        else
+        {
+            Workspace.SelectionSet.Clear();
+        }
     }
 
 
@@ -2866,4 +2985,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             OnPropertyChanged(propertyName);
         }
     }
+
+    private sealed class PendingOpenCad2DImport
+    {
+        public PendingOpenCad2DImport(
+            string filePath,
+            DocumentRecoveryResult recovery,
+            OpenCad2DImportPlacementOptions options)
+        {
+            FilePath = filePath;
+            Recovery = recovery;
+            Options = options;
+        }
+
+        public string FilePath { get; }
+
+        public DocumentRecoveryResult Recovery { get; }
+
+        public OpenCad2DImportPlacementOptions Options { get; }
+    }
+
 }

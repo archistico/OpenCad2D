@@ -42,7 +42,7 @@ Import Drawing is a low-risk foundation for reusing existing work. Blocks should
 
 Specification: `docs/specs/v0.8.100-import-drawing.md`.
 
-Status: implemented as first pass.
+Status: v0.8.102 implemented.
 
 Goal: allow a `.opencad2d.json` file to be imported into the current drawing.
 
@@ -53,9 +53,10 @@ Initial scope:
 - Merge layers, line formats, text formats and dimension styles safely.
 - Resolve external image paths relative to the imported document before inserting them.
 - Preserve visual appearance as much as possible.
-- Start with import at origin.
-- First implementation adds the toolbar workflow and undoable merge.
-- Defer insertion point, scale and rotation to the next refinement pass.
+- v0.8.100: import at origin and undoable merge.
+- v0.8.101: insertion point workflow with pending import and Escape cancellation.
+- v0.8.102: import options dialog with uniform scale and rotation in degrees.
+- Defer live preview and command-line aliases to later refinement passes.
 
 Exit criteria:
 
@@ -64,7 +65,9 @@ Exit criteria:
 - Imported entity IDs do not collide with current entity IDs.
 - Imported image references remain valid when possible.
 - Undo removes the imported batch as one operation.
-- Tests cover merge behavior, ID regeneration and image path resolution.
+- Insertion point can be selected in the canvas, including snap points.
+- Scale and rotation options transform the imported entities around source origin before placement.
+- Tests cover merge behavior, ID regeneration, pending placement, cancellation, scale and rotation.
 
 ---
 

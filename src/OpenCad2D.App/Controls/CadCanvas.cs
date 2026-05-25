@@ -1052,14 +1052,16 @@ public sealed class CadCanvas : Control
 
     private void NotifyWorkspaceChanged(
         ToolResult result,
-        Point2D mousePosition)
+        Point2D mousePosition,
+        bool isPointerPressed = false)
     {
         WorkspaceChanged?.Invoke(
             this,
             new CadCanvasWorkspaceChangedEventArgs(
                 result,
                 mousePosition,
-                _currentSnapCandidate));
+                _currentSnapCandidate,
+                isPointerPressed));
     }
 
     private void DrawActiveToolPreview(DrawingContext context)
@@ -1166,7 +1168,8 @@ public sealed class CadCanvas : Control
 
         NotifyWorkspaceChanged(
             result,
-            modelPoint);
+            modelPoint,
+            isPointerPressed: true);
 
         InvalidateVisual();
     }

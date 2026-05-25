@@ -17,6 +17,7 @@ using OpenCad2D.App.ViewModels.TextFormats;
 using OpenCad2D.App.ViewModels.DimensionStyles;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.App.ViewModels.ImageReferences;
+using OpenCad2D.App.ViewModels.ImportDrawing;
 using OpenCad2D.Export.Dxf.Import;
 using OpenCad2D.Export.Pdf;
 using OpenCad2D.Export.Svg;
@@ -205,17 +206,27 @@ public partial class MainWindow : Window
                 return;
             }
 
-            ToolResult result = _viewModel.ImportDrawingFromFile(filePath);
+            var optionsWindow = new ImportDrawingOptionsWindow();
+            OpenCad2DImportPlacementOptions? options = await optionsWindow
+                .ShowDialog<OpenCad2DImportPlacementOptions?>(this);
 
-            RefreshAllUiAfterDocumentChange();
-            CadCanvas.InvalidateVisual();
-
-            if (result.Changed)
+            if (options is null)
             {
-                RefreshStatus();
+                return;
             }
 
-            await ShowMissingImageReferencesWarningIfNeededAsync();
+            ToolResult result = _viewModel.BeginImportDrawingPlacementFromFile(
+                filePath,
+                options);
+
+            RefreshStatus();
+            CadCanvas.InvalidateVisual();
+            CadCanvas.Focus();
+
+            if (result.Message is not null)
+            {
+                _viewModel.SetLastResult(result);
+            }
         }
         catch (DocumentLoadException exception)
         {
@@ -2441,13 +2452,43 @@ public partial class MainWindow : Window
         return true;
     }
 
-    private void CadCanvas_WorkspaceChanged(
+    private async void CadCanvas_WorkspaceChanged(
         object? sender,
         CadCanvasWorkspaceChangedEventArgs e)
     {
         _viewModel.SetMousePosition(e.MousePosition);
-        _viewModel.SetLastResult(e.Result);
         _viewModel.SetCurrentSnapCandidate(e.SnapCandidate);
+
+        if (_viewModel.IsImportDrawingPlacementPending)
+        {
+            ToolResult importResult;
+
+            if (e.Result.Kind == ToolResultKind.Cancelled)
+            {
+                importResult = _viewModel.CancelPendingImportDrawing();
+            }
+            else if (e.IsPointerPressed)
+            {
+                Point2D insertionPoint = e.SnapCandidate?.Point ?? e.MousePosition;
+                importResult = _viewModel.CommitPendingImportDrawing(insertionPoint);
+
+                CadCanvas.ClearSnapMarker();
+                CadCanvas.InvalidateVisual();
+
+                await ShowMissingImageReferencesWarningIfNeededAsync();
+            }
+            else
+            {
+                importResult = ToolResult.Started("Import drawing: specify insertion point.");
+            }
+
+            _viewModel.SetLastResult(importResult);
+        }
+        else
+        {
+            _viewModel.SetLastResult(e.Result);
+        }
+
         _viewModel.NotifyDocumentStateChanged();
 
         RefreshStatus();

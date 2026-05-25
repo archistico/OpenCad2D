@@ -8,12 +8,14 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
+using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Geometry.Transformations;
 
 namespace OpenCad2D.App.ViewModels.ImportDrawing;
 
 /// <summary>
 /// Builds an undoable merge command that imports another OpenCad2D document into the current one.
-/// The first implementation imports at origin and keeps geometry unchanged while regenerating entity ids.
+/// Imported entities can be placed using a uniform scale, a rotation and an insertion point.
 /// </summary>
 public sealed class OpenCad2DImportMerger
 {
@@ -21,8 +23,39 @@ public sealed class OpenCad2DImportMerger
         CadDocument target,
         CadDocument source)
     {
+        return Merge(
+            target,
+            source,
+            Point2D.Origin,
+            1,
+            0);
+    }
+
+    public OpenCad2DImportMergeResult Merge(
+        CadDocument target,
+        CadDocument source,
+        Point2D insertionPoint,
+        double scale,
+        double rotationDegrees)
+    {
         ArgumentNullException.ThrowIfNull(target);
         ArgumentNullException.ThrowIfNull(source);
+
+        if (!double.IsFinite(scale) || scale <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(scale),
+                scale,
+                "Import scale must be a positive finite value.");
+        }
+
+        if (!double.IsFinite(rotationDegrees))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(rotationDegrees),
+                rotationDegrees,
+                "Import rotation must be a finite value.");
+        }
 
         var lineFormatIdMap = new Dictionary<LineFormatId, LineFormatId>();
         var textFormatIdMap = new Dictionary<TextFormatId, TextFormatId>();
@@ -55,12 +88,18 @@ public sealed class OpenCad2DImportMerger
             layerIdMap,
             out int addedLayerCount);
 
+        Matrix2D placementMatrix = CreatePlacementMatrix(
+            insertionPoint,
+            scale,
+            rotationDegrees);
+
         IReadOnlyList<CadEntity> importedEntities = source.Entities.All
             .Select(entity => RemapEntity(
                 entity,
                 layerIdMap,
                 textFormatIdMap,
                 dimensionStyleIdMap))
+            .Select(entity => entity.Transform(placementMatrix))
             .Select(entity => entity.WithId(EntityId.New()))
             .ToList();
 
@@ -116,6 +155,20 @@ public sealed class OpenCad2DImportMerger
             addedTextFormatCount,
             addedDimensionStyleCount,
             addedLayerCount);
+    }
+
+
+    private static Matrix2D CreatePlacementMatrix(
+        Point2D insertionPoint,
+        double scale,
+        double rotationDegrees)
+    {
+        double rotationRadians = rotationDegrees * Math.PI / 180.0;
+
+        return Matrix2D
+            .Scale(scale, Point2D.Origin)
+            .Multiply(Matrix2D.Rotation(rotationRadians, Point2D.Origin))
+            .Multiply(Matrix2D.Translation(insertionPoint.X, insertionPoint.Y));
     }
 
     private static IReadOnlyList<LineFormat> MergeLineFormats(

@@ -508,8 +508,10 @@ Detailed planning documents added for this pivot:
 Important implementation opinion preserved from planning: do not start with AutoCAD-style click-inside hatch detection. Start with explicit selected boundaries, because robust automatic boundary detection requires graph construction, curve intersections, virtual splitting and face extraction. Blocks should be implemented before symbol/stair libraries so that generated architectural content can reuse definitions instead of becoming disconnected one-off geometry.
 
 
-## v0.8.100 Import Drawing first pass
+## v0.8.100-v0.8.102 Import Drawing
 
-Implemented the first native OpenCad2D import workflow. The toolbar exposes `Import Drawing`, which loads another `.opencad2d.json` and appends it to the current document at origin. The active document is not replaced and the current file path is preserved. Imported entities receive fresh IDs and are selected after import. Layers, line formats, text formats and dimension styles are merged with conflict-safe remapping. The whole merge is committed as a single undoable command.
+Implemented the first native OpenCad2D import workflow. The toolbar exposes `Import Drawing`, which loads another `.opencad2d.json` and appends it to the current document. The active document is not replaced and the current file path is preserved. Imported entities receive fresh IDs and are selected after import. Layers, line formats, text formats and dimension styles are merged with conflict-safe remapping. The whole merge is committed as a single undoable command.
 
-Deferred refinements: insertion point, scale, rotation, import preview, command-line alias and a dedicated import report window.
+The workflow now uses a pending placement step. After file selection, v0.8.102 shows a small options dialog with uniform `Scale` and `Rotation °`. The imported drawing is then committed when the user clicks an insertion point in the canvas; an active snap candidate is used when available. Escape cancels the pending import without changing the document.
+
+Deferred refinements: live import preview, command-line alias and a dedicated import report window.

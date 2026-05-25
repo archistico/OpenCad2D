@@ -1,4 +1,5 @@
 using OpenCad2D.App.ViewModels;
+using OpenCad2D.App.ViewModels.ImportDrawing;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -111,6 +112,106 @@ public sealed class MainWindowViewModelOpenCad2DImportTests
         }
     }
 
+
+    [Fact]
+    public void ImportDrawingFromFile_WithPlacementOptions_ShouldScaleRotateAndTranslateImportedEntities()
+    {
+        string filePath = CreateTemporaryOpenCad2DDrawing(document =>
+        {
+            document.AddEntity(new LineEntity(
+                new Point2D(1, 0),
+                new Point2D(2, 0)));
+        });
+
+        try
+        {
+            var viewModel = new MainWindowViewModel();
+
+            viewModel.ImportDrawingFromFile(
+                filePath,
+                new Point2D(10, 20),
+                new OpenCad2DImportPlacementOptions(2, 90));
+
+            LineEntity importedLine = Assert.IsType<LineEntity>(
+                viewModel.Workspace.Document.Entities.All.Single());
+
+            AssertNearlyEqual(new Point2D(10, 22), importedLine.Start);
+            AssertNearlyEqual(new Point2D(10, 24), importedLine.End);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public void PendingImportDrawing_ShouldCommitAtInsertionPointAndBeUndoable()
+    {
+        string filePath = CreateTemporaryOpenCad2DDrawing(document =>
+        {
+            document.AddEntity(new CircleEntity(
+                new Point2D(2, 3),
+                4));
+        });
+
+        try
+        {
+            var viewModel = new MainWindowViewModel();
+
+            var beginResult = viewModel.BeginImportDrawingPlacementFromFile(
+                filePath,
+                new OpenCad2DImportPlacementOptions(1, 0));
+
+            Assert.True(beginResult.Changed);
+            Assert.True(viewModel.IsImportDrawingPlacementPending);
+            Assert.Empty(viewModel.Workspace.Document.Entities.All);
+
+            var commitResult = viewModel.CommitPendingImportDrawing(new Point2D(10, 20));
+
+            Assert.True(commitResult.Changed);
+            Assert.False(viewModel.IsImportDrawingPlacementPending);
+
+            CircleEntity importedCircle = Assert.IsType<CircleEntity>(
+                viewModel.Workspace.Document.Entities.All.Single());
+            AssertNearlyEqual(new Point2D(12, 23), importedCircle.Center);
+
+            viewModel.Undo();
+
+            Assert.Empty(viewModel.Workspace.Document.Entities.All);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
+    [Fact]
+    public void PendingImportDrawing_ShouldCancelWithoutChangingDocument()
+    {
+        string filePath = CreateTemporaryOpenCad2DDrawing(document =>
+        {
+            document.AddEntity(new LineEntity(
+                Point2D.Origin,
+                new Point2D(5, 0)));
+        });
+
+        try
+        {
+            var viewModel = new MainWindowViewModel();
+
+            viewModel.BeginImportDrawingPlacementFromFile(filePath);
+            var result = viewModel.CancelPendingImportDrawing();
+
+            Assert.True(result.Changed);
+            Assert.False(viewModel.IsImportDrawingPlacementPending);
+            Assert.Empty(viewModel.Workspace.Document.Entities.All);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
     private static string CreateTemporaryOpenCad2DDrawing(Action<CadDocument> configure)
     {
         var document = new CadDocument();
@@ -132,4 +233,13 @@ public sealed class MainWindowViewModelOpenCad2DImportTests
 
         return filePath;
     }
+
+    private static void AssertNearlyEqual(
+        Point2D expected,
+        Point2D actual)
+    {
+        Assert.Equal(expected.X, actual.X, 6);
+        Assert.Equal(expected.Y, actual.Y, 6);
+    }
+
 }

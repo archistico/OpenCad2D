@@ -1,0 +1,57 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OpenCad2D.App.ImportDrawingOptionsWindow"
+        Title="Import Drawing Options"
+        Icon="/Assets/app-icon.ico"
+        Width="360"
+        Height="230"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#252526">
+
+    <Border Padding="18">
+        <Grid RowDefinitions="Auto,Auto,Auto"
+              RowSpacing="14">
+
+            <TextBlock Grid.Row="0"
+                       Text="Import Drawing"
+                       Foreground="#FFFFFF"
+                       FontSize="18"
+                       FontWeight="Bold" />
+
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="*,*"
+                  ColumnSpacing="12">
+                <StackPanel Grid.Column="0"
+                            Spacing="5">
+                    <TextBlock Text="Scale"
+                               Foreground="#CCCCCC" />
+                    <TextBox x:Name="ScaleTextBox"
+                             Text="1"
+                             MinWidth="120" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Spacing="5">
+                    <TextBlock Text="Rotation °"
+                               Foreground="#CCCCCC" />
+                    <TextBox x:Name="RotationTextBox"
+                             Text="0"
+                             MinWidth="120" />
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Grid.Row="2"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8">
+                <Button Content="Cancel"
+                        MinWidth="80"
+                        Click="Cancel_Click" />
+                <Button Content="OK"
+                        MinWidth="80"
+                        Click="Ok_Click" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
