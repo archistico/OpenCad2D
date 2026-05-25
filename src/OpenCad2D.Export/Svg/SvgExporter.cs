@@ -413,6 +413,13 @@ public sealed class SvgExporter : ISvgExporter
                 height,
                 margin),
 
+            ImageReferenceEntity imageReference => ExportImageReference(
+                imageReference,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
             ArcEntity arc => ExportArc(
                 arc,
                 lineFormat,
@@ -424,6 +431,62 @@ public sealed class SvgExporter : ISvgExporter
         };
     }
 
+
+
+    private static string ExportImageReference(
+        ImageReferenceEntity imageReference,
+        LineFormat lineFormat,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        Point2D origin = ToSvgPoint(
+            imageReference.Origin,
+            bounds,
+            svgHeight,
+            margin);
+        Point2D widthEnd = ToSvgPoint(
+            imageReference.Origin + imageReference.WidthVector,
+            bounds,
+            svgHeight,
+            margin);
+        Point2D heightEnd = ToSvgPoint(
+            imageReference.Origin + imageReference.HeightVector,
+            bounds,
+            svgHeight,
+            margin);
+
+        Vector2D widthVector = origin.VectorTo(widthEnd);
+        Vector2D heightVector = origin.VectorTo(heightEnd);
+
+        string matrix =
+            $"matrix({Format(widthVector.X)} {Format(widthVector.Y)} {Format(heightVector.X)} {Format(heightVector.Y)} {Format(origin.X)} {Format(origin.Y)})";
+
+        return
+            $"  <image href=\"{Escape(imageReference.FilePath)}\" x=\"0\" y=\"0\" width=\"1\" height=\"1\" preserveAspectRatio=\"none\" transform=\"{matrix}\" />" +
+            Environment.NewLine +
+            $"  <polygon points=\"{ExportImagePolygonPoints(imageReference, bounds, svgHeight, margin)}\" {StrokeAttributes(lineFormat, null)} />";
+    }
+
+    private static string ExportImagePolygonPoints(
+        ImageReferenceEntity imageReference,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        return string.Join(
+            " ",
+            imageReference.GetCorners().Select(point =>
+            {
+                Point2D svgPoint = ToSvgPoint(
+                    point,
+                    bounds,
+                    svgHeight,
+                    margin);
+
+                return $"{Format(svgPoint.X)},{Format(svgPoint.Y)}";
+            }));
+    }
 
     private static string ExportDimension(
         CadDocument document,

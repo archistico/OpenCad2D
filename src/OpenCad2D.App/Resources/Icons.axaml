@@ -116,6 +116,9 @@
     <!-- Import_DXF.svg -->
     <StreamGeometry x:Key="IconImportDXF">M14 3v4a1 1 0 0 0 1 1h4 M5 13v-8a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-5.5m-9.5 -2h7m-3 -3l3 3l-3 3</StreamGeometry>
 
+    <!-- Image.svg -->
+    <StreamGeometry x:Key="IconImage">M4 5h16v14h-16z M7 15l3 -3l2 2l3 -4l3 5 M8 9h.01</StreamGeometry>
+
     <!-- Layers.svg -->
     <StreamGeometry x:Key="IconLayers">M4 3h16 M4 9h16 M4 15h16 M4 21h16</StreamGeometry>
 

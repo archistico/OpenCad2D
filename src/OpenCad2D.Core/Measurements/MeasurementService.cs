@@ -42,6 +42,7 @@ public static class MeasurementService
             ArcEntity arc => MeasureArc(arc),
             PolylineEntity polyline => MeasurePolyline(polyline),
             BezierSplineEntity spline => MeasureBezierSpline(spline),
+            ImageReferenceEntity imageReference => MeasureImageReference(imageReference),
             _ => throw new NotSupportedException(
                 $"Measurements are not supported for entity kind '{entity.Kind}'."),
         };
@@ -238,5 +239,17 @@ public static class MeasurementService
             length: CalculatePolylineLength(approximation),
             vertexCount: spline.ControlPoints.Count,
             isClosed: spline.IsClosed);
+    }
+
+    private static EntityMeasurement MeasureImageReference(ImageReferenceEntity imageReference)
+    {
+        double area = Math.Abs(imageReference.WidthVector.Cross(imageReference.HeightVector));
+
+        return new EntityMeasurement(
+            EntityKind.ImageReference,
+            length: imageReference.Width,
+            area: area,
+            vertexCount: 4,
+            isClosed: true);
     }
 }

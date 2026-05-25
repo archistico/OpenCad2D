@@ -220,6 +220,20 @@ Deferred / future UI polish:
 - [>] Broader enum/boolean audit for future entity properties.
 
 
+
+### External raster image references
+
+Status: [x] basic foundation implemented.
+
+OpenCad2D can now attach local PNG/JPG files as external image references. The drawing stores the source path and an oriented rectangle, never the raster bytes. The reference can be selected and transformed like other rectangular entities: move, copy, rotate, scale, mirror and grip-edit are supported. Missing files are shown as selectable placeholders so drawings remain recoverable.
+
+Current limitations:
+
+- no dedicated relink/missing-reference manager yet;
+- paths are stored as provided by the user;
+- SVG export links the external raster through `<image href="...">`;
+- DXF/PDF raster-image output remains deferred.
+
 ## Deferred beyond the active v0.9 scope
 
 These are valid future tasks but should not block the current stabilization flow unless they become critical bugs.
@@ -229,7 +243,8 @@ These are valid future tasks but should not block the current stabilization flow
 - [>] true associative dimensions;
 - [>] blocks;
 - [>] general hatch/pattern tools beyond the current solid fill support;
-- [>] raster references;
+- [x] basic external raster references for PNG/JPG as non-embedded image entities;
+- [>] advanced raster-reference management, relinking and DXF/PDF parity;
 - [>] advanced NURBS fidelity;
 - [>] autosave/recovery v2;
 - [>] major renderer rewrite;

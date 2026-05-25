@@ -302,3 +302,23 @@ The evening regression sheet now includes `PREVIEW-TRIM-03` and `PREVIEW-EXT-03`
 The granular status-message pass is test-green for TRIM, BREAK POINT, BREAK SEGMENT and EXTEND. Invalid hover/no-preview feedback now mirrors commit-click failure reasons across the four tools. The last fixes covered two regressions: BREAK POINT hover directly on a line endpoint now reports the endpoint/tolerance message instead of the generic inside-target message, and BREAK SEGMENT hover with coincident second point now reports the distinct-points message.
 
 Next manual work should resume from `docs/testing/curve-editing-evening-run-2026-05-21.md`, starting with Passata 0 and Passata 0.5 only as quick smoke checks, then moving to real geometry validation: TRIM base, polylines/advanced curves, BREAK and EXTEND/micro-gap checks.
+
+## 2026-05-25 — External raster image references
+
+Implemented the first raster-reference foundation for PNG/JPG files.
+
+- Added `ImageReferenceEntity` in Core. It stores only an external file path plus oriented-rectangle geometry: origin, width vector and height vector. The image bytes are not embedded in the `.opencad2d.json` document.
+- Image references participate in the normal entity pipeline: bounding box, hit testing, closest point, layer visibility/locking, selection, move/copy/rotate/scale/mirror transforms and draw order.
+- Added JSON persistence through `ImageReferenceEntityDto` and the polymorphic entity converter.
+- Added Avalonia rendering with a small bitmap cache. If the external file is missing/unreadable, the rectangle is still drawn with a diagonal placeholder so the reference remains selectable and recoverable.
+- Added `Attach Image` in the file toolbar for local `.png`, `.jpg` and `.jpeg` files. The inserted image is selected immediately and sized to about 30% of the current visible world width, preserving the source pixel aspect ratio.
+- Added grip support: four corner grips and one center move grip. General transform tools can still be used for precise rotation and scaling.
+- SVG export writes an external `<image href="...">` reference plus an outline polygon. DXF/PDF export currently skip the raster content; this should be documented as a current limitation until dedicated external-image support is designed for those formats.
+
+Recommended manual checks:
+
+1. Attach a PNG and JPG from local disk.
+2. Save, close, reopen and verify the image reloads from the external path.
+3. Move, copy, rotate, scale and mirror the reference.
+4. Hide/lock the layer and verify rendering/selection behavior is consistent with other entities.
+5. Rename or move the external image and reopen the drawing; the placeholder rectangle should remain visible/selectable.

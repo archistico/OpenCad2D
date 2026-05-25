@@ -668,6 +668,21 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     .ToList()
             },
 
+            ImageReferenceEntity imageReference => new ImageReferenceEntityDto
+            {
+                Id = imageReference.Id.ToString(),
+                LayerId = imageReference.LayerId.Value,
+                FilePath = imageReference.FilePath,
+                OriginX = imageReference.Origin.X,
+                OriginY = imageReference.Origin.Y,
+                WidthVectorX = imageReference.WidthVector.X,
+                WidthVectorY = imageReference.WidthVector.Y,
+                HeightVectorX = imageReference.HeightVector.X,
+                HeightVectorY = imageReference.HeightVector.Y,
+                PixelWidth = imageReference.PixelWidth,
+                PixelHeight = imageReference.PixelHeight
+            },
+
             _ => null
         };
     }
@@ -1102,6 +1117,20 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 : new BezierSplineEntity(
                     spline.ControlPoints.Select(point => new Point2D(point.X, point.Y)),
                     spline.IsClosed,
+                    id,
+                    layerId),
+
+            ImageReferenceEntityDto imageReference => string.IsNullOrWhiteSpace(imageReference.FilePath) ||
+                new Vector2D(imageReference.WidthVectorX, imageReference.WidthVectorY).Length <= 0 ||
+                new Vector2D(imageReference.HeightVectorX, imageReference.HeightVectorY).Length <= 0
+                ? null
+                : new ImageReferenceEntity(
+                    imageReference.FilePath,
+                    new Point2D(imageReference.OriginX, imageReference.OriginY),
+                    new Vector2D(imageReference.WidthVectorX, imageReference.WidthVectorY),
+                    new Vector2D(imageReference.HeightVectorX, imageReference.HeightVectorY),
+                    imageReference.PixelWidth,
+                    imageReference.PixelHeight,
                     id,
                     layerId),
 

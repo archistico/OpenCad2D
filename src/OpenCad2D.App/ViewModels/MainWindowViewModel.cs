@@ -1,4 +1,6 @@
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Dimensions;
+using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
@@ -657,6 +659,63 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return message;
     }
 
+
+    public ToolResult AddImageReference(
+        string filePath,
+        Point2D center,
+        double width,
+        double height,
+        int pixelWidth,
+        int pixelHeight)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "Image file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        if (width <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(width),
+                "Image width must be greater than zero.");
+        }
+
+        if (height <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(height),
+                "Image height must be greater than zero.");
+        }
+
+        Workspace.EnsureCurrentLayerIsUsable();
+
+        var imageReference = new ImageReferenceEntity(
+            filePath,
+            new Point2D(
+                center.X - width / 2.0,
+                center.Y - height / 2.0),
+            new Vector2D(width, 0),
+            new Vector2D(0, height),
+            pixelWidth,
+            pixelHeight,
+            layerId: Workspace.CurrentLayerId);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new AddEntityCommand(imageReference));
+
+        Workspace.SelectionSet.ReplaceWith(new[] { imageReference.Id });
+
+        ToolResult result = ToolResult.Completed(
+            $"Linked image '{Path.GetFileName(filePath)}' added as external reference.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
 
     public DxfImportResult ImportDxfFromFile(string filePath)
     {

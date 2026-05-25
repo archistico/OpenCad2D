@@ -20,5 +20,6 @@ public enum EntityKind
     EllipticalArc,
     Arc,
     Polyline,
-    BezierSpline
+    BezierSpline,
+    ImageReference
 }

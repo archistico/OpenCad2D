@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
+using Avalonia.Media.Imaging;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,7 @@ using OpenCad2D.Export.Dxf.Import;
 using OpenCad2D.Export.Pdf;
 using OpenCad2D.Export.Svg;
 using OpenCad2D.Core.Layers;
+using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
@@ -46,6 +48,12 @@ public partial class MainWindow : Window
     {
         Patterns = new[] { "*.dxf" },
         MimeTypes = new[] { "application/dxf", "application/x-dxf" }
+    };
+
+    private static readonly FilePickerFileType RasterImageFileType = new("Raster image")
+    {
+        Patterns = new[] { "*.png", "*.jpg", "*.jpeg" },
+        MimeTypes = new[] { "image/png", "image/jpeg" }
     };
 
     private static readonly FilePickerFileType PdfFileType = new("PDF document")
@@ -216,6 +224,73 @@ public partial class MainWindow : Window
         {
             await ShowMessageAsync(
                 "Import DXF failed",
+                exception.Message);
+        }
+    }
+
+    private async void AttachImage_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
+                {
+                    Title = "Attach raster image",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { RasterImageFileType }
+                });
+
+            if (files.Count == 0)
+            {
+                return;
+            }
+
+            string? filePath = files[0].TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Attach image",
+                    "Only local image files are supported in this version.");
+                return;
+            }
+
+            using var bitmap = new Bitmap(filePath);
+            int pixelWidth = bitmap.PixelSize.Width;
+            int pixelHeight = bitmap.PixelSize.Height;
+
+            Point2D center = CadCanvas.LastVisibleWorldBounds.Center;
+            double visibleWidth = Math.Abs(CadCanvas.LastVisibleWorldBounds.Width);
+            double targetWidth = visibleWidth > 1e-9
+                ? Math.Max(1.0, visibleWidth * 0.30)
+                : Math.Max(1.0, pixelWidth / 10.0);
+            double aspectRatio = pixelHeight > 0 && pixelWidth > 0
+                ? pixelHeight / (double)pixelWidth
+                : 1.0;
+            double targetHeight = Math.Max(1.0, targetWidth * aspectRatio);
+
+            ToolResult result = _viewModel.AddImageReference(
+                filePath,
+                center,
+                targetWidth,
+                targetHeight,
+                pixelWidth,
+                pixelHeight);
+
+            RefreshAllUiAfterDocumentChange();
+            CadCanvas.InvalidateVisual();
+
+            if (result.Changed)
+            {
+                RefreshStatus();
+            }
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Attach image failed",
                 exception.Message);
         }
     }

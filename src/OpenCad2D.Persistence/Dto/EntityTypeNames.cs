@@ -21,4 +21,6 @@ public static class EntityTypeNames
     public const string Arc = "Arc";
     public const string Polyline = "Polyline";
     public const string BezierSpline = "BezierSpline";
+
+    public const string ImageReference = "ImageReference";
 }

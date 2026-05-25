@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.Viewport;
 using OpenCad2D.Core.Dimensions;
@@ -13,6 +14,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Globalization;
 
 namespace OpenCad2D.App.Rendering;
@@ -29,6 +31,7 @@ public sealed class CadEntityRenderer
 {
     private readonly ViewportTransform _viewport;
     private readonly DimensionGeometryBuilder _dimensionGeometryBuilder = new();
+    private readonly Dictionary<string, Bitmap?> _imageCache = new(StringComparer.OrdinalIgnoreCase);
 
     public CadEntityRenderer(ViewportTransform viewport)
     {
@@ -171,7 +174,94 @@ public sealed class CadEntityRenderer
                     spline,
                     pen);
                 break;
+
+            case ImageReferenceEntity imageReference:
+                DrawImageReference(
+                    context,
+                    imageReference,
+                    pen);
+                break;
         }
+    }
+
+
+    private void DrawImageReference(
+        DrawingContext context,
+        ImageReferenceEntity imageReference,
+        Pen pen)
+    {
+        Point origin = ToScreenPoint(imageReference.Origin);
+        Point widthEnd = ToScreenPoint(imageReference.Origin + imageReference.WidthVector);
+        Point heightEnd = ToScreenPoint(imageReference.Origin + imageReference.HeightVector);
+
+        Vector screenWidth = widthEnd - origin;
+        Vector screenHeight = heightEnd - origin;
+
+        Bitmap? bitmap = GetImageBitmap(imageReference.FilePath);
+
+        if (bitmap is not null)
+        {
+            var transform = new Matrix(
+                screenWidth.X,
+                screenWidth.Y,
+                screenHeight.X,
+                screenHeight.Y,
+                origin.X,
+                origin.Y);
+
+            using (context.PushTransform(transform))
+            {
+                context.DrawImage(
+                    bitmap,
+                    new Rect(0, 0, bitmap.PixelSize.Width, bitmap.PixelSize.Height),
+                    new Rect(0, 0, 1, 1));
+            }
+        }
+        else
+        {
+            DrawMissingImagePlaceholder(
+                context,
+                imageReference,
+                pen);
+        }
+
+        context.DrawLine(pen, ToScreenPoint(imageReference.BottomLeft), ToScreenPoint(imageReference.BottomRight));
+        context.DrawLine(pen, ToScreenPoint(imageReference.BottomRight), ToScreenPoint(imageReference.TopRight));
+        context.DrawLine(pen, ToScreenPoint(imageReference.TopRight), ToScreenPoint(imageReference.TopLeft));
+        context.DrawLine(pen, ToScreenPoint(imageReference.TopLeft), ToScreenPoint(imageReference.BottomLeft));
+    }
+
+    private Bitmap? GetImageBitmap(string filePath)
+    {
+        if (_imageCache.TryGetValue(filePath, out Bitmap? cached))
+        {
+            return cached;
+        }
+
+        try
+        {
+            if (!File.Exists(filePath))
+            {
+                return null;
+            }
+
+            Bitmap bitmap = new(filePath);
+            _imageCache[filePath] = bitmap;
+            return bitmap;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
+
+    private void DrawMissingImagePlaceholder(
+        DrawingContext context,
+        ImageReferenceEntity imageReference,
+        Pen pen)
+    {
+        context.DrawLine(pen, ToScreenPoint(imageReference.BottomLeft), ToScreenPoint(imageReference.TopRight));
+        context.DrawLine(pen, ToScreenPoint(imageReference.BottomRight), ToScreenPoint(imageReference.TopLeft));
     }
 
     private void DrawDimension(

@@ -140,3 +140,14 @@ The project already has viewport culling and spatial-query foundations, but v0.9
 - representative export time.
 
 Major renderer or spatial-index rewrites are deferred unless testing reveals a concrete blocker.
+
+## External raster image references
+
+OpenCad2D supports basic PNG/JPG attachment as external references. The drawing stores the image path and rectangle geometry only; raster bytes are not embedded.
+
+Current limitations:
+
+- moving or renaming the image file breaks the live raster preview until the path is restored;
+- there is no reference manager/relink dialog yet;
+- SVG export writes an external `<image href="...">` link;
+- DXF and PDF export do not yet emit raster image content.

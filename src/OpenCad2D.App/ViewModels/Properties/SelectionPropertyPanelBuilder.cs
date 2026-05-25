@@ -174,6 +174,7 @@ public sealed class SelectionPropertyPanelBuilder
             EllipticalArcEntity ellipticalArc => BuildEllipticalArcGeometrySection(ellipticalArc),
             PolylineEntity polyline => BuildPolylineGeometrySection(workspace, polyline, setMessage, refresh),
             BezierSplineEntity spline => BuildBezierSplineGeometrySection(spline),
+            ImageReferenceEntity imageReference => BuildImageReferenceGeometrySection(imageReference),
             ArcEntity arc => BuildArcGeometrySection(workspace, arc, setMessage, refresh),
             _ => new PropertySectionViewModel(
                 "Geometry",
@@ -544,6 +545,25 @@ public sealed class SelectionPropertyPanelBuilder
                 Row("Closed", PropertyValueFormatter.FormatBoolean(spline.IsClosed)),
                 Row("Approx. samples", approximation.Vertices.Count.ToString(CultureInfo.InvariantCulture)),
                 Row("Approx. length", PropertyValueFormatter.FormatLength(GetPolylineLength(approximation)))
+            });
+    }
+
+
+    private static PropertySectionViewModel BuildImageReferenceGeometrySection(ImageReferenceEntity imageReference)
+    {
+        double area = Math.Abs(imageReference.WidthVector.Cross(imageReference.HeightVector));
+
+        return new PropertySectionViewModel(
+            "Image Reference",
+            new[]
+            {
+                Row("File", imageReference.FilePath),
+                Row("Origin", PropertyValueFormatter.FormatPoint(imageReference.Origin)),
+                Row("Center", PropertyValueFormatter.FormatPoint(imageReference.Center)),
+                Row("Width", PropertyValueFormatter.FormatLength(imageReference.Width)),
+                Row("Height", PropertyValueFormatter.FormatLength(imageReference.Height)),
+                Row("Area", PropertyValueFormatter.FormatArea(area)),
+                Row("Pixels", $"{imageReference.PixelWidth} x {imageReference.PixelHeight}")
             });
     }
 
@@ -1327,6 +1347,7 @@ public sealed class SelectionPropertyPanelBuilder
             EllipticalArcEntity => "Elliptical Arc",
             PolylineEntity => "Polyline",
             BezierSplineEntity => "Spline",
+            ImageReferenceEntity => "Image Reference",
             ArcEntity => "Arc",
             _ => entity.Kind.ToString()
         };
