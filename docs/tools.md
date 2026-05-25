@@ -309,3 +309,8 @@ Implemented toolbar workflows:
 - `Manage Refs`: opens the Image References Manager, which lists status, path, pixel size, CAD size, rotation and instance count and provides select/relink/replace/open-folder actions.
 
 Image references participate in selection, snapping, transform tools and grip editing like rectangular CAD entities. Endpoint snap exposes the four corners, midpoint snap exposes the four edge midpoints, center snap exposes the rectangle center and nearest snap uses the image border.
+
+
+## Create Block
+
+The Create Block tool is the first block workflow. It requires a non-empty selection, asks for a block name and base point, then replaces the selection with a block reference. The visual geometry stays in place because the selected entities are translated into the block definition relative to the base point.

@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:blocks="clr-namespace:OpenCad2D.Core.Blocks;assembly=OpenCad2D.Core"
+        x:Class="OpenCad2D.App.InsertBlockOptionsWindow"
+        Title="Insert Block"
+        Icon="/Assets/app-icon.ico"
+        Width="420"
+        Height="285"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#252526">
+
+    <Border Padding="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
+              RowSpacing="14">
+
+            <TextBlock Grid.Row="0"
+                       Text="Insert Block"
+                       Foreground="#FFFFFF"
+                       FontSize="18"
+                       FontWeight="Bold" />
+
+            <StackPanel Grid.Row="1"
+                        Spacing="5">
+                <TextBlock Text="Block definition"
+                           Foreground="#CCCCCC" />
+                <ComboBox x:Name="BlockComboBox"
+                          MinWidth="360">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate x:DataType="blocks:BlockDefinition">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,*"
+                  ColumnSpacing="12">
+                <StackPanel Grid.Column="0"
+                            Spacing="5">
+                    <TextBlock Text="Scale"
+                               Foreground="#CCCCCC" />
+                    <TextBox x:Name="ScaleTextBox"
+                             Text="1"
+                             MinWidth="120" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Spacing="5">
+                    <TextBlock Text="Rotation °"
+                               Foreground="#CCCCCC" />
+                    <TextBox x:Name="RotationTextBox"
+                             Text="0"
+                             MinWidth="120" />
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8">
+                <Button Content="Cancel"
+                        MinWidth="80"
+                        Click="Cancel_Click" />
+                <Button Content="OK"
+                        MinWidth="80"
+                        Click="Ok_Click" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

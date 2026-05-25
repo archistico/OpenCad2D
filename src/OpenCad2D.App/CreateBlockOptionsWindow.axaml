@@ -1,0 +1,72 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="OpenCad2D.App.CreateBlockOptionsWindow"
+        Title="Create Block"
+        Icon="/Assets/app-icon.ico"
+        Width="460"
+        Height="315"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#252526">
+
+    <Border Padding="18">
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+              RowSpacing="14">
+
+            <TextBlock Grid.Row="0"
+                       Text="Create Block"
+                       Foreground="#FFFFFF"
+                       FontSize="18"
+                       FontWeight="Bold" />
+
+            <StackPanel Grid.Row="1"
+                        Spacing="5">
+                <TextBlock Text="Block name"
+                           Foreground="#CCCCCC" />
+                <TextBox x:Name="NameTextBox"
+                         Text="Block 1"
+                         MinWidth="320" />
+            </StackPanel>
+
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,*"
+                  ColumnSpacing="12">
+                <StackPanel Grid.Column="0"
+                            Spacing="5">
+                    <TextBlock Text="Base point X"
+                               Foreground="#CCCCCC" />
+                    <TextBox x:Name="BasePointXTextBox"
+                             Text="0"
+                             MinWidth="120" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="1"
+                            Spacing="5">
+                    <TextBlock Text="Base point Y"
+                               Foreground="#CCCCCC" />
+                    <TextBox x:Name="BasePointYTextBox"
+                             Text="0"
+                             MinWidth="120" />
+                </StackPanel>
+            </Grid>
+
+            <Button Grid.Row="3"
+                    Content="Pick base point from drawing"
+                    HorizontalAlignment="Left"
+                    MinWidth="200"
+                    Click="PickBasePoint_Click" />
+
+            <StackPanel Grid.Row="4"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8">
+                <Button Content="Cancel"
+                        MinWidth="80"
+                        Click="Cancel_Click" />
+                <Button Content="OK"
+                        MinWidth="80"
+                        Click="Ok_Click" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

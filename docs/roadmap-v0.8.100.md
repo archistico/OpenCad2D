@@ -75,7 +75,7 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.110-blocks.md`.
 
-Status: planned.
+Status: v0.8.111 in progress/implemented.
 
 Goal: introduce reusable block definitions and block references.
 
@@ -86,6 +86,8 @@ Initial scope:
 - Persist block definitions and block references in `.opencad2d.json`.
 - Render block references by transforming definition geometry into world space.
 - Support selection, hit testing and basic transforms of block references.
+- v0.8.110: add block definitions, block references, persistence and rendering foundation.
+- v0.8.111: create block from selection with numeric base point and undo as a single operation.
 - Support snapping to transformed geometry inside block references.
 
 Exit criteria:
@@ -277,9 +279,27 @@ Implemented as the first structural block milestone:
 
 This milestone intentionally does not yet include the full block UI. The next blocks-focused milestones should add:
 
-- create block from selection
+- create block from selection — implemented in v0.8.111
 - insert block from existing definition
 - block manager
 - edit block definition workflow
 - explode block
 - snaps against transformed block contents
+
+
+## v0.8.111 — Create Block from selection
+
+Implemented as the first usable block workflow:
+
+- `Create Block` button in the modify tools area
+- options dialog with block name and numeric base point
+- creation of a `BlockDefinition` from selected entities in local coordinates
+- replacement of the selected entities with a single `BlockReferenceEntity`
+- selection of the created reference
+- undo as one operation: restore original entities and remove the new definition/reference
+- duplicate block names are rejected
+- nested block creation is deferred and currently rejected
+
+`v0.8.112 — Insert Block from existing definition` is implemented. It adds a toolbar command, options dialog, pending insertion-point workflow, snap support, Escape cancellation and single-step undo for newly inserted block references.
+
+Next recommended blocks-focused milestone: `v0.8.113 — Block Manager`.

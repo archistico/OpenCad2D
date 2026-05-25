@@ -529,3 +529,17 @@ The project now has the first block model layer:
 - `CadEntityRenderer` can render a block reference by transforming definition entities into world coordinates.
 
 This is intentionally a foundation checkpoint. UI workflows for creating, inserting, editing and exploding blocks are still pending.
+
+
+## v0.8.111 block workflow handoff
+
+Create Block from selection is implemented as the first user-facing block workflow. The main pieces are:
+
+- `AddBlockDefinitionCommand` in Core for undoable definition creation/removal.
+- `CreateBlockOptionsWindow` for block name, numeric base point and optional canvas base-point picking.
+- `CreateBlockOptions` in the App ViewModels/Blocks namespace.
+- `MainWindowViewModel.CreateBlockFromSelection(...)` creates the definition, converts selected entities into local block coordinates by translating them by `-basePoint`, replaces the selection with a `BlockReferenceEntity`, and selects the reference.
+
+Canvas picking for the block base point is supported through `BeginCreateBlockBasePointPick`, `CommitCreateBlockBasePointPick` and `CancelCreateBlockBasePointPick` on `MainWindowViewModel`; active snap candidates are used when available. Nested block creation is intentionally rejected for now.
+
+Insert Block is implemented through `InsertBlockOptions`, `InsertBlockOptionsWindow`, `BeginInsertBlockPlacement`, `CommitPendingBlockInsertion` and `CancelPendingBlockInsertion`. It inserts an additional `BlockReferenceEntity` for an existing definition with uniform scale, rotation and a picked insertion point. Active snap candidates are honored and Escape cancels the pending insert without modifying the document. Block Manager, Edit Block and Explode Block remain future milestones.

@@ -184,3 +184,15 @@ The raster image reference commands are currently toolbar/dialog actions rather 
 | Manage Refs | Open the Image References Manager for status, selection, relink, replace and open-folder operations. |
 
 All image reference mutations are executed through undoable replace/add commands in the normal command history.
+
+
+
+## Insert Block
+
+`Insert Block` creates a new instance of an existing block definition. The command opens an options dialog where the user selects the block definition and enters a uniform scale plus rotation in degrees. After confirmation, the canvas asks for an insertion point; active snaps are honored. Escape cancels the pending insertion without modifying the document. Undo removes the inserted block reference as a single operation.
+
+## Create Block
+
+`Create Block` converts the current selection into a reusable block definition. The command asks for a block name and a base point. The base point can be typed numerically or picked from the drawing with the mouse/snap workflow. The selected entities are stored in local block coordinates and replaced by a single `BlockReferenceEntity` at the same visible location. The operation is undoable as one step.
+
+Current limitation: nested blocks are not supported yet. Existing block references should be exploded before they are included in a new block.

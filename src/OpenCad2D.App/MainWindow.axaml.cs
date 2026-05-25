@@ -18,6 +18,7 @@ using OpenCad2D.App.ViewModels.DimensionStyles;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.App.ViewModels.ImageReferences;
 using OpenCad2D.App.ViewModels.ImportDrawing;
+using OpenCad2D.App.ViewModels.Blocks;
 using OpenCad2D.Export.Dxf.Import;
 using OpenCad2D.Export.Pdf;
 using OpenCad2D.Export.Svg;
@@ -1624,6 +1625,74 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+
+    private async void CreateBlock_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        var optionsWindow = new CreateBlockOptionsWindow();
+        CreateBlockOptions? options = await optionsWindow
+            .ShowDialog<CreateBlockOptions?>(this);
+
+        if (options is null)
+        {
+            return;
+        }
+
+        ToolResult result = options.PickBasePointFromDrawing
+            ? _viewModel.BeginCreateBlockBasePointPick(options)
+            : _viewModel.CreateBlockFromSelection(options);
+
+        RefreshStatus();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+
+        if (result.Message is not null && result.Kind != ToolResultKind.Completed && !options.PickBasePointFromDrawing)
+        {
+            await ShowMessageAsync(
+                "Create Block",
+                result.Message);
+        }
+    }
+
+
+    private async void InsertBlock_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        IReadOnlyList<OpenCad2D.Core.Blocks.BlockDefinition> definitions = _viewModel.BlockDefinitions;
+
+        if (definitions.Count == 0)
+        {
+            await ShowMessageAsync(
+                "Insert Block",
+                "Create at least one block before inserting a block instance.");
+            return;
+        }
+
+        var optionsWindow = new InsertBlockOptionsWindow(definitions);
+        InsertBlockOptions? options = await optionsWindow
+            .ShowDialog<InsertBlockOptions?>(this);
+
+        if (options is null)
+        {
+            return;
+        }
+
+        ToolResult result = _viewModel.BeginInsertBlockPlacement(options);
+
+        RefreshStatus();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+
+        if (result.Message is not null && result.Kind != ToolResultKind.Started)
+        {
+            await ShowMessageAsync(
+                "Insert Block",
+                result.Message);
+        }
+    }
+
     private void Explode_Click(
         object? sender,
         RoutedEventArgs e)
@@ -2459,7 +2528,53 @@ public partial class MainWindow : Window
         _viewModel.SetMousePosition(e.MousePosition);
         _viewModel.SetCurrentSnapCandidate(e.SnapCandidate);
 
-        if (_viewModel.IsImportDrawingPlacementPending)
+        if (_viewModel.IsCreateBlockBasePointPickPending)
+        {
+            ToolResult createBlockResult;
+
+            if (e.Result.Kind == ToolResultKind.Cancelled)
+            {
+                createBlockResult = _viewModel.CancelCreateBlockBasePointPick();
+            }
+            else if (e.IsPointerPressed)
+            {
+                Point2D basePoint = e.SnapCandidate?.Point ?? e.MousePosition;
+                createBlockResult = _viewModel.CommitCreateBlockBasePointPick(basePoint);
+
+                CadCanvas.ClearSnapMarker();
+                CadCanvas.InvalidateVisual();
+            }
+            else
+            {
+                createBlockResult = ToolResult.Started("Create block: specify base point.");
+            }
+
+            _viewModel.SetLastResult(createBlockResult);
+        }
+        else if (_viewModel.IsBlockInsertionPending)
+        {
+            ToolResult insertBlockResult;
+
+            if (e.Result.Kind == ToolResultKind.Cancelled)
+            {
+                insertBlockResult = _viewModel.CancelPendingBlockInsertion();
+            }
+            else if (e.IsPointerPressed)
+            {
+                Point2D insertionPoint = e.SnapCandidate?.Point ?? e.MousePosition;
+                insertBlockResult = _viewModel.CommitPendingBlockInsertion(insertionPoint);
+
+                CadCanvas.ClearSnapMarker();
+                CadCanvas.InvalidateVisual();
+            }
+            else
+            {
+                insertBlockResult = ToolResult.Started("Insert block: specify insertion point.");
+            }
+
+            _viewModel.SetLastResult(insertBlockResult);
+        }
+        else if (_viewModel.IsImportDrawingPlacementPending)
         {
             ToolResult importResult;
 

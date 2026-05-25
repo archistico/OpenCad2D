@@ -1197,6 +1197,34 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="CreateBlockButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Create a reusable block from the current selection"
+                                    Click="CreateBlock_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectangle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Create Block" />
+                                </Grid>
+                            </Button>
+
+                            <Button x:Name="InsertBlockButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Insert a new instance of an existing block definition"
+                                    Click="InsertBlock_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectangle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Insert Block" />
+                                </Grid>
+                            </Button>
+
                             <Button x:Name="ExplodeButton"
                                     Classes="tool-button"
                                     ToolTip.Tip="Explode selected polylines into individual lines"

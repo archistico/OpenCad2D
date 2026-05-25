@@ -1,4 +1,5 @@
 using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Documents;
@@ -6,6 +7,7 @@ using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Geometry.Transformations;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
@@ -16,6 +18,7 @@ using OpenCad2D.Tools.Navigation;
 using OpenCad2D.App.ViewModels.Properties;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.App.ViewModels.ImportDrawing;
+using OpenCad2D.App.ViewModels.Blocks;
 using OpenCad2D.App.Settings;
 using System.IO;
 using OpenCad2D.Persistence.Dto;
@@ -37,6 +40,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private const string DefaultTemplateRelativePath = "Templates/default.opencad2d.json";
 
     private PendingOpenCad2DImport? _pendingOpenCad2DImport;
+    private CreateBlockOptions? _pendingCreateBlockBasePointPick;
+    private InsertBlockOptions? _pendingBlockInsertion;
 
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
@@ -1224,6 +1229,176 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+    public bool IsCreateBlockBasePointPickPending => _pendingCreateBlockBasePointPick is not null;
+
+    public bool IsBlockInsertionPending => _pendingBlockInsertion is not null;
+
+    public IReadOnlyList<BlockDefinition> BlockDefinitions => Workspace.Document.BlockDefinitions.All;
+
+    public ToolResult BeginInsertBlockPlacement(InsertBlockOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        if (!Workspace.Document.BlockDefinitions.Contains(options.BlockDefinitionId))
+        {
+            ToolResult rejected = ToolResult.None(
+                $"Block '{options.BlockName}' does not exist.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        _pendingBlockInsertion = options;
+
+        ToolResult result = ToolResult.Started(
+            $"Insert block '{options.BlockName}': specify insertion point.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult CommitPendingBlockInsertion(Point2D insertionPoint)
+    {
+        if (_pendingBlockInsertion is null)
+        {
+            return ToolResult.None();
+        }
+
+        InsertBlockOptions options = _pendingBlockInsertion;
+        _pendingBlockInsertion = null;
+
+        if (!Workspace.Document.BlockDefinitions.TryGet(options.BlockDefinitionId, out BlockDefinition? definition) ||
+            definition is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                $"Block '{options.BlockName}' does not exist.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        Workspace.EnsureCurrentLayerIsUsable();
+
+        double rotationRadians = options.RotationDegrees * Math.PI / 180.0;
+        double cos = Math.Cos(rotationRadians);
+        double sin = Math.Sin(rotationRadians);
+        double scale = options.Scale;
+
+        var reference = new BlockReferenceEntity(
+            definition.Id,
+            insertionPoint,
+            new Vector2D(cos * scale, sin * scale),
+            new Vector2D(-sin * scale, cos * scale),
+            definition.GetBoundingBox(),
+            layerId: Workspace.CurrentLayerId);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new AddEntityCommand(reference));
+
+        Workspace.SelectionSet.ReplaceWith(reference.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Block '{definition.Name}' inserted.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+
+        return result;
+    }
+
+    public ToolResult CancelPendingBlockInsertion()
+    {
+        if (_pendingBlockInsertion is null)
+        {
+            return ToolResult.None();
+        }
+
+        _pendingBlockInsertion = null;
+
+        ToolResult result = ToolResult.None("Insert block cancelled.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult BeginCreateBlockBasePointPick(CreateBlockOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        string blockName = options.Name.Trim();
+
+        if (string.IsNullOrWhiteSpace(blockName))
+        {
+            ToolResult rejected = ToolResult.None(
+                "Enter a block name before creating the block.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        _pendingCreateBlockBasePointPick = options with
+        {
+            Name = blockName,
+            PickBasePointFromDrawing = false
+        };
+
+        ToolResult result = ToolResult.Started(
+            $"Create block '{blockName}': specify base point.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult CommitCreateBlockBasePointPick(Point2D basePoint)
+    {
+        if (_pendingCreateBlockBasePointPick is null)
+        {
+            return ToolResult.None();
+        }
+
+        CreateBlockOptions pendingOptions = _pendingCreateBlockBasePointPick;
+        _pendingCreateBlockBasePointPick = null;
+
+        return CreateBlockFromSelection(pendingOptions with
+        {
+            BasePointX = basePoint.X,
+            BasePointY = basePoint.Y,
+            PickBasePointFromDrawing = false
+        });
+    }
+
+    public ToolResult CancelCreateBlockBasePointPick()
+    {
+        if (_pendingCreateBlockBasePointPick is null)
+        {
+            return ToolResult.None();
+        }
+
+        _pendingCreateBlockBasePointPick = null;
+
+        ToolResult result = ToolResult.None("Create block cancelled.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+
     public bool IsImportDrawingPlacementPending => _pendingOpenCad2DImport is not null;
 
     public ToolResult BeginImportDrawingPlacementFromFile(
@@ -1392,6 +1567,112 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+
+
+    public ToolResult CreateBlockFromSelection(CreateBlockOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        string blockName = options.Name.Trim();
+
+        if (string.IsNullOrWhiteSpace(blockName))
+        {
+            ToolResult rejected = ToolResult.None(
+                "Enter a block name before creating the block.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        if (Workspace.Document.BlockDefinitions.ContainsName(blockName))
+        {
+            ToolResult rejected = ToolResult.None(
+                $"A block named '{blockName}' already exists.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        IReadOnlyList<CadEntity> selectedEntities = Workspace.SelectionSet.SelectedIds
+            .Select(id => Workspace.Document.Entities.TryGet(id, out CadEntity? entity) ? entity : null)
+            .OfType<CadEntity>()
+            .Where(Workspace.Document.IsEntitySelectable)
+            .ToList();
+
+        if (selectedEntities.Count == 0)
+        {
+            ToolResult rejected = ToolResult.None(
+                "Select one or more editable entities before creating a block.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        if (selectedEntities.Any(entity => entity is BlockReferenceEntity))
+        {
+            ToolResult rejected = ToolResult.None(
+                "Nested blocks are not supported yet. Explode existing block references before creating a new block.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        Workspace.EnsureCurrentLayerIsUsable();
+
+        Point2D basePoint = new(options.BasePointX, options.BasePointY);
+        Matrix2D worldToBlock = Matrix2D.Translation(-basePoint.X, -basePoint.Y);
+
+        IReadOnlyList<CadEntity> definitionEntities = selectedEntities
+            .Select(entity => entity.Transform(worldToBlock))
+            .ToList();
+
+        var blockDefinition = new BlockDefinition(
+            BlockDefinitionId.New(),
+            blockName,
+            definitionEntities);
+
+        var blockReference = new BlockReferenceEntity(
+            blockDefinition.Id,
+            basePoint,
+            new Vector2D(1, 0),
+            new Vector2D(0, 1),
+            blockDefinition.GetBoundingBox(),
+            layerId: Workspace.CurrentLayerId);
+
+        var command = new CompositeCommand(
+            "Create block",
+            new ICadCommand[]
+            {
+                new AddBlockDefinitionCommand(blockDefinition),
+                new ModifyEntitiesCommand(
+                    selectedEntities,
+                    new[] { blockReference },
+                    "Create block reference")
+            });
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            command);
+
+        Workspace.SelectionSet.ReplaceWith(blockReference.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Block '{blockName}' created from {selectedEntities.Count} selected entities.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+
+        return result;
+    }
 
     public DxfImportResult ImportDxfFromFile(string filePath)
     {
