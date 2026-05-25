@@ -506,3 +506,10 @@ Detailed planning documents added for this pivot:
 - `docs/specs/v0.8.140-hatch.md`
 
 Important implementation opinion preserved from planning: do not start with AutoCAD-style click-inside hatch detection. Start with explicit selected boundaries, because robust automatic boundary detection requires graph construction, curve intersections, virtual splitting and face extraction. Blocks should be implemented before symbol/stair libraries so that generated architectural content can reuse definitions instead of becoming disconnected one-off geometry.
+
+
+## v0.8.100 Import Drawing first pass
+
+Implemented the first native OpenCad2D import workflow. The toolbar exposes `Import Drawing`, which loads another `.opencad2d.json` and appends it to the current document at origin. The active document is not replaced and the current file path is preserved. Imported entities receive fresh IDs and are selected after import. Layers, line formats, text formats and dimension styles are merged with conflict-safe remapping. The whole merge is committed as a single undoable command.
+
+Deferred refinements: insertion point, scale, rotation, import preview, command-line alias and a dedicated import report window.

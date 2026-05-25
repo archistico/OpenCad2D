@@ -175,6 +175,62 @@ public partial class MainWindow : Window
     }
 
 
+
+    private async void ImportDrawing_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
+                new FilePickerOpenOptions
+                {
+                    Title = "Import OpenCad2D drawing into current document",
+                    AllowMultiple = false,
+                    FileTypeFilter = new[] { OpenCad2DFileType }
+                });
+
+            if (files.Count == 0)
+            {
+                return;
+            }
+
+            string? filePath = files[0].TryGetLocalPath();
+
+            if (string.IsNullOrWhiteSpace(filePath))
+            {
+                await ShowMessageAsync(
+                    "Import Drawing",
+                    "Only local OpenCad2D files are supported in this version.");
+                return;
+            }
+
+            ToolResult result = _viewModel.ImportDrawingFromFile(filePath);
+
+            RefreshAllUiAfterDocumentChange();
+            CadCanvas.InvalidateVisual();
+
+            if (result.Changed)
+            {
+                RefreshStatus();
+            }
+
+            await ShowMissingImageReferencesWarningIfNeededAsync();
+        }
+        catch (DocumentLoadException exception)
+        {
+            await ShowMessageAsync(
+                "Import Drawing failed",
+                exception.Message);
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Import Drawing failed",
+                exception.Message);
+        }
+    }
+
     private async void ImportDxf_Click(
         object? sender,
         RoutedEventArgs e)

@@ -27,6 +27,18 @@ Common command types:
 
 ---
 
+## File-level commands
+
+These actions are currently exposed from the toolbar/window UI rather than the command-line parser. They still use undoable document commands when they mutate the active drawing.
+
+| Action | Behavior | Undo semantics |
+|---|---|---|
+| Import Drawing | Imports another `.opencad2d.json` into the current drawing at origin | Undo removes the imported batch and rolls back added resources when possible |
+| Import DXF | Imports an ASCII DXF into a new unsaved document | Replaces the active document, so normal undo is not used for the import operation |
+| Attach Image | Links a PNG/JPG/JPEG as an external raster reference | Undo removes the image reference |
+| Collect Refs | Copies linked raster references beside the drawing and rewrites their paths | Undo restores the previous image reference paths |
+
+---
 
 ## Confirmation policy
 

@@ -15,6 +15,7 @@ using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Navigation;
 using OpenCad2D.App.ViewModels.Properties;
 using OpenCad2D.App.ViewModels.PolarTracking;
+using OpenCad2D.App.ViewModels.ImportDrawing;
 using OpenCad2D.App.Settings;
 using System.IO;
 using OpenCad2D.Persistence.Dto;
@@ -1218,6 +1219,58 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             .OfType<ImageReferenceEntity>()
             .Where(imageReference => !File.Exists(imageReference.FilePath))
             .ToList();
+    }
+
+
+    public ToolResult ImportDrawingFromFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "OpenCad2D import file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        DocumentDto dto = _documentSerializer.LoadFromFile(filePath);
+        DocumentRecoveryResult recovery = _documentSerializer.DeserializeWithRecovery(dto);
+
+        var merger = new OpenCad2DImportMerger();
+        OpenCad2DImportMergeResult mergeResult = merger.Merge(
+            Workspace.Document,
+            recovery.Document);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            mergeResult.Command);
+
+        if (mergeResult.ImportedEntities.Count > 0)
+        {
+            Workspace.SelectionSet.ReplaceWith(
+                mergeResult.ImportedEntities.Select(entity => entity.Id));
+        }
+        else
+        {
+            Workspace.SelectionSet.Clear();
+        }
+
+        Workspace.EnsureCurrentLayerIsUsable();
+
+        string recoverySuffix = recovery.HasIssues
+            ? $" Recovery: {recovery.RecoveredEntityCount} recovered, {recovery.SkippedEntityCount} skipped."
+            : string.Empty;
+
+        ToolResult result = ToolResult.Completed(
+            $"Imported OpenCad2D drawing '{Path.GetFileName(filePath)}' " +
+            $"({mergeResult.ImportedEntityCount} entities, " +
+            $"{mergeResult.AddedLayerCount} layers, " +
+            $"{mergeResult.AddedLineFormatCount} line formats)." +
+            recoverySuffix);
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+
+        return result;
     }
 
 

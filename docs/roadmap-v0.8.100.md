@@ -42,7 +42,7 @@ Import Drawing is a low-risk foundation for reusing existing work. Blocks should
 
 Specification: `docs/specs/v0.8.100-import-drawing.md`.
 
-Status: planned.
+Status: implemented as first pass.
 
 Goal: allow a `.opencad2d.json` file to be imported into the current drawing.
 
@@ -54,6 +54,7 @@ Initial scope:
 - Resolve external image paths relative to the imported document before inserting them.
 - Preserve visual appearance as much as possible.
 - Start with import at origin.
+- First implementation adds the toolbar workflow and undoable merge.
 - Defer insertion point, scale and rotation to the next refinement pass.
 
 Exit criteria:

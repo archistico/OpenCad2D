@@ -520,3 +520,10 @@ Responsibilities are split by layer:
 | `OpenCad2D.Export` | SVG external `<image>` link; DXF/PDF raster parity is deferred |
 
 The architecture deliberately avoids embedding raster bytes in the native document. This keeps `.opencad2d.json` readable, small and easy to version, while `Collect Refs` provides the portability workflow for sharing drawings with their linked images.
+
+
+## OpenCad2D native drawing import
+
+The first v0.8.100 import pass inserts another `.opencad2d.json` into the active document instead of replacing it. The import workflow loads the source file through the normal JSON serializer, so relative raster image references are resolved against the imported document before entities are merged. Imported entities receive fresh IDs and the operation is committed through command history as one undoable batch.
+
+Resource merge is conflict-aware for line formats, text formats, dimension styles and layers. Equivalent resources are reused; materially different conflicts receive safe suffixed IDs/names and imported entities are remapped to the resulting resources. The first implementation imports at origin. Insertion point, scale, rotation and preview are deferred refinements.

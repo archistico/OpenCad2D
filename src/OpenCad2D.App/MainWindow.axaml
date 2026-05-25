@@ -224,6 +224,20 @@
                             </Button>
 
                     <Button Classes="global-button"
+                            ToolTip.Tip="Import another .opencad2d.json drawing into the current document"
+                            Click="ImportDrawing_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconOpen}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Import Drawing" />
+                                </Grid>
+                            </Button>
+
+
+                    <Button Classes="global-button"
                             ToolTip.Tip="Attach a PNG or JPG as an external image reference"
                             Click="AttachImage_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
