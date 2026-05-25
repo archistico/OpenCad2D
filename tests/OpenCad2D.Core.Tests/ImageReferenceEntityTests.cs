@@ -122,4 +122,42 @@ public sealed class ImageReferenceEntityTests
         Assert.Equal(new Vector2D(-8, 0), resized.HeightVector);
     }
 
+
+    [Fact]
+    public void WithSizeAroundCenter_ShouldPreserveCenterAndDirections()
+    {
+        var entity = new ImageReferenceEntity(
+            "plan.png",
+            Point2D.Origin,
+            new Vector2D(10, 0),
+            new Vector2D(0, 4));
+
+        ImageReferenceEntity resized = entity.WithSizeAroundCenter(20, 8);
+
+        Assert.Equal(entity.Center.X, resized.Center.X, precision: 6);
+        Assert.Equal(entity.Center.Y, resized.Center.Y, precision: 6);
+        Assert.Equal(new Vector2D(20, 0), resized.WidthVector);
+        Assert.Equal(new Vector2D(0, 8), resized.HeightVector);
+        Assert.Equal(new Point2D(-5, -2), resized.Origin);
+    }
+
+    [Fact]
+    public void WithNaturalAspectRatio_ShouldUsePixelMetadataAndPreserveCenter()
+    {
+        var entity = new ImageReferenceEntity(
+            "photo.jpg",
+            Point2D.Origin,
+            new Vector2D(12, 0),
+            new Vector2D(0, 20),
+            pixelWidth: 1200,
+            pixelHeight: 800);
+
+        ImageReferenceEntity reset = entity.WithNaturalAspectRatio();
+
+        Assert.Equal(entity.Center.X, reset.Center.X, precision: 6);
+        Assert.Equal(entity.Center.Y, reset.Center.Y, precision: 6);
+        Assert.Equal(12, reset.Width, precision: 6);
+        Assert.Equal(8, reset.Height, precision: 6);
+    }
+
 }

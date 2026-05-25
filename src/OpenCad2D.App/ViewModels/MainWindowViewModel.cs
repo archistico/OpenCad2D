@@ -765,6 +765,50 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+
+    public ToolResult ResetSelectedImageReferenceAspectRatio()
+    {
+        ImageReferenceEntity? selectedImageReference = GetSingleSelectedImageReference();
+
+        if (selectedImageReference is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                "Select exactly one image reference before resetting its aspect ratio.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        if (!selectedImageReference.HasNaturalAspectRatio)
+        {
+            ToolResult rejected = ToolResult.None(
+                "The selected image reference has no pixel size metadata, so its natural aspect ratio is unknown.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        ImageReferenceEntity replacement = selectedImageReference.WithNaturalAspectRatio();
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new ReplaceEntitiesCommand(replacement));
+
+        Workspace.SelectionSet.ReplaceWith(replacement.Id);
+
+        ToolResult result = ToolResult.Completed(
+            "Image aspect ratio reset from the linked raster file metadata.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     private ImageReferenceEntity? GetSingleSelectedImageReference()
     {
         if (Workspace.SelectionSet.SelectedIds.Count != 1)

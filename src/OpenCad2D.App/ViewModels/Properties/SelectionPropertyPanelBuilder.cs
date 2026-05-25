@@ -570,7 +570,10 @@ public sealed class SelectionPropertyPanelBuilder
                 EditableRow("Height", PropertyValueFormatter.FormatLength(imageReference.Height), value => ReplaceImageReferenceHeight(workspace, imageReference.Id, value, setMessage, refresh)),
                 EditableRow("Rotation", PropertyValueFormatter.FormatCoordinate(imageReference.RotationDegrees), value => ReplaceImageReferenceRotation(workspace, imageReference.Id, value, setMessage, refresh)),
                 Row("Area", PropertyValueFormatter.FormatArea(area)),
-                Row("Pixels", $"{imageReference.PixelWidth} x {imageReference.PixelHeight}")
+                Row("Pixels", $"{imageReference.PixelWidth} x {imageReference.PixelHeight}"),
+                Row("Natural aspect", imageReference.HasNaturalAspectRatio
+                    ? imageReference.NaturalAspectRatio.ToString("0.######", CultureInfo.InvariantCulture)
+                    : "Unknown")
             });
     }
 

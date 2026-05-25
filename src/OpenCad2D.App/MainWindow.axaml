@@ -249,6 +249,21 @@
                                 </Grid>
                             </Button>
 
+
+
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Reset the selected image to its natural PNG/JPG aspect ratio"
+                            Click="ResetImageAspect_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconImage}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Reset Aspect" />
+                                </Grid>
+                            </Button>
+
                     <Button Classes="global-button"
                             ToolTip.Tip="Save the current drawing"
                             Click="Save_Click" >

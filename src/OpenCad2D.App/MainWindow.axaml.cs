@@ -355,6 +355,27 @@ public partial class MainWindow : Window
         }
     }
 
+
+    private async void ResetImageAspect_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ToolResult result = _viewModel.ResetSelectedImageReferenceAspectRatio();
+
+        RefreshAllUiAfterDocumentChange();
+        CadCanvas.InvalidateVisual();
+
+        if (!result.Changed)
+        {
+            await ShowMessageAsync(
+                "Reset image aspect",
+                result.Message ?? "The selected image aspect ratio could not be reset.");
+            return;
+        }
+
+        RefreshStatus();
+    }
+
     private async void Save_Click(
         object? sender,
         RoutedEventArgs e)

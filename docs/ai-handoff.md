@@ -339,3 +339,20 @@ Manual checks:
 2. Use Replace Image on a selected reference and verify geometry is preserved while the visual raster changes.
 3. Try Replace Image with no selected image and verify the explanatory message is shown.
 4. Undo/redo Property Panel edits and Replace Image.
+
+### 2026-05-25 — Image aspect reset refinement
+
+Follow-up refinement for external raster references:
+
+- `ImageReferenceEntity` now exposes `NaturalAspectRatio`, `HasNaturalAspectRatio`, `WithSizeAroundCenter(...)` and `WithNaturalAspectRatio()`.
+- Added a `Reset Aspect` toolbar action for exactly one selected image reference. It restores the rectangle height from the linked raster pixel metadata while preserving width, center, rotation and the external-reference model.
+- The Property Panel now shows the natural pixel aspect ratio when pixel metadata is available.
+- Added Core and App tests for centered resizing, natural aspect reset and the no-selection rejection path.
+
+Manual checks:
+
+1. Attach a landscape or portrait PNG/JPG.
+2. Distort width/height from the Property Panel or grips.
+3. Select the image and use `Reset Aspect`.
+4. Verify the center and rotation stay stable while height returns to the pixel aspect ratio.
+5. Try `Reset Aspect` with no image selected and verify the explanatory message.

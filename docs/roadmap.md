@@ -225,7 +225,7 @@ Deferred / future UI polish:
 
 Status: [x] basic foundation implemented.
 
-OpenCad2D can now attach local PNG/JPG files as external image references. The drawing stores the source path and an oriented rectangle, never the raster bytes. The reference can be selected and transformed like other rectangular entities: move, copy, rotate, scale, mirror and grip-edit are supported. Missing files are shown as selectable placeholders so drawings remain recoverable.
+OpenCad2D can now attach local PNG/JPG files as external image references. The drawing stores the source path and an oriented rectangle, never the raster bytes. The reference can be selected and transformed like other rectangular entities: move, copy, rotate, scale, mirror and grip-edit are supported. Missing files are shown as selectable placeholders so drawings remain recoverable. A selected raster reference can also be relinked/replaced and reset to its natural pixel aspect ratio.
 
 Current limitations:
 

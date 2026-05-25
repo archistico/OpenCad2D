@@ -93,6 +93,12 @@ public sealed class ImageReferenceEntity : CadEntity
 
     public double RotationDegrees => Math.Atan2(WidthVector.Y, WidthVector.X) * 180.0 / Math.PI;
 
+    public double NaturalAspectRatio => PixelWidth > 0 && PixelHeight > 0
+        ? PixelHeight / (double)PixelWidth
+        : 0.0;
+
+    public bool HasNaturalAspectRatio => NaturalAspectRatio > 0;
+
     public ImageReferenceEntity WithFilePath(
         string filePath,
         int pixelWidth,
@@ -134,6 +140,39 @@ public sealed class ImageReferenceEntity : CadEntity
         double width,
         double height)
     {
+        return WithSizeInternal(
+            width,
+            height,
+            keepCenter: false);
+    }
+
+    public ImageReferenceEntity WithSizeAroundCenter(
+        double width,
+        double height)
+    {
+        return WithSizeInternal(
+            width,
+            height,
+            keepCenter: true);
+    }
+
+    public ImageReferenceEntity WithNaturalAspectRatio()
+    {
+        if (!HasNaturalAspectRatio)
+        {
+            return this;
+        }
+
+        return WithSizeAroundCenter(
+            Width,
+            Math.Max(1e-9, Width * NaturalAspectRatio));
+    }
+
+    private ImageReferenceEntity WithSizeInternal(
+        double width,
+        double height,
+        bool keepCenter)
+    {
         if (width <= 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -151,11 +190,17 @@ public sealed class ImageReferenceEntity : CadEntity
         Vector2D widthDirection = WidthVector.Normalize();
         Vector2D heightDirection = HeightVector.Normalize();
 
+        Vector2D widthVector = widthDirection * width;
+        Vector2D heightVector = heightDirection * height;
+        Point2D origin = keepCenter
+            ? Center - ((widthVector + heightVector) / 2.0)
+            : Origin;
+
         return new ImageReferenceEntity(
             FilePath,
-            Origin,
-            widthDirection * width,
-            heightDirection * height,
+            origin,
+            widthVector,
+            heightVector,
             PixelWidth,
             PixelHeight,
             Id,
