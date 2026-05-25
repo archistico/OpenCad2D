@@ -143,12 +143,13 @@ Major renderer or spatial-index rewrites are deferred unless testing reveals a c
 
 ## External raster image references
 
-OpenCad2D supports basic PNG/JPG attachment as external references. The drawing stores the image path and rectangle geometry only; raster bytes are not embedded. On save, image paths are stored relative to the `.opencad2d.json` file whenever possible, so a drawing folder can be moved together with its image folder.
+OpenCad2D supports PNG/JPG/JPEG attachment as external references. The drawing stores the image path and oriented rectangle geometry only; raster bytes are not embedded. On save, image paths are stored relative to the `.opencad2d.json` file whenever possible, so a drawing folder can be moved together with its image folder. `Collect Refs` can copy existing linked images into an `images/` folder beside the drawing and save portable relative references.
 
 Current limitations:
 
 - moving or renaming the image file outside the drawing folder still breaks the live raster preview, but the drawing now warns about missing references on open and they can be restored with Relink Missing, Replace Image, or the editable File property;
-- there is no reference manager/relink dialog yet;
+- `Collect Refs` skips missing image files; relink them first if they should be included in the portable drawing package;
+- `Manage Refs` is currently a compact manager for raster image references only; it does not yet manage future external reference types such as DXF underlays or PDF underlays;
 - Reset Aspect depends on stored pixel metadata; very old/corrupt image references without pixel dimensions cannot infer the natural aspect ratio;
 - SVG export writes an external `<image href="...">` link;
 - DXF and PDF export do not yet emit raster image content.

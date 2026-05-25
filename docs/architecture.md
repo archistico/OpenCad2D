@@ -498,3 +498,25 @@ The current logging contract is intentionally small:
 - `InMemoryApplicationLogger` supports focused tests and future diagnostic UI scenarios.
 
 The first consumer is `CadCanvas.HandlePointerPressedException`. Pointer/tool failures are still converted into a recoverable user-facing `ToolResult.Cancelled(...)`, but the full exception is now logged before the canvas is invalidated. This avoids losing stack traces when asynchronous tool input fails.
+
+
+## External raster image reference architecture
+
+Raster attachments are modeled as `ImageReferenceEntity` in `OpenCad2D.Core`. The entity stores only:
+
+- external file path;
+- origin point;
+- width and height vectors;
+- source pixel metadata when available.
+
+Responsibilities are split by layer:
+
+| Layer | Responsibility |
+|---|---|
+| `OpenCad2D.Core` | geometry, bounds, transforms, hit testing support and immutable entity helpers |
+| `OpenCad2D.Persistence` | JSON DTO conversion and relative/absolute path normalization through `ExternalReferencePathHelper` |
+| `OpenCad2D.Interaction` | endpoint, midpoint, center and nearest snap candidates on the image rectangle |
+| `OpenCad2D.App` | file picking, bitmap loading/cache, missing-image warning, Relink/Replace/Reset/Collect/Manage UI |
+| `OpenCad2D.Export` | SVG external `<image>` link; DXF/PDF raster parity is deferred |
+
+The architecture deliberately avoids embedding raster bytes in the native document. This keeps `.opencad2d.json` readable, small and easy to version, while `Collect Refs` provides the portability workflow for sharing drawings with their linked images.

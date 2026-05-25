@@ -15,7 +15,7 @@ The native document stores:
 - line formats;
 - text formats;
 - dimension styles;
-- entities;
+- entities, including external image reference metadata;
 - viewport state;
 - document-level drafting settings.
 
@@ -66,6 +66,36 @@ missing IsFilled on old entities -> false
 This keeps old drawings visually unchanged when reopened.
 
 ---
+
+## External raster image references
+
+`ImageReferenceEntity` stores an external PNG/JPG/JPEG link plus CAD geometry. The native file stores metadata only:
+
+- file path;
+- origin point;
+- width vector;
+- height vector;
+- source pixel width and height when available.
+
+Raster bytes are never embedded in `.opencad2d.json`.
+
+Path rules:
+
+- `SaveToFile(...)` writes image paths relative to the drawing folder whenever possible;
+- `LoadFromFile(...)` resolves relative image paths against the folder that contains the `.opencad2d.json` file;
+- old drawings that contain absolute image paths remain compatible;
+- `FromJson(string json)` does not resolve relative image paths because it has no document-file location.
+
+Portable project workflow:
+
+```text
+drawing.opencad2d.json
+images/
+  plan.png
+  reference-photo.jpg
+```
+
+`Collect Refs` copies existing linked raster files into the sibling `images/` folder, avoids duplicate copies for the same source file and updates the document to portable relative paths. Missing files are skipped and should be relinked before collecting if they must be included.
 
 ## Document settings
 

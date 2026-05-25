@@ -85,6 +85,7 @@ LineEntity                -> <line>
 CircleEntity              -> <circle>, optionally filled
 Polyline open             -> <polyline>
 Polyline closed           -> <polygon>, optionally filled
+ImageReferenceEntity      -> external <image href="..."> link
 ArcEntity                 -> <path>
 Horizontal dimension      -> lines + text
 Vertical dimension        -> lines + text
@@ -113,6 +114,7 @@ dimension text   -> DimensionStyle.TextFormatId -> TextFormat
 text font        -> TextFormat.FontFamily
 text size        -> TextFormat.Height
 fill             -> Layer.FillColor for filled circles and filled closed polylines; none otherwise
+image href       -> external raster path stored by ImageReferenceEntity; raster bytes are not embedded
 ```
 
 This matches the project rule that stroke appearance comes from the layer's reusable line format, while solid fill color comes from the layer itself.
@@ -487,3 +489,10 @@ The v0.4 export scope is complete for the implemented basic dimension types:
 - angular dimensions, including reflex angles.
 
 All are exported as graphical primitives. This keeps external-viewer compatibility predictable while the internal dimension model is still evolving. Native editable DXF `DIMENSION` records remain a future interoperability task.
+
+
+## Raster images in export
+
+External raster image references are currently preserved in SVG export as external `<image href="...">` links. The raster bytes are not embedded.
+
+PDF and DXF raster-image output are intentionally deferred. DXF support will require `IMAGE` / `IMAGEDEF` objects, dictionary wiring and compatibility checks in CAD viewers such as QCAD, LibreCAD and Autodesk viewers.

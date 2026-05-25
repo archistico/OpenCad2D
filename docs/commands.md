@@ -155,3 +155,20 @@ Empty Enter repeats the last command only when no command is active.
 - Workflow: number of sides, center point, vertex point or radius.
 - The tool creates a closed `PolylineEntity`, so existing selection, offset, export and edit logic applies.
 - Supported command input: absolute coordinates, relative coordinates, polar input and direct distance for the radius/vertex step.
+
+---
+
+## External image reference UI actions
+
+The raster image reference commands are currently toolbar/dialog actions rather than command-line aliases:
+
+| Action | Effect |
+|---|---|
+| Attach Image | Attach a PNG/JPG/JPEG as an external image reference. |
+| Replace Image | Replace or relink the selected image reference while preserving CAD geometry. |
+| Relink Missing | Relink the selected missing image, or the first missing image in the drawing. |
+| Reset Aspect | Restore the selected image rectangle to the stored natural pixel aspect ratio. |
+| Collect Refs | Copy existing linked raster files into an `images/` folder beside the drawing and save relative paths. |
+| Manage Refs | Open the Image References Manager for status, selection, relink, replace and open-folder operations. |
+
+All image reference mutations are executed through undoable replace/add commands in the normal command history.

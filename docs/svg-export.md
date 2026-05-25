@@ -17,12 +17,26 @@ LineEntity
 CircleEntity
 ArcEntity
 PolylineEntity
+ImageReferenceEntity as external <image href="..."> link
 basic dimensions as graphical primitives
 ```
 
 The SVG exporter uses layer line formats for stroke color, line weight and dash pattern. Text export uses the document text format referenced by each `TextEntity`. Supported filled closed entities use `Layer.FillColor`.
 
 ---
+
+## External raster image references
+
+SVG export writes `ImageReferenceEntity` as an external raster link. The image file is not embedded as base64.
+
+Expected behavior:
+
+- the SVG contains an `<image href="...">` reference;
+- the linked file must remain available next to the SVG or at the referenced path;
+- the image rectangle follows the stored CAD orientation, size and rotation;
+- the export remains consistent with the project policy that raster attachments are external references, not embedded document payloads.
+
+For portable SVG output, run `Collect Refs` before export and keep the drawing/SVG and `images/` folder together as needed.
 
 ## Background modes
 

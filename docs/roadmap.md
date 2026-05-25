@@ -1,4 +1,4 @@
-﻿# OpenCad2D roadmap
+# OpenCad2D roadmap
 
 This roadmap tracks the active development path from the current v0.9 stabilization work toward the first stable v1.0 release.
 
@@ -26,7 +26,8 @@ Primary v0.9 themes:
 - reliable save/export behavior;
 - DXF/SVG/PDF compatibility checks;
 - documented limitations;
-- clean release packaging.
+- clean release packaging;
+- documented external raster-image reference workflow.
 
 ---
 
@@ -39,7 +40,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Core geometry/document model | [x] | Geometry primitives, entities, layers, line formats, text formats, dimension styles, command history and undo/redo are in place. |
 | Application shell | [x] | Avalonia canvas, file command bar, top CAD bar, left tool panel, property panel, command row, snap bar and status bar are established. |
 | Native persistence | [x] | `.opencad2d.json` save/load, dirty state, save-changes prompt, partial recovery, viewport/document settings persistence and layer/entity fill persistence are implemented. |
-| Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; ASCII DXF import covers the practical 2D entity set currently supported. |
+| Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; SVG export includes external raster image references; ASCII DXF import covers the practical 2D entity set currently supported. |
 | Command input | [x] | Aliases, prompt phases, coordinate input, relative/polar input, direct distances, history and first-pass autocomplete are implemented. |
 | Drafting aids | [x] | Snap system, grid, Ortho, Polar Tracking, Zoom Window, Zoom Extents, pan and crosshair are implemented. |
 | Draw tools baseline | [x] | Points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and open Bezier splines are supported. Rectangles and polygons are closed polylines for fill/editing purposes. |
@@ -53,6 +54,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Save/export UX clarity | [x] | Export creates derived files and does not clear dirty state or replace the current native file path; user messages make this explicit. |
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
 | Explode / Join essentials | [x] | EXPLODE converts selected polylines into lines; JOIN converts connected selected lines into polylines, with command aliases, buttons, undo and targeted tests. |
+| External raster references | [x] | PNG/JPG/JPEG files can be attached as external references, transformed as oriented rectangles, snapped, relinked, collected into portable folders and managed through Image References Manager. |
 
 ---
 
@@ -225,15 +227,17 @@ Deferred / future UI polish:
 
 Status: [x] basic foundation implemented.
 
-OpenCad2D can now attach local PNG/JPG files as external image references. The drawing stores the source path and an oriented rectangle, never the raster bytes. The reference can be selected and transformed like other rectangular entities: move, copy, rotate, scale, mirror and grip-edit are supported. Missing files are shown as selectable placeholders so drawings remain recoverable. A selected raster reference can also be relinked/replaced and reset to its natural pixel aspect ratio. Missing raster references are reported on open and can be relinked with a dedicated command while preserving drawing geometry. Image paths are normalized on save: when possible, fully qualified paths are written relative to the `.opencad2d.json` document folder and resolved again on load.
+OpenCad2D can now attach local PNG/JPG files as external image references. The drawing stores the source path and an oriented rectangle, never the raster bytes. The reference can be selected and transformed like other rectangular entities: move, copy, rotate, scale, mirror and grip-edit are supported. Missing files are shown as selectable placeholders so drawings remain recoverable. A selected raster reference can also be relinked/replaced and reset to its natural pixel aspect ratio. Missing raster references are reported on open and can be relinked with a dedicated command while preserving drawing geometry. Image paths are normalized on save: when possible, fully qualified paths are written relative to the `.opencad2d.json` document folder and resolved again on load. The `Collect Refs` workflow can copy linked PNG/JPG files into an `images/` folder beside the drawing and save the project with portable relative references. The `Manage Refs` window provides a compact reference manager with status, path, pixel size, CAD size, rotation, instance count, select/relink/replace and open-folder actions.
 
-Current limitations:
+Current limitations and deferred work:
 
-- no dedicated relink/missing-reference manager yet;
 - relative image paths are supported for project portability; older absolute paths remain compatible;
+- `Collect Refs` packages existing linked PNG/JPG files into a sibling `images/` folder and preserves geometry;
+- `Manage Refs` lists external raster references, groups duplicate file paths by instance count and offers select/relink/replace/open-folder actions;
 - missing image references are detected on open and can be relinked without changing position, size or rotation;
 - SVG export links the external raster through `<image href="...">`;
-- DXF/PDF raster-image output remains deferred.
+- DXF/PDF raster-image output remains deferred;
+- future reference types such as PDF underlays, DXF underlays or block-style XREFs are not part of this raster-only workflow.
 
 ## Deferred beyond the active v0.9 scope
 
@@ -244,8 +248,9 @@ These are valid future tasks but should not block the current stabilization flow
 - [>] true associative dimensions;
 - [>] blocks;
 - [>] general hatch/pattern tools beyond the current solid fill support;
-- [x] basic external raster references for PNG/JPG as non-embedded image entities;
-- [>] advanced raster-reference management, relinking and DXF/PDF parity;
+- [x] external raster references for PNG/JPG/JPEG as non-embedded image entities;
+- [x] raster-reference management, relinking, relative paths and Collect Refs packaging;
+- [>] DXF/PDF raster-image export parity;
 - [>] advanced NURBS fidelity;
 - [>] autosave/recovery v2;
 - [>] major renderer rewrite;

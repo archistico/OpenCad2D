@@ -1,4 +1,4 @@
-﻿using Avalonia.Controls;
+using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
@@ -16,6 +16,7 @@ using OpenCad2D.App.ViewModels.LineFormats;
 using OpenCad2D.App.ViewModels.TextFormats;
 using OpenCad2D.App.ViewModels.DimensionStyles;
 using OpenCad2D.App.ViewModels.PolarTracking;
+using OpenCad2D.App.ViewModels.ImageReferences;
 using OpenCad2D.Export.Dxf.Import;
 using OpenCad2D.Export.Pdf;
 using OpenCad2D.Export.Svg;
@@ -27,6 +28,8 @@ using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Measurements;
 using System;
+using System.Diagnostics;
+using System.IO;
 
 namespace OpenCad2D.App;
 
@@ -443,6 +446,229 @@ public partial class MainWindow : Window
 
         RefreshStatus();
     }
+
+    private async void CollectImageReferences_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        try
+        {
+            ToolResult result = _viewModel.CollectExternalImageReferences();
+
+            RefreshAllUiAfterDocumentChange();
+            CadCanvas.InvalidateVisual();
+
+            if (!result.Changed)
+            {
+                await ShowMessageAsync(
+                    "Collect references",
+                    result.Message ?? "No external image reference was collected.");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_viewModel.CurrentFilePath))
+            {
+                _viewModel.SaveToFile(
+                    _viewModel.CurrentFilePath,
+                    CadCanvas.GetViewportState());
+            }
+
+            RefreshAllUiAfterDocumentChange();
+            RefreshStatus();
+
+            await ShowMessageAsync(
+                "Collect references",
+                result.Message ?? "External image references were collected into the drawing images folder.");
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Collect references failed",
+                exception.Message);
+        }
+    }
+
+    private async void ManageImageReferences_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        await ShowImageReferenceManagerAsync();
+    }
+
+    private async Task ShowImageReferenceManagerAsync()
+    {
+        while (true)
+        {
+            var dialogViewModel = new ImageReferenceManagerWindowViewModel(
+                _viewModel.Workspace.Document);
+
+            var dialog = new ImageReferenceManagerWindow(dialogViewModel);
+
+            ImageReferenceManagerResult? result = await dialog.ShowDialog<ImageReferenceManagerResult?>(this);
+
+            if (result?.Reference is null || result.Action == ImageReferenceManagerAction.None)
+            {
+                CadCanvas.Focus();
+                return;
+            }
+
+            switch (result.Action)
+            {
+                case ImageReferenceManagerAction.SelectInDrawing:
+                    SelectImageReferenceFromManager(result.Reference.EntityId);
+                    return;
+
+                case ImageReferenceManagerAction.Relink:
+                    await RelinkImageReferenceFromManagerAsync(result.Reference.EntityId);
+                    break;
+
+                case ImageReferenceManagerAction.Replace:
+                    await ReplaceImageReferenceFromManagerAsync(result.Reference.EntityId);
+                    break;
+
+                case ImageReferenceManagerAction.OpenFolder:
+                    await OpenImageReferenceFolderFromManagerAsync(result.Reference);
+                    break;
+            }
+        }
+    }
+
+    private void SelectImageReferenceFromManager(OpenCad2D.Core.Identifiers.EntityId entityId)
+    {
+        _viewModel.SelectImageReference(entityId);
+
+        RefreshAllUiAfterDocumentChange();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        RefreshStatus();
+        CadCanvas.Focus();
+    }
+
+    private async Task RelinkImageReferenceFromManagerAsync(OpenCad2D.Core.Identifiers.EntityId entityId)
+    {
+        ImageFileSelection? selection = await PickRasterImageAsync("Relink raster image");
+
+        if (selection is null)
+        {
+            return;
+        }
+
+        ToolResult result = _viewModel.RelinkImageReference(
+            entityId,
+            selection.FilePath,
+            selection.PixelWidth,
+            selection.PixelHeight);
+
+        RefreshAllUiAfterDocumentChange();
+        CadCanvas.InvalidateVisual();
+        RefreshStatus();
+
+        if (!result.Changed)
+        {
+            await ShowMessageAsync(
+                "Relink image",
+                result.Message ?? "The selected image reference could not be relinked.");
+        }
+    }
+
+    private async Task ReplaceImageReferenceFromManagerAsync(OpenCad2D.Core.Identifiers.EntityId entityId)
+    {
+        ImageFileSelection? selection = await PickRasterImageAsync("Replace raster image");
+
+        if (selection is null)
+        {
+            return;
+        }
+
+        ToolResult result = _viewModel.ReplaceImageReference(
+            entityId,
+            selection.FilePath,
+            selection.PixelWidth,
+            selection.PixelHeight);
+
+        RefreshAllUiAfterDocumentChange();
+        CadCanvas.InvalidateVisual();
+        RefreshStatus();
+
+        if (!result.Changed)
+        {
+            await ShowMessageAsync(
+                "Replace image",
+                result.Message ?? "The selected image reference could not be replaced.");
+        }
+    }
+
+    private async Task OpenImageReferenceFolderFromManagerAsync(ImageReferenceItemViewModel reference)
+    {
+        if (string.IsNullOrWhiteSpace(reference.DirectoryPath))
+        {
+            await ShowMessageAsync(
+                "Open image folder",
+                "The selected image reference has no valid folder path.");
+            return;
+        }
+
+        if (!Directory.Exists(reference.DirectoryPath))
+        {
+            await ShowMessageAsync(
+                "Open image folder",
+                "The selected image reference folder does not exist.");
+            return;
+        }
+
+        try
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = reference.DirectoryPath,
+                UseShellExecute = true
+            });
+        }
+        catch (Exception exception)
+        {
+            await ShowMessageAsync(
+                "Open image folder failed",
+                exception.Message);
+        }
+    }
+
+    private async Task<ImageFileSelection?> PickRasterImageAsync(string title)
+    {
+        IReadOnlyList<IStorageFile> files = await StorageProvider.OpenFilePickerAsync(
+            new FilePickerOpenOptions
+            {
+                Title = title,
+                AllowMultiple = false,
+                FileTypeFilter = new[] { RasterImageFileType }
+            });
+
+        if (files.Count == 0)
+        {
+            return null;
+        }
+
+        string? filePath = files[0].TryGetLocalPath();
+
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            await ShowMessageAsync(
+                title,
+                "Only local image files are supported in this version.");
+            return null;
+        }
+
+        using var bitmap = new Bitmap(filePath);
+
+        return new ImageFileSelection(
+            filePath,
+            bitmap.PixelSize.Width,
+            bitmap.PixelSize.Height);
+    }
+
+    private sealed record ImageFileSelection(
+        string FilePath,
+        int PixelWidth,
+        int PixelHeight);
 
     private async void Save_Click(
         object? sender,

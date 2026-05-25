@@ -1,0 +1,175 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:refs="clr-namespace:OpenCad2D.App.ViewModels.ImageReferences"
+        x:Class="OpenCad2D.App.ImageReferenceManagerWindow"
+        x:DataType="refs:ImageReferenceManagerWindowViewModel"
+        Title="Image References"
+        Icon="/Assets/app-icon.ico"
+        Width="1100"
+        Height="520"
+        MinWidth="940"
+        MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.header-cell">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.cell-label">
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.cell-path">
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
+        <Style Selector="TextBlock.status-ok">
+            <Setter Property="Foreground" Value="#8FD14F" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.status-missing">
+            <Setter Property="Foreground" Value="#F48771" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="BorderBrush" Value="#555555" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="86" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto"
+          Margin="10">
+
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    Margin="0,0,0,8">
+            <Button Classes="dialog-button"
+                    Content="Select"
+                    Click="SelectInDrawing_Click"
+                    IsEnabled="{Binding HasSelectedReference}" />
+
+            <Button Classes="dialog-button"
+                    Content="Relink"
+                    Click="Relink_Click"
+                    IsEnabled="{Binding HasSelectedReference}" />
+
+            <Button Classes="dialog-button"
+                    Content="Replace"
+                    Click="Replace_Click"
+                    IsEnabled="{Binding HasSelectedReference}" />
+
+            <Button Classes="dialog-button"
+                    Content="Open Folder"
+                    Click="OpenFolder_Click"
+                    IsEnabled="{Binding CanOpenSelectedFolder}" />
+
+            <TextBlock Text="{Binding SummaryText}"
+                       Foreground="#AAAAAA"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0" />
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                BorderBrush="#3A3A3A"
+                BorderThickness="1"
+                Background="#202020">
+            <Grid RowDefinitions="Auto,*">
+                <Border Grid.Row="0"
+                        Background="#2D2D30"
+                        Padding="7,5">
+                    <Grid ColumnDefinitions="95,170,*,130,115,90,75"
+                          ColumnSpacing="6">
+                        <TextBlock Grid.Column="0" Classes="header-cell" Text="Status" />
+                        <TextBlock Grid.Column="1" Classes="header-cell" Text="File" />
+                        <TextBlock Grid.Column="2" Classes="header-cell" Text="Path" />
+                        <TextBlock Grid.Column="3" Classes="header-cell" Text="Pixels" />
+                        <TextBlock Grid.Column="4" Classes="header-cell" Text="CAD size" />
+                        <TextBlock Grid.Column="5" Classes="header-cell" Text="Rotation" />
+                        <TextBlock Grid.Column="6" Classes="header-cell" Text="Instances" />
+                    </Grid>
+                </Border>
+
+                <ListBox Grid.Row="1"
+                         ItemsSource="{Binding References}"
+                         SelectedItem="{Binding SelectedReference}"
+                         Background="#202020"
+                         BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="refs:ImageReferenceItemViewModel">
+                            <Border Padding="7,4">
+                                <Grid ColumnDefinitions="95,170,*,130,115,90,75"
+                                      ColumnSpacing="6">
+                                    <Grid Grid.Column="0">
+                                        <TextBlock Classes="status-ok"
+                                                   Text="{Binding StatusText}"
+                                                   IsVisible="{Binding Exists}" />
+                                        <TextBlock Classes="status-missing"
+                                                   Text="{Binding StatusText}"
+                                                   IsVisible="{Binding IsMissing}" />
+                                    </Grid>
+
+                                    <TextBlock Grid.Column="1"
+                                               Classes="cell-label"
+                                               Text="{Binding FileName}" />
+
+                                    <TextBlock Grid.Column="2"
+                                               Classes="cell-path"
+                                               Text="{Binding FilePath}" />
+
+                                    <TextBlock Grid.Column="3"
+                                               Classes="cell-label"
+                                               Text="{Binding PixelSizeText}" />
+
+                                    <TextBlock Grid.Column="4"
+                                               Classes="cell-label"
+                                               Text="{Binding CadSizeText}" />
+
+                                    <TextBlock Grid.Column="5"
+                                               Classes="cell-label"
+                                               Text="{Binding RotationText}" />
+
+                                    <TextBlock Grid.Column="6"
+                                               Classes="cell-label"
+                                               Text="{Binding InstanceCountText}"
+                                               HorizontalAlignment="Right" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="6"
+                    Margin="0,12,0,0">
+            <Button Classes="dialog-button"
+                    Content="Close"
+                    Click="Close_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

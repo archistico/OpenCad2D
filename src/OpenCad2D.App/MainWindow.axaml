@@ -1,4 +1,4 @@
-﻿<Window xmlns="https://github.com/avaloniaui"
+<Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:OpenCad2D.App.Controls"
         xmlns:vm="clr-namespace:OpenCad2D.App.ViewModels"
@@ -272,6 +272,32 @@
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Reset Aspect" />
+                                </Grid>
+                            </Button>
+
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Copy linked PNG/JPG files into an images folder beside the drawing and save relative references"
+                            Click="CollectImageReferences_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconImage}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Collect Refs" />
+                                </Grid>
+                            </Button>
+
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Manage external PNG/JPG image references used by the drawing"
+                            Click="ManageImageReferences_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconImage}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Manage Refs" />
                                 </Grid>
                             </Button>
 

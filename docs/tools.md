@@ -292,3 +292,20 @@ Property Panel final cleanup:
 - `Dimension style` uses a combo box populated from document dimension styles.
 - Polyline `Closed` uses a Yes/No combo box.
 - Polyline vertices are shown in a compact `Vertices` section as editable `X, Y` rows, capped to the first 4 vertices with a `More vertices` note.
+
+---
+
+## External raster image reference tools
+
+OpenCad2D supports local PNG/JPG/JPEG files as external raster references. The drawing stores the image path and oriented rectangle geometry only; raster bytes are never embedded.
+
+Implemented toolbar workflows:
+
+- `Attach Image`: creates a new external image reference near the current viewport center.
+- `Replace Image`: relinks the selected image reference to another local raster file while preserving its CAD geometry.
+- `Relink Missing`: relinks the selected missing reference, or the first missing reference found in the drawing.
+- `Reset Aspect`: restores the selected reference height from its stored pixel aspect ratio while preserving width, center and rotation.
+- `Collect Refs`: copies linked raster files into an `images/` folder beside the drawing file and saves portable relative paths.
+- `Manage Refs`: opens the Image References Manager, which lists status, path, pixel size, CAD size, rotation and instance count and provides select/relink/replace/open-folder actions.
+
+Image references participate in selection, snapping, transform tools and grip editing like rectangular CAD entities. Endpoint snap exposes the four corners, midpoint snap exposes the four edge midpoints, center snap exposes the rectangle center and nearest snap uses the image border.

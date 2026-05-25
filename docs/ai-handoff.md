@@ -410,3 +410,71 @@ Manual checks:
 3. Enable Midpoint and verify snap markers on the four border midpoints.
 4. Enable Center and verify the center snap.
 5. Enable Nearest and verify the cursor snaps to the image border.
+
+### 2026-05-25 — Collect external image references
+
+Follow-up project-portability refinement for external raster references:
+
+- Added a `Collect Refs` toolbar action for raster image references.
+- The command requires the drawing to be saved first, so the target package folder can be derived from the current `.opencad2d.json` path.
+- Existing linked PNG/JPG files are copied into an `images/` folder beside the drawing file.
+- Duplicate source images are collected only once; multiple references can point to the same collected file.
+- If two different source images have the same filename, the collector creates a unique filename such as `name_2.png` rather than overwriting an existing file.
+- Missing references are skipped and reported; their placeholder/relink workflow remains unchanged.
+- CAD geometry is preserved: position, size, rotation, pixel metadata, layer and entity ids are not changed.
+- The UI saves the drawing after collecting, so `JsonDocumentSerializer.SaveToFile(...)` persists the collected paths as relative references like `images/plan.png`.
+- Added App tests for collecting into the drawing folder, reusing one copied file for duplicate source references and rejecting collection for unsaved drawings.
+
+Manual checks:
+
+1. Save a drawing.
+2. Attach one PNG/JPG from another folder.
+3. Use `Collect Refs`.
+4. Verify an `images/` folder appears beside the `.opencad2d.json` file.
+5. Inspect the JSON and verify the image path is relative.
+6. Move the drawing file together with the `images/` folder and reopen.
+
+### 2026-05-25 — Image References Manager
+
+Implemented a first `Manage Refs` workflow for external raster image references.
+
+- Added `ImageReferenceManagerWindow` and `ImageReferenceManagerWindowViewModel`.
+- The manager lists linked PNG/JPG references with status (`OK` / `Missing`), filename, path, pixel size, CAD size, rotation and instance count.
+- References that use the same file path are grouped into one row; the instance count shows how many image entities use that linked file.
+- Added manager actions:
+  - `Select`: selects the reference in the drawing.
+  - `Relink`: chooses a new local PNG/JPG and updates the selected reference while preserving geometry.
+  - `Replace`: same file replacement workflow for non-missing references, also preserving geometry.
+  - `Open Folder`: opens the containing folder with the system shell when it exists.
+- Added `MainWindowViewModel.SelectImageReference(...)`, `ReplaceImageReference(...)` and `RelinkImageReference(...)` to support manager-driven operations by entity id.
+- Added App tests for selecting image references by id, replacing by id while preserving geometry, grouping duplicate file paths in the manager and summarizing missing references.
+
+Manual checks:
+
+1. Attach two images and open `Manage Refs`.
+2. Verify status, path, pixel size, CAD size, rotation and instance count.
+3. Use `Select` and verify the reference is selected in the drawing.
+4. Rename one linked image, reopen the drawing and verify the manager shows `Missing`.
+5. Use `Relink` from the manager and verify geometry is preserved.
+6. Use `Open Folder` for an existing reference.
+
+### 2026-05-25 — Documentation and v0.9 release preparation
+
+Documentation consolidation for the external raster-image reference milestone and the v0.9 release gate.
+
+Updated:
+
+- `README.md` now mentions external raster image references, relative paths, Collect Refs, Manage Refs and the current SVG/DXF/PDF export distinction.
+- `docs/roadmap.md` now treats raster-reference management, relinking, relative paths and Collect Refs as completed v0.9 work; DXF/PDF raster-image export parity remains deferred.
+- `docs/known-limitations.md` no longer says that a reference manager/relink dialog is missing; it now describes the remaining raster-reference limitations more accurately.
+- `docs/persistence.md` documents image-reference metadata, relative path normalization, load-time resolution and the portable `images/` folder workflow.
+- `docs/svg-export.md` and `docs/export.md` document SVG external `<image href="...">` output and clarify that PDF/DXF raster output is deferred.
+- `docs/architecture.md` now describes the split of image-reference responsibilities across Core, Persistence, Interaction, App and Export.
+
+Added release preparation files:
+
+- `docs/release-v0.9.md`
+- `docs/release-checklist-v0.9.md`
+- `docs/release-publish-v0.9.md`
+
+Before tagging v0.9, run the full build/test gate and perform the manual smoke tests listed in `docs/release-checklist-v0.9.md`, especially the external image-reference workflow and SVG/DXF/PDF export expectations.

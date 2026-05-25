@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Documents;
@@ -726,6 +726,107 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+    public ToolResult SelectImageReference(EntityId entityId)
+    {
+        ImageReferenceEntity? imageReference = GetImageReferenceById(entityId);
+
+        if (imageReference is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                "The selected image reference no longer exists in the drawing.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        Workspace.SelectionSet.ReplaceWith(imageReference.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Selected image reference '{Path.GetFileName(imageReference.FilePath)}'.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    public ToolResult ReplaceImageReference(
+        EntityId entityId,
+        string filePath,
+        int pixelWidth,
+        int pixelHeight)
+    {
+        return ReplaceImageReferenceInternal(
+            entityId,
+            filePath,
+            pixelWidth,
+            pixelHeight,
+            "Image reference replaced");
+    }
+
+    public ToolResult RelinkImageReference(
+        EntityId entityId,
+        string filePath,
+        int pixelWidth,
+        int pixelHeight)
+    {
+        return ReplaceImageReferenceInternal(
+            entityId,
+            filePath,
+            pixelWidth,
+            pixelHeight,
+            "Image reference relinked");
+    }
+
+    private ToolResult ReplaceImageReferenceInternal(
+        EntityId entityId,
+        string filePath,
+        int pixelWidth,
+        int pixelHeight,
+        string completedPrefix)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException(
+                "Image file path cannot be empty.",
+                nameof(filePath));
+        }
+
+        ImageReferenceEntity? imageReference = GetImageReferenceById(entityId);
+
+        if (imageReference is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                "The selected image reference no longer exists in the drawing.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        ImageReferenceEntity replacement = imageReference.WithFilePath(
+            filePath,
+            pixelWidth,
+            pixelHeight);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new ReplaceEntitiesCommand(replacement));
+
+        Workspace.SelectionSet.ReplaceWith(replacement.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"{completedPrefix} to '{Path.GetFileName(filePath)}'.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     public ToolResult ReplaceSelectedImageReference(
         string filePath,
         int pixelWidth,
@@ -891,6 +992,207 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         NotifyDocumentStateChanged();
 
         return result;
+    }
+
+    public ToolResult CollectExternalImageReferences()
+    {
+        if (string.IsNullOrWhiteSpace(CurrentFilePath))
+        {
+            ToolResult rejected = ToolResult.None(
+                "Save the drawing before collecting external image references.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        string? documentDirectory = Path.GetDirectoryName(CurrentFilePath);
+
+        if (string.IsNullOrWhiteSpace(documentDirectory))
+        {
+            ToolResult rejected = ToolResult.None(
+                "The current drawing path has no valid directory.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        IReadOnlyList<ImageReferenceEntity> imageReferences = Workspace.Document.Entities.All
+            .OfType<ImageReferenceEntity>()
+            .ToList();
+
+        if (imageReferences.Count == 0)
+        {
+            ToolResult rejected = ToolResult.None(
+                "The current drawing has no external image references to collect.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        string imagesDirectory = Path.Combine(documentDirectory, "images");
+        var replacements = new List<ImageReferenceEntity>();
+        var collectedSources = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        int copiedCount = 0;
+        int reusedCount = 0;
+        int missingCount = 0;
+
+        foreach (ImageReferenceEntity imageReference in imageReferences)
+        {
+            if (string.IsNullOrWhiteSpace(imageReference.FilePath) || !File.Exists(imageReference.FilePath))
+            {
+                missingCount++;
+                continue;
+            }
+
+            string sourcePath = Path.GetFullPath(imageReference.FilePath);
+
+            if (!collectedSources.TryGetValue(sourcePath, out string? targetPath))
+            {
+                Directory.CreateDirectory(imagesDirectory);
+
+                string sourceFileName = Path.GetFileName(sourcePath);
+                targetPath = GetCollectReferenceTargetPath(
+                    imagesDirectory,
+                    sourceFileName,
+                    sourcePath);
+
+                if (AreSamePath(sourcePath, targetPath))
+                {
+                    reusedCount++;
+                }
+                else
+                {
+                    File.Copy(sourcePath, targetPath, overwrite: false);
+                    copiedCount++;
+                }
+
+                collectedSources[sourcePath] = targetPath;
+            }
+            else
+            {
+                reusedCount++;
+            }
+
+            ImageReferenceEntity replacement = imageReference.WithFilePath(
+                targetPath,
+                imageReference.PixelWidth,
+                imageReference.PixelHeight);
+
+            replacements.Add(replacement);
+        }
+
+        if (replacements.Count == 0)
+        {
+            ToolResult rejected = ToolResult.None(
+                missingCount == 0
+                    ? "No image reference needed to be collected."
+                    : $"No image reference could be collected because {missingCount} linked image file(s) are missing.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new ReplaceEntitiesCommand(replacements));
+
+        ToolResult result = ToolResult.Completed(
+            BuildCollectExternalImageReferencesMessage(
+                copiedCount,
+                reusedCount,
+                missingCount));
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
+    private static string BuildCollectExternalImageReferencesMessage(
+        int copiedCount,
+        int reusedCount,
+        int missingCount)
+    {
+        string message = $"Collected external image references: {copiedCount} copied, {reusedCount} already in package.";
+
+        if (missingCount > 0)
+        {
+            message += $" {missingCount} missing image reference(s) were skipped.";
+        }
+
+        message += " Save the drawing to persist relative image paths.";
+
+        return message;
+    }
+
+    private static string GetCollectReferenceTargetPath(
+        string imagesDirectory,
+        string sourceFileName,
+        string sourcePath)
+    {
+        string safeFileName = string.IsNullOrWhiteSpace(sourceFileName)
+            ? "image"
+            : sourceFileName;
+
+        string targetPath = Path.Combine(imagesDirectory, safeFileName);
+
+        if (!File.Exists(targetPath) || AreSamePath(targetPath, sourcePath))
+        {
+            return targetPath;
+        }
+
+        string name = Path.GetFileNameWithoutExtension(safeFileName);
+        string extension = Path.GetExtension(safeFileName);
+
+        for (int index = 2; ; index++)
+        {
+            string candidate = Path.Combine(
+                imagesDirectory,
+                $"{name}_{index}{extension}");
+
+            if (!File.Exists(candidate))
+            {
+                return candidate;
+            }
+        }
+    }
+
+    private static bool AreSamePath(
+        string first,
+        string second)
+    {
+        try
+        {
+            return string.Equals(
+                Path.GetFullPath(first),
+                Path.GetFullPath(second),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        catch (Exception exception) when (exception is ArgumentException or NotSupportedException or PathTooLongException)
+        {
+            return string.Equals(
+                first,
+                second,
+                StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    private ImageReferenceEntity? GetImageReferenceById(EntityId entityId)
+    {
+        if (!Workspace.Document.Entities.Contains(entityId))
+        {
+            return null;
+        }
+
+        return Workspace.Document.Entities.GetRequired(entityId) as ImageReferenceEntity;
     }
 
     private ImageReferenceEntity? GetSingleSelectedImageReference()
