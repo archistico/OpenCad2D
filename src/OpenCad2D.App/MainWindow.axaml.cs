@@ -90,6 +90,7 @@ public partial class MainWindow : Window
         InitializeLayerComboBox();
         InitializePolarTrackingComboBox();
         RefreshLayerControls();
+        RefreshSnapControls();
         RefreshStatus();
 
         if (clearSnapMarker)
@@ -2775,6 +2776,19 @@ public partial class MainWindow : Window
             : "Props";
 
         RefreshActiveToolUi();
+    }
+
+    private void RefreshSnapControls()
+    {
+        SnapEndpointCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Endpoint);
+        SnapMidpointCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Midpoint);
+        SnapCenterCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Center);
+        SnapQuadrantCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Quadrant);
+        SnapIntersectionCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Intersection);
+        SnapPerpendicularCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Perpendicular);
+        SnapTangentCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Tangent);
+        SnapGridCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Grid);
+        OrthoCheckBox.IsChecked = _viewModel.IsOrthoEnabled;
     }
 
     private void SnapEndpoint_Changed(

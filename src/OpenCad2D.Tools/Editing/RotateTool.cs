@@ -226,7 +226,7 @@ public sealed class RotateTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
 
         return State == RotateToolState.WaitingForEntitySelection
             ? SnapKind.EntityOnly
-            : context.EnabledSnaps;
+            : context.EnabledSnaps & ~SnapKind.Entity;
     }
 
     public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)

@@ -190,7 +190,9 @@ public abstract class TwoPointToolBase : ICadTool
         Point2D cursorPoint,
         Point2D? basePoint)
     {
-        if (context.EnabledSnaps == SnapKind.None ||
+        SnapKind enabledSnaps = context.EnabledSnaps & ~SnapKind.Entity;
+
+        if (enabledSnaps == SnapKind.None ||
             Tolerance.IsZero(context.SnapTolerance))
         {
             return cursorPoint;
@@ -200,7 +202,7 @@ public abstract class TwoPointToolBase : ICadTool
             context.Document,
             cursorPoint,
             context.SnapTolerance,
-            context.EnabledSnaps,
+            enabledSnaps,
             basePoint,
             context.GridSettings);
 

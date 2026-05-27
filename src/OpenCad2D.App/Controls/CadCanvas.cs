@@ -19,6 +19,7 @@ using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Grips;
+using OpenCad2D.Tools.Input;
 using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Navigation;
 using OpenCad2D.Tools.Selection;

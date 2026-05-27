@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
@@ -133,6 +133,32 @@ public sealed class TwoPointToolBaseTests
         var context = CreateContext(
             document,
             SnapKind.Endpoint,
+            snapTolerance: 5);
+
+        var tool = new FakeTwoPointTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(101, 101)));
+
+        Assert.Equal(new Point2D(100, 100), tool.FirstPoint);
+        Assert.Equal(new Point2D(100, 100), tool.FirstPointReceived);
+    }
+
+    [Fact]
+    public void FirstPointerPress_WithEntityAndEndpointSnap_ShouldIgnoreEntitySnap()
+    {
+        var document = new CadDocument();
+
+        var existingLine = new OpenCad2D.Core.Entities.LineEntity(
+            new Point2D(100, 100),
+            new Point2D(200, 100));
+
+        document.AddEntity(existingLine);
+
+        var context = CreateContext(
+            document,
+            SnapKind.Entity | SnapKind.Endpoint,
             snapTolerance: 5);
 
         var tool = new FakeTwoPointTool();

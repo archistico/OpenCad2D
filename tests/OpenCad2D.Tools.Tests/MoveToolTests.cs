@@ -63,6 +63,32 @@ public sealed class MoveToolTests
     }
 
     [Fact]
+    public void ActiveSnapKind_WithSelection_ShouldFilterEntitySnapFromPointPhase()
+    {
+        CadDocument document = new();
+        SelectionSet selection = new();
+
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        document.AddEntity(line);
+        selection.Select(line.Id);
+
+        var context = CreateContext(
+            document,
+            selection,
+            enabledSnaps: SnapKind.Entity | SnapKind.Endpoint | SnapKind.Midpoint);
+
+        var tool = new MoveTool();
+
+        SnapKind result = tool.GetActiveSnapKind(context);
+
+        Assert.Equal(SnapKind.Endpoint | SnapKind.Midpoint, result);
+        Assert.Equal(MoveToolState.WaitingForBasePoint, tool.MoveState);
+    }
+
+    [Fact]
     public void FirstPointerPress_WithNoSelection_ShouldSelectEntityToMove()
     {
         CadDocument document = new();

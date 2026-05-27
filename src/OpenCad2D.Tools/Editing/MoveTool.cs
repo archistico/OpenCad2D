@@ -132,7 +132,7 @@ public sealed class MoveTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
         return _state == MoveToolState.WaitingForEntitySelection
             ? SnapKind.EntityOnly
-            : context.EnabledSnaps;
+            : context.EnabledSnaps & ~SnapKind.Entity;
     }
 
     public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
