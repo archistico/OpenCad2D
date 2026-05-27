@@ -42,6 +42,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private PendingOpenCad2DImport? _pendingOpenCad2DImport;
     private CreateBlockOptions? _pendingCreateBlockBasePointPick;
     private InsertBlockOptions? _pendingBlockInsertion;
+    private BlockEditSession? _activeBlockEditSession;
 
     private Point2D _mousePosition = Point2D.Origin;
     private string _lastMessage = "Ready.";
@@ -1331,6 +1332,278 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+    public bool IsBlockEditSessionActive => _activeBlockEditSession is not null;
+
+    public string ActiveBlockEditText => _activeBlockEditSession is null
+        ? "No active block edit"
+        : $"Editing block '{_activeBlockEditSession.BlockName}'";
+
+    public ToolResult BeginEditSelectedBlock()
+    {
+        if (_activeBlockEditSession is not null)
+        {
+            ToolResult rejected = ToolResult.None(
+                $"Finish or cancel the current block edit before editing another block.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        if (Workspace.SelectionSet.SelectedIds.Count != 1)
+        {
+            ToolResult rejected = ToolResult.None(
+                "Select exactly one block reference before editing a block.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        EntityId selectedId = Workspace.SelectionSet.SelectedIds.Single();
+
+        if (!Workspace.Document.Entities.TryGet(selectedId, out CadEntity? selectedEntity) ||
+            selectedEntity is not BlockReferenceEntity blockReference ||
+            !Workspace.Document.IsEntitySelectable(blockReference))
+        {
+            ToolResult rejected = ToolResult.None(
+                "Select an editable block reference before editing a block.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        if (!Workspace.Document.BlockDefinitions.TryGet(blockReference.BlockDefinitionId, out BlockDefinition? definition) ||
+            definition is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                "The selected block reference points to a missing block definition.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        IReadOnlyList<CadEntity> editEntities = definition.Entities
+            .Select(entity => blockReference.TransformContainedEntity(entity).WithId(EntityId.New()))
+            .ToList();
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new ModifyEntitiesCommand(
+                new[] { blockReference },
+                editEntities,
+                "Start block edit"));
+
+        _activeBlockEditSession = new BlockEditSession(
+            definition.Id,
+            definition.Name,
+            blockReference,
+            editEntities.Select(entity => entity.Id).ToList());
+
+        Workspace.SelectionSet.ReplaceWith(editEntities.Select(entity => entity.Id));
+
+        ToolResult result = ToolResult.Completed(
+            $"Block '{definition.Name}' opened for editing. Modify the selected entities, then use Save Block Edit or Cancel Block Edit.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+        OnPropertiesChanged(nameof(IsBlockEditSessionActive), nameof(ActiveBlockEditText));
+
+        return result;
+    }
+
+    public ToolResult SaveActiveBlockEdit()
+    {
+        if (_activeBlockEditSession is null)
+        {
+            ToolResult rejected = ToolResult.None("No block edit session is active.");
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+            return rejected;
+        }
+
+        BlockEditSession session = _activeBlockEditSession;
+
+        if (!Workspace.Document.BlockDefinitions.TryGet(session.BlockDefinitionId, out BlockDefinition? oldDefinition) ||
+            oldDefinition is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                $"Cannot save block edit because block '{session.BlockName}' no longer exists.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+            return rejected;
+        }
+
+        IReadOnlyList<CadEntity> editedEntities = GetBlockEditSourceEntities(session);
+        IReadOnlyList<CadEntity> entitiesToRemove = GetBlockEditEntitiesToRemove(session, editedEntities);
+
+        if (editedEntities.Count == 0)
+        {
+            ToolResult rejected = ToolResult.None(
+                "Select at least one editable non-block entity or keep at least one original edit entity before saving the block edit.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+            return rejected;
+        }
+
+        Matrix2D worldToBlock = session.OriginalReference.LocalToWorldMatrix.Invert();
+        IReadOnlyList<CadEntity> localEntities = editedEntities
+            .Select(entity => entity.Transform(worldToBlock).WithId(EntityId.New()))
+            .ToList();
+
+        BlockDefinition newDefinition = oldDefinition.WithEntities(localEntities);
+        BoundingBox2D updatedDefinitionBounds = newDefinition.GetBoundingBox();
+        BlockReferenceEntity restoredReference = WithDefinitionBounds(
+            session.OriginalReference,
+            updatedDefinitionBounds);
+
+        IReadOnlyList<BlockReferenceEntity> updatedExistingReferences = Workspace.Document.Entities.All
+            .OfType<BlockReferenceEntity>()
+            .Where(reference => reference.BlockDefinitionId == session.BlockDefinitionId)
+            .Select(reference => WithDefinitionBounds(reference, updatedDefinitionBounds))
+            .ToList();
+
+        List<BlockDefinition> updatedDefinitions = Workspace.Document.BlockDefinitions.All
+            .Select(definition => definition.Id == session.BlockDefinitionId ? newDefinition : definition)
+            .ToList();
+
+        var commands = new List<ICadCommand>
+        {
+            new UpdateBlockDefinitionsCommand(
+                Workspace.Document.BlockDefinitions.All.ToList(),
+                updatedDefinitions)
+        };
+
+        if (updatedExistingReferences.Count > 0)
+        {
+            commands.Add(new ReplaceEntitiesCommand(updatedExistingReferences));
+        }
+
+        commands.Add(new ModifyEntitiesCommand(
+            entitiesToRemove,
+            new[] { restoredReference },
+            "Close block edit"));
+
+        var command = new CompositeCommand(
+            "Save block edit",
+            commands);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            command);
+
+        _activeBlockEditSession = null;
+        Workspace.SelectionSet.ReplaceWith(restoredReference.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Block '{session.BlockName}' updated from {editedEntities.Count} entity/entities.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+        OnPropertiesChanged(nameof(IsBlockEditSessionActive), nameof(ActiveBlockEditText));
+
+        return result;
+    }
+
+    public ToolResult CancelActiveBlockEdit()
+    {
+        if (_activeBlockEditSession is null)
+        {
+            ToolResult rejected = ToolResult.None("No block edit session is active.");
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+            return rejected;
+        }
+
+        BlockEditSession session = _activeBlockEditSession;
+        IReadOnlyList<CadEntity> editEntities = GetExistingEntities(session.EditEntityIds);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new ModifyEntitiesCommand(
+                editEntities,
+                new[] { session.OriginalReference },
+                "Cancel block edit"));
+
+        _activeBlockEditSession = null;
+        Workspace.SelectionSet.ReplaceWith(session.OriginalReference.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Block edit for '{session.BlockName}' cancelled.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+        OnPropertiesChanged(nameof(IsBlockEditSessionActive), nameof(ActiveBlockEditText));
+
+        return result;
+    }
+
+    private IReadOnlyList<CadEntity> GetBlockEditSourceEntities(BlockEditSession session)
+    {
+        IReadOnlyList<CadEntity> selectedEditableEntities = Workspace.SelectionSet.SelectedIds
+            .Select(id => Workspace.Document.Entities.TryGet(id, out CadEntity? entity) ? entity : null)
+            .OfType<CadEntity>()
+            .Where(entity => entity is not BlockReferenceEntity)
+            .Where(Workspace.Document.IsEntitySelectable)
+            .ToList();
+
+        if (selectedEditableEntities.Count > 0)
+        {
+            return selectedEditableEntities;
+        }
+
+        return GetExistingEntities(session.EditEntityIds);
+    }
+
+    private IReadOnlyList<CadEntity> GetBlockEditEntitiesToRemove(
+        BlockEditSession session,
+        IReadOnlyList<CadEntity> sourceEntities)
+    {
+        Dictionary<EntityId, CadEntity> entities = GetExistingEntities(session.EditEntityIds)
+            .Concat(sourceEntities)
+            .GroupBy(entity => entity.Id)
+            .ToDictionary(group => group.Key, group => group.First());
+
+        return entities.Values.ToList();
+    }
+
+    private static BlockReferenceEntity WithDefinitionBounds(
+        BlockReferenceEntity reference,
+        BoundingBox2D definitionBounds)
+    {
+        return new BlockReferenceEntity(
+            reference.BlockDefinitionId,
+            reference.InsertionPoint,
+            reference.XAxis,
+            reference.YAxis,
+            definitionBounds,
+            reference.Id,
+            reference.LayerId,
+            reference.Style,
+            reference.IsVisible,
+            reference.IsLocked,
+            reference.DrawOrder);
+    }
+
+    private IReadOnlyList<CadEntity> GetExistingEntities(IEnumerable<EntityId> entityIds)
+    {
+        return entityIds
+            .Select(id => Workspace.Document.Entities.TryGet(id, out CadEntity? entity) ? entity : null)
+            .OfType<CadEntity>()
+            .ToList();
+    }
+
     public ToolResult BeginCreateBlockBasePointPick(CreateBlockOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -2608,6 +2881,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         ToolResult result = Workspace.ActionController.Undo();
 
+        ClearBlockEditSessionAfterHistoryNavigation();
         Workspace.EnsureCurrentLayerIsUsable();
         SetLastResult(result);
         NotifyDocumentStateChanged();
@@ -2619,11 +2893,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         ToolResult result = Workspace.ActionController.Redo();
 
+        ClearBlockEditSessionAfterHistoryNavigation();
         Workspace.EnsureCurrentLayerIsUsable();
         SetLastResult(result);
         NotifyDocumentStateChanged();
 
         return result;
+    }
+
+    private void ClearBlockEditSessionAfterHistoryNavigation()
+    {
+        if (_activeBlockEditSession is null)
+        {
+            return;
+        }
+
+        _activeBlockEditSession = null;
+        OnPropertiesChanged(nameof(IsBlockEditSessionActive), nameof(ActiveBlockEditText));
     }
 
     public ToolResult DeleteSelection()

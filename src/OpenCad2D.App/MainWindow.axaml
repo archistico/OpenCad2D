@@ -1239,6 +1239,48 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="EditBlockButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Open the selected block reference for in-place editing"
+                                    Click="EditBlock_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectangle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Edit Block" />
+                                </Grid>
+                            </Button>
+
+                            <Button x:Name="SaveBlockEditButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Save the active block edit using the selected entities"
+                                    Click="SaveBlockEdit_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectangle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Save Block Edit" />
+                                </Grid>
+                            </Button>
+
+                            <Button x:Name="CancelBlockEditButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Cancel the active block edit and restore the original block reference"
+                                    Click="CancelBlockEdit_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectangle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Cancel Block Edit" />
+                                </Grid>
+                            </Button>
+
                             <Button x:Name="ExplodeButton"
                                     Classes="tool-button"
                                     ToolTip.Tip="Explode selected polylines into individual lines"

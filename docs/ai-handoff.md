@@ -528,7 +528,7 @@ The project now has the first block model layer:
 - JSON persistence supports `blockDefinitions` at document level and `BlockReference` entities.
 - `CadEntityRenderer` can render a block reference by transforming definition entities into world coordinates.
 
-This foundation checkpoint has since grown into user-facing Create Block, Insert Block, Block Manager, internal snapping and Explode Block workflows. Edit Block remains pending.
+This foundation checkpoint has since grown into user-facing Create Block, Insert Block, Block Manager, internal snapping, Explode Block and first in-place Edit Block workflows.
 
 
 ## v0.8.111 block workflow handoff
@@ -544,7 +544,7 @@ Canvas picking for the block base point is supported through `BeginCreateBlockBa
 
 Insert Block is implemented through `InsertBlockOptions`, `InsertBlockOptionsWindow`, `BeginInsertBlockPlacement`, `CommitPendingBlockInsertion` and `CancelPendingBlockInsertion`. It inserts an additional `BlockReferenceEntity` for an existing definition with uniform scale, rotation and a picked insertion point. Active snap candidates are honored and Escape cancels the pending insert without modifying the document.
 
-The v0.8.113 minimal Block Manager is implemented through `BlockManagerWindow`, `BlockManagerWindowViewModel`, `EditableBlockDefinitionViewModel`, `BlockManagerResult` and `BlockManagerAction`. It lists definitions, shows entity/reference counts and bounds, allows direct rename validation, deletes only unused definitions, and can start insertion of the selected definition. Changes are applied with `UpdateBlockDefinitionsCommand`, so rename/delete operations are undoable. Internal block snapping and Explode Block are now implemented; Edit Block remains the next block-editing milestone.
+The v0.8.113 minimal Block Manager is implemented through `BlockManagerWindow`, `BlockManagerWindowViewModel`, `EditableBlockDefinitionViewModel`, `BlockManagerResult` and `BlockManagerAction`. It lists definitions, shows entity/reference counts and bounds, allows direct rename validation, deletes only unused definitions, and can start insertion of the selected definition. Changes are applied with `UpdateBlockDefinitionsCommand`, so rename/delete operations are undoable. Internal block snapping, Explode Block and the first in-place Edit Block session are now implemented.
 
 
 ## v0.8.114-v0.8.115 block snap and explode handoff
@@ -553,4 +553,19 @@ Block references are now usable through their internal transformed geometry for 
 
 `ExplodeTool` now supports both selected `PolylineEntity` instances and selected `BlockReferenceEntity` instances. For block references it reads the matching `BlockDefinition`, transforms each definition entity through `BlockReferenceEntity.TransformContainedEntity(...)`, assigns each resulting entity a fresh `EntityId`, and commits the replacement through `ModifyEntitiesCommand`. Undo restores the original block reference. The shared block definition is intentionally kept in the document because other references may still use it.
 
-Recommended next step: implement the first `Edit Block` workflow, likely as an isolated edit session or a modal definition editor, rather than modifying definition entities directly from normal model-space selection.
+Recommended next step: stabilize the first `Edit Block` workflow with manual testing, then decide whether a later isolated block editor is needed.
+
+## v0.8.115 first Edit Block handoff
+
+The first Edit Block workflow is implemented as an in-place edit session started from a selected `BlockReferenceEntity`.
+
+Current behavior:
+
+- `BeginEditSelectedBlock()` requires exactly one editable block reference selected.
+- The selected reference is temporarily replaced by world-space copies of its definition entities through `ModifyEntitiesCommand`.
+- The temporary edit entities are selected so the user can move, edit, delete or replace them with normal tools.
+- `SaveActiveBlockEdit()` updates the source `BlockDefinition` from the currently selected non-block entities when any are selected; otherwise it uses the tracked temporary edit entities.
+- Save converts edited world-space geometry back into block-local coordinates through `Matrix2D.Invert()` and restores the original block reference id with updated definition bounds.
+- `CancelActiveBlockEdit()` removes the temporary edit entities and restores the original reference without changing the definition.
+
+This is intentionally not a full isolated block editor yet. It gives a safe, testable first workflow while keeping nested blocks unsupported.

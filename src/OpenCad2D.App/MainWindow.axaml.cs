@@ -1775,6 +1775,63 @@ public partial class MainWindow : Window
     }
 
 
+    private async void EditBlock_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ToolResult result = _viewModel.BeginEditSelectedBlock();
+
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+
+        if (result.Message is not null && result.Kind != ToolResultKind.Completed)
+        {
+            await ShowMessageAsync(
+                "Edit Block",
+                result.Message);
+        }
+    }
+
+    private async void SaveBlockEdit_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ToolResult result = _viewModel.SaveActiveBlockEdit();
+
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+
+        if (result.Message is not null && result.Kind != ToolResultKind.Completed)
+        {
+            await ShowMessageAsync(
+                "Save Block Edit",
+                result.Message);
+        }
+    }
+
+    private async void CancelBlockEdit_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ToolResult result = _viewModel.CancelActiveBlockEdit();
+
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+
+        if (result.Message is not null && result.Kind != ToolResultKind.Completed)
+        {
+            await ShowMessageAsync(
+                "Cancel Block Edit",
+                result.Message);
+        }
+    }
+
     private void Explode_Click(
         object? sender,
         RoutedEventArgs e)

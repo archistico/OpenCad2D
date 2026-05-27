@@ -89,7 +89,7 @@ The following milestones are planned before the future v0.9 stabilization gate:
 | v0.8.112 | [x] | `docs/specs/v0.8.110-blocks.md` | Insert existing block definitions with scale, rotation and picked insertion point. |
 | v0.8.113 | [x] | `docs/specs/v0.8.110-blocks.md` | Add minimal Block Manager for rename, unused delete and insert-selected workflow. |
 | v0.8.114 | [x] | `docs/specs/v0.8.110-blocks.md` | Add snap candidates from block-internal geometry. |
-| v0.8.115 | [~] | `docs/specs/v0.8.110-blocks.md` | Add Explode Block first; Edit Block remains the next block-editing workflow. |
+| v0.8.115 | [x] | `docs/specs/v0.8.110-blocks.md` | Add Explode Block and the first in-place Edit Block session workflow. |
 | v0.8.120 | [ ] | `docs/specs/v0.8.120-architectural-symbols.md` | Add north symbol, metric scale, section/elevation markers and title block helpers. |
 | v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
 | v0.8.140 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add explicit-boundary hatch/solid fill entity. |

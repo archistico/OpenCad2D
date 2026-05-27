@@ -1,6 +1,7 @@
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Blocks;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.App.Tests;
@@ -243,5 +244,98 @@ public sealed class MainWindowViewModelBlockManagerTests
         viewModel.Undo();
 
         Assert.Equal("Door", viewModel.Workspace.Document.BlockDefinitions.GetRequired(definition.Id).Name);
+    }
+}
+
+public sealed class MainWindowViewModelBlockEditTests
+{
+    [Fact]
+    public void BeginEditSelectedBlock_ShouldReplaceReferenceWithEditableWorldEntities()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+
+        var result = viewModel.BeginEditSelectedBlock();
+
+        Assert.True(result.Changed);
+        Assert.True(viewModel.IsBlockEditSessionActive);
+        Assert.DoesNotContain(viewModel.Workspace.Document.Entities.All, entity => entity.Id == originalReference.Id);
+
+        LineEntity editLine = Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.All.Single());
+        Assert.Equal(new Point2D(10, 20), editLine.Start);
+        Assert.Equal(new Point2D(15, 20), editLine.End);
+        Assert.Equal(editLine.Id, viewModel.Workspace.SelectionSet.SelectedIds.Single());
+    }
+
+    [Fact]
+    public void SaveActiveBlockEdit_ShouldUpdateDefinitionAndRestoreReference()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        BlockDefinitionId definitionId = originalReference.BlockDefinitionId;
+        viewModel.BeginEditSelectedBlock();
+
+        LineEntity editLine = Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.All.Single());
+        var modifiedLine = new LineEntity(
+            editLine.Start,
+            new Point2D(18, 20),
+            editLine.Id,
+            editLine.LayerId,
+            editLine.Style,
+            editLine.IsVisible,
+            editLine.IsLocked,
+            editLine.DrawOrder);
+        viewModel.Workspace.Document.ReplaceEntity(modifiedLine);
+        viewModel.Workspace.SelectionSet.ReplaceWith(modifiedLine.Id);
+
+        var result = viewModel.SaveActiveBlockEdit();
+
+        Assert.True(result.Changed);
+        Assert.False(viewModel.IsBlockEditSessionActive);
+        BlockReferenceEntity restoredReference = Assert.IsType<BlockReferenceEntity>(
+            viewModel.Workspace.Document.Entities.All.Single());
+        Assert.Equal(originalReference.Id, restoredReference.Id);
+        Assert.Equal(restoredReference.Id, viewModel.Workspace.SelectionSet.SelectedIds.Single());
+
+        LineEntity localLine = Assert.IsType<LineEntity>(
+            viewModel.Workspace.Document.BlockDefinitions.GetRequired(definitionId).Entities.Single());
+        Assert.Equal(Point2D.Origin, localLine.Start);
+        Assert.Equal(new Point2D(8, 0), localLine.End);
+    }
+
+    [Fact]
+    public void CancelActiveBlockEdit_ShouldRestoreReferenceWithoutChangingDefinition()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        BlockDefinitionId definitionId = originalReference.BlockDefinitionId;
+        viewModel.BeginEditSelectedBlock();
+
+        var result = viewModel.CancelActiveBlockEdit();
+
+        Assert.True(result.Changed);
+        Assert.False(viewModel.IsBlockEditSessionActive);
+        BlockReferenceEntity restoredReference = Assert.IsType<BlockReferenceEntity>(
+            viewModel.Workspace.Document.Entities.All.Single());
+        Assert.Equal(originalReference.Id, restoredReference.Id);
+
+        LineEntity localLine = Assert.IsType<LineEntity>(
+            viewModel.Workspace.Document.BlockDefinitions.GetRequired(definitionId).Entities.Single());
+        Assert.Equal(Point2D.Origin, localLine.Start);
+        Assert.Equal(new Point2D(5, 0), localLine.End);
+    }
+
+    private static MainWindowViewModel CreateViewModelWithDoorBlock(
+        out BlockReferenceEntity originalReference)
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(10, 20),
+            new Point2D(15, 20));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.ReplaceWith(line.Id);
+        viewModel.CreateBlockFromSelection(new CreateBlockOptions("Door", 10, 20));
+
+        originalReference = Assert.IsType<BlockReferenceEntity>(
+            viewModel.Workspace.Document.Entities.All.Single());
+
+        return viewModel;
     }
 }

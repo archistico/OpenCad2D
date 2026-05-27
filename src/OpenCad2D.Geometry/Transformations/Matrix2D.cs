@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Geometry;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Geometry.Transformations;
@@ -72,6 +72,31 @@ public readonly record struct Matrix2D(
             M21 * other.M12 + M22 * other.M22,
             OffsetX * other.M11 + OffsetY * other.M21 + other.OffsetX,
             OffsetX * other.M12 + OffsetY * other.M22 + other.OffsetY);
+    }
+
+    public Matrix2D Invert()
+    {
+        double determinant = M11 * M22 - M12 * M21;
+
+        if (Math.Abs(determinant) <= 1e-12)
+        {
+            throw new InvalidOperationException("Matrix cannot be inverted because it is singular.");
+        }
+
+        double inv11 = M22 / determinant;
+        double inv12 = -M12 / determinant;
+        double inv21 = -M21 / determinant;
+        double inv22 = M11 / determinant;
+        double invOffsetX = -(OffsetX * inv11 + OffsetY * inv12);
+        double invOffsetY = -(OffsetX * inv21 + OffsetY * inv22);
+
+        return new Matrix2D(
+            inv11,
+            inv12,
+            inv21,
+            inv22,
+            invOffsetX,
+            invOffsetY);
     }
 
     public static Matrix2D Mirror(Line2D mirrorLine)
