@@ -1,3 +1,4 @@
+using OpenCad2D.Tools.Architectural;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Drawing;
@@ -30,6 +31,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Polyline));
         Assert.True(registry.Contains(ToolId.Spline));
         Assert.True(registry.Contains(ToolId.Polygon));
+        Assert.True(registry.Contains(ToolId.NorthSymbol));
         Assert.True(registry.Contains(ToolId.HorizontalDimension));
         Assert.True(registry.Contains(ToolId.VerticalDimension));
         Assert.True(registry.Contains(ToolId.AlignedDimension));
@@ -64,7 +66,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(40, tools.Count);
+        Assert.Equal(41, tools.Count);
 
         Assert.Contains(
             tools,
@@ -188,6 +190,10 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.NorthSymbol);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.HorizontalDimension);
 
         Assert.Contains(
@@ -287,6 +293,19 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Explode);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Join);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Delete);
+    }
+
+
+
+    [Fact]
+    public void GetByCategory_Symbols_ShouldReturnSymbolTools()
+    {
+        var registry = new ToolRegistry();
+
+        IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Symbols");
+
+        Assert.Single(tools);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.NorthSymbol);
     }
 
 
@@ -487,6 +506,18 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<SplineTool>(tool);
         Assert.Equal("Spline", tool.Name);
+    }
+
+
+    [Fact]
+    public void Create_NorthSymbol_ShouldReturnNorthSymbolTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.NorthSymbol);
+
+        Assert.IsType<NorthSymbolTool>(tool);
+        Assert.Equal("North Symbol", tool.Name);
     }
 
 

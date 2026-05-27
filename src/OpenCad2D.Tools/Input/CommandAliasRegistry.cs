@@ -99,6 +99,10 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("POLYGON", ToolId.Polygon);
         yield return new CommandAlias("PG", ToolId.Polygon);
 
+        yield return new CommandAlias("NORTH", ToolId.NorthSymbol);
+        yield return new CommandAlias("NORTHSYMBOL", ToolId.NorthSymbol);
+        yield return new CommandAlias("NS", ToolId.NorthSymbol);
+
         yield return new CommandAlias("RECTANGLE", ToolId.Rectangle);
         yield return new CommandAlias("REC", ToolId.Rectangle);
 

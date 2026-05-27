@@ -31,6 +31,8 @@ public sealed class CommandAliasRegistryTests
     [InlineData("spl", ToolId.Spline)]
     [InlineData("PG", ToolId.Polygon)]
     [InlineData("polygon", ToolId.Polygon)]
+    [InlineData("NORTH", ToolId.NorthSymbol)]
+    [InlineData("ns", ToolId.NorthSymbol)]
     public void TryResolve_WithKnownAlias_ShouldReturnTool(
         string alias,
         ToolId expectedToolId)

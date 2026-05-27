@@ -496,6 +496,8 @@ The planned order is:
 6. `v0.8.140+` — Hatch/fill system with explicit boundaries first, then holes/islands and composite boundaries.
 7. `v0.8.160+` — Consolidation before the future v0.9 release gate.
 
+North Symbol note: the current default geometry is circle + upward arrow made with ordinary entities. The picked point is the `(0,0)` symbol base point; the `N` label is offset beside/above the arrow tip and must not overlap the arrow shaft.
+
 Detailed planning documents added for this pivot:
 
 - `docs/roadmap-v0.8.100.md`
@@ -569,3 +571,16 @@ Current behavior:
 - `CancelActiveBlockEdit()` removes the temporary edit entities and restores the original reference without changing the definition.
 
 This is intentionally not a full isolated block editor yet. It gives a safe, testable first workflow while keeping nested blocks unsupported.
+
+
+## v0.8.120 Architectural symbols — North Symbol first pass
+
+The architectural-symbols milestone has started with `NorthSymbolTool`. The tool is registered as `ToolId.NorthSymbol` in the `Symbols` category and exposed in the left toolbar under a new `SYMBOLS` section. Command aliases are `NORTH`, `NORTHSYMBOL` and `NS`.
+
+Current behavior: one click inserts a fixed-size north arrow at the snapped insertion point. The symbol is intentionally made of ordinary entities rather than a specialized entity type: one `LineEntity`, one open `PolylineEntity` arrowhead and one `TextEntity` with label `N`. Geometry uses the current layer and current text format. Insertion is committed as a single undoable composite command.
+
+Orientation note: the first pass has been corrected so the arrow tip and `N` label point visually upward, matching conventional north symbols.
+
+Tests added cover registry creation/category, command aliases, basic insertion, current-layer assignment, undo, endpoint snapping and deterministic generated geometry.
+
+Recommended next step: add `Metric Scale Bar` as the second architectural symbol, preferably still as ordinary line/text geometry before introducing any larger symbol-library UI.

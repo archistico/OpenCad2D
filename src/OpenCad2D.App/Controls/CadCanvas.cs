@@ -1137,6 +1137,15 @@ public sealed class CadCanvas : Control
             else
             {
                 Point2D rightClickModelPoint = ToModelPoint(position);
+
+                // Right-click can advance selection-oriented modify tools
+                // (Move/Copy/Rotate/Scale) from entity selection to point input.
+                // Recompute the snap candidate immediately with the new tool state;
+                // otherwise the canvas can keep the previous EntityOnly marker and
+                // the user does not see endpoint/midpoint/center snaps while choosing
+                // the base point.
+                UpdateCurrentSnapCandidate(rightClickModelPoint);
+
                 NotifyWorkspaceChanged(
                     rightClickResult,
                     rightClickModelPoint);

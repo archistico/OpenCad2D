@@ -20,6 +20,7 @@ public enum ToolId
     Polyline,
     Spline,
     Polygon,
+    NorthSymbol,
     HorizontalDimension,
     VerticalDimension,
     AlignedDimension,

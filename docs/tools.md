@@ -39,6 +39,14 @@ Implemented:
 
 ---
 
+## Architectural symbol tools
+
+Implemented first pass:
+
+- `NorthSymbolTool`
+
+`NorthSymbolTool` inserts a simple north arrow made of ordinary geometry: one vertical line, two arrow-side lines, one circle and one `TextEntity` with label `N`. The first version uses a fixed default size of 50 model units, uses the picked point as the `(0,0)` symbol base point, honors active snaps for the insertion point, uses the current layer/current text format, and commits insertion as one undoable command. Aliases: `NORTH`, `NORTHSYMBOL`, `NS`.
+
 ## Dimension tools
 
 Implemented:

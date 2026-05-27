@@ -134,13 +134,13 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.120-architectural-symbols.md`.
 
-Status: planned.
+Status: in progress. First pass of North Symbol is implemented.
 
 Goal: add practical drafting helpers for technical and architectural drawings.
 
 Initial scope:
 
-- North symbol.
+- North symbol — first pass implemented as fixed-size ordinary line/polyline/text geometry.
 - Metric scale bar.
 - Section marker.
 - Elevation marker.

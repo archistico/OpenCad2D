@@ -1,3 +1,4 @@
+using OpenCad2D.Tools.Architectural;
 using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
@@ -139,6 +140,14 @@ public sealed class ToolRegistry
                 "Polygon",
                 "Draw"),
             () => new PolygonTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.NorthSymbol,
+                "NorthSymbol",
+                "North Symbol",
+                "Symbols"),
+            () => new NorthSymbolTool());
 
 
         Register(
