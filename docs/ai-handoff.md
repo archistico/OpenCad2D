@@ -528,7 +528,7 @@ The project now has the first block model layer:
 - JSON persistence supports `blockDefinitions` at document level and `BlockReference` entities.
 - `CadEntityRenderer` can render a block reference by transforming definition entities into world coordinates.
 
-This is intentionally a foundation checkpoint. UI workflows for creating, inserting, editing and exploding blocks are still pending.
+This foundation checkpoint has since grown into user-facing Create Block, Insert Block, Block Manager, internal snapping and Explode Block workflows. Edit Block remains pending.
 
 
 ## v0.8.111 block workflow handoff
@@ -544,4 +544,13 @@ Canvas picking for the block base point is supported through `BeginCreateBlockBa
 
 Insert Block is implemented through `InsertBlockOptions`, `InsertBlockOptionsWindow`, `BeginInsertBlockPlacement`, `CommitPendingBlockInsertion` and `CancelPendingBlockInsertion`. It inserts an additional `BlockReferenceEntity` for an existing definition with uniform scale, rotation and a picked insertion point. Active snap candidates are honored and Escape cancels the pending insert without modifying the document.
 
-The v0.8.113 minimal Block Manager is implemented through `BlockManagerWindow`, `BlockManagerWindowViewModel`, `EditableBlockDefinitionViewModel`, `BlockManagerResult` and `BlockManagerAction`. It lists definitions, shows entity/reference counts and bounds, allows direct rename validation, deletes only unused definitions, and can start insertion of the selected definition. Changes are applied with `UpdateBlockDefinitionsCommand`, so rename/delete operations are undoable. Edit Block and Explode Block remain future milestones.
+The v0.8.113 minimal Block Manager is implemented through `BlockManagerWindow`, `BlockManagerWindowViewModel`, `EditableBlockDefinitionViewModel`, `BlockManagerResult` and `BlockManagerAction`. It lists definitions, shows entity/reference counts and bounds, allows direct rename validation, deletes only unused definitions, and can start insertion of the selected definition. Changes are applied with `UpdateBlockDefinitionsCommand`, so rename/delete operations are undoable. Internal block snapping and Explode Block are now implemented; Edit Block remains the next block-editing milestone.
+
+
+## v0.8.114-v0.8.115 block snap and explode handoff
+
+Block references are now usable through their internal transformed geometry for click selection and object snaps. This fixes the earlier limitation where a block was effectively selectable only by its reference bounds/window. Endpoint, midpoint, center and nearest snap providers can resolve candidates from child geometry transformed into world coordinates.
+
+`ExplodeTool` now supports both selected `PolylineEntity` instances and selected `BlockReferenceEntity` instances. For block references it reads the matching `BlockDefinition`, transforms each definition entity through `BlockReferenceEntity.TransformContainedEntity(...)`, assigns each resulting entity a fresh `EntityId`, and commits the replacement through `ModifyEntitiesCommand`. Undo restores the original block reference. The shared block definition is intentionally kept in the document because other references may still use it.
+
+Recommended next step: implement the first `Edit Block` workflow, likely as an isolated edit session or a modal definition editor, rather than modifying definition entities directly from normal model-space selection.

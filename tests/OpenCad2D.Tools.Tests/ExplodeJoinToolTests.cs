@@ -1,6 +1,8 @@
+using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
@@ -81,6 +83,55 @@ public sealed class ExplodeJoinToolTests
         List<LineEntity> lines = document.Entities.All.OfType<LineEntity>().ToList();
         Assert.Equal(3, lines.Count);
         Assert.Contains(lines, line => line.Start == new Point2D(10, 5) && line.End == new Point2D(0, 0));
+    }
+
+    [Fact]
+    public void Explode_SelectedBlockReference_ShouldReplaceReferenceWithWorldSpaceEntities()
+    {
+        CadDocument document = new();
+        CommandHistory history = new();
+        SelectionSet selection = new();
+
+        var definition = new BlockDefinition(
+            BlockDefinitionId.New(),
+            "Door",
+            new CadEntity[]
+            {
+                new LineEntity(new Point2D(0, 0), new Point2D(10, 0))
+            });
+
+        document.BlockDefinitions.Add(definition);
+
+        var blockReference = new BlockReferenceEntity(
+            definition.Id,
+            new Point2D(5, 10),
+            new Vector2D(2, 0),
+            new Vector2D(0, 2),
+            definition.GetBoundingBox());
+
+        document.AddEntity(blockReference);
+        selection.Select(blockReference.Id);
+
+        var context = CreateContext(document, history, selection);
+        var tool = new ExplodeTool();
+
+        ToolResult result = tool.HandleCommandInput(
+            OpenCad2D.Tools.Input.CommandInputSubmission.Confirm(string.Empty),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.False(document.Entities.Contains(blockReference.Id));
+
+        LineEntity line = Assert.Single(document.Entities.All.OfType<LineEntity>());
+        Assert.Equal(new Point2D(5, 10), line.Start);
+        Assert.Equal(new Point2D(25, 10), line.End);
+        Assert.NotEqual(definition.Entities[0].Id, line.Id);
+        Assert.Empty(selection.SelectedIds);
+
+        history.Undo(document);
+
+        Assert.True(document.Entities.Contains(blockReference.Id));
+        Assert.Empty(document.Entities.All.OfType<LineEntity>());
     }
 
     [Fact]

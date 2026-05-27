@@ -1,4 +1,5 @@
 using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
@@ -9,7 +10,7 @@ using OpenCad2D.Tools.Input;
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
-/// Explodes selected straight-segment polylines into individual line entities.
+/// Explodes selected straight-segment polylines into individual line entities and block references into their world-space entities.
 /// </summary>
 public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 {
@@ -32,8 +33,8 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
         {
             int count = context.Selection.SelectedIds.Count;
             string message = count == 1
-                ? "1 entity selected. Press Enter or right-click to explode polylines into lines."
-                : $"{count} entities selected. Press Enter or right-click to explode polylines into lines.";
+                ? "1 entity selected. Press Enter or right-click to explode polylines or blocks."
+                : $"{count} entities selected. Press Enter or right-click to explode polylines or blocks.";
 
             return new CommandPromptState(
                 "EXPLODE",
@@ -45,10 +46,10 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
 
         return new CommandPromptState(
             "EXPLODE",
-            "Select polylines to explode into lines",
+            "Select polylines or blocks to explode",
             CommandInputKind.Selection,
             acceptsEmptyEnter: true,
-            placeholder: "Select polylines, then press Enter/right-click");
+            placeholder: "Select polylines/blocks, then press Enter/right-click");
     }
 
     public ToolResult HandleCommandInput(
@@ -63,7 +64,7 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
             return Execute(context);
         }
 
-        return ToolResult.None("Select polylines to explode, then press Enter or right-click.");
+        return ToolResult.None("Select polylines or blocks to explode, then press Enter or right-click.");
     }
 
     public ToolResult OnPointerPressed(
@@ -87,7 +88,7 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
 
         if (selectedId is null)
         {
-            return ToolResult.None("Select polylines to explode, then press Enter or right-click.");
+            return ToolResult.None("Select polylines or blocks to explode, then press Enter or right-click.");
         }
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
@@ -101,7 +102,7 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
         int count = context.Selection.SelectedIds.Count;
         if (count == 0)
         {
-            return ToolResult.Updated("Entity removed from explode selection. Select polylines to explode.");
+            return ToolResult.Updated("Entity removed from explode selection. Select polylines or blocks to explode.");
         }
 
         return ToolResult.Updated(count == 1
@@ -148,36 +149,77 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
             .Where(polyline => polyline.Vertices.Count >= 2)
             .ToList();
 
-        if (polylines.Count == 0)
-        {
-            return ToolResult.None("No explodable polylines selected.");
-        }
-
-        var newLines = polylines
-            .SelectMany(CreateLineSegments)
+        var blockReferences = selectedEntities
+            .OfType<BlockReferenceEntity>()
+            .Where(blockReference => context.Document.BlockDefinitions.Contains(blockReference.BlockDefinitionId))
             .ToList();
 
-        if (newLines.Count == 0)
+        if (polylines.Count == 0 && blockReferences.Count == 0)
         {
-            return ToolResult.None("Selected polylines do not contain line segments to explode.");
+            return ToolResult.None("No explodable polylines or blocks selected.");
         }
+
+        var newEntities = new List<CadEntity>();
+        newEntities.AddRange(polylines.SelectMany(CreateLineSegments));
+        newEntities.AddRange(blockReferences.SelectMany(blockReference => CreateBlockEntities(context, blockReference)));
+
+        if (newEntities.Count == 0)
+        {
+            return ToolResult.None("Selected entities do not contain geometry to explode.");
+        }
+
+        var removedEntities = polylines
+            .Cast<CadEntity>()
+            .Concat(blockReferences)
+            .ToList();
 
         context.Commands.Execute(
             context.Document,
-            new CompositeCommand(
-                "Explode polylines",
-                new ICadCommand[]
-                {
-                    new DeleteEntitiesCommand(polylines.Select(polyline => polyline.Id)),
-                    new AddEntityCommand(newLines)
-                }));
+            new ModifyEntitiesCommand(
+                removedEntities,
+                newEntities,
+                "Explode entities"));
 
         context.Selection.Set.Clear();
         _isSelectingObjects = false;
 
-        return ToolResult.Completed(polylines.Count == 1
-            ? $"Polyline exploded into {newLines.Count} lines."
-            : $"{polylines.Count} polylines exploded into {newLines.Count} lines.");
+        return ToolResult.Completed(CreateCompletedMessage(polylines.Count, blockReferences.Count, newEntities.Count));
+    }
+
+    private static IEnumerable<CadEntity> CreateBlockEntities(
+        ToolContext context,
+        BlockReferenceEntity blockReference)
+    {
+        BlockDefinition definition = context.Document.BlockDefinitions.GetRequired(blockReference.BlockDefinitionId);
+
+        foreach (CadEntity entity in definition.Entities)
+        {
+            yield return blockReference
+                .TransformContainedEntity(entity)
+                .WithId(EntityId.New());
+        }
+    }
+
+    private static string CreateCompletedMessage(
+        int polylineCount,
+        int blockReferenceCount,
+        int createdEntityCount)
+    {
+        if (blockReferenceCount == 0)
+        {
+            return polylineCount == 1
+                ? $"Polyline exploded into {createdEntityCount} lines."
+                : $"{polylineCount} polylines exploded into {createdEntityCount} lines.";
+        }
+
+        if (polylineCount == 0)
+        {
+            return blockReferenceCount == 1
+                ? $"Block exploded into {createdEntityCount} entities."
+                : $"{blockReferenceCount} blocks exploded into {createdEntityCount} entities.";
+        }
+
+        return $"{polylineCount} polylines and {blockReferenceCount} blocks exploded into {createdEntityCount} entities.";
     }
 
     private static IEnumerable<LineEntity> CreateLineSegments(PolylineEntity polyline)
