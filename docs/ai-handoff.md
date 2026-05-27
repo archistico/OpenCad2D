@@ -584,3 +584,12 @@ Orientation note: the first pass has been corrected so the arrow tip and `N` lab
 Tests added cover registry creation/category, command aliases, basic insertion, current-layer assignment, undo, endpoint snapping and deterministic generated geometry.
 
 Recommended next step: add `Metric Scale Bar` as the second architectural symbol, preferably still as ordinary line/text geometry before introducing any larger symbol-library UI.
+
+
+## Modify tool preview vectors
+
+Move already exposed a base-to-current measurement vector. The preview pass extends the same visual guidance to Copy, Rotate and Scale:
+
+- Copy draws the displacement vector from base point to current destination while preserving the copied-entity preview.
+- Rotate and Scale now update a transient reference preview while the user is choosing the reference point, then draw base-to-reference and base-to-destination guide vectors during the final destination phase.
+- The implementation lives in `CadToolPreviewRenderer`; `RotateTool` and `ScaleTool` also update `CurrentDestinationPoint` during `WaitingForReferencePoint` so the renderer can show the live reference vector before the reference point is accepted.

@@ -399,6 +399,7 @@ Consistency rules now documented and guarded by tests:
 - Polygon side count, Fillet radius/trim mode, Mirror delete-source and Offset last-distance prompts expose safe defaults and reject missing defaults with clear messages;
 - entity-selection phases expose `SnapKind.EntityOnly`;
 - geometric point phases expose the active geometric snap set;
+- Move, Copy, Rotate and Scale show a live guide vector between the base/reference point and the current pointer during point-picking phases;
 - option-only confirmation phases that do not need a canvas point expose no point snap mode;
 - `Cancel`/`Deactivate` clears transient base points, previews and pending state so tools do not leave dirty intermediate state behind.
 

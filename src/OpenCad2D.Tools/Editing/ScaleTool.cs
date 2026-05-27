@@ -161,8 +161,30 @@ public sealed class ScaleTool : ICadTool, ISnapModeProvider, ICommandDrivenTool,
 
         EnsureInitialState(context);
 
+        if (_basePoint is null)
+        {
+            return ToolResult.None();
+        }
+
+        if (State == ScaleToolState.WaitingForReferencePoint)
+        {
+            Point2D referencePreviewPoint = ApplyGeometricSnap(
+                context,
+                pointer.ModelPoint,
+                _basePoint);
+
+            referencePreviewPoint = ToolInputConstraintService.ApplyAngleConstraint(
+                context,
+                _basePoint.Value,
+                referencePreviewPoint);
+
+            _currentDestinationPoint = referencePreviewPoint;
+
+            return ToolResult.Updated(
+                "Reference point preview updated.");
+        }
+
         if (State != ScaleToolState.WaitingForDestinationPoint ||
-            _basePoint is null ||
             _referencePoint is null)
         {
             return ToolResult.None();

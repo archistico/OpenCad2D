@@ -99,6 +99,26 @@ public sealed class ScaleToolTests
     }
 
     [Fact]
+    public void PointerMove_WhileWaitingForReferencePoint_ShouldUpdateReferencePreviewPoint()
+    {
+        var context = CreateContextWithSelectedLine();
+        var tool = new ScaleTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        ToolResult result = tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal(ScaleToolState.WaitingForReferencePoint, tool.State);
+        Assert.Null(tool.ReferencePoint);
+        Assert.Equal(new Point2D(10, 0), tool.CurrentDestinationPoint);
+    }
+
+    [Fact]
     public void ReferencePointEqualToBasePoint_ShouldBeRejected()
     {
         var context = CreateContextWithSelectedLine();

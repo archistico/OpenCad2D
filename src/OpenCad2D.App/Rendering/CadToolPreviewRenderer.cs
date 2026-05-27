@@ -112,6 +112,24 @@ public sealed class CadToolPreviewRenderer
                 context,
                 moveTool);
         }
+        else if (activeTool is CopyTool copyTool)
+        {
+            DrawCopyToolMeasurementPreview(
+                context,
+                copyTool);
+        }
+        else if (activeTool is RotateTool rotateTool)
+        {
+            DrawRotateToolMeasurementPreview(
+                context,
+                rotateTool);
+        }
+        else if (activeTool is ScaleTool scaleTool)
+        {
+            DrawScaleToolMeasurementPreview(
+                context,
+                scaleTool);
+        }
         else if (activeTool is ArcTool arcTool)
         {
             DrawArcToolMeasurementPreview(
@@ -420,6 +438,136 @@ public sealed class CadToolPreviewRenderer
             _measurementVectorPen,
             start,
             end);
+    }
+
+    private void DrawCopyToolMeasurementPreview(
+        DrawingContext context,
+        CopyTool tool)
+    {
+        if (tool.FirstPoint is null)
+        {
+            return;
+        }
+
+        DrawBasePointVectorPreview(
+            context,
+            tool.FirstPoint.Value,
+            tool.CurrentPoint);
+    }
+
+    private void DrawRotateToolMeasurementPreview(
+        DrawingContext context,
+        RotateTool tool)
+    {
+        DrawBaseReferenceDestinationPreview(
+            context,
+            tool.BasePoint,
+            tool.ReferencePoint,
+            tool.CurrentDestinationPoint);
+    }
+
+    private void DrawScaleToolMeasurementPreview(
+        DrawingContext context,
+        ScaleTool tool)
+    {
+        DrawBaseReferenceDestinationPreview(
+            context,
+            tool.BasePoint,
+            tool.ReferencePoint,
+            tool.CurrentDestinationPoint);
+    }
+
+    private void DrawBasePointVectorPreview(
+        DrawingContext context,
+        Point2D basePoint,
+        Point2D? destinationPoint)
+    {
+        Point start = ToScreenPoint(basePoint);
+
+        const double markerRadius = 4;
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            start,
+            markerRadius,
+            markerRadius);
+
+        if (destinationPoint is null)
+        {
+            return;
+        }
+
+        Point end = ToScreenPoint(destinationPoint.Value);
+
+        context.DrawLine(
+            _measurementVectorPen,
+            start,
+            end);
+    }
+
+    private void DrawBaseReferenceDestinationPreview(
+        DrawingContext context,
+        Point2D? basePoint,
+        Point2D? referencePoint,
+        Point2D? destinationPoint)
+    {
+        if (basePoint is null)
+        {
+            return;
+        }
+
+        Point start = ToScreenPoint(basePoint.Value);
+
+        const double markerRadius = 4;
+
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            start,
+            markerRadius,
+            markerRadius);
+
+        if (referencePoint is not null)
+        {
+            Point reference = ToScreenPoint(referencePoint.Value);
+
+            context.DrawLine(
+                _measurementVectorPen,
+                start,
+                reference);
+            context.DrawEllipse(
+                _basePointMarkerFill,
+                _basePointMarkerPen,
+                reference,
+                markerRadius,
+                markerRadius);
+        }
+
+        if (destinationPoint is null ||
+            _workspace?.GeometryTolerance.ArePointsEqual(
+                basePoint.Value,
+                destinationPoint.Value) == true ||
+            (referencePoint is not null &&
+             _workspace?.GeometryTolerance.ArePointsEqual(
+                 referencePoint.Value,
+                 destinationPoint.Value) == true))
+        {
+            return;
+        }
+
+        Point destination = ToScreenPoint(destinationPoint.Value);
+
+        context.DrawLine(
+            _measurementVectorPen,
+            start,
+            destination);
+        context.DrawEllipse(
+            _basePointMarkerFill,
+            _basePointMarkerPen,
+            destination,
+            markerRadius,
+            markerRadius);
     }
 
     private void DrawTwoPointToolMeasurementPreview(

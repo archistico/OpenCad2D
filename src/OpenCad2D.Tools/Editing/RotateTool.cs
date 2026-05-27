@@ -160,8 +160,30 @@ public sealed class RotateTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
 
         EnsureInitialState(context);
 
+        if (_basePoint is null)
+        {
+            return ToolResult.None();
+        }
+
+        if (State == RotateToolState.WaitingForReferencePoint)
+        {
+            Point2D referencePreviewPoint = ApplyGeometricSnap(
+                context,
+                pointer.ModelPoint,
+                _basePoint);
+
+            referencePreviewPoint = ToolInputConstraintService.ApplyAngleConstraint(
+                context,
+                _basePoint.Value,
+                referencePreviewPoint);
+
+            _currentDestinationPoint = referencePreviewPoint;
+
+            return ToolResult.Updated(
+                "Reference point preview updated.");
+        }
+
         if (State != RotateToolState.WaitingForDestinationPoint ||
-            _basePoint is null ||
             _referencePoint is null)
         {
             return ToolResult.None();
