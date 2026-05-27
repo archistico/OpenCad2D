@@ -32,6 +32,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Spline));
         Assert.True(registry.Contains(ToolId.Polygon));
         Assert.True(registry.Contains(ToolId.NorthSymbol));
+        Assert.True(registry.Contains(ToolId.ScaleBar));
         Assert.True(registry.Contains(ToolId.HorizontalDimension));
         Assert.True(registry.Contains(ToolId.VerticalDimension));
         Assert.True(registry.Contains(ToolId.AlignedDimension));
@@ -66,7 +67,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(41, tools.Count);
+        Assert.Equal(42, tools.Count);
 
         Assert.Contains(
             tools,
@@ -194,6 +195,10 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.ScaleBar);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.HorizontalDimension);
 
         Assert.Contains(
@@ -304,8 +309,9 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Symbols");
 
-        Assert.Single(tools);
+        Assert.Equal(2, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.NorthSymbol);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.ScaleBar);
     }
 
 
@@ -518,6 +524,18 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<NorthSymbolTool>(tool);
         Assert.Equal("North Symbol", tool.Name);
+    }
+
+
+    [Fact]
+    public void Create_ScaleBar_ShouldReturnScaleBarTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.ScaleBar);
+
+        Assert.IsType<ScaleBarTool>(tool);
+        Assert.Equal("Metric Scale Bar", tool.Name);
     }
 
 

@@ -577,13 +577,15 @@ This is intentionally not a full isolated block editor yet. It gives a safe, tes
 
 The architectural-symbols milestone has started with `NorthSymbolTool`. The tool is registered as `ToolId.NorthSymbol` in the `Symbols` category and exposed in the left toolbar under a new `SYMBOLS` section. Command aliases are `NORTH`, `NORTHSYMBOL` and `NS`.
 
-Current behavior: one click inserts a fixed-size north arrow at the snapped insertion point. The symbol is intentionally made of ordinary entities rather than a specialized entity type: one `LineEntity`, one open `PolylineEntity` arrowhead and one `TextEntity` with label `N`. Geometry uses the current layer and current text format. Insertion is committed as a single undoable composite command.
+Current North Symbol behavior: one click inserts a fixed-size north arrow at the snapped insertion point. The symbol is intentionally made of ordinary entities rather than a specialized entity type: three `LineEntity` objects, one `CircleEntity` and one `TextEntity` with label `N`. Geometry uses the current layer and current text format. Insertion is committed as a single undoable composite command.
 
-Orientation note: the first pass has been corrected so the arrow tip and `N` label point visually upward, matching conventional north symbols.
+Orientation note: the north arrow uses the picked point as its local `(0,0)` base point; the arrow tip points visually upward and the `N` label is offset beside the arrow rather than overlapping the shaft.
 
-Tests added cover registry creation/category, command aliases, basic insertion, current-layer assignment, undo, endpoint snapping and deterministic generated geometry.
+Metric Scale Bar first pass: `ScaleBarTool` is registered as `ToolId.ScaleBar` in the `Symbols` category and exposed in the left toolbar under `SYMBOLS`. Command aliases are `SCALEBAR`, `SBAR` and `GRAPHICSCALE`. One click inserts a fixed metric scale bar at the snapped insertion point. The generated geometry is ordinary line/text geometry: one baseline, six vertical tick lines, labels `0`, `1`, `2`, `3`, `4`, `5 m`, and `1:100`. Geometry uses the current layer and current text format. Insertion is committed as a single undoable composite command.
 
-Recommended next step: add `Metric Scale Bar` as the second architectural symbol, preferably still as ordinary line/text geometry before introducing any larger symbol-library UI.
+Tests cover registry creation/category, command aliases, basic insertion, current-layer assignment, undo, endpoint snapping and deterministic generated geometry for the symbol tools.
+
+Recommended next step: add `Section Symbol` as the next architectural symbol, preferably still as ordinary line/text geometry before introducing any larger symbol-library UI.
 
 
 ## Modify tool preview vectors
@@ -593,3 +595,10 @@ Move already exposed a base-to-current measurement vector. The preview pass exte
 - Copy draws the displacement vector from base point to current destination while preserving the copied-entity preview.
 - Rotate and Scale now update a transient reference preview while the user is choosing the reference point, then draw base-to-reference and base-to-destination guide vectors during the final destination phase.
 - The implementation lives in `CadToolPreviewRenderer`; `RotateTool` and `ScaleTool` also update `CurrentDestinationPoint` during `WaitingForReferencePoint` so the renderer can show the live reference vector before the reference point is accepted.
+
+
+## Latest handoff — Metric Scale Bar geometry
+
+- `ScaleBarTool` uses the picked point as local origin `(0,0)` and offsets the requested 0–1000 scale bar geometry from there.
+- Output entity count: 20 entities = 6 closed polylines, 7 vertical ticks, 7 text labels.
+- `MainWindow` includes active-button synchronization for both North Symbol and Scale Bar.

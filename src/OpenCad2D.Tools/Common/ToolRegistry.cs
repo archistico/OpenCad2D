@@ -149,6 +149,14 @@ public sealed class ToolRegistry
                 "Symbols"),
             () => new NorthSymbolTool());
 
+        Register(
+            new ToolDescriptor(
+                ToolId.ScaleBar,
+                "ScaleBar",
+                "Metric Scale Bar",
+                "Symbols"),
+            () => new ScaleBarTool());
+
 
         Register(
             new ToolDescriptor(

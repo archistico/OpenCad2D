@@ -322,3 +322,20 @@ Image references participate in selection, snapping, transform tools and grip ed
 ## Create Block
 
 The Create Block tool is the first block workflow. It requires a non-empty selection, asks for a block name and base point, then replaces the selection with a block reference. The visual geometry stays in place because the selected entities are translated into the block definition relative to the base point.
+
+
+## Architectural symbols
+
+### North Symbol
+
+`NorthSymbol` inserts a fixed-size north arrow as ordinary CAD geometry on the current layer. Aliases: `NORTH`, `NORTHSYMBOL`, `NS`.
+
+### Metric Scale Bar
+
+`ScaleBar` inserts a fixed-size metric graphic scale bar as ordinary line and text geometry on the current layer. Aliases: `SCALEBAR`, `SBAR`, `GRAPHICSCALE`. The first version represents `0` to `5 m` at `1:100` and is inserted with one picked point.
+
+
+## Symbol tools
+
+- `NorthSymbolTool`: inserts a north symbol as ordinary geometry.
+- `ScaleBarTool`: inserts a metric scale bar as ordinary polylines, lines and text.

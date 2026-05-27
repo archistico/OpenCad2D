@@ -103,6 +103,10 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("NORTHSYMBOL", ToolId.NorthSymbol);
         yield return new CommandAlias("NS", ToolId.NorthSymbol);
 
+        yield return new CommandAlias("SCALEBAR", ToolId.ScaleBar);
+        yield return new CommandAlias("SBAR", ToolId.ScaleBar);
+        yield return new CommandAlias("GRAPHICSCALE", ToolId.ScaleBar);
+
         yield return new CommandAlias("RECTANGLE", ToolId.Rectangle);
         yield return new CommandAlias("REC", ToolId.Rectangle);
 

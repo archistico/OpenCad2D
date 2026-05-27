@@ -1428,6 +1428,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void ScaleBar_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.ScaleBar);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
 
     private void HorizontalDimension_Click(
         object? sender,
@@ -2946,6 +2957,16 @@ public partial class MainWindow : Window
             PolygonButton,
             activeToolName.Equals("Polygon", StringComparison.OrdinalIgnoreCase));
 
+        SetActiveToolButton(
+            NorthSymbolButton,
+            activeToolName.Equals("North Symbol", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("NorthSymbol", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            ScaleBarButton,
+            activeToolName.Equals("Metric Scale Bar", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("Scale Bar", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("ScaleBar", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             HorizontalDimensionButton,

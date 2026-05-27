@@ -134,14 +134,14 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.120-architectural-symbols.md`.
 
-Status: in progress. First pass of North Symbol is implemented.
+Status: in progress. First passes of North Symbol and Metric Scale Bar are implemented.
 
 Goal: add practical drafting helpers for technical and architectural drawings.
 
 Initial scope:
 
-- North symbol — first pass implemented as fixed-size ordinary line/polyline/text geometry.
-- Metric scale bar.
+- North symbol — first pass implemented as fixed-size ordinary line/circle/text geometry.
+- Metric scale bar — first pass implemented as fixed-size ordinary line/text geometry.
 - Section marker.
 - Elevation marker.
 - Simple title block/testalino generator.

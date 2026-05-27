@@ -21,6 +21,7 @@ public enum ToolId
     Spline,
     Polygon,
     NorthSymbol,
+    ScaleBar,
     HorizontalDimension,
     VerticalDimension,
     AlignedDimension,

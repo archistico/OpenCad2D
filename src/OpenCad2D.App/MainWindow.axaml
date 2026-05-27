@@ -862,6 +862,20 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="ScaleBarButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Insert a simple metric graphic scale bar"
+                                    Click="ScaleBar_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectangle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Scale Bar" />
+                                </Grid>
+                            </Button>
+
                             <TextBlock Classes="panel-section-label"
                                        Text="DIMENSION" />
 

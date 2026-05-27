@@ -1,0 +1,562 @@
+{
+  "version": 1,
+  "savedAt": "2026-05-27T22:59:02.5997643\u002B00:00",
+  "settings": {
+    "currentLayerId": "0",
+    "currentTextFormatId": "Annotation",
+    "currentDimensionStyleId": "Standard",
+    "grid": {
+      "kind": "Rectangular",
+      "isVisible": true,
+      "minorStep": 10,
+      "majorStep": 50,
+      "originX": 0,
+      "originY": 0,
+      "minimumScreenSpacing": 8,
+      "maximumScreenSpacing": 220,
+      "isometricAngleDegrees": 30
+    },
+    "snapping": {
+      "isEnabled": true,
+      "enabledModes": [
+        "Endpoint",
+        "Midpoint",
+        "Center",
+        "Quadrant",
+        "Intersection",
+        "Perpendicular",
+        "Tangent",
+        "Grid"
+      ],
+      "tolerance": 8
+    },
+    "drafting": {
+      "isOrthoEnabled": false,
+      "polarTracking": {
+        "isEnabled": false,
+        "stepDegrees": 90
+      }
+    }
+  },
+  "viewport": {
+    "panX": 198.9599707293308,
+    "panY": 562.1417812324903,
+    "zoom": 1.5208750000000002
+  },
+  "lineFormats": [
+    {
+      "id": "Continuous",
+      "name": "Continua",
+      "color": "#FFFFFF",
+      "lineWeight": 1,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "color": "#A0A0A0",
+      "lineWeight": 0.8,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "color": "#FFFFFF",
+      "lineWeight": 2,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Axis",
+      "name": "Asse",
+      "color": "#FF0000",
+      "lineWeight": 0.75,
+      "lineStyle": "DashDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4
+      ]
+    },
+    {
+      "id": "Dashed",
+      "name": "Tratteggiata",
+      "color": "#FFFF00",
+      "lineWeight": 0.75,
+      "lineStyle": "Dashed",
+      "dashPattern": [
+        8,
+        4
+      ]
+    },
+    {
+      "id": "DashDotDot",
+      "name": "Tratto due punti",
+      "color": "#00C8FF",
+      "lineWeight": 0.5,
+      "lineStyle": "DashDotDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4,
+        1,
+        4
+      ]
+    },
+    {
+      "id": "DashDot",
+      "name": "Tratto e punto",
+      "color": "#00FF00",
+      "lineWeight": 0.75,
+      "lineStyle": "DashDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4
+      ]
+    }
+  ],
+  "textFormats": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "fontFamily": "Arial",
+      "height": 10,
+      "color": "#FFFFFF",
+      "isBold": false,
+      "isItalic": false
+    },
+    {
+      "id": "Title",
+      "name": "Title",
+      "fontFamily": "Arial",
+      "height": 18,
+      "color": "#FFFFFF",
+      "isBold": true,
+      "isItalic": false
+    },
+    {
+      "id": "Annotation",
+      "name": "Annotation",
+      "fontFamily": "Arial",
+      "height": 8,
+      "color": "#FFFF00",
+      "isBold": false,
+      "isItalic": false
+    },
+    {
+      "id": "Small",
+      "name": "Small",
+      "fontFamily": "Arial",
+      "height": 6,
+      "color": "#B4B4B4",
+      "isBold": false,
+      "isItalic": false
+    }
+  ],
+  "dimensionStyles": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "textFormatId": "Annotation",
+      "arrowSize": 4,
+      "arrowSymbol": "ClosedArrow",
+      "textRotationMode": "Readable",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": 2,
+      "extensionLineOffset": 1.5,
+      "extensionLineOvershoot": 2,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": "",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    },
+    {
+      "id": "Architectural",
+      "name": "Architectural",
+      "textFormatId": "Annotation",
+      "arrowSize": 4,
+      "arrowSymbol": "ArchitecturalTick",
+      "textRotationMode": "Readable",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": -2,
+      "extensionLineOffset": 1.5,
+      "extensionLineOvershoot": 2,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": " m",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    },
+    {
+      "id": "Mechanical",
+      "name": "Mechanical",
+      "textFormatId": "Annotation",
+      "arrowSize": 3,
+      "arrowSymbol": "ClosedFilledTriangle",
+      "textRotationMode": "Horizontal",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": 2,
+      "extensionLineOffset": 1,
+      "extensionLineOvershoot": 1.5,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": " mm",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    }
+  ],
+  "layers": [
+    {
+      "id": "0",
+      "name": "0",
+      "lineFormatId": "Continuous",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FFFFFF",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "lineFormatId": "Annotations",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#A0A0A0",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "lineFormatId": "Walls",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FFFFFF",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Axis",
+      "name": "Axis",
+      "lineFormatId": "Axis",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FF0000",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Construction lines",
+      "name": "Construction lines",
+      "lineFormatId": "Dashed",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FFFF00",
+      "isVisible": true,
+      "isLocked": false
+    }
+  ],
+  "blockDefinitions": [],
+  "entities": [
+    {
+      "isClosed": true,
+      "isFilled": true,
+      "vertices": [
+        {
+          "x": 0,
+          "y": 20
+        },
+        {
+          "x": 100,
+          "y": 20
+        },
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 0
+        }
+      ],
+      "type": "Polyline",
+      "id": "f146f7f6-2e6a-4f43-83b0-509864ebdcf3",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "isFilled": false,
+      "vertices": [
+        {
+          "x": 100,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": -20
+        },
+        {
+          "x": 100,
+          "y": -20
+        }
+      ],
+      "type": "Polyline",
+      "id": "6615a233-d89d-4b53-b839-e9bf06e0e8b2",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "isFilled": true,
+      "vertices": [
+        {
+          "x": 200,
+          "y": 20
+        },
+        {
+          "x": 300,
+          "y": 20
+        },
+        {
+          "x": 300,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": 0
+        }
+      ],
+      "type": "Polyline",
+      "id": "e7389578-b448-417b-a855-a58a0959a026",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "isFilled": false,
+      "vertices": [
+        {
+          "x": 300,
+          "y": 0
+        },
+        {
+          "x": 400,
+          "y": 0
+        },
+        {
+          "x": 400,
+          "y": -20
+        },
+        {
+          "x": 300,
+          "y": -20
+        }
+      ],
+      "type": "Polyline",
+      "id": "e594e857-aec5-40d8-bce2-c0a6816000e8",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "isFilled": true,
+      "vertices": [
+        {
+          "x": 400,
+          "y": 20
+        },
+        {
+          "x": 500,
+          "y": 20
+        },
+        {
+          "x": 500,
+          "y": 0
+        },
+        {
+          "x": 400,
+          "y": 0
+        }
+      ],
+      "type": "Polyline",
+      "id": "b02f0c5c-bba2-4090-9526-4c3dabb65f86",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "isFilled": false,
+      "vertices": [
+        {
+          "x": 500,
+          "y": 0
+        },
+        {
+          "x": 1000,
+          "y": 0
+        },
+        {
+          "x": 1000,
+          "y": -20
+        },
+        {
+          "x": 500,
+          "y": -20
+        }
+      ],
+      "type": "Polyline",
+      "id": "b15b8566-9846-41c4-8819-7b190cd1465e",
+      "layerId": "0"
+    },
+    {
+      "startX": 0,
+      "startY": 30,
+      "endX": 0,
+      "endY": -30,
+      "type": "Line",
+      "id": "71c7bab8-a7b2-4119-8932-bb02c2685b3d",
+      "layerId": "0"
+    },
+    {
+      "startX": 100,
+      "startY": 30,
+      "endX": 100,
+      "endY": -30,
+      "type": "Line",
+      "id": "69827322-2292-4513-a261-0d7b68d8702e",
+      "layerId": "0"
+    },
+    {
+      "startX": 200,
+      "startY": 30,
+      "endX": 200,
+      "endY": -30,
+      "type": "Line",
+      "id": "627cc330-3c85-4cf5-9281-a8cc65b2419d",
+      "layerId": "0"
+    },
+    {
+      "startX": 300,
+      "startY": 30,
+      "endX": 300,
+      "endY": -30,
+      "type": "Line",
+      "id": "32d1ab93-46fb-4764-b401-eb45cfdee17c",
+      "layerId": "0"
+    },
+    {
+      "startX": 400,
+      "startY": 30,
+      "endX": 400,
+      "endY": -30,
+      "type": "Line",
+      "id": "ef2add47-97b6-4ddc-8835-f067b427e4f4",
+      "layerId": "0"
+    },
+    {
+      "startX": 500,
+      "startY": 30,
+      "endX": 500,
+      "endY": -30,
+      "type": "Line",
+      "id": "d69b54a6-08c7-4db6-bfc1-e8bb896117ca",
+      "layerId": "0"
+    },
+    {
+      "startX": 1000,
+      "startY": 30,
+      "endX": 1000,
+      "endY": -30,
+      "type": "Line",
+      "id": "27461215-7268-4d43-85ab-d68caaa69cb8",
+      "layerId": "0"
+    },
+    {
+      "text": "0",
+      "insertionX": 0,
+      "insertionY": -50,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard",
+      "type": "Text",
+      "id": "8ab5aca3-6dcf-46ee-a4bb-0e742a6d2827",
+      "layerId": "0"
+    },
+    {
+      "text": "100",
+      "insertionX": 100,
+      "insertionY": -50,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard",
+      "type": "Text",
+      "id": "dab40d40-a2a9-4a9c-916b-ba9e741fd6f6",
+      "layerId": "0"
+    },
+    {
+      "text": "200",
+      "insertionX": 200,
+      "insertionY": -50,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard",
+      "type": "Text",
+      "id": "0e3fbcf4-719a-4637-9b78-2a26477eabbb",
+      "layerId": "0"
+    },
+    {
+      "text": "300",
+      "insertionX": 300,
+      "insertionY": -50,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard",
+      "type": "Text",
+      "id": "55e9bb3c-6a21-44b3-b7e1-9997532c2be3",
+      "layerId": "0"
+    },
+    {
+      "text": "400",
+      "insertionX": 400,
+      "insertionY": -50,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard",
+      "type": "Text",
+      "id": "b33b2b55-9999-4107-a20b-7a97cbf33fcd",
+      "layerId": "0"
+    },
+    {
+      "text": "500",
+      "insertionX": 500,
+      "insertionY": -50,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard",
+      "type": "Text",
+      "id": "e3ea8825-3dc2-4065-89f2-d2d70649c9e2",
+      "layerId": "0"
+    },
+    {
+      "text": "1000",
+      "insertionX": 1000,
+      "insertionY": -50,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard",
+      "type": "Text",
+      "id": "e73f079c-4f36-4386-aef0-e10e3b41728d",
+      "layerId": "0"
+    }
+  ]
+}
