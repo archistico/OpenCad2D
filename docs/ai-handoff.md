@@ -581,11 +581,11 @@ Current North Symbol behavior: one click inserts a fixed-size north arrow at the
 
 Orientation note: the north arrow uses the picked point as its local `(0,0)` base point; the arrow tip points visually upward and the `N` label is offset beside the arrow rather than overlapping the shaft.
 
-Metric Scale Bar first pass: `ScaleBarTool` is registered as `ToolId.ScaleBar` in the `Symbols` category and exposed in the left toolbar under `SYMBOLS`. Command aliases are `SCALEBAR`, `SBAR` and `GRAPHICSCALE`. One click inserts a fixed metric scale bar at the snapped insertion point. The generated geometry is ordinary line/text geometry: one baseline, six vertical tick lines, labels `0`, `1`, `2`, `3`, `4`, `5 m`, and `1:100`. Geometry uses the current layer and current text format. Insertion is committed as a single undoable composite command.
+Metric Scale Bar first pass: `ScaleBarTool` is registered as `ToolId.ScaleBar` in the `Symbols` category and exposed in the left toolbar under `SYMBOLS`. Command aliases are `SCALEBAR`, `SBAR` and `GRAPHICSCALE`. One click inserts a fixed metric scale bar at the snapped insertion point. The generated geometry is ordinary geometry. After the latest geometry update it creates the requested 0–1000 bar using 6 closed polylines, 7 vertical tick lines and 7 text labels. Geometry uses the current layer and current text format. Insertion is committed as a single undoable composite command.
 
 Tests cover registry creation/category, command aliases, basic insertion, current-layer assignment, undo, endpoint snapping and deterministic generated geometry for the symbol tools.
 
-Recommended next step: add `Section Symbol` as the next architectural symbol, preferably still as ordinary line/text geometry before introducing any larger symbol-library UI.
+Recommended next step changed: do not continue adding many fixed-symbol toolbar buttons. Add a `Library` workflow first. Fixed reusable content should be stored as `.opencad2d.json` files under a `library/` folder and shown in a modal browser with categories and preview. Keep direct symbol/tool buttons for parametric generators only.
 
 
 ## Modify tool preview vectors
@@ -602,3 +602,28 @@ Move already exposed a base-to-current measurement vector. The preview pass exte
 - `ScaleBarTool` uses the picked point as local origin `(0,0)` and offsets the requested 0–1000 scale bar geometry from there.
 - Output entity count: 20 entities = 6 closed polylines, 7 vertical ticks, 7 text labels.
 - `MainWindow` includes active-button synchronization for both North Symbol and Scale Bar.
+
+
+## Latest planning handoff — Library Browser direction
+
+The next milestone should be `v0.8.122 Library Browser`, documented in `docs/specs/v0.8.122-library-browser.md`.
+
+Decision:
+
+- Avoid adding one toolbar button per fixed symbol.
+- Add a single `Library` button/window for fixed reusable `.opencad2d.json` snippets.
+- Group snippets by category folders under `library/`, for example `arredo`, `simboli`, `sanitari`, `porte-finestre`, `annotazioni`.
+- The modal window should show categories, item list/grid, preview, Insert and Cancel.
+- Default insertion policy should create/reuse a block definition and place a `BlockReferenceEntity` at the picked point.
+- Use `(0,0)` in the library file as the item base point.
+- Honor active snaps for the insertion point.
+- Keep direct `Symbols`/tool buttons for parametric generators such as doors, windows, stairs, configurable section/elevation markers and title blocks.
+
+Recommended implementation sequence:
+
+1. Add `library/` folder convention and a `LibraryItemCatalog` service that scans folders.
+2. Add a minimal `LibraryWindow` with categories and item list.
+3. Add a first vector preview control using the native document loader and bounding-box fit.
+4. Add pending insertion workflow: select item -> close dialog -> pick insertion point.
+5. Insert as block reference by default, using import/block infrastructure and one undoable command.
+6. Add tests for scan, grouping, preview-load safety, insertion, snap and undo.

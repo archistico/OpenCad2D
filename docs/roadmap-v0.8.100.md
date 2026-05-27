@@ -14,7 +14,7 @@ Suggested numbering:
 |---|---|
 | v0.8.100 - v0.8.109 | Import another OpenCad2D drawing into the current document |
 | v0.8.110 - v0.8.119 | Block model, block references and block editing |
-| v0.8.120 - v0.8.129 | Architectural symbols and parametric drafting helpers |
+| v0.8.120 - v0.8.129 | Library browser, reusable drawing snippets and parametric drafting helpers |
 | v0.8.130 - v0.8.139 | Stair tools for plan/elevation/front elevation drafting |
 | v0.8.140 - v0.8.159 | Hatch and boundary fill system |
 | v0.8.160+ | Consolidation, compatibility, documentation and release gate preparation |
@@ -27,14 +27,14 @@ The recommended order is:
 
 1. Import Drawing
 2. Blocks
-3. Architectural Symbols
+3. Drawing Library and parametric helpers
 4. Stairs
 5. Hatch
 6. Consolidation
 
 This order is intentional.
 
-Import Drawing is a low-risk foundation for reusing existing work. Blocks should follow because many future symbols should be generated as reusable block definitions. Architectural symbols and stairs can then use the block infrastructure instead of becoming isolated one-off tools. Hatch is deferred because robust boundary recognition is geometrically more complex and should be built on top of a stable entity/document model.
+Import Drawing is a low-risk foundation for reusing existing work. Blocks should follow because many future symbols should be generated as reusable block definitions. Reusable library items and parametric helpers can then use the block infrastructure instead of becoming isolated one-off tools. Fixed symbols should mostly live as `.opencad2d.json` library snippets, while the Symbols/tools area should be reserved for parametric generators such as doors, windows, stairs or markers that need user-provided dimensions. Hatch is deferred because robust boundary recognition is geometrically more complex and should be built on top of a stable entity/document model.
 
 ---
 
@@ -130,32 +130,46 @@ Exit criteria:
 
 ---
 
-## Milestone v0.8.120 — Architectural symbols v1
+## Milestone v0.8.120 — Symbols and library direction
 
-Specification: `docs/specs/v0.8.120-architectural-symbols.md`.
+Specifications:
 
-Status: in progress. First passes of North Symbol and Metric Scale Bar are implemented.
+- `docs/specs/v0.8.120-architectural-symbols.md`
+- `docs/specs/v0.8.122-library-browser.md`
 
-Goal: add practical drafting helpers for technical and architectural drawings.
+Status: direction updated. North Symbol and Metric Scale Bar first passes are implemented, but future fixed symbols should move toward the Library workflow instead of adding many toolbar buttons.
 
-Initial scope:
+Goal: separate two concepts that should not grow into one overloaded toolbar:
 
-- North symbol — first pass implemented as fixed-size ordinary line/circle/text geometry.
-- Metric scale bar — first pass implemented as fixed-size ordinary line/text geometry.
-- Section marker.
-- Elevation marker.
-- Simple title block/testalino generator.
+1. **Library items** — reusable fixed drawings stored as `.opencad2d.json` files under a `library/` folder and inserted through a modal Library Browser with preview and categories.
+2. **Parametric symbol tools** — true generators that ask for dimensions/options before creating geometry, such as doors, windows, stairs, section markers with configurable labels, or title blocks.
 
-Design rule:
+Updated scope:
 
-These tools should generate normal OpenCad2D entities or block definitions/references. They should not introduce unnecessary special entity types unless a symbol truly needs parametric editing after insertion.
+- Keep existing North Symbol and Metric Scale Bar as useful first-pass tools, but do not keep adding one toolbar button for every fixed symbol.
+- Add a `Library` button that opens a modal browser.
+- Load `.opencad2d.json` items from `library/<category>/...`.
+- Group items by folder/category, for example `arredo`, `simboli`, `sanitari`, `porte-finestre`, `scale`, `annotazioni`.
+- Show a preview for each item.
+- Insert selected items using the existing import/block infrastructure.
+- Reserve the `Symbols`/parametric tools area for objects that need parameters before generation.
+
+Recommended insertion policy:
+
+- Insert library items as a `BlockReferenceEntity` by default, creating or reusing a `BlockDefinition` derived from the source file.
+- Preserve layers/formats from the source file where possible.
+- Provide an explicit later option to insert exploded geometry when useful.
+- Use the item file origin `(0,0)` as the insertion base point.
 
 Exit criteria:
 
-- Each symbol is inserted at a picked point.
-- Each symbol supports at least scale/size and rotation where relevant.
-- Generated geometry is selectable, transformable and exportable through existing mechanisms.
-- Symbols can be generated as reusable blocks where useful.
+- A Library button opens a modal browser.
+- Browser scans the `library/` folder and groups items by category.
+- Each valid `.opencad2d.json` item can show a preview.
+- User can select an item and insert it by picking a point on the canvas.
+- Object snaps work for the insertion point.
+- Insertion is undoable as one operation.
+- Inserted library items are selectable, movable, rotatable, scalable, copyable and exportable through existing mechanisms.
 
 ---
 

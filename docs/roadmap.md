@@ -90,13 +90,14 @@ The following milestones are planned before the future v0.9 stabilization gate:
 | v0.8.113 | [x] | `docs/specs/v0.8.110-blocks.md` | Add minimal Block Manager for rename, unused delete and insert-selected workflow. |
 | v0.8.114 | [x] | `docs/specs/v0.8.110-blocks.md` | Add snap candidates from block-internal geometry. |
 | v0.8.115 | [x] | `docs/specs/v0.8.110-blocks.md` | Add Explode Block and the first in-place Edit Block session workflow. |
-| v0.8.120 | [~] | `docs/specs/v0.8.120-architectural-symbols.md` | Add north symbol, metric scale, section/elevation markers and title block helpers. North Symbol and Metric Scale Bar first passes are implemented. |
+| v0.8.120 | [~] | `docs/specs/v0.8.120-architectural-symbols.md` | Keep first-pass North Symbol and Metric Scale Bar; reserve future direct tools for parametric helpers rather than many fixed-symbol toolbar buttons. |
+| v0.8.122 | [ ] | `docs/specs/v0.8.122-library-browser.md` | Add Library browser for reusable `.opencad2d.json` snippets grouped by category, with preview and insert workflow. |
 | v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
 | v0.8.140 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add explicit-boundary hatch/solid fill entity. |
 | v0.8.150 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add holes/islands and composite hatch boundaries. |
 | v0.8.160+ | [ ] | `docs/roadmap-v0.8.100.md` | Consolidate the expanded v0.8 line before the next release gate. |
 
-Implementation should follow the order above. Import Drawing and Blocks are foundations; architectural symbols and stairs should build on blocks where useful; hatch is deferred because robust boundary recognition is the most geometry-sensitive part of the plan.
+Implementation should follow the order above. Import Drawing and Blocks are foundations; the next priority is the Library browser because fixed symbols, furniture and reusable drawing snippets should be loaded from `.opencad2d.json` files instead of becoming separate toolbar buttons. Parametric tools should remain for objects that need dimensions/options before generation. Hatch is deferred because robust boundary recognition is the most geometry-sensitive part of the plan.
 
 ---
 

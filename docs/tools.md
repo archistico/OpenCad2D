@@ -39,13 +39,18 @@ Implemented:
 
 ---
 
-## Architectural symbol tools
+## Symbols, library and parametric helpers
 
 Implemented first pass:
 
 - `NorthSymbolTool`
+- `ScaleBarTool`
 
-`NorthSymbolTool` inserts a simple north arrow made of ordinary geometry: one vertical line, two arrow-side lines, one circle and one `TextEntity` with label `N`. The first version uses a fixed default size of 50 model units, uses the picked point as the `(0,0)` symbol base point, honors active snaps for the insertion point, uses the current layer/current text format, and commits insertion as one undoable command. Aliases: `NORTH`, `NORTHSYMBOL`, `NS`.
+`NorthSymbolTool` inserts a simple north arrow made of ordinary geometry: three lines, one circle and one `TextEntity` with label `N`. The first version uses the picked point as the `(0,0)` symbol base point, honors active snaps for the insertion point, uses the current layer/current text format, and commits insertion as one undoable command. Aliases: `NORTH`, `NORTHSYMBOL`, `NS`.
+
+`ScaleBarTool` inserts the requested 0–1000 graphic scale bar as ordinary closed polylines, vertical tick lines and text labels. The picked point is the local `(0,0)` base point. Aliases: `SCALEBAR`, `SBAR`, `GRAPHICSCALE`.
+
+Direction for next steps: avoid adding many fixed-symbol buttons. Fixed reusable content should be stored as `.opencad2d.json` files under `library/` and inserted through a modal Library Browser. Direct symbol/tool buttons should be kept for parametric generators such as doors, windows, stairs, configurable section/elevation markers and title blocks.
 
 ## Dimension tools
 
@@ -324,7 +329,7 @@ Image references participate in selection, snapping, transform tools and grip ed
 The Create Block tool is the first block workflow. It requires a non-empty selection, asks for a block name and base point, then replaces the selection with a block reference. The visual geometry stays in place because the selected entities are translated into the block definition relative to the base point.
 
 
-## Architectural symbols
+## Current fixed-symbol tools
 
 ### North Symbol
 
@@ -332,10 +337,26 @@ The Create Block tool is the first block workflow. It requires a non-empty selec
 
 ### Metric Scale Bar
 
-`ScaleBar` inserts a fixed-size metric graphic scale bar as ordinary line and text geometry on the current layer. Aliases: `SCALEBAR`, `SBAR`, `GRAPHICSCALE`. The first version represents `0` to `5 m` at `1:100` and is inserted with one picked point.
+`ScaleBar` inserts the 0–1000 metric graphic scale bar as ordinary polylines, lines and text geometry on the current layer. Aliases: `SCALEBAR`, `SBAR`, `GRAPHICSCALE`. The first version is inserted with one picked point used as local origin `(0,0)`.
 
+## Library browser direction
 
-## Symbol tools
+Next fixed symbols should be provided as library files rather than new toolbar buttons.
 
-- `NorthSymbolTool`: inserts a north symbol as ordinary geometry.
-- `ScaleBarTool`: inserts a metric scale bar as ordinary polylines, lines and text.
+Target workflow:
+
+```text
+Library button -> modal Library window -> category -> preview -> Insert -> pick insertion point
+```
+
+Expected library layout:
+
+```text
+library/arredo/*.opencad2d.json
+library/simboli/*.opencad2d.json
+library/sanitari/*.opencad2d.json
+library/porte-finestre/*.opencad2d.json
+library/annotazioni/*.opencad2d.json
+```
+
+The recommended default insertion mode is block-reference insertion, with Explode Block available when raw geometry is needed.
