@@ -220,6 +220,7 @@ public partial class MainWindow : Window
                 filePath,
                 options);
 
+            BeginPointPlacementSnapping(result);
             RefreshStatus();
             CadCanvas.InvalidateVisual();
             CadCanvas.Focus();
@@ -1626,6 +1627,21 @@ public partial class MainWindow : Window
     }
 
 
+    private void BeginPointPlacementSnapping(ToolResult result)
+    {
+        if (result.Kind != ToolResultKind.Started)
+        {
+            return;
+        }
+
+        CadCanvas.EnabledSnapsOverride = _viewModel.Workspace.Context.EnabledSnaps;
+    }
+
+    private void EndPointPlacementSnapping()
+    {
+        CadCanvas.EnabledSnapsOverride = null;
+    }
+
     private async void CreateBlock_Click(
         object? sender,
         RoutedEventArgs e)
@@ -1642,6 +1658,11 @@ public partial class MainWindow : Window
         ToolResult result = options.PickBasePointFromDrawing
             ? _viewModel.BeginCreateBlockBasePointPick(options)
             : _viewModel.CreateBlockFromSelection(options);
+
+        if (options.PickBasePointFromDrawing)
+        {
+            BeginPointPlacementSnapping(result);
+        }
 
         RefreshStatus();
         CadCanvas.InvalidateVisual();
@@ -1681,6 +1702,7 @@ public partial class MainWindow : Window
 
         ToolResult result = _viewModel.BeginInsertBlockPlacement(options);
 
+        BeginPointPlacementSnapping(result);
         RefreshStatus();
         CadCanvas.InvalidateVisual();
         CadCanvas.Focus();
@@ -1692,6 +1714,66 @@ public partial class MainWindow : Window
                 result.Message);
         }
     }
+
+    private async void BlockManager_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        var dialogViewModel = new BlockManagerWindowViewModel(
+            _viewModel.Workspace.Document);
+
+        var dialog = new BlockManagerWindow(dialogViewModel);
+
+        BlockManagerResult? result = await dialog.ShowDialog<BlockManagerResult?>(this);
+
+        if (result is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        ToolResult updateResult = _viewModel.ApplyBlockDefinitionChanges(result.BlockDefinitions);
+
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+
+        if (updateResult.Message is not null && updateResult.Kind != ToolResultKind.Completed)
+        {
+            await ShowMessageAsync(
+                "Block Manager",
+                updateResult.Message);
+            return;
+        }
+
+        if (result.Action != BlockManagerAction.InsertSelected ||
+            result.SelectedBlockDefinitionId is null ||
+            string.IsNullOrWhiteSpace(result.SelectedBlockName))
+        {
+            return;
+        }
+
+        ToolResult insertResult = _viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(
+                result.SelectedBlockDefinitionId.Value,
+                result.SelectedBlockName,
+                1.0,
+                0.0));
+
+        BeginPointPlacementSnapping(insertResult);
+        RefreshStatus();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+
+        if (insertResult.Message is not null && insertResult.Kind != ToolResultKind.Started)
+        {
+            await ShowMessageAsync(
+                "Block Manager",
+                insertResult.Message);
+        }
+    }
+
 
     private void Explode_Click(
         object? sender,
@@ -2535,11 +2617,13 @@ public partial class MainWindow : Window
             if (e.Result.Kind == ToolResultKind.Cancelled)
             {
                 createBlockResult = _viewModel.CancelCreateBlockBasePointPick();
+                EndPointPlacementSnapping();
             }
             else if (e.IsPointerPressed)
             {
                 Point2D basePoint = e.SnapCandidate?.Point ?? e.MousePosition;
                 createBlockResult = _viewModel.CommitCreateBlockBasePointPick(basePoint);
+                EndPointPlacementSnapping();
 
                 CadCanvas.ClearSnapMarker();
                 CadCanvas.InvalidateVisual();
@@ -2558,11 +2642,13 @@ public partial class MainWindow : Window
             if (e.Result.Kind == ToolResultKind.Cancelled)
             {
                 insertBlockResult = _viewModel.CancelPendingBlockInsertion();
+                EndPointPlacementSnapping();
             }
             else if (e.IsPointerPressed)
             {
                 Point2D insertionPoint = e.SnapCandidate?.Point ?? e.MousePosition;
                 insertBlockResult = _viewModel.CommitPendingBlockInsertion(insertionPoint);
+                EndPointPlacementSnapping();
 
                 CadCanvas.ClearSnapMarker();
                 CadCanvas.InvalidateVisual();
@@ -2581,11 +2667,13 @@ public partial class MainWindow : Window
             if (e.Result.Kind == ToolResultKind.Cancelled)
             {
                 importResult = _viewModel.CancelPendingImportDrawing();
+                EndPointPlacementSnapping();
             }
             else if (e.IsPointerPressed)
             {
                 Point2D insertionPoint = e.SnapCandidate?.Point ?? e.MousePosition;
                 importResult = _viewModel.CommitPendingImportDrawing(insertionPoint);
+                EndPointPlacementSnapping();
 
                 CadCanvas.ClearSnapMarker();
                 CadCanvas.InvalidateVisual();

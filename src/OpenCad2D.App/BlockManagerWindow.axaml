@@ -1,0 +1,169 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:blocks="clr-namespace:OpenCad2D.App.ViewModels.Blocks"
+        x:Class="OpenCad2D.App.BlockManagerWindow"
+        x:DataType="blocks:BlockManagerWindowViewModel"
+        Title="Block Manager"
+        Icon="/Assets/app-icon.ico"
+        Width="860"
+        Height="500"
+        MinWidth="740"
+        MinHeight="380"
+        WindowStartupLocation="CenterOwner"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.header-cell">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.cell-label">
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.status-unused">
+            <Setter Property="Foreground" Value="#8FD14F" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.status-used">
+            <Setter Property="Foreground" Value="#DCDCAA" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="BorderBrush" Value="#555555" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="86" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto"
+          Margin="10">
+
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    Spacing="6"
+                    Margin="0,0,0,8">
+            <Button Classes="dialog-button"
+                    Content="Insert"
+                    Click="Insert_Click"
+                    IsEnabled="{Binding CanInsertSelectedBlock}" />
+
+            <Button Classes="dialog-button"
+                    Content="Delete Unused"
+                    Click="Delete_Click"
+                    IsEnabled="{Binding CanDeleteSelectedBlock}" />
+
+            <TextBlock Text="Rename blocks directly in the Name column. Used blocks cannot be deleted."
+                       Foreground="#AAAAAA"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0" />
+
+            <TextBlock Text="{Binding SummaryText}"
+                       Foreground="#AAAAAA"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0" />
+        </StackPanel>
+
+        <Border Grid.Row="1"
+                BorderBrush="#3A3A3A"
+                BorderThickness="1"
+                Background="#202020">
+            <Grid RowDefinitions="Auto,*">
+                <Border Grid.Row="0"
+                        Background="#2D2D30"
+                        Padding="7,5">
+                    <Grid ColumnDefinitions="*,90,90,110,100"
+                          ColumnSpacing="6">
+                        <TextBlock Grid.Column="0" Classes="header-cell" Text="Name" />
+                        <TextBlock Grid.Column="1" Classes="header-cell" Text="Entities" />
+                        <TextBlock Grid.Column="2" Classes="header-cell" Text="Instances" />
+                        <TextBlock Grid.Column="3" Classes="header-cell" Text="Bounds" />
+                        <TextBlock Grid.Column="4" Classes="header-cell" Text="Status" />
+                    </Grid>
+                </Border>
+
+                <ListBox Grid.Row="1"
+                         ItemsSource="{Binding Blocks}"
+                         SelectedItem="{Binding SelectedBlock}"
+                         Background="#202020"
+                         BorderThickness="0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="blocks:EditableBlockDefinitionViewModel">
+                            <Border Padding="7,4">
+                                <Grid ColumnDefinitions="*,90,90,110,100"
+                                      ColumnSpacing="6">
+                                    <TextBox Grid.Column="0"
+                                             Text="{Binding Name, Mode=TwoWay}"
+                                             Background="#252526"
+                                             Foreground="#DDDDDD"
+                                             BorderBrush="#555555"
+                                             BorderThickness="1"
+                                             FontSize="11"
+                                             Padding="5,2" />
+
+                                    <TextBlock Grid.Column="1"
+                                               Classes="cell-label"
+                                               Text="{Binding EntityCountText}"
+                                               HorizontalAlignment="Right" />
+
+                                    <TextBlock Grid.Column="2"
+                                               Classes="cell-label"
+                                               Text="{Binding InstanceCountText}"
+                                               HorizontalAlignment="Right" />
+
+                                    <TextBlock Grid.Column="3"
+                                               Classes="cell-label"
+                                               Text="{Binding BoundsText}" />
+
+                                    <Grid Grid.Column="4">
+                                        <TextBlock Classes="status-unused"
+                                                   Text="{Binding StatusText}"
+                                                   IsVisible="{Binding CanDelete}" />
+                                        <TextBlock Classes="status-used"
+                                                   Text="{Binding StatusText}"
+                                                   IsVisible="{Binding !CanDelete}" />
+                                    </Grid>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="2"
+                   Text="{Binding ValidationMessage}"
+                   Foreground="#F48771"
+                   IsVisible="{Binding HasValidationMessage}"
+                   Margin="0,8,0,0" />
+
+        <StackPanel Grid.Row="3"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="6"
+                    Margin="0,12,0,0">
+            <Button Classes="dialog-button"
+                    Content="OK"
+                    Click="Ok_Click" />
+
+            <Button Classes="dialog-button"
+                    Content="Cancel"
+                    Click="Cancel_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

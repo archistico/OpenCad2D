@@ -1,5 +1,7 @@
-﻿using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.BlockReferences;
 
 namespace OpenCad2D.Interaction.Snapping;
 
@@ -14,17 +16,38 @@ public sealed class NearestSnapProvider : ISnapProvider
     {
         foreach (CadEntity entity in request.Document.GetVisibleEntities(request.SearchArea))
         {
-            Point2D closestPoint = entity.GetClosestPoint(request.CursorPoint);
-            double distance = request.CursorPoint.DistanceTo(closestPoint);
-
-            if (distance <= request.Tolerance)
+            foreach ((Point2D point, EntityId entityId) in GetCandidatePoints(request, entity))
             {
-                yield return new SnapCandidate(
-                    SnapKind.Nearest,
-                    closestPoint,
-                    entity.Id,
-                    distance);
+                double distance = request.CursorPoint.DistanceTo(point);
+
+                if (distance <= request.Tolerance)
+                {
+                    yield return new SnapCandidate(
+                        SnapKind.Nearest,
+                        point,
+                        entityId,
+                        distance);
+                }
             }
         }
+    }
+
+    private static IEnumerable<(Point2D Point, EntityId EntityId)> GetCandidatePoints(
+        SnapRequest request,
+        CadEntity entity)
+    {
+        if (entity is BlockReferenceEntity blockReference)
+        {
+            foreach (CadEntity worldEntity in BlockReferenceGeometryResolver.GetWorldEntities(
+                request.Document,
+                blockReference))
+            {
+                yield return (worldEntity.GetClosestPoint(request.CursorPoint), blockReference.Id);
+            }
+
+            yield break;
+        }
+
+        yield return (entity.GetClosestPoint(request.CursorPoint), entity.Id);
     }
 }

@@ -241,3 +241,42 @@ public sealed class HitTestServiceTests
     }
 
 }
+public sealed class BlockReferenceHitTestServiceTests
+{
+    [Fact]
+    public void HitTest_WhenPointIsNearBlockInternalEntity_ShouldReturnBlockReference()
+    {
+        var document = new CadDocument();
+        var blockDefinitionId = BlockDefinitionId.New();
+        var internalLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        var definition = new OpenCad2D.Core.Blocks.BlockDefinition(
+            blockDefinitionId,
+            "Door",
+            new[] { internalLine });
+
+        document.BlockDefinitions.Add(definition);
+
+        var blockReference = new BlockReferenceEntity(
+            blockDefinitionId,
+            new Point2D(100, 50),
+            new Vector2D(1, 0),
+            new Vector2D(0, 1),
+            definition.GetBoundingBox());
+
+        document.AddEntity(blockReference);
+
+        var service = new HitTestService();
+
+        HitTestResult? result = service.HitTest(
+            document,
+            new Point2D(105, 50.25),
+            tolerance: 1);
+
+        Assert.NotNull(result);
+        Assert.Equal(blockReference.Id, result.Entity.Id);
+        Assert.Equal(new Point2D(105, 50), result.ClosestPoint);
+    }
+}

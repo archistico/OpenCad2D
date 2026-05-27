@@ -1225,6 +1225,20 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="BlockManagerButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Manage, rename, delete and insert block definitions"
+                                    Click="BlockManager_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconRectangle}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Block Manager" />
+                                </Grid>
+                            </Button>
+
                             <Button x:Name="ExplodeButton"
                                     Classes="tool-button"
                                     ToolTip.Tip="Explode selected polylines into individual lines"

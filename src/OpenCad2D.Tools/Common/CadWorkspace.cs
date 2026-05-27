@@ -1,3 +1,4 @@
+using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Documents;
@@ -401,6 +402,63 @@ public sealed class CadWorkspace
 
         return ToolResult.Completed("Line formats updated.");
     }
+
+
+    public ToolResult ApplyBlockDefinitionChanges(IEnumerable<BlockDefinition> blockDefinitions)
+    {
+        ArgumentNullException.ThrowIfNull(blockDefinitions);
+
+        List<BlockDefinition> oldBlockDefinitions = Document.BlockDefinitions.All.ToList();
+        List<BlockDefinition> blockDefinitionList = blockDefinitions.ToList();
+
+        if (AreBlockDefinitionsEquivalent(oldBlockDefinitions, blockDefinitionList))
+        {
+            return ToolResult.None();
+        }
+
+        var command = new UpdateBlockDefinitionsCommand(
+            oldBlockDefinitions,
+            blockDefinitionList);
+
+        CommandHistory.Execute(
+            Document,
+            command);
+
+        ClearSelectionOfNonSelectableEntities();
+
+        return ToolResult.Completed("Block definitions updated.");
+    }
+
+    private static bool AreBlockDefinitionsEquivalent(
+        IReadOnlyList<BlockDefinition> first,
+        IReadOnlyList<BlockDefinition> second)
+    {
+        if (first.Count != second.Count)
+        {
+            return false;
+        }
+
+        Dictionary<BlockDefinitionId, BlockDefinition> secondById = second.ToDictionary(definition => definition.Id);
+
+        foreach (BlockDefinition firstDefinition in first)
+        {
+            if (!secondById.TryGetValue(firstDefinition.Id, out BlockDefinition? secondDefinition))
+            {
+                return false;
+            }
+
+            if (!string.Equals(firstDefinition.Name, secondDefinition.Name, StringComparison.Ordinal) ||
+                firstDefinition.Entities.Count != secondDefinition.Entities.Count ||
+                !firstDefinition.Entities.Select(entity => entity.Id)
+                    .SequenceEqual(secondDefinition.Entities.Select(entity => entity.Id)))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 
 
     public ToolResult ApplyTextFormatChanges(IEnumerable<TextFormat> textFormats)

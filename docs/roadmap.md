@@ -83,9 +83,13 @@ The following milestones are planned before the future v0.9 stabilization gate:
 
 | Milestone | Status | Specification | Goal |
 |---|---:|---|---|
-| v0.8.100 | [ ] | `docs/specs/v0.8.100-import-drawing.md` | Import another `.opencad2d.json` drawing into the current document. |
-| v0.8.110 | [ ] | `docs/specs/v0.8.110-blocks.md` | Introduce block definitions, block references and persistence. |
-| v0.8.115 | [ ] | `docs/specs/v0.8.110-blocks.md` | Add Create Block, Insert Block, Edit Block and Explode workflows. |
+| v0.8.100 | [x] | `docs/specs/v0.8.100-import-drawing.md` | Import another `.opencad2d.json` drawing into the current document. |
+| v0.8.110 | [x] | `docs/specs/v0.8.110-blocks.md` | Introduce block definitions, block references and persistence. |
+| v0.8.111 | [x] | `docs/specs/v0.8.110-blocks.md` | Create Block from selected entities with optional picked base point. |
+| v0.8.112 | [x] | `docs/specs/v0.8.110-blocks.md` | Insert existing block definitions with scale, rotation and picked insertion point. |
+| v0.8.113 | [x] | `docs/specs/v0.8.110-blocks.md` | Add minimal Block Manager for rename, unused delete and insert-selected workflow. |
+| v0.8.114 | [ ] | `docs/specs/v0.8.110-blocks.md` | Add snap candidates from block-internal geometry. |
+| v0.8.115 | [ ] | `docs/specs/v0.8.110-blocks.md` | Add Edit Block and Explode workflows. |
 | v0.8.120 | [ ] | `docs/specs/v0.8.120-architectural-symbols.md` | Add north symbol, metric scale, section/elevation markers and title block helpers. |
 | v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
 | v0.8.140 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add explicit-boundary hatch/solid fill entity. |

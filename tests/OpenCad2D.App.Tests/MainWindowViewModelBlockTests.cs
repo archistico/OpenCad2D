@@ -219,3 +219,29 @@ public sealed class MainWindowViewModelInsertBlockTests
         return viewModel;
     }
 }
+
+public sealed class MainWindowViewModelBlockManagerTests
+{
+    [Fact]
+    public void ApplyBlockDefinitionChanges_ShouldRenameBlockAndBeUndoable()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(Point2D.Origin, new Point2D(1, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.ReplaceWith(line.Id);
+        viewModel.CreateBlockFromSelection(new CreateBlockOptions("Door", 0, 0));
+        var definition = viewModel.Workspace.Document.BlockDefinitions.All.Single();
+
+        var result = viewModel.ApplyBlockDefinitionChanges(new[]
+        {
+            definition.WithName("Door Renamed")
+        });
+
+        Assert.True(result.Changed);
+        Assert.Equal("Door Renamed", viewModel.Workspace.Document.BlockDefinitions.GetRequired(definition.Id).Name);
+
+        viewModel.Undo();
+
+        Assert.Equal("Door", viewModel.Workspace.Document.BlockDefinitions.GetRequired(definition.Id).Name);
+    }
+}

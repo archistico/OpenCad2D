@@ -66,6 +66,7 @@ public sealed class CadCanvas : Control
         new SolidColorBrush(Color.FromRgb(255, 230, 80)),
         2);
     private SnapCandidate? _currentSnapCandidate;
+    private SnapKind? _enabledSnapsOverride;
     private readonly Pen _gridMinorPen = new(
         new SolidColorBrush(Color.FromRgb(45, 45, 45)),
         1);
@@ -110,6 +111,17 @@ public sealed class CadCanvas : Control
     public event EventHandler<CadCanvasWorkspaceChangedEventArgs>? WorkspaceChanged;
 
     public event EventHandler? RepeatLastCommandRequested;
+
+    public SnapKind? EnabledSnapsOverride
+    {
+        get => _enabledSnapsOverride;
+        set
+        {
+            _enabledSnapsOverride = value;
+            _currentSnapCandidate = null;
+            InvalidateVisual();
+        }
+    }
 
     public CadCanvas()
     {
@@ -643,6 +655,11 @@ public sealed class CadCanvas : Control
         if (Workspace is null)
         {
             return SnapKind.None;
+        }
+
+        if (_enabledSnapsOverride.HasValue)
+        {
+            return _enabledSnapsOverride.Value;
         }
 
         if (Workspace.ToolController.ActiveTool is ISnapModeProvider provider)

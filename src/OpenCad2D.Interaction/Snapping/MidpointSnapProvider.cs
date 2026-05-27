@@ -1,4 +1,6 @@
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Interaction.BlockReferences;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Interaction.Snapping;
@@ -14,7 +16,7 @@ public sealed class MidpointSnapProvider : ISnapProvider
     {
         foreach (CadEntity entity in request.Document.GetVisibleEntities(request.SearchArea))
         {
-            foreach (Point2D point in GetEntityMidpoints(entity))
+            foreach ((Point2D point, EntityId entityId) in GetCandidatePoints(request, entity))
             {
                 double distance = request.CursorPoint.DistanceTo(point);
 
@@ -23,10 +25,35 @@ public sealed class MidpointSnapProvider : ISnapProvider
                     yield return new SnapCandidate(
                         SnapKind.Midpoint,
                         point,
-                        entity.Id,
+                        entityId,
                         distance);
                 }
             }
+        }
+    }
+
+    private static IEnumerable<(Point2D Point, EntityId EntityId)> GetCandidatePoints(
+        SnapRequest request,
+        CadEntity entity)
+    {
+        if (entity is BlockReferenceEntity blockReference)
+        {
+            foreach (CadEntity worldEntity in BlockReferenceGeometryResolver.GetWorldEntities(
+                request.Document,
+                blockReference))
+            {
+                foreach (Point2D point in GetEntityMidpoints(worldEntity))
+                {
+                    yield return (point, blockReference.Id);
+                }
+            }
+
+            yield break;
+        }
+
+        foreach (Point2D point in GetEntityMidpoints(entity))
+        {
+            yield return (point, entity.Id);
         }
     }
 
