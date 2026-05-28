@@ -35,6 +35,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - layers with visibility and locking;
 - reusable line formats with color, lineweight, line style and custom dash pattern values;
 - reusable text formats;
+- reusable drawing library snippets loaded from `library/**/*.opencad2d.json`, grouped by category, previewed and inserted as block references;
 - external PNG/JPG/JPEG image references stored as linked files, not embedded raster bytes;
 - relative image paths, missing-image warnings, relink/replace/reset-aspect workflows, Collect Refs packaging and Image References Manager;
 - Layer Manager, Line Format Manager, Text Format Manager and Image References Manager;
@@ -173,6 +174,7 @@ Important documents:
 | `docs/curve-editing.md` | Trim/Break curve-editing architecture, native precision and shared cut-point rules |
 | `docs/command-input.md` | command input syntax and tool workflow |
 | `docs/tools.md` | tool behavior, workflow rules and preview-provider conventions |
+| `docs/library-browser.md` | reusable `.opencad2d.json` library item layout, insertion workflow and limitations |
 | `docs/line-formats.md` | line format and line style pattern rules |
 | `docs/application-settings.md` | document settings and local settings separation |
 | `docs/draw-order.md` | Z-order behavior |

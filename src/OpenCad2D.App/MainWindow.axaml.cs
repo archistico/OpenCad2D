@@ -19,6 +19,7 @@ using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.App.ViewModels.ImageReferences;
 using OpenCad2D.App.ViewModels.ImportDrawing;
 using OpenCad2D.App.ViewModels.Blocks;
+using OpenCad2D.App.ViewModels.Library;
 using OpenCad2D.Export.Dxf.Import;
 using OpenCad2D.Export.Pdf;
 using OpenCad2D.Export.Svg;
@@ -1710,6 +1711,55 @@ public partial class MainWindow : Window
         }
     }
 
+    private async void Library_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        string libraryRootPath = ResolveLibraryRootPath();
+        var catalog = new LibraryItemCatalog(new JsonDocumentSerializer());
+        LibraryCatalogScanResult scanResult = catalog.Scan(libraryRootPath);
+        var dialogViewModel = new LibraryWindowViewModel(scanResult);
+        var dialog = new LibraryWindow(dialogViewModel);
+
+        LibraryWindowResult? result = await dialog.ShowDialog<LibraryWindowResult?>(this);
+
+        if (result is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        ToolResult insertResult = _viewModel.BeginInsertLibraryItem(result.SelectedItem);
+
+        BeginPointPlacementSnapping(insertResult);
+        RefreshStatus();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+
+        if (insertResult.Message is not null && insertResult.Kind != ToolResultKind.Started)
+        {
+            await ShowMessageAsync(
+                "Library",
+                insertResult.Message);
+        }
+    }
+
+    private static string ResolveLibraryRootPath()
+    {
+        string currentDirectoryLibrary = Path.Combine(
+            Environment.CurrentDirectory,
+            "library");
+
+        if (Directory.Exists(currentDirectoryLibrary))
+        {
+            return currentDirectoryLibrary;
+        }
+
+        return Path.Combine(
+            AppContext.BaseDirectory,
+            "library");
+    }
+
 
     private async void InsertBlock_Click(
         object? sender,
@@ -2769,6 +2819,31 @@ public partial class MainWindow : Window
             }
 
             _viewModel.SetLastResult(insertBlockResult);
+        }
+        else if (_viewModel.IsLibraryInsertionPending)
+        {
+            ToolResult libraryInsertResult;
+
+            if (e.Result.Kind == ToolResultKind.Cancelled)
+            {
+                libraryInsertResult = _viewModel.CancelPendingLibraryInsertion();
+                EndPointPlacementSnapping();
+            }
+            else if (e.IsPointerPressed)
+            {
+                Point2D insertionPoint = e.SnapCandidate?.Point ?? e.MousePosition;
+                libraryInsertResult = _viewModel.CommitPendingLibraryInsertion(insertionPoint);
+                EndPointPlacementSnapping();
+
+                CadCanvas.ClearSnapMarker();
+                CadCanvas.InvalidateVisual();
+            }
+            else
+            {
+                libraryInsertResult = ToolResult.Started("Library: specify insertion point.");
+            }
+
+            _viewModel.SetLastResult(libraryInsertResult);
         }
         else if (_viewModel.IsImportDrawingPlacementPending)
         {

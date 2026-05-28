@@ -45,12 +45,15 @@ Implemented first pass:
 
 - `NorthSymbolTool`
 - `ScaleBarTool`
+- Library Browser for `.opencad2d.json` snippets
 
 `NorthSymbolTool` inserts a simple north arrow made of ordinary geometry: three lines, one circle and one `TextEntity` with label `N`. The first version uses the picked point as the `(0,0)` symbol base point, honors active snaps for the insertion point, uses the current layer/current text format, and commits insertion as one undoable command. Aliases: `NORTH`, `NORTHSYMBOL`, `NS`.
 
 `ScaleBarTool` inserts the requested 0–1000 graphic scale bar as ordinary closed polylines, vertical tick lines and text labels. The picked point is the local `(0,0)` base point. Aliases: `SCALEBAR`, `SBAR`, `GRAPHICSCALE`.
 
-Direction for next steps: avoid adding many fixed-symbol buttons. Fixed reusable content should be stored as `.opencad2d.json` files under `library/` and inserted through a modal Library Browser. Direct symbol/tool buttons should be kept for parametric generators such as doors, windows, stairs, configurable section/elevation markers and title blocks.
+The Library Browser scans `library/**/*.opencad2d.json`, groups items by the first folder below `library/`, shows a vector preview and inserts the selected item as a reusable block reference. The source file origin `(0,0)` is the insertion base point. Repeated insertions reuse the deterministic library block definition. See `docs/library-browser.md`.
+
+Fixed reusable content should be stored as `.opencad2d.json` files under `library/` rather than becoming separate toolbar buttons. Direct symbol/tool buttons should be kept for parametric generators such as doors, windows, stairs, configurable section/elevation markers and title blocks.
 
 ## Dimension tools
 
@@ -346,11 +349,11 @@ The Create Block tool is the first block workflow. It requires a non-empty selec
 
 `ScaleBar` inserts the 0–1000 metric graphic scale bar as ordinary polylines, lines and text geometry on the current layer. Aliases: `SCALEBAR`, `SBAR`, `GRAPHICSCALE`. The first version is inserted with one picked point used as local origin `(0,0)`.
 
-## Library browser direction
+## Library Browser
 
-Next fixed symbols should be provided as library files rather than new toolbar buttons.
+Fixed symbols and reusable snippets should be provided as library files rather than new toolbar buttons.
 
-Target workflow:
+Workflow:
 
 ```text
 Library button -> modal Library window -> category -> preview -> Insert -> pick insertion point
@@ -366,7 +369,9 @@ library/porte-finestre/*.opencad2d.json
 library/annotazioni/*.opencad2d.json
 ```
 
-The recommended default insertion mode is block-reference insertion, with Explode Block available when raw geometry is needed.
+Library items are inserted as block references by default. The browser creates or reuses a deterministic block definition for each item, then starts a canvas insertion-point workflow that honors active snaps. Explode Block is available when raw geometry is needed.
+
+See `docs/library-browser.md` for item creation rules, folder layout and current limitations.
 
 ### Explode and Join stabilization
 

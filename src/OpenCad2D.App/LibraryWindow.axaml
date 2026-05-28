@@ -1,0 +1,201 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:library="clr-namespace:OpenCad2D.App.ViewModels.Library"
+        xmlns:controls="clr-namespace:OpenCad2D.App.Controls"
+        x:Class="OpenCad2D.App.LibraryWindow"
+        x:DataType="library:LibraryWindowViewModel"
+        Title="Library"
+        Icon="/Assets/app-icon.ico"
+        Width="900"
+        Height="560"
+        MinWidth="760"
+        MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        Background="#1E1E1E">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.header-cell">
+            <Setter Property="Foreground" Value="#CCCCCC" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="TextBlock.cell-label">
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Background" Value="#333333" />
+            <Setter Property="Foreground" Value="#DDDDDD" />
+            <Setter Property="BorderBrush" Value="#555555" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="9,4" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="MinWidth" Value="86" />
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto"
+          Margin="10">
+
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,260"
+              ColumnSpacing="10"
+              Margin="0,0,0,8">
+            <TextBox Grid.Column="0"
+                     PlaceholderText="Search"
+                     Text="{Binding SearchText, Mode=TwoWay}"
+                     Background="#252526"
+                     Foreground="#DDDDDD"
+                     BorderBrush="#555555"
+                     BorderThickness="1"
+                     FontSize="12"
+                     Padding="6,4" />
+
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Spacing="8">
+                <TextBlock Text="{Binding SummaryText}"
+                           Foreground="#AAAAAA"
+                           VerticalAlignment="Center" />
+
+                <TextBlock Text="{Binding WarningSummaryText}"
+                           Foreground="#F48771"
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding HasWarnings}" />
+            </StackPanel>
+        </Grid>
+
+        <Grid Grid.Row="1"
+              ColumnDefinitions="210,*,260"
+              ColumnSpacing="10">
+            <Border Grid.Column="0"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="1"
+                    Background="#202020">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0"
+                            Background="#2D2D30"
+                            Padding="7,5">
+                        <TextBlock Classes="header-cell"
+                                   Text="Categories" />
+                    </Border>
+
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding Categories}"
+                             SelectedItem="{Binding SelectedCategory}"
+                             Background="#202020"
+                             BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="library:LibraryCatalogCategory">
+                                <Border Padding="7,5">
+                                    <TextBlock Classes="cell-label"
+                                               Text="{Binding DisplayName}" />
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="1"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="1"
+                    Background="#202020">
+                <Grid RowDefinitions="Auto,*">
+                    <Border Grid.Row="0"
+                            Background="#2D2D30"
+                            Padding="7,5">
+                        <Grid ColumnDefinitions="*,190"
+                              ColumnSpacing="8">
+                            <TextBlock Grid.Column="0"
+                                       Classes="header-cell"
+                                       Text="Item" />
+                            <TextBlock Grid.Column="1"
+                                       Classes="header-cell"
+                                       Text="Path" />
+                        </Grid>
+                    </Border>
+
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding VisibleItems}"
+                             SelectedItem="{Binding SelectedItem}"
+                             Background="#202020"
+                             BorderThickness="0">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate x:DataType="library:LibraryCatalogItem">
+                                <Border Padding="7,5">
+                                    <Grid ColumnDefinitions="*,190"
+                                          ColumnSpacing="8">
+                                        <TextBlock Grid.Column="0"
+                                                   Classes="cell-label"
+                                                   Text="{Binding Title}" />
+                                        <TextBlock Grid.Column="1"
+                                                   Classes="cell-label"
+                                                   Text="{Binding RelativePath}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <Border Grid.Column="2"
+                    BorderBrush="#3A3A3A"
+                    BorderThickness="1"
+                    Background="#202020"
+                    Padding="10">
+                <Grid RowDefinitions="Auto,Auto,*,Auto">
+                    <TextBlock Grid.Row="0"
+                               Text="{Binding SelectedItem.Title}"
+                               Foreground="#FFFFFF"
+                               FontWeight="SemiBold"
+                               FontSize="14" />
+
+                    <TextBlock Grid.Row="1"
+                               Text="{Binding SelectedItem.RelativePath}"
+                               Foreground="#AAAAAA"
+                               FontSize="11"
+                               TextWrapping="Wrap"
+                               Margin="0,4,0,10" />
+
+                    <controls:LibraryItemPreviewControl Grid.Row="2"
+                                                        Item="{Binding SelectedItem}" />
+
+                    <TextBlock Grid.Row="3"
+                               Text="{Binding ValidationMessage}"
+                               Foreground="#F48771"
+                               IsVisible="{Binding HasValidationMessage}"
+                               TextWrapping="Wrap"
+                               Margin="0,10,0,0" />
+                </Grid>
+            </Border>
+        </Grid>
+
+        <TextBlock Grid.Row="2"
+                   Text="No library items found."
+                   Foreground="#AAAAAA"
+                   IsVisible="{Binding !HasItems}"
+                   Margin="0,8,0,0" />
+
+        <StackPanel Grid.Row="3"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="6"
+                    Margin="0,12,0,0">
+            <Button Classes="dialog-button"
+                    Content="Insert"
+                    Click="Insert_Click"
+                    IsEnabled="{Binding CanInsertSelectedItem}" />
+
+            <Button Classes="dialog-button"
+                    Content="Cancel"
+                    Click="Cancel_Click" />
+        </StackPanel>
+    </Grid>
+</Window>

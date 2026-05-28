@@ -19,6 +19,7 @@ using OpenCad2D.App.ViewModels.Properties;
 using OpenCad2D.App.ViewModels.PolarTracking;
 using OpenCad2D.App.ViewModels.ImportDrawing;
 using OpenCad2D.App.ViewModels.Blocks;
+using OpenCad2D.App.ViewModels.Library;
 using OpenCad2D.App.Settings;
 using System.IO;
 using OpenCad2D.Persistence.Dto;
@@ -42,6 +43,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private PendingOpenCad2DImport? _pendingOpenCad2DImport;
     private CreateBlockOptions? _pendingCreateBlockBasePointPick;
     private InsertBlockOptions? _pendingBlockInsertion;
+    private PendingLibraryBlockInsertion? _pendingLibraryBlockInsertion;
     private BlockEditSession? _activeBlockEditSession;
 
     private Point2D _mousePosition = Point2D.Origin;
@@ -1234,7 +1236,110 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public bool IsBlockInsertionPending => _pendingBlockInsertion is not null;
 
+    public bool IsLibraryInsertionPending => _pendingLibraryBlockInsertion is not null;
+
     public IReadOnlyList<BlockDefinition> BlockDefinitions => Workspace.Document.BlockDefinitions.All;
+
+    public ToolResult BeginInsertLibraryItem(LibraryCatalogItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        DocumentRecoveryResult recovery = _documentSerializer.DeserializeWithRecovery(item.Document);
+
+        try
+        {
+            var builder = new LibraryBlockDefinitionBuilder();
+            LibraryBlockDefinitionPreparation preparation = builder.Prepare(
+                Workspace.Document,
+                recovery.Document,
+                item);
+
+            _pendingLibraryBlockInsertion = new PendingLibraryBlockInsertion(
+                item,
+                preparation);
+
+            ToolResult result = ToolResult.Started(
+                $"Library item '{item.Title}': specify insertion point.");
+
+            SetLastResult(result);
+            NotifyDocumentStateChanged();
+
+            return result;
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
+        {
+            ToolResult rejected = ToolResult.None(exception.Message);
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+    }
+
+    public ToolResult CommitPendingLibraryInsertion(Point2D insertionPoint)
+    {
+        if (_pendingLibraryBlockInsertion is null)
+        {
+            return ToolResult.None();
+        }
+
+        PendingLibraryBlockInsertion pending = _pendingLibraryBlockInsertion;
+        _pendingLibraryBlockInsertion = null;
+
+        Workspace.EnsureCurrentLayerIsUsable();
+
+        var reference = new BlockReferenceEntity(
+            pending.Preparation.BlockDefinitionId,
+            insertionPoint,
+            new Vector2D(1, 0),
+            new Vector2D(0, 1),
+            pending.Preparation.Definition.GetBoundingBox(),
+            layerId: Workspace.CurrentLayerId);
+
+        var commands = new List<ICadCommand>(pending.Preparation.DefinitionCommands)
+        {
+            new AddEntityCommand(reference)
+        };
+
+        ICadCommand command = commands.Count == 1
+            ? commands[0]
+            : new CompositeCommand(
+                "Insert library item",
+                commands);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            command);
+
+        Workspace.SelectionSet.ReplaceWith(reference.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Library item '{pending.Item.Title}' inserted as block '{pending.Preparation.BlockName}'.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+        NotifyFileStateChanged();
+
+        return result;
+    }
+
+    public ToolResult CancelPendingLibraryInsertion()
+    {
+        if (_pendingLibraryBlockInsertion is null)
+        {
+            return ToolResult.None();
+        }
+
+        _pendingLibraryBlockInsertion = null;
+
+        ToolResult result = ToolResult.None("Library insertion cancelled.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
 
     public ToolResult BeginInsertBlockPlacement(InsertBlockOptions options)
     {
@@ -3581,6 +3686,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         public DocumentRecoveryResult Recovery { get; }
 
         public OpenCad2DImportPlacementOptions Options { get; }
+    }
+
+    private sealed class PendingLibraryBlockInsertion
+    {
+        public PendingLibraryBlockInsertion(
+            LibraryCatalogItem item,
+            LibraryBlockDefinitionPreparation preparation)
+        {
+            Item = item;
+            Preparation = preparation;
+        }
+
+        public LibraryCatalogItem Item { get; }
+
+        public LibraryBlockDefinitionPreparation Preparation { get; }
     }
 
 }

@@ -848,6 +848,19 @@
                             <TextBlock Classes="panel-section-label"
                                        Text="SYMBOLS" />
 
+                            <Button Classes="tool-button"
+                                    ToolTip.Tip="Open reusable drawing library items"
+                                    Click="Library_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconOpen}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Library" />
+                                </Grid>
+                            </Button>
+
                             <Button x:Name="NorthSymbolButton"
                                     Classes="tool-button"
                                     ToolTip.Tip="Insert a simple north arrow symbol"
