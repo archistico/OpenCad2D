@@ -16,7 +16,7 @@ Suggested numbering:
 | v0.8.110 - v0.8.119 | Block model, block references and block editing |
 | v0.8.120 - v0.8.129 | Library browser, reusable drawing snippets and parametric drafting helpers |
 | v0.8.130 - v0.8.139 | Stair tools for plan/elevation/front elevation drafting |
-| v0.8.140 - v0.8.159 | Hatch and boundary fill system |
+| v0.8.140 - v0.8.159 | Boundary Fill v1/v2 and hatch system |
 | v0.8.160+ | Consolidation, compatibility, documentation and release gate preparation |
 
 The exact patch numbers can move, but each milestone should remain independently buildable, testable and documented.
@@ -29,12 +29,12 @@ The recommended order is:
 2. Blocks
 3. Drawing Library and parametric helpers
 4. Stairs
-5. Hatch
+5. Boundary Fill / Hatch
 6. Consolidation
 
 This order is intentional.
 
-Import Drawing is a low-risk foundation for reusing existing work. Blocks should follow because many future symbols should be generated as reusable block definitions. Reusable library items and parametric helpers can then use the block infrastructure instead of becoming isolated one-off tools. Fixed symbols should mostly live as `.opencad2d.json` library snippets, while the Symbols/tools area should be reserved for parametric generators such as doors, windows, stairs or markers that need user-provided dimensions. Hatch is deferred because robust boundary recognition is geometrically more complex and should be built on top of a stable entity/document model.
+Import Drawing is a low-risk foundation for reusing existing work. Blocks should follow because many future symbols should be generated as reusable block definitions. Reusable library items and parametric helpers can then use the block infrastructure instead of becoming isolated one-off tools. Fixed symbols should mostly live as `.opencad2d.json` library snippets, while the Symbols/tools area should be reserved for parametric generators such as doors, windows, stairs or markers that need user-provided dimensions. Boundary Fill should progress conservatively: first create filled polylines from detected linear faces, then add preview/curve/gap support, and only then introduce a true hatch entity for holes and richer hatch behavior.
 
 ---
 
@@ -202,11 +202,26 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.140-hatch.md`.
 
-Status: planned.
+Status: partial. Boundary Fill v1 is implemented; HatchEntity remains planned.
 
-Goal: introduce a robust fill/hatch entity without trying to replicate all AutoCAD boundary detection immediately.
+Goal: evolve the current solid-fill system into robust boundary fill and hatch workflows without trying to replicate all AutoCAD boundary detection immediately.
 
-Initial scope:
+Implemented BF v1 scope:
+
+- `BFILL` / `FILL` / `RIEMPIMENTO` command aliases.
+- Click inside a closed visible linear boundary.
+- Split linear boundaries at intersections and build planar faces.
+- Create a new closed `PolylineEntity` for the picked face.
+- Set `IsFilled = true`, use the current layer and support undo through `AddEntityCommand`.
+
+BF v2 scope:
+
+- Preview the detected boundary before creation.
+- Add sampled arc and circle boundaries while still generating a filled `PolylineEntity`.
+- Add configurable small-gap tolerance with conservative failure messages.
+- Keep holes/islands deferred until a true hatch entity exists.
+
+HatchEntity scope:
 
 - `HatchEntity` with explicit loops.
 - Solid fill.
@@ -217,11 +232,39 @@ Initial scope:
 
 Exit criteria:
 
-- A selected closed polyline can become a hatch boundary.
+- BF v1: clicking inside a rectangle made of lines creates a filled closed polyline.
+- BF v2: moving the cursor previews the detected boundary before committing.
+- BF v2: arc/circle boundaries can participate through documented sampling.
+- BF v2: small endpoint gaps can be closed within a configured tolerance, and larger gaps fail clearly.
+- HatchEntity: a selected closed polyline can become a hatch boundary.
 - A selected set of connected line/arc entities can become a hatch boundary if it forms a valid loop.
 - Hatch can contain inner loops for holes in a controlled explicit workflow.
 - Hatch rendering honors holes.
 - Open or ambiguous boundaries fail with clear messages.
+
+---
+
+## Milestone v0.8.145 — Boundary Fill v2
+
+Specification: `docs/specs/v0.8.140-hatch.md`.
+
+Status: planned.
+
+Goal: improve the existing click-inside BF workflow before introducing a true hatch entity.
+
+Scope:
+
+- Hover/preview of the boundary that would be generated.
+- Sampled arc and circle boundary support.
+- Configurable gap tolerance for small endpoint gaps.
+- Better diagnostics for ambiguous, open or self-intersecting detected regions.
+
+Deferred beyond BF v2:
+
+- Holes/islands.
+- Hatch patterns.
+- Associativity.
+- Full AutoCAD-style boundary detection across arbitrary curves and blocks.
 
 ---
 
@@ -231,7 +274,7 @@ Specification: `docs/specs/v0.8.140-hatch.md`.
 
 Status: planned.
 
-Goal: support more realistic hatch regions.
+Goal: support more realistic hatch regions through a real hatch entity.
 
 Scope:
 
@@ -243,7 +286,7 @@ Scope:
 
 Deferred beyond v0.8.150:
 
-- Full click-inside automatic boundary detection.
+- Fully general click-inside automatic boundary detection beyond the BF v2 supported boundary set.
 - Pattern libraries equivalent to AutoCAD `.pat`.
 - Associative hatch that automatically updates after boundary edits.
 

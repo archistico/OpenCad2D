@@ -66,6 +66,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Selection and hit testing | [x] | Selection, Select All, Select Last, Deselect, entity cycling, text/MTEXT bounding-box hit testing and locked/hidden layer behavior are implemented. |
 | Native curve editing | [x] | TRIM, BREAK and supported EXTEND flows use native parameters, shared cut points and adapter-backed splitting for supported curves. Mixed polylines preserve bulge segments where supported; curved-end EXTEND is intentionally conservative. |
 | Elliptical arcs | [x] | `EllipticalArcEntity` exists with rendering, snapping, persistence and SVG/PDF/DXF export support. |
+| Boundary Fill v1 | [x] | `BFILL`/`FILL`/`RIEMPIMENTO` click inside a closed visible linear boundary, build planar faces and create a filled closed `PolylineEntity` on the current layer. |
 | Open Bezier split | [x] | Open Bezier splines can be split/extracted natively and are no longer permanently degraded to polylines in TRIM/BREAK. |
 | Preview UX base | [x] | TRIM/BREAK removal previews are dashed; EXTEND addition previews are highlighted; selected boundaries stay visible. |
 | Save/export UX clarity | [x] | Export creates derived files and does not clear dirty state or replace the current native file path; user messages make this explicit. |
@@ -139,11 +140,12 @@ The following milestones are planned before the future v0.9 stabilization gate:
 | v0.8.120 | [~] | `docs/specs/v0.8.120-architectural-symbols.md` | Keep first-pass North Symbol and Metric Scale Bar; reserve future direct tools for parametric helpers rather than many fixed-symbol toolbar buttons. |
 | v0.8.122 | [ ] | `docs/specs/v0.8.122-library-browser.md` | Add Library browser for reusable `.opencad2d.json` snippets grouped by category, with preview and insert workflow. |
 | v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
-| v0.8.140 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add explicit-boundary hatch/solid fill entity. |
-| v0.8.150 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add holes/islands and composite hatch boundaries. |
+| v0.8.140 | [~] | `docs/specs/v0.8.140-hatch.md` | Boundary Fill v1 is implemented as click-inside linear face detection that creates filled closed polylines; HatchEntity remains planned. |
+| v0.8.145 | [ ] | `docs/specs/v0.8.140-hatch.md` | Boundary Fill v2: preview, sampled arc/circle boundaries and configurable small-gap tolerance. |
+| v0.8.150 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add real HatchEntity support for holes/islands and composite hatch boundaries. |
 | v0.8.160+ | [ ] | `docs/roadmap-v0.8.100.md` | Consolidate the expanded v0.8 line before the next release gate. |
 
-Implementation should follow the order above. Import Drawing and Blocks are foundations; the next priority is the Library browser because fixed symbols, furniture and reusable drawing snippets should be loaded from `.opencad2d.json` files instead of becoming separate toolbar buttons. Parametric tools should remain for objects that need dimensions/options before generation. Hatch is deferred because robust boundary recognition is the most geometry-sensitive part of the plan.
+Implementation should follow the order above. Import Drawing and Blocks are foundations; the next priority is the Library browser because fixed symbols, furniture and reusable drawing snippets should be loaded from `.opencad2d.json` files instead of becoming separate toolbar buttons. Parametric tools should remain for objects that need dimensions/options before generation. Boundary Fill v1 has started the click-inside workflow conservatively for linear boundaries. The next BF work should improve confidence and coverage before introducing a real hatch entity: preview first, then sampled curve boundaries, then gap tolerance, then HatchEntity for holes/islands.
 
 ---
 
@@ -221,6 +223,8 @@ Current limits:
 - no per-entity fill color;
 - open polylines never render/export fill;
 - general editable hatch workflows remain future work.
+
+Boundary Fill v1 is available as a bridge between current solid-fill support and future hatch entities. It detects the visible linear face containing a picked point and creates a new filled closed `PolylineEntity`. BF v2 should add preview, sampled arc/circle boundaries and configurable gap tolerance. Holes/islands should wait for a real `HatchEntity`, because subtractive inner loops do not fit the current single-polyline fill model.
 
 ### 4. Curve editing regression checklist
 
@@ -383,4 +387,3 @@ Candidate v1.0 gates:
 - [x] Preview no-op feedback is consistent with commit-click feedback for TRIM, BREAK POINT, BREAK SEGMENT and EXTEND.
   - Invalid hover positions no longer fall back to generic messages when the failure reason is known.
   - BREAK endpoint and coincident-point hover regressions are covered by passing tests.
-

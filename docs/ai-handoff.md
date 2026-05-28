@@ -493,7 +493,7 @@ The planned order is:
 3. `v0.8.115` — Block tools: Create Block, Insert Block, Edit Block, Explode and minimal Block Manager.
 4. `v0.8.120` — Architectural symbols: north symbol, metric scale, section/elevation markers and title block/testalino helpers.
 5. `v0.8.130` — Stair tools for plan, side elevation and front elevation, including optional slab/structure line.
-6. `v0.8.140+` — Hatch/fill system with explicit boundaries first, then holes/islands and composite boundaries.
+6. `v0.8.140+` — Boundary Fill v1 exists for click-inside linear regions that generate filled polylines; BF v2 should add preview, sampled arc/circle boundaries and gap tolerance before a true HatchEntity handles holes/islands and composite boundaries.
 7. `v0.8.160+` — Consolidation before the future v0.9 release gate.
 
 North Symbol note: the current default geometry is circle + upward arrow made with ordinary entities. The picked point is the `(0,0)` symbol base point; the `N` label is offset beside/above the arrow tip and must not overlap the arrow shaft.
@@ -507,7 +507,7 @@ Detailed planning documents added for this pivot:
 - `docs/specs/v0.8.130-stairs.md`
 - `docs/specs/v0.8.140-hatch.md`
 
-Important implementation opinion preserved from planning: do not start with AutoCAD-style click-inside hatch detection. Start with explicit selected boundaries, because robust automatic boundary detection requires graph construction, curve intersections, virtual splitting and face extraction. Blocks should be implemented before symbol/stair libraries so that generated architectural content can reuse definitions instead of becoming disconnected one-off geometry.
+Important implementation opinion preserved from planning: do not jump from BF v1 directly to full AutoCAD-style hatch detection. The implemented linear click-inside workflow is a useful bridge, but the next steps should be preview, sampled curve boundaries and controlled gap tolerance before holes/islands or associative hatch behavior. Blocks should be implemented before symbol/stair libraries so that generated architectural content can reuse definitions instead of becoming disconnected one-off geometry.
 
 
 ## v0.8.100-v0.8.102 Import Drawing

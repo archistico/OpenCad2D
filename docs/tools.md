@@ -163,6 +163,13 @@ Current first-pass boundary support:
 
 Curved boundaries, blocks, hatch patterns, holes and associative boundary updates are deferred. Aliases: `BFILL`, `BF`, `BOUNDARYFILL`, `FILL`, `RIEMPIMENTO`.
 
+Planned v2 sequence:
+
+1. Preview the detected boundary under the cursor before creation.
+2. Add sampled curve boundaries for arcs and circles, keeping the generated result as a filled `PolylineEntity`.
+3. Add configurable gap tolerance for small endpoint gaps, with clear diagnostics when the gap cannot be closed safely.
+4. Revisit holes/islands through a real `HatchEntity`, because a single `PolylineEntity` cannot represent subtractive inner loops.
+
 ---
 
 ## Fillet
