@@ -300,6 +300,7 @@ public sealed class CadEntityRenderer
                 origin.X,
                 origin.Y);
 
+            using (context.PushOpacity(imageReference.Opacity))
             using (context.PushTransform(transform))
             {
                 context.DrawImage(

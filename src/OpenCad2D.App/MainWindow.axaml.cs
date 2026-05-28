@@ -600,6 +600,10 @@ public partial class MainWindow : Window
                 case ImageReferenceManagerAction.OpenFolder:
                     await OpenImageReferenceFolderFromManagerAsync(result.Reference);
                     break;
+
+                case ImageReferenceManagerAction.SetTransparency:
+                    await SetImageReferenceTransparencyFromManagerAsync(result.Reference.EntityId, result.TransparencyPercent ?? 0.0);
+                    break;
             }
         }
     }
@@ -666,6 +670,26 @@ public partial class MainWindow : Window
             await ShowMessageAsync(
                 "Replace image",
                 result.Message ?? "The selected image reference could not be replaced.");
+        }
+    }
+
+    private async Task SetImageReferenceTransparencyFromManagerAsync(
+        OpenCad2D.Core.Identifiers.EntityId entityId,
+        double transparencyPercent)
+    {
+        ToolResult result = _viewModel.SetImageReferenceTransparency(
+            entityId,
+            transparencyPercent);
+
+        RefreshAllUiAfterDocumentChange();
+        CadCanvas.InvalidateVisual();
+        RefreshStatus();
+
+        if (!result.Changed)
+        {
+            await ShowMessageAsync(
+                "Image transparency",
+                result.Message ?? "The selected image reference transparency could not be updated.");
         }
     }
 

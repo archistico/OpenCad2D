@@ -37,7 +37,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - reusable text formats;
 - reusable drawing library snippets loaded from `library/**/*.opencad2d.json`, grouped by category, previewed and inserted as block references;
 - external PNG/JPG/JPEG image references stored as linked files, not embedded raster bytes;
-- relative image paths, missing-image warnings, relink/replace/reset-aspect workflows, Collect Refs packaging and Image References Manager;
+- relative image paths, transparency percentages, missing-image warnings, relink/replace/reset-aspect workflows, Collect Refs packaging and Image References Manager;
 - Layer Manager, Line Format Manager, Text Format Manager and Image References Manager;
 - compact ColorPicker support in line/text format managers;
 - editable Property Panel for supported entities, including MTEXT value/reference-width editing and read-only draw order display;
@@ -137,7 +137,7 @@ The native file stores:
 - line formats;
 - text formats;
 - dimension styles;
-- external image reference paths and oriented rectangle geometry;
+- external image reference paths, oriented rectangle geometry and opacity;
 - viewport state;
 - document-level settings such as grid, snap, ortho and polar tracking.
 

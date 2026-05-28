@@ -6,5 +6,6 @@ public enum ImageReferenceManagerAction
     SelectInDrawing,
     Relink,
     Replace,
-    OpenFolder
+    OpenFolder,
+    SetTransparency
 }

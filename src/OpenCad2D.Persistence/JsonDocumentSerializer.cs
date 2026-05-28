@@ -755,7 +755,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 HeightVectorX = imageReference.HeightVector.X,
                 HeightVectorY = imageReference.HeightVector.Y,
                 PixelWidth = imageReference.PixelWidth,
-                PixelHeight = imageReference.PixelHeight
+                PixelHeight = imageReference.PixelHeight,
+                Opacity = imageReference.Opacity
             },
 
             BlockReferenceEntity blockReference => new BlockReferenceEntityDto
@@ -1250,7 +1251,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     imageReference.PixelWidth,
                     imageReference.PixelHeight,
                     id,
-                    layerId),
+                    layerId,
+                    opacity: imageReference.Opacity),
 
             BlockReferenceEntityDto blockReference => string.IsNullOrWhiteSpace(blockReference.BlockDefinitionId) ||
                 new Vector2D(blockReference.XAxisX, blockReference.XAxisY).Length <= 0 ||

@@ -27,7 +27,8 @@ public sealed class ImageReferenceEntity : CadEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        double opacity = 1.0)
         : base(
             id ?? EntityId.New(),
             layerId ?? LayerId.Default,
@@ -63,6 +64,7 @@ public sealed class ImageReferenceEntity : CadEntity
         HeightVector = heightVector;
         PixelWidth = Math.Max(0, pixelWidth);
         PixelHeight = Math.Max(0, pixelHeight);
+        Opacity = ClampOpacity(opacity);
     }
 
     public string FilePath { get; }
@@ -76,6 +78,10 @@ public sealed class ImageReferenceEntity : CadEntity
     public int PixelWidth { get; }
 
     public int PixelHeight { get; }
+
+    public double Opacity { get; }
+
+    public double TransparencyPercent => (1.0 - Opacity) * 100.0;
 
     public Point2D BottomLeft => Origin;
 
@@ -116,7 +122,8 @@ public sealed class ImageReferenceEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            Opacity);
     }
 
     public ImageReferenceEntity WithOrigin(Point2D origin)
@@ -133,7 +140,8 @@ public sealed class ImageReferenceEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            Opacity);
     }
 
     public ImageReferenceEntity WithSize(
@@ -208,7 +216,8 @@ public sealed class ImageReferenceEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            Opacity);
     }
 
     public ImageReferenceEntity WithRotationDegrees(double rotationDegrees)
@@ -236,7 +245,32 @@ public sealed class ImageReferenceEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            Opacity);
+    }
+
+    public ImageReferenceEntity WithOpacity(double opacity)
+    {
+        return new ImageReferenceEntity(
+            FilePath,
+            Origin,
+            WidthVector,
+            HeightVector,
+            PixelWidth,
+            PixelHeight,
+            Id,
+            LayerId,
+            Style,
+            IsVisible,
+            IsLocked,
+            DrawOrder,
+            opacity);
+    }
+
+    public ImageReferenceEntity WithTransparencyPercent(double transparencyPercent)
+    {
+        double clampedTransparencyPercent = Math.Clamp(transparencyPercent, 0.0, 100.0);
+        return WithOpacity(1.0 - (clampedTransparencyPercent / 100.0));
     }
 
     public override EntityKind Kind => EntityKind.ImageReference;
@@ -296,7 +330,8 @@ public sealed class ImageReferenceEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            Opacity);
     }
 
     public override CadEntity WithId(EntityId id)
@@ -313,7 +348,8 @@ public sealed class ImageReferenceEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            Opacity);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -330,7 +366,18 @@ public sealed class ImageReferenceEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            Opacity);
+    }
+
+    private static double ClampOpacity(double opacity)
+    {
+        if (double.IsNaN(opacity) || double.IsInfinity(opacity))
+        {
+            return 1.0;
+        }
+
+        return Math.Clamp(opacity, 0.0, 1.0);
     }
 
     private bool Contains(Point2D point)

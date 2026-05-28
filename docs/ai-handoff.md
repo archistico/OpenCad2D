@@ -328,8 +328,8 @@ Recommended manual checks:
 
 Follow-up improvements for external raster references:
 
-- `ImageReferenceEntity` now exposes helper methods for relinking, origin edits, size edits and rotation edits while keeping the external-reference model intact.
-- The Property Panel exposes editable fields for the selected image reference: file path, origin X/Y, width, height and rotation. Edits are applied through normal replace-entity commands, so undo/redo remains coherent.
+- `ImageReferenceEntity` now exposes helper methods for relinking, origin edits, size edits, rotation edits and transparency/opacity edits while keeping the external-reference model intact.
+- The Property Panel exposes editable fields for the selected image reference: file path, origin X/Y, width, height, rotation and transparency percentage. Edits are applied through normal replace-entity commands, so undo/redo remains coherent.
 - Added a `Replace Image` toolbar action. It requires exactly one selected image reference, opens the same PNG/JPG picker and relinks the selected entity while preserving its current drawing geometry. Pixel dimensions are refreshed from the newly selected raster file.
 - Added tests for relinking, rotation around center, size-preserving vector direction, and ViewModel relink behavior.
 
@@ -773,3 +773,21 @@ Documentation updates:
 - `docs/roadmap.md` now records the completed mixed-polyline modify-tool consolidation and the new automated DXF coverage.
 
 Manual release validation still needs a recorded external viewer pass in LibreCAD/QCAD/Autodesk tools with exact versions. The automated tests protect OpenCad2D's internal DXF contract, but do not prove broad external interoperability by themselves.
+
+### 2026-05-28 — Image reference transparency
+
+Added per-image transparency support for external raster references.
+
+- `ImageReferenceEntity` now stores `Opacity` internally as a normalized `0.0` to `1.0` value and exposes `TransparencyPercent` for UI-facing editing.
+- JSON persistence now writes/reads the image reference opacity, defaulting older drawings to fully opaque.
+- Avalonia rendering applies the stored opacity when drawing linked raster files; missing-image placeholders remain normal vector placeholders.
+- SVG export emits the opacity on external `<image>` elements when the reference is partially transparent.
+- `Manage Refs` now displays a transparency percentage column and provides an Apply action for the selected image reference.
+- The selected-image Property Panel also exposes an editable `Transparency %` row. All edits use normal replace-entity commands, so undo/redo remains coherent.
+
+Manual checks:
+
+1. Attach a PNG/JPG, open `Manage Refs`, set transparency to `50` and verify the canvas displays the image at half opacity.
+2. Save, close and reopen the drawing and verify the transparency is preserved.
+3. Export SVG and verify the external `<image>` element keeps the expected opacity.
+4. Undo/redo a transparency edit from either `Manage Refs` or the Property Panel.

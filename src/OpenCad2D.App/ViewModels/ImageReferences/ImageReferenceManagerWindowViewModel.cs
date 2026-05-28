@@ -3,6 +3,7 @@ using OpenCad2D.Core.Entities;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
@@ -11,6 +12,7 @@ namespace OpenCad2D.App.ViewModels.ImageReferences;
 public sealed class ImageReferenceManagerWindowViewModel : INotifyPropertyChanged
 {
     private ImageReferenceItemViewModel? _selectedReference;
+    private string _transparencyPercentText = "0";
 
     public ImageReferenceManagerWindowViewModel(CadDocument document)
     {
@@ -43,11 +45,49 @@ public sealed class ImageReferenceManagerWindowViewModel : INotifyPropertyChange
             }
 
             _selectedReference = value;
+            _transparencyPercentText = value is null
+                ? string.Empty
+                : value.TransparencyPercent.ToString("0.#", CultureInfo.InvariantCulture);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(TransparencyPercentText));
             OnPropertyChanged(nameof(HasSelectedReference));
             OnPropertyChanged(nameof(CanOpenSelectedFolder));
+            OnPropertyChanged(nameof(CanApplyTransparency));
         }
     }
+
+    public string TransparencyPercentText
+    {
+        get => _transparencyPercentText;
+        set
+        {
+            if (_transparencyPercentText == value)
+            {
+                return;
+            }
+
+            _transparencyPercentText = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(CanApplyTransparency));
+        }
+    }
+
+    public bool TryGetTransparencyPercent(out double transparencyPercent)
+    {
+        if (!double.TryParse(
+            TransparencyPercentText,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out transparencyPercent))
+        {
+            return false;
+        }
+
+        transparencyPercent = Math.Clamp(transparencyPercent, 0.0, 100.0);
+        return true;
+    }
+
+    public bool CanApplyTransparency => HasSelectedReference && TryGetTransparencyPercent(out _);
 
     public bool HasReferences => References.Count > 0;
 

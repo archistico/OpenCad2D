@@ -160,4 +160,23 @@ public sealed class ImageReferenceEntityTests
         Assert.Equal(8, reset.Height, precision: 6);
     }
 
+    [Fact]
+    public void WithTransparencyPercent_ShouldConvertAndClampToOpacity()
+    {
+        var entity = new ImageReferenceEntity(
+            "plan.png",
+            Point2D.Origin,
+            new Vector2D(10, 0),
+            new Vector2D(0, 5));
+
+        ImageReferenceEntity transparent = entity.WithTransparencyPercent(35);
+        ImageReferenceEntity clampedLow = entity.WithTransparencyPercent(-10);
+        ImageReferenceEntity clampedHigh = entity.WithTransparencyPercent(150);
+
+        Assert.Equal(0.65, transparent.Opacity, precision: 6);
+        Assert.Equal(35, transparent.TransparencyPercent, precision: 6);
+        Assert.Equal(1.0, clampedLow.Opacity, precision: 6);
+        Assert.Equal(0.0, clampedHigh.Opacity, precision: 6);
+    }
+
 }

@@ -1,8 +1,8 @@
 {
   "version": 1,
-  "savedAt": "2026-05-28T08:36:44.9199622\u002B00:00",
+  "savedAt": "2026-05-28T20:16:07.4711736\u002B00:00",
   "settings": {
-    "currentLayerId": "Walls",
+    "currentLayerId": "0",
     "currentTextFormatId": "Standard",
     "currentDimensionStyleId": "Standard",
     "grid": {
@@ -39,9 +39,9 @@
     }
   },
   "viewport": {
-    "panX": 379.1087197695755,
-    "panY": 194.86286178245723,
-    "zoom": 0.3759370399230928
+    "panX": 577.0335300528483,
+    "panY": 381.0955674625667,
+    "zoom": 0.49717673529829015
   },
   "lineFormats": [
     {
@@ -285,6 +285,7 @@
       "heightVectorY": 2191.421513956417,
       "pixelWidth": 1401,
       "pixelHeight": 1699,
+      "opacity": 0.5,
       "type": "ImageReference",
       "id": "6d502e93-e0aa-4365-92ba-234c6d24a4ca",
       "layerId": "0"

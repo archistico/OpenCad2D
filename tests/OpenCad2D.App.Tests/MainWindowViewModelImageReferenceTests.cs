@@ -406,6 +406,35 @@ public sealed class MainWindowViewModelImageReferenceTests
     }
 
     [Fact]
+    public void SetImageReferenceTransparency_ShouldUpdateImageReferenceAndSelectIt()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.AddImageReference(
+            "plan.png",
+            Point2D.Origin,
+            width: 10,
+            height: 5,
+            pixelWidth: 100,
+            pixelHeight: 50);
+
+        ImageReferenceEntity original = Assert.IsType<ImageReferenceEntity>(
+            viewModel.Workspace.Document.Entities.All.Single());
+
+        ToolResult result = viewModel.SetImageReferenceTransparency(original.Id, 25);
+
+        Assert.True(result.Changed);
+
+        ImageReferenceEntity image = Assert.IsType<ImageReferenceEntity>(
+            viewModel.Workspace.Document.Entities.All.Single());
+
+        Assert.Equal(original.Id, image.Id);
+        Assert.Equal(0.75, image.Opacity, precision: 6);
+        Assert.Equal(25, image.TransparencyPercent, precision: 6);
+        Assert.Equal(original.Id, viewModel.Workspace.SelectionSet.SelectedIds.Single());
+    }
+
+    [Fact]
     public void ImageReferenceManagerWindowViewModel_ShouldGroupDuplicateFilePaths()
     {
         var viewModel = new MainWindowViewModel();
@@ -431,6 +460,7 @@ public sealed class MainWindowViewModelImageReferenceTests
         ImageReferenceItemViewModel reference = Assert.Single(manager.References);
         Assert.Equal(2, reference.InstanceCount);
         Assert.Equal("2", reference.InstanceCountText);
+        Assert.Equal("0%", reference.TransparencyText);
     }
 
     [Fact]

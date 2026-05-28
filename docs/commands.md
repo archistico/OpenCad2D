@@ -183,7 +183,7 @@ The raster image reference commands are currently toolbar/dialog actions rather 
 | Relink Missing | Relink the selected missing image, or the first missing image in the drawing. |
 | Reset Aspect | Restore the selected image rectangle to the stored natural pixel aspect ratio. |
 | Collect Refs | Copy existing linked raster files into an `images/` folder beside the drawing and save relative paths. |
-| Manage Refs | Open the Image References Manager for status, selection, relink, replace and open-folder operations. |
+| Manage Refs | Open the Image References Manager for status, selection, transparency percentage, relink, replace and open-folder operations. |
 
 All image reference mutations are executed through undoable replace/add commands in the normal command history.
 

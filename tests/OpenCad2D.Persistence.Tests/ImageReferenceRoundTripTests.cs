@@ -21,7 +21,8 @@ public sealed class ImageReferenceRoundTripTests
             new Vector2D(0, 15),
             pixelWidth: 1200,
             pixelHeight: 600,
-            id: new EntityId(Guid.Parse("11111111-1111-1111-1111-111111111111")));
+            id: new EntityId(Guid.Parse("11111111-1111-1111-1111-111111111111")),
+            opacity: 0.42);
         document.AddEntity(image);
 
         var serializer = new JsonDocumentSerializer();
@@ -44,6 +45,7 @@ public sealed class ImageReferenceRoundTripTests
         Assert.Equal(image.HeightVector, restoredImage.HeightVector);
         Assert.Equal(1200, restoredImage.PixelWidth);
         Assert.Equal(600, restoredImage.PixelHeight);
+        Assert.Equal(0.42, restoredImage.Opacity, precision: 6);
     }
 
     [Fact]

@@ -89,7 +89,8 @@ public sealed class ImageReferenceGripProvider : IGripProvider
             image.Style,
             image.IsVisible,
             image.IsLocked,
-            image.DrawOrder);
+            image.DrawOrder,
+            image.Opacity);
     }
 
     private static ImageReferenceEntity RebuildFromCorners(
@@ -118,7 +119,8 @@ public sealed class ImageReferenceGripProvider : IGripProvider
             image.Style,
             image.IsVisible,
             image.IsLocked,
-            image.DrawOrder);
+            image.DrawOrder,
+            image.Opacity);
     }
 
     private static ImageReferenceEntity GetImage(CadEntity entity)

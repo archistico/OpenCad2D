@@ -85,6 +85,23 @@
                     Click="OpenFolder_Click"
                     IsEnabled="{Binding CanOpenSelectedFolder}" />
 
+            <TextBlock Text="Transparency %"
+                       Foreground="#AAAAAA"
+                       VerticalAlignment="Center"
+                       Margin="8,0,0,0" />
+
+            <TextBox Text="{Binding TransparencyPercentText}"
+                     Width="62"
+                     Height="24"
+                     FontSize="11"
+                     VerticalContentAlignment="Center"
+                     IsEnabled="{Binding HasSelectedReference}" />
+
+            <Button Classes="dialog-button"
+                    Content="Apply"
+                    Click="ApplyTransparency_Click"
+                    IsEnabled="{Binding HasSelectedReference}" />
+
             <TextBlock Text="{Binding SummaryText}"
                        Foreground="#AAAAAA"
                        VerticalAlignment="Center"
@@ -99,7 +116,7 @@
                 <Border Grid.Row="0"
                         Background="#2D2D30"
                         Padding="7,5">
-                    <Grid ColumnDefinitions="95,170,*,130,115,90,75"
+                    <Grid ColumnDefinitions="95,170,*,130,115,90,95,75"
                           ColumnSpacing="6">
                         <TextBlock Grid.Column="0" Classes="header-cell" Text="Status" />
                         <TextBlock Grid.Column="1" Classes="header-cell" Text="File" />
@@ -107,7 +124,8 @@
                         <TextBlock Grid.Column="3" Classes="header-cell" Text="Pixels" />
                         <TextBlock Grid.Column="4" Classes="header-cell" Text="CAD size" />
                         <TextBlock Grid.Column="5" Classes="header-cell" Text="Rotation" />
-                        <TextBlock Grid.Column="6" Classes="header-cell" Text="Instances" />
+                        <TextBlock Grid.Column="6" Classes="header-cell" Text="Transparency" />
+                        <TextBlock Grid.Column="7" Classes="header-cell" Text="Instances" />
                     </Grid>
                 </Border>
 
@@ -119,7 +137,7 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="refs:ImageReferenceItemViewModel">
                             <Border Padding="7,4">
-                                <Grid ColumnDefinitions="95,170,*,130,115,90,75"
+                                <Grid ColumnDefinitions="95,170,*,130,115,90,95,75"
                                       ColumnSpacing="6">
                                     <Grid Grid.Column="0">
                                         <TextBlock Classes="status-ok"
@@ -151,6 +169,10 @@
                                                Text="{Binding RotationText}" />
 
                                     <TextBlock Grid.Column="6"
+                                               Classes="cell-label"
+                                               Text="{Binding TransparencyText}" />
+
+                                    <TextBlock Grid.Column="7"
                                                Classes="cell-label"
                                                Text="{Binding InstanceCountText}"
                                                HorizontalAlignment="Right" />

@@ -791,6 +791,41 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             "Image reference relinked");
     }
 
+
+    public ToolResult SetImageReferenceTransparency(
+        EntityId entityId,
+        double transparencyPercent)
+    {
+        ImageReferenceEntity? imageReference = GetImageReferenceById(entityId);
+
+        if (imageReference is null)
+        {
+            ToolResult rejected = ToolResult.None(
+                "The selected image reference no longer exists in the drawing.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        ImageReferenceEntity replacement = imageReference.WithTransparencyPercent(transparencyPercent);
+
+        Workspace.CommandHistory.Execute(
+            Workspace.Document,
+            new ReplaceEntitiesCommand(replacement));
+
+        Workspace.SelectionSet.ReplaceWith(replacement.Id);
+
+        ToolResult result = ToolResult.Completed(
+            $"Image reference transparency set to {replacement.TransparencyPercent:0.#}%.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return result;
+    }
+
     private ToolResult ReplaceImageReferenceInternal(
         EntityId entityId,
         string filePath,

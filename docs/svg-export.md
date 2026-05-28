@@ -33,7 +33,7 @@ Expected behavior:
 
 - the SVG contains an `<image href="...">` reference;
 - the linked file must remain available next to the SVG or at the referenced path;
-- the image rectangle follows the stored CAD orientation, size and rotation;
+- the image rectangle follows the stored CAD orientation, size, rotation and opacity;
 - the export remains consistent with the project policy that raster attachments are external references, not embedded document payloads.
 
 For portable SVG output, run `Collect Refs` before export and keep the drawing/SVG and `images/` folder together as needed.

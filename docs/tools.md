@@ -357,7 +357,7 @@ Implemented toolbar workflows:
 - `Relink Missing`: relinks the selected missing reference, or the first missing reference found in the drawing.
 - `Reset Aspect`: restores the selected reference height from its stored pixel aspect ratio while preserving width, center and rotation.
 - `Collect Refs`: copies linked raster files into an `images/` folder beside the drawing file and saves portable relative paths.
-- `Manage Refs`: opens the Image References Manager, which lists status, path, pixel size, CAD size, rotation and instance count and provides select/relink/replace/open-folder actions.
+- `Manage Refs`: opens the Image References Manager, which lists status, path, pixel size, CAD size, rotation, transparency percentage and instance count and provides select/relink/replace/open-folder actions plus an undoable transparency update.
 
 Image references participate in selection, snapping, transform tools and grip editing like rectangular CAD entities. Endpoint snap exposes the four corners, midpoint snap exposes the four edge midpoints, center snap exposes the rectangle center and nearest snap uses the image border.
 

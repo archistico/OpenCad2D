@@ -618,6 +618,7 @@ public sealed class SelectionPropertyPanelBuilder
                 EditableRow("Width", PropertyValueFormatter.FormatLength(imageReference.Width), value => ReplaceImageReferenceWidth(workspace, imageReference.Id, value, setMessage, refresh)),
                 EditableRow("Height", PropertyValueFormatter.FormatLength(imageReference.Height), value => ReplaceImageReferenceHeight(workspace, imageReference.Id, value, setMessage, refresh)),
                 EditableRow("Rotation", PropertyValueFormatter.FormatCoordinate(imageReference.RotationDegrees), value => ReplaceImageReferenceRotation(workspace, imageReference.Id, value, setMessage, refresh)),
+                EditableRow("Transparency %", imageReference.TransparencyPercent.ToString("0.#", CultureInfo.InvariantCulture), value => ReplaceImageReferenceTransparency(workspace, imageReference.Id, value, setMessage, refresh)),
                 Row("Area", PropertyValueFormatter.FormatArea(area)),
                 Row("Pixels", $"{imageReference.PixelWidth} x {imageReference.PixelHeight}"),
                 Row("Natural aspect", imageReference.HasNaturalAspectRatio
@@ -1080,6 +1081,28 @@ public sealed class SelectionPropertyPanelBuilder
             workspace,
             imageReference.WithRotationDegrees(rotationDegrees),
             "Image reference rotation updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceImageReferenceTransparency(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<ImageReferenceEntity>(workspace, entityId, setMessage, out ImageReferenceEntity imageReference) ||
+            !TryParseDouble(value, setMessage, out double transparencyPercent))
+        {
+            return;
+        }
+
+        if (transparencyPercent < 0 || transparencyPercent > 100)
+        {
+            setMessage?.Invoke("Image transparency must be between 0 and 100 percent.");
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            imageReference.WithTransparencyPercent(transparencyPercent),
+            "Image reference transparency updated.",
             setMessage,
             refresh);
     }

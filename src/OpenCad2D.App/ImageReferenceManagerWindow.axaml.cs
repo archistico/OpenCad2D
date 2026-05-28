@@ -50,6 +50,25 @@ public partial class ImageReferenceManagerWindow : Window
         CloseWithAction(ImageReferenceManagerAction.OpenFolder);
     }
 
+    private void ApplyTransparency_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ImageReferenceItemViewModel? selectedReference = ViewModel?.SelectedReference;
+
+        if (selectedReference is null || ViewModel is null || !ViewModel.TryGetTransparencyPercent(out double transparencyPercent))
+        {
+            return;
+        }
+
+        Result = new ImageReferenceManagerResult(
+            ImageReferenceManagerAction.SetTransparency,
+            selectedReference,
+            transparencyPercent);
+
+        Close(Result);
+    }
+
     private void Close_Click(
         object? sender,
         RoutedEventArgs e)

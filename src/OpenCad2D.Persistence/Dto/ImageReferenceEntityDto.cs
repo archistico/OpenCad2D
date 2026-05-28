@@ -27,4 +27,6 @@ public sealed class ImageReferenceEntityDto : EntityDto
     public int PixelWidth { get; set; }
 
     public int PixelHeight { get; set; }
+
+    public double Opacity { get; set; } = 1.0;
 }

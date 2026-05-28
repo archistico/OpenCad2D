@@ -26,6 +26,8 @@ public sealed class ImageReferenceItemViewModel
             : "Unknown";
         CadSizeText = $"{imageReference.Width:0.###} × {imageReference.Height:0.###}";
         RotationText = $"{imageReference.RotationDegrees:0.###}°";
+        TransparencyPercent = imageReference.TransparencyPercent;
+        TransparencyText = $"{TransparencyPercent:0.#}%";
         InstanceCount = Math.Max(1, instanceCount);
         InstanceCountText = InstanceCount.ToString();
         IsMissing = !Exists;
@@ -50,6 +52,10 @@ public sealed class ImageReferenceItemViewModel
     public string CadSizeText { get; }
 
     public string RotationText { get; }
+
+    public double TransparencyPercent { get; }
+
+    public string TransparencyText { get; }
 
     public int InstanceCount { get; }
 
