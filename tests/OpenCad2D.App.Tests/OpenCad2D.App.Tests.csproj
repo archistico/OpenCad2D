@@ -23,6 +23,7 @@
     <ProjectReference Include="..\..\src\OpenCad2D.App\OpenCad2D.App.csproj" />
     <ProjectReference Include="..\..\src\OpenCad2D.Core\OpenCad2D.Core.csproj" />
     <ProjectReference Include="..\..\src\OpenCad2D.Geometry\OpenCad2D.Geometry.csproj" />
+    <ProjectReference Include="..\..\src\OpenCad2D.Persistence\OpenCad2D.Persistence.csproj" />
   </ItemGroup>
 
 </Project>

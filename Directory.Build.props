@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Keep offline/local builds quiet when NuGet vulnerability data is unreachable. -->
+    <NuGetAudit>false</NuGetAudit>
+  </PropertyGroup>
+</Project>
