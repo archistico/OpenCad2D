@@ -38,6 +38,7 @@ public enum ToolId
     Extend,
     Trim,
     Offset,
+    BoundaryFill,
     Fillet,
     Chamfer,
     Mirror,

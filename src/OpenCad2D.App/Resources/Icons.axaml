@@ -51,6 +51,9 @@
     <!-- Break_Seg.svg -->
     <StreamGeometry x:Key="IconBreakSeg">M8 4h-3v16h3 M16 4h3v16h-3</StreamGeometry>
 
+    <!-- Boundary_Fill.svg -->
+    <StreamGeometry x:Key="IconBoundaryFill">M4 6h16v12h-16z M7 15l8 -8 M9 17h8v-8</StreamGeometry>
+
     <!-- Circle.svg -->
     <StreamGeometry x:Key="IconCircle">M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0</StreamGeometry>
 

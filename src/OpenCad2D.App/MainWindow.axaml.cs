@@ -1628,6 +1628,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void BoundaryFill_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.BoundaryFill);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Fillet_Click(
         object? sender,
         RoutedEventArgs e)
@@ -3149,6 +3160,11 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             OffsetButton,
             activeToolName.Equals("Offset", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            BoundaryFillButton,
+            activeToolName.Equals("Boundary Fill", StringComparison.OrdinalIgnoreCase) ||
+            activeToolName.Equals("BoundaryFill", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             FilletButton,

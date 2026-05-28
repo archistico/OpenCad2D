@@ -288,6 +288,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.BoundaryFill,
+                "BoundaryFill",
+                "Boundary Fill",
+                "Modify"),
+            () => new BoundaryFillTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Fillet,
                 "Fillet",
                 "Fillet",

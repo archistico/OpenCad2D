@@ -100,6 +100,7 @@ Implemented:
 | Extend | line/arc/open-polyline target support |
 | Trim | cutting edges including ellipses, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
+| Boundary Fill | click inside a closed linear boundary to create a filled closed polyline |
 | Fillet | line-line plus adjacent linear-polyline segments, Radius and Trim/NoTrim options, radius 0 sharp join for lines |
 | Mirror | two-point mirror axis, keeps source by default, optional source deletion |
 | Explode | selected polylines become individual lines/arcs; block references become world-space entities |
@@ -141,6 +142,26 @@ Supported targets:
 Polyline offset uses miter joins with a conservative miter limit. Very sharp joins fall back to a bevel-style corner instead of producing long miter spikes. Ellipse, elliptical arc and Bezier spline offset are intentionally deferred because true offsets are not the same native curve type. Rounded joins, configurable join styles, bulge/arc polyline segments and advanced self-intersection cleanup are future work.
 
 The side preview must use the same geometry method as final creation.
+
+---
+
+## Boundary Fill
+
+Workflow:
+
+```text
+BFILL: Pick inside a closed linear boundary:
+```
+
+`BoundaryFillTool` scans visible linear boundaries, splits them at intersections, builds planar faces and creates a new closed `PolylineEntity` for the face containing the picked point. The generated polyline is `IsFilled = true`, uses the current layer and is added through `AddEntityCommand`, so undo removes the fill boundary.
+
+Current first-pass boundary support:
+
+- standalone `LineEntity` segments;
+- straight `PolylineEntity` segments, including rectangles and polygons;
+- intersecting linear segments, where the clicked face can be selected from the resulting planar subdivision.
+
+Curved boundaries, blocks, hatch patterns, holes and associative boundary updates are deferred. Aliases: `BFILL`, `BF`, `BOUNDARYFILL`, `FILL`, `RIEMPIMENTO`.
 
 ---
 

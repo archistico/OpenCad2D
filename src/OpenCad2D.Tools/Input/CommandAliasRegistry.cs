@@ -176,6 +176,12 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("OFFSET", ToolId.Offset);
         yield return new CommandAlias("O", ToolId.Offset);
 
+        yield return new CommandAlias("BFILL", ToolId.BoundaryFill);
+        yield return new CommandAlias("BF", ToolId.BoundaryFill);
+        yield return new CommandAlias("BOUNDARYFILL", ToolId.BoundaryFill);
+        yield return new CommandAlias("FILL", ToolId.BoundaryFill);
+        yield return new CommandAlias("RIEMPIMENTO", ToolId.BoundaryFill);
+
         yield return new CommandAlias("FILLET", ToolId.Fillet);
         yield return new CommandAlias("F", ToolId.Fillet);
 
