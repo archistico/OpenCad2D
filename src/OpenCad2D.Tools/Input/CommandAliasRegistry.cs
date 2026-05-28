@@ -179,6 +179,9 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("FILLET", ToolId.Fillet);
         yield return new CommandAlias("F", ToolId.Fillet);
 
+        yield return new CommandAlias("CHAMFER", ToolId.Chamfer);
+        yield return new CommandAlias("CHA", ToolId.Chamfer);
+
         yield return new CommandAlias("MIRROR", ToolId.Mirror);
         yield return new CommandAlias("MI", ToolId.Mirror);
 

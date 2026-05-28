@@ -195,6 +195,47 @@ public sealed class DxfExportCompatibilityTests
         Assert.Contains(polylineRecord, group => group.Code == 70 && group.Value == "1");
     }
 
+
+    [Fact]
+    public void Export_MixedPolyline_ShouldWriteBulgeGroupsOnOwningVertices()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10),
+                new Point2D(0, 10)
+            },
+            isClosed: true,
+            segmentBulges: new[]
+            {
+                0.0,
+                0.414213562373095,
+                0.0,
+                -0.25
+            }));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(
+            document,
+            new DxfExportOptions
+            {
+                UseCadViewerCoordinateSystem = false
+            });
+        IReadOnlyList<DxfGroup> polylineRecord = Assert.Single(GetRecords(
+            ParseGroups(result.Content),
+            "LWPOLYLINE"));
+
+        Assert.Contains(polylineRecord, group => group.Code == 90 && group.Value == "4");
+        Assert.Contains(polylineRecord, group => group.Code == 70 && group.Value == "1");
+        Assert.Equal(2, polylineRecord.Count(group => group.Code == 42));
+        Assert.Contains(polylineRecord, group => group.Code == 42 && group.Value == "0.414213562373095");
+        Assert.Contains(polylineRecord, group => group.Code == 42 && group.Value == "-0.25");
+    }
+
     private static CadDocument CreateRepresentativeDocument()
     {
         var document = new CadDocument();

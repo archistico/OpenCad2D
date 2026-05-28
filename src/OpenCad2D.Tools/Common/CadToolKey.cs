@@ -8,5 +8,8 @@ public enum CadToolKey
     Enter,
     Delete,
     C,
-    S
+    S,
+    A,
+    L,
+    U
 }

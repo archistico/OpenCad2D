@@ -512,18 +512,22 @@ public sealed class PdfExporter : IPdfExporter
         CadColor? fillColor,
         PdfExportContext context)
     {
-        if (polyline.Vertices.Count == 0)
+        PolylineEntity exportPolyline = polyline.HasArcSegments
+            ? polyline.ToPolylineApproximation()
+            : polyline;
+
+        if (exportPolyline.Vertices.Count == 0)
         {
             return;
         }
 
         Point2D first = ToPdfPoint(
-            polyline.Vertices[0],
+            exportPolyline.Vertices[0],
             context);
 
         builder.AppendLine($"{Format(first.X)} {Format(first.Y)} m");
 
-        foreach (Point2D vertex in polyline.Vertices.Skip(1))
+        foreach (Point2D vertex in exportPolyline.Vertices.Skip(1))
         {
             Point2D point = ToPdfPoint(
                 vertex,
@@ -531,7 +535,7 @@ public sealed class PdfExporter : IPdfExporter
             builder.AppendLine($"{Format(point.X)} {Format(point.Y)} l");
         }
 
-        if (polyline.IsClosed)
+        if (exportPolyline.IsClosed)
         {
             builder.AppendLine("h");
         }

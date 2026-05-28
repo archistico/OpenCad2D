@@ -236,7 +236,7 @@ This is one of the most important snaps because it allows the user to connect ge
 
 Midpoint snapping finds the middle point of a line segment.
 
-For polylines, each segment can provide a midpoint.
+For polylines, each segment can provide a midpoint. Straight segments use the segment midpoint. Mixed polylines with DXF bulges use the length midpoint of the approximated curved segment, so snapping follows the visible arc rather than the chord.
 
 For raster image references, each image border can provide a midpoint.
 
@@ -266,7 +266,9 @@ For arcs, only quadrant points that actually lie on the arc are returned.
 
 Intersection snapping finds intersections between visible entities.
 
-It supports exact intersections for common analytic combinations such as line-line, line-polyline, polyline-polyline, line-circle, circle-circle, line-arc and circle-arc.
+It supports exact intersections for common analytic combinations such as line-line, line-polyline, polyline-polyline, line-circle, circle-circle, line-arc and circle-arc when the entities are represented analytically or by straight segments.
+
+Mixed polylines with DXF bulges are converted through `PolylineEntity.GetInteractionGeometry()` before intersection snapping. This makes line/polyline and polyline/polyline snaps follow the visible curved segment instead of the original chord.
 
 It also supports first-pass curve intersections for `EllipseEntity` and `BezierSplineEntity` by converting curves to a high-resolution polyline approximation for snapping. This covers practical line/ellipse, polyline/ellipse, circle/ellipse, ellipse/ellipse, line/spline, polyline/spline, circle/spline, ellipse/spline and spline/spline intersections.
 

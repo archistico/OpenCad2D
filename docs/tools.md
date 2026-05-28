@@ -97,10 +97,10 @@ Implemented:
 | Extend | line/arc/open-polyline target support |
 | Trim | cutting edges including ellipses, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
-| Fillet | line-line, Radius and Trim/NoTrim options, radius 0 sharp join |
+| Fillet | line-line plus adjacent linear-polyline segments, Radius and Trim/NoTrim options, radius 0 sharp join for lines |
 | Mirror | two-point mirror axis, keeps source by default, optional source deletion |
-| Explode | selected straight-segment polylines become individual lines |
-| Join | selected connected lines become one or more polylines |
+| Explode | selected polylines become individual lines/arcs; block references become world-space entities |
+| Join | selected connected lines/arcs/open polylines become one or more polylines |
 
 ---
 
@@ -109,11 +109,11 @@ Implemented:
 Workflow:
 
 ```text
-EXPLODE: Select polylines to explode into lines:
-JOIN: Select connected lines to join into polylines:
+EXPLODE: Select polylines or blocks to explode:
+JOIN: Select connected lines, arcs and open polylines to join:
 ```
 
-Both tools are selection-first, support multi-pick selection, use EntityOnly snap while selecting entities and accept Enter/right-click to confirm. Explode supports open and closed straight-segment polylines. Join supports connected line chains and can create either open or closed polylines; disconnected connected groups become separate polylines.
+Both tools are selection-first, support multi-pick selection, use EntityOnly snap while selecting entities and accept Enter/right-click to confirm. Explode supports open and closed polylines, including mixed bulge segments: straight segments become `LineEntity` objects and curved bulge segments become `ArcEntity` objects. Block references still explode into transformed world-space child entities. Join supports connected line, arc and open-polyline chains and can create either open or closed polylines; disconnected connected groups become separate polylines.
 
 ---
 
@@ -154,17 +154,24 @@ FILLET: Select second line:
 
 Supported targets:
 
-- Line-Line.
+- Line-Line;
+- two adjacent straight segments of the same linear `PolylineEntity`;
+- terminal segments of separate open linear `PolylineEntity` objects.
 
 Rules:
 
-- Radius `0` creates a sharp-corner join in Trim mode;
+- Radius `0` creates a sharp-corner join in Trim mode for Line-Line;
+- polyline segment fillet requires a radius greater than zero;
 - radius greater than zero creates a tangent arc;
-- `Trim` replaces the source lines with trimmed line segments plus the fillet arc;
-- `NoTrim` keeps the source lines and adds only the fillet arc;
+- Line-Line in `Trim` mode replaces the source lines with trimmed line segments plus the fillet arc;
+- Line-Line in `NoTrim` mode keeps the source lines and adds only the fillet arc;
+- same-polyline segment fillet requires `Trim` mode and keeps the result as one `PolylineEntity` with one bulge segment;
+- separate polyline fillet trims the selected terminal segment on each source polyline and adds an `ArcEntity` fillet, mirroring Line-Line behavior;
+- multi-segment separate polyline fillet is intentionally deferred so the tool does not accidentally replace unrelated vertices;
+- polyline segment fillet is limited to straight segments; existing curved/bulged polyline segments are rejected with a clear message;
 - Enter/right-click accepts the current radius and trim-mode defaults;
-- a live preview is shown while choosing the second line;
-- Line-Arc, Arc-Arc and polyline fillet are future work.
+- a live preview is shown while choosing the second object;
+- Line-Arc, Arc-Arc and curved-polyline fillet are future work.
 
 ---
 
@@ -360,3 +367,27 @@ library/annotazioni/*.opencad2d.json
 ```
 
 The recommended default insertion mode is block-reference insertion, with Explode Block available when raw geometry is needed.
+
+### Explode and Join stabilization
+
+The Explode tool works on selected polylines and block references. Mixed polylines are decomposed segment-by-segment: `bulge == 0` creates a line, while non-zero bulge creates an arc with the same layer, style, visibility, lock state and draw order. Closed polylines include the closing segment, so a closing bulge becomes a closing arc.
+
+The Join tool works on selected lines, arcs and open polylines. It converts every joinable input into an internal oriented segment, builds endpoint-connected chains, rejects ambiguous branching junctions and emits `PolylineEntity` objects. Reversed arc or polyline segments invert their bulge sign so the final curve direction remains geometrically correct.
+
+Closed polylines and unsupported entity kinds are rejected with command-line feedback instead of failing silently.
+
+### Fillet / Chamfer on linear polyline segments
+
+`FILLET` and `CHAMFER` can now pick two adjacent linear segments from the same `PolylineEntity`.
+The first picked segment is excluded when resolving the second pick on the same polyline, so clicking near the shared vertex can select the adjacent segment instead of repeatedly selecting the first one.
+For this phase, existing bulged/curved polyline segments are rejected with explicit feedback.
+
+### Fillet and Chamfer on polyline segments
+
+`FILLET` and `CHAMFER` support linear polyline segments in addition to standalone lines. Supported cases include adjacent segments of the same linear polyline. `FILLET` also supports terminal segments of separate open linear polylines by trimming each source polyline and adding an arc. Curved/bulged polyline segments and internal trims on separate multi-segment polylines are rejected conservatively for now.
+
+### Chamfer on separate simple polylines
+
+`CHAMFER` also supports terminal segments of separate open linear polylines, plus mixed line/polyline pairs. The selected polyline source is trimmed and remains a `PolylineEntity`; the chamfer edge is created as a `LineEntity`.
+
+Separate multi-segment polylines are still rejected conservatively. This avoids modifying only part of a larger polyline until segment-level replacement is implemented for separate entities.

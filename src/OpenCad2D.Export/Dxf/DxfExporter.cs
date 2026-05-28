@@ -815,14 +815,19 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(90, polyline.Vertices.Count);
         writer.WriteGroup(70, polyline.IsClosed ? 1 : 0);
 
-        foreach (Point2D vertex in polyline.Vertices)
+        for (int index = 0; index < polyline.Vertices.Count; index++)
         {
             Point2D dxfVertex = ToDxfPoint(
-                vertex,
+                polyline.Vertices[index],
                 contentBounds);
 
             writer.WriteGroup(10, dxfVertex.X);
             writer.WriteGroup(20, dxfVertex.Y);
+
+            if (index < polyline.SegmentBulges.Count && !OpenCad2D.Geometry.Tolerance.IsZero(polyline.SegmentBulges[index]))
+            {
+                writer.WriteGroup(42, polyline.SegmentBulges[index]);
+            }
         }
     }
 
@@ -846,9 +851,13 @@ public sealed class DxfExporter : IDxfExporter
         writer.WriteGroup(92, 7);
         writer.WriteGroup(72, 0);
         writer.WriteGroup(73, 1);
-        writer.WriteGroup(93, polyline.Vertices.Count);
+        PolylineEntity hatchPolyline = polyline.HasArcSegments
+            ? polyline.ToPolylineApproximation()
+            : polyline;
 
-        foreach (Point2D vertex in polyline.Vertices)
+        writer.WriteGroup(93, hatchPolyline.Vertices.Count);
+
+        foreach (Point2D vertex in hatchPolyline.Vertices)
         {
             Point2D dxfVertex = ToDxfPoint(
                 vertex,

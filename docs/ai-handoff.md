@@ -52,7 +52,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Preview UX base | [x] | TRIM/BREAK removal previews are dashed; EXTEND addition previews are highlighted; selected boundaries stay visible. |
 | Save/export UX clarity | [x] | Export creates derived files and does not clear dirty state or replace the current native file path; user messages make this explicit. |
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
-| Explode / Join essentials | [x] | EXPLODE converts selected polylines into lines; JOIN converts connected selected lines into polylines, with command aliases, buttons, undo and targeted tests. |
+| Explode / Join essentials | [x] | EXPLODE converts selected polylines into lines/arcs and block references into world-space entities; JOIN converts connected selected lines/arcs/open polylines into bulge-capable polylines, with command aliases, buttons, undo and targeted tests. |
 
 ---
 
@@ -553,7 +553,7 @@ The v0.8.113 minimal Block Manager is implemented through `BlockManagerWindow`, 
 
 Block references are now usable through their internal transformed geometry for click selection and object snaps. This fixes the earlier limitation where a block was effectively selectable only by its reference bounds/window. Endpoint, midpoint, center and nearest snap providers can resolve candidates from child geometry transformed into world coordinates.
 
-`ExplodeTool` now supports both selected `PolylineEntity` instances and selected `BlockReferenceEntity` instances. For block references it reads the matching `BlockDefinition`, transforms each definition entity through `BlockReferenceEntity.TransformContainedEntity(...)`, assigns each resulting entity a fresh `EntityId`, and commits the replacement through `ModifyEntitiesCommand`. Undo restores the original block reference. The shared block definition is intentionally kept in the document because other references may still use it.
+`ExplodeTool` supports selected `PolylineEntity` instances and selected `BlockReferenceEntity` instances. For polylines it now decomposes each segment: straight segments become `LineEntity` instances and bulged segments become `ArcEntity` instances. Closing segments on closed polylines are included, so a closing bulge becomes a closing arc. For block references it reads the matching `BlockDefinition`, transforms each definition entity through `BlockReferenceEntity.TransformContainedEntity(...)`, assigns each resulting entity a fresh `EntityId`, and commits the replacement through `ModifyEntitiesCommand`. Undo restores the original polyline or block reference. The shared block definition is intentionally kept in the document because other references may still use it.
 
 Recommended next step: stabilize the first `Edit Block` workflow with manual testing, then decide whether a later isolated block editor is needed.
 
@@ -627,3 +627,149 @@ Recommended implementation sequence:
 4. Add pending insertion workflow: select item -> close dialog -> pick insertion point.
 5. Insert as block reference by default, using import/block infrastructure and one undoable command.
 6. Add tests for scan, grouping, preview-load safety, insertion, snap and undo.
+
+
+## v0.8.130 Geometry note — arc selection and mixed lightweight polylines
+
+Implemented a first core pass for AutoCAD-style mixed `PolylineEntity` geometry. `PolylineEntity` now owns `SegmentBulges`, where each segment has a DXF-compatible bulge value: `0` for straight segments and non-zero for circular arc segments. Existing straight polylines remain compatible because the constructor defaults all bulges to zero.
+
+DXF `LWPOLYLINE` import now preserves bulge values on one `PolylineEntity` instead of exploding mixed geometry into separate `LineEntity` and `ArcEntity` instances. DXF export writes group code `42` for non-zero segment bulges. Persistence writes `SegmentBulges` only when curved segments exist, so older JSON files remain readable.
+
+Canvas rendering, hit testing, closest-point logic, bounding boxes, SVG/PDF export and HATCH fallback use an internal polyline approximation for curved segments. This allows clicking/selecting curved polyline portions and keeps downstream export stable. Advanced edit commands that still operate on straight `Polyline2D` adapters currently use the approximation for mixed polylines; future work should add native segment-aware editing/grips for bulge segments.
+
+Added regression coverage for: clicking an `ArcEntity` stroke, clicking a bulged polyline arc segment, preserving DXF bulges on import, writing bulge group `42` on export, and bounding/distance behavior for curved polyline segments.
+
+## Latest handoff — mixed polyline grip/property stabilization
+
+The mixed-polyline pass has been stabilized so common editing surfaces no longer accidentally drop DXF bulge data.
+
+Implemented refinements:
+
+- `PolylineGripProvider` now preserves `SegmentBulges` when moving a vertex or moving the whole polyline.
+- Insert grips on curved polyline segments are placed on the approximated arc instead of on the chord midpoint.
+- Inserting a vertex into a curved segment keeps the polyline valid by replacing that one curved segment with two straight segments; other segment bulges are preserved.
+- Deleting a polyline vertex preserves unaffected segment bulges and sets the newly merged segment to straight.
+- Rectangle-specific grip behavior is disabled for closed four-vertex polylines that contain arc bulges, so mixed polylines are edited with generic polyline grips.
+- The Property Panel preserves `SegmentBulges` when editing vertex coordinates and resizes the bulge list safely when toggling the closed flag.
+- Polyline Geometry now shows segment count and arc segment count; length and area use the internal approximation when a polyline contains arc segments.
+
+Recommended next step: add a real segment editor for mixed polylines: select segment, convert line/arc, edit bulge/radius, split arc natively, and expose per-segment data in a dedicated modal instead of overloading the basic Property Panel.
+
+
+## Latest handoff — mixed polyline interaction geometry
+
+Mixed `PolylineEntity` segments now expose a shared interaction approximation through `GetInteractionGeometry()`. This keeps hit/selection/snap/measurement behavior consistent for DXF bulge segments without forcing every caller to know how bulges are represented internally.
+
+Implemented refinements:
+
+- Crossing-window selection now tests bulged polylines against the approximated curved path, not only against the original chord-based `Polyline2D`.
+- Midpoint snapping on mixed polylines returns the length midpoint of each curved segment approximation, so a semicircular bulge snaps near the visual arc midpoint instead of the chord midpoint.
+- Intersection snapping now converts mixed polylines through the same interaction approximation before line-polyline, polyline-polyline, polyline-ellipse and polyline-spline intersection checks.
+- Core `MeasurementService` now calculates polyline length and closed-polyline area from the interaction geometry when bulges are present.
+
+New regression coverage was added for arc-segment midpoint snaps, line/bulged-polyline intersection snaps, crossing-window selection on a curved polyline portion, and measurement of open/closed bulged polylines.
+
+Recommended next step: introduce native segment-level operations for bulged polylines instead of relying on approximation in edit services. Priority targets are perpendicular snap to curved segments, center/quadrant snaps for arc segments, and TRIM/BREAK/EXTEND preserving bulge topology where feasible.
+
+## Latest handoff — editable mixed-polyline segment bulges
+
+Mixed polylines now expose per-segment bulge editing in the Property Panel. A selected `PolylineEntity` gets a dedicated `Segments` section with editable rows named `Segment N bulge`. This allows a straight segment to be converted into an arc segment, an arc segment to be flattened by entering `0`, or the arc direction/curvature to be changed by editing the signed DXF bulge value directly.
+
+Implementation notes:
+
+- `SelectionPropertyPanelBuilder` adds `BuildPolylineSegmentsSection` and caps displayed segment rows to keep the panel responsive on large imported DXF polylines.
+- `ReplacePolylineSegmentBulge` replaces the entity through the normal undoable command path and preserves all other entity metadata.
+- Invalid non-numeric values are rejected by the existing invariant-culture numeric parser.
+- Tests cover row exposure, undo support and invalid-value rejection.
+
+Recommended next step: replace the raw bulge value editor with a friendlier segment editor modal that can show segment type, bulge, included angle/radius and quick actions such as Straight, Arc CW and Arc CCW.
+
+## 2026-05-28 - Polyline draw tool: three-point arc segments
+
+The `PolylineTool` now supports creating curved segments during drawing.
+
+Implementation notes:
+
+- `PolylineToolState` now includes `WaitingForArcPointOnArc` and `WaitingForArcEndPoint`.
+- `PolylineTool` keeps a `_segmentBulges` list in parallel with committed segments.
+- Option `Arc` / `A` starts a three-point arc segment. The previous polyline vertex is the arc start point.
+- The point-on-arc input is stored temporarily in `_arcPointOnArc`; the following point becomes the segment endpoint.
+- `ArcCreationService.TryCreateFromThreePoints` is used to validate the three points and calculate the circular arc.
+- The arc is converted to a DXF-compatible bulge with `tan(sweep / 4)`. In the current coordinate convention, clockwise arcs produce positive bulges and counter-clockwise arcs produce negative bulges, matching the existing `PolylineEntity` approximation logic.
+- Completing a closed polyline appends a straight closing bulge for now.
+- The next segment returns to straight mode after one three-point arc. Future work may add persistent arc mode or additional arc construction modes.
+
+Tests were added in `PolylineToolTests` for command-line arc mode, pointer input, preview bulge, incomplete arc completion, and undo behaviour.
+
+## 2026-05-28 - Join tool stabilization for mixed polylines
+
+The `JoinTool` now supports `LineEntity`, `ArcEntity` and open `PolylineEntity` inputs. It converts selected entities into oriented join segments, builds endpoint-connected chains, rejects branching junctions, and creates `PolylineEntity` results. Arc inputs become bulge segments; reversed arc/polyline segments invert bulge signs.
+
+Important diagnostics were added so command-line feedback explains failure causes: unsupported entity kinds, closed polylines, incompatible layer/style metadata, disconnected endpoints and branching junctions. Undo/redo remains atomic through a `CompositeCommand` that deletes consumed source entities and adds the generated polylines.
+## 2026-05-28 - Explode stabilization for mixed polylines
+
+The `ExplodeTool` now handles mixed `PolylineEntity` geometry. It iterates `PolylineEntity.SegmentCount`, reads the corresponding `SegmentBulges` value, creates `LineEntity` for zero-bulge segments and reconstructs `ArcEntity` for non-zero bulge segments. Source layer/style/visibility/lock/draw-order metadata are preserved on every generated entity. Closed polylines include the closing segment, including closing arcs.
+
+This completes the practical inverse of `JOIN` for mixed polylines: line/arc chains can be joined into a bulge-capable `PolylineEntity`, then exploded back into explicit lines and arcs with undo/redo support through `ModifyEntitiesCommand`.
+
+
+## 2026-05-28 - Fillet on adjacent linear polyline segments
+
+`FilletTool` has been extended beyond Line-Line fillets. It can now pick two adjacent straight segments from the same `PolylineEntity` and replace the shared corner with a tangent bulge segment while keeping the result as one polyline. This is implemented in `FilletTool` by introducing an internal fillet pick model that stores the picked entity and, for polylines, the closest segment index.
+
+Important constraints:
+
+- Line-Line behavior remains unchanged, including Radius, Trim/NoTrim, radius 0, preview and undo/redo.
+- Polyline fillet only supports adjacent straight segments from the same polyline.
+- Polyline fillet requires Trim mode and radius greater than zero.
+- Existing curved/bulged polyline segments are rejected with a clear diagnostic rather than approximated.
+- The replacement entity is a new `PolylineEntity` with preserved layer/style/visibility/lock/draw-order/fill metadata and a non-zero bulge on the generated fillet segment.
+
+Regression tests were added for successful adjacent-segment fillet, undo restoration, non-adjacent rejection and existing-bulge rejection.
+
+## 2026-05-28 - Fillet/Chamfer polyline segment pick stabilization
+
+`FilletTool` now resolves selectable objects through `SelectAllByPoint` and supports excluding the first selected polyline segment when resolving the second segment. This fixes the workflow where a second click at the shared polyline vertex selected the same segment again.
+
+`ChamferTool` now supports two adjacent linear segments of the same `PolylineEntity`, mirroring the existing fillet behavior. It preserves the entity as a single polyline and inserts a straight chamfer segment. Existing bulged segments remain intentionally unsupported for this phase.
+
+### 2026-05-28 - Polyline fillet radius correction
+
+Fixed polyline segment fillet geometry for non-90 degree corners. The tangent distance still uses `radius / tan(cornerAngle / 2)`, but the bulge now uses the fillet arc sweep `PI - cornerAngle`, not the original corner angle. This keeps the generated bulge arc tangent to both trimmed polyline segments with the requested radius.
+
+
+## 2026-05-28 - Fillet support for separate simple polylines
+
+`FilletTool` now also supports terminal segments of separate open linear `PolylineEntity` objects. The tool converts the picked polyline segments to temporary `LineEntity` geometry, reuses the existing Line-Line fillet solver, then converts trimmed line results back to simple polylines while keeping the fillet as an `ArcEntity`.
+
+This intentionally does not yet support separate multi-segment polylines, because replacing only one selected segment while preserving all unrelated vertices needs a more complete segment-surgery implementation. Such cases return a clear conservative diagnostic instead of modifying the drawing.
+
+## 2026-05-28 - Chamfer support for separate simple polylines and line/polyline pairs
+
+`ChamferTool` now supports separate object chamfers where the selected objects are either terminal segments of separate open linear `PolylineEntity` objects, or one standalone `LineEntity` plus one terminal segment of an open linear `PolylineEntity`.
+
+The implementation reuses the existing Line-Line chamfer solver, then converts only the trimmed source that came from a polyline back into a simple `PolylineEntity`. The generated chamfer edge remains a `LineEntity`. Separate multi-segment polylines remain intentionally unsupported and return a clear conservative diagnostic.
+
+
+## 2026-05-28 - Fillet/Chamfer support for terminal segments of separate multi-segment polylines
+
+`FilletTool` and `ChamferTool` now support separate multi-segment open linear polylines when the picked segment is terminal, meaning segment 0 or the last segment. The tools reuse the existing Line-Line solvers, then write the trimmed endpoint back into the original polyline so the source remains a `PolylineEntity`. This allows CAD-like operations on polyline ends without exploding the geometry.
+
+The implementation intentionally rejects internal segment trims on separate polylines because moving an internal vertex would either disconnect adjacent segments or require a more complex local topology edit. Curved/bulged segments remain unsupported for Fillet/Chamfer in this phase.
+
+## 2026-05-28 - Consolidation pass for mixed polylines and DXF regressions
+
+After the mixed-polyline, JOIN/EXPLODE, OFFSET, FILLET and CHAMFER work, the consolidation pass adds automated DXF regression coverage and documentation cleanup rather than new editing geometry.
+
+New DXF regression tests:
+
+- `DxfExportCompatibilityTests.Export_MixedPolyline_ShouldWriteBulgeGroupsOnOwningVertices` verifies that `PolylineEntity.SegmentBulges` are exported as LWPOLYLINE group code `42` values on the owning vertices. Zero bulges are intentionally omitted.
+- `DxfRoundTripTests.ExportThenImport_WithMixedPolylineBulges_ShouldPreserveCompoundPolylineTopology` verifies that a closed mixed polyline round-trips through DXF as one `PolylineEntity`, preserving positive, negative and zero bulges.
+
+Documentation updates:
+
+- `docs/dxf-compatibility.md` now states that bulged `LWPOLYLINE` imports remain a single `PolylineEntity` with `SegmentBulges`, not exploded line/arc entities.
+- `docs/known-limitations.md` now distinguishes implemented conservative mixed-polyline offset from the deferred analytic bulge-preserving offset.
+- `docs/roadmap.md` now records the completed mixed-polyline modify-tool consolidation and the new automated DXF coverage.
+
+Manual release validation still needs a recorded external viewer pass in LibreCAD/QCAD/Autodesk tools with exact versions. The automated tests protect OpenCad2D's internal DXF contract, but do not prove broad external interoperability by themselves.

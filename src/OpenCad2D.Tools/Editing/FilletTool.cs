@@ -20,7 +20,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
     private double _radius;
     private bool _trimEnabled = true;
-    private ToolPickedEntityInput? _firstPick;
+    private FilletPick? _firstPick;
     private IReadOnlyList<CadEntity> _previewEntities = Array.Empty<CadEntity>();
 
     public string Name => "Fillet";
@@ -219,22 +219,17 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             return ToolResult.None();
         }
 
-        ToolPickedEntityInput? secondPick = PickSelectableLine(context, pointer.ModelPoint);
+        FilletPick? secondPick = PickSelectableFilletObject(context, pointer.ModelPoint, _firstPick);
 
-        if (secondPick is null || secondPick.EntityId.Equals(_firstPick.EntityId))
+        if (secondPick is null)
         {
             _previewEntities = Array.Empty<CadEntity>();
             return ToolResult.None();
         }
 
-        LineEntity first = (LineEntity)_firstPick.Entity;
-        LineEntity second = (LineEntity)secondPick.Entity;
-
-        if (!TryCreateLineLineFillet(
-                first,
-                _firstPick.PickPoint,
-                second,
-                secondPick.PickPoint,
+        if (!TryCreateFilletResult(
+                _firstPick,
+                secondPick,
                 _radius,
                 _trimEnabled,
                 context.GeometryTolerance,
@@ -309,11 +304,11 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         ToolContext context,
         Point2D pickPoint)
     {
-        ToolPickedEntityInput? pick = PickSelectableLine(context, pickPoint);
+        FilletPick? pick = PickSelectableFilletObject(context, pickPoint);
 
         if (pick is null)
         {
-            return ToolResult.None("Fillet currently supports visible, unlocked lines only. Select the first line.");
+            return ToolResult.None("Fillet currently supports visible, unlocked lines and linear polyline segments only. Select the first object.");
         }
 
         _firstPick = pick;
@@ -321,7 +316,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         State = FilletToolState.WaitingForSecondEntity;
         context.CurrentBasePoint = pick.ClosestPoint;
 
-        return ToolResult.Started("First fillet object selected. Select second line.");
+        return ToolResult.Started("First fillet object selected. Select second line or adjacent polyline segment.");
     }
 
     private ToolResult AcceptSecondLine(
@@ -334,47 +329,37 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             return ToolResult.None("Select first line before selecting the second line.");
         }
 
-        ToolPickedEntityInput? secondPick = PickSelectableLine(context, pickPoint);
+        FilletPick? secondPick = PickSelectableFilletObject(context, pickPoint, _firstPick);
 
         if (secondPick is null)
         {
-            return ToolResult.None("Select a visible, unlocked line as second fillet object.");
+            return ToolResult.None("Select a visible, unlocked line or linear polyline segment as second fillet object.");
         }
 
-        if (secondPick.EntityId.Equals(_firstPick.EntityId))
-        {
-            return ToolResult.None("Second fillet object must be different from the first one.");
-        }
-
-        LineEntity first = (LineEntity)_firstPick.Entity;
-        LineEntity second = (LineEntity)secondPick.Entity;
-
-        if (!TryCreateLineLineFillet(
-                first,
-                _firstPick.PickPoint,
-                second,
-                secondPick.PickPoint,
+        if (!TryCreateFilletResult(
+                _firstPick,
+                secondPick,
                 _radius,
                 _trimEnabled,
                 context.GeometryTolerance,
                 out IReadOnlyList<CadEntity>? resultEntities,
                 out string? errorMessage))
         {
-            return ToolResult.None(errorMessage ?? "Cannot create fillet for the selected lines.");
+            return ToolResult.None(errorMessage ?? "Cannot create fillet for the selected objects.");
         }
 
         if (resultEntities is null)
         {
-            return ToolResult.None(errorMessage ?? "Cannot create fillet for the selected lines.");
+            return ToolResult.None(errorMessage ?? "Cannot create fillet for the selected objects.");
         }
 
         ICadCommand command = _trimEnabled
             ? new ModifyEntitiesCommand(
-                new[] { first, second },
+                GetRemovedEntitiesForFillet(_firstPick, secondPick),
                 resultEntities,
                 _radius <= context.GeometryTolerance.Distance
-                    ? "Fillet lines with zero radius"
-                    : "Fillet lines")
+                    ? "Fillet with zero radius"
+                    : "Fillet objects")
             : new AddEntityCommand(
                 resultEntities);
 
@@ -387,7 +372,611 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         State = FilletToolState.WaitingForFirstEntityOrRadius;
         context.CurrentBasePoint = null;
 
-        return ToolResult.Completed("Fillet created. Select first line or type Radius/Trim.");
+        return ToolResult.Completed("Fillet created. Select first line or polyline segment, or type Radius/Trim.");
+    }
+
+    private static bool TryCreateFilletResult(
+        FilletPick firstPick,
+        FilletPick secondPick,
+        double radius,
+        bool trimSourceLines,
+        GeometryTolerance tolerance,
+        out IReadOnlyList<CadEntity>? resultEntities,
+        out string? errorMessage)
+    {
+        resultEntities = null;
+        errorMessage = null;
+
+        if (firstPick.Entity is LineEntity firstLine && secondPick.Entity is LineEntity secondLine)
+        {
+            if (secondPick.EntityId.Equals(firstPick.EntityId))
+            {
+                errorMessage = "Second fillet object must be different from the first one.";
+                return false;
+            }
+
+            return TryCreateLineLineFillet(
+                firstLine,
+                firstPick.PickPoint,
+                secondLine,
+                secondPick.PickPoint,
+                radius,
+                trimSourceLines,
+                tolerance,
+                out resultEntities,
+                out errorMessage);
+        }
+
+        if (firstPick.Entity is PolylineEntity firstPolyline &&
+            secondPick.Entity is PolylineEntity secondPolyline &&
+            firstPick.EntityId.Equals(secondPick.EntityId))
+        {
+            return TryCreatePolylineSegmentFillet(
+                firstPolyline,
+                firstPick.PolylineSegmentIndex,
+                secondPick.PolylineSegmentIndex,
+                radius,
+                trimSourceLines,
+                tolerance,
+                out resultEntities,
+                out errorMessage);
+        }
+
+        if ((firstPick.Entity is LineEntity || firstPick.Entity is PolylineEntity) &&
+            (secondPick.Entity is LineEntity || secondPick.Entity is PolylineEntity))
+        {
+            return TryCreateSeparateObjectFillet(
+                firstPick,
+                secondPick,
+                radius,
+                trimSourceLines,
+                tolerance,
+                out resultEntities,
+                out errorMessage);
+        }
+
+        errorMessage = "Polyline segment fillet currently supports lines, two adjacent segments of the same linear polyline, terminal segments of separate linear polylines, or line plus terminal polyline segment.";
+        return false;
+    }
+
+    private static IReadOnlyList<CadEntity> GetRemovedEntitiesForFillet(
+        FilletPick firstPick,
+        FilletPick secondPick)
+    {
+        if (firstPick.EntityId.Equals(secondPick.EntityId))
+        {
+            return new[] { firstPick.Entity };
+        }
+
+        return new[] { firstPick.Entity, secondPick.Entity };
+    }
+
+
+    private static bool TryCreateSeparateObjectFillet(
+        FilletPick firstPick,
+        FilletPick secondPick,
+        double radius,
+        bool trimSourceLines,
+        GeometryTolerance tolerance,
+        out IReadOnlyList<CadEntity>? resultEntities,
+        out string? errorMessage)
+    {
+        resultEntities = null;
+        errorMessage = null;
+
+        if (firstPick.EntityId.Equals(secondPick.EntityId))
+        {
+            errorMessage = "Second fillet object must be different from the first one.";
+            return false;
+        }
+
+        if (!TryCreateFilletLineSource(firstPick, out LineEntity? firstLine, out FilletSourceKind firstKind, out errorMessage) ||
+            firstLine is null)
+        {
+            return false;
+        }
+
+        if (!TryCreateFilletLineSource(secondPick, out LineEntity? secondLine, out FilletSourceKind secondKind, out errorMessage) ||
+            secondLine is null)
+        {
+            return false;
+        }
+
+        if (!TryCreateLineLineFillet(
+                firstLine,
+                firstPick.PickPoint,
+                secondLine,
+                secondPick.PickPoint,
+                radius,
+                trimSourceLines,
+                tolerance,
+                out IReadOnlyList<CadEntity>? lineResultEntities,
+                out errorMessage))
+        {
+            return false;
+        }
+
+        if (lineResultEntities is null)
+        {
+            errorMessage ??= "Cannot create fillet for the selected objects.";
+            return false;
+        }
+
+        if (!trimSourceLines)
+        {
+            resultEntities = lineResultEntities;
+            return true;
+        }
+
+        if (lineResultEntities.Count < 2 ||
+            lineResultEntities[0] is not LineEntity firstTrimmed ||
+            lineResultEntities[1] is not LineEntity secondTrimmed)
+        {
+            errorMessage = "Cannot create fillet geometry for the selected objects.";
+            return false;
+        }
+
+        if (!TryConvertTrimmedFilletSource(firstTrimmed, firstPick, firstKind, tolerance, out CadEntity? convertedFirst, out errorMessage) ||
+            convertedFirst is null)
+        {
+            return false;
+        }
+
+        if (!TryConvertTrimmedFilletSource(secondTrimmed, secondPick, secondKind, tolerance, out CadEntity? convertedSecond, out errorMessage) ||
+            convertedSecond is null)
+        {
+            return false;
+        }
+
+        var converted = new List<CadEntity>
+        {
+            convertedFirst,
+            convertedSecond
+        };
+
+        foreach (CadEntity entity in lineResultEntities.Skip(2))
+        {
+            converted.Add(entity);
+        }
+
+        resultEntities = converted;
+        return true;
+    }
+
+    private static bool TryCreateFilletLineSource(
+        FilletPick pick,
+        out LineEntity? line,
+        out FilletSourceKind kind,
+        out string? errorMessage)
+    {
+        line = null;
+        kind = FilletSourceKind.Line;
+        errorMessage = null;
+
+        if (pick.Entity is LineEntity lineEntity)
+        {
+            line = lineEntity;
+            kind = FilletSourceKind.Line;
+            return true;
+        }
+
+        if (pick.Entity is not PolylineEntity polyline)
+        {
+            errorMessage = "Fillet currently supports visible, unlocked lines and polyline segments only.";
+            return false;
+        }
+
+        kind = FilletSourceKind.PolylineSegment;
+
+        if (pick.PolylineSegmentIndex is null)
+        {
+            errorMessage = "Select a polyline segment.";
+            return false;
+        }
+
+        if (polyline.IsClosed)
+        {
+            errorMessage = "Fillet between separate objects currently supports open polylines only.";
+            return false;
+        }
+
+        if (polyline.HasArcSegments)
+        {
+            errorMessage = "Polyline segment fillet currently supports linear polylines only.";
+            return false;
+        }
+
+        if (!IsTerminalOpenPolylineSegment(polyline, pick.PolylineSegmentIndex.Value))
+        {
+            errorMessage = "Fillet between separate polylines currently supports terminal segments only.";
+            return false;
+        }
+
+        line = CreateLineFromPolylineSegment(polyline, pick.PolylineSegmentIndex.Value);
+        return true;
+    }
+
+    private static bool TryConvertTrimmedFilletSource(
+        LineEntity trimmedLine,
+        FilletPick originalPick,
+        FilletSourceKind kind,
+        GeometryTolerance tolerance,
+        out CadEntity? converted,
+        out string? errorMessage)
+    {
+        converted = null;
+        errorMessage = null;
+
+        if (kind == FilletSourceKind.Line)
+        {
+            converted = trimmedLine;
+            return true;
+        }
+
+        if (originalPick.Entity is not PolylineEntity sourcePolyline ||
+            originalPick.PolylineSegmentIndex is null)
+        {
+            errorMessage = "Cannot update the selected polyline segment.";
+            return false;
+        }
+
+        return TryReplaceTrimmedTerminalPolylineSegment(
+            sourcePolyline,
+            originalPick.PolylineSegmentIndex.Value,
+            trimmedLine,
+            tolerance,
+            out converted,
+            out errorMessage);
+    }
+
+    private static bool TryReplaceTrimmedTerminalPolylineSegment(
+        PolylineEntity sourcePolyline,
+        int segmentIndex,
+        LineEntity trimmedLine,
+        GeometryTolerance tolerance,
+        out CadEntity? converted,
+        out string? errorMessage)
+    {
+        converted = null;
+        errorMessage = null;
+
+        if (!IsTerminalOpenPolylineSegment(sourcePolyline, segmentIndex))
+        {
+            errorMessage = "Fillet between separate polylines currently supports terminal segments only.";
+            return false;
+        }
+
+        Point2D originalStart = sourcePolyline.Vertices[segmentIndex];
+        Point2D originalEnd = sourcePolyline.Vertices[segmentIndex + 1];
+        bool startChanged = !tolerance.ArePointsEqual(trimmedLine.Start, originalStart);
+        bool endChanged = !tolerance.ArePointsEqual(trimmedLine.End, originalEnd);
+
+        if (startChanged && endChanged)
+        {
+            errorMessage = "Cannot trim the selected polyline segment without changing both endpoints.";
+            return false;
+        }
+
+        var vertices = sourcePolyline.Vertices.ToList();
+
+        if (sourcePolyline.SegmentCount == 1)
+        {
+            vertices[0] = trimmedLine.Start;
+            vertices[1] = trimmedLine.End;
+        }
+        else if (segmentIndex == 0)
+        {
+            if (endChanged)
+            {
+                errorMessage = "Fillet between separate polylines can only trim the terminal endpoint of a multi-segment polyline.";
+                return false;
+            }
+
+            vertices[0] = trimmedLine.Start;
+        }
+        else if (segmentIndex == sourcePolyline.SegmentCount - 1)
+        {
+            if (startChanged)
+            {
+                errorMessage = "Fillet between separate polylines can only trim the terminal endpoint of a multi-segment polyline.";
+                return false;
+            }
+
+            vertices[^1] = trimmedLine.End;
+        }
+        else
+        {
+            errorMessage = "Fillet between separate polylines currently supports terminal segments only.";
+            return false;
+        }
+
+        converted = new PolylineEntity(
+            vertices,
+            isClosed: false,
+            layerId: sourcePolyline.LayerId,
+            style: sourcePolyline.Style,
+            isVisible: sourcePolyline.IsVisible,
+            isLocked: sourcePolyline.IsLocked,
+            drawOrder: sourcePolyline.DrawOrder,
+            isFilled: false,
+            segmentBulges: sourcePolyline.SegmentBulges);
+        return true;
+    }
+
+    private static bool IsTerminalOpenPolylineSegment(
+        PolylineEntity polyline,
+        int segmentIndex)
+    {
+        return !polyline.IsClosed &&
+            segmentIndex >= 0 &&
+            segmentIndex < polyline.SegmentCount &&
+            (segmentIndex == 0 || segmentIndex == polyline.SegmentCount - 1);
+    }
+
+    private static bool TryCreatePolylineSegmentFillet(
+        PolylineEntity polyline,
+        int? firstSegmentIndex,
+        int? secondSegmentIndex,
+        double radius,
+        bool trimSourceLines,
+        GeometryTolerance tolerance,
+        out IReadOnlyList<CadEntity>? resultEntities,
+        out string? errorMessage)
+    {
+        resultEntities = null;
+        errorMessage = null;
+
+        if (!trimSourceLines)
+        {
+            errorMessage = "Polyline segment fillet requires Trim mode.";
+            return false;
+        }
+
+        if (radius <= tolerance.Distance)
+        {
+            errorMessage = "Polyline segment fillet requires a radius greater than zero.";
+            return false;
+        }
+
+        if (firstSegmentIndex is null || secondSegmentIndex is null)
+        {
+            errorMessage = "Select two polyline segments.";
+            return false;
+        }
+
+        if (polyline.HasArcSegments)
+        {
+            errorMessage = "Polyline segment fillet currently supports linear polylines only.";
+            return false;
+        }
+
+        if (firstSegmentIndex.Value == secondSegmentIndex.Value)
+        {
+            errorMessage = "Select two different adjacent polyline segments.";
+            return false;
+        }
+
+        if (!TryGetAdjacentPolylineSegments(
+                polyline,
+                firstSegmentIndex.Value,
+                secondSegmentIndex.Value,
+                out int beforeSegmentIndex,
+                out int afterSegmentIndex,
+                out int commonVertexIndex))
+        {
+            errorMessage = "Selected polyline segments are not adjacent.";
+            return false;
+        }
+
+        int vertexCount = polyline.Vertices.Count;
+        int previousVertexIndex = beforeSegmentIndex;
+        int nextVertexIndex = (afterSegmentIndex + 1) % vertexCount;
+
+        Point2D common = polyline.Vertices[commonVertexIndex];
+        Point2D previous = polyline.Vertices[previousVertexIndex];
+        Point2D next = polyline.Vertices[nextVertexIndex];
+
+        Vector2D previousBranch = common.VectorTo(previous);
+        Vector2D nextBranch = common.VectorTo(next);
+
+        if (tolerance.IsVectorLengthZero(previousBranch.Length) ||
+            tolerance.IsVectorLengthZero(nextBranch.Length))
+        {
+            errorMessage = "Cannot fillet zero-length polyline segments.";
+            return false;
+        }
+
+        Vector2D previousUnit = previousBranch.Normalize();
+        Vector2D nextUnit = nextBranch.Normalize();
+        double angle = Math.Acos(Math.Clamp(previousUnit.Dot(nextUnit), -1.0, 1.0));
+        double minimumAngle = Math.Max(tolerance.Angle, MinimumPracticalFilletAngleRadians);
+
+        if (angle <= minimumAngle || Math.Abs(Math.PI - angle) <= minimumAngle)
+        {
+            errorMessage = "Cannot fillet polyline segments with an invalid or nearly collinear corner angle.";
+            return false;
+        }
+
+        double tangentDistance = radius / Math.Tan(angle / 2.0);
+
+        if (tangentDistance <= tolerance.Distance ||
+            double.IsNaN(tangentDistance) ||
+            double.IsInfinity(tangentDistance))
+        {
+            errorMessage = "Fillet radius is not valid for the selected polyline corner.";
+            return false;
+        }
+
+        if (tangentDistance >= common.DistanceTo(previous) - tolerance.Distance ||
+            tangentDistance >= common.DistanceTo(next) - tolerance.Distance)
+        {
+            errorMessage = "Fillet radius is too large for the selected polyline segments.";
+            return false;
+        }
+
+        Point2D previousTangent = common + previousUnit * tangentDistance;
+        Point2D nextTangent = common + nextUnit * tangentDistance;
+        // The angle between the two polyline branches is the corner angle at the
+        // original vertex.  The fillet arc itself spans the supplementary angle
+        // between the two tangent radii; using the corner angle directly gives
+        // the correct result only for 90° corners and produces a wrong radius
+        // for acute/obtuse corners.
+        double filletArcSweep = Math.PI - angle;
+        double bulgeMagnitude = Math.Tan(filletArcSweep / 4.0);
+        double cross = previousUnit.Cross(nextUnit);
+        double arcBulge = cross < 0.0
+            ? -bulgeMagnitude
+            : bulgeMagnitude;
+
+        IReadOnlyList<PolylineSegmentPiece> pieces = BuildFilletedPolylineSegments(
+            polyline,
+            beforeSegmentIndex,
+            afterSegmentIndex,
+            previousTangent,
+            nextTangent,
+            arcBulge,
+            tolerance);
+
+        if (pieces.Count == 0)
+        {
+            errorMessage = "Cannot create filleted polyline geometry.";
+            return false;
+        }
+
+        var vertices = new List<Point2D>
+        {
+            pieces[0].Start
+        };
+        var bulges = new List<double>();
+
+        for (int index = 0; index < pieces.Count; index++)
+        {
+            PolylineSegmentPiece piece = pieces[index];
+            bulges.Add(piece.Bulge);
+            bool closesPolyline = polyline.IsClosed &&
+                index == pieces.Count - 1 &&
+                tolerance.ArePointsEqual(piece.End, vertices[0]);
+
+            if (!closesPolyline)
+            {
+                vertices.Add(piece.End);
+            }
+        }
+
+        var result = new PolylineEntity(
+            vertices,
+            polyline.IsClosed,
+            layerId: polyline.LayerId,
+            style: polyline.Style,
+            isVisible: polyline.IsVisible,
+            isLocked: polyline.IsLocked,
+            drawOrder: polyline.DrawOrder,
+            isFilled: polyline.IsClosed && polyline.IsFilled,
+            segmentBulges: bulges);
+
+        resultEntities = new CadEntity[] { result };
+        return true;
+    }
+
+    private static IReadOnlyList<PolylineSegmentPiece> BuildFilletedPolylineSegments(
+        PolylineEntity polyline,
+        int beforeSegmentIndex,
+        int afterSegmentIndex,
+        Point2D previousTangent,
+        Point2D nextTangent,
+        double arcBulge,
+        GeometryTolerance tolerance)
+    {
+        var pieces = new List<PolylineSegmentPiece>();
+
+        for (int index = 0; index < polyline.SegmentCount; index++)
+        {
+            Point2D start = polyline.Vertices[index];
+            Point2D end = polyline.Vertices[(index + 1) % polyline.Vertices.Count];
+
+            if (index == beforeSegmentIndex)
+            {
+                AddPolylinePieceIfLongEnough(pieces, start, previousTangent, 0.0, tolerance);
+
+                if (afterSegmentIndex == (beforeSegmentIndex + 1) % polyline.SegmentCount)
+                {
+                    AddPolylinePieceIfLongEnough(pieces, previousTangent, nextTangent, arcBulge, tolerance);
+                }
+
+                continue;
+            }
+
+            if (index == afterSegmentIndex)
+            {
+                AddPolylinePieceIfLongEnough(pieces, nextTangent, end, 0.0, tolerance);
+                continue;
+            }
+
+            AddPolylinePieceIfLongEnough(pieces, start, end, 0.0, tolerance);
+        }
+
+        if (polyline.IsClosed && afterSegmentIndex == 0 && beforeSegmentIndex == polyline.SegmentCount - 1)
+        {
+            AddPolylinePieceIfLongEnough(pieces, previousTangent, nextTangent, arcBulge, tolerance);
+        }
+
+        return pieces;
+    }
+
+    private static void AddPolylinePieceIfLongEnough(
+        List<PolylineSegmentPiece> pieces,
+        Point2D start,
+        Point2D end,
+        double bulge,
+        GeometryTolerance tolerance)
+    {
+        if (tolerance.ArePointsEqual(start, end))
+        {
+            return;
+        }
+
+        pieces.Add(new PolylineSegmentPiece(start, end, bulge));
+    }
+
+    private static bool TryGetAdjacentPolylineSegments(
+        PolylineEntity polyline,
+        int firstSegmentIndex,
+        int secondSegmentIndex,
+        out int beforeSegmentIndex,
+        out int afterSegmentIndex,
+        out int commonVertexIndex)
+    {
+        beforeSegmentIndex = -1;
+        afterSegmentIndex = -1;
+        commonVertexIndex = -1;
+
+        if (firstSegmentIndex < 0 || firstSegmentIndex >= polyline.SegmentCount ||
+            secondSegmentIndex < 0 || secondSegmentIndex >= polyline.SegmentCount)
+        {
+            return false;
+        }
+
+        int vertexCount = polyline.Vertices.Count;
+        int firstEnd = (firstSegmentIndex + 1) % vertexCount;
+        int secondEnd = (secondSegmentIndex + 1) % vertexCount;
+
+        if (firstEnd == secondSegmentIndex)
+        {
+            beforeSegmentIndex = firstSegmentIndex;
+            afterSegmentIndex = secondSegmentIndex;
+            commonVertexIndex = firstEnd;
+            return true;
+        }
+
+        if (secondEnd == firstSegmentIndex)
+        {
+            beforeSegmentIndex = secondSegmentIndex;
+            afterSegmentIndex = firstSegmentIndex;
+            commonVertexIndex = secondEnd;
+            return true;
+        }
+
+        return false;
     }
 
     internal static bool TryCreateLineLineFillet(
@@ -522,6 +1111,20 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         return true;
     }
 
+    private static LineEntity CreateLineFromPolylineSegment(
+        PolylineEntity polyline,
+        int segmentIndex)
+    {
+        return new LineEntity(
+            polyline.Vertices[segmentIndex],
+            polyline.Vertices[(segmentIndex + 1) % polyline.Vertices.Count],
+            layerId: polyline.LayerId,
+            style: polyline.Style,
+            isVisible: polyline.IsVisible,
+            isLocked: polyline.IsLocked,
+            drawOrder: polyline.DrawOrder);
+    }
+
     private static LineEntity CreateTrimmedLineToPoint(
         LineEntity source,
         Vector2D keptBranch,
@@ -566,32 +1169,142 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         return line.Start.VectorTo(point).Dot(direction) / lengthSquared;
     }
 
-    private static ToolPickedEntityInput? PickSelectableLine(
+    private static FilletPick? PickSelectableFilletObject(
         ToolContext context,
-        Point2D pickPoint)
+        Point2D pickPoint,
+        FilletPick? firstPick = null)
     {
-        EntityId? selectedId = context.Selection.Service.SelectByPoint(
+        IReadOnlyList<EntityId> selectedIds = context.Selection.Service.SelectAllByPoint(
             context.Document,
             pickPoint,
             context.Selection.Tolerance);
 
-        if (selectedId is null)
+        foreach (EntityId selectedId in selectedIds)
+        {
+            CadEntity entity = context.Document.Entities.GetRequired(selectedId);
+
+            if (!context.Document.IsEntitySelectable(entity))
+            {
+                continue;
+            }
+
+            if (entity is LineEntity)
+            {
+                if (firstPick is not null && selectedId.Equals(firstPick.EntityId))
+                {
+                    continue;
+                }
+
+                return new FilletPick(
+                    selectedId,
+                    pickPoint,
+                    entity.GetClosestPoint(pickPoint),
+                    entity,
+                    null);
+            }
+
+            if (entity is PolylineEntity polyline)
+            {
+                int? excludedSegmentIndex = firstPick is not null &&
+                    selectedId.Equals(firstPick.EntityId)
+                        ? firstPick.PolylineSegmentIndex
+                        : null;
+
+                int? segmentIndex = FindClosestPolylineSegment(
+                    polyline,
+                    pickPoint,
+                    excludedSegmentIndex);
+
+                if (segmentIndex is null)
+                {
+                    continue;
+                }
+
+                return new FilletPick(
+                    selectedId,
+                    pickPoint,
+                    GetClosestPointOnSegment(
+                        polyline.Vertices[segmentIndex.Value],
+                        polyline.Vertices[(segmentIndex.Value + 1) % polyline.Vertices.Count],
+                        pickPoint),
+                    entity,
+                    segmentIndex.Value);
+            }
+        }
+
+        return null;
+    }
+
+    private static int? FindClosestPolylineSegment(
+        PolylineEntity polyline,
+        Point2D pickPoint,
+        int? excludedSegmentIndex = null)
+    {
+        if (polyline.SegmentCount == 0)
         {
             return null;
         }
 
-        CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
+        double bestDistance = double.PositiveInfinity;
+        int bestIndex = -1;
 
-        if (entity is not LineEntity || !context.Document.IsEntitySelectable(entity))
+        for (int index = 0; index < polyline.SegmentCount; index++)
         {
-            return null;
+            if (excludedSegmentIndex is not null && index == excludedSegmentIndex.Value)
+            {
+                continue;
+            }
+
+            Point2D start = polyline.Vertices[index];
+            Point2D end = polyline.Vertices[(index + 1) % polyline.Vertices.Count];
+            Point2D closest = GetClosestPointOnSegment(start, end, pickPoint);
+            double distance = closest.DistanceTo(pickPoint);
+
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestIndex = index;
+            }
         }
 
-        return new ToolPickedEntityInput(
-            selectedId.Value,
-            pickPoint,
-            entity.GetClosestPoint(pickPoint),
-            entity);
+        return bestIndex >= 0
+            ? bestIndex
+            : null;
+    }
+
+    private static Point2D GetClosestPointOnSegment(
+        Point2D start,
+        Point2D end,
+        Point2D point)
+    {
+        Vector2D direction = start.VectorTo(end);
+        double lengthSquared = direction.LengthSquared;
+
+        if (Tolerance.IsZero(lengthSquared))
+        {
+            return start;
+        }
+
+        double parameter = Math.Clamp(start.VectorTo(point).Dot(direction) / lengthSquared, 0.0, 1.0);
+        return start + direction * parameter;
+    }
+
+    private sealed record FilletPick(
+        EntityId EntityId,
+        Point2D PickPoint,
+        Point2D ClosestPoint,
+        CadEntity Entity,
+        int? PolylineSegmentIndex);
+
+    private readonly record struct PolylineSegmentPiece(
+        Point2D Start,
+        Point2D End,
+        double Bulge);
+
+    private enum FilletSourceKind
+    {
+        Line,
+        PolylineSegment
     }
 
     private string FormatTrimMode()

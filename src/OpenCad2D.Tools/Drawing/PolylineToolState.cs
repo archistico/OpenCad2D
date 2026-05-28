@@ -6,5 +6,7 @@ namespace OpenCad2D.Tools.Drawing;
 public enum PolylineToolState
 {
     WaitingForFirstPoint,
-    CollectingVertices
+    CollectingVertices,
+    WaitingForArcPointOnArc,
+    WaitingForArcEndPoint
 }

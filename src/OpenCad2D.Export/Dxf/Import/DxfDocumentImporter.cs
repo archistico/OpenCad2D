@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -648,26 +648,20 @@ public sealed class DxfDocumentImporter : IDxfImporter
             document,
             GetLayerName(record));
 
-        bool hasBulge = vertices.Any(vertex =>
-            !Tolerance.AreEqual(vertex.Bulge, 0));
+        int segmentCount = isClosed
+            ? vertices.Count
+            : vertices.Count - 1;
 
-        if (hasBulge)
-        {
-            ImportLightweightPolylineWithBulges(
-                record,
-                vertices,
-                isClosed,
-                layerId,
-                document,
-                log);
-
-            return;
-        }
+        List<double> segmentBulges = vertices
+            .Take(segmentCount)
+            .Select(vertex => vertex.Bulge)
+            .ToList();
 
         document.AddEntity(new PolylineEntity(
             vertices.Select(vertex => vertex.Point),
             isClosed,
-            layerId: layerId));
+            layerId: layerId,
+            segmentBulges: segmentBulges));
     }
 
 

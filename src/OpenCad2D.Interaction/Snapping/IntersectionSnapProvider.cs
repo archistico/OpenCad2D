@@ -54,17 +54,17 @@ public sealed class IntersectionSnapProvider : ISnapProvider
             (LineEntity line, PolylineEntity polyline) =>
                 PolylineIntersectionService.IntersectSegmentPolyline(
                     line.Geometry,
-                    polyline.Geometry),
+                    ToIntersectionPolyline(polyline)),
 
             (PolylineEntity polyline, LineEntity line) =>
                 PolylineIntersectionService.IntersectSegmentPolyline(
                     line.Geometry,
-                    polyline.Geometry),
+                    ToIntersectionPolyline(polyline)),
 
             (PolylineEntity polyline1, PolylineEntity polyline2) =>
                 PolylineIntersectionService.IntersectPolylinePolyline(
-                    polyline1.Geometry,
-                    polyline2.Geometry),
+                    ToIntersectionPolyline(polyline1),
+                    ToIntersectionPolyline(polyline2)),
 
             (LineEntity line, CircleEntity circle) =>
                 CircleIntersectionService.IntersectSegmentCircle(
@@ -93,12 +93,12 @@ public sealed class IntersectionSnapProvider : ISnapProvider
 
             (PolylineEntity polyline, EllipseEntity ellipse) =>
                 IntersectPolylineCurveApproximation(
-                    polyline.Geometry,
+                    ToIntersectionPolyline(polyline),
                     ToIntersectionPolyline(ellipse)),
 
             (EllipseEntity ellipse, PolylineEntity polyline) =>
                 IntersectPolylineCurveApproximation(
-                    polyline.Geometry,
+                    ToIntersectionPolyline(polyline),
                     ToIntersectionPolyline(ellipse)),
 
             (CircleEntity circle, EllipseEntity ellipse) =>
@@ -128,12 +128,12 @@ public sealed class IntersectionSnapProvider : ISnapProvider
 
             (PolylineEntity polyline, BezierSplineEntity spline) =>
                 IntersectPolylineCurveApproximation(
-                    polyline.Geometry,
+                    ToIntersectionPolyline(polyline),
                     ToIntersectionPolyline(spline)),
 
             (BezierSplineEntity spline, PolylineEntity polyline) =>
                 IntersectPolylineCurveApproximation(
-                    polyline.Geometry,
+                    ToIntersectionPolyline(polyline),
                     ToIntersectionPolyline(spline)),
 
             (CircleEntity circle, BezierSplineEntity spline) =>
@@ -228,6 +228,12 @@ public sealed class IntersectionSnapProvider : ISnapProvider
         return PolylineIntersectionService.IntersectPolylinePolyline(
             polyline,
             curveApproximation);
+    }
+
+
+    private static Polyline2D ToIntersectionPolyline(PolylineEntity polyline)
+    {
+        return polyline.GetInteractionGeometry(CurveIntersectionSampleCount);
     }
 
     private static Polyline2D ToIntersectionPolyline(EllipseEntity ellipse)

@@ -118,6 +118,8 @@ Aliases are case-insensitive.
 | Explode | `EXPLODE`, `X` |
 | Join | `JOIN`, `J` |
 
+Fillet supports Line-Line, adjacent straight segments of the same polyline, and terminal segments of separate open linear polylines. Line-Line remains supported with Radius and Trim/NoTrim options.
+
 ### Draw order
 
 | Action | Aliases |
@@ -196,3 +198,58 @@ All image reference mutations are executed through undoable replace/add commands
 `Create Block` converts the current selection into a reusable block definition. The command asks for a block name and a base point. The base point can be typed numerically or picked from the drawing with the mouse/snap workflow. The selected entities are stored in local block coordinates and replaced by a single `BlockReferenceEntity` at the same visible location. The operation is undoable as one step.
 
 Current limitation: nested blocks are not supported yet. Existing block references should be exploded before they are included in a new block.
+
+## Polyline three-point arc segments
+
+The `Polyline` command now supports mixed straight and curved segments while keeping a single `PolylineEntity`.
+
+Workflow:
+
+1. Start `Polyline` and specify the first vertex.
+2. Specify straight vertices normally, or choose `Arc` / `A`.
+3. In arc mode, the previous polyline vertex is the arc start point.
+4. Specify the point on the arc.
+5. Specify the arc endpoint.
+6. The tool stores the resulting segment as a DXF-compatible bulge on the polyline segment.
+7. The next segment returns to straight mode; choose `Arc` again to draw another curved segment.
+
+`Undo` while entering a three-point arc first cancels the pending arc point; another undo returns to regular straight-segment input. A polyline cannot be completed while an arc segment is half-entered.
+
+### EXPLODE mixed polyline support
+
+`EXPLODE` accepts selected polylines and block references. For polylines, the command now reads each segment instead of assuming that every segment is straight:
+
+- straight segments (`bulge == 0`) become `LineEntity`;
+- curved segments (`bulge != 0`) become `ArcEntity`;
+- closed polylines also explode their closing segment;
+- layer, style, visibility, lock state and draw order are preserved on the generated entities;
+- undo restores the original polyline or block reference through the existing modify-entities command flow.
+
+This makes `EXPLODE` the inverse workflow for mixed polylines created by three-point polyline arcs, DXF LWPOLYLINE bulges or `JOIN` of line/arc chains.
+
+### JOIN diagnostic feedback and mixed polylines
+
+`JOIN` now accepts lines, arcs and open polylines. The command creates one or more `PolylineEntity` results. Arc geometry is preserved as per-segment bulge values, so joining a line with an arc creates a mixed polyline instead of exploding the arc into a separate entity.
+
+The command is deliberately explicit when it cannot complete the operation:
+
+- unsupported entities return `Only lines, arcs and open polylines can be joined.`;
+- closed polylines return `Closed polylines cannot be joined.`;
+- selections with different layer/style visibility metadata return `Selected entities use different layers or styles and cannot be joined.`;
+- disconnected selections return `Selected entities do not touch at endpoints.`;
+- branching junctions return `Selected entities create a branching junction and cannot be joined into a single polyline.`.
+
+Disconnected valid chains are still supported: selecting two independent chains can create two polylines in one command.
+
+### FILLET / CHAMFER polyline segment picking
+
+When `FILLET` or `CHAMFER` is active, clicking a linear `PolylineEntity` selects the closest linear segment, not only the whole entity.
+After the first segment is selected, the second pick on the same polyline ignores the first segment and can resolve the adjacent segment at a shared vertex.
+
+### FILLET / CHAMFER polyline segment notes
+
+`FILLET` and `CHAMFER` can be used by clicking linear polyline segments. When selecting a second segment on the same polyline, the command ignores the first segment already picked so that clicks near a shared vertex resolve the adjacent segment.
+
+### CHAMFER separate simple polylines
+
+`CHAMFER` supports standalone lines, adjacent straight segments of the same linear polyline, separate open single-segment linear polylines, and mixed line/polyline pairs. Multi-segment polylines are supported only when the selected segment is terminal; internal-segment trims are rejected with a conservative diagnostic.

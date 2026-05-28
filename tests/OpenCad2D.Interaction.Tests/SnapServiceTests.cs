@@ -62,6 +62,39 @@ public sealed class SnapServiceTests
         Assert.Equal(new Point2D(5, 0), result.Point);
     }
 
+
+    [Fact]
+    public void Snap_WithMidpointEnabledOnBulgedPolyline_ShouldReturnArcMidpoint()
+    {
+        var document = new CadDocument();
+
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+
+        document.AddEntity(polyline);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            new Point2D(5.1, 4.9),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Midpoint);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Midpoint, result.Kind);
+        Assert.Equal(polyline.Id, result.EntityId);
+        Assert.Equal(5, result.Point.X, precision: 2);
+        Assert.Equal(5, result.Point.Y, precision: 2);
+    }
+
     [Fact]
     public void Snap_WithCenterEnabled_ShouldReturnCircleCenter()
     {

@@ -52,7 +52,7 @@ public static class MeasurementService
     {
         ArgumentNullException.ThrowIfNull(polyline);
 
-        return polyline.Geometry.Length;
+        return polyline.GetInteractionGeometry().Length;
     }
 
     public static double? CalculatePolylineArea(PolylineEntity polyline)
@@ -64,7 +64,7 @@ public static class MeasurementService
             return null;
         }
 
-        return CalculatePolygonArea(polyline.Vertices);
+        return CalculatePolygonArea(polyline.GetInteractionGeometry().Vertices);
     }
 
     public static double CalculatePolygonArea(IReadOnlyList<Point2D> vertices)

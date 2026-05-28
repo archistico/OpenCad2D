@@ -552,4 +552,39 @@ public sealed class CadBreakServiceTests
     }
 
 
+
+
+    [Fact]
+    public void BreakAtPoint_WithBulgedPolylineSegment_ShouldPreserveBulgesInFragments()
+    {
+        double bulge = Math.Tan(Math.PI / 8.0);
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { bulge, 0.0 });
+
+        Point2D breakPoint = polyline.GetSegmentMidpoints()[0];
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakAtPoint(
+            polyline,
+            breakPoint);
+
+        Assert.Equal(2, result.Count);
+
+        var first = Assert.IsType<PolylineEntity>(result[0]);
+        var second = Assert.IsType<PolylineEntity>(result[1]);
+
+        Assert.False(first.IsClosed);
+        Assert.False(second.IsClosed);
+        Assert.Single(first.SegmentBulges);
+        Assert.Equal(2, second.SegmentBulges.Count);
+        Assert.NotEqual(0.0, first.SegmentBulges[0], precision: 10);
+        Assert.NotEqual(0.0, second.SegmentBulges[0], precision: 10);
+        Assert.Equal(0.0, second.SegmentBulges[1], precision: 10);
+    }
+
 }

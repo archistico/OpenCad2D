@@ -152,7 +152,7 @@ public sealed class SelectionService
             PolylineEntity polyline =>
                 RectangleIntersectionService.IntersectsPolyline(
                     window,
-                    polyline.Geometry),
+                    polyline.GetInteractionGeometry()),
 
             CircleEntity circle =>
                 RectangleIntersectionService.IntersectsCircle(

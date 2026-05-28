@@ -190,6 +190,14 @@ public static class CadExtendService
         bool pickedStart = pickPoint.DistanceTo(vertices[0]) <=
                            pickPoint.DistanceTo(vertices[^1]);
 
+        int endpointSegmentIndex = pickedStart ? 0 : target.SegmentCount - 1;
+        if (Math.Abs(target.SegmentBulges[endpointSegmentIndex]) > tolerance.Distance)
+        {
+            // Extending a curved polyline end requires changing the native bulge/arc geometry.
+            // Keep this conservative for now instead of silently flattening the mixed polyline.
+            return null;
+        }
+
         Point2D fixedPoint = pickedStart ? vertices[1] : vertices[^2];
         Point2D endpoint = pickedStart ? vertices[0] : vertices[^1];
 
@@ -235,7 +243,9 @@ public static class CadExtendService
             target.Style,
             target.IsVisible,
             target.IsLocked,
-            target.DrawOrder);
+            target.DrawOrder,
+            isFilled: false,
+            segmentBulges: target.SegmentBulges);
     }
 
     private static Point2D? FindBestPointBeforeStart(

@@ -209,6 +209,155 @@ public sealed class FilletToolTests
     }
 
 
+
+    [Fact]
+    public void PolylineAdjacentSegments_WithRadius_ShouldCreateSingleBulgedPolyline()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(10, 10)
+        });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 5)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity filleted = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All));
+        Assert.Equal(4, filleted.Vertices.Count);
+        Assert.Equal(new Point2D(0, 0), filleted.Vertices[0]);
+        Assert.Equal(8.0, filleted.Vertices[1].X, 12);
+        Assert.Equal(0.0, filleted.Vertices[1].Y, 12);
+        Assert.Equal(10.0, filleted.Vertices[2].X, 12);
+        Assert.Equal(2.0, filleted.Vertices[2].Y, 12);
+        Assert.Equal(new Point2D(10, 10), filleted.Vertices[3]);
+        Assert.Equal(3, filleted.SegmentBulges.Count);
+        Assert.Equal(0.0, filleted.SegmentBulges[0], 12);
+        Assert.True(filleted.SegmentBulges[1] < 0.0);
+        Assert.Equal(0.0, filleted.SegmentBulges[2], 12);
+    }
+
+
+    [Fact]
+    public void PolylineAdjacentSegments_WithObtuseCorner_ShouldCreateArcWithRequestedRadius()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(15, 10)
+        });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(12, 4)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity filleted = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All));
+        Assert.Equal(4, filleted.Vertices.Count);
+
+        double bulge = filleted.SegmentBulges[1];
+        Assert.NotEqual(0.0, bulge);
+
+        double chordLength = filleted.Vertices[1].DistanceTo(filleted.Vertices[2]);
+        double sweep = Math.Abs(-4.0 * Math.Atan(bulge));
+        double actualRadius = chordLength / (2.0 * Math.Sin(sweep / 2.0));
+
+        Assert.Equal(2.0, actualRadius, 10);
+    }
+
+    [Fact]
+    public void PolylineAdjacentSegments_WithUndo_ShouldRestoreOriginalPolyline()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(10, 10)
+        });
+        var history = new CommandHistory();
+        document.AddEntity(polyline);
+        ToolContext context = new(
+            document,
+            history,
+            new SnapService(),
+            selectionTolerance: 5);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 5)));
+
+        history.Undo(document);
+
+        Assert.Same(polyline, Assert.Single(document.Entities.All));
+    }
+
+    [Fact]
+    public void PolylineNonAdjacentSegments_ShouldReturnClearErrorAndNotModifyDocument()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(10, 10),
+            new Point2D(20, 10)
+        });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(15, 10)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("Selected polyline segments are not adjacent.", result.Message);
+        Assert.Same(polyline, Assert.Single(document.Entities.All));
+    }
+
+    [Fact]
+    public void PolylineWithExistingBulge_ShouldReturnClearErrorAndNotModifyDocument()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10)
+            },
+            segmentBulges: new[] { -0.25, 0.0 });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 5)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("Polyline segment fillet currently supports linear polylines only.", result.Message);
+        Assert.Same(polyline, Assert.Single(document.Entities.All));
+    }
+
     [Fact]
     public void GetActiveSnapKind_WhenSelectingEntities_ShouldUseEntityOnlySnap()
     {
@@ -282,6 +431,152 @@ public sealed class FilletToolTests
         Assert.Equal(FilletToolState.WaitingForFirstEntityOrRadius, tool.State);
         Assert.Equal(0, tool.Radius);
     }
+
+    [Fact]
+    public void PolylineAdjacentSegments_WhenSecondClickIsOnSharedVertex_ShouldSelectAdjacentSegment()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(10, 10)
+        });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity filleted = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All));
+        Assert.Contains(filleted.SegmentBulges, bulge => Math.Abs(bulge) > 1e-9);
+    }
+
+
+    [Fact]
+    public void SeparateSingleSegmentPolylines_ShouldCreateTrimmedPolylinesAndFilletArc()
+    {
+        CadDocument document = new();
+        var horizontal = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0)
+        });
+        var vertical = new PolylineEntity(new[]
+        {
+            new Point2D(10, 0),
+            new Point2D(10, 10)
+        });
+        document.AddEntity(horizontal);
+        document.AddEntity(vertical);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 5)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(3, document.Entities.All.Count());
+        Assert.Equal(2, document.Entities.All.OfType<PolylineEntity>().Count());
+        ArcEntity arc = Assert.Single(document.Entities.All.OfType<ArcEntity>());
+        Assert.Equal(2.0, arc.Radius, 12);
+        Assert.Contains(document.Entities.All.OfType<PolylineEntity>(), polyline =>
+            polyline.Vertices.Count == 2 &&
+            PointsNear(polyline.Vertices[0], new Point2D(0, 0)) &&
+            PointsNear(polyline.Vertices[1], new Point2D(8, 0)));
+        Assert.Contains(document.Entities.All.OfType<PolylineEntity>(), polyline =>
+            polyline.Vertices.Count == 2 &&
+            PointsNear(polyline.Vertices[0], new Point2D(10, 2)) &&
+            PointsNear(polyline.Vertices[1], new Point2D(10, 10)));
+    }
+
+    [Fact]
+    public void SeparateMultiSegmentTerminalPolylines_ShouldTrimTerminalVerticesAndCreateFilletArc()
+    {
+        CadDocument document = new();
+        var horizontal = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(20, 0)
+        });
+        var vertical = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(0, 10),
+            new Point2D(0, 20)
+        });
+        document.AddEntity(horizontal);
+        document.AddEntity(vertical);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 5)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal(3, document.Entities.All.Count());
+        ArcEntity arc = Assert.Single(document.Entities.All.OfType<ArcEntity>());
+        Assert.Equal(2.0, arc.Radius, 12);
+        Assert.Contains(document.Entities.All.OfType<PolylineEntity>(), polyline =>
+            polyline.Vertices.Count == 3 &&
+            PointsNear(polyline.Vertices[0], new Point2D(2, 0)) &&
+            PointsNear(polyline.Vertices[1], new Point2D(10, 0)) &&
+            PointsNear(polyline.Vertices[2], new Point2D(20, 0)));
+        Assert.Contains(document.Entities.All.OfType<PolylineEntity>(), polyline =>
+            polyline.Vertices.Count == 3 &&
+            PointsNear(polyline.Vertices[0], new Point2D(0, 2)) &&
+            PointsNear(polyline.Vertices[1], new Point2D(0, 10)) &&
+            PointsNear(polyline.Vertices[2], new Point2D(0, 20)));
+    }
+
+    [Fact]
+    public void SeparateMultiSegmentPolylines_WhenTrimWouldMoveInternalVertex_ShouldReturnClearError()
+    {
+        CadDocument document = new();
+        var first = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 0),
+            new Point2D(12, 0)
+        });
+        var second = new PolylineEntity(new[]
+        {
+            new Point2D(10, 0),
+            new Point2D(10, 10)
+        });
+        document.AddEntity(first);
+        document.AddEntity(second);
+        ToolContext context = CreateContext(document);
+        var tool = new FilletTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Radius"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 5)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("Fillet between separate polylines can only trim the terminal endpoint of a multi-segment polyline.", result.Message);
+        Assert.Equal(2, document.Entities.All.Count());
+    }
+
+    private static bool PointsNear(Point2D actual, Point2D expected)
+    {
+        return Math.Abs(actual.X - expected.X) < 1e-6 &&
+               Math.Abs(actual.Y - expected.Y) < 1e-6;
+    }
+
     private static ToolContext CreateContext(CadDocument? document = null)
     {
         return new ToolContext(

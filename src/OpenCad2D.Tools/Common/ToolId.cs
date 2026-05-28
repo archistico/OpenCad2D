@@ -39,6 +39,7 @@ public enum ToolId
     Trim,
     Offset,
     Fillet,
+    Chamfer,
     Mirror,
     Explode,
     Join,

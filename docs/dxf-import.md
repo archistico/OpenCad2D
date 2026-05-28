@@ -45,13 +45,13 @@ Unsupported records do not stop the import. They are skipped and reported in the
 | `CIRCLE` | `CircleEntity` | zero or negative radius is skipped |
 | `ARC` | `ArcEntity` | angles are read from DXF degrees |
 | `POINT` | `PointEntity` | missing coordinates are skipped |
-| `LWPOLYLINE` | `PolylineEntity`, or `LineEntity`/`ArcEntity` when bulge is present | straight segments stay editable as polylines; bulge segments are converted to separate native arcs |
+| `LWPOLYLINE` | `PolylineEntity` | straight and bulge segments are preserved on the same lightweight polyline |
 | `TEXT` | `TextEntity` | single-line text |
 | `MTEXT` | `MultilineTextEntity` | `\P` paragraph separators are converted to internal line breaks; reference width `41` is preserved when present |
 | `ELLIPSE` | `EllipseEntity`; partial elliptical arcs are a candidate for `EllipticalArcEntity` | full ellipse imports as a native entity; partial parameter ranges still need a dedicated native importer pass |
 | `SPLINE` | `BezierSplineEntity`, or `PolylineEntity` for fit-point-only splines | control-point splines import as Bezier splines; fit-point-only splines are approximated as polylines |
 
-`LWPOLYLINE` bulge values are now converted to native arc geometry. When a lightweight polyline contains any bulge segment, OpenCad2D imports the polyline as separate `LineEntity` and `ArcEntity` segments. This preserves the curved geometry but does not yet preserve the original polyline as a single compound entity.
+`LWPOLYLINE` bulge values are now preserved directly on `PolylineEntity.SegmentBulges`. This keeps mixed straight/arc lightweight polylines as one compound entity instead of exploding them into separate line and arc entities. Canvas rendering, hit testing and SVG/PDF/HATCH fallback use an internal approximation, while DXF export writes the original bulge values back to group code `42`.
 
 `TEXT` currently imports the text value, insertion point and optional rotation. `MTEXT` imports multiline content, maps DXF paragraph separators to internal line breaks and preserves group code `41` as `ReferenceWidth` when present. Imported text uses `TextFormatId.Standard`.
 
@@ -150,5 +150,5 @@ errors                   -> keep current document and show report
 - no block insertion support;
 - no hatches;
 - full `ELLIPSE` import and readable `SPLINE` import are implemented, but partial ellipses and external NURBS-level spline fidelity are still approximated;
-- `LWPOLYLINE` bulge segments are converted to separate line/arc entities, not preserved as one compound polyline;
+- advanced editing commands still approximate curved polyline segments internally for TRIM/BREAK/EXTEND;
 - no paper-space or layout reconstruction.

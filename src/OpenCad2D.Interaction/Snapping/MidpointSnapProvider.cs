@@ -66,9 +66,9 @@ public sealed class MidpointSnapProvider : ISnapProvider
                 break;
 
             case PolylineEntity polyline:
-                foreach (LineSegment2D segment in polyline.Geometry.GetSegments())
+                foreach (Point2D midpoint in polyline.GetSegmentMidpoints())
                 {
-                    yield return segment.Midpoint;
+                    yield return midpoint;
                 }
 
                 break;

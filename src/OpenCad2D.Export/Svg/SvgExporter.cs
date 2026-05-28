@@ -790,9 +790,13 @@ public sealed class SvgExporter : ISvgExporter
         double svgHeight,
         double margin)
     {
+        PolylineEntity exportPolyline = polyline.HasArcSegments
+            ? polyline.ToPolylineApproximation()
+            : polyline;
+
         string points = string.Join(
             " ",
-            polyline.Vertices.Select(vertex =>
+            exportPolyline.Vertices.Select(vertex =>
             {
                 Point2D svgPoint = ToSvgPoint(
                     vertex,
@@ -803,11 +807,11 @@ public sealed class SvgExporter : ISvgExporter
                 return $"{Format(svgPoint.X)},{Format(svgPoint.Y)}";
             }));
 
-        string tagName = polyline.IsClosed
+        string tagName = exportPolyline.IsClosed
             ? "polygon"
             : "polyline";
 
-        CadColor? fillColor = polyline.IsClosed && polyline.IsFilled
+        CadColor? fillColor = exportPolyline.IsClosed && exportPolyline.IsFilled
             ? layer.FillColor
             : null;
 

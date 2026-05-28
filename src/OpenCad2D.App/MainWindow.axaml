@@ -805,7 +805,7 @@
 
                             <Button x:Name="PolylineButton"
                                     Classes="tool-button"
-                                    ToolTip.Tip="Draw a polyline with multiple vertices"
+                                    ToolTip.Tip="Draw a polyline with line segments and three-point arc segments (A = Arc, L = Line)"
                                     Click="Polyline_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
@@ -1188,7 +1188,7 @@
 
                             <Button x:Name="OffsetButton"
                                     Classes="tool-button"
-                                    ToolTip.Tip="Create an offset copy of a line, circle or arc"
+                                    ToolTip.Tip="Create an offset copy of a line, circle, arc or straight polyline"
                                     Click="Offset_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
@@ -1211,6 +1211,20 @@
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Fillet" />
+                                </Grid>
+                            </Button>
+
+                            <Button x:Name="ChamferButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Create an equal-distance chamfer between two lines"
+                                    Click="Chamfer_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconChamfer}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Chamfer" />
                                 </Grid>
                             </Button>
 

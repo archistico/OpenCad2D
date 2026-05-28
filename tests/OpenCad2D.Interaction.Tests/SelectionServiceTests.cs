@@ -268,6 +268,33 @@ public sealed class SelectionServiceTests
 
         Assert.Empty(result);
     }
+
+    [Fact]
+    public void SelectByWindow_Crossing_WithBulgedPolylineArcCrossingWindow_ShouldSelectPolyline()
+    {
+        var document = new CadDocument();
+
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+
+        document.AddEntity(polyline);
+
+        var service = new SelectionService();
+
+        IReadOnlyList<EntityId> result = service.SelectByWindow(
+            document,
+            new BoundingBox2D(4, 4, 6, 6),
+            WindowSelectionMode.Crossing);
+
+        EntityId selected = Assert.Single(result);
+        Assert.Equal(polyline.Id, selected);
+    }
+
     [Fact]
     public void SelectAllByPoint_WhenEntitiesOverlap_ShouldReturnAllHitsInPriorityOrder()
     {

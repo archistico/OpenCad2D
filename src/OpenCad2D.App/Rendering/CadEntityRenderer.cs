@@ -734,9 +734,12 @@ public sealed class CadEntityRenderer
         Pen pen,
         IBrush? fillBrush)
     {
-        IReadOnlyList<Point2D> vertices = polyline.Vertices;
+        PolylineEntity renderPolyline = polyline.HasArcSegments
+            ? polyline.ToPolylineApproximation()
+            : polyline;
+        IReadOnlyList<Point2D> vertices = renderPolyline.Vertices;
 
-        if (fillBrush is not null && polyline.IsClosed && vertices.Count > 2)
+        if (fillBrush is not null && renderPolyline.IsClosed && vertices.Count > 2)
         {
             DrawClosedPolylineGeometry(
                 context,
@@ -754,7 +757,7 @@ public sealed class CadEntityRenderer
                 ToScreenPoint(vertices[i + 1]));
         }
 
-        if (polyline.IsClosed && vertices.Count > 1)
+        if (renderPolyline.IsClosed && vertices.Count > 1)
         {
             context.DrawLine(
                 pen,

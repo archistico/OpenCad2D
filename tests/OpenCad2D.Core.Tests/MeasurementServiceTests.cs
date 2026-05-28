@@ -166,6 +166,41 @@ public sealed class MeasurementServiceTests
         Assert.True(measurement.IsClosed!.Value);
     }
 
+
+    [Fact]
+    public void MeasureEntity_WithBulgedPolyline_ShouldUseArcLengthApproximation()
+    {
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+
+        EntityMeasurement measurement = MeasurementService.MeasureEntity(polyline);
+
+        Assert.Equal(5 * Math.PI, measurement.Length!.Value, precision: 2);
+        Assert.Null(measurement.Area);
+    }
+
+    [Fact]
+    public void MeasureEntity_WithClosedBulgedPolyline_ShouldUseArcApproximationForArea()
+    {
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            isClosed: true,
+            segmentBulges: new[] { 1.0, 1.0 });
+
+        EntityMeasurement measurement = MeasurementService.MeasureEntity(polyline);
+
+        Assert.Equal(Math.PI * 25, measurement.Area!.Value, precision: 1);
+    }
+
     [Fact]
     public void CalculatePolygonArea_ShouldBePositiveRegardlessOfWinding()
     {

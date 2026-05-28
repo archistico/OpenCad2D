@@ -2,6 +2,7 @@ using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -10,7 +11,7 @@ using OpenCad2D.Tools.Input;
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
-/// Explodes selected straight-segment polylines into individual line entities and block references into their world-space entities.
+/// Explodes selected polylines into individual line and arc entities and block references into their world-space entities.
 /// </summary>
 public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 {
@@ -160,7 +161,7 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
         }
 
         var newEntities = new List<CadEntity>();
-        newEntities.AddRange(polylines.SelectMany(CreateLineSegments));
+        newEntities.AddRange(polylines.SelectMany(CreatePolylineSegments));
         newEntities.AddRange(blockReferences.SelectMany(blockReference => CreateBlockEntities(context, blockReference)));
 
         if (newEntities.Count == 0)
@@ -208,8 +209,8 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
         if (blockReferenceCount == 0)
         {
             return polylineCount == 1
-                ? $"Polyline exploded into {createdEntityCount} lines."
-                : $"{polylineCount} polylines exploded into {createdEntityCount} lines.";
+                ? $"Polyline exploded into {createdEntityCount} entities."
+                : $"{polylineCount} polylines exploded into {createdEntityCount} entities.";
         }
 
         if (polylineCount == 0)
@@ -222,17 +223,32 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
         return $"{polylineCount} polylines and {blockReferenceCount} blocks exploded into {createdEntityCount} entities.";
     }
 
-    private static IEnumerable<LineEntity> CreateLineSegments(PolylineEntity polyline)
+    private static IEnumerable<CadEntity> CreatePolylineSegments(PolylineEntity polyline)
     {
-        for (int i = 0; i < polyline.Vertices.Count - 1; i++)
+        for (int index = 0; index < polyline.SegmentCount; index++)
         {
-            yield return CreateLine(polyline, polyline.Vertices[i], polyline.Vertices[i + 1]);
+            Point2D start = polyline.Vertices[index];
+            Point2D end = polyline.Vertices[(index + 1) % polyline.Vertices.Count];
+            double bulge = index < polyline.SegmentBulges.Count
+                ? polyline.SegmentBulges[index]
+                : 0.0;
+
+            yield return CreateSegmentEntity(polyline, start, end, bulge);
+        }
+    }
+
+    private static CadEntity CreateSegmentEntity(
+        PolylineEntity source,
+        Point2D start,
+        Point2D end,
+        double bulge)
+    {
+        if (Tolerance.IsZero(bulge) || Tolerance.ArePointsEqual(start, end))
+        {
+            return CreateLine(source, start, end);
         }
 
-        if (polyline.IsClosed && polyline.Vertices.Count > 2)
-        {
-            yield return CreateLine(polyline, polyline.Vertices[^1], polyline.Vertices[0]);
-        }
+        return CreateArc(source, start, end, bulge);
     }
 
     private static LineEntity CreateLine(
@@ -243,6 +259,62 @@ public sealed class ExplodeTool : ICadTool, ICommandDrivenTool, ISnapModeProvide
         return new LineEntity(
             start,
             end,
+            layerId: source.LayerId,
+            style: source.Style,
+            isVisible: source.IsVisible,
+            isLocked: source.IsLocked,
+            drawOrder: source.DrawOrder);
+    }
+
+    private static ArcEntity CreateArc(
+        PolylineEntity source,
+        Point2D start,
+        Point2D end,
+        double bulge)
+    {
+        double chordLength = start.DistanceTo(end);
+        double sweep = -4.0 * Math.Atan(bulge);
+        double includedAngle = Math.Abs(sweep);
+
+        if (Tolerance.IsZero(chordLength) || Tolerance.IsZero(includedAngle))
+        {
+            return new ArcEntity(
+                start,
+                Tolerance.Default,
+                Angle.FromDegrees(0),
+                Angle.FromDegrees(0),
+                layerId: source.LayerId,
+                style: source.Style,
+                isVisible: source.IsVisible,
+                isLocked: source.IsLocked,
+                drawOrder: source.DrawOrder);
+        }
+
+        double radius = chordLength / (2.0 * Math.Sin(includedAngle / 2.0));
+        Point2D midpoint = new(
+            (start.X + end.X) / 2.0,
+            (start.Y + end.Y) / 2.0);
+
+        Vector2D chord = start.VectorTo(end).Normalize();
+        Vector2D leftNormal = new(-chord.Y, chord.X);
+        double centerOffset = chordLength * (1.0 - bulge * bulge) / (4.0 * bulge);
+        Point2D center = midpoint - leftNormal * centerOffset;
+
+        Angle startAngle = Angle.FromRadians(Math.Atan2(
+            start.Y - center.Y,
+            start.X - center.X));
+        Angle endAngle = Angle.FromRadians(Math.Atan2(
+            end.Y - center.Y,
+            end.X - center.X));
+
+        bool isCounterClockwise = bulge < 0.0;
+
+        return new ArcEntity(
+            center,
+            radius,
+            startAngle,
+            endAngle,
+            isCounterClockwise,
             layerId: source.LayerId,
             style: source.Style,
             isVisible: source.IsVisible,

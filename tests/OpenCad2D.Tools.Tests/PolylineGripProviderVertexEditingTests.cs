@@ -178,4 +178,182 @@ public sealed class PolylineGripProviderVertexEditingTests
         Assert.DoesNotContain(grips, grip => grip.Kind == GripKind.InsertVertex);
         Assert.False(provider.CanDeleteVertex(rectangle, 0));
     }
+
+    [Fact]
+    public void GetGrips_ForPolylineWithBulge_ShouldPlaceInsertGripOnArcSegment()
+    {
+        var provider = new PolylineGripProvider();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+
+        GripPoint insertGrip = provider.GetGrips(polyline)
+            .Single(grip => grip.Kind == GripKind.InsertVertex);
+
+        Assert.Equal(5, insertGrip.Position.X, precision: 10);
+        Assert.Equal(5, insertGrip.Position.Y, precision: 10);
+    }
+
+
+    [Fact]
+    public void GetGrips_ForPolylineWithBulge_ShouldExposeArcShapeGrip()
+    {
+        var provider = new PolylineGripProvider();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+
+        GripPoint shapeGrip = provider.GetGrips(polyline)
+            .Single(grip => grip.Kind == GripKind.ResizeRadius);
+
+        Assert.Equal(5, shapeGrip.Position.X, precision: 10);
+        Assert.Equal(5, shapeGrip.Position.Y, precision: 10);
+    }
+
+    [Fact]
+    public void ApplyGripMove_ForPolylineArcShapeGrip_ShouldUpdateBulgeFromThreePointArc()
+    {
+        var provider = new PolylineGripProvider();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+        GripPoint shapeGrip = provider.GetGrips(polyline)
+            .Single(grip => grip.Kind == GripKind.ResizeRadius);
+
+        var result = (PolylineEntity)provider.ApplyGripMove(
+            polyline,
+            shapeGrip.GripIndex,
+            new Point2D(5, 2.5));
+
+        Assert.Equal(polyline.Id, result.Id);
+        Assert.Single(result.SegmentBulges);
+        Assert.NotEqual(1.0, result.SegmentBulges[0]);
+        Assert.True(result.HasArcSegments);
+    }
+
+    [Fact]
+    public void ApplyGripMove_ForPolylineArcShapeGripOntoChord_ShouldFlattenSegment()
+    {
+        var provider = new PolylineGripProvider();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+        GripPoint shapeGrip = provider.GetGrips(polyline)
+            .Single(grip => grip.Kind == GripKind.ResizeRadius);
+
+        var result = (PolylineEntity)provider.ApplyGripMove(
+            polyline,
+            shapeGrip.GripIndex,
+            new Point2D(5, 0));
+
+        Assert.Equal(0.0, Assert.Single(result.SegmentBulges), precision: 12);
+        Assert.False(result.HasArcSegments);
+    }
+
+    [Fact]
+    public void ApplyGripMove_ForPolylineWithBulge_ShouldPreserveBulgesWhenMovingVertex()
+    {
+        var provider = new PolylineGripProvider();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 1.0, 0.0 });
+
+        var result = (PolylineEntity)provider.ApplyGripMove(
+            polyline,
+            gripIndex: 1,
+            destination: new Point2D(10, 2));
+
+        Assert.Equal(new[] { 1.0, 0.0 }, result.SegmentBulges);
+        Assert.Equal(new Point2D(10, 2), result.Vertices[1]);
+    }
+
+    [Fact]
+    public void ApplyGripMove_ForPolylineWithBulge_ShouldPreserveBulgesWhenMovingEntity()
+    {
+        var provider = new PolylineGripProvider();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 1.0, -0.5 });
+
+        int moveEntityGripIndex = polyline.Vertices.Count;
+        var result = (PolylineEntity)provider.ApplyGripMove(
+            polyline,
+            moveEntityGripIndex,
+            new Point2D(20, 10));
+
+        Assert.Equal(new[] { 1.0, -0.5 }, result.SegmentBulges);
+    }
+
+    [Fact]
+    public void InsertVertex_ForPolylineWithBulge_ShouldKeepValidBulgeCountAndFlattenSplitSegment()
+    {
+        var provider = new PolylineGripProvider();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 1.0, -0.5 });
+        GripPoint arcInsertGrip = provider.GetGrips(polyline)
+            .First(grip => grip.Kind == GripKind.InsertVertex);
+
+        var result = (PolylineEntity)provider.InsertVertex(
+            polyline,
+            arcInsertGrip.GripIndex,
+            new Point2D(5, 4));
+
+        Assert.Equal(4, result.Vertices.Count);
+        Assert.Equal(new[] { 0.0, 0.0, -0.5 }, result.SegmentBulges);
+    }
+
+    [Fact]
+    public void DeleteVertex_ForPolylineWithBulge_ShouldKeepValidBulgeCountAndFlattenMergedSegment()
+    {
+        var provider = new PolylineGripProvider();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0),
+                new Point2D(30, 0)
+            },
+            segmentBulges: new[] { 1.0, -0.5, 0.25 });
+
+        var result = (PolylineEntity)provider.DeleteVertex(
+            polyline,
+            gripIndex: 1);
+
+        Assert.Equal(3, result.Vertices.Count);
+        Assert.Equal(new[] { 0.0, 0.25 }, result.SegmentBulges);
+    }
+
 }

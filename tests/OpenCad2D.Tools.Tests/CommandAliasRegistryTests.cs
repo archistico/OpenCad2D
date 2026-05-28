@@ -16,6 +16,8 @@ public sealed class CommandAliasRegistryTests
     [InlineData("TR", ToolId.Trim)]
     [InlineData("O", ToolId.Offset)]
     [InlineData("F", ToolId.Fillet)]
+    [InlineData("CHA", ToolId.Chamfer)]
+    [InlineData("chamfer", ToolId.Chamfer)]
     [InlineData("MI", ToolId.Mirror)]
     [InlineData("mirror", ToolId.Mirror)]
     [InlineData("EXPLODE", ToolId.Explode)]

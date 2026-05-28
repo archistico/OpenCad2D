@@ -1638,6 +1638,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Chamfer_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        _viewModel.SetTool(ToolId.Chamfer);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Mirror_Click(
         object? sender,
         RoutedEventArgs e)
@@ -2480,40 +2491,59 @@ public partial class MainWindow : Window
     private bool TryHandlePolylineCompletionKey(KeyEventArgs e)
     {
         if (_viewModel.Workspace.ToolController.ActiveTool is not PolylineTool polylineTool ||
-            polylineTool.State != PolylineToolState.CollectingVertices ||
-            !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
+            !string.IsNullOrWhiteSpace(CommandInputTextBox.Text) ||
+            !TryMapPolylineShortcutKey(e.Key, out CadToolKey toolKey))
         {
             return false;
         }
 
-        if (e.Key == Key.Enter)
+        if (!polylineTool.TryHandleKey(
+                _viewModel.Workspace.Context,
+                toolKey,
+                out ToolResult result))
         {
-            CompletePolyline(isClosed: false);
-            e.Handled = true;
-            return true;
+            return false;
         }
 
-        if (e.Key == Key.C)
-        {
-            CompletePolyline(isClosed: true);
-            e.Handled = true;
-            return true;
-        }
-
-        return false;
+        ApplyPolylineShortcutResult(result);
+        e.Handled = true;
+        return true;
     }
 
-    private void CompletePolyline(bool isClosed)
+    private static bool TryMapPolylineShortcutKey(
+        Key key,
+        out CadToolKey toolKey)
     {
-        if (_viewModel.Workspace.ToolController.ActiveTool is not PolylineTool polylineTool)
+        switch (key)
         {
-            return;
+            case Key.Enter:
+                toolKey = CadToolKey.Enter;
+                return true;
+
+            case Key.C:
+                toolKey = CadToolKey.C;
+                return true;
+
+            case Key.A:
+                toolKey = CadToolKey.A;
+                return true;
+
+            case Key.L:
+                toolKey = CadToolKey.L;
+                return true;
+
+            case Key.U:
+                toolKey = CadToolKey.U;
+                return true;
+
+            default:
+                toolKey = default;
+                return false;
         }
+    }
 
-        ToolResult result = isClosed
-            ? polylineTool.CompleteClosed(_viewModel.Workspace.Context)
-            : polylineTool.CompleteOpen(_viewModel.Workspace.Context);
-
+    private void ApplyPolylineShortcutResult(ToolResult result)
+    {
         ClearCommandInputText();
 
         _viewModel.SetLastResult(result);
@@ -3048,6 +3078,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             FilletButton,
             activeToolName.Equals("Fillet", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            ChamferButton,
+            activeToolName.Equals("Chamfer", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             MirrorButton,

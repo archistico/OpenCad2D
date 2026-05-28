@@ -110,6 +110,43 @@ public sealed class IntersectionSnapProviderTests
         Assert.Equal(0, result.Point.Y, precision: 10);
     }
 
+
+    [Fact]
+    public void Snap_LineBulgedPolylineIntersection_ShouldUseArcGeometry()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(5, 4),
+            new Point2D(5, 6));
+
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+
+        document.AddEntity(line);
+        document.AddEntity(polyline);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(5.05, 5.05),
+            tolerance: 0.5,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(5, result.Point.X, precision: 2);
+        Assert.Equal(5, result.Point.Y, precision: 1);
+    }
+
     [Fact]
     public void Snap_LineCircleIntersection_ShouldReturnNearestIntersection()
     {

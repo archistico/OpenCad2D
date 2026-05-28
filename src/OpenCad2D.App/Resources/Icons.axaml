@@ -104,6 +104,9 @@
     <!-- Fillet.svg -->
     <StreamGeometry x:Key="IconFillet">M5 19v-6a8 8 0 0 1 8 -8h6</StreamGeometry>
 
+    <!-- Chamfer.svg -->
+    <StreamGeometry x:Key="IconChamfer">M5 19h5l9 -9v-5</StreamGeometry>
+
     <!-- Forward.svg -->
     <StreamGeometry x:Key="IconForward">M7 9.5l-3 1.5l8 4l8 -4l-3 -1.5 M4 15l8 4l8 -4 M12 11v-7 M9 7l3 -3l3 3</StreamGeometry>
 

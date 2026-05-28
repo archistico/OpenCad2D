@@ -830,3 +830,33 @@ TRIM, BREAK AT POINT, BREAK SEGMENT and EXTEND now share the same principle for 
 Covered feedback categories include missing intersections, picked-side intervals that cannot be removed, endpoint/vertex tolerance failures, off-entity break points, coincident break points, unsupported closed spline cases, non-editable targets and EXTEND boundaries reachable only from the opposite endpoint.
 
 The automated tests cover the primary invalid-hover and failed-commit paths. Manual regression should now focus mainly on confirming that the resulting geometry, undo/redo behavior and micro-gap behavior match the preview.
+
+## Drawing mixed polylines with three-point arcs
+
+Polylines can now be drawn with AutoCAD-style mixed segments directly from the `Polyline` tool. The initial implementation supports three-point arc creation:
+
+- the last polyline vertex is used as the arc start point;
+- the user selects a point on the arc;
+- the user selects the arc endpoint;
+- the segment is saved as a bulge value in `PolylineEntity.SegmentBulges`.
+
+The point on the arc is a construction input only; it is not inserted as a polyline vertex. This keeps the entity compatible with LWPOLYLINE/DXF semantics, where curved polyline segments are represented by bulges rather than separate `ArcEntity` objects.
+
+### Exploding mixed polylines
+
+`EXPLODE` decomposes `PolylineEntity` segment-by-segment. Linear segments become `LineEntity` objects; bulged segments become `ArcEntity` objects reconstructed from the segment chord and bulge value. The conversion preserves the source layer, style, visibility, lock state and draw order.
+
+For closed polylines, the final segment from the last vertex back to the first vertex is handled exactly like the other segments. If the last segment has a non-zero bulge, the exploded result includes a closing arc.
+
+### Joining arcs into polylines
+
+`JOIN` preserves arc geometry by converting `ArcEntity` inputs into polyline bulge segments. The resulting entity is a mixed `PolylineEntity`; it can later be edited through vertex grips and the Property Panel segment bulge rows.
+
+When a segment is reversed during chain construction, the bulge sign is inverted. This matches the internal polyline convention where the same chord with the opposite direction requires the opposite bulge sign.
+
+
+## Fillet on linear polyline segments
+
+`FilletTool` now supports two adjacent straight segments of the same `PolylineEntity`. The command keeps the source as a single polyline, replacing the picked corner with two tangent vertices and one DXF-compatible bulge segment. This makes the result compatible with the mixed-polyline pipeline used by draw, join, explode, trim, break and DXF export.
+
+Current limits are intentional: the selected segments must be adjacent, must belong to the same visible/unlocked polyline, must be straight, and the command must be in `Trim` mode. Existing curved/bulged polyline segments are rejected instead of being flattened or silently approximated.

@@ -1,5 +1,6 @@
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry;
+using OpenCad2D.Geometry.Operations;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Tools.Grips;
@@ -12,6 +13,7 @@ namespace OpenCad2D.Tools.Grips;
 public sealed class PolylineGripProvider : IGripProvider
 {
     private const int InsertGripIndexOffset = 10_000;
+    private const int BulgeGripIndexOffset = 20_000;
 
     public bool CanHandle(CadEntity entity)
     {
@@ -113,10 +115,15 @@ public sealed class PolylineGripProvider : IGripProvider
             insertIndex,
             destination);
 
+        IReadOnlyList<double> bulges = InsertZeroBulgesAtSegment(
+            polyline,
+            segmentIndex);
+
         return CreateGenericPolyline(
             polyline,
             vertices,
-            polyline.IsClosed);
+            polyline.IsClosed,
+            bulges);
     }
 
     /// <summary>
@@ -136,13 +143,18 @@ public sealed class PolylineGripProvider : IGripProvider
                 "Unknown polyline vertex grip index or the polyline has too few vertices.");
         }
 
+        IReadOnlyList<double> bulges = DeleteVertexBulges(
+            polyline,
+            gripIndex);
+
         var vertices = polyline.Vertices.ToList();
         vertices.RemoveAt(gripIndex);
 
         return CreateGenericPolyline(
             polyline,
             vertices,
-            polyline.IsClosed);
+            polyline.IsClosed,
+            bulges);
     }
 
     private static IReadOnlyList<GripPoint> GetGenericPolylineGrips(PolylineEntity polyline)
@@ -162,14 +174,29 @@ public sealed class PolylineGripProvider : IGripProvider
 
         for (int i = 0; i < segmentCount; i++)
         {
-            Point2D start = polyline.Vertices[i];
-            Point2D end = GetSegmentEnd(polyline, i);
-
             grips.Add(new GripPoint(
-                GetMidpoint(start, end),
+                GetSegmentGripPoint(polyline, i),
                 GripKind.InsertVertex,
                 polyline.Id,
                 EncodeInsertGripIndex(i)));
+        }
+
+        for (int i = 0; i < segmentCount; i++)
+        {
+            double bulge = i < polyline.SegmentBulges.Count
+                ? polyline.SegmentBulges[i]
+                : 0.0;
+
+            if (Tolerance.IsZero(bulge))
+            {
+                continue;
+            }
+
+            grips.Add(new GripPoint(
+                GetSegmentGripPoint(polyline, i),
+                GripKind.ResizeRadius,
+                polyline.Id,
+                EncodeBulgeGripIndex(i)));
         }
 
         grips.Add(new GripPoint(
@@ -215,6 +242,14 @@ public sealed class PolylineGripProvider : IGripProvider
         int gripIndex,
         Point2D destination)
     {
+        if (IsBulgeGripIndex(gripIndex))
+        {
+            return AdjustSegmentBulge(
+                polyline,
+                gripIndex,
+                destination);
+        }
+
         if (IsInsertGripIndex(gripIndex))
         {
             return InsertVertex(
@@ -230,7 +265,8 @@ public sealed class PolylineGripProvider : IGripProvider
             return CreateGenericPolyline(
                 polyline,
                 polyline.Vertices.Select(vertex => vertex + vector),
-                polyline.IsClosed);
+                polyline.IsClosed,
+                polyline.SegmentBulges);
         }
 
         if (gripIndex < 0 || gripIndex >= polyline.Vertices.Count)
@@ -247,7 +283,55 @@ public sealed class PolylineGripProvider : IGripProvider
         return CreateGenericPolyline(
             polyline,
             vertices,
-            polyline.IsClosed);
+            polyline.IsClosed,
+            polyline.SegmentBulges);
+    }
+
+    private static CadEntity AdjustSegmentBulge(
+        PolylineEntity polyline,
+        int gripIndex,
+        Point2D destination)
+    {
+        int segmentIndex = DecodeBulgeGripIndex(gripIndex);
+
+        if (segmentIndex < 0 || segmentIndex >= GetSegmentCount(polyline))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(gripIndex),
+                gripIndex,
+                "Unknown polyline bulge grip index.");
+        }
+
+        Point2D start = polyline.Vertices[segmentIndex];
+        Point2D end = GetSegmentEnd(polyline, segmentIndex);
+
+        var bulges = polyline.SegmentBulges.ToList();
+
+        while (bulges.Count < GetSegmentCount(polyline))
+        {
+            bulges.Add(0.0);
+        }
+
+        if (Tolerance.IsZero(start.DistanceTo(destination)) ||
+            Tolerance.IsZero(end.DistanceTo(destination)) ||
+            !ArcCreationService.TryCreateFromThreePoints(
+                start,
+                destination,
+                end,
+                out Arc2D arc))
+        {
+            bulges[segmentIndex] = 0.0;
+        }
+        else
+        {
+            bulges[segmentIndex] = GetBulgeFromArc(arc);
+        }
+
+        return CreateGenericPolyline(
+            polyline,
+            polyline.Vertices,
+            polyline.IsClosed,
+            bulges);
     }
 
     private static CadEntity ApplyRectangleGripMove(
@@ -377,7 +461,8 @@ public sealed class PolylineGripProvider : IGripProvider
     private static PolylineEntity CreateGenericPolyline(
         PolylineEntity source,
         IEnumerable<Point2D> vertices,
-        bool isClosed)
+        bool isClosed,
+        IEnumerable<double>? segmentBulges = null)
     {
         return new PolylineEntity(
             vertices,
@@ -387,7 +472,9 @@ public sealed class PolylineGripProvider : IGripProvider
             source.Style,
             source.IsVisible,
             source.IsLocked,
-            source.DrawOrder);
+            source.DrawOrder,
+            source.IsFilled,
+            segmentBulges);
     }
 
     private static bool TryGetRectangleFrame(
@@ -396,7 +483,7 @@ public sealed class PolylineGripProvider : IGripProvider
     {
         rectangle = default;
 
-        if (!polyline.IsClosed || polyline.Vertices.Count != 4)
+        if (polyline.HasArcSegments || !polyline.IsClosed || polyline.Vertices.Count != 4)
         {
             return false;
         }
@@ -476,6 +563,30 @@ public sealed class PolylineGripProvider : IGripProvider
         return polyline.Vertices.Count > minimumVertexCount;
     }
 
+    private static Point2D GetSegmentGripPoint(
+        PolylineEntity polyline,
+        int segmentIndex)
+    {
+        Point2D start = polyline.Vertices[segmentIndex];
+        Point2D end = GetSegmentEnd(polyline, segmentIndex);
+        double bulge = segmentIndex < polyline.SegmentBulges.Count
+            ? polyline.SegmentBulges[segmentIndex]
+            : 0.0;
+
+        if (Tolerance.IsZero(bulge))
+        {
+            return GetMidpoint(start, end);
+        }
+
+        IReadOnlyList<Point2D> approximation = new PolylineEntity(
+            new[] { start, end },
+            segmentBulges: new[] { bulge })
+            .ToPolylineApproximation(16)
+            .Vertices;
+
+        return approximation[approximation.Count / 2];
+    }
+
     private static Point2D GetMidpoint(
         Point2D first,
         Point2D second)
@@ -485,6 +596,83 @@ public sealed class PolylineGripProvider : IGripProvider
             (first.Y + second.Y) / 2.0);
     }
 
+    private static double GetBulgeFromArc(Arc2D arc)
+    {
+        double sweep = GetPositiveSweep(arc);
+        double bulge = Math.Tan(sweep / 4.0);
+
+        return arc.IsCounterClockwise
+            ? -bulge
+            : bulge;
+    }
+
+    private static double GetPositiveSweep(Arc2D arc)
+    {
+        double start = arc.StartAngle.NormalizePositive().Radians;
+        double end = arc.EndAngle.NormalizePositive().Radians;
+
+        if (arc.IsCounterClockwise)
+        {
+            double sweep = end - start;
+            return sweep < 0.0
+                ? sweep + (2.0 * Math.PI)
+                : sweep;
+        }
+
+        double clockwiseSweep = start - end;
+        return clockwiseSweep < 0.0
+            ? clockwiseSweep + (2.0 * Math.PI)
+            : clockwiseSweep;
+    }
+
+    private static IReadOnlyList<double> InsertZeroBulgesAtSegment(
+        PolylineEntity polyline,
+        int segmentIndex)
+    {
+        var bulges = new List<double>();
+
+        for (int index = 0; index < polyline.SegmentBulges.Count; index++)
+        {
+            if (index == segmentIndex)
+            {
+                bulges.Add(0.0);
+                bulges.Add(0.0);
+                continue;
+            }
+
+            bulges.Add(polyline.SegmentBulges[index]);
+        }
+
+        return bulges;
+    }
+
+    private static IReadOnlyList<double> DeleteVertexBulges(
+        PolylineEntity polyline,
+        int deletedVertexIndex)
+    {
+        int oldVertexCount = polyline.Vertices.Count;
+        var newOriginalIndices = Enumerable.Range(0, oldVertexCount)
+            .Where(index => index != deletedVertexIndex)
+            .ToList();
+        int newSegmentCount = polyline.IsClosed
+            ? newOriginalIndices.Count
+            : Math.Max(newOriginalIndices.Count - 1, 0);
+        var bulges = new List<double>(newSegmentCount);
+
+        for (int segmentIndex = 0; segmentIndex < newSegmentCount; segmentIndex++)
+        {
+            int startOriginalIndex = newOriginalIndices[segmentIndex];
+            int endOriginalIndex = newOriginalIndices[(segmentIndex + 1) % newOriginalIndices.Count];
+            int expectedEndOriginalIndex = (startOriginalIndex + 1) % oldVertexCount;
+
+            bulges.Add(expectedEndOriginalIndex == endOriginalIndex
+                ? polyline.SegmentBulges[startOriginalIndex]
+                : 0.0);
+        }
+
+        return bulges;
+    }
+
     private static int EncodeInsertGripIndex(int segmentIndex)
     {
         return InsertGripIndexOffset + segmentIndex;
@@ -492,12 +680,27 @@ public sealed class PolylineGripProvider : IGripProvider
 
     private static bool IsInsertGripIndex(int gripIndex)
     {
-        return gripIndex >= InsertGripIndexOffset;
+        return gripIndex >= InsertGripIndexOffset && gripIndex < BulgeGripIndexOffset;
     }
 
     private static int DecodeInsertGripIndex(int gripIndex)
     {
         return gripIndex - InsertGripIndexOffset;
+    }
+
+    private static int EncodeBulgeGripIndex(int segmentIndex)
+    {
+        return BulgeGripIndexOffset + segmentIndex;
+    }
+
+    private static bool IsBulgeGripIndex(int gripIndex)
+    {
+        return gripIndex >= BulgeGripIndexOffset;
+    }
+
+    private static int DecodeBulgeGripIndex(int gripIndex)
+    {
+        return gripIndex - BulgeGripIndexOffset;
     }
 
     private static Point2D GetCentroid(IReadOnlyList<Point2D> vertices)

@@ -205,7 +205,7 @@ A generic `PolylineEntity` exposes three categories of grips.
 
 ```text
 Vertex grips       -> GripKind.MoveVertex
-Segment midpoints  -> GripKind.InsertVertex
+Segment insert grips -> GripKind.InsertVertex
 Centroid grip      -> GripKind.MoveEntity
 ```
 
@@ -228,7 +228,7 @@ center grip: 1
 Insertion behavior:
 
 ```text
-Click segment midpoint grip
+Click segment insert grip
 Move to destination
 Click destination
 -> new vertex is inserted between the two segment vertices
@@ -251,6 +251,8 @@ rectangle-like closed four-vertex polylines keep rectangle-specific resize behav
 ```
 
 Rectangle-like closed polylines intentionally keep their existing corner/edge/center grips, so their right-angle rectangle behavior is preserved.
+
+For mixed AutoCAD-style polylines, insert grips are placed on the actual curved segment approximation instead of the straight chord midpoint. Moving an existing vertex or moving the whole entity preserves `SegmentBulges`. Inserting a new vertex into an arc segment currently flattens that split segment into two straight segments, because the destination can be any point and native arc-segment split editing is planned as a later segment-aware refinement. Deleting a vertex keeps unaffected bulges and sets the newly merged segment to a straight segment.
 
 ---
 
@@ -562,3 +564,18 @@ Center grip -> move the whole arc rigidly
 ```
 
 This means moving one of the three arc construction grips keeps the other two construction points fixed and recalculates center, radius and sweep from the resulting three points. The center grip remains a pure translation grip.
+
+## Mixed polyline segment bulges
+
+The Property Panel now exposes editable DXF-compatible bulge values for selected polylines. Enter `0` to keep a segment straight, a positive value for one arc direction and a negative value for the opposite arc direction. This is intentionally a low-level but precise editing surface, useful while the dedicated visual segment editor is still planned.
+
+## Mixed polyline arc-shape editing
+
+For `PolylineEntity` objects with non-zero segment bulges, the grip provider now adds an arc-shape grip in addition to vertex, insert and move grips.
+
+- Vertex grips still move vertices and preserve existing bulges.
+- Insert grips still insert a new vertex; if the original segment was curved, the split segment is intentionally flattened.
+- Arc-shape grips use `GripKind.ResizeRadius` and update only the selected segment bulge.
+- Moving an arc-shape grip onto the chord flattens the segment.
+
+This gives a first graphical way to change the curvature of mixed polylines without opening the Property Panel.

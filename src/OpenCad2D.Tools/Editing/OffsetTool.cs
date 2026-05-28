@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Creates parallel/constant-distance copies of supported entities.
-/// Supports lines, circles, arcs and straight-segment polylines with miter joins.
+/// Supports lines, circles, arcs and straight-segment polylines with miter joins and approximate mixed-polylines.
 /// True offsets of ellipses, elliptical arcs and splines are intentionally deferred.
 /// </summary>
 public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, IToolPreviewDescriptorProvider, ISnapModeProvider
@@ -177,7 +177,7 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         {
             OffsetToolState.WaitingForDistance => ToolResult.None("Specify a positive offset distance, two distance points, or confirm the previous distance."),
             OffsetToolState.WaitingForDistanceSecondPoint => ToolResult.None("Specify the second distance point or type a positive offset distance."),
-            OffsetToolState.WaitingForEntity => ToolResult.None("Select a line, circle, arc or straight-segment polyline from the drawing canvas."),
+            OffsetToolState.WaitingForEntity => ToolResult.None("Select a line, circle, arc or polyline from the drawing canvas."),
             OffsetToolState.WaitingForSidePoint => ToolResult.None("Specify the side to offset by clicking or typing a point."),
             _ => ToolResult.None()
         };
@@ -298,7 +298,7 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         if (picked is null)
         {
-            return ToolResult.None("Select a visible, unlocked line, circle, arc or straight-segment polyline to offset.");
+            return ToolResult.None("Select a visible, unlocked line, circle, arc or polyline to offset.");
         }
 
         if (!IsSupportedEntity(picked.Entity))
@@ -473,14 +473,18 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         offsetPolyline = null;
         errorMessage = null;
 
-        IReadOnlyList<Point2D> vertices = polyline.Vertices;
+        PolylineEntity sourcePolyline = polyline.HasArcSegments
+            ? NormalizeClosedApproximation(polyline.ToPolylineApproximation(), tolerance)
+            : polyline;
+
+        IReadOnlyList<Point2D> vertices = sourcePolyline.Vertices;
         if (vertices.Count < 2)
         {
             errorMessage = "Cannot offset a polyline with fewer than two vertices.";
             return false;
         }
 
-        IReadOnlyList<LineSegment2D> originalSegments = polyline.Geometry.GetSegments();
+        IReadOnlyList<LineSegment2D> originalSegments = sourcePolyline.Geometry.GetSegments();
         if (originalSegments.Count == 0)
         {
             errorMessage = "Cannot offset a polyline without segments.";
@@ -535,6 +539,31 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             isLocked: polyline.IsLocked,
             drawOrder: polyline.DrawOrder + 1);
         return true;
+    }
+
+    private static PolylineEntity NormalizeClosedApproximation(
+        PolylineEntity polyline,
+        GeometryTolerance tolerance)
+    {
+        if (!polyline.IsClosed || polyline.Vertices.Count < 2)
+        {
+            return polyline;
+        }
+
+        if (!tolerance.ArePointsEqual(polyline.Vertices[0], polyline.Vertices[^1]))
+        {
+            return polyline;
+        }
+
+        return new PolylineEntity(
+            polyline.Vertices.Take(polyline.Vertices.Count - 1),
+            isClosed: true,
+            layerId: polyline.LayerId,
+            style: polyline.Style,
+            isVisible: polyline.IsVisible,
+            isLocked: polyline.IsLocked,
+            drawOrder: polyline.DrawOrder,
+            isFilled: polyline.IsFilled);
     }
 
     private static int DeterminePolylineOffsetSide(
@@ -805,11 +834,11 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         return entity switch
         {
             EllipseEntity or EllipticalArcEntity =>
-                "Offset currently supports lines, circles, arcs and straight-segment polylines. Ellipse and elliptical arc offsets are deferred because a true offset is not another exact ellipse.",
+                "Offset currently supports lines, circles, arcs and polylines. Ellipse and elliptical arc offsets are deferred because a true offset is not another exact ellipse.",
             BezierSplineEntity =>
-                "Offset currently supports lines, circles, arcs and straight-segment polylines. Spline offsets are deferred because a true offset is not another exact Bezier spline.",
+                "Offset currently supports lines, circles, arcs and polylines. Spline offsets are deferred because a true offset is not another exact Bezier spline.",
             _ =>
-                "Offset currently supports lines, circles, arcs and straight-segment polylines."
+                "Offset currently supports lines, circles, arcs and polylines."
         };
     }
 

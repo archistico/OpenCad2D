@@ -254,6 +254,7 @@ public sealed class ToolPreviewEntityProviderTests
             new BreakAtPointTool(),
             new BreakBetweenPointsTool(),
             new FilletTool(),
+            new ChamferTool(),
             new OffsetTool(),
             new MeasureDistanceTool()
         };

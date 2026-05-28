@@ -636,14 +636,14 @@ public sealed class DefaultCurveAdapterFactory : ICurveAdapterFactory
     private sealed class PolylineCurveAdapter : ICurveAdapter
     {
         private readonly PolylineEntity _polyline;
-        private readonly IReadOnlyList<LineSegment2D> _segments;
+        private readonly IReadOnlyList<PolylineSegmentInfo> _segments;
         private readonly double[] _segmentStarts;
         private readonly double _totalLength;
 
         public PolylineCurveAdapter(PolylineEntity polyline)
         {
             _polyline = polyline;
-            _segments = polyline.Geometry.GetSegments();
+            _segments = BuildSegments(polyline);
             _segmentStarts = new double[_segments.Count];
 
             double accumulated = 0.0;
@@ -673,29 +673,11 @@ public sealed class DefaultCurveAdapterFactory : ICurveAdapterFactory
                 return _polyline.Vertices[0];
             }
 
-            double effectiveParameter = _polyline.IsClosed
-                ? NormalizePeriodic(parameter, _totalLength)
-                : Math.Clamp(parameter, 0.0, _totalLength);
+            SegmentLocation location = LocateParameter(
+                parameter,
+                preferPreviousSegmentAtBoundary: !_polyline.IsClosed && parameter >= _totalLength);
 
-            if (!_polyline.IsClosed && effectiveParameter >= _totalLength)
-            {
-                return _polyline.Vertices[^1];
-            }
-
-            int segmentIndex = FindSegmentIndex(effectiveParameter);
-            LineSegment2D segment = _segments[segmentIndex];
-            double segmentLength = segment.Length;
-
-            if (segmentLength <= 0.0)
-            {
-                return segment.Start;
-            }
-
-            double localParameter = (effectiveParameter - _segmentStarts[segmentIndex]) / segmentLength;
-
-            return LineParameterService.PointAt(
-                segment,
-                Math.Clamp(localParameter, 0.0, 1.0));
+            return _segments[location.SegmentIndex].PointAt(location.LocalParameter);
         }
 
         public bool TryProjectPointToCut(
@@ -710,23 +692,18 @@ public sealed class DefaultCurveAdapterFactory : ICurveAdapterFactory
 
             for (int index = 0; index < _segments.Count; index++)
             {
-                LineSegment2D segment = _segments[index];
-                double localParameter = LineParameterService.GetParameter(
-                    segment,
-                    point,
-                    tolerance);
+                PolylineSegmentInfo segment = _segments[index];
 
-                if (!LineIntersectionService.IsParameterOnSegment(
-                        localParameter,
-                        tolerance))
+                if (!segment.TryProject(
+                        point,
+                        tolerance,
+                        out double localParameter,
+                        out Point2D projectedPoint))
                 {
                     continue;
                 }
 
-                double clamped = Math.Clamp(localParameter, 0.0, 1.0);
-                Point2D projectedPoint = LineParameterService.PointAt(segment, clamped);
                 double distance = projectedPoint.DistanceTo(point);
-
                 if (distance >= bestDistance)
                 {
                     continue;
@@ -734,7 +711,7 @@ public sealed class DefaultCurveAdapterFactory : ICurveAdapterFactory
 
                 bestDistance = distance;
                 bestIndex = index;
-                bestLocalParameter = clamped;
+                bestLocalParameter = localParameter;
                 bestPoint = projectedPoint;
             }
 
@@ -765,129 +742,197 @@ public sealed class DefaultCurveAdapterFactory : ICurveAdapterFactory
 
             foreach (CurveInterval interval in intervalsToKeep)
             {
-                if (interval.End.Parameter - interval.Start.Parameter <= tolerance.Parameter)
+                double startParameter = interval.Start.Parameter;
+                double endParameter = interval.End.Parameter;
+
+                if (_polyline.IsClosed && endParameter <= startParameter)
+                {
+                    endParameter += _totalLength;
+                }
+
+                if (endParameter - startParameter <= tolerance.Parameter)
                 {
                     continue;
                 }
 
-                List<Point2D> vertices = BuildVerticesForInterval(
-                    interval.Start,
-                    interval.End,
-                    tolerance);
-
                 AddPolylineIfValid(
                     result,
-                    vertices,
+                    BuildFragmentPieces(startParameter, endParameter, tolerance),
                     tolerance);
             }
 
             return result;
         }
 
-        private List<Point2D> BuildVerticesForInterval(
-            CurveCut start,
-            CurveCut end,
-            GeometryTolerance tolerance)
-        {
-            var vertices = new List<Point2D>();
-            AddIfDifferent(vertices, start.Point, tolerance);
-
-            double startParameter = start.Parameter;
-            double endParameter = end.Parameter;
-
-            if (_polyline.IsClosed && endParameter <= startParameter)
-            {
-                endParameter += _totalLength;
-            }
-
-            foreach ((double parameter, Point2D vertex) in EnumerateForwardVertices(
-                         startParameter,
-                         endParameter,
-                         tolerance))
-            {
-                AddIfDifferent(vertices, vertex, tolerance);
-            }
-
-            AddIfDifferent(vertices, end.Point, tolerance);
-            return vertices;
-        }
-
-        private IEnumerable<(double Parameter, Point2D Vertex)> EnumerateForwardVertices(
+        private FragmentBuildResult BuildFragmentPieces(
             double startParameter,
             double endParameter,
             GeometryTolerance tolerance)
         {
-            int vertexCount = _polyline.Vertices.Count;
-            int maxPasses = _polyline.IsClosed ? 2 : 1;
+            var vertices = new List<Point2D>();
+            var bulges = new List<double>();
 
-            for (int pass = 0; pass < maxPasses; pass++)
+            double current = startParameter;
+            while (current < endParameter - tolerance.Parameter)
             {
-                double offset = pass * _totalLength;
+                SegmentLocation start = LocateParameter(
+                    current,
+                    preferPreviousSegmentAtBoundary: false);
+                double nextBoundary = GetNextSegmentBoundaryParameter(current, start.SegmentIndex);
+                double pieceEndParameter = Math.Min(nextBoundary, endParameter);
+                SegmentLocation end = LocateParameter(
+                    pieceEndParameter,
+                    preferPreviousSegmentAtBoundary: true);
 
-                for (int vertexIndex = 0; vertexIndex < vertexCount; vertexIndex++)
+                if (end.SegmentIndex != start.SegmentIndex)
                 {
-                    double vertexParameter = GetVertexParameter(vertexIndex) + offset;
+                    end = new SegmentLocation(start.SegmentIndex, 1.0);
+                    pieceEndParameter = nextBoundary;
+                }
 
-                    if (vertexParameter <= startParameter + tolerance.Parameter ||
-                        vertexParameter >= endParameter - tolerance.Parameter)
+                AddPiece(
+                    vertices,
+                    bulges,
+                    _segments[start.SegmentIndex],
+                    start.LocalParameter,
+                    end.LocalParameter,
+                    tolerance);
+
+                if (pieceEndParameter <= current + tolerance.Parameter)
+                {
+                    break;
+                }
+
+                current = pieceEndParameter;
+            }
+
+            return new FragmentBuildResult(vertices, bulges);
+        }
+
+        private double GetNextSegmentBoundaryParameter(
+            double parameter,
+            int segmentIndex)
+        {
+            if (_segments.Count == 0)
+            {
+                return parameter;
+            }
+
+            double cycleStart = _polyline.IsClosed
+                ? Math.Floor(parameter / _totalLength) * _totalLength
+                : 0.0;
+            int nextIndex = segmentIndex + 1;
+
+            return nextIndex >= _segments.Count
+                ? cycleStart + _totalLength
+                : cycleStart + _segmentStarts[nextIndex];
+        }
+
+        private SegmentLocation LocateParameter(
+            double parameter,
+            bool preferPreviousSegmentAtBoundary)
+        {
+            if (_segments.Count == 0)
+            {
+                return new SegmentLocation(0, 0.0);
+            }
+
+            double effectiveParameter = _polyline.IsClosed
+                ? NormalizePeriodic(parameter, _totalLength)
+                : Math.Clamp(parameter, 0.0, _totalLength);
+
+            if (preferPreviousSegmentAtBoundary)
+            {
+                if (effectiveParameter <= 0.0 && parameter > 0.0)
+                {
+                    return new SegmentLocation(_segments.Count - 1, 1.0);
+                }
+
+                for (int index = 1; index < _segmentStarts.Length; index++)
+                {
+                    if (Math.Abs(effectiveParameter - _segmentStarts[index]) <= 1e-12)
                     {
-                        continue;
+                        return new SegmentLocation(index - 1, 1.0);
                     }
-
-                    yield return (vertexParameter, _polyline.Vertices[vertexIndex]);
                 }
             }
-        }
 
-        private double GetVertexParameter(int vertexIndex)
-        {
-            if (vertexIndex <= 0)
+            if (effectiveParameter >= _totalLength)
             {
-                return 0.0;
-            }
-
-            if (vertexIndex >= _segmentStarts.Length)
-            {
-                return _totalLength;
-            }
-
-            return _segmentStarts[vertexIndex];
-        }
-
-        private int FindSegmentIndex(double parameter)
-        {
-            if (parameter >= _totalLength)
-            {
-                return _segments.Count - 1;
+                return new SegmentLocation(_segments.Count - 1, 1.0);
             }
 
             for (int index = _segments.Count - 1; index >= 0; index--)
             {
-                if (parameter >= _segmentStarts[index])
+                if (effectiveParameter >= _segmentStarts[index])
                 {
-                    return index;
+                    double segmentLength = _segments[index].Length;
+                    double localParameter = segmentLength <= 0.0
+                        ? 0.0
+                        : (effectiveParameter - _segmentStarts[index]) / segmentLength;
+
+                    return new SegmentLocation(
+                        index,
+                        Math.Clamp(localParameter, 0.0, 1.0));
                 }
             }
 
-            return 0;
+            return new SegmentLocation(0, 0.0);
+        }
+
+        private void AddPiece(
+            IList<Point2D> vertices,
+            IList<double> bulges,
+            PolylineSegmentInfo segment,
+            double startLocal,
+            double endLocal,
+            GeometryTolerance tolerance)
+        {
+            if (endLocal - startLocal <= tolerance.Parameter)
+            {
+                return;
+            }
+
+            Point2D start = segment.PointAt(startLocal);
+            Point2D end = segment.PointAt(endLocal);
+
+            if (start.DistanceTo(end) <= tolerance.Distance)
+            {
+                return;
+            }
+
+            if (vertices.Count == 0)
+            {
+                vertices.Add(start);
+            }
+            else if (vertices[^1].DistanceTo(start) > tolerance.Distance)
+            {
+                vertices.Add(start);
+            }
+
+            vertices.Add(end);
+            bulges.Add(segment.GetBulge(startLocal, endLocal));
         }
 
         private void AddPolylineIfValid(
             ICollection<CadEntity> result,
-            IReadOnlyList<Point2D> vertices,
+            FragmentBuildResult fragment,
             GeometryTolerance tolerance)
         {
-            List<Point2D> cleanedVertices = RemoveConsecutiveDuplicates(vertices, tolerance);
+            (List<Point2D> vertices, List<double> bulges) = RemoveConsecutiveDuplicates(
+                fragment.Vertices,
+                fragment.Bulges,
+                tolerance);
 
-            if (cleanedVertices.Count < 2)
+            if (vertices.Count < 2)
             {
                 return;
             }
 
             double length = 0.0;
-            for (int index = 0; index < cleanedVertices.Count - 1; index++)
+            for (int index = 0; index < vertices.Count - 1; index++)
             {
-                length += cleanedVertices[index].DistanceTo(cleanedVertices[index + 1]);
+                length += vertices[index].DistanceTo(vertices[index + 1]);
             }
 
             if (length <= tolerance.Distance)
@@ -896,40 +941,234 @@ public sealed class DefaultCurveAdapterFactory : ICurveAdapterFactory
             }
 
             result.Add(new PolylineEntity(
-                cleanedVertices,
+                vertices,
                 isClosed: false,
                 layerId: _polyline.LayerId,
                 style: _polyline.Style,
                 isVisible: _polyline.IsVisible,
                 isLocked: _polyline.IsLocked,
-                drawOrder: _polyline.DrawOrder));
+                drawOrder: _polyline.DrawOrder,
+                isFilled: false,
+                segmentBulges: bulges));
         }
 
-        private static List<Point2D> RemoveConsecutiveDuplicates(
+        private static (List<Point2D> Vertices, List<double> Bulges) RemoveConsecutiveDuplicates(
             IReadOnlyList<Point2D> vertices,
+            IReadOnlyList<double> bulges,
             GeometryTolerance tolerance)
         {
-            var result = new List<Point2D>();
+            var cleanedVertices = new List<Point2D>();
+            var cleanedBulges = new List<double>();
 
-            foreach (Point2D vertex in vertices)
+            for (int index = 0; index < vertices.Count; index++)
             {
-                AddIfDifferent(result, vertex, tolerance);
+                Point2D vertex = vertices[index];
+
+                if (cleanedVertices.Count > 0 &&
+                    cleanedVertices[^1].DistanceTo(vertex) <= tolerance.Distance)
+                {
+                    continue;
+                }
+
+                if (cleanedVertices.Count > 0)
+                {
+                    int bulgeIndex = Math.Min(index - 1, bulges.Count - 1);
+                    cleanedBulges.Add(bulgeIndex >= 0 ? bulges[bulgeIndex] : 0.0);
+                }
+
+                cleanedVertices.Add(vertex);
+            }
+
+            while (cleanedBulges.Count > Math.Max(cleanedVertices.Count - 1, 0))
+            {
+                cleanedBulges.RemoveAt(cleanedBulges.Count - 1);
+            }
+
+            return (cleanedVertices, cleanedBulges);
+        }
+
+        private static IReadOnlyList<PolylineSegmentInfo> BuildSegments(PolylineEntity polyline)
+        {
+            var result = new List<PolylineSegmentInfo>();
+
+            for (int index = 0; index < polyline.SegmentCount; index++)
+            {
+                Point2D start = polyline.Vertices[index];
+                Point2D end = polyline.Vertices[(index + 1) % polyline.Vertices.Count];
+                double bulge = polyline.SegmentBulges[index];
+
+                if (start.DistanceTo(end) <= 0.0)
+                {
+                    continue;
+                }
+
+                result.Add(new PolylineSegmentInfo(start, end, bulge));
             }
 
             return result;
         }
 
-        private static void AddIfDifferent(
-            ICollection<Point2D> vertices,
-            Point2D point,
-            GeometryTolerance tolerance)
+        private readonly record struct SegmentLocation(
+            int SegmentIndex,
+            double LocalParameter);
+
+        private readonly record struct FragmentBuildResult(
+            IReadOnlyList<Point2D> Vertices,
+            IReadOnlyList<double> Bulges);
+
+        private sealed class PolylineSegmentInfo
         {
-            if (vertices.Count > 0 && vertices.Last().DistanceTo(point) <= tolerance.Distance)
+            private readonly Point2D _start;
+            private readonly Point2D _end;
+            private readonly double _bulge;
+            private readonly bool _isArc;
+            private readonly Point2D _center;
+            private readonly double _radius;
+            private readonly double _startAngle;
+            private readonly double _sweep;
+
+            public PolylineSegmentInfo(
+                Point2D start,
+                Point2D end,
+                double bulge)
             {
-                return;
+                _start = start;
+                _end = end;
+                _bulge = bulge;
+                _isArc = Math.Abs(bulge) > 1e-12;
+
+                if (!_isArc)
+                {
+                    Length = start.DistanceTo(end);
+                    return;
+                }
+
+                double chordLength = start.DistanceTo(end);
+                _sweep = -4.0 * Math.Atan(bulge);
+                double includedAngle = Math.Abs(_sweep);
+                _radius = chordLength / (2.0 * Math.Sin(includedAngle / 2.0));
+
+                Point2D midpoint = new(
+                    (start.X + end.X) / 2.0,
+                    (start.Y + end.Y) / 2.0);
+                Vector2D chord = start.VectorTo(end).Normalize();
+                Vector2D leftNormal = new(-chord.Y, chord.X);
+                double centerOffset = chordLength * (1.0 - bulge * bulge) / (4.0 * bulge);
+
+                _center = midpoint - leftNormal * centerOffset;
+                _startAngle = Math.Atan2(
+                    start.Y - _center.Y,
+                    start.X - _center.X);
+                Length = Math.Abs(_radius * _sweep);
             }
 
-            vertices.Add(point);
+            public double Length { get; }
+
+            public Point2D PointAt(double localParameter)
+            {
+                double clamped = Math.Clamp(localParameter, 0.0, 1.0);
+
+                if (!_isArc)
+                {
+                    return new LineSegment2D(_start, _end) is { } segment
+                        ? LineParameterService.PointAt(segment, clamped)
+                        : _start;
+                }
+
+                double angle = _startAngle + _sweep * clamped;
+                return new Point2D(
+                    _center.X + Math.Cos(angle) * _radius,
+                    _center.Y + Math.Sin(angle) * _radius);
+            }
+
+            public bool TryProject(
+                Point2D point,
+                GeometryTolerance tolerance,
+                out double localParameter,
+                out Point2D projectedPoint)
+            {
+                if (!_isArc)
+                {
+                    LineSegment2D segment = new(_start, _end);
+                    double parameter = LineParameterService.GetParameter(
+                        segment,
+                        point,
+                        tolerance);
+
+                    if (!LineIntersectionService.IsParameterOnSegment(parameter, tolerance))
+                    {
+                        localParameter = default;
+                        projectedPoint = default;
+                        return false;
+                    }
+
+                    localParameter = Math.Clamp(parameter, 0.0, 1.0);
+                    projectedPoint = LineParameterService.PointAt(segment, localParameter);
+                    return true;
+                }
+
+                Vector2D fromCenter = _center.VectorTo(point);
+                if (fromCenter.Length <= tolerance.Distance)
+                {
+                    localParameter = default;
+                    projectedPoint = default;
+                    return false;
+                }
+
+                double angle = Math.Atan2(fromCenter.Y, fromCenter.X);
+                double parameterOnArc = GetLocalArcParameter(angle);
+
+                if (parameterOnArc < -tolerance.Parameter ||
+                    parameterOnArc > 1.0 + tolerance.Parameter)
+                {
+                    localParameter = default;
+                    projectedPoint = default;
+                    return false;
+                }
+
+                localParameter = Math.Clamp(parameterOnArc, 0.0, 1.0);
+                projectedPoint = PointAt(localParameter);
+                return true;
+            }
+
+            public double GetBulge(
+                double startLocal,
+                double endLocal)
+            {
+                if (!_isArc)
+                {
+                    return 0.0;
+                }
+
+                double localSweep = _sweep * (endLocal - startLocal);
+                return Math.Tan(-localSweep / 4.0);
+            }
+
+            private double GetLocalArcParameter(double angle)
+            {
+                double distance = _sweep >= 0.0
+                    ? CounterClockwiseDistance(_startAngle, angle)
+                    : ClockwiseDistance(_startAngle, angle);
+
+                double sweep = Math.Abs(_sweep);
+                return sweep <= 0.0 ? 0.0 : distance / sweep;
+            }
+
+            private static double CounterClockwiseDistance(
+                double start,
+                double end)
+            {
+                double delta = NormalizeRadians(end) - NormalizeRadians(start);
+                return delta < 0.0 ? delta + Math.PI * 2.0 : delta;
+            }
+
+            private static double ClockwiseDistance(
+                double start,
+                double end)
+            {
+                double delta = NormalizeRadians(start) - NormalizeRadians(end);
+                return delta < 0.0 ? delta + Math.PI * 2.0 : delta;
+            }
         }
     }
 

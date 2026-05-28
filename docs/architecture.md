@@ -26,7 +26,7 @@ Pure geometry:
 - segments;
 - circles;
 - arcs;
-- polylines;
+- AutoCAD-style lightweight polylines with straight and bulge arc segments;
 - bounding boxes;
 - matrices and transformations;
 - intersections;
@@ -397,6 +397,8 @@ Editing    -> selected entities, then CadDocument mutation checks
 ```
 
 Do not reuse rendering filters as mutation rules.
+
+Mixed `PolylineEntity` geometry uses `SegmentBulges` for native storage. Interaction systems that do not yet understand bulges analytically should use `PolylineEntity.GetInteractionGeometry()` so selection, snapping and measurements follow the visible curved path rather than the chord between vertices.
 
 ---
 

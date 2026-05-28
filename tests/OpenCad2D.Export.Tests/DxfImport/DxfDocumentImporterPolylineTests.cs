@@ -100,7 +100,7 @@ public sealed class DxfDocumentImporterPolylineTests
     }
 
     [Fact]
-    public void Import_WhenLightweightPolylineHasBulge_ShouldConvertCurvedSegmentToArcEntity()
+    public void Import_WhenLightweightPolylineHasBulge_ShouldPreserveBulgeOnPolylineEntity()
     {
         const string content = """
             0
@@ -132,22 +132,21 @@ public sealed class DxfDocumentImporterPolylineTests
 
         DxfImportResult result = importer.Import(content);
 
-        ArcEntity arc = Assert.IsType<ArcEntity>(Assert.Single(result.Document.Entities.All));
-        Assert.Equal(new LayerId("Curves"), arc.LayerId);
-        Assert.Equal(5, arc.Center.X, precision: 6);
-        Assert.Equal(0, arc.Center.Y, precision: 6);
-        Assert.Equal(5, arc.Radius, precision: 6);
-        Assert.Equal(180, arc.StartAngle.NormalizePositive().Degrees, precision: 6);
-        Assert.Equal(0, arc.EndAngle.NormalizePositive().Degrees, precision: 6);
-        Assert.True(arc.IsCounterClockwise);
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(Assert.Single(result.Document.Entities.All));
+        Assert.Equal(new LayerId("Curves"), polyline.LayerId);
+        Assert.Equal(2, polyline.Vertices.Count);
+        Assert.False(polyline.IsClosed);
+        Assert.True(polyline.HasArcSegments);
+        double bulge = Assert.Single(polyline.SegmentBulges);
+        Assert.Equal(1, bulge, precision: 6);
+        Assert.Equal(new Point2D(0, 0), polyline.Vertices[0]);
+        Assert.Equal(new Point2D(10, 0), polyline.Vertices[1]);
         Assert.False(result.HasWarnings);
-        DxfImportLogEntry info = Assert.Single(result.Log);
-        Assert.Equal(DxfImportLogSeverity.Info, info.Severity);
-        Assert.Contains("bulge geometry", info.Message);
+        Assert.Empty(result.Log);
     }
 
     [Fact]
-    public void Import_WhenLightweightPolylineHasMixedStraightAndBulgeSegments_ShouldConvertSegmentsToLinesAndArcs()
+    public void Import_WhenLightweightPolylineHasMixedStraightAndBulgeSegments_ShouldPreserveMixedSegmentsOnPolylineEntity()
     {
         const string content = """
             0
@@ -183,20 +182,21 @@ public sealed class DxfDocumentImporterPolylineTests
 
         DxfImportResult result = importer.Import(content);
 
-        IReadOnlyList<CadEntity> entities = result.Document.Entities.All.ToList();
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(Assert.Single(result.Document.Entities.All));
 
-        Assert.Equal(2, entities.Count);
-        LineEntity line = Assert.IsType<LineEntity>(entities[0]);
-        ArcEntity arc = Assert.IsType<ArcEntity>(entities[1]);
-        Assert.Equal(new Point2D(0, 0), line.Start);
-        Assert.Equal(new Point2D(10, 0), line.End);
-        Assert.Equal(15, arc.Center.X, precision: 6);
-        Assert.Equal(0, arc.Center.Y, precision: 6);
+        Assert.Equal(3, polyline.Vertices.Count);
+        Assert.Equal(2, polyline.SegmentBulges.Count);
+        Assert.Equal(new Point2D(0, 0), polyline.Vertices[0]);
+        Assert.Equal(new Point2D(10, 0), polyline.Vertices[1]);
+        Assert.Equal(new Point2D(20, 0), polyline.Vertices[2]);
+        Assert.Equal(0, polyline.SegmentBulges[0], precision: 6);
+        Assert.Equal(1, polyline.SegmentBulges[1], precision: 6);
+        Assert.True(polyline.HasArcSegments);
         Assert.False(result.HasWarnings);
     }
 
     [Fact]
-    public void Import_WhenClosedLightweightPolylineHasLastVertexBulge_ShouldConvertClosingSegmentToArc()
+    public void Import_WhenClosedLightweightPolylineHasLastVertexBulge_ShouldPreserveClosingSegmentBulge()
     {
         const string content = """
             0
@@ -232,13 +232,15 @@ public sealed class DxfDocumentImporterPolylineTests
 
         DxfImportResult result = importer.Import(content);
 
-        IReadOnlyList<CadEntity> entities = result.Document.Entities.All.ToList();
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(Assert.Single(result.Document.Entities.All));
 
-        Assert.Equal(3, entities.Count);
-        Assert.IsType<LineEntity>(entities[0]);
-        Assert.IsType<LineEntity>(entities[1]);
-        ArcEntity closingArc = Assert.IsType<ArcEntity>(entities[2]);
-        Assert.False(closingArc.IsCounterClockwise);
+        Assert.True(polyline.IsClosed);
+        Assert.Equal(3, polyline.Vertices.Count);
+        Assert.Equal(3, polyline.SegmentBulges.Count);
+        Assert.Equal(0, polyline.SegmentBulges[0], precision: 6);
+        Assert.Equal(0, polyline.SegmentBulges[1], precision: 6);
+        Assert.Equal(-1, polyline.SegmentBulges[2], precision: 6);
+        Assert.True(polyline.HasArcSegments);
         Assert.False(result.HasWarnings);
     }
 

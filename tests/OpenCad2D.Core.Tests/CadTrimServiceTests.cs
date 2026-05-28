@@ -490,4 +490,34 @@ public sealed class CadTrimServiceCurveSplitPipelineTests
     }
 
 
+
+
+    [Fact]
+    public void TrimBulgedPolyline_ByLineBoundary_ShouldPreserveArcBulgeFragment()
+    {
+        double bulge = Math.Tan(Math.PI / 8.0);
+        var target = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { bulge, 0.0 });
+        Point2D arcMidpoint = target.GetSegmentMidpoints()[0];
+        var boundary = new LineEntity(
+            new Point2D(arcMidpoint.X, arcMidpoint.Y - 10),
+            new Point2D(arcMidpoint.X, arcMidpoint.Y + 10));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(0, 0));
+
+        PolylineEntity kept = Assert.Single(result.OfType<PolylineEntity>());
+
+        Assert.False(kept.IsClosed);
+        Assert.Contains(kept.SegmentBulges, value => Math.Abs(value) > 1e-9);
+    }
+
 }

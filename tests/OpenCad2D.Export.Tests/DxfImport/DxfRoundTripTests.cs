@@ -172,6 +172,64 @@ public sealed class DxfRoundTripTests
         AssertPoint(10, 0, line.End);
     }
 
+
+    [Fact]
+    public void ExportThenImport_WithMixedPolylineBulges_ShouldPreserveCompoundPolylineTopology()
+    {
+        var document = new CadDocument();
+        var layerId = new LayerId("MixedPolylines");
+
+        document.Layers.Add(new Layer(
+            layerId,
+            "MixedPolylines"));
+        document.AddEntity(new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10),
+                new Point2D(0, 10)
+            },
+            isClosed: true,
+            layerId: layerId,
+            segmentBulges: new[]
+            {
+                0.0,
+                0.5,
+                0.0,
+                -0.25
+            }));
+
+        DxfExportResult exported = new DxfExporter().Export(
+            document,
+            new DxfExportOptions
+            {
+                UseCadViewerCoordinateSystem = false
+            });
+
+        DxfImportResult imported = new DxfDocumentImporter().Import(exported.Content);
+
+        Assert.False(imported.HasWarnings);
+        Assert.False(imported.HasErrors);
+        Assert.Equal(1, imported.Statistics.TotalImportedEntities);
+        Assert.Equal(1, imported.Statistics.GetImportedEntityCount(EntityKind.Polyline));
+
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(Assert.Single(imported.Document.Entities.All));
+        Assert.Equal(layerId, polyline.LayerId);
+        Assert.True(polyline.IsClosed);
+        Assert.True(polyline.HasArcSegments);
+        Assert.Equal(4, polyline.Vertices.Count);
+        Assert.Equal(4, polyline.SegmentBulges.Count);
+        AssertPoint(0, 0, polyline.Vertices[0]);
+        AssertPoint(10, 0, polyline.Vertices[1]);
+        AssertPoint(10, 10, polyline.Vertices[2]);
+        AssertPoint(0, 10, polyline.Vertices[3]);
+        Assert.Equal(0, polyline.SegmentBulges[0], 6);
+        Assert.Equal(0.5, polyline.SegmentBulges[1], 6);
+        Assert.Equal(0, polyline.SegmentBulges[2], 6);
+        Assert.Equal(-0.25, polyline.SegmentBulges[3], 6);
+    }
+
     private static void AssertPoint(
         double expectedX,
         double expectedY,

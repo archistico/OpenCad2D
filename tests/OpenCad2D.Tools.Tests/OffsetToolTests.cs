@@ -400,6 +400,64 @@ public sealed class OffsetToolTests
     }
 
 
+
+    [Fact]
+    public void OffsetPolyline_WithArcSegments_ShouldCreateApproximateLinearOffsetPolyline()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 0.0, 1.0 });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 2)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity offset = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All.Where(entity => !entity.Id.Equals(polyline.Id))));
+        Assert.False(offset.HasArcSegments);
+        Assert.False(offset.IsClosed);
+        Assert.True(offset.Vertices.Count > polyline.Vertices.Count);
+    }
+
+
+    [Fact]
+    public void OnPointerMoved_WithMixedPolyline_ShouldExposeApproximateOffsetPreview()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 0.0, 1.0 });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerMoved(context, new PointerInfo(new Point2D(5, 2)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        PolylineEntity preview = Assert.IsType<PolylineEntity>(tool.GetPreviewEntity());
+        Assert.False(preview.HasArcSegments);
+        Assert.True(preview.Vertices.Count > polyline.Vertices.Count);
+        Assert.Single(document.Entities.All);
+    }
+
     [Fact]
     public void OffsetBezierSpline_ShouldReturnDeferredMessageAndNotCreatePolylineApproximation()
     {

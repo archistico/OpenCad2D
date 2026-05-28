@@ -57,21 +57,67 @@ The following foundations are considered complete for the active roadmap. Older 
 | Core geometry/document model | [x] | Geometry primitives, entities, layers, line formats, text formats, dimension styles, command history and undo/redo are in place. |
 | Application shell | [x] | Avalonia canvas, file command bar, top CAD bar, left tool panel, property panel, command row, snap bar and status bar are established. |
 | Native persistence | [x] | `.opencad2d.json` save/load, dirty state, save-changes prompt, partial recovery, viewport/document settings persistence and layer/entity fill persistence are implemented. |
-| Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; SVG export includes external raster image references; ASCII DXF import covers the practical 2D entity set currently supported. |
+| Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; SVG export includes external raster image references; ASCII DXF import covers the practical 2D entity set currently supported, including LWPOLYLINE bulge preservation for mixed line/arc polylines. |
 | Command input | [x] | Aliases, prompt phases, coordinate input, relative/polar input, direct distances, history and first-pass autocomplete are implemented. |
 | Drafting aids | [x] | Snap system, grid, Ortho, Polar Tracking, Zoom Window, Zoom Extents, pan and crosshair are implemented. |
-| Draw tools baseline | [x] | Points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and open Bezier splines are supported. Rectangles and polygons are closed polylines for fill/editing purposes. |
+| Draw tools baseline | [x] | Points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, mixed line/arc polylines, polygons and open Bezier splines are supported. Rectangles and polygons are closed polylines for fill/editing purposes. |
 | Dimensions baseline | [x] | Horizontal, vertical, aligned, radius, diameter and angular dimensions exist, with conservative stale marking after model edits. |
 | Transform tools | [x] | Move, Copy, Rotate, Scale, Mirror and point-based Align are usable and tested. |
 | Selection and hit testing | [x] | Selection, Select All, Select Last, Deselect, entity cycling, text/MTEXT bounding-box hit testing and locked/hidden layer behavior are implemented. |
-| Native curve editing | [x] | TRIM, BREAK and supported EXTEND flows use native parameters, shared cut points and adapter-backed splitting for supported curves. |
+| Native curve editing | [x] | TRIM, BREAK and supported EXTEND flows use native parameters, shared cut points and adapter-backed splitting for supported curves. Mixed polylines preserve bulge segments where supported; curved-end EXTEND is intentionally conservative. |
 | Elliptical arcs | [x] | `EllipticalArcEntity` exists with rendering, snapping, persistence and SVG/PDF/DXF export support. |
 | Open Bezier split | [x] | Open Bezier splines can be split/extracted natively and are no longer permanently degraded to polylines in TRIM/BREAK. |
 | Preview UX base | [x] | TRIM/BREAK removal previews are dashed; EXTEND addition previews are highlighted; selected boundaries stay visible. |
 | Save/export UX clarity | [x] | Export creates derived files and does not clear dirty state or replace the current native file path; user messages make this explicit. |
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
-| Explode / Join essentials | [x] | EXPLODE converts selected polylines into lines; JOIN converts connected selected lines into polylines, with command aliases, buttons, undo and targeted tests. |
+| Explode / Join essentials | [x] | EXPLODE converts straight and mixed polylines into lines/arcs; JOIN converts connected lines, arcs and open polylines into one or more polylines, with bulge preservation, diagnostics, undo and targeted tests. |
 | External raster references | [x] | PNG/JPG/JPEG files can be attached as external references, transformed as oriented rectangles, snapped, relinked, collected into portable folders and managed through Image References Manager. |
+
+---
+
+## Mixed polyline stabilization checkpoint
+
+Status: [x] completed for the current mixed-polyline foundation.
+
+Completed:
+
+- [x] `PolylineEntity` supports DXF-compatible `SegmentBulges` for AutoCAD-style mixed line/arc segments.
+- [x] DXF `LWPOLYLINE` import/export preserves bulge values instead of exploding compound polylines.
+- [x] JSON persistence keeps older straight polylines compatible and writes bulges only when needed.
+- [x] Polyline drawing supports explicit `POLYLINE LINE` and `POLYLINE ARC` modes, with three-point arc segment creation.
+- [x] Hit testing, crossing selection, snapping and measurement use the visible mixed-polyline interaction geometry.
+- [x] Property Panel exposes editable per-segment bulge rows for precise low-level edits.
+- [x] Grip editing preserves existing bulges and adds a first visual arc-shape grip for curved segments.
+- [x] JOIN supports lines, arcs and open polylines, reports clear failure reasons and creates mixed polylines where needed.
+- [x] EXPLODE converts mixed polylines back into `LineEntity` and `ArcEntity` fragments.
+- [x] BREAK/TRIM preserve bulged segments where supported; EXTEND preserves existing bulges for straight open-polyline endpoints and refuses curved endpoints instead of flattening them.
+- [x] OFFSET supports straight polylines natively and mixed/bulged polylines through a conservative linear approximation of the offset result, without modifying or flattening the source object.
+- [x] FILLET and CHAMFER support standalone lines, adjacent straight segments of the same polyline, single-segment separate polylines and terminal segments of separate open linear multi-segment polylines.
+
+Manual regression checklist:
+
+- [ ] Draw a polyline with straight segments, switch to Arc, create a three-point arc, then return to Line.
+- [ ] Close a mixed polyline and verify selection/hit testing on the curved segment.
+- [ ] Edit a segment bulge from the Property Panel and undo/redo the edit.
+- [ ] Drag the arc-shape grip and verify the curved segment changes without moving unrelated segments.
+- [ ] JOIN line + arc, arc + line and open polyline + line; verify command-line diagnostics for invalid selections.
+- [ ] EXPLODE a mixed open polyline and a mixed closed polyline.
+- [ ] BREAK/TRIM a mixed polyline and confirm curved fragments remain curved.
+- [ ] OFFSET a mixed polyline and confirm the source remains bulged while the result is an explicit linear approximation.
+- [ ] FILLET/CHAMFER adjacent straight segments of one polyline and terminal segments of separate polylines.
+
+Deferred refinements:
+
+- [>] friendly segment editor modal with radius/included-angle display and Straight/Arc CW/Arc CCW actions;
+- [>] additional polyline arc construction modes beyond three-point arcs;
+- [>] native curved-end EXTEND for bulged polyline endpoints;
+- [>] true analytic Offset for bulged mixed polylines that preserves arc/bulge segments in the result;
+- [>] center/quadrant/tangent/perpendicular snaps that expose individual polyline arc-segment geometry directly.
+
+Consolidation added after this checkpoint:
+
+- [x] DXF automated coverage now includes mixed-polyline bulge group export and OpenCad2D round-trip preservation.
+- [x] Known limitations were updated to distinguish supported conservative approximations from future analytic curve-preserving operations.
 
 ---
 

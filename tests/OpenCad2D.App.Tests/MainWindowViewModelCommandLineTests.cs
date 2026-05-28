@@ -651,7 +651,7 @@ public sealed class MainWindowViewModelCommandLineTests
         var result = viewModel.SubmitCommandInput("U");
 
         Assert.Equal("Polyline", viewModel.ActiveToolName);
-        Assert.Equal("Specify next polyline point, press Enter/right-click to finish, or C to close.", viewModel.LastMessage);
+        Assert.Equal("Polyline line mode: specify next point, press Enter/right-click to finish, C to close, or A for arc.", viewModel.LastMessage);
         Assert.DoesNotContain("U", viewModel.CommandLineHistory);
         Assert.Equal(0, viewModel.Workspace.Document.Entities.Count);
         Assert.NotNull(result);
@@ -668,7 +668,7 @@ public sealed class MainWindowViewModelCommandLineTests
 
         viewModel.SubmitCommandInput("0,0");
 
-        Assert.Equal("POLYLINE: Specify next point or [Close/Undo]:", viewModel.CommandPromptText);
+        Assert.Equal("POLYLINE LINE: Specify next point or [Arc/Close/Undo]:", viewModel.CommandPromptText);
     }
 
 

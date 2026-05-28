@@ -1,0 +1,457 @@
+{
+  "version": 1,
+  "savedAt": "2026-05-28T08:36:44.9199622\u002B00:00",
+  "settings": {
+    "currentLayerId": "Walls",
+    "currentTextFormatId": "Standard",
+    "currentDimensionStyleId": "Standard",
+    "grid": {
+      "kind": "Rectangular",
+      "isVisible": true,
+      "minorStep": 10,
+      "majorStep": 50,
+      "originX": 0,
+      "originY": 0,
+      "minimumScreenSpacing": 8,
+      "maximumScreenSpacing": 220,
+      "isometricAngleDegrees": 30
+    },
+    "snapping": {
+      "isEnabled": true,
+      "enabledModes": [
+        "Endpoint",
+        "Midpoint",
+        "Center",
+        "Quadrant",
+        "Intersection",
+        "Perpendicular",
+        "Tangent",
+        "Grid"
+      ],
+      "tolerance": 8
+    },
+    "drafting": {
+      "isOrthoEnabled": false,
+      "polarTracking": {
+        "isEnabled": false,
+        "stepDegrees": 90
+      }
+    }
+  },
+  "viewport": {
+    "panX": 379.1087197695755,
+    "panY": 194.86286178245723,
+    "zoom": 0.3759370399230928
+  },
+  "lineFormats": [
+    {
+      "id": "Continuous",
+      "name": "Continua",
+      "color": "#FFFFFF",
+      "lineWeight": 1,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "color": "#A0A0A0",
+      "lineWeight": 0.8,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "color": "#FF0004",
+      "lineWeight": 2,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    },
+    {
+      "id": "Axis",
+      "name": "Asse",
+      "color": "#FF0000",
+      "lineWeight": 0.75,
+      "lineStyle": "DashDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4
+      ]
+    },
+    {
+      "id": "Dashed",
+      "name": "Tratteggiata",
+      "color": "#FFFF00",
+      "lineWeight": 0.75,
+      "lineStyle": "Dashed",
+      "dashPattern": [
+        8,
+        4
+      ]
+    },
+    {
+      "id": "DashDotDot",
+      "name": "Tratto due punti",
+      "color": "#00C8FF",
+      "lineWeight": 0.5,
+      "lineStyle": "DashDotDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4,
+        1,
+        4
+      ]
+    },
+    {
+      "id": "DashDot",
+      "name": "Tratto e punto",
+      "color": "#00FF00",
+      "lineWeight": 0.75,
+      "lineStyle": "DashDot",
+      "dashPattern": [
+        12,
+        4,
+        1,
+        4
+      ]
+    }
+  ],
+  "textFormats": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "fontFamily": "Arial",
+      "height": 10,
+      "color": "#FFFFFF",
+      "isBold": false,
+      "isItalic": false
+    },
+    {
+      "id": "Title",
+      "name": "Title",
+      "fontFamily": "Arial",
+      "height": 18,
+      "color": "#FFFFFF",
+      "isBold": true,
+      "isItalic": false
+    },
+    {
+      "id": "Annotation",
+      "name": "Annotation",
+      "fontFamily": "Arial",
+      "height": 8,
+      "color": "#FFFF00",
+      "isBold": false,
+      "isItalic": false
+    },
+    {
+      "id": "Small",
+      "name": "Small",
+      "fontFamily": "Arial",
+      "height": 6,
+      "color": "#B4B4B4",
+      "isBold": false,
+      "isItalic": false
+    }
+  ],
+  "dimensionStyles": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "textFormatId": "Annotation",
+      "arrowSize": 4,
+      "arrowSymbol": "ClosedArrow",
+      "textRotationMode": "Readable",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": 2,
+      "extensionLineOffset": 1.5,
+      "extensionLineOvershoot": 2,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": "",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    },
+    {
+      "id": "Architectural",
+      "name": "Architectural",
+      "textFormatId": "Annotation",
+      "arrowSize": 4,
+      "arrowSymbol": "ArchitecturalTick",
+      "textRotationMode": "Readable",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": -2,
+      "extensionLineOffset": 1.5,
+      "extensionLineOvershoot": 2,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": " m",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    },
+    {
+      "id": "Mechanical",
+      "name": "Mechanical",
+      "textFormatId": "Annotation",
+      "arrowSize": 3,
+      "arrowSymbol": "ClosedFilledTriangle",
+      "textRotationMode": "Horizontal",
+      "textFitMode": "OutsideWhenNeeded",
+      "terminatorFitMode": "OutsideWhenNeeded",
+      "dimensionLineOffset": 8,
+      "textOffset": 2,
+      "extensionLineOffset": 1,
+      "extensionLineOvershoot": 1.5,
+      "decimalPlaces": 2,
+      "decimalSeparator": ".",
+      "prefix": "",
+      "suffix": " mm",
+      "radiusPrefix": "R ",
+      "diameterPrefix": "\u00D8 "
+    }
+  ],
+  "layers": [
+    {
+      "id": "0",
+      "name": "0",
+      "lineFormatId": "Continuous",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FF0004",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Annotations",
+      "name": "Annotations",
+      "lineFormatId": "Annotations",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#A0A0A0",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Axis",
+      "name": "Axis",
+      "lineFormatId": "Axis",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FF0000",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Construction lines",
+      "name": "Construction lines",
+      "lineFormatId": "Dashed",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#FFFF00",
+      "isVisible": true,
+      "isLocked": false
+    },
+    {
+      "id": "Walls",
+      "name": "Walls",
+      "lineFormatId": "Walls",
+      "color": null,
+      "lineWeight": null,
+      "fillColor": "#5B5B5B",
+      "isVisible": true,
+      "isLocked": false
+    }
+  ],
+  "blockDefinitions": [],
+  "entities": [
+    {
+      "filePath": "img\\mainfloor.jpg",
+      "originX": -270.4209080216448,
+      "originY": -409.9024007707578,
+      "widthVectorX": 1807.0521136273928,
+      "widthVectorY": 1.5572786759697783,
+      "heightVectorX": -1.8885199646485746,
+      "heightVectorY": 2191.421513956417,
+      "pixelWidth": 1401,
+      "pixelHeight": 1699,
+      "type": "ImageReference",
+      "id": "6d502e93-e0aa-4365-92ba-234c6d24a4ca",
+      "layerId": "0"
+    },
+    {
+      "isClosed": true,
+      "isFilled": true,
+      "vertices": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": 0
+        },
+        {
+          "x": 200,
+          "y": -140
+        },
+        {
+          "x": 470,
+          "y": -140
+        },
+        {
+          "x": 470,
+          "y": -250
+        },
+        {
+          "x": 730,
+          "y": -250
+        },
+        {
+          "x": 730,
+          "y": -140
+        },
+        {
+          "x": 850,
+          "y": -140
+        },
+        {
+          "x": 850,
+          "y": 60
+        },
+        {
+          "x": 1250,
+          "y": 60
+        },
+        {
+          "x": 1250,
+          "y": 1280
+        },
+        {
+          "x": 1210,
+          "y": 1280
+        },
+        {
+          "x": 1210,
+          "y": 1240
+        },
+        {
+          "x": 1210,
+          "y": 100
+        },
+        {
+          "x": 830,
+          "y": 100
+        },
+        {
+          "x": 830,
+          "y": 290
+        },
+        {
+          "x": 810,
+          "y": 290
+        },
+        {
+          "x": 810,
+          "y": -100
+        },
+        {
+          "x": 690,
+          "y": -100
+        },
+        {
+          "x": 690,
+          "y": -100
+        },
+        {
+          "x": 690,
+          "y": -140
+        },
+        {
+          "x": 700,
+          "y": -140
+        },
+        {
+          "x": 700,
+          "y": -230
+        },
+        {
+          "x": 500,
+          "y": -230
+        },
+        {
+          "x": 500,
+          "y": -140
+        },
+        {
+          "x": 510,
+          "y": -140
+        },
+        {
+          "x": 510,
+          "y": -100
+        },
+        {
+          "x": 240,
+          "y": -100
+        },
+        {
+          "x": 240,
+          "y": 40
+        },
+        {
+          "x": 40,
+          "y": 40
+        },
+        {
+          "x": 40,
+          "y": 200
+        },
+        {
+          "x": 0,
+          "y": 200
+        }
+      ],
+      "segmentBulges": null,
+      "type": "Polyline",
+      "id": "50a0ae84-bba2-4fd9-8860-683010745122",
+      "layerId": "Walls"
+    },
+    {
+      "isClosed": true,
+      "isFilled": true,
+      "vertices": [
+        {
+          "x": 1210,
+          "y": -140
+        },
+        {
+          "x": 1250,
+          "y": -140
+        },
+        {
+          "x": 1250,
+          "y": -100
+        },
+        {
+          "x": 1210,
+          "y": -100
+        }
+      ],
+      "segmentBulges": null,
+      "type": "Polyline",
+      "id": "05610eaa-2909-42de-9930-6da627f0bec6",
+      "layerId": "Walls"
+    }
+  ]
+}

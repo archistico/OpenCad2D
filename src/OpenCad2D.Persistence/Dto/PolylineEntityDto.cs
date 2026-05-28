@@ -15,4 +15,6 @@ public sealed class PolylineEntityDto : EntityDto
     public bool IsFilled { get; set; }
 
     public List<PointDto> Vertices { get; set; } = new();
+
+    public List<double>? SegmentBulges { get; set; }
 }

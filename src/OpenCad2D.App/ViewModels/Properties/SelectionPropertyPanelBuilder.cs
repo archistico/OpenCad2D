@@ -15,6 +15,7 @@ namespace OpenCad2D.App.ViewModels.Properties;
 public sealed class SelectionPropertyPanelBuilder
 {
     private const int MaxPolylineVerticesInPropertyPanel = 4;
+    private const int MaxPolylineSegmentsInPropertyPanel = 8;
     private static readonly string[] YesNoOptions = ["Yes", "No"];
     private static readonly string[] FillOptions = ["None", "Solid"];
     public PropertyPanelViewModel Build(
@@ -102,6 +103,7 @@ public sealed class SelectionPropertyPanelBuilder
         if (entity is PolylineEntity polyline)
         {
             sections.Add(BuildPolylineVerticesSection(workspace, polyline, setMessage, refresh));
+            sections.Add(BuildPolylineSegmentsSection(workspace, polyline, setMessage, refresh));
         }
 
         sections.Add(BuildBoundsSection(entity.GetBoundingBox()));
@@ -477,6 +479,8 @@ public sealed class SelectionPropertyPanelBuilder
                 value => ReplacePolylineFill(workspace, polyline.Id, value, setMessage, refresh)));
         }
 
+        rows.Add(Row("Segments", polyline.SegmentCount.ToString(CultureInfo.InvariantCulture)));
+        rows.Add(Row("Arc segments", polyline.SegmentBulges.Count(bulge => !OpenCad2D.Geometry.Tolerance.IsZero(bulge)).ToString(CultureInfo.InvariantCulture)));
         rows.Add(Row("Length", PropertyValueFormatter.FormatLength(GetPolylineLength(polyline))));
 
         if (polyline.IsClosed && polyline.Vertices.Count >= 3)
@@ -531,6 +535,51 @@ public sealed class SelectionPropertyPanelBuilder
 
         return new PropertySectionViewModel(
             "Vertices",
+            rows);
+    }
+
+    private static PropertySectionViewModel BuildPolylineSegmentsSection(
+        CadWorkspace workspace,
+        PolylineEntity polyline,
+        Action<string>? setMessage,
+        Action? refresh)
+    {
+        var rows = new List<PropertyRowViewModel>();
+        int displayedSegmentCount = Math.Min(
+            polyline.SegmentCount,
+            MaxPolylineSegmentsInPropertyPanel);
+
+        for (int index = 0; index < displayedSegmentCount; index++)
+        {
+            int segmentIndex = index;
+            double bulge = polyline.SegmentBulges[index];
+
+            rows.Add(EditableRow(
+                $"Segment {index + 1} bulge",
+                PropertyValueFormatter.FormatCoordinate(bulge),
+                value => ReplacePolylineSegmentBulge(
+                    workspace,
+                    polyline.Id,
+                    segmentIndex,
+                    value,
+                    setMessage,
+                    refresh)));
+        }
+
+        if (polyline.SegmentCount > displayedSegmentCount)
+        {
+            rows.Add(Row(
+                "More segments",
+                $"{polyline.SegmentCount - displayedSegmentCount} hidden to keep the Property Panel responsive."));
+        }
+
+        if (rows.Count == 0)
+        {
+            rows.Add(Row("Segments", "No editable segments"));
+        }
+
+        return new PropertySectionViewModel(
+            "Segments",
             rows);
     }
 
@@ -638,16 +687,19 @@ public sealed class SelectionPropertyPanelBuilder
 
     private static double GetPolylineLength(PolylineEntity polyline)
     {
+        PolylineEntity measurable = polyline.HasArcSegments
+            ? polyline.ToPolylineApproximation()
+            : polyline;
         double length = 0;
 
-        for (int i = 1; i < polyline.Vertices.Count; i++)
+        for (int i = 1; i < measurable.Vertices.Count; i++)
         {
-            length += polyline.Vertices[i - 1].DistanceTo(polyline.Vertices[i]);
+            length += measurable.Vertices[i - 1].DistanceTo(measurable.Vertices[i]);
         }
 
-        if (polyline.IsClosed && polyline.Vertices.Count > 1)
+        if (measurable.IsClosed && measurable.Vertices.Count > 1)
         {
-            length += polyline.Vertices[^1].DistanceTo(polyline.Vertices[0]);
+            length += measurable.Vertices[^1].DistanceTo(measurable.Vertices[0]);
         }
 
         return length;
@@ -655,12 +707,15 @@ public sealed class SelectionPropertyPanelBuilder
 
     private static double GetPolylineSignedArea(PolylineEntity polyline)
     {
+        PolylineEntity measurable = polyline.HasArcSegments
+            ? polyline.ToPolylineApproximation()
+            : polyline;
         double sum = 0;
 
-        for (int i = 0; i < polyline.Vertices.Count; i++)
+        for (int i = 0; i < measurable.Vertices.Count; i++)
         {
-            Point2D current = polyline.Vertices[i];
-            Point2D next = polyline.Vertices[(i + 1) % polyline.Vertices.Count];
+            Point2D current = measurable.Vertices[i];
+            Point2D next = measurable.Vertices[(i + 1) % measurable.Vertices.Count];
 
             sum += current.X * next.Y - next.X * current.Y;
         }
@@ -1120,8 +1175,45 @@ public sealed class SelectionPropertyPanelBuilder
 
         ReplaceEntity(
             workspace,
-            new PolylineEntity(vertices, polyline.IsClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder, polyline.IsFilled),
+            new PolylineEntity(vertices, polyline.IsClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder, polyline.IsFilled, polyline.SegmentBulges),
             "Polyline vertex updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplacePolylineSegmentBulge(
+        CadWorkspace workspace,
+        EntityId entityId,
+        int segmentIndex,
+        string value,
+        Action<string>? setMessage,
+        Action? refresh)
+    {
+        if (!TryGetEditableEntity<PolylineEntity>(workspace, entityId, setMessage, out PolylineEntity polyline) ||
+            !TryParseDouble(value, setMessage, out double bulge))
+        {
+            return;
+        }
+
+        if (segmentIndex < 0 || segmentIndex >= polyline.SegmentBulges.Count)
+        {
+            setMessage?.Invoke("Polyline segment was not found.");
+            return;
+        }
+
+        if (double.IsNaN(bulge) || double.IsInfinity(bulge))
+        {
+            setMessage?.Invoke("Polyline bulge must be a finite numeric value.");
+            return;
+        }
+
+        List<double> bulges = polyline.SegmentBulges.ToList();
+        bulges[segmentIndex] = bulge;
+
+        ReplaceEntity(
+            workspace,
+            new PolylineEntity(polyline.Vertices, polyline.IsClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder, polyline.IsFilled, bulges),
+            "Polyline segment bulge updated.",
             setMessage,
             refresh);
     }
@@ -1142,10 +1234,28 @@ public sealed class SelectionPropertyPanelBuilder
 
         ReplaceEntity(
             workspace,
-            new PolylineEntity(polyline.Vertices, isClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder, isClosed && polyline.IsFilled),
+            new PolylineEntity(polyline.Vertices, isClosed, polyline.Id, polyline.LayerId, polyline.Style, polyline.IsVisible, polyline.IsLocked, polyline.DrawOrder, isClosed && polyline.IsFilled, GetPolylineBulgesForClosedState(polyline, isClosed)),
             "Polyline updated.",
             setMessage,
             refresh);
+    }
+
+
+    private static IReadOnlyList<double> GetPolylineBulgesForClosedState(
+        PolylineEntity polyline,
+        bool isClosed)
+    {
+        if (polyline.IsClosed == isClosed)
+        {
+            return polyline.SegmentBulges;
+        }
+
+        if (isClosed)
+        {
+            return polyline.SegmentBulges.Concat(new[] { 0.0 }).ToList();
+        }
+
+        return polyline.SegmentBulges.Take(Math.Max(polyline.Vertices.Count - 1, 0)).ToList();
     }
 
     private static void ReplacePolylineFill(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)

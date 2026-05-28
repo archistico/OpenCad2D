@@ -338,4 +338,54 @@ public sealed class CadExtendServiceTests
             $"Expected point {point} to lie on the source ellipse; equation value was {equation}.");
     }
 
+
+
+    [Fact]
+    public void ExtendOpenMixedPolyline_WithStraightEndpoint_ShouldPreserveExistingBulges()
+    {
+        double bulge = Math.Tan(Math.PI / 8.0);
+        var target = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(15, 0)
+            },
+            segmentBulges: new[] { bulge, 0.0 });
+        var boundary = new LineEntity(new Point2D(20, -5), new Point2D(20, 5));
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            new Point2D(15, 0));
+
+        PolylineEntity extended = Assert.IsType<PolylineEntity>(result);
+
+        Assert.Equal(new Point2D(20, 0), extended.Vertices[^1]);
+        Assert.Equal(target.SegmentBulges.Count, extended.SegmentBulges.Count);
+        Assert.Equal(bulge, extended.SegmentBulges[0], precision: 10);
+        Assert.Equal(0.0, extended.SegmentBulges[1], precision: 10);
+    }
+
+    [Fact]
+    public void ExtendOpenMixedPolyline_WithCurvedEndpoint_ShouldReturnNullInsteadOfFlattening()
+    {
+        double bulge = Math.Tan(Math.PI / 8.0);
+        var target = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { bulge });
+        var boundary = new LineEntity(new Point2D(15, -5), new Point2D(15, 5));
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            new Point2D(10, 0));
+
+        Assert.Null(result);
+    }
+
 }

@@ -1,4 +1,4 @@
-﻿# Known Limitations
+# Known Limitations
 
 OpenCad2D is in the v0.9 stabilization track before the first stable v1.0 release. The following limitations should remain visible until they are resolved.
 
@@ -39,10 +39,22 @@ Known limits:
 - general editable `HATCH`, `IMAGE` and `LEADER` workflows are not supported yet; export has a limited `SOLID` HATCH path for filled circles and closed polylines;
 - native DXF `DIMENSION` import/export remains future work; current OpenCad2D dimensions export as graphical primitives;
 - custom DXF `LTYPE` generation for arbitrary line format dash patterns is future work;
-- `LWPOLYLINE` bulge import preserves curved geometry as separate native line/arc entities, but does not preserve the original compound polyline topology;
+- `LWPOLYLINE` bulge import/export now preserves compound mixed polyline topology through `PolylineEntity.SegmentBulges`; automated regression covers group-code `42` output and OpenCad2D round-trip, while broader viewer compatibility still needs a recorded LibreCAD/QCAD/Autodesk pass;
 - full DXF `ELLIPSE` entities import as native `EllipseEntity`; edited partial ellipses are represented internally as `EllipticalArcEntity`, while DXF partial-ellipse import still needs a dedicated native importer pass if required for v0.9;
 - readable DXF `SPLINE` control points import as `BezierSplineEntity`; fit-point-only splines import as approximations; full external NURBS knot/weight evaluation is not implemented yet;
 - broad compatibility should be checked and recorded with exact LibreCAD/QCAD/Autodesk viewer versions before v0.9 release.
+
+---
+
+## Offset and polylines
+
+Straight polylines are offset as editable polylines. Mixed/bulged polylines are currently offset conservatively by approximating the curved source segments into a linear polyline result. The source entity is not flattened or modified.
+
+Current limitations:
+
+- mixed-polyline offset does not yet preserve arc/bulge segments in the offset result;
+- analytic arc-aware offset for bulged polylines is deferred;
+- complex self-intersections or very tight offsets may still require user cleanup, especially on dense approximated curves.
 
 ---
 
@@ -73,7 +85,7 @@ OpenCad2D mitigates this by marking dimensions as potentially stale after geomet
 
 ## Snapping and intersections
 
-The editing pipeline now has native line/polyline/circle/arc intersection support for ellipses and elliptical arcs in the important TRIM/BREAK/EXTEND paths.
+The editing pipeline now has native line/polyline/circle/arc intersection support for ellipses, elliptical arcs and mixed polyline segments in the important TRIM/BREAK/EXTEND paths.
 
 Remaining limitations:
 
@@ -92,6 +104,7 @@ Current intentional limitations:
 - closed Bezier spline editing is deferred/no-op;
 - Break Point on complete circles and complete ellipses is deferred until a full-sweep open-arc convention is defined;
 - rectangles and polygons are represented as closed polylines for editing; once trimmed/broken open, the result is a `PolylineEntity`;
+- curved-end `EXTEND` for bulged polyline endpoints is intentionally deferred; current behavior refuses the operation instead of flattening the arc segment;
 - additional command paths may adopt `CadIntersectionPoint` incrementally when useful.
 
 ---
@@ -103,7 +116,9 @@ Offset has a stabilized v0.9 workflow for distance input, target selection, side
 - Line;
 - Circle;
 - Arc;
-- straight-segment open/closed Polyline.
+- open/closed Polyline. Straight polylines are offset directly; bulged mixed polylines are offset by conservative linear approximation.
+
+Bulged mixed polylines are now accepted by Offset through a conservative approximation pass: curved bulge segments are sampled into straight segments before the offset is generated. This makes the command usable without silently pretending to create a mathematically exact circular-arc offset.
 
 Current intentional limitations:
 
@@ -111,13 +126,13 @@ Current intentional limitations:
 - Bezier spline offsets are deferred because a true offset is not another exact Bezier spline;
 - unsupported advanced curves return a clear message and create no geometry;
 - no silent permanent `PolylineEntity` approximation is created for ellipse, elliptical arc or spline offset;
-- rounded joins, configurable join styles and advanced self-intersection cleanup remain future work.
+- true arc-aware offsets that preserve bulge segments, rounded joins, configurable join styles and advanced self-intersection cleanup remain future work.
 
 ---
 
 ## Property Panel
 
-The Property Panel supports many primary properties, but v0.9 still needs a review pass for curve entities after the native curve-editing work:
+The Property Panel supports many primary properties and now exposes editable `Segment N bulge` rows for mixed polylines. A broader review pass is still useful for curve entities after the native curve-editing work:
 
 - Arc;
 - Ellipse;
@@ -153,3 +168,18 @@ Current limitations:
 - Reset Aspect depends on stored pixel metadata; very old/corrupt image references without pixel dimensions cannot infer the natural aspect ratio;
 - SVG export writes an external `<image href="...">` link;
 - DXF and PDF export do not yet emit raster image content.
+
+## Fillet / Chamfer
+
+Fillet and Chamfer now support standalone lines, adjacent straight segments of the same linear polyline, and terminal segments of separate open linear polylines. The separate-polyline case supports multi-segment polylines only when the picked segment is terminal. Internal segment trims are still rejected conservatively because moving an internal vertex would require a topology-aware local rewrite of adjacent segments.
+
+Current limitations:
+
+- Fillet/Chamfer on curved or bulged polyline segments is not supported yet;
+- Fillet/Chamfer between separate polylines only edits terminal segments;
+- Chamfer still uses a single equal distance on both selected branches;
+- Chamfer does not yet have a NoTrim mode.
+
+## DXF mixed-polyline consolidation
+
+Automated tests now cover mixed-polyline DXF group-code `42` export and OpenCad2D export/import round-trip. Manual external validation is still required before a release claim: use current LibreCAD and QCAD builds at minimum, and record exact versions in `docs/dxf-compatibility.md`.

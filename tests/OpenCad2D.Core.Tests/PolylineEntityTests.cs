@@ -54,6 +54,24 @@ public sealed class PolylineEntityTests
         Assert.Equal(3, distance, precision: 10);
     }
 
+
+    [Fact]
+    public void GetSegmentMidpoints_WithBulgeSegment_ShouldReturnArcLengthMidpoint()
+    {
+        var entity = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0)
+            },
+            segmentBulges: new[] { 1.0 });
+
+        Point2D midpoint = Assert.Single(entity.GetSegmentMidpoints());
+
+        Assert.Equal(5, midpoint.X, precision: 2);
+        Assert.Equal(5, midpoint.Y, precision: 2);
+    }
+
     [Fact]
     public void Transform_WithTranslation_ShouldReturnMovedPolylineWithSameId()
     {

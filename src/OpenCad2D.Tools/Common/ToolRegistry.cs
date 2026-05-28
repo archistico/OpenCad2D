@@ -296,6 +296,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Chamfer,
+                "Chamfer",
+                "Chamfer",
+                "Modify"),
+            () => new ChamferTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Mirror,
                 "Mirror",
                 "Mirror",

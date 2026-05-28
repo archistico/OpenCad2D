@@ -723,7 +723,10 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                         X = vertex.X,
                         Y = vertex.Y
                     })
-                    .ToList()
+                    .ToList(),
+                SegmentBulges = polyline.HasArcSegments
+                    ? polyline.SegmentBulges.ToList()
+                    : null
             },
 
             BezierSplineEntity spline => new BezierSplineEntityDto
@@ -1224,7 +1227,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 polyline.IsClosed,
                 id,
                 layerId,
-                isFilled: polyline.IsFilled),
+                isFilled: polyline.IsFilled,
+                segmentBulges: polyline.SegmentBulges),
 
             BezierSplineEntityDto spline => spline.ControlPoints.Count < 2
                 ? null

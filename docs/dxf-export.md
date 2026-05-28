@@ -36,7 +36,7 @@ Supported entity mappings:
 | `CircleEntity` | `CIRCLE`, plus `HATCH` when solid fill is enabled |
 | `ArcEntity` | `ARC` |
 | `EllipseEntity` | `ELLIPSE` |
-| `PolylineEntity` | `LWPOLYLINE`, plus `HATCH` for closed solid-filled polylines |
+| `PolylineEntity` | `LWPOLYLINE` with DXF bulge group `42` where needed, plus `HATCH` for closed solid-filled polylines |
 | `BezierSplineEntity` | `SPLINE` with open-uniform knot vector |
 | basic dimensions | graphical primitives: `LINE`, `ARC`, `TEXT` |
 
@@ -233,6 +233,13 @@ Arc angles are adjusted consistently with this Y flip.
 This is an export/display compatibility choice. It does not change the internal model coordinate system.
 
 ---
+
+
+## Mixed lightweight polylines
+
+`PolylineEntity` now stores a DXF-compatible bulge value for each segment. A bulge of `0` is a straight segment; any non-zero bulge represents a circular arc segment between the current vertex and the next vertex, matching the AutoCAD/LWPOLYLINE convention. DXF export writes these values as group code `42`, so mixed straight/arc polylines can round-trip without being exploded into separate entities.
+
+SVG, PDF and solid HATCH fallback paths approximate curved polyline segments with short straight segments because those export paths currently operate on simple path geometry. The source `PolylineEntity` remains mixed and editable in the document model.
 
 ## Arc export
 

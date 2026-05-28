@@ -50,6 +50,7 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.Trim));
         Assert.True(registry.Contains(ToolId.Offset));
         Assert.True(registry.Contains(ToolId.Fillet));
+        Assert.True(registry.Contains(ToolId.Chamfer));
         Assert.True(registry.Contains(ToolId.Mirror));
         Assert.True(registry.Contains(ToolId.Explode));
         Assert.True(registry.Contains(ToolId.Join));
@@ -67,7 +68,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(42, tools.Count);
+        Assert.Equal(43, tools.Count);
 
         Assert.Contains(
             tools,
@@ -144,6 +145,10 @@ public sealed class ToolRegistryTests
         Assert.Contains(
             tools,
             descriptor => descriptor.Id == ToolId.Fillet);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Chamfer);
 
         Assert.Contains(
             tools,
@@ -281,7 +286,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Modify");
 
-        Assert.Equal(16, tools.Count);
+        Assert.Equal(17, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Selection);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Move);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Copy);
@@ -294,6 +299,7 @@ public sealed class ToolRegistryTests
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Trim);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Offset);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Fillet);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Chamfer);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Mirror);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Explode);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Join);
@@ -714,6 +720,17 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<FilletTool>(tool);
         Assert.Equal("Fillet", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Chamfer_ShouldReturnChamferTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Chamfer);
+
+        Assert.IsType<ChamferTool>(tool);
+        Assert.Equal("Chamfer", tool.Name);
     }
 
     [Fact]

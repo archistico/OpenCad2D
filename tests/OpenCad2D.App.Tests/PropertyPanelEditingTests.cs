@@ -156,9 +156,141 @@ public sealed class PropertyPanelEditingTests
         Assert.Equal(new[] { "Yes", "No" }, row.Options);
     }
 
+
+
     [Fact]
-    public void ApplyCommand_ForPointX_ShouldReplaceEntityAndSupportUndo()
+    public void ApplyCommand_ForPolylineVertex_ShouldPreserveSegmentBulges()
     {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 1.0, -0.5 });
+        viewModel.Workspace.Document.AddEntity(polyline);
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Vertex 2");
+        row.EditableValue = "12, 0";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+
+        Assert.Equal(new[] { 1.0, -0.5 }, updated.SegmentBulges);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForPolylineClosed_ShouldResizeSegmentBulges()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 1.0, -0.5 });
+        viewModel.Workspace.Document.AddEntity(polyline);
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindSection(viewModel, "Geometry")
+            .Rows.Single(row => row.Name == "Closed");
+        row.EditableValue = "Yes";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+
+        Assert.True(updated.IsClosed);
+        Assert.Equal(new[] { 1.0, -0.5, 0.0 }, updated.SegmentBulges);
+    }
+
+    [Fact]
+    public void PropertyPanel_ForPolyline_ShouldExposeEditableSegmentBulgeRows()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 1.0, 0.0 });
+        viewModel.Workspace.Document.AddEntity(polyline);
+
+        SelectEntity(viewModel, polyline);
+
+        PropertySectionViewModel section = FindSection(viewModel, "Segments");
+
+        Assert.Equal(2, section.Rows.Count);
+        Assert.Equal("Segment 1 bulge", section.Rows[0].Name);
+        Assert.Equal("1", section.Rows[0].Value);
+        Assert.Equal("Segment 2 bulge", section.Rows[1].Name);
+        Assert.Equal("0", section.Rows[1].Value);
+        Assert.All(section.Rows, row => Assert.True(row.IsEditable));
+    }
+
+    [Fact]
+    public void ApplyCommand_ForPolylineSegmentBulge_ShouldReplacePolylineAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 0.0, 0.0 });
+        viewModel.Workspace.Document.AddEntity(polyline);
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Segment 1 bulge");
+        row.EditableValue = "0.4142135624";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.Equal(new[] { 0.4142135624, 0.0 }, updated.SegmentBulges);
+        Assert.Equal("Polyline segment bulge updated.", viewModel.LastMessage);
+        Assert.True(viewModel.Workspace.CommandHistory.CanUndo);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.Equal(new[] { 0.0, 0.0 }, restored.SegmentBulges);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForPolylineSegmentBulge_ShouldRejectInvalidValue()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(20, 0)
+            },
+            segmentBulges: new[] { 0.0, 0.0 });
+        viewModel.Workspace.Document.AddEntity(polyline);
+        SelectEntity(viewModel, polyline);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Segment 1 bulge");
+        row.EditableValue = "abc";
+        row.ApplyCommand.Execute(null);
+
+        var unchanged = Assert.IsType<PolylineEntity>(viewModel.Workspace.Document.Entities.GetRequired(polyline.Id));
+        Assert.Equal(new[] { 0.0, 0.0 }, unchanged.SegmentBulges);
+        Assert.Equal("Invalid numeric value. Use point as decimal separator, for example 10.5.", viewModel.LastMessage);
+    }
+
+
+    [Fact]
+    public void ApplyCommand_ForPointX_ShouldReplaceEntityAndSupportUndo()    {
         var viewModel = new MainWindowViewModel();
         var point = new PointEntity(new Point2D(10, 20));
         viewModel.Workspace.Document.AddEntity(point);
