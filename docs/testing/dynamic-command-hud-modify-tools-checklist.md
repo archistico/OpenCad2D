@@ -121,3 +121,47 @@ Enter
 ```
 
 Expected: accepted, distance set to zero.
+
+
+## Remaining manual checks to resume next session
+
+### Step 30E — Break / Boundary Fill
+
+- `BREAK PT`
+  - Select a supported curve/entity.
+  - Press `Tab`; verify the HUD enters `X`.
+  - Enter `X`, press `Tab`, enter `Y`, press `Enter`.
+  - Verify the break point is projected/validated correctly and the command completes or reports a clear error.
+
+- `BREAK SEG`
+  - Select a supported curve/entity.
+  - First break point: enter `X/Y` through the HUD.
+  - Second break point: enter either `Distance/Angle` or `X/Y`.
+  - Verify the removed segment matches the two projected points.
+
+- `BOUNDARY FILL`
+  - Press `Tab`; verify the HUD enters `X`.
+  - Enter `X/Y` for a point inside a closed boundary.
+  - Verify a fill entity is created.
+  - Repeat with a point outside the boundary and verify a clear failure/no-op.
+
+### Step 30F — selection-only cleanup
+
+For each of `TRIM`, `EXTEND`, `DELETE`, `EXPLODE`, and `JOIN`:
+
+- Start the command with and without a preselection.
+- Verify the HUD shows prompt/options only.
+- Verify no editable scalar HUD fields appear.
+- Verify `Tab` does not enter grip edit while the command is active.
+- Verify `Esc` cancels the command and preserves the expected selection behavior.
+- Verify mouse picking still works.
+
+### Step 31 — Block tools
+
+- `CREATE BLOCK`
+  - Verify current dialog-driven workflow still works.
+  - Verify base point behavior before attempting HUD integration.
+
+- `INSERT BLOCK`
+  - Verify current dialog/pending placement workflow still works.
+  - Verify insertion point can be isolated as the only first HUD candidate before adding scale/rotation HUD fields.

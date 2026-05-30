@@ -395,3 +395,15 @@ Implemented as the first usable block workflow:
 `v0.8.112 — Insert Block from existing definition` is implemented. It adds a toolbar command, options dialog, pending insertion-point workflow, snap support, Escape cancellation and single-step undo for newly inserted block references.
 
 Next recommended blocks-focused milestone: `v0.8.113 — Block Manager`.
+
+
+## Dynamic Command HUD remaining steps
+
+The dynamic command HUD milestone is active and mostly implemented. Before treating v0.8.121 as complete, finish these focused steps:
+
+- Step 30E: Break Point, Break Segment and Boundary Fill HUD input.
+- Step 30F: Trim, Extend, Delete, Explode and Join as selection-only cleanup tools.
+- Step 31: Create Block and Insert Block as a separate modal/pending-placement HUD integration.
+- Final pass: documentation, `ai-handoff`, regression checklist updates and removal of residual legacy command-line code.
+
+Do not generalize the shared HUD resolver while finishing these tasks; continue using tool/phase-specific behavior with regression tests.

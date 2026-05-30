@@ -153,7 +153,7 @@ Implementation should follow the order above. Import Drawing and Blocks are foun
 
 ## Active UI refactor checkpoint — Dynamic Command HUD
 
-Status: [ ] planned.
+Status: [~] in progress; main HUD architecture and most draw/modify flows are implemented. Remaining work is limited to Break/Boundary Fill, selection-only cleanup, block tools, final docs and legacy helper cleanup.
 
 Specification: `docs/specs/v0.8.121-dynamic-command-hud.md`.
 
@@ -161,16 +161,20 @@ This checkpoint must be treated as a command-input architecture refactor, not as
 
 Milestone order:
 
-1. [ ] **HUD-0 Tool prompt inventory** — list every command-driven tool, its phases, prompts, options, expected input, Enter/right-click policy, Escape behavior and possible live fields.
-2. [ ] **HUD-1 Shared prompt contract cleanup** — make `CommandPromptState` the common source of truth for all interactive tools and reduce ViewModel-specific prompt fallbacks.
-3. [ ] **HUD-2 Pointer position and live measurements** — propagate pointer screen position and extract reusable live distance/angle/delta measurements without changing UI behavior.
-4. [ ] **HUD-3 Read-only `CommandHudState`** — expose a ViewModel-level HUD model independent from Avalonia controls.
-5. [ ] **HUD-4 Read-only visual HUD overlay** — add the cursor-adjacent overlay while keeping the old command row fully functional.
-6. [ ] **HUD-5 Move the real command input into the HUD** — keep a single operational `CommandInputTextBox` and preserve history, autocomplete, Enter, right-click and Escape behavior.
-7. [ ] **HUD-6 Remove the old bottom command row** — remove the fixed row only after regression passes.
-8. [>] **HUD-7 Editable numeric HUD fields** — defer direct Distance/Angle/Width/Height/Radius editing until the read-only HUD and moved input are stable.
+1. [x] **HUD-0 Tool prompt inventory** — list every command-driven tool, its phases, prompts, options, expected input, Enter/right-click policy, Escape behavior and possible live fields.
+2. [x] **HUD-1 Shared prompt contract cleanup** — make `CommandPromptState` the common source of truth for interactive tools and reduce ViewModel-specific prompt fallbacks.
+3. [x] **HUD-2 Pointer position and live measurements** — propagate pointer screen position and extract reusable live distance/angle/delta measurements.
+4. [x] **HUD-3 Read-only `CommandHudState`** — expose a ViewModel-level HUD model independent from Avalonia controls.
+5. [x] **HUD-4 Read-only visual HUD overlay** — add the cursor-adjacent overlay.
+6. [x] **HUD-5 Remove generic command textbox and fixed bottom command row** — HUD input is now logical, keyboard-driven and mouse-transparent.
+7. [x] **HUD-6 Editable fields for primary draw tools** — Line, Polyline, Rectangle, Rectangle by Sides and Circle are covered with tool-specific routing/resolvers.
+8. [x] **HUD-7 Transform/modify first pass** — Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer are covered or validated.
+9. [ ] **HUD-8 Step 30E Break / Boundary Fill** — finish Break Point, Break Segment and Boundary Fill HUD input.
+10. [ ] **HUD-9 Step 30F selection-only cleanup** — verify Trim, Extend, Delete, Explode and Join remain prompt/options-only and do not expose numeric fields.
+11. [ ] **HUD-10 Step 31 block tools** — handle Create Block and Insert Block separately because they use modal/pending workflows.
+12. [ ] **HUD-11 Final cleanup** — update docs and remove residual legacy command-line helper code only after regression coverage is complete.
 
-Regression requirement: this work must cover draw, dimension, transform, modify, measure, navigation and selection/order tools. It must not be validated only on Line, Polyline, Rectangle and Circle.
+Regression requirement: this work must continue to cover draw, dimension, transform, modify, measure, navigation and selection/order tools. It must not be validated only on Line, Polyline, Rectangle and Circle.
 
 ---
 

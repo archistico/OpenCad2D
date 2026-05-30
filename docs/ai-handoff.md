@@ -1358,3 +1358,31 @@ This step is intentionally test/documentation-only. It does not change the HUD r
   - `Fillet.Radius` accepts zero and rejects negative values.
   - `Chamfer.Distance` accepts zero and rejects negative values.
 - Added regression tests so this distinction is not lost while extending other modify tools.
+
+
+### Dynamic Command HUD — remaining work checkpoint after Step 30D
+
+Current stable HUD coverage includes Line, Polyline, Rectangle, Rectangle by Sides, Circle, Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer. The fixed bottom command row and generic command textbox are removed; HUD input is logical, mouse-transparent and keyboard-driven.
+
+Remaining work to resume next session:
+
+1. **Step 30E — Break / Boundary Fill HUD input**
+   - Verify/fix `Break Point` after entity selection with `X/Y` break-point entry.
+   - Verify/fix `Break Segment` first point with `X/Y` and second point with `Distance/Angle/X/Y`.
+   - Verify/fix `Boundary Fill` seed point with `X/Y`.
+   - Add automated coverage where possible and keep manual checks for hit-testing/picking behavior.
+
+2. **Step 30F — Selection-only tools cleanup**
+   - Audit `Trim`, `Extend`, `Delete`, `Explode` and `Join`.
+   - These tools should show clear prompt/options only and should not expose editable scalar HUD fields.
+   - Verify `Tab`, `Enter`, `Esc`, command options and mouse picking remain consistent.
+
+3. **Step 31 — Block tools**
+   - Treat `Create Block` and `Insert Block` separately because they use option dialogs and pending placement state instead of the normal command-driven tool pipeline.
+   - Do not fold them into the common HUD resolver without a dedicated plan and tests.
+
+4. **Final cleanup**
+   - Update `docs/ai-handoff.md`, `docs/command-input.md`, `docs/tools.md`, `docs/commands.md`, and the HUD specification.
+   - Remove or simplify residual legacy command-line helper code only after all HUD flows are covered.
+
+Important guardrail: do not broaden the shared HUD resolver while finishing the remaining tools. Continue using narrow tool/phase-specific behavior and regression tests, as done for Rectangle, Circle, Rectangle by Sides and modify tools.

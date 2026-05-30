@@ -620,3 +620,41 @@ The HUD scalar validation now mirrors the modify tool rules instead of applying 
 - `Chamfer` distance may be zero; negative distance is rejected.
 
 This step does not alter the stable Line/Polyline/Rectangle/Circle/Rectangle-by-sides paths.
+
+
+## Dynamic HUD remaining integration plan
+
+The next dynamic HUD work should continue from the Step 30D stable state. The remaining commands are split deliberately so the stable draw/modify HUD routing is not destabilized.
+
+### Step 30E — Break / Boundary Fill
+
+Planned scope:
+
+- `Break Point`: after selecting the target entity, support the break point through `X / Y`.
+- `Break Segment`: support the first break point through `X / Y`; support the second break point through `Distance / Angle / X / Y`.
+- `Boundary Fill`: support seed-point entry through `X / Y`.
+
+These tools depend on hit testing and projection to existing geometry, so manual checks remain mandatory even when automated prompt/field tests are added.
+
+### Step 30F — selection-only cleanup
+
+The following tools should stay prompt/options-only and must not expose editable numeric HUD fields:
+
+- `Trim`
+- `Extend`
+- `Delete`
+- `Explode`
+- `Join`
+
+The goal is consistent command behavior: `Tab` must not enter grip edit while a command-driven tool is active, `Enter` and `Esc` must preserve the existing tool semantics, and command options should use the HUD option shortcut path.
+
+### Step 31 — Block tools
+
+`Create Block` and `Insert Block` are deferred to a separate step because they are controlled by modal option windows and pending canvas placement state rather than a normal `ICommandDrivenTool` state machine.
+
+Possible future HUD integration:
+
+- `Create Block`: selected-entity workflow plus base point through `X / Y`, if the current modal base-point workflow is moved or mirrored into HUD state.
+- `Insert Block`: insertion point through `X / Y`, with scale/rotation only if they can be represented without conflicting with the existing options dialog.
+
+Do not remove the dialog workflow until the block commands have dedicated regression coverage.
