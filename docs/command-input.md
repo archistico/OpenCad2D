@@ -576,3 +576,37 @@ The distance-angle behavior follows the same rule already stabilized for Line an
 ### Rotate / Scale scalar HUD input parser note
 
 The contextual parser now treats `PointOrAngle` as accepting either a point or a numeric angle, and `PointOrNumber` as accepting either a point or a numeric value. This allows the HUD `Angle` field for Rotate and the HUD `Factor` field for Scale to submit scalar values through the same command-driven input path as typed command input.
+
+## Dynamic HUD behavior for modify tools
+
+The dynamic HUD now distinguishes point/scalar tools from selection-only tools.
+
+Editable modify-tool HUD fields currently include:
+
+- `Mirror`: `X/Y` for the first axis point; `Distance/Angle/X/Y` for the second axis point.
+- `Break Point`: `X/Y` for the break point after the target entity has been selected.
+- `Break Segment`: `X/Y` for the first break point; `Distance/Angle/X/Y` for the second break point.
+- `Offset`: `Distance` in the distance phase; `Distance/X/Y` in the second distance point phase; `X/Y` for the side point.
+- `Fillet`: `Radius` in the radius setup phase.
+- `Chamfer`: `Distance` in the distance setup phase.
+- `Boundary Fill`: `X/Y` for the seed point.
+
+Selection-only tools such as `Trim`, `Extend`, `Delete`, `Explode`, and `Join` keep prompt/options only and should not show editable numeric fields.
+
+`Create Block` and `Insert Block` remain outside the normal command-driven tool pipeline because they are controlled by option dialogs and pending placement state.
+
+## Modify tool HUD regression coverage
+
+The dynamic command HUD now has automated coverage for the first modify-tool integration pass. The tests protect the intended split between editable numeric/coordinate phases and selection-only phases:
+
+- editable scalar/point phases: Mirror, Offset, Fillet, Chamfer, Boundary Fill;
+- selection-only or immediate phases: Trim, Extend, Explode, Join.
+
+Create Block and Insert Block remain outside this path because their current workflows use modal option windows and pending placement state rather than a normal `ICommandDrivenTool` pipeline.
+
+
+### Step 30C - Mirror HUD Tab and option fix
+
+- Tab is reserved for logical HUD field traversal while a command-driven tool is active; CadCanvas grip-edit Tab is now limited to SelectionTool.
+- Command option shortcuts such as Mirror Yes/No are handled by the window preview key path after the generic HUD textbox removal.
+- Manual check: MIRROR with a selected curve, Tab should enter X for first axis point; at delete-source prompt, Y/N should execute the option.

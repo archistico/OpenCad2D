@@ -1351,7 +1351,8 @@ public sealed class CadCanvas : Control
         {
             result = Workspace.ActionController.Redo();
         }
-        else if (e.Key == Key.Tab)
+        else if (e.Key == Key.Tab &&
+                 Workspace.ToolController.ActiveTool is SelectionTool)
         {
             result = Workspace.EnterGripEditModeForSelection();
             e.Handled = result.Changed;

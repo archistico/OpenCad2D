@@ -1309,3 +1309,43 @@ Regression tests cover:
 - `Rotate` can now accept a scalar angle through the HUD `Angle` field in the destination phase.
 - `Scale` can now accept a scalar factor through the HUD `Factor` field in the destination phase.
 - The fix is in `CommandInputParser` and does not change the stabilized HUD resolvers for Line, Polyline, Rectangle, Circle, Rectangle by Sides, Move or Copy.
+
+## Dynamic Command HUD — modify tools audit step
+
+The dynamic HUD has been extended/audited for the first group of modify tools without changing the stable Line/Polyline/Rectangle/Circle/Rectangle-by-sides paths.
+
+Implemented HUD behavior:
+
+- `Mirror`: first axis point uses `X/Y`; second axis point uses `Distance/Angle/X/Y`; final `Yes/No` option remains command-option based.
+- `Break Point`: after selecting the entity, the break point phase exposes `X/Y` only.
+- `Break Segment`: first break point exposes `X/Y`; second break point exposes `Distance/Angle/X/Y`.
+- `Offset`: distance phase exposes `Distance`; second distance point exposes `Distance/X/Y`; side point remains point-based via `X/Y` or click.
+- `Fillet`: radius setup phase exposes `Radius`.
+- `Chamfer`: distance setup phase exposes `Distance`.
+- `Boundary Fill`: seed point uses `X/Y` through the generic point-input path.
+- `Trim`, `Extend`, `Delete`, `Explode`, and `Join` remain selection-only/confirm tools with no editable numeric HUD fields.
+- `Create Block` and `Insert Block` are not normal `ICommandDrivenTool` tools; they remain modal/pending-placement flows and need a later dedicated HUD step.
+
+A manual checklist was added at `docs/testing/dynamic-command-hud-modify-tools-checklist.md`.
+
+### Dynamic Command HUD — Step 30B modify tools regression guard
+
+Added automated regression coverage for the modify tools audited in Step 30A.
+
+Covered behaviors:
+
+- `Mirror` selected-entity flow exposes `X/Y` for the first axis point and `Distance/Angle/X/Y` for the second axis point.
+- `Offset` exposes editable `Distance` in the initial distance phase and accepts a typed distance.
+- `Fillet` exposes editable `Radius` after the `Radius` option and accepts a typed radius.
+- `Chamfer` exposes editable `Distance` after the `Distance` option and accepts a typed distance.
+- `Boundary Fill` exposes only `X/Y` for the seed point.
+- `Trim`, `Extend`, `Explode`, and `Join` do not expose scalar HUD overrides.
+
+This step is intentionally test/documentation-only. It does not change the HUD routing or any tool resolver.
+
+
+### Step 30C - Mirror HUD Tab and option fix
+
+- Tab is reserved for logical HUD field traversal while a command-driven tool is active; CadCanvas grip-edit Tab is now limited to SelectionTool.
+- Command option shortcuts such as Mirror Yes/No are handled by the window preview key path after the generic HUD textbox removal.
+- Manual check: MIRROR with a selected curve, Tab should enter X for first axis point; at delete-source prompt, Y/N should execute the option.

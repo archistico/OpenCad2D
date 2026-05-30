@@ -1390,6 +1390,154 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.True(ArePointsNear(new Point2D(0, 10), aligned.End));
     }
 
+
+
+    [Fact]
+    public void CommandHudInput_Mirror_ShouldExposeCoordinateThenDistanceAngleFields()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
+
+        viewModel.SubmitCommandInput("MIRROR");
+
+        CommandHudFieldKind[] firstPointKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.X, firstPointKinds);
+        Assert.Contains(CommandHudFieldKind.Y, firstPointKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Distance, firstPointKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Angle, firstPointKinds);
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "0",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "0",
+            confirm: true,
+            out _));
+
+        viewModel.SetMousePosition(new Point2D(0, 10));
+
+        CommandHudFieldKind[] secondPointKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.Distance, secondPointKinds);
+        Assert.Contains(CommandHudFieldKind.Angle, secondPointKinds);
+        Assert.Contains(CommandHudFieldKind.X, secondPointKinds);
+        Assert.Contains(CommandHudFieldKind.Y, secondPointKinds);
+    }
+
+    [Fact]
+    public void CommandHudInput_OffsetDistance_ShouldBeEditableAndAccepted()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("OFFSET");
+
+        CommandHudFieldKind[] editableKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.Distance, editableKinds);
+
+        bool handled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "5",
+            confirm: true,
+            out var result);
+
+        Assert.True(handled);
+        Assert.NotNull(result);
+        Assert.Contains("Select object", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_FilletRadius_ShouldBeEditableAndAccepted()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("FILLET");
+        viewModel.SubmitCommandInput("R");
+
+        CommandHudFieldKind[] editableKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.Radius, editableKinds);
+
+        bool handled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "2.5",
+            confirm: true,
+            out var result);
+
+        Assert.True(handled);
+        Assert.NotNull(result);
+        Assert.Contains("Fillet radius set", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_ChamferDistance_ShouldBeEditableAndAccepted()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CHAMFER");
+        viewModel.SubmitCommandInput("D");
+
+        CommandHudFieldKind[] editableKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.Distance, editableKinds);
+
+        bool handled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "3",
+            confirm: true,
+            out var result);
+
+        Assert.True(handled);
+        Assert.NotNull(result);
+        Assert.Contains("Chamfer distance set", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_BoundaryFillSeedPoint_ShouldExposeCoordinateFields()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("BOUNDARYFILL");
+
+        CommandHudFieldKind[] editableKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.X, editableKinds);
+        Assert.Contains(CommandHudFieldKind.Y, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Distance, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Angle, editableKinds);
+    }
+
+    [Theory]
+    [InlineData("TRIM")]
+    [InlineData("EXTEND")]
+    [InlineData("EXPLODE")]
+    [InlineData("JOIN")]
+    public void CommandHudInput_SelectionOnlyModifyTools_ShouldNotExposeNumericOverrides(string command)
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput(command);
+
+        CommandHudFieldKind[] editableKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.DoesNotContain(CommandHudFieldKind.Distance, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Angle, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Width, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Height, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Radius, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Factor, editableKinds);
+    }
+
+    private static CommandHudFieldKind[] GetEditableHudFieldKinds(MainWindowViewModel viewModel)
+    {
+        return viewModel.CommandHudState.Fields
+            .Where(field => field.CanAcceptTypedOverride)
+            .Select(field => field.Kind)
+            .ToArray();
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,

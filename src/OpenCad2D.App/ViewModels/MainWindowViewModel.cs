@@ -463,9 +463,35 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return BuildCoordinateOverrideFields();
         }
 
+        if (activeTool is OffsetTool { State: OffsetToolState.WaitingForDistance } offsetDistanceTool)
+        {
+            return BuildSingleDistanceField(
+                "distance",
+                "Distance",
+                _commandHudInputState.Distance ?? offsetDistanceTool.Distance ?? offsetDistanceTool.LastDistance);
+        }
+
+        if (activeTool is FilletTool { State: FilletToolState.WaitingForRadius } filletTool)
+        {
+            return BuildSingleDistanceField(
+                "radius",
+                "Radius",
+                _commandHudInputState.Radius ?? filletTool.Radius);
+        }
+
+        if (activeTool is ChamferTool { State: ChamferToolState.WaitingForDistance } chamferTool)
+        {
+            return BuildSingleDistanceField(
+                "distance",
+                "Distance",
+                _commandHudInputState.Distance ?? chamferTool.Distance);
+        }
+
         if (!measurement.HasValue)
         {
-            return BuildCoordinateOverrideFields();
+            return IsPointExpectedInput(GetCurrentPromptState().ExpectedInput)
+                ? BuildCoordinateOverrideFields()
+                : Array.Empty<CommandHudFieldViewModel>();
         }
 
         if (activeTool is LineTool lineTool &&
@@ -491,6 +517,32 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             return BuildDistanceAngleCoordinateOverrideFields(measurement);
         }
+
+        if (activeTool is MirrorTool mirrorTool &&
+            mirrorTool.State == MirrorToolState.WaitingForSecondAxisPoint)
+        {
+            return BuildDistanceAngleCoordinateOverrideFields(measurement);
+        }
+
+        if (activeTool is BreakAtPointTool breakAtPointTool &&
+            breakAtPointTool.State == BreakAtPointToolState.WaitingForBreakPoint)
+        {
+            return BuildCoordinateOverrideFields();
+        }
+
+        if (activeTool is BreakBetweenPointsTool breakBetweenPointsTool)
+        {
+            if (breakBetweenPointsTool.State == BreakBetweenPointsToolState.WaitingForFirstBreakPoint)
+            {
+                return BuildCoordinateOverrideFields();
+            }
+
+            if (breakBetweenPointsTool.State == BreakBetweenPointsToolState.WaitingForSecondBreakPoint)
+            {
+                return BuildDistanceAngleCoordinateOverrideFields(measurement);
+            }
+        }
+
 
         if (activeTool is RectangleTool rectangleTool &&
             rectangleTool.State == TwoPointToolState.WaitingForSecondPoint)
@@ -554,22 +606,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (activeTool is OffsetTool offsetTool &&
             offsetTool.State == OffsetToolState.WaitingForDistanceSecondPoint)
         {
-            return BuildSingleDistanceField(
+            return BuildSingleDistanceCoordinateOverrideField(
                 "distance",
                 "Distance",
-                measurement.Distance);
-        }
-
-        if (activeTool is MirrorTool mirrorTool &&
-            mirrorTool.State == MirrorToolState.WaitingForSecondAxisPoint)
-        {
-            return BuildDistanceAngleFields(measurement);
-        }
-
-        if (activeTool is BreakBetweenPointsTool breakBetweenPointsTool &&
-            breakBetweenPointsTool.State == BreakBetweenPointsToolState.WaitingForSecondBreakPoint)
-        {
-            return BuildDistanceAngleFields(measurement);
+                _commandHudInputState.Distance ?? measurement.Distance);
         }
 
         if (activeTool is MeasureAngleTool measureAngleTool &&
@@ -632,6 +672,30 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         return new[]
         {
+            new CommandHudFieldViewModel(
+                "x",
+                "X",
+                _commandHudInputState.X ?? userPoint.X),
+            new CommandHudFieldViewModel(
+                "y",
+                "Y",
+                _commandHudInputState.Y ?? userPoint.Y)
+        };
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildSingleDistanceCoordinateOverrideField(
+        string key,
+        string label,
+        double? value)
+    {
+        Point2D userPoint = GetLivePointerUserPoint();
+
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                key,
+                label,
+                value),
             new CommandHudFieldViewModel(
                 "x",
                 "X",
@@ -3227,6 +3291,51 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
+        if (Workspace.ToolController.ActiveTool is OffsetTool { State: OffsetToolState.WaitingForDistance or OffsetToolState.WaitingForDistanceSecondPoint } &&
+            fieldKind == CommandHudFieldKind.Distance)
+        {
+            if (!confirm)
+            {
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
+            result = SubmitCommandInput(FormatHudNumber(value));
+            ClearCommandHudInputOverrides();
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (Workspace.ToolController.ActiveTool is FilletTool { State: FilletToolState.WaitingForRadius } &&
+            fieldKind == CommandHudFieldKind.Radius)
+        {
+            if (!confirm)
+            {
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
+            result = SubmitCommandInput(FormatHudNumber(value));
+            ClearCommandHudInputOverrides();
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (Workspace.ToolController.ActiveTool is ChamferTool { State: ChamferToolState.WaitingForDistance } &&
+            fieldKind == CommandHudFieldKind.Distance)
+        {
+            if (!confirm)
+            {
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
+            result = SubmitCommandInput(FormatHudNumber(value));
+            ClearCommandHudInputOverrides();
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
         return false;
     }
 
@@ -3244,6 +3353,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                activeTool is PolylineTool { State: PolylineToolState.CollectingVertices } ||
                activeTool is MoveTool { MoveState: MoveToolState.WaitingForDestinationPoint } ||
                activeTool is CopyTool { CopyState: MoveToolState.WaitingForDestinationPoint } ||
+               activeTool is MirrorTool { State: MirrorToolState.WaitingForSecondAxisPoint } ||
+               activeTool is BreakBetweenPointsTool { State: BreakBetweenPointsToolState.WaitingForSecondBreakPoint } ||
+               activeTool is OffsetTool { State: OffsetToolState.WaitingForDistanceSecondPoint } ||
                activeTool is RotateTool { State: RotateToolState.WaitingForReferencePoint } ||
                activeTool is ScaleTool { State: ScaleToolState.WaitingForReferencePoint };
     }

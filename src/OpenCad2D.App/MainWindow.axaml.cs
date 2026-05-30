@@ -2431,6 +2431,22 @@ public partial class MainWindow : Window
             CadCanvas.InvalidateVisual();
             CadCanvas.Focus();
             e.Handled = true;
+            return;
+        }
+
+        if (TryHandleAlignScaleConfirmationKey(e))
+        {
+            return;
+        }
+
+        if (TryHandleCommandOptionShortcutKey(e))
+        {
+            return;
+        }
+
+        if (TryHandlePolylineCompletionKey(e))
+        {
+            return;
         }
     }
 
