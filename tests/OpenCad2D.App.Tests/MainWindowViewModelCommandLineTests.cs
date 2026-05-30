@@ -1609,9 +1609,212 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Contains("greater than zero", viewModel.LastMessage);
     }
 
+    [Fact]
+    public void CommandHudInput_ArcStart_ShouldExposeEditableRadiusAndAngle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("ARC");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_ArcEnd_ShouldExposeEditableAngle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("ARC");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("10,0");
+        viewModel.SetMousePosition(new Point2D(0, 10));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
+        Assert.DoesNotContain(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_ArcRadiusAngleEndAngle_ShouldCreateArc()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("ARC");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "10",
+            confirm: false,
+            out _);
+        bool startAngleHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Angle,
+            "0",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(0, 10));
+        bool endAngleHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Angle,
+            "90",
+            confirm: true,
+            out _);
+
+        Assert.True(radiusHandled);
+        Assert.True(startAngleHandled);
+        Assert.True(endAngleHandled);
+
+        ArcEntity arc = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>());
+        Assert.True(ArePointsNear(new Point2D(0, 0), arc.Center));
+        Assert.Equal(10.0, arc.Radius, 9);
+        Assert.Equal(0.0, arc.StartAngle.Degrees, 9);
+        Assert.Equal(90.0, arc.EndAngle.Degrees, 9);
+    }
+
+    [Fact]
+    public void CommandHudInput_ArcRadiusNegative_ShouldNotCreateArc()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("ARC");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "-5",
+            confirm: true,
+            out var result);
+
+        Assert.True(radiusHandled);
+        Assert.NotNull(result);
+        Assert.DoesNotContain(
+            viewModel.Workspace.Document.Entities.All,
+            entity => entity is ArcEntity);
+        Assert.Contains("greater than zero", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_EllipseMajorAxis_ShouldExposeEditableRadiusAndAngle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("EL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_EllipseMinorRadius_ShouldExposeEditableRadius()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("EL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("10,0");
+        viewModel.SetMousePosition(new Point2D(0, 4));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
+        Assert.DoesNotContain(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_EllipseMajorRadiusAngleMinorRadius_ShouldCreateEllipse()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("EL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool majorRadiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "10",
+            confirm: false,
+            out _);
+        bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Angle,
+            "0",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(0, 4));
+        bool minorRadiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "4",
+            confirm: true,
+            out _);
+
+        Assert.True(majorRadiusHandled);
+        Assert.True(angleHandled);
+        Assert.True(minorRadiusHandled);
+
+        EllipseEntity ellipse = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<EllipseEntity>());
+        Assert.True(ArePointsNear(new Point2D(0, 0), ellipse.Center));
+        Assert.True(AreVectorsNear(new Vector2D(10, 0), ellipse.MajorAxis));
+        Assert.Equal(4.0, ellipse.MinorRadius, 9);
+    }
+
+    [Fact]
+    public void CommandHudInput_EllipseMinorRadiusNegative_ShouldNotCreateEllipse()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("EL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("10,0");
+        viewModel.SetMousePosition(new Point2D(0, 4));
+
+        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "-4",
+            confirm: true,
+            out var result);
+
+        Assert.True(radiusHandled);
+        Assert.NotNull(result);
+        Assert.DoesNotContain(
+            viewModel.Workspace.Document.Entities.All,
+            entity => entity is EllipseEntity);
+        Assert.Contains("greater than zero", viewModel.LastMessage);
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,
+        double tolerance = 0.000000001)
+    {
+        return Math.Abs(expected.X - actual.X) <= tolerance &&
+               Math.Abs(expected.Y - actual.Y) <= tolerance;
+    }
+
+    private static bool AreVectorsNear(
+        Vector2D expected,
+        Vector2D actual,
         double tolerance = 0.000000001)
     {
         return Math.Abs(expected.X - actual.X) <= tolerance &&

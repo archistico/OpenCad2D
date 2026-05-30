@@ -754,7 +754,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return Math.Abs(signedHeight);
     }
 
-    private static IReadOnlyList<CommandHudFieldViewModel> BuildArcFields(
+    private IReadOnlyList<CommandHudFieldViewModel> BuildArcFields(
         ArcTool arcTool,
         CommandLiveMeasurement measurement)
     {
@@ -765,14 +765,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "radius",
                     "Radius",
-                    measurement.Distance,
-                    isEditable: false),
+                    _commandHudInputState.Radius ?? measurement.Distance),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
-                    measurement.AngleDegrees,
-                    "°",
-                    isEditable: false)
+                    _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                    "°")
             },
 
             ArcToolState.WaitingForEndPoint => new[]
@@ -780,9 +778,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
-                    measurement.AngleDegrees,
-                    "°",
-                    isEditable: false)
+                    _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                    "°")
             },
 
             _ => Array.Empty<CommandHudFieldViewModel>()
@@ -838,7 +835,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         };
     }
 
-    private static IReadOnlyList<CommandHudFieldViewModel> BuildEllipseFields(
+    private IReadOnlyList<CommandHudFieldViewModel> BuildEllipseFields(
         EllipseTool ellipseTool,
         CommandLiveMeasurement measurement)
     {
@@ -849,20 +846,21 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "major-radius",
                     "Major radius",
-                    measurement.Distance,
-                    isEditable: false),
+                    _commandHudInputState.Radius ?? measurement.Distance),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
-                    measurement.AngleDegrees,
-                    "°",
-                    isEditable: false)
+                    _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                    "°")
             },
 
-            EllipseToolState.WaitingForMinorRadius => BuildSingleDistanceField(
-                "minor-radius",
-                "Minor radius",
-                measurement.Distance),
+            EllipseToolState.WaitingForMinorRadius => new[]
+            {
+                new CommandHudFieldViewModel(
+                    "minor-radius",
+                    "Minor radius",
+                    _commandHudInputState.Radius ?? measurement.Distance)
+            },
 
             _ => Array.Empty<CommandHudFieldViewModel>()
         };
@@ -3154,6 +3152,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (IsCommandHudPointOverrideTargetActive() ||
             IsCommandHudRectangleOverrideTargetActive() ||
             IsCommandHudCircleOverrideTargetActive() ||
+            IsCommandHudArcStartOverrideTargetActive() ||
+            IsCommandHudArcEndOverrideTargetActive() ||
+            IsCommandHudEllipseMajorAxisOverrideTargetActive() ||
+            IsCommandHudEllipseMinorRadiusOverrideTargetActive() ||
             IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() ||
             IsCommandHudRectangleBySidesSecondSideOverrideTargetActive())
         {
@@ -3202,6 +3204,38 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return Workspace.ToolController.ActiveTool is CircleTool
         {
             State: TwoPointToolState.WaitingForSecondPoint
+        };
+    }
+
+    private bool IsCommandHudArcStartOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is ArcTool
+        {
+            State: ArcToolState.WaitingForStartPoint
+        };
+    }
+
+    private bool IsCommandHudArcEndOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is ArcTool
+        {
+            State: ArcToolState.WaitingForEndPoint
+        };
+    }
+
+    private bool IsCommandHudEllipseMajorAxisOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is EllipseTool
+        {
+            State: EllipseToolState.WaitingForMajorAxis
+        };
+    }
+
+    private bool IsCommandHudEllipseMinorRadiusOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is EllipseTool
+        {
+            State: EllipseToolState.WaitingForMinorRadius
         };
     }
 
@@ -3317,6 +3351,38 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             _commandHudInputState.Radius is not null)
         {
             return TryResolveCircleCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
+        if (IsCommandHudArcStartOverrideTargetActive() &&
+            (_commandHudInputState.Radius is not null || _commandHudInputState.AngleDegrees is not null))
+        {
+            return TryResolveArcStartCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
+        if (IsCommandHudArcEndOverrideTargetActive() &&
+            _commandHudInputState.AngleDegrees is not null)
+        {
+            return TryResolveArcEndCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
+        if (IsCommandHudEllipseMajorAxisOverrideTargetActive() &&
+            (_commandHudInputState.Radius is not null || _commandHudInputState.AngleDegrees is not null))
+        {
+            return TryResolveEllipseMajorAxisCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
+        if (IsCommandHudEllipseMinorRadiusOverrideTargetActive() &&
+            _commandHudInputState.Radius is not null)
+        {
+            return TryResolveEllipseMinorRadiusCommandHudOverridePoint(
                 out worldPoint,
                 out errorMessage);
         }
@@ -3499,6 +3565,149 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
+    private bool TryResolveArcStartCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Arc radius input requires the center point.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        double radius = _commandHudInputState.Radius ?? measurement.Distance ?? 0.0;
+        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
+
+        if (radius <= 0)
+        {
+            errorMessage = "Arc radius must be greater than zero.";
+            return false;
+        }
+
+        return TryResolveDistanceAnglePoint(
+            radius,
+            angleDegrees,
+            out worldPoint,
+            out errorMessage);
+    }
+
+    private bool TryResolveArcEndCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.ToolController.ActiveTool is not ArcTool arcTool ||
+            arcTool.CenterPoint is null ||
+            arcTool.StartPoint is null)
+        {
+            errorMessage = "Arc angle input requires the start point.";
+            return false;
+        }
+
+        double radius = arcTool.CenterPoint.Value.DistanceTo(arcTool.StartPoint.Value);
+
+        if (radius <= 0)
+        {
+            errorMessage = "Arc radius must be greater than zero.";
+            return false;
+        }
+
+        double angleDegrees = _commandHudInputState.AngleDegrees ?? 0.0;
+        double angleRadians = angleDegrees * Math.PI / 180.0;
+
+        Point2D centerUserPoint = Workspace.CurrentUcs.WorldToUser(
+            arcTool.CenterPoint.Value);
+        var endPointUserPoint = new Point2D(
+            centerUserPoint.X + Math.Cos(angleRadians) * radius,
+            centerUserPoint.Y + Math.Sin(angleRadians) * radius);
+
+        worldPoint = Workspace.CurrentUcs.UserToWorld(endPointUserPoint);
+        return true;
+    }
+
+    private bool TryResolveEllipseMajorAxisCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Ellipse major radius input requires the center point.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        double radius = _commandHudInputState.Radius ?? measurement.Distance ?? 0.0;
+        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
+
+        if (radius <= 0)
+        {
+            errorMessage = "Ellipse major radius must be greater than zero.";
+            return false;
+        }
+
+        return TryResolveDistanceAnglePoint(
+            radius,
+            angleDegrees,
+            out worldPoint,
+            out errorMessage);
+    }
+
+    private bool TryResolveEllipseMinorRadiusCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.ToolController.ActiveTool is not EllipseTool ellipseTool ||
+            ellipseTool.Center is null ||
+            ellipseTool.MajorAxisPoint is null)
+        {
+            errorMessage = "Ellipse minor radius input requires the major axis.";
+            return false;
+        }
+
+        double minorRadius = _commandHudInputState.Radius ?? 0.0;
+
+        if (minorRadius <= 0)
+        {
+            errorMessage = "Ellipse minor radius must be greater than zero.";
+            return false;
+        }
+
+        Point2D centerUserPoint = Workspace.CurrentUcs.WorldToUser(
+            ellipseTool.Center.Value);
+        Point2D majorAxisPointUserPoint = Workspace.CurrentUcs.WorldToUser(
+            ellipseTool.MajorAxisPoint.Value);
+        Point2D liveUserPoint = GetLivePointerUserPoint();
+
+        Vector2D majorAxis = centerUserPoint.VectorTo(majorAxisPointUserPoint);
+        double majorRadius = majorAxis.Length;
+
+        if (Workspace.GeometryTolerance.IsDistanceZero(majorRadius))
+        {
+            errorMessage = "Ellipse major radius must be greater than zero.";
+            return false;
+        }
+
+        Vector2D perpendicularDirection = (majorAxis / majorRadius).PerpendicularLeft();
+        double signedLiveRadius = centerUserPoint.VectorTo(liveUserPoint).Dot(perpendicularDirection);
+        double sign = signedLiveRadius < 0 ? -1.0 : 1.0;
+        Point2D minorRadiusUserPoint = centerUserPoint + perpendicularDirection * (sign * minorRadius);
+
+        worldPoint = Workspace.CurrentUcs.UserToWorld(minorRadiusUserPoint);
+        return true;
+    }
+
     private void ApplyCommandHudInputOverridesToPreview()
     {
         if (!_commandHudInputState.HasAnyOverride)
@@ -3515,6 +3724,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if ((IsCommandHudPointOverrideTargetActive() ||
              IsCommandHudRectangleOverrideTargetActive() ||
              IsCommandHudCircleOverrideTargetActive() ||
+             IsCommandHudArcStartOverrideTargetActive() ||
+             IsCommandHudArcEndOverrideTargetActive() ||
+             IsCommandHudEllipseMajorAxisOverrideTargetActive() ||
+             IsCommandHudEllipseMinorRadiusOverrideTargetActive() ||
              IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() ||
              IsCommandHudRectangleBySidesSecondSideOverrideTargetActive()) &&
             TryResolveCommandHudOverridePoint(
@@ -3603,6 +3816,38 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                      measurement.Distance is not null)
             {
                 _commandHudInputState.Width = measurement.Distance;
+            }
+        }
+
+        if (IsCommandHudArcStartOverrideTargetActive())
+        {
+            if (fieldKind == CommandHudFieldKind.Radius &&
+                _commandHudInputState.AngleDegrees is null &&
+                measurement.AngleDegrees is not null)
+            {
+                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
+            }
+            else if (fieldKind == CommandHudFieldKind.Angle &&
+                     _commandHudInputState.Radius is null &&
+                     measurement.Distance is not null)
+            {
+                _commandHudInputState.Radius = measurement.Distance;
+            }
+        }
+
+        if (IsCommandHudEllipseMajorAxisOverrideTargetActive())
+        {
+            if (fieldKind == CommandHudFieldKind.Radius &&
+                _commandHudInputState.AngleDegrees is null &&
+                measurement.AngleDegrees is not null)
+            {
+                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
+            }
+            else if (fieldKind == CommandHudFieldKind.Angle &&
+                     _commandHudInputState.Radius is null &&
+                     measurement.Distance is not null)
+            {
+                _commandHudInputState.Radius = measurement.Distance;
             }
         }
     }

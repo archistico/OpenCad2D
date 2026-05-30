@@ -2699,7 +2699,8 @@ public partial class MainWindow : Window
             CommandHudFieldKind.Width or
             CommandHudFieldKind.Height or
             CommandHudFieldKind.Radius or
-            CommandHudFieldKind.Factor;
+            CommandHudFieldKind.Factor or
+            CommandHudFieldKind.Angle;
     }
 
     private static bool IsNumericHudText(string text)

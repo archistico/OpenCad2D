@@ -194,8 +194,84 @@ Automated regression tests:
 - `CommandHudInput_RectangleBySidesWidthAngleHeight_ShouldCreateRectangle`
 - `CommandHudInput_RectangleBySidesFirstCorner_ShouldAcceptAbsoluteXAndY`
 - `CommandHudInput_RectangleBySidesHeightNegative_ShouldNotCreateRectangle`
+- `CommandHudInput_ArcStart_ShouldExposeEditableRadiusAndAngle`
+- `CommandHudInput_ArcEnd_ShouldExposeEditableAngle`
+- `CommandHudInput_ArcRadiusAngleEndAngle_ShouldCreateArc`
+- `CommandHudInput_ArcRadiusNegative_ShouldNotCreateArc`
+- `CommandHudInput_EllipseMajorAxis_ShouldExposeEditableRadiusAndAngle`
+- `CommandHudInput_EllipseMinorRadius_ShouldExposeEditableRadius`
+- `CommandHudInput_EllipseMajorRadiusAngleMinorRadius_ShouldCreateEllipse`
+- `CommandHudInput_EllipseMinorRadiusNegative_ShouldNotCreateEllipse`
 
 
 ## Step 28B - Rectangle by Sides height routing fix
 
 Fixed the logical HUD initial numeric routing so a single available `Height` field is treated as a preferred numeric target. This keeps the second side phase keyboard-driven: after setting the first side, typing a number routes to `Height` instead of the hidden generic command buffer.
+
+## Arc HUD checks
+
+Manual checks:
+
+```text
+ARC
+click center
+10
+Tab
+0
+Enter
+90
+Enter
+```
+
+Expected: an arc centered on the clicked point, radius 10, start angle 0 degrees and end angle 90 degrees.
+
+```text
+ARC
+Tab
+0
+Tab
+0
+Enter
+10
+Enter
+90
+Enter
+```
+
+Expected: center inserted at X=0, Y=0, then the arc is created from typed radius and end angle.
+
+Step 29A note: `Angle` is now a preferred initial numeric HUD target when it is the available editable field, so the Arc end phase stays keyboard-driven.
+
+## Ellipse HUD checks
+
+Manual checks:
+
+```text
+ELLIPSE
+click center
+10
+Tab
+0
+Enter
+4
+Enter
+```
+
+Expected: an ellipse centered on the clicked point, major radius 10 on the 0 degree axis and minor radius 4.
+
+```text
+ELLIPSE
+Tab
+0
+Tab
+0
+Enter
+10
+Enter
+4
+Enter
+```
+
+Expected: center inserted at X=0, Y=0, then the ellipse is created from typed major and minor radii.
+
+Step 29B note: Ellipse uses dedicated major-axis and minor-radius resolvers. Do not route these fields through the generic Line/Polyline polar resolver.

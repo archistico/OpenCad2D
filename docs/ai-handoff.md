@@ -1394,3 +1394,35 @@ Regression tests were added for editable field exposure, full rectangle creation
 ## Step 28B - Rectangle by Sides height routing fix
 
 Fixed the logical HUD initial numeric routing so a single available `Height` field is treated as a preferred numeric target. This keeps the second side phase keyboard-driven: after setting the first side, typing a number routes to `Height` instead of the hidden generic command buffer.
+
+## 2026-05-30 - Dynamic Command HUD Step 29A Arc dedicated resolver
+
+Arc HUD input is now enabled with dedicated resolver methods, following the isolated pattern used for Rectangle, Circle and Rectangle by Sides.
+
+Implemented behavior:
+
+- center point continues to use the shared `X` / `Y` point-entry path;
+- start point exposes editable `Radius` and `Angle`;
+- end point exposes editable `Angle`;
+- `TryResolveArcStartCommandHudOverridePoint(...)` resolves the start point from typed radius plus typed/live angle;
+- `TryResolveArcEndCommandHudOverridePoint(...)` resolves the end point from typed angle and the radius already fixed by the center/start points;
+- initial numeric routing now accepts `Angle` when it is the available editable field, so Arc end angle entry does not fall into the hidden command buffer;
+- the Line/Polyline, Rectangle, Circle and Rectangle by Sides resolver paths remain isolated.
+
+Regression tests were added for Arc field exposure, typed radius/start-angle/end-angle creation, and invalid radius handling.
+
+## 2026-05-30 - Dynamic Command HUD Step 29B Ellipse dedicated resolver
+
+Ellipse HUD input is now enabled with dedicated resolver methods, following the isolated pattern used for Rectangle, Circle, Rectangle by Sides and Arc.
+
+Implemented behavior:
+
+- center point continues to use the shared `X` / `Y` point-entry path;
+- major axis endpoint exposes editable `Major radius` and `Angle`;
+- minor axis radius point exposes editable `Minor radius`;
+- `TryResolveEllipseMajorAxisCommandHudOverridePoint(...)` resolves the major-axis endpoint from typed radius plus typed/live angle;
+- `TryResolveEllipseMinorRadiusCommandHudOverridePoint(...)` resolves the minor-radius point perpendicular to the fixed major axis while preserving the live side sign;
+- typing major radius freezes the live angle, and typing major-axis angle freezes the live radius;
+- the Line/Polyline, Rectangle, Circle, Rectangle by Sides and Arc resolver paths remain isolated.
+
+Regression tests were added for Ellipse field exposure, typed major-radius/angle/minor-radius creation, and invalid minor-radius handling.
