@@ -23,6 +23,7 @@ using OpenCad2D.App.ViewModels.ImportDrawing;
 using OpenCad2D.App.ViewModels.Blocks;
 using OpenCad2D.App.ViewModels.Library;
 using OpenCad2D.App.Settings;
+using System.Threading.Tasks;
 using System.IO;
 using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Persistence;
@@ -514,6 +515,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 measurement);
         }
 
+        if (activeTool is PolygonTool { State: PolygonToolState.WaitingForSides } waitingPolygonTool)
+        {
+            return BuildPolygonSidesField(waitingPolygonTool);
+        }
+
         if (activeTool is PolygonTool polygonTool &&
             polygonTool.State == PolygonToolState.WaitingForVertex)
         {
@@ -844,6 +850,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 "Angle",
                 _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
                 "°")
+        };
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildPolygonSidesField(
+        PolygonTool polygonTool)
+    {
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "sides",
+                "Sides",
+                _commandHudInputState.Sides ?? polygonTool.SideCount)
         };
     }
 
@@ -2824,6 +2842,102 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             out result);
     }
 
+    public async Task<bool> TryCommitCommandHudFieldInputAsync(
+        CommandHudFieldKind fieldKind,
+        string? input,
+        bool confirm)
+    {
+        if (!confirm)
+        {
+            return TryCommitCommandHudFieldInput(
+                fieldKind,
+                input,
+                confirm: false,
+                out _);
+        }
+
+        string normalizedInput = input?.Trim() ?? string.Empty;
+
+        if (fieldKind is not (
+            CommandHudFieldKind.Distance or
+            CommandHudFieldKind.Angle or
+            CommandHudFieldKind.Width or
+            CommandHudFieldKind.Height or
+            CommandHudFieldKind.Radius or
+            CommandHudFieldKind.Factor or
+            CommandHudFieldKind.Sides or
+            CommandHudFieldKind.X or
+            CommandHudFieldKind.Y))
+        {
+            return false;
+        }
+
+        if (!TryParseHudDouble(normalizedInput, out double value))
+        {
+            ToolResult invalidResult = ToolResult.None(
+                $"Invalid {fieldKind.ToString().ToLowerInvariant()} value.");
+            SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (RequiresPositiveHudValue(fieldKind) && value <= 0)
+        {
+            ToolResult invalidResult = ToolResult.None(
+                $"{GetHudFieldDisplayName(fieldKind)} must be greater than zero.");
+            SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        FreezeComplementaryHudValueIfNeeded(fieldKind);
+
+        _commandHudInputState.SetOverride(
+            fieldKind,
+            value);
+
+        if (fieldKind == CommandHudFieldKind.Sides)
+        {
+            ToolResult sidesResult = await SubmitCommandInputAsync(normalizedInput)
+                .ConfigureAwait(true);
+            ClearCommandHudInputOverrides();
+            SetLastResult(sidesResult);
+            return true;
+        }
+
+        AppendVisibleCommandHistoryLine($"> {normalizedInput}");
+
+        if (!IsCommandHudPointInputTargetActive())
+        {
+            NotifyPointerDrivenStateChanged();
+            return true;
+        }
+
+        if (!TryResolveCommandHudOverridePoint(
+                requireCompleteCoordinates: true,
+                out Point2D worldPoint,
+                out string? errorMessage))
+        {
+            ToolResult invalidResult = ToolResult.None(errorMessage);
+            SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        ToolResult result = await Workspace
+            .SubmitPointFromCommandLineAsync(worldPoint)
+            .ConfigureAwait(true);
+        ClearCommandHudInputOverrides();
+        SetLastResult(result);
+        AppendToolResultToVisibleHistory(result);
+        NotifyDocumentStateChanged();
+        NotifyCommandInputStateChanged();
+        return true;
+    }
+
     public bool TryConfirmCommandHudInputOverrides(out ToolResult result)
     {
         result = ToolResult.None();
@@ -2846,6 +2960,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         result = Workspace.SubmitPointFromCommandLine(worldPoint);
+        ClearCommandHudInputOverrides();
+        SetLastResult(result);
+        AppendToolResultToVisibleHistory(result);
+        NotifyDocumentStateChanged();
+        NotifyCommandInputStateChanged();
+        return true;
+    }
+
+    public async Task<bool> TryConfirmCommandHudInputOverridesAsync()
+    {
+        if (!_commandHudInputState.HasAnyOverride)
+        {
+            return false;
+        }
+
+        if (!TryResolveCommandHudOverridePoint(
+                requireCompleteCoordinates: true,
+                out Point2D worldPoint,
+                out string? errorMessage))
+        {
+            ToolResult invalidResult = ToolResult.None(errorMessage);
+            SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        ToolResult result = await Workspace
+            .SubmitPointFromCommandLineAsync(worldPoint)
+            .ConfigureAwait(true);
         ClearCommandHudInputOverrides();
         SetLastResult(result);
         AppendToolResultToVisibleHistory(result);
@@ -2954,6 +3098,100 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return pointResult;
     }
 
+    public async Task<ToolResult> SubmitCommandInputAsync(string? input)
+    {
+        ResetCommandHistoryNavigation();
+
+        string normalizedInput = input?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(normalizedInput))
+        {
+            AppendVisibleCommandHistoryLine("> Enter");
+
+            if (ShouldRouteInputToActiveCommand(normalizedInput) &&
+                await TrySubmitCommandDrivenInputAsync(normalizedInput).ConfigureAwait(true) is
+                    (true, ToolResult activeCommandResult))
+            {
+                return activeCommandResult;
+            }
+
+            ToolResult repeatResult = RepeatLastCommand();
+            AppendToolResultToVisibleHistory(repeatResult);
+            return repeatResult;
+        }
+
+        AppendVisibleCommandHistoryLine($"> {normalizedInput}");
+
+        if (ShouldRouteInputToActiveCommand(normalizedInput) &&
+            await TrySubmitCommandDrivenInputAsync(normalizedInput).ConfigureAwait(true) is
+                (true, ToolResult activeTextCommandResult))
+        {
+            return activeTextCommandResult;
+        }
+
+        if (TryExecuteActionCommand(normalizedInput, out ToolResult actionResult))
+        {
+            _commandLineHistory.Add(normalizedInput);
+            AppendToolResultToVisibleHistory(actionResult);
+            NotifyCommandInputStateChanged();
+            return actionResult;
+        }
+
+        if (_commandAliasRegistry.TryResolve(normalizedInput, out ToolId toolId))
+        {
+            _commandLineHistory.Add(normalizedInput);
+
+            ToolResult result = SetTool(
+                toolId,
+                rememberAsLastCommand: true,
+                commandInput: normalizedInput);
+
+            NotifyCommandInputStateChanged();
+            return result;
+        }
+
+        if (await TrySubmitCommandDrivenInputAsync(normalizedInput).ConfigureAwait(true) is
+            (true, ToolResult commandDrivenResult))
+        {
+            return commandDrivenResult;
+        }
+
+        CommandInputParseResult parseResult = _commandInputParser.Parse(normalizedInput);
+
+        if (!parseResult.IsValid)
+        {
+            string message = IsLikelyCommandAlias(normalizedInput)
+                ? $"Unknown command or alias '{normalizedInput}'."
+                : parseResult.ErrorMessage ?? "Invalid command input.";
+
+            ToolResult invalidResult = ToolResult.None(message);
+            SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
+            NotifyCommandInputStateChanged();
+            return invalidResult;
+        }
+
+        if (!TryResolveCommandInputPoint(parseResult, out Point2D worldPoint, out string? errorMessage))
+        {
+            ToolResult invalidResult = ToolResult.None(errorMessage);
+            SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
+            NotifyCommandInputStateChanged();
+            return invalidResult;
+        }
+
+        ToolResult pointResult = await Workspace
+            .SubmitPointFromCommandLineAsync(worldPoint)
+            .ConfigureAwait(true);
+
+        SetLastResult(pointResult);
+        AppendToolResultToVisibleHistory(pointResult);
+        NotifyDocumentStateChanged();
+        NotifyCommandInputStateChanged();
+
+        return pointResult;
+    }
+
     private bool ShouldRouteInputToActiveCommand(string normalizedInput)
     {
         if (Workspace.ToolController.ActiveTool is not ICommandDrivenTool commandDrivenTool)
@@ -3049,6 +3287,95 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
+    private async Task<(bool Handled, ToolResult Result)> TrySubmitCommandDrivenInputAsync(
+        string normalizedInput)
+    {
+        if (Workspace.ToolController.ActiveTool is not ICommandDrivenTool commandDrivenTool)
+        {
+            return (false, ToolResult.None());
+        }
+
+        CommandPromptState promptState = commandDrivenTool.GetPromptState(Workspace.Context);
+        Point2D? referenceUserPoint = Workspace.Context.CurrentBasePoint is null
+            ? null
+            : Workspace.CurrentUcs.WorldToUser(Workspace.Context.CurrentBasePoint.Value);
+
+        CommandInputSubmission submission = _commandInputParser.Parse(
+            normalizedInput,
+            promptState,
+            referenceUserPoint);
+
+        if (!submission.IsValid)
+        {
+            ToolResult invalidResult = ToolResult.None(
+                submission.ErrorMessage ?? "Invalid command input.");
+            SetLastResult(invalidResult);
+            AppendToolResultToVisibleHistory(invalidResult);
+            NotifyCommandInputStateChanged();
+            return (true, invalidResult);
+        }
+
+        CommandInputSubmission toolSubmission = submission;
+
+        if (submission.Kind == CommandInputSubmissionKind.Point && submission.Point is not null)
+        {
+            Point2D worldPoint = Workspace.CurrentUcs.UserToWorld(submission.Point.Value);
+            toolSubmission = CommandInputSubmission.FromPoint(
+                submission.RawText,
+                worldPoint,
+                offset: submission.Offset is null
+                    ? null
+                    : Workspace.CurrentUcs.UserVectorToWorld(submission.Offset.Value),
+                distance: submission.Distance,
+                angleDegrees: submission.AngleDegrees);
+        }
+        else if (submission.Kind == CommandInputSubmissionKind.Distance &&
+                 submission.Distance is not null &&
+                 ShouldResolveDistanceAsPoint(promptState.ExpectedInput))
+        {
+            if (!TryResolveDirectDistancePoint(
+                    submission.Distance.Value,
+                    out Point2D directDistancePoint,
+                    out string? errorMessage))
+            {
+                ToolResult invalidResult = ToolResult.None(errorMessage);
+                SetLastResult(invalidResult);
+                AppendToolResultToVisibleHistory(invalidResult);
+                NotifyCommandInputStateChanged();
+                return (true, invalidResult);
+            }
+
+            toolSubmission = CommandInputSubmission.FromPoint(
+                submission.RawText,
+                directDistancePoint,
+                distance: submission.Distance);
+        }
+
+        ToolResult result;
+
+        if (Workspace.ToolController.ActiveTool is IAsyncCadTool &&
+            toolSubmission.Kind == CommandInputSubmissionKind.Point &&
+            toolSubmission.Point is not null)
+        {
+            result = await Workspace
+                .SubmitPointFromCommandLineAsync(toolSubmission.Point.Value)
+                .ConfigureAwait(true);
+        }
+        else
+        {
+            result = commandDrivenTool.HandleCommandInput(
+                toolSubmission,
+                Workspace.Context);
+        }
+
+        SetLastResult(result);
+        AppendToolResultToVisibleHistory(result);
+        NotifyDocumentStateChanged();
+        NotifyCommandInputStateChanged();
+
+        return (true, result);
+    }
+
     private static bool ShouldResolveDistanceAsPoint(CommandInputKind expectedInput)
     {
         return expectedInput is
@@ -3126,6 +3453,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Height or
             CommandHudFieldKind.Radius or
             CommandHudFieldKind.Factor or
+            CommandHudFieldKind.Sides or
             CommandHudFieldKind.X or
             CommandHudFieldKind.Y))
         {
@@ -3157,6 +3485,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         _commandHudInputState.SetOverride(
             fieldKind,
             value);
+
+        if (fieldKind == CommandHudFieldKind.Sides)
+        {
+            if (confirm)
+            {
+                result = SubmitCommandInput(input);
+                ClearCommandHudInputOverrides();
+                SetLastResult(result);
+            }
+            else
+            {
+                NotifyPointerDrivenStateChanged();
+            }
+
+            return true;
+        }
 
         if (confirm)
         {
@@ -3233,6 +3577,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Height => "Height",
             CommandHudFieldKind.Radius => "Radius",
             CommandHudFieldKind.Factor => "Factor",
+            CommandHudFieldKind.Sides => "Sides",
             _ => fieldKind.ToString()
         };
     }

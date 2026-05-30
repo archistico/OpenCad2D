@@ -6,6 +6,7 @@ using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace OpenCad2D.App.Tests;
 
@@ -1926,6 +1927,71 @@ public sealed class MainWindowViewModelCommandLineTests
     }
 
     [Fact]
+    public void CommandHudInput_PolygonSides_ShouldExposeEditableSides()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("POLYGON");
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Sides &&
+                field.CanAcceptTypedOverride &&
+                field.LiveValue == 6);
+    }
+
+    [Fact]
+    public void CommandHudInput_PolygonSides_ShouldSetSideCount()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("POLYGON");
+
+        bool sidesHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Sides,
+            "5",
+            confirm: true,
+            out _);
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "10",
+            confirm: true,
+            out _);
+
+        Assert.True(sidesHandled);
+        Assert.True(radiusHandled);
+
+        PolylineEntity polygon = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.True(polygon.IsClosed);
+        Assert.Equal(5, polygon.Vertices.Count);
+    }
+
+    [Fact]
+    public void CommandHudInput_PolygonSidesOutOfRange_ShouldStayOnSidesPrompt()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("POLYGON");
+
+        bool sidesHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Sides,
+            "2",
+            confirm: true,
+            out var result);
+
+        Assert.True(sidesHandled);
+        Assert.NotNull(result);
+        Assert.Contains("between 3 and 256", viewModel.LastMessage);
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Sides && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
     public void CommandHudInput_PolygonRadiusAngle_ShouldCreatePolygon()
     {
         var viewModel = new MainWindowViewModel();
@@ -2115,6 +2181,84 @@ public sealed class MainWindowViewModelCommandLineTests
     }
 
     [Fact]
+    public async Task CommandHudInput_TextInsertionPoint_ShouldUseAsyncTextProvider()
+    {
+        var viewModel = new MainWindowViewModel(
+            new AsyncOnlyTextInputProvider(new TextInputResult(
+                "Async label",
+                TextFormatId.Standard,
+                0)));
+
+        viewModel.SubmitCommandInput("TEXT");
+
+        bool xHandled = await viewModel.TryCommitCommandHudFieldInputAsync(
+            CommandHudFieldKind.X,
+            "2",
+            confirm: false);
+        bool yHandled = await viewModel.TryCommitCommandHudFieldInputAsync(
+            CommandHudFieldKind.Y,
+            "3",
+            confirm: true);
+
+        Assert.True(xHandled);
+        Assert.True(yHandled);
+
+        TextEntity text = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<TextEntity>());
+        Assert.True(ArePointsNear(new Point2D(2, 3), text.InsertionPoint));
+        Assert.Equal("Async label", text.Text);
+    }
+
+    [Fact]
+    public async Task CommandLine_TextInsertionPoint_ShouldUseAsyncTextProvider()
+    {
+        var viewModel = new MainWindowViewModel(
+            new AsyncOnlyTextInputProvider(new TextInputResult(
+                "Command line label",
+                TextFormatId.Standard,
+                0)));
+
+        viewModel.SubmitCommandInput("TEXT");
+        ToolResult result = await viewModel.SubmitCommandInputAsync("4,5");
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+
+        TextEntity text = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<TextEntity>());
+        Assert.True(ArePointsNear(new Point2D(4, 5), text.InsertionPoint));
+        Assert.Equal("Command line label", text.Text);
+    }
+
+    [Fact]
+    public async Task CommandHudInput_MultilineTextInsertionPoint_ShouldUseAsyncTextProvider()
+    {
+        var viewModel = new MainWindowViewModel(
+            new AsyncOnlyTextInputProvider(new TextInputResult(
+                "Async line 1\nAsync line 2",
+                TextFormatId.Standard,
+                0)));
+
+        viewModel.SubmitCommandInput("MTEXT");
+
+        bool xHandled = await viewModel.TryCommitCommandHudFieldInputAsync(
+            CommandHudFieldKind.X,
+            "6",
+            confirm: false);
+        bool yHandled = await viewModel.TryCommitCommandHudFieldInputAsync(
+            CommandHudFieldKind.Y,
+            "7",
+            confirm: true);
+
+        Assert.True(xHandled);
+        Assert.True(yHandled);
+
+        MultilineTextEntity text = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<MultilineTextEntity>());
+        Assert.True(ArePointsNear(new Point2D(6, 7), text.InsertionPoint));
+        Assert.Equal("Async line 1\nAsync line 2", text.Text);
+    }
+
+    [Fact]
     public void CommandHudInput_FirstPoint_ShouldExposeCoordinatesEvenAfterPreviousBasePoint()
     {
         var viewModel = new MainWindowViewModel(
@@ -2227,6 +2371,26 @@ public sealed class MainWindowViewModelCommandLineTests
         public TextInputResult? RequestText(TextInputRequest request)
         {
             return _result;
+        }
+    }
+
+    private sealed class AsyncOnlyTextInputProvider : ITextInputProvider
+    {
+        private readonly TextInputResult? _result;
+
+        public AsyncOnlyTextInputProvider(TextInputResult? result)
+        {
+            _result = result;
+        }
+
+        public TextInputResult? RequestText(TextInputRequest request)
+        {
+            throw new InvalidOperationException("Synchronous text input should not be used.");
+        }
+
+        public Task<TextInputResult?> RequestTextAsync(TextInputRequest request)
+        {
+            return Task.FromResult(_result);
         }
     }
 

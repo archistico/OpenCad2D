@@ -207,6 +207,9 @@ Automated regression tests:
 - `CommandHudInput_ArcThreePointsDistanceAngle_ShouldCreateArc`
 - `CommandHudInput_ArcThreePointsDistanceNegative_ShouldNotAdvance`
 - `CommandHudInput_PolygonVertex_ShouldExposeEditableRadiusAndAngle`
+- `CommandHudInput_PolygonSides_ShouldExposeEditableSides`
+- `CommandHudInput_PolygonSides_ShouldSetSideCount`
+- `CommandHudInput_PolygonSidesOutOfRange_ShouldStayOnSidesPrompt`
 - `CommandHudInput_PolygonRadiusAngle_ShouldCreatePolygon`
 - `CommandHudInput_PolygonRadiusNegative_ShouldNotCreatePolygon`
 - `CommandHudInput_SplineNextPoint_ShouldExposeEditableDistanceAndAngle`
@@ -217,6 +220,9 @@ Automated regression tests:
 - `CommandHudInput_FirstPoint_ShouldExposeCoordinatesEvenAfterPreviousBasePoint`
 - `CommandHudInput_FirstPointTools_ShouldExposeCoordinateOverrides`
 - `CommandHudInput_PolygonCenterPoint_ShouldExposeCoordinateOverrides`
+- `CommandHudInput_TextInsertionPoint_ShouldUseAsyncTextProvider`
+- `CommandHudInput_MultilineTextInsertionPoint_ShouldUseAsyncTextProvider`
+- `CommandLine_TextInsertionPoint_ShouldUseAsyncTextProvider`
 
 
 ## Step 28B - Rectangle by Sides height routing fix

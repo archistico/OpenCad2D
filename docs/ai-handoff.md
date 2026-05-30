@@ -1492,3 +1492,27 @@ Implemented behavior:
 - first-point coordinate coverage now includes Line, Rectangle, Circle, Arc, Ellipse, Arc 3P, Spline, Text, MText and Polygon center.
 
 Regression tests were added for broad first-point `X` / `Y` field exposure and for starting Line from HUD coordinates immediately after a previous Text command.
+
+## 2026-05-30 - Dynamic Command HUD Step 29H async Text/MText confirmation fix
+
+The HUD and command-line coordinate confirmation paths now submit points asynchronously when the active tool needs async pointer handling.
+
+Fixed behavior:
+
+- `TEXT` and `MTEXT` no longer call the Avalonia text-input provider through its synchronous `RequestText(...)` path when coordinates are confirmed with Enter;
+- HUD field Enter, logical HUD Enter and command-line coordinate Enter now use async point submission from the app shell;
+- command-line point submission has an async workspace path that preserves the same no-snap/no-ortho exact-coordinate behavior as the synchronous path.
+
+Regression tests use an async-only text provider that throws on synchronous text requests, covering HUD `TEXT`, HUD `MTEXT` and command-line `TEXT` coordinate confirmation.
+
+## 2026-05-30 - Dynamic Command HUD Step 29I Polygon sides field
+
+Polygon side-count entry is now exposed as an editable HUD field instead of relying on the hidden command input buffer.
+
+Implemented behavior:
+
+- `CommandHudFieldKind.Sides` was added for numeric count prompts;
+- `PolygonTool` while waiting for sides shows editable `Sides` with the current default value `6`;
+- confirming `Sides` routes through the existing `POLYGON` command parser, preserving the default Enter behavior and the 3-256 validation.
+
+Regression tests cover field exposure, creating a 5-sided polygon from HUD side input, and rejecting out-of-range side counts while staying on the sides prompt.

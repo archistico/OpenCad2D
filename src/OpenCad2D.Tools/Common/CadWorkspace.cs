@@ -13,6 +13,7 @@ using OpenCad2D.Tools.Grips;
 using OpenCad2D.Tools.Selection;
 using OpenCad2D.Core.Layers;
 using OpenCad2D.Core.Styling;
+using System.Threading.Tasks;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -246,6 +247,13 @@ public sealed class CadWorkspace
             pointer => ToolController.OnPointerPressed(pointer));
     }
 
+    public Task<ToolResult> SubmitPointFromCommandLineAsync(Point2D worldPoint)
+    {
+        return SubmitCommandLinePointerAsync(
+            worldPoint,
+            pointer => ToolController.OnPointerPressedAsync(pointer));
+    }
+
     public ToolResult PreviewPointFromCommandLine(Point2D worldPoint)
     {
         return SubmitCommandLinePointer(
@@ -277,6 +285,36 @@ public sealed class CadWorkspace
             Context.EnabledSnaps = SnapKind.None;
 
             return submit(pointer);
+        }
+        finally
+        {
+            Context.IsOrthoEnabled = originalOrthoState;
+            Context.AngleConstraintSettings = originalAngleConstraintSettings;
+            Context.EnabledSnaps = originalEnabledSnaps;
+        }
+    }
+
+    private async Task<ToolResult> SubmitCommandLinePointerAsync(
+        Point2D worldPoint,
+        Func<PointerInfo, Task<ToolResult>> submit)
+    {
+        ArgumentNullException.ThrowIfNull(submit);
+
+        var pointer = new PointerInfo(
+            worldPoint,
+            CurrentUcs.WorldToUser(worldPoint));
+
+        bool originalOrthoState = Context.IsOrthoEnabled;
+        AngleConstraintSettings originalAngleConstraintSettings = Context.AngleConstraintSettings;
+        SnapKind originalEnabledSnaps = Context.EnabledSnaps;
+
+        try
+        {
+            Context.IsOrthoEnabled = false;
+            Context.AngleConstraintSettings = AngleConstraintSettings.Off;
+            Context.EnabledSnaps = SnapKind.None;
+
+            return await submit(pointer).ConfigureAwait(true);
         }
         finally
         {

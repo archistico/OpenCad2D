@@ -13,6 +13,7 @@ public enum CommandHudFieldKind
     Height,
     Radius,
     Factor,
+    Sides,
     X,
     Y
 }
@@ -78,6 +79,7 @@ public sealed class CommandHudFieldViewModel
         CommandHudFieldKind.Height => "height",
         CommandHudFieldKind.Radius => "radius",
         CommandHudFieldKind.Factor => "factor",
+        CommandHudFieldKind.Sides => "sides",
         CommandHudFieldKind.X => "x",
         CommandHudFieldKind.Y => "y",
         _ => string.Empty
@@ -111,6 +113,11 @@ public sealed class CommandHudFieldViewModel
         if (ContainsInvariant(key, "factor") || ContainsInvariant(label, "factor"))
         {
             return CommandHudFieldKind.Factor;
+        }
+
+        if (ContainsInvariant(key, "sides") || ContainsInvariant(label, "sides"))
+        {
+            return CommandHudFieldKind.Sides;
         }
 
         if (string.Equals(key, "x", System.StringComparison.OrdinalIgnoreCase) ||
