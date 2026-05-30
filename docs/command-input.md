@@ -1,12 +1,8 @@
 # Command Input
 
-OpenCad2D has a compact CAD-style command input. It shows:
+OpenCad2D currently has a compact CAD-style command input. The active roadmap replaces the fixed bottom command row with a dynamic cursor-adjacent command HUD.
 
-```text
-[Active tool] [Current prompt] [Input box]
-```
-
-The active prompt tells the user what the current command expects.
+The command input is not only a visual widget: it is the shared interaction contract between the UI and every command-driven tool. The active prompt tells the user what the current command expects, and both mouse input and typed input feed the same tool state machine.
 
 ---
 
@@ -18,6 +14,36 @@ Whenever a tool asks for a point, the user can either:
 - type a point/distance in the command input.
 
 Mouse input and typed input feed the same tool state machine.
+
+---
+
+## Dynamic Command HUD roadmap
+
+The fixed bottom command row is being replaced by a cursor-adjacent HUD in milestone `v0.8.121`. The full specification is `docs/specs/v0.8.121-dynamic-command-hud.md`.
+
+The migration must happen in safe stages:
+
+1. inventory every command-driven tool and its prompt phases;
+2. make `CommandPromptState` the common source for prompts, options and expected input;
+3. propagate pointer screen position and reusable live measurements;
+4. expose a read-only `CommandHudState`;
+5. render a read-only visual HUD while the old command row remains active;
+6. move the single real `CommandInputTextBox` into the HUD;
+7. remove the fixed row only after regression;
+8. implement editable numeric HUD fields later.
+
+Until that migration is complete, this document describes the command-input behavior that must be preserved.
+
+The final HUD should show, when meaningful:
+
+```text
+[tool icon] TOOL NAME
+Prompt or live fields
+Command options
+Command input
+```
+
+Examples of live fields include Distance/Angle for line-like phases, Width/Height for opposite-corner rectangles and Radius for circle phases. The first HUD implementation should show these fields read-only. Directly editable HUD fields are deferred because they require temporary distance/angle/width/radius overrides rather than ordinary one-shot command-input submission.
 
 ---
 
@@ -103,9 +129,9 @@ Implemented command-driven tools include:
 
 | Area | Tools |
 |---|---|
-| Draw | Point, Text, Line, Rectangle, Rect Sides, Circle, Arc, Arc 3P, Polyline |
+| Draw | Point, Text, MTEXT, Line, Rectangle, Rect Sides, Circle, Arc, Arc 3P, Ellipse, Polyline, Polygon, Spline, symbol/helper tools where registered |
 | Transform | Move, Copy, Rotate, Scale, point-based Align |
-| Modify | Delete, Break Point, Break Segment, Extend, Trim, Offset, Fillet |
+| Modify | Delete, Break Point, Break Segment, Extend, Trim, Offset, Fillet, Chamfer, Explode, Join and other registered modify tools |
 | Navigation | Zoom Window, Zoom Extents |
 | Selection | Select, Select All, Select Last |
 | Order | To Front, To Back, Forward, Backward |
@@ -194,4 +220,4 @@ can mean distance for `OFFSET`, angle for `ROTATE`, scale factor for `SCALE`, or
 
 ## Notes
 
-The earlier large always-visible command history panel was removed. The current UI favors a compact command row to preserve drawing space.
+The earlier large always-visible command history panel was removed. The current UI still uses a compact command row, but the active roadmap replaces it with a dynamic command HUD that preserves the same command parser and tool state machines.

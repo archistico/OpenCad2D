@@ -14,7 +14,7 @@ Suggested numbering:
 |---|---|
 | v0.8.100 - v0.8.109 | Import another OpenCad2D drawing into the current document |
 | v0.8.110 - v0.8.119 | Block model, block references and block editing |
-| v0.8.120 - v0.8.129 | Library browser, reusable drawing snippets and parametric drafting helpers |
+| v0.8.120 - v0.8.129 | Command HUD refactor, library browser, reusable drawing snippets and parametric drafting helpers |
 | v0.8.130 - v0.8.139 | Stair tools for plan/elevation/front elevation drafting |
 | v0.8.140 - v0.8.159 | Boundary Fill v1/v2 and hatch system |
 | v0.8.160+ | Consolidation, compatibility, documentation and release gate preparation |
@@ -27,14 +27,15 @@ The recommended order is:
 
 1. Import Drawing
 2. Blocks
-3. Drawing Library and parametric helpers
-4. Stairs
-5. Boundary Fill / Hatch
-6. Consolidation
+3. Dynamic Command HUD and command UX unification
+4. Drawing Library and parametric helpers
+5. Stairs
+6. Boundary Fill / Hatch
+7. Consolidation
 
 This order is intentional.
 
-Import Drawing is a low-risk foundation for reusing existing work. Blocks should follow because many future symbols should be generated as reusable block definitions. Reusable library items and parametric helpers can then use the block infrastructure instead of becoming isolated one-off tools. Fixed symbols should mostly live as `.opencad2d.json` library snippets, while the Symbols/tools area should be reserved for parametric generators such as doors, windows, stairs or markers that need user-provided dimensions. Boundary Fill should progress conservatively: first create filled polylines from detected linear faces, then add preview/curve/gap support, and only then introduce a true hatch entity for holes and richer hatch behavior.
+Import Drawing is a low-risk foundation for reusing existing work. Blocks should follow because many future symbols should be generated as reusable block definitions. Before adding more UI-heavy drafting workflows, the command input should be consolidated into a dynamic cursor HUD so every command exposes coherent prompt state, options and confirmation behavior. Reusable library items and parametric helpers can then use the block infrastructure instead of becoming isolated one-off tools. Fixed symbols should mostly live as `.opencad2d.json` library snippets, while the Symbols/tools area should be reserved for parametric generators such as doors, windows, stairs or markers that need user-provided dimensions. Boundary Fill should progress conservatively: first create filled polylines from detected linear faces, then add preview/curve/gap support, and only then introduce a true hatch entity for holes and richer hatch behavior.
 
 ---
 
@@ -128,6 +129,7 @@ Exit criteria:
 - Editing a definition updates all instances.
 - Exploding a block produces regular entities with correct world-space geometry.
 
+
 ---
 
 ## Milestone v0.8.120 — Symbols and library direction
@@ -170,6 +172,39 @@ Exit criteria:
 - Object snaps work for the insertion point.
 - Insertion is undoable as one operation.
 - Inserted library items are selectable, movable, rotatable, scalable, copyable and exportable through existing mechanisms.
+
+---
+
+## Milestone v0.8.121 — Dynamic Command HUD
+
+Specification: `docs/specs/v0.8.121-dynamic-command-hud.md`.
+
+Status: planned.
+
+Goal: replace the fixed bottom command row with a cursor-adjacent dynamic HUD while using one coherent command-state contract across all interactive tools.
+
+This milestone is intentionally placed before the Library Browser because it touches the global command UX. It should be stabilized before adding more modal insertion workflows and parametric tools.
+
+Implementation sequence:
+
+- HUD-0: command tool prompt inventory.
+- HUD-1: shared `CommandPromptState` cleanup.
+- HUD-2: pointer screen position and live measurement data.
+- HUD-3: read-only `CommandHudState`.
+- HUD-4: read-only visual HUD overlay while the old command row remains active.
+- HUD-5: move the real command input into the HUD.
+- HUD-6: remove the old bottom command row.
+- HUD-7: later editable numeric HUD fields.
+
+Exit criteria:
+
+- Every primary command-driven tool has a coherent prompt state.
+- The HUD follows the cursor and remains clamped inside the drawing area.
+- The HUD does not block canvas input.
+- There is only one operational command input.
+- Existing command aliases, typed coordinates, relative input, polar input, direct distances, history, autocomplete, Enter, right click and Escape behavior still work.
+- Manual regression covers draw, dimension, transform, modify, measure, navigation and selection/order tools.
+- The fixed command row is removed only after the HUD passes regression.
 
 ---
 

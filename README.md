@@ -42,7 +42,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - compact ColorPicker support in line/text format managers;
 - editable Property Panel for supported entities, including MTEXT value/reference-width editing and read-only draw order display;
 - independent draw order / Z-order, separate from layers;
-- CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input, direct distances, command history navigation and first-pass autocomplete;
+- CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input, direct distances, command history navigation and first-pass autocomplete; a dynamic cursor-adjacent command HUD is planned to replace the fixed bottom row;
 - object snapping, grid snapping, Ortho mode and Polar Tracking;
 - selection, Select All, Select Last and Deselect;
 - drawing tools for points, single-line text, multiline text, lines, rectangles, circles, ellipses, arcs, polylines, polygons and Bezier splines;
@@ -76,11 +76,11 @@ Left tool panel      Select, Draw, Dimension, Measure, Edit, Order, Align/Distri
 Center canvas        drawing area with CAD crosshair and previews
 Right panel          editable Property Panel
 Bottom snap bar      snap toggles and drafting toggles
-Command row          active tool, contextual prompt and command input
+Command row / HUD    active tool, contextual prompt and command input; planned migration to cursor-adjacent HUD
 Status bar           coordinates, snap state, measurements, rendered count and messages
 ```
 
-The command row is intentionally compact. The active tool and current prompt are shown next to the command input so the user knows which phase is active without losing drawing space.
+The current command row is intentionally compact. The active v0.8.121 roadmap replaces it with a dynamic cursor-adjacent command HUD after the prompt/input contract has been unified across all interactive tools.
 
 ---
 
@@ -169,7 +169,7 @@ Important documents:
 | `docs/architecture.md` | project structure and dependency rules |
 | `docs/roadmap.md` | current roadmap, completed stabilization work and next milestones |
 | `docs/roadmap-v0.8.100.md` | extended v0.8.100+ roadmap before the next stabilization gate |
-| `docs/specs/` | detailed specifications for import drawing, blocks, symbols, stairs and hatch milestones |
+| `docs/specs/` | detailed specifications for import drawing, blocks, dynamic command HUD, symbols, stairs and hatch milestones |
 | `docs/commands.md` | commands, aliases and undoable command rules |
 | `docs/curve-editing.md` | Trim/Break curve-editing architecture, native precision and shared cut-point rules |
 | `docs/command-input.md` | command input syntax and tool workflow |

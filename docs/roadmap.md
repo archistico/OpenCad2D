@@ -23,6 +23,7 @@ Primary v0.8.100+ themes:
 
 - import another `.opencad2d.json` drawing into the current document;
 - reusable block definitions and block references;
+- dynamic cursor-adjacent command HUD and command UX unification;
 - architectural symbols and technical drafting helpers;
 - stair plan/elevation/front-elevation generation;
 - explicit-boundary hatch and fill workflows;
@@ -138,6 +139,7 @@ The following milestones are planned before the future v0.9 stabilization gate:
 | v0.8.114 | [x] | `docs/specs/v0.8.110-blocks.md` | Add snap candidates from block-internal geometry. |
 | v0.8.115 | [x] | `docs/specs/v0.8.110-blocks.md` | Add Explode Block and the first in-place Edit Block session workflow. |
 | v0.8.120 | [~] | `docs/specs/v0.8.120-architectural-symbols.md` | Keep first-pass North Symbol and Metric Scale Bar; reserve future direct tools for parametric helpers rather than many fixed-symbol toolbar buttons. |
+| v0.8.121 | [ ] | `docs/specs/v0.8.121-dynamic-command-hud.md` | Replace the fixed command row with a dynamic cursor-adjacent command HUD after unifying command prompt state across all interactive tools. |
 | v0.8.122 | [ ] | `docs/specs/v0.8.122-library-browser.md` | Add Library browser for reusable `.opencad2d.json` snippets grouped by category, with preview and insert workflow. |
 | v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
 | v0.8.140 | [~] | `docs/specs/v0.8.140-hatch.md` | Boundary Fill v1 is implemented as click-inside linear face detection that creates filled closed polylines; HatchEntity remains planned. |
@@ -145,7 +147,30 @@ The following milestones are planned before the future v0.9 stabilization gate:
 | v0.8.150 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add real HatchEntity support for holes/islands and composite hatch boundaries. |
 | v0.8.160+ | [ ] | `docs/roadmap-v0.8.100.md` | Consolidate the expanded v0.8 line before the next release gate. |
 
-Implementation should follow the order above. Import Drawing and Blocks are foundations; the next priority is the Library browser because fixed symbols, furniture and reusable drawing snippets should be loaded from `.opencad2d.json` files instead of becoming separate toolbar buttons. Parametric tools should remain for objects that need dimensions/options before generation. Boundary Fill v1 has started the click-inside workflow conservatively for linear boundaries. The next BF work should improve confidence and coverage before introducing a real hatch entity: preview first, then sampled curve boundaries, then gap tolerance, then HatchEntity for holes/islands.
+Implementation should follow the order above. Import Drawing and Blocks are foundations. Before adding more drafting UI weight, the next safety-oriented UI milestone is the dynamic command HUD: it must first unify command prompt state across all tools, then replace the fixed command row in small reversible steps. After that, the Library browser remains the next drafting workflow priority because fixed symbols, furniture and reusable drawing snippets should be loaded from `.opencad2d.json` files instead of becoming separate toolbar buttons. Parametric tools should remain for objects that need dimensions/options before generation. Boundary Fill v1 has started the click-inside workflow conservatively for linear boundaries. The next BF work should improve confidence and coverage before introducing a real hatch entity: preview first, then sampled curve boundaries, then gap tolerance, then HatchEntity for holes/islands.
+
+---
+
+## Active UI refactor checkpoint — Dynamic Command HUD
+
+Status: [ ] planned.
+
+Specification: `docs/specs/v0.8.121-dynamic-command-hud.md`.
+
+This checkpoint must be treated as a command-input architecture refactor, not as a visual-only task. The fixed bottom command row should be removed only after the new HUD has passed prompt, input, focus and manual command regression checks.
+
+Milestone order:
+
+1. [ ] **HUD-0 Tool prompt inventory** — list every command-driven tool, its phases, prompts, options, expected input, Enter/right-click policy, Escape behavior and possible live fields.
+2. [ ] **HUD-1 Shared prompt contract cleanup** — make `CommandPromptState` the common source of truth for all interactive tools and reduce ViewModel-specific prompt fallbacks.
+3. [ ] **HUD-2 Pointer position and live measurements** — propagate pointer screen position and extract reusable live distance/angle/delta measurements without changing UI behavior.
+4. [ ] **HUD-3 Read-only `CommandHudState`** — expose a ViewModel-level HUD model independent from Avalonia controls.
+5. [ ] **HUD-4 Read-only visual HUD overlay** — add the cursor-adjacent overlay while keeping the old command row fully functional.
+6. [ ] **HUD-5 Move the real command input into the HUD** — keep a single operational `CommandInputTextBox` and preserve history, autocomplete, Enter, right-click and Escape behavior.
+7. [ ] **HUD-6 Remove the old bottom command row** — remove the fixed row only after regression passes.
+8. [>] **HUD-7 Editable numeric HUD fields** — defer direct Distance/Angle/Width/Height/Radius editing until the read-only HUD and moved input are stable.
+
+Regression requirement: this work must cover draw, dimension, transform, modify, measure, navigation and selection/order tools. It must not be validated only on Line, Polyline, Rectangle and Circle.
 
 ---
 

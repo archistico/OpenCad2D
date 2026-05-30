@@ -791,3 +791,33 @@ Manual checks:
 2. Save, close and reopen the drawing and verify the transparency is preserved.
 3. Export SVG and verify the external `<image>` element keeps the expected opacity.
 4. Undo/redo a transparency edit from either `Manage Refs` or the Property Panel.
+
+---
+
+## Current handoff — Dynamic Command HUD planning
+
+The next agreed planning step is the `v0.8.121` Dynamic Command HUD refactor. The detailed specification is `docs/specs/v0.8.121-dynamic-command-hud.md`.
+
+Important direction:
+
+- Treat this as a command-input architecture refactor, not as a visual-only task.
+- Do not implement only for Line, Polyline, Rectangle and Circle; every command-driven tool must be reviewed.
+- First stabilize the command prompt contract through `CommandPromptState`.
+- Keep the old bottom command row until the HUD has passed regression.
+- Add the HUD read-only before moving the real `CommandInputTextBox`.
+- Keep one operational command input; do not create duplicate command boxes.
+- Defer editable numeric HUD fields until after the read-only HUD and moved command input are stable.
+
+Planned implementation order:
+
+1. HUD-0 tool prompt inventory.
+2. HUD-1 shared prompt contract cleanup.
+3. HUD-2 pointer screen position and live measurement data.
+4. HUD-3 read-only `CommandHudState`.
+5. HUD-4 read-only visual HUD overlay.
+6. HUD-5 move the real command input into the HUD.
+7. HUD-6 remove the old bottom command row.
+8. HUD-7 editable numeric HUD fields later.
+
+Before code changes, update documentation and roadmap references so future work follows these milestones.
+
