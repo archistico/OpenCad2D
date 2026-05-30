@@ -552,187 +552,27 @@ Stable keyboard rules:
 - Starting to type `Distance` freezes the visible live `Angle`; starting to type `Angle` freezes the visible live `Distance`.
 - Overrides are cleared after each confirmed point.
 
-Arc and modify tools may show HUD fields, but editable routing must be added tool by tool in later isolated steps. Rectangle and Circle are enabled through dedicated resolvers.
+Rectangle, Circle, Arc and modify tools may show HUD fields, but editable routing must be added tool by tool in later isolated steps.
 
-## Dynamic HUD editable scope guard
+## Dynamic HUD modify tools — Move and Copy
 
-Editable HUD input is currently supported only for the stabilized Line/Polyline workflows and explicit first-point X/Y entry.
+`MOVE` and `COPY` now participate in the dynamic HUD input model.
 
-Editable now:
-
-- `X` / `Y` while a point command is waiting for a first point, entered intentionally with `Tab`.
-- `Distance` / `Angle` for Line after the first point.
-- `Distance` / `Angle` for Polyline line-mode after the first vertex.
-
-Read-only until dedicated implementation:
-
-- Rectangle `Width` / `Height`.
-- Rectangle-by-sides `Width` / `Angle` / `Height`.
-- Circle `Radius` uses a dedicated circle resolver.
-- Arc fields.
-- Ellipse, Polygon, Rotate, Scale, Offset, Mirror, Break, Measure and dimension fallback fields.
-
-This guard prevents an unsupported field from being picked by numeric routing simply because it is visible in the HUD. Each new tool must first add a dedicated resolver and regression tests.
-
-## Dynamic HUD rectangle dedicated resolver
-
-Rectangle support is added through a tool-specific resolver.
-
-Supported rectangle workflow:
+When the tool asks for the base point, the HUD supports coordinate entry with:
 
 ```text
-RECTANGLE
-click first corner
-200        -> Width
-Tab        -> Height
-100
-Enter      -> creates the rectangle
+X [ ... ]  Y [ ... ]
 ```
 
-Coordinate input for the first corner remains explicit:
-
-```text
-RECTANGLE
-Tab        -> X
-50
-Tab        -> Y
-25
-Enter      -> first corner at X=50, Y=25
-```
-
-After the first corner, the HUD shows:
-
-```text
-Width [ ... ]  Height [ ... ]
-X     [ ... ]  Y      [ ... ]
-```
-
-`Width` and `Height` must be greater than zero. Rectangle sizing is resolved by a dedicated rectangle resolver; it must not change the stabilized Line/Polyline `Distance` / `Angle` behavior.
-
-## Rectangle HUD regression guard
-
-Rectangle editable HUD input is supported only through its dedicated resolver. The dynamic HUD accepts:
-
-```text
-RECTANGLE
-click first corner
-Width
-Tab
-Height
-Enter
-```
-
-and first-corner absolute coordinates through intentional `Tab` navigation:
-
-```text
-RECTANGLE
-Tab
-X
-Tab
-Y
-Enter
-```
-
-The rectangle resolver must remain isolated from the Line/Polyline `Distance` / `Angle` resolver. This prevents Rectangle-specific behavior from regressing the already stable polar input workflow.
-
-
-## Circle HUD resolver
-
-Circle editable HUD input is supported through a dedicated resolver. The dynamic HUD accepts:
-
-```text
-CIRCLE
-Tab
-X
-Tab
-Y
-Enter
-Radius
-Enter
-```
-
-And after a center has been selected with the mouse:
-
-```text
-CIRCLE
-click center
-Radius
-Enter
-```
-
-`Radius` must be greater than zero. The circle resolver must remain isolated from the Line/Polyline `Distance` / `Angle` resolver and the Rectangle `Width` / `Height` resolver.
-
-## Dynamic HUD compact row layout
-
-The dynamic HUD uses a deterministic compact layout for numeric fields:
+When the tool asks for the destination point, the HUD supports:
 
 ```text
 Distance [ ... ]  Angle [ ... ]
-X        [ ... ]  Y     [ ... ]
+       X [ ... ]      Y [ ... ]
 ```
 
-For single-value tools, the geometry value stays on its own row and coordinates stay grouped below it:
+The distance-angle behavior follows the same rule already stabilized for Line and Polyline: entering a distance freezes the currently visible angle, entering an angle freezes the currently visible distance, and Enter confirms the destination point.
 
-```text
-Radius   [ ... ]
-X        [ ... ]  Y     [ ... ]
-```
+### Rotate / Scale scalar HUD input parser note
 
-This avoids mixing geometric properties and coordinate input on the same row. Labels and value boxes use fixed widths so `Distance`, `Radius`, `X` and the corresponding value boxes remain aligned.
-
-### Step 27C: wider HUD rows
-
-The row-based HUD layout now uses a wider panel and wider field columns so the second field in paired rows is not clipped:
-
-```text
-Distance [ ... ]  Angle [ ... ]
-X        [ ... ]  Y     [ ... ]
-```
-
-The change is visual only. It does not affect command routing, Tab cycling, mouse transparency or tool resolvers.
-
-### Step 27D — Circle HUD regression guard
-
-Circle HUD input is now protected by additional regression tests. The tests verify that the center prompt exposes coordinate fields only, that radius input remains dedicated to the post-center state, and that zero or negative radius values do not create a circle. This step does not change runtime behavior.
-
-
-## Rectangle by Sides HUD resolver
-
-Rectangle by Sides now uses a dedicated HUD resolver.
-
-Supported flow:
-
-```text
-RECTSIDES
-Tab
-X
-Tab
-Y
-Enter
-Width
-Tab
-Angle
-Enter
-Height
-Enter
-```
-
-Typical mouse-assisted flow:
-
-```text
-RECTSIDES
-click first corner
-Width
-Tab
-Angle
-Enter
-Height
-Enter
-```
-
-The first side uses `Width` plus `Angle`. The second side uses `Height`; the sign is taken from the live pointer side relative to the first side. This implementation is intentionally isolated from the Line/Polyline, Rectangle and Circle HUD resolvers.
-
-
-## Step 28B - Rectangle by Sides height routing fix
-
-Fixed the logical HUD initial numeric routing so a single available `Height` field is treated as a preferred numeric target. This keeps the second side phase keyboard-driven: after setting the first side, typing a number routes to `Height` instead of the hidden generic command buffer.
+The contextual parser now treats `PointOrAngle` as accepting either a point or a numeric angle, and `PointOrNumber` as accepting either a point or a numeric value. This allows the HUD `Angle` field for Rotate and the HUD `Factor` field for Scale to submit scalar values through the same command-driven input path as typed command input.

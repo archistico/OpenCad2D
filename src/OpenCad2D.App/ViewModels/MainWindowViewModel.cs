@@ -23,7 +23,6 @@ using OpenCad2D.App.ViewModels.ImportDrawing;
 using OpenCad2D.App.ViewModels.Blocks;
 using OpenCad2D.App.ViewModels.Library;
 using OpenCad2D.App.Settings;
-using System.Threading.Tasks;
 using System.IO;
 using OpenCad2D.Persistence.Dto;
 using OpenCad2D.Persistence;
@@ -454,7 +453,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         CommandLiveMeasurement measurement = GetLiveMeasurement();
         ICadTool activeTool = Workspace.ToolController.ActiveTool;
-        CommandPromptState promptState = GetCurrentPromptState();
+
+        if (activeTool is AlignTool alignTool &&
+            alignTool.State is AlignToolState.WaitingForSourcePoint1 or
+                AlignToolState.WaitingForDestinationPoint1 or
+                AlignToolState.WaitingForSourcePoint2 or
+                AlignToolState.WaitingForDestinationPoint2)
+        {
+            return BuildCoordinateOverrideFields();
+        }
+
+        if (!measurement.HasValue)
+        {
+            return BuildCoordinateOverrideFields();
+        }
 
         if (activeTool is LineTool lineTool &&
             lineTool.State == TwoPointToolState.WaitingForSecondPoint)
@@ -468,8 +480,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return BuildDistanceAngleCoordinateOverrideFields(measurement);
         }
 
-        if (activeTool is SplineTool splineTool &&
-            splineTool.State == SplineToolState.CollectingControlPoints)
+        if (activeTool is MoveTool moveTool &&
+            moveTool.MoveState == MoveToolState.WaitingForDestinationPoint)
+        {
+            return BuildDistanceAngleCoordinateOverrideFields(measurement);
+        }
+
+        if (activeTool is CopyTool copyTool &&
+            copyTool.CopyState == MoveToolState.WaitingForDestinationPoint)
         {
             return BuildDistanceAngleCoordinateOverrideFields(measurement);
         }
@@ -477,7 +495,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (activeTool is RectangleTool rectangleTool &&
             rectangleTool.State == TwoPointToolState.WaitingForSecondPoint)
         {
-            return BuildRectangleWidthHeightCoordinateFields(measurement);
+            return BuildWidthHeightFields(measurement);
         }
 
         if (activeTool is RectangleBySidesTool rectangleBySidesTool)
@@ -490,7 +508,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (activeTool is CircleTool circleTool &&
             circleTool.State == TwoPointToolState.WaitingForSecondPoint)
         {
-            return BuildCircleRadiusCoordinateFields(measurement);
+            return new[]
+            {
+                new CommandHudFieldViewModel(
+                    "radius",
+                    "Radius",
+                    measurement.Distance)
+            };
         }
 
         if (activeTool is ArcTool arcTool)
@@ -500,14 +524,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 measurement);
         }
 
-        if (activeTool is ArcThreePointsTool arcThreePointsTool &&
-            arcThreePointsTool.State is
-                ArcThreePointsToolState.WaitingForPointOnArc or
-                ArcThreePointsToolState.WaitingForEndPoint)
-        {
-            return BuildDistanceAngleCoordinateOverrideFields(measurement);
-        }
-
         if (activeTool is EllipseTool ellipseTool)
         {
             return BuildEllipseFields(
@@ -515,15 +531,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 measurement);
         }
 
-        if (activeTool is PolygonTool { State: PolygonToolState.WaitingForSides } waitingPolygonTool)
-        {
-            return BuildPolygonSidesField(waitingPolygonTool);
-        }
-
         if (activeTool is PolygonTool polygonTool &&
             polygonTool.State == PolygonToolState.WaitingForVertex)
         {
-            return BuildPolygonRadiusAngleFields(measurement);
+            return BuildRadiusAngleFields(measurement);
         }
 
         if (activeTool is RotateTool rotateTool)
@@ -583,20 +594,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return BuildSingleAngleField(measurement.AngleDegrees);
         }
 
-        if (!measurement.HasValue)
-        {
-            return IsPointExpectedInput(promptState.ExpectedInput)
-                ? BuildCoordinateOverrideFields()
-                : Array.Empty<CommandHudFieldViewModel>();
-        }
-
-        if (promptState.ExpectedInput == CommandInputKind.Point)
-        {
-            return BuildCoordinateOverrideFields();
-        }
-
         return BuildFieldsFromPromptKind(
-            promptState.ExpectedInput,
+            GetCurrentPromptState().ExpectedInput,
             measurement);
     }
 
@@ -658,72 +657,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             new CommandHudFieldViewModel(
                 "distance",
                 "Distance",
-                measurement.Distance,
-                isEditable: false),
+                measurement.Distance),
             new CommandHudFieldViewModel(
                 "angle",
                 "Angle",
                 measurement.AngleDegrees,
-                "°",
-                isEditable: false)
+                "°")
         };
     }
 
-    private IReadOnlyList<CommandHudFieldViewModel> BuildRectangleWidthHeightCoordinateFields(
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildWidthHeightFields(
         CommandLiveMeasurement measurement)
     {
-        Point2D userPoint = GetLivePointerUserPoint();
-
         return new[]
         {
             new CommandHudFieldViewModel(
                 "width",
                 "Width",
-                _commandHudInputState.Width ??
-                    (measurement.DeltaX is null
-                        ? null
-                        : Math.Abs(measurement.DeltaX.Value))),
+                measurement.DeltaX is null
+                    ? null
+                    : Math.Abs(measurement.DeltaX.Value)),
             new CommandHudFieldViewModel(
                 "height",
                 "Height",
-                _commandHudInputState.Height ??
-                    (measurement.DeltaY is null
-                        ? null
-                        : Math.Abs(measurement.DeltaY.Value))),
-            new CommandHudFieldViewModel(
-                "x",
-                "X",
-                _commandHudInputState.X ?? userPoint.X),
-            new CommandHudFieldViewModel(
-                "y",
-                "Y",
-                _commandHudInputState.Y ?? userPoint.Y)
+                measurement.DeltaY is null
+                    ? null
+                    : Math.Abs(measurement.DeltaY.Value))
         };
     }
 
-    private IReadOnlyList<CommandHudFieldViewModel> BuildCircleRadiusCoordinateFields(
-        CommandLiveMeasurement measurement)
-    {
-        Point2D userPoint = GetLivePointerUserPoint();
-
-        return new[]
-        {
-            new CommandHudFieldViewModel(
-                "radius",
-                "Radius",
-                _commandHudInputState.Radius ?? measurement.Distance),
-            new CommandHudFieldViewModel(
-                "x",
-                "X",
-                _commandHudInputState.X ?? userPoint.X),
-            new CommandHudFieldViewModel(
-                "y",
-                "Y",
-                _commandHudInputState.Y ?? userPoint.Y)
-        };
-    }
-
-    private IReadOnlyList<CommandHudFieldViewModel> BuildRectangleBySidesFields(
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildRectangleBySidesFields(
         RectangleBySidesTool rectangleBySidesTool,
         CommandLiveMeasurement measurement)
     {
@@ -734,11 +697,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "width",
                     "Width",
-                    _commandHudInputState.Width ?? measurement.Distance),
+                    measurement.Distance),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
-                    _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                    measurement.AngleDegrees,
                     "°")
             },
 
@@ -747,59 +710,29 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "height",
                     "Height",
-                    _commandHudInputState.Height ?? GetRectangleBySidesLiveHeight(rectangleBySidesTool))
+                    measurement.Distance)
             },
 
             _ => Array.Empty<CommandHudFieldViewModel>()
         };
     }
 
-    private double? GetRectangleBySidesLiveHeight(RectangleBySidesTool rectangleBySidesTool)
-    {
-        if (rectangleBySidesTool.StartPoint is null ||
-            rectangleBySidesTool.FirstSideEndPoint is null)
-        {
-            return null;
-        }
-
-        Point2D startUserPoint = Workspace.CurrentUcs.WorldToUser(
-            rectangleBySidesTool.StartPoint.Value);
-        Point2D firstSideEndUserPoint = Workspace.CurrentUcs.WorldToUser(
-            rectangleBySidesTool.FirstSideEndPoint.Value);
-        Point2D liveUserPoint = GetLivePointerUserPoint();
-
-        Vector2D firstSide = startUserPoint.VectorTo(firstSideEndUserPoint);
-        double firstSideLength = firstSide.Length;
-
-        if (Workspace.GeometryTolerance.IsDistanceZero(firstSideLength))
-        {
-            return null;
-        }
-
-        Vector2D perpendicularDirection = (firstSide / firstSideLength).PerpendicularLeft();
-        double signedHeight = startUserPoint.VectorTo(liveUserPoint).Dot(perpendicularDirection);
-
-        return Math.Abs(signedHeight);
-    }
-
-    private IReadOnlyList<CommandHudFieldViewModel> BuildArcFields(
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildArcFields(
         ArcTool arcTool,
         CommandLiveMeasurement measurement)
     {
         return arcTool.State switch
         {
-            ArcToolState.WaitingForCenterPoint => BuildCoordinateOverrideFields(),
-
             ArcToolState.WaitingForStartPoint => new[]
             {
                 new CommandHudFieldViewModel(
                     "radius",
                     "Radius",
-                    _commandHudInputState.Radius ?? measurement.Distance),
+                    measurement.Distance),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
-                    _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                    measurement.AngleDegrees,
                     "°")
             },
 
@@ -808,7 +741,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
-                    _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                    measurement.AngleDegrees,
                     "°")
             },
 
@@ -825,43 +758,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             new CommandHudFieldViewModel(
                 "radius",
                 "Radius",
-                measurement.Distance,
-                isEditable: false),
+                measurement.Distance),
             new CommandHudFieldViewModel(
                 "angle",
                 "Angle",
                 measurement.AngleDegrees,
-                "°",
-                isEditable: false)
-        };
-    }
-
-    private IReadOnlyList<CommandHudFieldViewModel> BuildPolygonRadiusAngleFields(
-        CommandLiveMeasurement measurement)
-    {
-        return new[]
-        {
-            new CommandHudFieldViewModel(
-                "radius",
-                "Radius",
-                _commandHudInputState.Radius ?? measurement.Distance),
-            new CommandHudFieldViewModel(
-                "angle",
-                "Angle",
-                _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
                 "°")
-        };
-    }
-
-    private IReadOnlyList<CommandHudFieldViewModel> BuildPolygonSidesField(
-        PolygonTool polygonTool)
-    {
-        return new[]
-        {
-            new CommandHudFieldViewModel(
-                "sides",
-                "Sides",
-                _commandHudInputState.Sides ?? polygonTool.SideCount)
         };
     }
 
@@ -875,8 +777,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             new CommandHudFieldViewModel(
                 key,
                 label,
-                value,
-                isEditable: false)
+                value)
         };
     }
 
@@ -889,77 +790,114 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 "angle",
                 "Angle",
                 value,
-                "°",
-                isEditable: false)
+                "°")
         };
     }
 
-    private IReadOnlyList<CommandHudFieldViewModel> BuildEllipseFields(
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildEllipseFields(
         EllipseTool ellipseTool,
         CommandLiveMeasurement measurement)
     {
         return ellipseTool.State switch
         {
-            EllipseToolState.WaitingForCenter => BuildCoordinateOverrideFields(),
-
             EllipseToolState.WaitingForMajorAxis => new[]
             {
                 new CommandHudFieldViewModel(
                     "major-radius",
                     "Major radius",
-                    _commandHudInputState.Radius ?? measurement.Distance),
+                    measurement.Distance),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
-                    _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                    measurement.AngleDegrees,
                     "°")
             },
 
-            EllipseToolState.WaitingForMinorRadius => new[]
-            {
-                new CommandHudFieldViewModel(
-                    "minor-radius",
-                    "Minor radius",
-                    _commandHudInputState.Radius ?? measurement.Distance)
-            },
+            EllipseToolState.WaitingForMinorRadius => BuildSingleDistanceField(
+                "minor-radius",
+                "Minor radius",
+                measurement.Distance),
 
             _ => Array.Empty<CommandHudFieldViewModel>()
         };
     }
 
-    private static IReadOnlyList<CommandHudFieldViewModel> BuildRotateFields(
+    private IReadOnlyList<CommandHudFieldViewModel> BuildRotateFields(
         RotateTool rotateTool,
         CommandLiveMeasurement measurement)
     {
         return rotateTool.State switch
         {
-            RotateToolState.WaitingForDestinationPoint when rotateTool.HasPreview => BuildSingleAngleField(
-                rotateTool.CurrentAngle.Degrees),
+            RotateToolState.WaitingForReferencePoint => BuildDistanceAngleCoordinateOverrideFields(measurement),
 
-            RotateToolState.WaitingForDestinationPoint => BuildSingleAngleField(
-                measurement.AngleDegrees),
+            RotateToolState.WaitingForDestinationPoint when rotateTool.HasPreview => BuildAngleCoordinateOverrideFields(
+                _commandHudInputState.AngleDegrees ?? rotateTool.CurrentAngle.Degrees),
+
+            RotateToolState.WaitingForDestinationPoint => BuildAngleCoordinateOverrideFields(
+                _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees),
 
             _ => Array.Empty<CommandHudFieldViewModel>()
         };
     }
 
-    private static IReadOnlyList<CommandHudFieldViewModel> BuildScaleFields(
+    private IReadOnlyList<CommandHudFieldViewModel> BuildScaleFields(
         ScaleTool scaleTool,
         CommandLiveMeasurement measurement)
     {
         return scaleTool.State switch
         {
-            ScaleToolState.WaitingForDestinationPoint when scaleTool.HasPreview => BuildSingleDistanceField(
-                "factor",
-                "Factor",
-                scaleTool.CurrentFactor),
+            ScaleToolState.WaitingForReferencePoint => BuildDistanceAngleCoordinateOverrideFields(measurement),
 
-            ScaleToolState.WaitingForDestinationPoint => BuildSingleDistanceField(
-                "factor",
-                "Factor",
-                null),
+            ScaleToolState.WaitingForDestinationPoint when scaleTool.HasPreview => BuildFactorCoordinateOverrideFields(
+                _commandHudInputState.Factor ?? scaleTool.CurrentFactor),
+
+            ScaleToolState.WaitingForDestinationPoint => BuildFactorCoordinateOverrideFields(
+                _commandHudInputState.Factor),
 
             _ => Array.Empty<CommandHudFieldViewModel>()
+        };
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildAngleCoordinateOverrideFields(double? angleDegrees)
+    {
+        Point2D userPoint = GetLivePointerUserPoint();
+
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "angle",
+                "Angle",
+                angleDegrees,
+                "°"),
+            new CommandHudFieldViewModel(
+                "x",
+                "X",
+                _commandHudInputState.X ?? userPoint.X),
+            new CommandHudFieldViewModel(
+                "y",
+                "Y",
+                _commandHudInputState.Y ?? userPoint.Y)
+        };
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildFactorCoordinateOverrideFields(double? factor)
+    {
+        Point2D userPoint = GetLivePointerUserPoint();
+
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "factor",
+                "Factor",
+                factor),
+            new CommandHudFieldViewModel(
+                "x",
+                "X",
+                _commandHudInputState.X ?? userPoint.X),
+            new CommandHudFieldViewModel(
+                "y",
+                "Y",
+                _commandHudInputState.Y ?? userPoint.Y)
         };
     }
 
@@ -2842,102 +2780,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             out result);
     }
 
-    public async Task<bool> TryCommitCommandHudFieldInputAsync(
-        CommandHudFieldKind fieldKind,
-        string? input,
-        bool confirm)
-    {
-        if (!confirm)
-        {
-            return TryCommitCommandHudFieldInput(
-                fieldKind,
-                input,
-                confirm: false,
-                out _);
-        }
-
-        string normalizedInput = input?.Trim() ?? string.Empty;
-
-        if (fieldKind is not (
-            CommandHudFieldKind.Distance or
-            CommandHudFieldKind.Angle or
-            CommandHudFieldKind.Width or
-            CommandHudFieldKind.Height or
-            CommandHudFieldKind.Radius or
-            CommandHudFieldKind.Factor or
-            CommandHudFieldKind.Sides or
-            CommandHudFieldKind.X or
-            CommandHudFieldKind.Y))
-        {
-            return false;
-        }
-
-        if (!TryParseHudDouble(normalizedInput, out double value))
-        {
-            ToolResult invalidResult = ToolResult.None(
-                $"Invalid {fieldKind.ToString().ToLowerInvariant()} value.");
-            SetLastResult(invalidResult);
-            AppendToolResultToVisibleHistory(invalidResult);
-            NotifyCommandInputStateChanged();
-            return true;
-        }
-
-        if (RequiresPositiveHudValue(fieldKind) && value <= 0)
-        {
-            ToolResult invalidResult = ToolResult.None(
-                $"{GetHudFieldDisplayName(fieldKind)} must be greater than zero.");
-            SetLastResult(invalidResult);
-            AppendToolResultToVisibleHistory(invalidResult);
-            NotifyCommandInputStateChanged();
-            return true;
-        }
-
-        FreezeComplementaryHudValueIfNeeded(fieldKind);
-
-        _commandHudInputState.SetOverride(
-            fieldKind,
-            value);
-
-        if (fieldKind == CommandHudFieldKind.Sides)
-        {
-            ToolResult sidesResult = await SubmitCommandInputAsync(normalizedInput)
-                .ConfigureAwait(true);
-            ClearCommandHudInputOverrides();
-            SetLastResult(sidesResult);
-            return true;
-        }
-
-        AppendVisibleCommandHistoryLine($"> {normalizedInput}");
-
-        if (!IsCommandHudPointInputTargetActive())
-        {
-            NotifyPointerDrivenStateChanged();
-            return true;
-        }
-
-        if (!TryResolveCommandHudOverridePoint(
-                requireCompleteCoordinates: true,
-                out Point2D worldPoint,
-                out string? errorMessage))
-        {
-            ToolResult invalidResult = ToolResult.None(errorMessage);
-            SetLastResult(invalidResult);
-            AppendToolResultToVisibleHistory(invalidResult);
-            NotifyCommandInputStateChanged();
-            return true;
-        }
-
-        ToolResult result = await Workspace
-            .SubmitPointFromCommandLineAsync(worldPoint)
-            .ConfigureAwait(true);
-        ClearCommandHudInputOverrides();
-        SetLastResult(result);
-        AppendToolResultToVisibleHistory(result);
-        NotifyDocumentStateChanged();
-        NotifyCommandInputStateChanged();
-        return true;
-    }
-
     public bool TryConfirmCommandHudInputOverrides(out ToolResult result)
     {
         result = ToolResult.None();
@@ -2960,36 +2802,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         result = Workspace.SubmitPointFromCommandLine(worldPoint);
-        ClearCommandHudInputOverrides();
-        SetLastResult(result);
-        AppendToolResultToVisibleHistory(result);
-        NotifyDocumentStateChanged();
-        NotifyCommandInputStateChanged();
-        return true;
-    }
-
-    public async Task<bool> TryConfirmCommandHudInputOverridesAsync()
-    {
-        if (!_commandHudInputState.HasAnyOverride)
-        {
-            return false;
-        }
-
-        if (!TryResolveCommandHudOverridePoint(
-                requireCompleteCoordinates: true,
-                out Point2D worldPoint,
-                out string? errorMessage))
-        {
-            ToolResult invalidResult = ToolResult.None(errorMessage);
-            SetLastResult(invalidResult);
-            AppendToolResultToVisibleHistory(invalidResult);
-            NotifyCommandInputStateChanged();
-            return true;
-        }
-
-        ToolResult result = await Workspace
-            .SubmitPointFromCommandLineAsync(worldPoint)
-            .ConfigureAwait(true);
         ClearCommandHudInputOverrides();
         SetLastResult(result);
         AppendToolResultToVisibleHistory(result);
@@ -3098,100 +2910,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return pointResult;
     }
 
-    public async Task<ToolResult> SubmitCommandInputAsync(string? input)
-    {
-        ResetCommandHistoryNavigation();
-
-        string normalizedInput = input?.Trim() ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(normalizedInput))
-        {
-            AppendVisibleCommandHistoryLine("> Enter");
-
-            if (ShouldRouteInputToActiveCommand(normalizedInput) &&
-                await TrySubmitCommandDrivenInputAsync(normalizedInput).ConfigureAwait(true) is
-                    (true, ToolResult activeCommandResult))
-            {
-                return activeCommandResult;
-            }
-
-            ToolResult repeatResult = RepeatLastCommand();
-            AppendToolResultToVisibleHistory(repeatResult);
-            return repeatResult;
-        }
-
-        AppendVisibleCommandHistoryLine($"> {normalizedInput}");
-
-        if (ShouldRouteInputToActiveCommand(normalizedInput) &&
-            await TrySubmitCommandDrivenInputAsync(normalizedInput).ConfigureAwait(true) is
-                (true, ToolResult activeTextCommandResult))
-        {
-            return activeTextCommandResult;
-        }
-
-        if (TryExecuteActionCommand(normalizedInput, out ToolResult actionResult))
-        {
-            _commandLineHistory.Add(normalizedInput);
-            AppendToolResultToVisibleHistory(actionResult);
-            NotifyCommandInputStateChanged();
-            return actionResult;
-        }
-
-        if (_commandAliasRegistry.TryResolve(normalizedInput, out ToolId toolId))
-        {
-            _commandLineHistory.Add(normalizedInput);
-
-            ToolResult result = SetTool(
-                toolId,
-                rememberAsLastCommand: true,
-                commandInput: normalizedInput);
-
-            NotifyCommandInputStateChanged();
-            return result;
-        }
-
-        if (await TrySubmitCommandDrivenInputAsync(normalizedInput).ConfigureAwait(true) is
-            (true, ToolResult commandDrivenResult))
-        {
-            return commandDrivenResult;
-        }
-
-        CommandInputParseResult parseResult = _commandInputParser.Parse(normalizedInput);
-
-        if (!parseResult.IsValid)
-        {
-            string message = IsLikelyCommandAlias(normalizedInput)
-                ? $"Unknown command or alias '{normalizedInput}'."
-                : parseResult.ErrorMessage ?? "Invalid command input.";
-
-            ToolResult invalidResult = ToolResult.None(message);
-            SetLastResult(invalidResult);
-            AppendToolResultToVisibleHistory(invalidResult);
-            NotifyCommandInputStateChanged();
-            return invalidResult;
-        }
-
-        if (!TryResolveCommandInputPoint(parseResult, out Point2D worldPoint, out string? errorMessage))
-        {
-            ToolResult invalidResult = ToolResult.None(errorMessage);
-            SetLastResult(invalidResult);
-            AppendToolResultToVisibleHistory(invalidResult);
-            NotifyCommandInputStateChanged();
-            return invalidResult;
-        }
-
-        ToolResult pointResult = await Workspace
-            .SubmitPointFromCommandLineAsync(worldPoint)
-            .ConfigureAwait(true);
-
-        SetLastResult(pointResult);
-        AppendToolResultToVisibleHistory(pointResult);
-        NotifyDocumentStateChanged();
-        NotifyCommandInputStateChanged();
-
-        return pointResult;
-    }
-
     private bool ShouldRouteInputToActiveCommand(string normalizedInput)
     {
         if (Workspace.ToolController.ActiveTool is not ICommandDrivenTool commandDrivenTool)
@@ -3287,95 +3005,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
-    private async Task<(bool Handled, ToolResult Result)> TrySubmitCommandDrivenInputAsync(
-        string normalizedInput)
-    {
-        if (Workspace.ToolController.ActiveTool is not ICommandDrivenTool commandDrivenTool)
-        {
-            return (false, ToolResult.None());
-        }
-
-        CommandPromptState promptState = commandDrivenTool.GetPromptState(Workspace.Context);
-        Point2D? referenceUserPoint = Workspace.Context.CurrentBasePoint is null
-            ? null
-            : Workspace.CurrentUcs.WorldToUser(Workspace.Context.CurrentBasePoint.Value);
-
-        CommandInputSubmission submission = _commandInputParser.Parse(
-            normalizedInput,
-            promptState,
-            referenceUserPoint);
-
-        if (!submission.IsValid)
-        {
-            ToolResult invalidResult = ToolResult.None(
-                submission.ErrorMessage ?? "Invalid command input.");
-            SetLastResult(invalidResult);
-            AppendToolResultToVisibleHistory(invalidResult);
-            NotifyCommandInputStateChanged();
-            return (true, invalidResult);
-        }
-
-        CommandInputSubmission toolSubmission = submission;
-
-        if (submission.Kind == CommandInputSubmissionKind.Point && submission.Point is not null)
-        {
-            Point2D worldPoint = Workspace.CurrentUcs.UserToWorld(submission.Point.Value);
-            toolSubmission = CommandInputSubmission.FromPoint(
-                submission.RawText,
-                worldPoint,
-                offset: submission.Offset is null
-                    ? null
-                    : Workspace.CurrentUcs.UserVectorToWorld(submission.Offset.Value),
-                distance: submission.Distance,
-                angleDegrees: submission.AngleDegrees);
-        }
-        else if (submission.Kind == CommandInputSubmissionKind.Distance &&
-                 submission.Distance is not null &&
-                 ShouldResolveDistanceAsPoint(promptState.ExpectedInput))
-        {
-            if (!TryResolveDirectDistancePoint(
-                    submission.Distance.Value,
-                    out Point2D directDistancePoint,
-                    out string? errorMessage))
-            {
-                ToolResult invalidResult = ToolResult.None(errorMessage);
-                SetLastResult(invalidResult);
-                AppendToolResultToVisibleHistory(invalidResult);
-                NotifyCommandInputStateChanged();
-                return (true, invalidResult);
-            }
-
-            toolSubmission = CommandInputSubmission.FromPoint(
-                submission.RawText,
-                directDistancePoint,
-                distance: submission.Distance);
-        }
-
-        ToolResult result;
-
-        if (Workspace.ToolController.ActiveTool is IAsyncCadTool &&
-            toolSubmission.Kind == CommandInputSubmissionKind.Point &&
-            toolSubmission.Point is not null)
-        {
-            result = await Workspace
-                .SubmitPointFromCommandLineAsync(toolSubmission.Point.Value)
-                .ConfigureAwait(true);
-        }
-        else
-        {
-            result = commandDrivenTool.HandleCommandInput(
-                toolSubmission,
-                Workspace.Context);
-        }
-
-        SetLastResult(result);
-        AppendToolResultToVisibleHistory(result);
-        NotifyDocumentStateChanged();
-        NotifyCommandInputStateChanged();
-
-        return (true, result);
-    }
-
     private static bool ShouldResolveDistanceAsPoint(CommandInputKind expectedInput)
     {
         return expectedInput is
@@ -3453,7 +3082,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Height or
             CommandHudFieldKind.Radius or
             CommandHudFieldKind.Factor or
-            CommandHudFieldKind.Sides or
             CommandHudFieldKind.X or
             CommandHudFieldKind.Y))
         {
@@ -3471,34 +3099,37 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (RequiresPositiveHudValue(fieldKind) && value <= 0)
+        if (fieldKind == CommandHudFieldKind.Distance && value <= 0)
         {
-            result = ToolResult.None($"{GetHudFieldDisplayName(fieldKind)} must be greater than zero.");
+            result = ToolResult.None("Distance must be greater than zero.");
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
             NotifyCommandInputStateChanged();
             return true;
         }
 
-        FreezeComplementaryHudValueIfNeeded(fieldKind);
+        if (IsPositiveCommandHudField(fieldKind) && value <= 0)
+        {
+            result = ToolResult.None($"{fieldKind} must be greater than zero.");
+            SetLastResult(result);
+            AppendToolResultToVisibleHistory(result);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        FreezeComplementaryPolarHudValueIfNeeded(fieldKind);
 
         _commandHudInputState.SetOverride(
             fieldKind,
             value);
 
-        if (fieldKind == CommandHudFieldKind.Sides)
+        if (TryHandleDedicatedScalarCommandHudOverride(
+                fieldKind,
+                value,
+                input,
+                confirm,
+                out result))
         {
-            if (confirm)
-            {
-                result = SubmitCommandInput(input);
-                ClearCommandHudInputOverrides();
-                SetLastResult(result);
-            }
-            else
-            {
-                NotifyPointerDrivenStateChanged();
-            }
-
             return true;
         }
 
@@ -3536,18 +3167,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (IsCommandHudPointOverrideTargetActive() ||
-            IsCommandHudRectangleOverrideTargetActive() ||
-            IsCommandHudCircleOverrideTargetActive() ||
-            IsCommandHudArcStartOverrideTargetActive() ||
-            IsCommandHudArcEndOverrideTargetActive() ||
-            IsCommandHudArcThreePointsOverrideTargetActive() ||
-            IsCommandHudEllipseMajorAxisOverrideTargetActive() ||
-            IsCommandHudEllipseMinorRadiusOverrideTargetActive() ||
-            IsCommandHudPolygonOverrideTargetActive() ||
-            IsCommandHudSplineOverrideTargetActive() ||
-            IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() ||
-            IsCommandHudRectangleBySidesSecondSideOverrideTargetActive())
+        if (IsCommandHudPointOverrideTargetActive())
         {
             result = Workspace.PreviewPointFromCommandLine(worldPoint);
             SetLastResult(result);
@@ -3558,125 +3178,74 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
-    private static bool RequiresPositiveHudValue(CommandHudFieldKind fieldKind)
+
+    private static bool IsPositiveCommandHudField(CommandHudFieldKind fieldKind)
     {
         return fieldKind is
-            CommandHudFieldKind.Distance or
             CommandHudFieldKind.Width or
             CommandHudFieldKind.Height or
             CommandHudFieldKind.Radius or
             CommandHudFieldKind.Factor;
     }
 
-    private static string GetHudFieldDisplayName(CommandHudFieldKind fieldKind)
+    private bool TryHandleDedicatedScalarCommandHudOverride(
+        CommandHudFieldKind fieldKind,
+        double value,
+        string input,
+        bool confirm,
+        out ToolResult result)
     {
-        return fieldKind switch
+        result = ToolResult.None();
+
+        if (Workspace.ToolController.ActiveTool is RotateTool { State: RotateToolState.WaitingForDestinationPoint } &&
+            fieldKind == CommandHudFieldKind.Angle)
         {
-            CommandHudFieldKind.Distance => "Distance",
-            CommandHudFieldKind.Width => "Width",
-            CommandHudFieldKind.Height => "Height",
-            CommandHudFieldKind.Radius => "Radius",
-            CommandHudFieldKind.Factor => "Factor",
-            CommandHudFieldKind.Sides => "Sides",
-            _ => fieldKind.ToString()
-        };
+            if (!confirm)
+            {
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
+            result = SubmitCommandInput(FormatHudNumber(value));
+            ClearCommandHudInputOverrides();
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (Workspace.ToolController.ActiveTool is ScaleTool { State: ScaleToolState.WaitingForDestinationPoint } &&
+            fieldKind == CommandHudFieldKind.Factor)
+        {
+            if (!confirm)
+            {
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
+            result = SubmitCommandInput(FormatHudNumber(value));
+            ClearCommandHudInputOverrides();
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        return false;
     }
 
-    private bool IsCommandHudRectangleOverrideTargetActive()
+    private static string FormatHudNumber(double value)
     {
-        return Workspace.ToolController.ActiveTool is RectangleTool
-        {
-            State: TwoPointToolState.WaitingForSecondPoint
-        };
+        return value.ToString("0.############", CultureInfo.InvariantCulture);
     }
 
-    private bool IsCommandHudCircleOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is CircleTool
-        {
-            State: TwoPointToolState.WaitingForSecondPoint
-        };
-    }
-
-    private bool IsCommandHudArcStartOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is ArcTool
-        {
-            State: ArcToolState.WaitingForStartPoint
-        };
-    }
-
-    private bool IsCommandHudArcEndOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is ArcTool
-        {
-            State: ArcToolState.WaitingForEndPoint
-        };
-    }
-
-    private bool IsCommandHudArcThreePointsOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is ArcThreePointsTool
-        {
-            State: ArcThreePointsToolState.WaitingForPointOnArc or
-                   ArcThreePointsToolState.WaitingForEndPoint
-        };
-    }
-
-    private bool IsCommandHudEllipseMajorAxisOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is EllipseTool
-        {
-            State: EllipseToolState.WaitingForMajorAxis
-        };
-    }
-
-    private bool IsCommandHudEllipseMinorRadiusOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is EllipseTool
-        {
-            State: EllipseToolState.WaitingForMinorRadius
-        };
-    }
-
-    private bool IsCommandHudPolygonOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is PolygonTool
-        {
-            State: PolygonToolState.WaitingForVertex
-        };
-    }
-
-    private bool IsCommandHudSplineOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is SplineTool
-        {
-            State: SplineToolState.CollectingControlPoints
-        };
-    }
-
-    private bool IsCommandHudRectangleBySidesFirstSideOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is RectangleBySidesTool
-        {
-            State: RectangleBySidesToolState.WaitingForFirstSideEndPoint
-        };
-    }
-
-    private bool IsCommandHudRectangleBySidesSecondSideOverrideTargetActive()
-    {
-        return Workspace.ToolController.ActiveTool is RectangleBySidesTool
-        {
-            State: RectangleBySidesToolState.WaitingForSecondSidePoint
-        };
-    }
 
     private bool IsCommandHudPointOverrideTargetActive()
     {
         ICadTool activeTool = Workspace.ToolController.ActiveTool;
 
         return activeTool is LineTool { State: TwoPointToolState.WaitingForSecondPoint } ||
-               activeTool is PolylineTool { State: PolylineToolState.CollectingVertices };
+               activeTool is PolylineTool { State: PolylineToolState.CollectingVertices } ||
+               activeTool is MoveTool { MoveState: MoveToolState.WaitingForDestinationPoint } ||
+               activeTool is CopyTool { CopyState: MoveToolState.WaitingForDestinationPoint } ||
+               activeTool is RotateTool { State: RotateToolState.WaitingForReferencePoint } ||
+               activeTool is ScaleTool { State: ScaleToolState.WaitingForReferencePoint };
     }
 
     private bool IsCommandHudPointInputTargetActive()
@@ -3739,94 +3308,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() &&
-            (_commandHudInputState.Width is not null || _commandHudInputState.AngleDegrees is not null))
-        {
-            return TryResolveRectangleBySidesFirstSideCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudRectangleBySidesSecondSideOverrideTargetActive() &&
-            _commandHudInputState.Height is not null)
-        {
-            return TryResolveRectangleBySidesSecondSideCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudRectangleOverrideTargetActive() &&
-            _commandHudInputState.HasSizeOverride)
-        {
-            return TryResolveRectangleCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudCircleOverrideTargetActive() &&
-            _commandHudInputState.Radius is not null)
-        {
-            return TryResolveCircleCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudArcStartOverrideTargetActive() &&
-            (_commandHudInputState.Radius is not null || _commandHudInputState.AngleDegrees is not null))
-        {
-            return TryResolveArcStartCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudArcEndOverrideTargetActive() &&
-            _commandHudInputState.AngleDegrees is not null)
-        {
-            return TryResolveArcEndCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudArcThreePointsOverrideTargetActive() &&
-            (_commandHudInputState.Distance is not null || _commandHudInputState.AngleDegrees is not null))
-        {
-            return TryResolveArcThreePointsCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudEllipseMajorAxisOverrideTargetActive() &&
-            (_commandHudInputState.Radius is not null || _commandHudInputState.AngleDegrees is not null))
-        {
-            return TryResolveEllipseMajorAxisCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudEllipseMinorRadiusOverrideTargetActive() &&
-            _commandHudInputState.Radius is not null)
-        {
-            return TryResolveEllipseMinorRadiusCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudPolygonOverrideTargetActive() &&
-            (_commandHudInputState.Radius is not null || _commandHudInputState.AngleDegrees is not null))
-        {
-            return TryResolvePolygonCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
-        if (IsCommandHudSplineOverrideTargetActive() &&
-            (_commandHudInputState.Distance is not null || _commandHudInputState.AngleDegrees is not null))
-        {
-            return TryResolveSplineCommandHudOverridePoint(
-                out worldPoint,
-                out errorMessage);
-        }
-
         if (!IsCommandHudPointOverrideTargetActive())
         {
             errorMessage = "Distance/angle input requires a base point.";
@@ -3850,394 +3331,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             out errorMessage);
     }
 
-    private bool TryResolveRectangleBySidesFirstSideCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.Context.CurrentBasePoint is null)
-        {
-            errorMessage = "Rectangle by sides width input requires the first corner.";
-            return false;
-        }
-
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-        double width = _commandHudInputState.Width ?? measurement.Distance ?? 0.0;
-        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
-
-        if (width <= 0)
-        {
-            errorMessage = "Rectangle by sides width must be greater than zero.";
-            return false;
-        }
-
-        return TryResolveDistanceAnglePoint(
-            width,
-            angleDegrees,
-            out worldPoint,
-            out errorMessage);
-    }
-
-    private bool TryResolveRectangleBySidesSecondSideCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.ToolController.ActiveTool is not RectangleBySidesTool rectangleBySidesTool ||
-            rectangleBySidesTool.StartPoint is null ||
-            rectangleBySidesTool.FirstSideEndPoint is null)
-        {
-            errorMessage = "Rectangle by sides height input requires the first side.";
-            return false;
-        }
-
-        double height = _commandHudInputState.Height ?? 0.0;
-
-        if (height <= 0)
-        {
-            errorMessage = "Rectangle by sides height must be greater than zero.";
-            return false;
-        }
-
-        Point2D startUserPoint = Workspace.CurrentUcs.WorldToUser(
-            rectangleBySidesTool.StartPoint.Value);
-        Point2D firstSideEndUserPoint = Workspace.CurrentUcs.WorldToUser(
-            rectangleBySidesTool.FirstSideEndPoint.Value);
-        Point2D liveUserPoint = GetLivePointerUserPoint();
-
-        Vector2D firstSide = startUserPoint.VectorTo(firstSideEndUserPoint);
-        double firstSideLength = firstSide.Length;
-
-        if (Workspace.GeometryTolerance.IsDistanceZero(firstSideLength))
-        {
-            errorMessage = "Rectangle by sides first side length must be greater than zero.";
-            return false;
-        }
-
-        Vector2D perpendicularDirection = (firstSide / firstSideLength).PerpendicularLeft();
-        double signedLiveHeight = startUserPoint.VectorTo(liveUserPoint).Dot(perpendicularDirection);
-        double sign = signedLiveHeight < 0 ? -1.0 : 1.0;
-        Point2D secondSideUserPoint = startUserPoint + perpendicularDirection * (sign * height);
-
-        worldPoint = Workspace.CurrentUcs.UserToWorld(secondSideUserPoint);
-        return true;
-    }
-
-    private bool TryResolveRectangleCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.Context.CurrentBasePoint is null)
-        {
-            errorMessage = "Rectangle size input requires the first corner.";
-            return false;
-        }
-
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-
-        double width = _commandHudInputState.Width ??
-            (measurement.DeltaX is null ? 0.0 : Math.Abs(measurement.DeltaX.Value));
-        double height = _commandHudInputState.Height ??
-            (measurement.DeltaY is null ? 0.0 : Math.Abs(measurement.DeltaY.Value));
-
-        if (width <= 0 || height <= 0)
-        {
-            errorMessage = "Rectangle width and height must be greater than zero.";
-            return false;
-        }
-
-        double signX = measurement.DeltaX is null || measurement.DeltaX.Value >= 0
-            ? 1.0
-            : -1.0;
-        double signY = measurement.DeltaY is null || measurement.DeltaY.Value >= 0
-            ? 1.0
-            : -1.0;
-
-        Point2D firstCornerUserPoint = Workspace.CurrentUcs.WorldToUser(
-            Workspace.Context.CurrentBasePoint.Value);
-        var oppositeCornerUserPoint = new Point2D(
-            firstCornerUserPoint.X + signX * width,
-            firstCornerUserPoint.Y + signY * height);
-
-        worldPoint = Workspace.CurrentUcs.UserToWorld(oppositeCornerUserPoint);
-        return true;
-    }
-
-    private bool TryResolveCircleCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.Context.CurrentBasePoint is null)
-        {
-            errorMessage = "Circle radius input requires the center point.";
-            return false;
-        }
-
-        double radius = _commandHudInputState.Radius ?? 0.0;
-
-        if (radius <= 0)
-        {
-            errorMessage = "Circle radius must be greater than zero.";
-            return false;
-        }
-
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-        double angleDegrees = measurement.AngleDegrees ?? 0.0;
-        double angleRadians = angleDegrees * Math.PI / 180.0;
-
-        Point2D centerUserPoint = Workspace.CurrentUcs.WorldToUser(
-            Workspace.Context.CurrentBasePoint.Value);
-        var radiusPointUserPoint = new Point2D(
-            centerUserPoint.X + Math.Cos(angleRadians) * radius,
-            centerUserPoint.Y + Math.Sin(angleRadians) * radius);
-
-        worldPoint = Workspace.CurrentUcs.UserToWorld(radiusPointUserPoint);
-        return true;
-    }
-
-    private bool TryResolveArcStartCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.Context.CurrentBasePoint is null)
-        {
-            errorMessage = "Arc radius input requires the center point.";
-            return false;
-        }
-
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-        double radius = _commandHudInputState.Radius ?? measurement.Distance ?? 0.0;
-        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
-
-        if (radius <= 0)
-        {
-            errorMessage = "Arc radius must be greater than zero.";
-            return false;
-        }
-
-        return TryResolveDistanceAnglePoint(
-            radius,
-            angleDegrees,
-            out worldPoint,
-            out errorMessage);
-    }
-
-    private bool TryResolveArcEndCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.ToolController.ActiveTool is not ArcTool arcTool ||
-            arcTool.CenterPoint is null ||
-            arcTool.StartPoint is null)
-        {
-            errorMessage = "Arc angle input requires the start point.";
-            return false;
-        }
-
-        double radius = arcTool.CenterPoint.Value.DistanceTo(arcTool.StartPoint.Value);
-
-        if (radius <= 0)
-        {
-            errorMessage = "Arc radius must be greater than zero.";
-            return false;
-        }
-
-        double angleDegrees = _commandHudInputState.AngleDegrees ?? 0.0;
-        double angleRadians = angleDegrees * Math.PI / 180.0;
-
-        Point2D centerUserPoint = Workspace.CurrentUcs.WorldToUser(
-            arcTool.CenterPoint.Value);
-        var endPointUserPoint = new Point2D(
-            centerUserPoint.X + Math.Cos(angleRadians) * radius,
-            centerUserPoint.Y + Math.Sin(angleRadians) * radius);
-
-        worldPoint = Workspace.CurrentUcs.UserToWorld(endPointUserPoint);
-        return true;
-    }
-
-    private bool TryResolveArcThreePointsCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.Context.CurrentBasePoint is null)
-        {
-            errorMessage = "Arc 3P distance input requires the previous point.";
-            return false;
-        }
-
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-        double distance = _commandHudInputState.Distance ?? measurement.Distance ?? 0.0;
-        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
-
-        if (distance <= 0)
-        {
-            errorMessage = "Arc 3P distance must be greater than zero.";
-            return false;
-        }
-
-        return TryResolveDistanceAnglePoint(
-            distance,
-            angleDegrees,
-            out worldPoint,
-            out errorMessage);
-    }
-
-    private bool TryResolveEllipseMajorAxisCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.Context.CurrentBasePoint is null)
-        {
-            errorMessage = "Ellipse major radius input requires the center point.";
-            return false;
-        }
-
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-        double radius = _commandHudInputState.Radius ?? measurement.Distance ?? 0.0;
-        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
-
-        if (radius <= 0)
-        {
-            errorMessage = "Ellipse major radius must be greater than zero.";
-            return false;
-        }
-
-        return TryResolveDistanceAnglePoint(
-            radius,
-            angleDegrees,
-            out worldPoint,
-            out errorMessage);
-    }
-
-    private bool TryResolveEllipseMinorRadiusCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.ToolController.ActiveTool is not EllipseTool ellipseTool ||
-            ellipseTool.Center is null ||
-            ellipseTool.MajorAxisPoint is null)
-        {
-            errorMessage = "Ellipse minor radius input requires the major axis.";
-            return false;
-        }
-
-        double minorRadius = _commandHudInputState.Radius ?? 0.0;
-
-        if (minorRadius <= 0)
-        {
-            errorMessage = "Ellipse minor radius must be greater than zero.";
-            return false;
-        }
-
-        Point2D centerUserPoint = Workspace.CurrentUcs.WorldToUser(
-            ellipseTool.Center.Value);
-        Point2D majorAxisPointUserPoint = Workspace.CurrentUcs.WorldToUser(
-            ellipseTool.MajorAxisPoint.Value);
-        Point2D liveUserPoint = GetLivePointerUserPoint();
-
-        Vector2D majorAxis = centerUserPoint.VectorTo(majorAxisPointUserPoint);
-        double majorRadius = majorAxis.Length;
-
-        if (Workspace.GeometryTolerance.IsDistanceZero(majorRadius))
-        {
-            errorMessage = "Ellipse major radius must be greater than zero.";
-            return false;
-        }
-
-        Vector2D perpendicularDirection = (majorAxis / majorRadius).PerpendicularLeft();
-        double signedLiveRadius = centerUserPoint.VectorTo(liveUserPoint).Dot(perpendicularDirection);
-        double sign = signedLiveRadius < 0 ? -1.0 : 1.0;
-        Point2D minorRadiusUserPoint = centerUserPoint + perpendicularDirection * (sign * minorRadius);
-
-        worldPoint = Workspace.CurrentUcs.UserToWorld(minorRadiusUserPoint);
-        return true;
-    }
-
-    private bool TryResolvePolygonCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.Context.CurrentBasePoint is null)
-        {
-            errorMessage = "Polygon radius input requires the center point.";
-            return false;
-        }
-
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-        double radius = _commandHudInputState.Radius ?? measurement.Distance ?? 0.0;
-        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
-
-        if (radius <= 0)
-        {
-            errorMessage = "Polygon radius must be greater than zero.";
-            return false;
-        }
-
-        return TryResolveDistanceAnglePoint(
-            radius,
-            angleDegrees,
-            out worldPoint,
-            out errorMessage);
-    }
-
-    private bool TryResolveSplineCommandHudOverridePoint(
-        out Point2D worldPoint,
-        out string? errorMessage)
-    {
-        worldPoint = Point2D.Origin;
-        errorMessage = null;
-
-        if (Workspace.Context.CurrentBasePoint is null)
-        {
-            errorMessage = "Spline distance input requires the previous control point.";
-            return false;
-        }
-
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-        double distance = _commandHudInputState.Distance ?? measurement.Distance ?? 0.0;
-        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
-
-        if (distance <= 0)
-        {
-            errorMessage = "Spline distance must be greater than zero.";
-            return false;
-        }
-
-        return TryResolveDistanceAnglePoint(
-            distance,
-            angleDegrees,
-            out worldPoint,
-            out errorMessage);
-    }
-
     private void ApplyCommandHudInputOverridesToPreview()
     {
         if (!_commandHudInputState.HasAnyOverride)
@@ -4251,18 +3344,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return;
         }
 
-        if ((IsCommandHudPointOverrideTargetActive() ||
-             IsCommandHudRectangleOverrideTargetActive() ||
-             IsCommandHudCircleOverrideTargetActive() ||
-             IsCommandHudArcStartOverrideTargetActive() ||
-             IsCommandHudArcEndOverrideTargetActive() ||
-             IsCommandHudArcThreePointsOverrideTargetActive() ||
-             IsCommandHudEllipseMajorAxisOverrideTargetActive() ||
-             IsCommandHudEllipseMinorRadiusOverrideTargetActive() ||
-             IsCommandHudPolygonOverrideTargetActive() ||
-             IsCommandHudSplineOverrideTargetActive() ||
-             IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() ||
-             IsCommandHudRectangleBySidesSecondSideOverrideTargetActive()) &&
+        if (IsCommandHudPointOverrideTargetActive() &&
             TryResolveCommandHudOverridePoint(
                 requireCompleteCoordinates: false,
                 out Point2D worldPoint,
@@ -4296,140 +3378,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             out value);
     }
 
-    private void FreezeComplementaryHudValueIfNeeded(CommandHudFieldKind fieldKind)
+    private void FreezeComplementaryPolarHudValueIfNeeded(CommandHudFieldKind fieldKind)
     {
+        if (!IsCommandHudPointOverrideTargetActive())
+        {
+            return;
+        }
+
         CommandLiveMeasurement measurement = GetLiveMeasurement();
 
-        if (IsCommandHudPointOverrideTargetActive())
+        if (fieldKind == CommandHudFieldKind.Distance &&
+            _commandHudInputState.AngleDegrees is null &&
+            measurement.AngleDegrees is not null)
         {
-            if (fieldKind == CommandHudFieldKind.Distance &&
-                _commandHudInputState.AngleDegrees is null &&
-                measurement.AngleDegrees is not null)
-            {
-                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
-            }
-            else if (fieldKind == CommandHudFieldKind.Angle &&
-                     _commandHudInputState.Distance is null &&
-                     measurement.Distance is not null)
-            {
-                _commandHudInputState.Distance = measurement.Distance;
-            }
-
-            return;
+            _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
         }
-
-        if (IsCommandHudRectangleOverrideTargetActive())
+        else if (fieldKind == CommandHudFieldKind.Angle &&
+                 _commandHudInputState.Distance is null &&
+                 measurement.Distance is not null)
         {
-            if (fieldKind == CommandHudFieldKind.Width &&
-                _commandHudInputState.Height is null &&
-                measurement.DeltaY is not null)
-            {
-                _commandHudInputState.Height = Math.Abs(measurement.DeltaY.Value);
-            }
-            else if (fieldKind == CommandHudFieldKind.Height &&
-                     _commandHudInputState.Width is null &&
-                     measurement.DeltaX is not null)
-            {
-                _commandHudInputState.Width = Math.Abs(measurement.DeltaX.Value);
-            }
-
-            return;
-        }
-
-        if (IsCommandHudRectangleBySidesFirstSideOverrideTargetActive())
-        {
-            if (fieldKind == CommandHudFieldKind.Width &&
-                _commandHudInputState.AngleDegrees is null &&
-                measurement.AngleDegrees is not null)
-            {
-                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
-            }
-            else if (fieldKind == CommandHudFieldKind.Angle &&
-                     _commandHudInputState.Width is null &&
-                     measurement.Distance is not null)
-            {
-                _commandHudInputState.Width = measurement.Distance;
-            }
-        }
-
-        if (IsCommandHudArcStartOverrideTargetActive())
-        {
-            if (fieldKind == CommandHudFieldKind.Radius &&
-                _commandHudInputState.AngleDegrees is null &&
-                measurement.AngleDegrees is not null)
-            {
-                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
-            }
-            else if (fieldKind == CommandHudFieldKind.Angle &&
-                     _commandHudInputState.Radius is null &&
-                     measurement.Distance is not null)
-            {
-                _commandHudInputState.Radius = measurement.Distance;
-            }
-        }
-
-        if (IsCommandHudEllipseMajorAxisOverrideTargetActive())
-        {
-            if (fieldKind == CommandHudFieldKind.Radius &&
-                _commandHudInputState.AngleDegrees is null &&
-                measurement.AngleDegrees is not null)
-            {
-                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
-            }
-            else if (fieldKind == CommandHudFieldKind.Angle &&
-                     _commandHudInputState.Radius is null &&
-                     measurement.Distance is not null)
-            {
-                _commandHudInputState.Radius = measurement.Distance;
-            }
-        }
-
-        if (IsCommandHudArcThreePointsOverrideTargetActive())
-        {
-            if (fieldKind == CommandHudFieldKind.Distance &&
-                _commandHudInputState.AngleDegrees is null &&
-                measurement.AngleDegrees is not null)
-            {
-                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
-            }
-            else if (fieldKind == CommandHudFieldKind.Angle &&
-                     _commandHudInputState.Distance is null &&
-                     measurement.Distance is not null)
-            {
-                _commandHudInputState.Distance = measurement.Distance;
-            }
-        }
-
-        if (IsCommandHudPolygonOverrideTargetActive())
-        {
-            if (fieldKind == CommandHudFieldKind.Radius &&
-                _commandHudInputState.AngleDegrees is null &&
-                measurement.AngleDegrees is not null)
-            {
-                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
-            }
-            else if (fieldKind == CommandHudFieldKind.Angle &&
-                     _commandHudInputState.Radius is null &&
-                     measurement.Distance is not null)
-            {
-                _commandHudInputState.Radius = measurement.Distance;
-            }
-        }
-
-        if (IsCommandHudSplineOverrideTargetActive())
-        {
-            if (fieldKind == CommandHudFieldKind.Distance &&
-                _commandHudInputState.AngleDegrees is null &&
-                measurement.AngleDegrees is not null)
-            {
-                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
-            }
-            else if (fieldKind == CommandHudFieldKind.Angle &&
-                     _commandHudInputState.Distance is null &&
-                     measurement.Distance is not null)
-            {
-                _commandHudInputState.Distance = measurement.Distance;
-            }
+            _commandHudInputState.Distance = measurement.Distance;
         }
     }
 

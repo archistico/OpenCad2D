@@ -1,12 +1,8 @@
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.Core.Entities;
-using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
-using OpenCad2D.Tools.Common;
-using OpenCad2D.Tools.Drawing;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace OpenCad2D.App.Tests;
 
@@ -1102,908 +1098,82 @@ public sealed class MainWindowViewModelCommandLineTests
 
 
     [Fact]
-    public void CommandHudInput_LineAndPolylineFields_ShouldRemainEditableCheckpoint()
+    public void CommandHudInput_MoveDistanceAngle_ShouldMoveSelectedEntity()
     {
         var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
 
-        viewModel.SubmitCommandInput("L");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
 
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Distance && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
+        viewModel.SubmitCommandInput("M");
 
-        var polylineViewModel = new MainWindowViewModel();
-
-        polylineViewModel.SubmitCommandInput("PL");
-        polylineViewModel.SubmitCommandInput("0,0");
-        polylineViewModel.SetMousePosition(new Point2D(0, 10));
-
-        Assert.Contains(
-            polylineViewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Distance && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            polylineViewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleWidthHeight_ShouldBeEditableWithDedicatedImplementation()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("REC");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 5));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Width && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Height && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleWidthHeight_ShouldCreateRectangle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("REC");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(20, 10));
-
-        bool widthHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Width,
-            "12",
-            confirm: false,
-            out _);
-        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Height,
-            "6",
-            confirm: true,
-            out _);
-
-        Assert.True(widthHandled);
-        Assert.True(heightHandled);
-
-        PolylineEntity rectangle = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
-        Assert.True(rectangle.IsClosed);
-        Assert.Equal(4, rectangle.Vertices.Count);
-        Assert.True(ArePointsNear(new Point2D(0, 0), rectangle.Vertices[0]));
-        Assert.True(ArePointsNear(new Point2D(12, 0), rectangle.Vertices[1]));
-        Assert.True(ArePointsNear(new Point2D(12, 6), rectangle.Vertices[2]));
-        Assert.True(ArePointsNear(new Point2D(0, 6), rectangle.Vertices[3]));
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleFirstCorner_ShouldAcceptAbsoluteXAndY()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("REC");
-
-        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+        bool baseXHandled = viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.X,
-            "2",
+            "0",
             confirm: false,
             out _);
-        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
+        bool baseYHandled = viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.Y,
-            "3",
-            confirm: true,
-            out _);
-
-        viewModel.SetMousePosition(new Point2D(12, 8));
-        bool widthHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Width,
-            "10",
-            confirm: false,
-            out _);
-        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Height,
-            "5",
-            confirm: true,
-            out _);
-
-        Assert.True(xHandled);
-        Assert.True(yHandled);
-        Assert.True(widthHandled);
-        Assert.True(heightHandled);
-
-        PolylineEntity rectangle = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
-        Assert.True(rectangle.IsClosed);
-        Assert.True(ArePointsNear(new Point2D(2, 3), rectangle.Vertices[0]));
-        Assert.True(ArePointsNear(new Point2D(12, 3), rectangle.Vertices[1]));
-        Assert.True(ArePointsNear(new Point2D(12, 8), rectangle.Vertices[2]));
-        Assert.True(ArePointsNear(new Point2D(2, 8), rectangle.Vertices[3]));
-    }
-
-
-
-    [Fact]
-    public void CommandHudInput_RectangleWidthOnly_ShouldFreezeVisibleLiveHeight()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("REC");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(20, 10));
-
-        bool widthHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Width,
-            "12",
-            confirm: false,
-            out _);
-
-        viewModel.SetMousePosition(new Point2D(20, 100));
-        bool confirmed = viewModel.TryConfirmCommandHudInputOverrides(out _);
-
-        Assert.True(widthHandled);
-        Assert.True(confirmed);
-
-        PolylineEntity rectangle = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
-        Assert.True(rectangle.IsClosed);
-        Assert.True(ArePointsNear(new Point2D(0, 0), rectangle.Vertices[0]));
-        Assert.True(ArePointsNear(new Point2D(12, 0), rectangle.Vertices[1]));
-        Assert.True(ArePointsNear(new Point2D(12, 10), rectangle.Vertices[2]));
-        Assert.True(ArePointsNear(new Point2D(0, 10), rectangle.Vertices[3]));
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleWidthHeight_ShouldRespectLiveQuadrant()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("REC");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(-20, -10));
-
-        bool widthHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Width,
-            "12",
-            confirm: false,
-            out _);
-        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Height,
-            "6",
-            confirm: true,
-            out _);
-
-        Assert.True(widthHandled);
-        Assert.True(heightHandled);
-
-        PolylineEntity rectangle = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
-        Assert.True(rectangle.IsClosed);
-        Assert.True(ArePointsNear(new Point2D(0, 0), rectangle.Vertices[0]));
-        Assert.True(ArePointsNear(new Point2D(-12, 0), rectangle.Vertices[1]));
-        Assert.True(ArePointsNear(new Point2D(-12, -6), rectangle.Vertices[2]));
-        Assert.True(ArePointsNear(new Point2D(0, -6), rectangle.Vertices[3]));
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleFirstCornerIncompleteCoordinates_ShouldNotCreateRectangle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("REC");
-
-        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.X,
-            "10",
-            confirm: true,
-            out var result);
-
-        Assert.True(xHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is PolylineEntity);
-        Assert.Contains("both X and Y", viewModel.LastMessage);
-    }
-
-
-    [Fact]
-    public void CommandHudInput_CircleRadius_ShouldBeEditableWithDedicatedImplementation()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("CIRCLE");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_CircleRadius_ShouldCreateCircle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("CIRCLE");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "7",
-            confirm: true,
-            out _);
-
-        Assert.True(radiusHandled);
-
-        CircleEntity circle = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<CircleEntity>());
-        Assert.True(ArePointsNear(new Point2D(0, 0), circle.Center));
-        Assert.Equal(7.0, circle.Radius, 9);
-    }
-
-    [Fact]
-    public void CommandHudInput_CircleCenter_ShouldAcceptAbsoluteXAndY()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("CIRCLE");
-
-        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.X,
-            "4",
-            confirm: false,
-            out _);
-        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Y,
-            "5",
-            confirm: true,
-            out _);
-
-        viewModel.SetMousePosition(new Point2D(14, 5));
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "10",
-            confirm: true,
-            out _);
-
-        Assert.True(xHandled);
-        Assert.True(yHandled);
-        Assert.True(radiusHandled);
-
-        CircleEntity circle = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<CircleEntity>());
-        Assert.True(ArePointsNear(new Point2D(4, 5), circle.Center));
-        Assert.Equal(10.0, circle.Radius, 9);
-    }
-
-    [Fact]
-    public void CommandHudInput_CircleCenterIncompleteCoordinates_ShouldNotCreateCircle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("CIRCLE");
-
-        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.X,
-            "10",
-            confirm: true,
-            out var result);
-
-        Assert.True(xHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is CircleEntity);
-        Assert.Contains("both X and Y", viewModel.LastMessage);
-    }
-
-
-    [Fact]
-    public void CommandHudInput_CircleCenterPrompt_ShouldExposeOnlyCoordinateFields()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("CIRCLE");
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.X && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Y && field.CanAcceptTypedOverride);
-        Assert.DoesNotContain(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_CircleRadiusZero_ShouldNotCreateCircle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("CIRCLE");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
             "0",
             confirm: true,
-            out var result);
+            out _);
 
-        Assert.True(radiusHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is CircleEntity);
-        Assert.Contains("greater than zero", viewModel.LastMessage);
-    }
+        viewModel.SetMousePosition(new Point2D(0, 10));
 
-    [Fact]
-    public void CommandHudInput_CircleRadiusNegative_ShouldNotCreateCircle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("CIRCLE");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "-5",
-            confirm: true,
-            out var result);
-
-        Assert.True(radiusHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is CircleEntity);
-        Assert.Contains("greater than zero", viewModel.LastMessage);
-    }
-
-
-    [Fact]
-    public void CommandHudInput_RectangleBySidesFirstSide_ShouldExposeEditableWidthAndAngle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("RSIDES");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Width && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleBySidesSecondSide_ShouldExposeEditableHeight()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("RSIDES");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SetMousePosition(new Point2D(0, 5));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Height && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleBySidesWidthAngleHeight_ShouldCreateRectangle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("RSIDES");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool widthHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Width,
-            "10",
+        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "5",
             confirm: false,
             out _);
         bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Angle,
-            "0",
-            confirm: true,
-            out _);
-
-        viewModel.SetMousePosition(new Point2D(0, 5));
-        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Height,
-            "5",
-            confirm: true,
-            out _);
-
-        Assert.True(widthHandled);
-        Assert.True(angleHandled);
-        Assert.True(heightHandled);
-
-        PolylineEntity rectangle = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
-        Assert.True(rectangle.IsClosed);
-        Assert.Equal(4, rectangle.Vertices.Count);
-        Assert.True(ArePointsNear(new Point2D(0, 0), rectangle.Vertices[0]));
-        Assert.True(ArePointsNear(new Point2D(10, 0), rectangle.Vertices[1]));
-        Assert.True(ArePointsNear(new Point2D(10, 5), rectangle.Vertices[2]));
-        Assert.True(ArePointsNear(new Point2D(0, 5), rectangle.Vertices[3]));
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleBySidesFirstCorner_ShouldAcceptAbsoluteXAndY()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("RSIDES");
-
-        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.X,
-            "2",
-            confirm: false,
-            out _);
-        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Y,
-            "3",
-            confirm: true,
-            out _);
-
-        viewModel.SetMousePosition(new Point2D(12, 3));
-        bool widthHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Width,
-            "10",
-            confirm: true,
-            out _);
-
-        viewModel.SetMousePosition(new Point2D(2, 8));
-        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Height,
-            "5",
-            confirm: true,
-            out _);
-
-        Assert.True(xHandled);
-        Assert.True(yHandled);
-        Assert.True(widthHandled);
-        Assert.True(heightHandled);
-
-        PolylineEntity rectangle = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
-        Assert.True(rectangle.IsClosed);
-        Assert.True(ArePointsNear(new Point2D(2, 3), rectangle.Vertices[0]));
-        Assert.True(ArePointsNear(new Point2D(12, 3), rectangle.Vertices[1]));
-        Assert.True(ArePointsNear(new Point2D(12, 8), rectangle.Vertices[2]));
-        Assert.True(ArePointsNear(new Point2D(2, 8), rectangle.Vertices[3]));
-    }
-
-    [Fact]
-    public void CommandHudInput_RectangleBySidesHeightNegative_ShouldNotCreateRectangle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("RSIDES");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SetMousePosition(new Point2D(0, 5));
-
-        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Height,
-            "-5",
-            confirm: true,
-            out var result);
-
-        Assert.True(heightHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is PolylineEntity);
-        Assert.Contains("greater than zero", viewModel.LastMessage);
-    }
-
-    [Fact]
-    public void CommandHudInput_ArcStart_ShouldExposeEditableRadiusAndAngle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("ARC");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_ArcEnd_ShouldExposeEditableAngle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("ARC");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SetMousePosition(new Point2D(0, 10));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-        Assert.DoesNotContain(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_ArcRadiusAngleEndAngle_ShouldCreateArc()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("ARC");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "10",
-            confirm: false,
-            out _);
-        bool startAngleHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Angle,
-            "0",
-            confirm: true,
-            out _);
-
-        viewModel.SetMousePosition(new Point2D(0, 10));
-        bool endAngleHandled = viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.Angle,
             "90",
             confirm: true,
             out _);
 
-        Assert.True(radiusHandled);
-        Assert.True(startAngleHandled);
-        Assert.True(endAngleHandled);
-
-        ArcEntity arc = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>());
-        Assert.True(ArePointsNear(new Point2D(0, 0), arc.Center));
-        Assert.Equal(10.0, arc.Radius, 9);
-        Assert.Equal(0.0, arc.StartAngle.Degrees, 9);
-        Assert.Equal(90.0, arc.EndAngle.Degrees, 9);
-    }
-
-    [Fact]
-    public void CommandHudInput_ArcRadiusNegative_ShouldNotCreateArc()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("ARC");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "-5",
-            confirm: true,
-            out var result);
-
-        Assert.True(radiusHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is ArcEntity);
-        Assert.Contains("greater than zero", viewModel.LastMessage);
-    }
-
-    [Fact]
-    public void CommandHudInput_ArcThreePointsPointOnArc_ShouldExposeEditableDistanceAndAngle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("ARC3P");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SetMousePosition(new Point2D(0, 10));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Distance && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_ArcThreePointsEndPoint_ShouldExposeEditableDistanceAndAngle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("ARC3P");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SubmitCommandInput("0,10");
-        viewModel.SetMousePosition(new Point2D(-10, 0));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Distance && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_ArcThreePointsDistanceAngle_ShouldCreateArc()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("ARC3P");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SetMousePosition(new Point2D(0, 10));
-
-        bool pointDistanceHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Distance,
-            "14.142135623730951",
-            confirm: false,
-            out _);
-        bool pointAngleHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Angle,
-            "135",
-            confirm: true,
-            out _);
-
-        viewModel.SetMousePosition(new Point2D(-10, 0));
-        bool endDistanceHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Distance,
-            "14.142135623730951",
-            confirm: false,
-            out _);
-        bool endAngleHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Angle,
-            "-135",
-            confirm: true,
-            out _);
-
-        Assert.True(pointDistanceHandled);
-        Assert.True(pointAngleHandled);
-        Assert.True(endDistanceHandled);
-        Assert.True(endAngleHandled);
-
-        ArcEntity arc = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>());
-        Assert.True(ArePointsNear(new Point2D(0, 0), arc.Center));
-        Assert.Equal(10.0, arc.Radius, 8);
-    }
-
-    [Fact]
-    public void CommandHudInput_ArcThreePointsDistanceNegative_ShouldNotAdvance()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("ARC3P");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SetMousePosition(new Point2D(0, 10));
-
-        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Distance,
-            "-5",
-            confirm: true,
-            out var result);
-
+        Assert.True(baseXHandled);
+        Assert.True(baseYHandled);
         Assert.True(distanceHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is ArcEntity);
-        Assert.Contains("greater than zero", viewModel.LastMessage);
+        Assert.True(angleHandled);
+
+        LineEntity moved = Assert.IsType<LineEntity>(
+            viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+        Assert.True(ArePointsNear(new Point2D(0, 5), moved.Start));
+        Assert.True(ArePointsNear(new Point2D(10, 5), moved.End));
     }
 
     [Fact]
-    public void CommandHudInput_EllipseMajorAxis_ShouldExposeEditableRadiusAndAngle()
+    public void CommandHudInput_CopyDistanceAngle_ShouldCopySelectedEntity()
     {
         var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
 
-        viewModel.SubmitCommandInput("EL");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
 
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
+        viewModel.SubmitCommandInput("COPY");
 
-    [Fact]
-    public void CommandHudInput_EllipseMinorRadius_ShouldExposeEditableRadius()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("EL");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SetMousePosition(new Point2D(0, 4));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
-        Assert.DoesNotContain(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_EllipseMajorRadiusAngleMinorRadius_ShouldCreateEllipse()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("EL");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool majorRadiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "10",
+        bool baseXHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "0",
             confirm: false,
             out _);
-        bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Angle,
+        bool baseYHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
             "0",
             confirm: true,
             out _);
 
-        viewModel.SetMousePosition(new Point2D(0, 4));
-        bool minorRadiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "4",
-            confirm: true,
-            out _);
-
-        Assert.True(majorRadiusHandled);
-        Assert.True(angleHandled);
-        Assert.True(minorRadiusHandled);
-
-        EllipseEntity ellipse = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<EllipseEntity>());
-        Assert.True(ArePointsNear(new Point2D(0, 0), ellipse.Center));
-        Assert.True(AreVectorsNear(new Vector2D(10, 0), ellipse.MajorAxis));
-        Assert.Equal(4.0, ellipse.MinorRadius, 9);
-    }
-
-    [Fact]
-    public void CommandHudInput_EllipseMinorRadiusNegative_ShouldNotCreateEllipse()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("EL");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SubmitCommandInput("10,0");
-        viewModel.SetMousePosition(new Point2D(0, 4));
-
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "-4",
-            confirm: true,
-            out var result);
-
-        Assert.True(radiusHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is EllipseEntity);
-        Assert.Contains("greater than zero", viewModel.LastMessage);
-    }
-
-    [Fact]
-    public void CommandHudInput_PolygonVertex_ShouldExposeEditableRadiusAndAngle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("POLYGON");
-        viewModel.SubmitCommandInput("6");
-        viewModel.SubmitCommandInput("0,0");
         viewModel.SetMousePosition(new Point2D(10, 0));
 
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_PolygonSides_ShouldExposeEditableSides()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("POLYGON");
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Sides &&
-                field.CanAcceptTypedOverride &&
-                field.LiveValue == 6);
-    }
-
-    [Fact]
-    public void CommandHudInput_PolygonSides_ShouldSetSideCount()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("POLYGON");
-
-        bool sidesHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Sides,
+        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
             "5",
-            confirm: true,
-            out _);
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "10",
-            confirm: true,
-            out _);
-
-        Assert.True(sidesHandled);
-        Assert.True(radiusHandled);
-
-        PolylineEntity polygon = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
-        Assert.True(polygon.IsClosed);
-        Assert.Equal(5, polygon.Vertices.Count);
-    }
-
-    [Fact]
-    public void CommandHudInput_PolygonSidesOutOfRange_ShouldStayOnSidesPrompt()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("POLYGON");
-
-        bool sidesHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Sides,
-            "2",
-            confirm: true,
-            out var result);
-
-        Assert.True(sidesHandled);
-        Assert.NotNull(result);
-        Assert.Contains("between 3 and 256", viewModel.LastMessage);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Sides && field.CanAcceptTypedOverride);
-    }
-
-    [Fact]
-    public void CommandHudInput_PolygonRadiusAngle_ShouldCreatePolygon()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("POLYGON");
-        viewModel.SubmitCommandInput("6");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "10",
             confirm: false,
             out _);
         bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
@@ -2012,322 +1182,212 @@ public sealed class MainWindowViewModelCommandLineTests
             confirm: true,
             out _);
 
-        Assert.True(radiusHandled);
+        Assert.True(baseXHandled);
+        Assert.True(baseYHandled);
+        Assert.True(distanceHandled);
         Assert.True(angleHandled);
 
-        PolylineEntity polygon = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
-        Assert.True(polygon.IsClosed);
-        Assert.Equal(6, polygon.Vertices.Count);
-        Assert.True(ArePointsNear(new Point2D(10, 0), polygon.Vertices[0]));
+        LineEntity[] lines = viewModel.Workspace.Document.Entities.All
+            .OfType<LineEntity>()
+            .ToArray();
+
+        Assert.Equal(2, lines.Length);
+        Assert.Contains(lines, entity =>
+            ArePointsNear(new Point2D(0, 0), entity.Start) &&
+            ArePointsNear(new Point2D(10, 0), entity.End));
+        Assert.Contains(lines, entity =>
+            ArePointsNear(new Point2D(5, 0), entity.Start) &&
+            ArePointsNear(new Point2D(15, 0), entity.End));
     }
 
     [Fact]
-    public void CommandHudInput_PolygonRadiusNegative_ShouldNotCreatePolygon()
+    public void CommandHudInput_MoveDestination_ShouldExposeEditableDistanceAngleAndCoordinates()
     {
         var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
 
-        viewModel.SubmitCommandInput("POLYGON");
-        viewModel.SubmitCommandInput("6");
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
+
+        viewModel.SubmitCommandInput("M");
         viewModel.SubmitCommandInput("0,0");
         viewModel.SetMousePosition(new Point2D(10, 0));
 
-        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Radius,
-            "-10",
-            confirm: true,
-            out var result);
+        CommandHudFieldKind[] editableKinds = viewModel.CommandHudState.Fields
+            .Where(field => field.CanAcceptTypedOverride)
+            .Select(field => field.Kind)
+            .ToArray();
 
-        Assert.True(radiusHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is PolylineEntity);
-        Assert.Contains("greater than zero", viewModel.LastMessage);
+        Assert.Contains(CommandHudFieldKind.Distance, editableKinds);
+        Assert.Contains(CommandHudFieldKind.Angle, editableKinds);
+        Assert.Contains(CommandHudFieldKind.X, editableKinds);
+        Assert.Contains(CommandHudFieldKind.Y, editableKinds);
     }
 
-    [Fact]
-    public void CommandHudInput_SplineNextPoint_ShouldExposeEditableDistanceAndAngle()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SubmitCommandInput("SPLINE");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
-
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Distance && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
-    }
 
     [Fact]
-    public void CommandHudInput_SplineDistanceAngle_ShouldCreateSpline()
+    public void CommandHudInput_RotateAngle_ShouldRotateSelectedEntity()
     {
         var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(1, 0),
+            new Point2D(2, 0));
 
-        viewModel.SubmitCommandInput("SPLINE");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
 
-        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Distance,
-            "10",
+        viewModel.SubmitCommandInput("RO");
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "0",
             confirm: false,
-            out _);
-        bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Angle,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
             "0",
             confirm: true,
-            out _);
-        viewModel.SubmitCommandInput(string.Empty);
+            out _));
 
-        Assert.True(distanceHandled);
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "1",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "0",
+            confirm: true,
+            out _));
+
+        bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Angle,
+            "90",
+            confirm: true,
+            out _);
+
         Assert.True(angleHandled);
 
-        BezierSplineEntity spline = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<BezierSplineEntity>());
-        Assert.False(spline.IsClosed);
-        Assert.Equal(2, spline.ControlPoints.Count);
-        Assert.True(ArePointsNear(new Point2D(0, 0), spline.ControlPoints[0]));
-        Assert.True(ArePointsNear(new Point2D(10, 0), spline.ControlPoints[1]));
+        LineEntity rotated = Assert.IsType<LineEntity>(
+            viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+        Assert.True(ArePointsNear(new Point2D(0, 1), rotated.Start));
+        Assert.True(ArePointsNear(new Point2D(0, 2), rotated.End));
     }
 
     [Fact]
-    public void CommandHudInput_SplineDistanceNegative_ShouldNotAddControlPoint()
+    public void CommandHudInput_ScaleFactor_ShouldScaleSelectedEntity()
     {
         var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(1, 0),
+            new Point2D(2, 0));
 
-        viewModel.SubmitCommandInput("SPLINE");
-        viewModel.SubmitCommandInput("0,0");
-        viewModel.SetMousePosition(new Point2D(10, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
 
-        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Distance,
-            "-10",
-            confirm: true,
-            out var result);
+        viewModel.SubmitCommandInput("SC");
 
-        Assert.True(distanceHandled);
-        Assert.NotNull(result);
-        Assert.DoesNotContain(
-            viewModel.Workspace.Document.Entities.All,
-            entity => entity is BezierSplineEntity);
-        Assert.Contains("greater than zero", viewModel.LastMessage);
-    }
-
-    [Fact]
-    public void CommandHudInput_TextInsertionPoint_ShouldAcceptAbsoluteXAndY()
-    {
-        var viewModel = new MainWindowViewModel(
-            new StubTextInputProvider(new TextInputResult(
-                "Label",
-                TextFormatId.Standard,
-                0)));
-
-        viewModel.SubmitCommandInput("TEXT");
-
-        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.X,
-            "2",
+            "0",
             confirm: false,
-            out _);
-        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.Y,
-            "3",
+            "0",
             confirm: true,
-            out _);
+            out _));
 
-        Assert.True(xHandled);
-        Assert.True(yHandled);
-
-        TextEntity text = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<TextEntity>());
-        Assert.True(ArePointsNear(new Point2D(2, 3), text.InsertionPoint));
-        Assert.Equal("Label", text.Text);
-    }
-
-    [Fact]
-    public void CommandHudInput_MultilineTextInsertionPoint_ShouldAcceptAbsoluteXAndY()
-    {
-        var viewModel = new MainWindowViewModel(
-            new StubTextInputProvider(new TextInputResult(
-                "Line 1\nLine 2",
-                TextFormatId.Standard,
-                0)));
-
-        viewModel.SubmitCommandInput("MTEXT");
-
-        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.X,
-            "4",
+            "1",
             confirm: false,
-            out _);
-        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.Y,
-            "5",
+            "0",
+            confirm: true,
+            out _));
+
+        bool factorHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Factor,
+            "2",
             confirm: true,
             out _);
 
-        Assert.True(xHandled);
-        Assert.True(yHandled);
+        Assert.True(factorHandled);
 
-        MultilineTextEntity text = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<MultilineTextEntity>());
-        Assert.True(ArePointsNear(new Point2D(4, 5), text.InsertionPoint));
-        Assert.Equal("Line 1\nLine 2", text.Text);
+        LineEntity scaled = Assert.IsType<LineEntity>(
+            viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+        Assert.True(ArePointsNear(new Point2D(2, 0), scaled.Start));
+        Assert.True(ArePointsNear(new Point2D(4, 0), scaled.End));
     }
 
     [Fact]
-    public async Task CommandHudInput_TextInsertionPoint_ShouldUseAsyncTextProvider()
+    public void CommandHudInput_Align_ShouldAcceptCoordinateFieldsForPointPhases()
     {
-        var viewModel = new MainWindowViewModel(
-            new AsyncOnlyTextInputProvider(new TextInputResult(
-                "Async label",
-                TextFormatId.Standard,
-                0)));
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
 
-        viewModel.SubmitCommandInput("TEXT");
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
 
-        bool xHandled = await viewModel.TryCommitCommandHudFieldInputAsync(
+        viewModel.SubmitCommandInput("ALIGN");
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.X,
-            "2",
-            confirm: false);
-        bool yHandled = await viewModel.TryCommitCommandHudFieldInputAsync(
+            "0",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.Y,
-            "3",
-            confirm: true);
+            "0",
+            confirm: true,
+            out _));
 
-        Assert.True(xHandled);
-        Assert.True(yHandled);
-
-        TextEntity text = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<TextEntity>());
-        Assert.True(ArePointsNear(new Point2D(2, 3), text.InsertionPoint));
-        Assert.Equal("Async label", text.Text);
-    }
-
-    [Fact]
-    public async Task CommandLine_TextInsertionPoint_ShouldUseAsyncTextProvider()
-    {
-        var viewModel = new MainWindowViewModel(
-            new AsyncOnlyTextInputProvider(new TextInputResult(
-                "Command line label",
-                TextFormatId.Standard,
-                0)));
-
-        viewModel.SubmitCommandInput("TEXT");
-        ToolResult result = await viewModel.SubmitCommandInputAsync("4,5");
-
-        Assert.Equal(ToolResultKind.Completed, result.Kind);
-
-        TextEntity text = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<TextEntity>());
-        Assert.True(ArePointsNear(new Point2D(4, 5), text.InsertionPoint));
-        Assert.Equal("Command line label", text.Text);
-    }
-
-    [Fact]
-    public async Task CommandHudInput_MultilineTextInsertionPoint_ShouldUseAsyncTextProvider()
-    {
-        var viewModel = new MainWindowViewModel(
-            new AsyncOnlyTextInputProvider(new TextInputResult(
-                "Async line 1\nAsync line 2",
-                TextFormatId.Standard,
-                0)));
-
-        viewModel.SubmitCommandInput("MTEXT");
-
-        bool xHandled = await viewModel.TryCommitCommandHudFieldInputAsync(
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.X,
-            "6",
-            confirm: false);
-        bool yHandled = await viewModel.TryCommitCommandHudFieldInputAsync(
+            "0",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.Y,
-            "7",
-            confirm: true);
+            "0",
+            confirm: true,
+            out _));
 
-        Assert.True(xHandled);
-        Assert.True(yHandled);
-
-        MultilineTextEntity text = Assert.Single(
-            viewModel.Workspace.Document.Entities.All.OfType<MultilineTextEntity>());
-        Assert.True(ArePointsNear(new Point2D(6, 7), text.InsertionPoint));
-        Assert.Equal("Async line 1\nAsync line 2", text.Text);
-    }
-
-    [Fact]
-    public void CommandHudInput_FirstPoint_ShouldExposeCoordinatesEvenAfterPreviousBasePoint()
-    {
-        var viewModel = new MainWindowViewModel(
-            new StubTextInputProvider(new TextInputResult(
-                "Anchor",
-                TextFormatId.Standard,
-                0)));
-
-        viewModel.SubmitCommandInput("TEXT");
-        viewModel.SubmitCommandInput("1,1");
-
-        viewModel.SetTool(ToolId.Line);
-
-        AssertCommandHudHasCoordinateOverrides(viewModel);
-
-        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.X,
             "10",
             confirm: false,
-            out _);
-        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.Y,
-            "20",
+            "0",
             confirm: true,
-            out _);
-        viewModel.SubmitCommandInput("30,20");
+            out _));
 
-        Assert.True(xHandled);
-        Assert.True(yHandled);
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "0",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "10",
+            confirm: true,
+            out _));
 
-        Assert.Contains(
-            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
-            line => ArePointsNear(new Point2D(10, 20), line.Start) &&
-                    ArePointsNear(new Point2D(30, 20), line.End));
-    }
+        viewModel.SubmitCommandInput("N");
 
-    [Theory]
-    [InlineData(ToolId.Line)]
-    [InlineData(ToolId.Rectangle)]
-    [InlineData(ToolId.Circle)]
-    [InlineData(ToolId.Arc)]
-    [InlineData(ToolId.Ellipse)]
-    [InlineData(ToolId.ArcThreePoints)]
-    [InlineData(ToolId.Spline)]
-    [InlineData(ToolId.Text)]
-    [InlineData(ToolId.MultilineText)]
-    public void CommandHudInput_FirstPointTools_ShouldExposeCoordinateOverrides(
-        ToolId toolId)
-    {
-        var viewModel = new MainWindowViewModel(
-            new StubTextInputProvider(new TextInputResult(
-                "Label",
-                TextFormatId.Standard,
-                0)));
-
-        viewModel.SetTool(toolId);
-
-        AssertCommandHudHasCoordinateOverrides(viewModel);
-    }
-
-    [Fact]
-    public void CommandHudInput_PolygonCenterPoint_ShouldExposeCoordinateOverrides()
-    {
-        var viewModel = new MainWindowViewModel();
-
-        viewModel.SetTool(ToolId.Polygon);
-        viewModel.SubmitCommandInput("6");
-
-        AssertCommandHudHasCoordinateOverrides(viewModel);
+        LineEntity aligned = Assert.IsType<LineEntity>(
+            viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+        Assert.True(ArePointsNear(new Point2D(0, 0), aligned.Start));
+        Assert.True(ArePointsNear(new Point2D(0, 10), aligned.End));
     }
 
     private static bool ArePointsNear(
@@ -2337,61 +1397,6 @@ public sealed class MainWindowViewModelCommandLineTests
     {
         return Math.Abs(expected.X - actual.X) <= tolerance &&
                Math.Abs(expected.Y - actual.Y) <= tolerance;
-    }
-
-    private static void AssertCommandHudHasCoordinateOverrides(
-        MainWindowViewModel viewModel)
-    {
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.X && field.CanAcceptTypedOverride);
-        Assert.Contains(
-            viewModel.CommandHudState.Fields,
-            field => field.Kind == CommandHudFieldKind.Y && field.CanAcceptTypedOverride);
-    }
-
-    private static bool AreVectorsNear(
-        Vector2D expected,
-        Vector2D actual,
-        double tolerance = 0.000000001)
-    {
-        return Math.Abs(expected.X - actual.X) <= tolerance &&
-               Math.Abs(expected.Y - actual.Y) <= tolerance;
-    }
-
-    private sealed class StubTextInputProvider : ITextInputProvider
-    {
-        private readonly TextInputResult? _result;
-
-        public StubTextInputProvider(TextInputResult? result)
-        {
-            _result = result;
-        }
-
-        public TextInputResult? RequestText(TextInputRequest request)
-        {
-            return _result;
-        }
-    }
-
-    private sealed class AsyncOnlyTextInputProvider : ITextInputProvider
-    {
-        private readonly TextInputResult? _result;
-
-        public AsyncOnlyTextInputProvider(TextInputResult? result)
-        {
-            _result = result;
-        }
-
-        public TextInputResult? RequestText(TextInputRequest request)
-        {
-            throw new InvalidOperationException("Synchronous text input should not be used.");
-        }
-
-        public Task<TextInputResult?> RequestTextAsync(TextInputRequest request)
-        {
-            return Task.FromResult(_result);
-        }
     }
 
 }

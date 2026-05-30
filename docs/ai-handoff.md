@@ -1286,233 +1286,26 @@ Important constraints for future changes:
 - Do not rely on Avalonia focus for HUD numeric fields; the HUD is mouse-transparent and uses logical field state.
 - The next safe feature step should be Rectangle read-only/visual verification first, then a dedicated rectangle resolver, not a shared resolver rewrite.
 
-## 2026-05-30 — Dynamic Command HUD Step 25-quater editable-scope guard
+### Step 29A — Dynamic Command HUD for Move/Copy
 
-The stable editable HUD scope is now explicitly guarded. `Distance`/`Angle` and `X`/`Y` remain editable for the tested Line/Polyline workflows, but HUD fields shown by unsupported tools are read-only until each tool receives a dedicated resolver and regression tests.
+The dynamic command HUD has been extended to the first modify tools: `MoveTool` and `CopyTool`.
 
-Changes:
+Scope:
 
-- Line and Polyline straight-segment HUD fields remain editable.
-- First-point `X`/`Y` coordinate fields remain editable through explicit `Tab` entry.
-- Rectangle `Width`/`Height`, Circle `Radius`, Arc, Rectangle-by-sides, Ellipse, Rotate, Scale, Offset and fallback prompt fields remain visual/read-only for now.
-- Added regression tests to lock this scope before attempting Rectangle again.
+- `MOVE` and `COPY` still accept base points through the existing point input path, including HUD `X / Y`.
+- During destination point input, both tools now expose editable `Distance / Angle / X / Y` fields.
+- The implementation reuses the stable Line/Polyline distance-angle point resolver only for the destination phase of Move/Copy.
+- Existing dedicated resolvers for Rectangle/Circle/Rectangle by Sides remain isolated and unchanged.
 
-Reason:
+Regression tests cover:
 
-A previous Rectangle implementation broke the shared routing model. New tool support must not be added by widening the common resolver first; it must start from read-only fields, then a dedicated resolver, then tests.
+- moving a selected line with HUD `Distance / Angle`;
+- copying a selected line with HUD `Distance / Angle`;
+- verifying that the Move destination phase exposes editable `Distance / Angle / X / Y` fields.
 
-## 2026-05-30 — Dynamic Command HUD Step 26A rectangle dedicated resolver
+### Dynamic Command HUD - Step 29B fix
 
-Rectangle HUD input is reintroduced using a dedicated resolver instead of widening the shared Line/Polyline polar resolver.
-
-Changes:
-
-- Rectangle `Width` / `Height` fields are editable only when `RectangleTool` is waiting for the opposite corner.
-- Rectangle keeps the compact HUD shape `Width / Height / X / Y` after the first corner.
-- `Width` freezes the current live `Height`; `Height` freezes the current live `Width`.
-- The rectangle opposite corner is resolved by `TryResolveRectangleCommandHudOverridePoint`, which uses the first corner, the entered size values, and the current live quadrant/sign.
-- Line/Polyline polar behavior remains handled by the existing stable resolver.
-- Regression tests cover rectangle editable fields, width/height creation, first-corner X/Y input, and preserve the existing Line/Polyline tests.
-
-Important implementation constraint:
-
-- Do not merge rectangle size semantics into the Line/Polyline distance-angle resolver. Keep each non-polar tool behind a dedicated resolver until enough regression tests exist.
-
-## 2026-05-30 — Dynamic Command HUD Step 26B rectangle regression guard
-
-Rectangle HUD input is confirmed working through a dedicated resolver. Added regression coverage to protect the implementation before extending Circle/Arc/Modify tools:
-
-- width-only rectangle input freezes the live height visible when the width is typed;
-- width/height rectangle input preserves the live quadrant sign;
-- incomplete first-corner X/Y input does not create a rectangle;
-- the stabilization checklist now includes Rectangle-specific manual checks.
-
-Do not generalize Rectangle routing into the stable Line/Polyline distance-angle resolver. Future tools should follow the same pattern: add a dedicated resolver first, then enable their HUD fields.
-
-## 2026-05-30 — Dynamic Command HUD Step 27A circle dedicated resolver
-
-Circle HUD input is added using a dedicated resolver, following the successful Rectangle pattern.
-
-Implemented:
-
-- `CircleTool` radius phase now exposes editable `Radius` plus `X` / `Y` radius-point coordinates.
-- `TryResolveCircleCommandHudOverridePoint(...)` creates a synthetic radius point from the center, typed radius and live pointer angle, then reuses the existing Circle point submission flow.
-- Center coordinates still use the shared point `X` / `Y` path.
-- Regression tests cover radius creation, center X/Y input and incomplete center coordinates.
-
-Important guardrail: do not merge Circle radius handling into the stable Line/Polyline `Distance` / `Angle` resolver or the Rectangle `Width` / `Height` resolver. Continue adding new tool support with dedicated resolvers and tests.
-
-## 2026-05-30 — Dynamic Command HUD Step 27B compact field row layout
-
-The dynamic command HUD field layout has been refined without changing command routing or resolver behavior.
-
-Changes:
-
-- HUD fields are now grouped into deterministic rows instead of flowing through a single WrapPanel.
-- Geometry fields are displayed before coordinate fields.
-- Coordinate fields `X` / `Y` are always grouped on their own row when present.
-- Single-value tools such as Circle now show `Radius` on its own row, with `X` / `Y` on the next row.
-- Two-value tools such as Line/Polyline keep `Distance` / `Angle` on the first row and `X` / `Y` on the second row.
-- Labels and value boxes use fixed column widths so values align consistently across rows.
-
-No resolver, parser, command-state or keyboard-routing behavior was changed in this step.
-
-## 2026-05-30 — Dynamic Command HUD Step 27C wider field rows
-
-The dynamic command HUD width was increased to prevent the second field in paired rows, such as `Angle` and `Y`, from being clipped.
-
-Changes:
-
-- HUD panel width increased from `MinWidth=220` / `MaxWidth=320` to `MinWidth=390` / `MaxWidth=460`.
-- Field label columns increased from `68` to `78`.
-- Field value boxes increased from `76` to `92`.
-- Horizontal spacing between paired fields increased from `10` to `14`.
-
-This is a visual-only adjustment. Command routing, typed overrides, dedicated resolvers, Tab handling and mouse transparency are unchanged.
-
-### Step 27D — Circle HUD regression guard
-
-Circle HUD input is now protected by additional regression tests. The tests verify that the center prompt exposes coordinate fields only, that radius input remains dedicated to the post-center state, and that zero or negative radius values do not create a circle. This step does not change runtime behavior.
-
-
-## 2026-05-30 — Dynamic Command HUD Step 28A Rectangle by Sides dedicated resolver
-
-Rectangle by Sides HUD input is added using the same isolated pattern used for Rectangle and Circle.
-
-Implemented behavior:
-
-- first corner continues to use the shared `X` / `Y` point-entry path;
-- first side phase exposes editable `Width` and `Angle` fields;
-- second side phase exposes editable `Height`;
-- `TryResolveRectangleBySidesFirstSideCommandHudOverridePoint(...)` resolves the first-side endpoint from typed width plus typed/live angle;
-- `TryResolveRectangleBySidesSecondSideCommandHudOverridePoint(...)` resolves a synthetic second-side point from typed height and the live side sign;
-- the implementation intentionally does not modify the stable Line/Polyline, Rectangle, or Circle resolvers.
-
-Regression tests were added for editable field exposure, full rectangle creation, first-corner `X` / `Y` input, and invalid height handling.
-
-
-## Step 28B - Rectangle by Sides height routing fix
-
-Fixed the logical HUD initial numeric routing so a single available `Height` field is treated as a preferred numeric target. This keeps the second side phase keyboard-driven: after setting the first side, typing a number routes to `Height` instead of the hidden generic command buffer.
-
-## 2026-05-30 - Dynamic Command HUD Step 29A Arc dedicated resolver
-
-Arc HUD input is now enabled with dedicated resolver methods, following the isolated pattern used for Rectangle, Circle and Rectangle by Sides.
-
-Implemented behavior:
-
-- center point continues to use the shared `X` / `Y` point-entry path;
-- start point exposes editable `Radius` and `Angle`;
-- end point exposes editable `Angle`;
-- `TryResolveArcStartCommandHudOverridePoint(...)` resolves the start point from typed radius plus typed/live angle;
-- `TryResolveArcEndCommandHudOverridePoint(...)` resolves the end point from typed angle and the radius already fixed by the center/start points;
-- initial numeric routing now accepts `Angle` when it is the available editable field, so Arc end angle entry does not fall into the hidden command buffer;
-- the Line/Polyline, Rectangle, Circle and Rectangle by Sides resolver paths remain isolated.
-
-Regression tests were added for Arc field exposure, typed radius/start-angle/end-angle creation, and invalid radius handling.
-
-## 2026-05-30 - Dynamic Command HUD Step 29B Ellipse dedicated resolver
-
-Ellipse HUD input is now enabled with dedicated resolver methods, following the isolated pattern used for Rectangle, Circle, Rectangle by Sides and Arc.
-
-Implemented behavior:
-
-- center point continues to use the shared `X` / `Y` point-entry path;
-- major axis endpoint exposes editable `Major radius` and `Angle`;
-- minor axis radius point exposes editable `Minor radius`;
-- `TryResolveEllipseMajorAxisCommandHudOverridePoint(...)` resolves the major-axis endpoint from typed radius plus typed/live angle;
-- `TryResolveEllipseMinorRadiusCommandHudOverridePoint(...)` resolves the minor-radius point perpendicular to the fixed major axis while preserving the live side sign;
-- typing major radius freezes the live angle, and typing major-axis angle freezes the live radius;
-- the Line/Polyline, Rectangle, Circle, Rectangle by Sides and Arc resolver paths remain isolated.
-
-Regression tests were added for Ellipse field exposure, typed major-radius/angle/minor-radius creation, and invalid minor-radius handling.
-
-## 2026-05-30 - Dynamic Command HUD Step 29C Arc 3P dedicated resolver
-
-Arc 3P HUD input is now enabled for its post-start phases.
-
-Implemented behavior:
-
-- start point continues to use the shared `X` / `Y` point-entry path;
-- point-on-arc and end-point phases expose editable `Distance`, `Angle`, `X` and `Y`;
-- `TryResolveArcThreePointsCommandHudOverridePoint(...)` resolves the next point from typed distance plus typed/live angle relative to the previous Arc 3P point;
-- typing distance freezes the live angle, and typing angle freezes the live distance;
-- the existing Close/Undo-style command option model is not involved in Arc 3P, so the change is isolated to point resolution.
-
-Regression tests were added for field exposure in both Arc 3P point phases, distance/angle arc creation, and invalid distance handling.
-
-## 2026-05-30 - Dynamic Command HUD Step 29D Polygon dedicated resolver
-
-Polygon HUD input is now enabled for the vertex phase.
-
-Implemented behavior:
-
-- side count remains the existing command-driven number prompt;
-- center point continues to use the shared `X` / `Y` point-entry path;
-- vertex point exposes editable `Radius` and `Angle`;
-- `TryResolvePolygonCommandHudOverridePoint(...)` resolves the vertex from typed radius plus typed/live angle;
-- typing radius freezes the live angle, and typing angle freezes the live radius.
-
-Regression tests were added for Polygon field exposure, typed radius/angle polygon creation, and invalid radius handling.
-
-## 2026-05-30 - Dynamic Command HUD Step 29E Spline dedicated resolver
-
-Spline HUD input is now enabled for the next-control-point phase.
-
-Implemented behavior:
-
-- first control point continues to use the shared `X` / `Y` point-entry path;
-- subsequent control points expose editable `Distance`, `Angle`, `X` and `Y`;
-- `TryResolveSplineCommandHudOverridePoint(...)` resolves the next control point from typed distance plus typed/live angle relative to the previous control point;
-- typing distance freezes the live angle, and typing angle freezes the live distance;
-- Enter completion plus `Close` and `Undo` options remain handled by the existing command-driven flow.
-
-Regression tests were added for Spline field exposure, typed distance/angle open spline creation, and invalid distance handling.
-
-## 2026-05-30 - Dynamic Command HUD Step 29F Text and MText insertion-point coverage
-
-Text and MText insertion points are now covered through the shared command-driven `X` / `Y` HUD path.
-
-Implemented behavior:
-
-- `TextTool` already used `ICommandDrivenTool`; ViewModel regression coverage now verifies typed `X` / `Y` insertion.
-- `MultilineTextTool` now implements `ICommandDrivenTool` with an `MTEXT` point prompt and command-input point handling.
-- HUD input only chooses the insertion point; text content, rotation and text format remain delegated to the existing text input provider/window.
-
-Regression tests were added for `TEXT` and `MTEXT` insertion from typed HUD coordinates, plus tool-level MText prompt/command-input behavior.
-
-## 2026-05-30 - Dynamic Command HUD Step 29G first-point coordinate guard
-
-The HUD first-point path was hardened after a regression where tools that accept `PointOrDistance` or have dedicated HUD builders could expose no `X` / `Y` fields at the first point.
-
-Implemented behavior:
-
-- point-accepting prompts without a live measurement now expose coordinate override fields instead of an empty HUD;
-- `ArcTool` center point and `EllipseTool` center point now explicitly return `X` / `Y` from their dedicated HUD builders;
-- first-point coordinate coverage now includes Line, Rectangle, Circle, Arc, Ellipse, Arc 3P, Spline, Text, MText and Polygon center.
-
-Regression tests were added for broad first-point `X` / `Y` field exposure and for starting Line from HUD coordinates immediately after a previous Text command.
-
-## 2026-05-30 - Dynamic Command HUD Step 29H async Text/MText confirmation fix
-
-The HUD and command-line coordinate confirmation paths now submit points asynchronously when the active tool needs async pointer handling.
-
-Fixed behavior:
-
-- `TEXT` and `MTEXT` no longer call the Avalonia text-input provider through its synchronous `RequestText(...)` path when coordinates are confirmed with Enter;
-- HUD field Enter, logical HUD Enter and command-line coordinate Enter now use async point submission from the app shell;
-- command-line point submission has an async workspace path that preserves the same no-snap/no-ortho exact-coordinate behavior as the synchronous path.
-
-Regression tests use an async-only text provider that throws on synchronous text requests, covering HUD `TEXT`, HUD `MTEXT` and command-line `TEXT` coordinate confirmation.
-
-## 2026-05-30 - Dynamic Command HUD Step 29I Polygon sides field
-
-Polygon side-count entry is now exposed as an editable HUD field instead of relying on the hidden command input buffer.
-
-Implemented behavior:
-
-- `CommandHudFieldKind.Sides` was added for numeric count prompts;
-- `PolygonTool` while waiting for sides shows editable `Sides` with the current default value `6`;
-- confirming `Sides` routes through the existing `POLYGON` command parser, preserving the default Enter behavior and the 3-256 validation.
-
-Regression tests cover field exposure, creating a 5-sided polygon from HUD side input, and rejecting out-of-range side counts while staying on the sides prompt.
+- Fixed contextual command input parsing for `PointOrAngle` and `PointOrNumber` prompt kinds.
+- `Rotate` can now accept a scalar angle through the HUD `Angle` field in the destination phase.
+- `Scale` can now accept a scalar factor through the HUD `Factor` field in the destination phase.
+- The fix is in `CommandInputParser` and does not change the stabilized HUD resolvers for Line, Polyline, Rectangle, Circle, Rectangle by Sides, Move or Copy.

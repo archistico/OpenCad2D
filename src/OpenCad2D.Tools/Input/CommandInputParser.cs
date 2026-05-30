@@ -89,7 +89,7 @@ public sealed class CommandInputParser
                 referencePoint);
 
             if (pointSubmission.IsValid ||
-                !PromptAcceptsDistance(promptState.ExpectedInput) ||
+                !PromptAcceptsScalarFallback(promptState.ExpectedInput) ||
                 value.StartsWith('@') ||
                 value.Contains('<'))
             {
@@ -114,20 +114,30 @@ public sealed class CommandInputParser
             return CommandInputSubmission.Invalid(rawText, "Expected a distance value.");
         }
 
-        if (promptState.ExpectedInput == CommandInputKind.Angle)
+        if (PromptAcceptsAngle(promptState.ExpectedInput))
         {
             if (!TryParseDouble(value, out double angleDegrees))
             {
+                if (pointSubmission is not null)
+                {
+                    return pointSubmission;
+                }
+
                 return CommandInputSubmission.Invalid(rawText, "Expected an angle value in degrees.");
             }
 
             return CommandInputSubmission.Angle(rawText, NormalizeAngle(angleDegrees));
         }
 
-        if (promptState.ExpectedInput == CommandInputKind.Number)
+        if (PromptAcceptsNumber(promptState.ExpectedInput))
         {
             if (!TryParseDouble(value, out double number))
             {
+                if (pointSubmission is not null)
+                {
+                    return pointSubmission;
+                }
+
                 return CommandInputSubmission.Invalid(rawText, "Expected a numeric value.");
             }
 
@@ -235,14 +245,50 @@ public sealed class CommandInputParser
             "Invalid point format. Use x,y, @x,y or @distance<angle.");
     }
 
+    private static bool PromptAcceptsScalarFallback(CommandInputKind kind)
+    {
+        return PromptAcceptsDistance(kind) ||
+               PromptAcceptsAngle(kind) ||
+               PromptAcceptsNumber(kind);
+    }
+
+
     private static bool PromptAcceptsPoint(CommandInputKind kind)
     {
-        return kind is CommandInputKind.Point or CommandInputKind.PointOrOption or CommandInputKind.PointOrDistance or CommandInputKind.PointOrDistanceOrOption;
+        return kind is
+            CommandInputKind.Point or
+            CommandInputKind.PointOrOption or
+            CommandInputKind.PointOrDistance or
+            CommandInputKind.PointOrDistanceOrOption or
+            CommandInputKind.PointOrAngle or
+            CommandInputKind.PointOrAngleOrOption or
+            CommandInputKind.PointOrNumber or
+            CommandInputKind.PointOrNumberOrOption;
     }
 
     private static bool PromptAcceptsDistance(CommandInputKind kind)
     {
-        return kind is CommandInputKind.Distance or CommandInputKind.DistanceOrOption or CommandInputKind.PointOrDistance or CommandInputKind.PointOrDistanceOrOption;
+        return kind is
+            CommandInputKind.Distance or
+            CommandInputKind.DistanceOrOption or
+            CommandInputKind.PointOrDistance or
+            CommandInputKind.PointOrDistanceOrOption;
+    }
+
+    private static bool PromptAcceptsAngle(CommandInputKind kind)
+    {
+        return kind is
+            CommandInputKind.Angle or
+            CommandInputKind.PointOrAngle or
+            CommandInputKind.PointOrAngleOrOption;
+    }
+
+    private static bool PromptAcceptsNumber(CommandInputKind kind)
+    {
+        return kind is
+            CommandInputKind.Number or
+            CommandInputKind.PointOrNumber or
+            CommandInputKind.PointOrNumberOrOption;
     }
 
     private static bool PromptAcceptsOptions(CommandInputKind kind)
@@ -251,6 +297,8 @@ public sealed class CommandInputParser
             CommandInputKind.PointOrOption or
             CommandInputKind.DistanceOrOption or
             CommandInputKind.PointOrDistanceOrOption or
+            CommandInputKind.PointOrAngleOrOption or
+            CommandInputKind.PointOrNumberOrOption or
             CommandInputKind.SelectionOrOption;
     }
 
