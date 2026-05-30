@@ -537,3 +537,19 @@ Enter
 ### Step 24 — Freeze complementary polar HUD value
 
 When the user starts typing a polar HUD value, the complementary live value is frozen immediately. Typing `Distance` freezes the current live `Angle`; typing `Angle` freezes the current live `Distance`. This prevents the preview update from recalculating the missing polar component from a changed/stale pointer state and keeps the value that was visible when typing began.
+
+## Dynamic HUD stabilization checkpoint
+
+The dynamic command HUD is currently considered stable only for Line and Polyline straight-segment input.
+
+Stable keyboard rules:
+
+- `Tab` enters and cycles logical HUD fields; it must not focus the Property Panel.
+- First-point coordinate entry is explicit: `Tab -> X`, type X, `Tab -> Y`, type Y, `Enter`.
+- A plain number during a first-point prompt does not automatically fill `X`.
+- After a first/base point exists, a plain number fills `Distance` for Line and Polyline line-mode.
+- `Distance -> Tab -> Angle -> Enter` confirms the next point from polar input.
+- Starting to type `Distance` freezes the visible live `Angle`; starting to type `Angle` freezes the visible live `Distance`.
+- Overrides are cleared after each confirmed point.
+
+Rectangle, Circle, Arc and modify tools may show HUD fields, but editable routing must be added tool by tool in later isolated steps.

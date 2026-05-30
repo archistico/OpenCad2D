@@ -1268,3 +1268,20 @@ Validation focus:
 ### Step 24 — Freeze complementary polar HUD value
 
 When the user starts typing a polar HUD value, the complementary live value is frozen immediately. Typing `Distance` freezes the current live `Angle`; typing `Angle` freezes the current live `Distance`. This prevents the preview update from recalculating the missing polar component from a changed/stale pointer state and keeps the value that was visible when typing began.
+
+## 2026-05-30 — Dynamic Command HUD Step 25-bis stabilization checkpoint
+
+The active stable baseline is the dynamic HUD after Step 24. A later attempt to extend Rectangle routing caused broad regressions, so expansion is paused until the Line/Polyline HUD behavior is protected by tests.
+
+This checkpoint adds regression coverage for the stable behavior without adding new UI features:
+
+- Line distance entry freezes the live angle that was visible when typing started.
+- Polyline first point can be created through HUD `X`/`Y` coordinate fields.
+- Polyline `Distance`/`Angle` creates the next vertex and clears the override so subsequent segments start from live values.
+
+Important constraints for future changes:
+
+- Do not generalize `TryResolveCommandHudOverridePoint` for Rectangle/Circle/Arc without tool-specific tests.
+- Do not make `X` the default target for plain numeric input during first-point prompts.
+- Do not rely on Avalonia focus for HUD numeric fields; the HUD is mouse-transparent and uses logical field state.
+- The next safe feature step should be Rectangle read-only/visual verification first, then a dedicated rectangle resolver, not a shared resolver rewrite.

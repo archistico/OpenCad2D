@@ -839,6 +839,263 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Null(viewModel.GetCommandAutocompleteSuggestion(input));
     }
 
+
+    [Fact]
+    public void CommandHudInput_LineDistance_ShouldFreezeVisibleLiveAngle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(0, 10));
+
+        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "5",
+            confirm: false,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool confirmed = viewModel.TryConfirmCommandHudInputOverrides(out var result);
+
+        Assert.True(distanceHandled);
+        Assert.True(confirmed);
+        Assert.NotNull(result);
+
+        LineEntity line = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>());
+        Assert.True(ArePointsNear(new Point2D(0, 0), line.Start));
+        Assert.True(ArePointsNear(new Point2D(0, 5), line.End));
+    }
+
+    [Fact]
+    public void CommandHudInput_PolylineFirstPoint_ShouldAcceptAbsoluteXAndY()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("PL");
+
+        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _);
+        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "20",
+            confirm: true,
+            out _);
+
+        viewModel.SubmitCommandInput("@5,0");
+        var result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.True(xHandled);
+        Assert.True(yHandled);
+        Assert.NotNull(result);
+
+        PolylineEntity polyline = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.Equal(2, polyline.Vertices.Count);
+        Assert.True(ArePointsNear(new Point2D(10, 20), polyline.Vertices[0]));
+        Assert.True(ArePointsNear(new Point2D(15, 20), polyline.Vertices[1]));
+    }
+
+    [Fact]
+    public void CommandHudInput_PolylineDistanceAngle_ShouldCreateNextVertexAndResetOverride()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("PL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(0, 10));
+
+        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "5",
+            confirm: false,
+            out _);
+        bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Angle,
+            "0",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(20, 0));
+        CommandHudFieldViewModel distanceField = Assert.Single(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Distance);
+
+        var result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.True(distanceHandled);
+        Assert.True(angleHandled);
+        Assert.True(distanceField.LiveValue is > 5.0);
+        Assert.NotNull(result);
+
+        PolylineEntity polyline = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.Equal(2, polyline.Vertices.Count);
+        Assert.True(ArePointsNear(new Point2D(0, 0), polyline.Vertices[0]));
+        Assert.True(ArePointsNear(new Point2D(5, 0), polyline.Vertices[1]));
+    }
+
+
+    [Fact]
+    public void CommandHudInput_LineFirstPoint_ShouldAcceptAbsoluteXAndY()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+
+        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "3",
+            confirm: false,
+            out _);
+        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "4",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(13, 4));
+        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "10",
+            confirm: true,
+            out _);
+
+        Assert.True(xHandled);
+        Assert.True(yHandled);
+        Assert.True(distanceHandled);
+
+        LineEntity line = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>());
+        Assert.True(ArePointsNear(new Point2D(3, 4), line.Start));
+        Assert.True(ArePointsNear(new Point2D(13, 4), line.End));
+    }
+
+    [Fact]
+    public void CommandHudInput_LineDistanceAngle_ShouldCreateExpectedSegment()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(0, 10));
+
+        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "10",
+            confirm: false,
+            out _);
+        bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Angle,
+            "45",
+            confirm: true,
+            out _);
+
+        Assert.True(distanceHandled);
+        Assert.True(angleHandled);
+
+        LineEntity line = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>());
+        Assert.True(ArePointsNear(new Point2D(0, 0), line.Start));
+        Assert.True(ArePointsNear(
+            new Point2D(10.0 / Math.Sqrt(2.0), 10.0 / Math.Sqrt(2.0)),
+            line.End));
+    }
+
+    [Fact]
+    public void CommandHudInput_PolylineDistanceOnly_ShouldFreezeVisibleLiveAngle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("PL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(0, 10));
+
+        bool distanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "5",
+            confirm: false,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool confirmed = viewModel.TryConfirmCommandHudInputOverrides(out _);
+        var result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.True(distanceHandled);
+        Assert.True(confirmed);
+        Assert.NotNull(result);
+
+        PolylineEntity polyline = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.Equal(2, polyline.Vertices.Count);
+        Assert.True(ArePointsNear(new Point2D(0, 0), polyline.Vertices[0]));
+        Assert.True(ArePointsNear(new Point2D(0, 5), polyline.Vertices[1]));
+    }
+
+    [Fact]
+    public void CommandHudInput_PolylineMultipleSegments_ShouldNotReusePreviousOverrides()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("PL");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool firstDistanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "5",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(5, 10));
+
+        bool secondDistanceHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "10",
+            confirm: true,
+            out _);
+
+        var result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.True(firstDistanceHandled);
+        Assert.True(secondDistanceHandled);
+        Assert.NotNull(result);
+
+        PolylineEntity polyline = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.Equal(3, polyline.Vertices.Count);
+        Assert.True(ArePointsNear(new Point2D(0, 0), polyline.Vertices[0]));
+        Assert.True(ArePointsNear(new Point2D(5, 0), polyline.Vertices[1]));
+        Assert.True(ArePointsNear(new Point2D(5, 10), polyline.Vertices[2]));
+    }
+
+    [Fact]
+    public void CommandHudInput_PolylineFirstPointIncompleteCoordinates_ShouldNotCreatePoint()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("PL");
+
+        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: true,
+            out var result);
+
+        Assert.True(xHandled);
+        Assert.NotNull(result);
+        Assert.DoesNotContain(
+            viewModel.Workspace.Document.Entities.All,
+            entity => entity is PolylineEntity);
+        Assert.Contains("both X and Y", viewModel.LastMessage);
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,
