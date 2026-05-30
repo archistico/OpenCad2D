@@ -2697,6 +2697,7 @@ public partial class MainWindow : Window
         return kind is
             CommandHudFieldKind.Distance or
             CommandHudFieldKind.Width or
+            CommandHudFieldKind.Height or
             CommandHudFieldKind.Radius or
             CommandHudFieldKind.Factor;
     }

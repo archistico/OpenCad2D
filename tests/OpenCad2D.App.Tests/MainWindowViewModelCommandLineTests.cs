@@ -1465,6 +1465,150 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Contains("greater than zero", viewModel.LastMessage);
     }
 
+
+    [Fact]
+    public void CommandHudInput_RectangleBySidesFirstSide_ShouldExposeEditableWidthAndAngle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("RSIDES");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Width && field.CanAcceptTypedOverride);
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_RectangleBySidesSecondSide_ShouldExposeEditableHeight()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("RSIDES");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("10,0");
+        viewModel.SetMousePosition(new Point2D(0, 5));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Height && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_RectangleBySidesWidthAngleHeight_ShouldCreateRectangle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("RSIDES");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool widthHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Width,
+            "10",
+            confirm: false,
+            out _);
+        bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Angle,
+            "0",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(0, 5));
+        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Height,
+            "5",
+            confirm: true,
+            out _);
+
+        Assert.True(widthHandled);
+        Assert.True(angleHandled);
+        Assert.True(heightHandled);
+
+        PolylineEntity rectangle = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.True(rectangle.IsClosed);
+        Assert.Equal(4, rectangle.Vertices.Count);
+        Assert.True(ArePointsNear(new Point2D(0, 0), rectangle.Vertices[0]));
+        Assert.True(ArePointsNear(new Point2D(10, 0), rectangle.Vertices[1]));
+        Assert.True(ArePointsNear(new Point2D(10, 5), rectangle.Vertices[2]));
+        Assert.True(ArePointsNear(new Point2D(0, 5), rectangle.Vertices[3]));
+    }
+
+    [Fact]
+    public void CommandHudInput_RectangleBySidesFirstCorner_ShouldAcceptAbsoluteXAndY()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("RSIDES");
+
+        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "2",
+            confirm: false,
+            out _);
+        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "3",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(12, 3));
+        bool widthHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Width,
+            "10",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(2, 8));
+        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Height,
+            "5",
+            confirm: true,
+            out _);
+
+        Assert.True(xHandled);
+        Assert.True(yHandled);
+        Assert.True(widthHandled);
+        Assert.True(heightHandled);
+
+        PolylineEntity rectangle = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.True(rectangle.IsClosed);
+        Assert.True(ArePointsNear(new Point2D(2, 3), rectangle.Vertices[0]));
+        Assert.True(ArePointsNear(new Point2D(12, 3), rectangle.Vertices[1]));
+        Assert.True(ArePointsNear(new Point2D(12, 8), rectangle.Vertices[2]));
+        Assert.True(ArePointsNear(new Point2D(2, 8), rectangle.Vertices[3]));
+    }
+
+    [Fact]
+    public void CommandHudInput_RectangleBySidesHeightNegative_ShouldNotCreateRectangle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("RSIDES");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("10,0");
+        viewModel.SetMousePosition(new Point2D(0, 5));
+
+        bool heightHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Height,
+            "-5",
+            confirm: true,
+            out var result);
+
+        Assert.True(heightHandled);
+        Assert.NotNull(result);
+        Assert.DoesNotContain(
+            viewModel.Workspace.Document.Entities.All,
+            entity => entity is PolylineEntity);
+        Assert.Contains("greater than zero", viewModel.LastMessage);
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,

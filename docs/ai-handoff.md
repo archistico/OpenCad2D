@@ -1374,3 +1374,23 @@ This is a visual-only adjustment. Command routing, typed overrides, dedicated re
 
 Circle HUD input is now protected by additional regression tests. The tests verify that the center prompt exposes coordinate fields only, that radius input remains dedicated to the post-center state, and that zero or negative radius values do not create a circle. This step does not change runtime behavior.
 
+
+## 2026-05-30 — Dynamic Command HUD Step 28A Rectangle by Sides dedicated resolver
+
+Rectangle by Sides HUD input is added using the same isolated pattern used for Rectangle and Circle.
+
+Implemented behavior:
+
+- first corner continues to use the shared `X` / `Y` point-entry path;
+- first side phase exposes editable `Width` and `Angle` fields;
+- second side phase exposes editable `Height`;
+- `TryResolveRectangleBySidesFirstSideCommandHudOverridePoint(...)` resolves the first-side endpoint from typed width plus typed/live angle;
+- `TryResolveRectangleBySidesSecondSideCommandHudOverridePoint(...)` resolves a synthetic second-side point from typed height and the live side sign;
+- the implementation intentionally does not modify the stable Line/Polyline, Rectangle, or Circle resolvers.
+
+Regression tests were added for editable field exposure, full rectangle creation, first-corner `X` / `Y` input, and invalid height handling.
+
+
+## Step 28B - Rectangle by Sides height routing fix
+
+Fixed the logical HUD initial numeric routing so a single available `Height` field is treated as a preferred numeric target. This keeps the second side phase keyboard-driven: after setting the first side, typing a number routes to `Height` instead of the hidden generic command buffer.

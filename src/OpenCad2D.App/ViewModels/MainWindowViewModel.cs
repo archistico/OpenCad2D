@@ -695,7 +695,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         };
     }
 
-    private static IReadOnlyList<CommandHudFieldViewModel> BuildRectangleBySidesFields(
+    private IReadOnlyList<CommandHudFieldViewModel> BuildRectangleBySidesFields(
         RectangleBySidesTool rectangleBySidesTool,
         CommandLiveMeasurement measurement)
     {
@@ -706,14 +706,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "width",
                     "Width",
-                    measurement.Distance,
-                    isEditable: false),
+                    _commandHudInputState.Width ?? measurement.Distance),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
-                    measurement.AngleDegrees,
-                    "°",
-                    isEditable: false)
+                    _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                    "°")
             },
 
             RectangleBySidesToolState.WaitingForSecondSidePoint => new[]
@@ -721,12 +719,39 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "height",
                     "Height",
-                    measurement.Distance,
-                    isEditable: false)
+                    _commandHudInputState.Height ?? GetRectangleBySidesLiveHeight(rectangleBySidesTool))
             },
 
             _ => Array.Empty<CommandHudFieldViewModel>()
         };
+    }
+
+    private double? GetRectangleBySidesLiveHeight(RectangleBySidesTool rectangleBySidesTool)
+    {
+        if (rectangleBySidesTool.StartPoint is null ||
+            rectangleBySidesTool.FirstSideEndPoint is null)
+        {
+            return null;
+        }
+
+        Point2D startUserPoint = Workspace.CurrentUcs.WorldToUser(
+            rectangleBySidesTool.StartPoint.Value);
+        Point2D firstSideEndUserPoint = Workspace.CurrentUcs.WorldToUser(
+            rectangleBySidesTool.FirstSideEndPoint.Value);
+        Point2D liveUserPoint = GetLivePointerUserPoint();
+
+        Vector2D firstSide = startUserPoint.VectorTo(firstSideEndUserPoint);
+        double firstSideLength = firstSide.Length;
+
+        if (Workspace.GeometryTolerance.IsDistanceZero(firstSideLength))
+        {
+            return null;
+        }
+
+        Vector2D perpendicularDirection = (firstSide / firstSideLength).PerpendicularLeft();
+        double signedHeight = startUserPoint.VectorTo(liveUserPoint).Dot(perpendicularDirection);
+
+        return Math.Abs(signedHeight);
     }
 
     private static IReadOnlyList<CommandHudFieldViewModel> BuildArcFields(
@@ -3128,7 +3153,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (IsCommandHudPointOverrideTargetActive() ||
             IsCommandHudRectangleOverrideTargetActive() ||
-            IsCommandHudCircleOverrideTargetActive())
+            IsCommandHudCircleOverrideTargetActive() ||
+            IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() ||
+            IsCommandHudRectangleBySidesSecondSideOverrideTargetActive())
         {
             result = Workspace.PreviewPointFromCommandLine(worldPoint);
             SetLastResult(result);
@@ -3175,6 +3202,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return Workspace.ToolController.ActiveTool is CircleTool
         {
             State: TwoPointToolState.WaitingForSecondPoint
+        };
+    }
+
+    private bool IsCommandHudRectangleBySidesFirstSideOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is RectangleBySidesTool
+        {
+            State: RectangleBySidesToolState.WaitingForFirstSideEndPoint
+        };
+    }
+
+    private bool IsCommandHudRectangleBySidesSecondSideOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is RectangleBySidesTool
+        {
+            State: RectangleBySidesToolState.WaitingForSecondSidePoint
         };
     }
 
@@ -3246,6 +3289,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
+        if (IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() &&
+            (_commandHudInputState.Width is not null || _commandHudInputState.AngleDegrees is not null))
+        {
+            return TryResolveRectangleBySidesFirstSideCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
+        if (IsCommandHudRectangleBySidesSecondSideOverrideTargetActive() &&
+            _commandHudInputState.Height is not null)
+        {
+            return TryResolveRectangleBySidesSecondSideCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
         if (IsCommandHudRectangleOverrideTargetActive() &&
             _commandHudInputState.HasSizeOverride)
         {
@@ -3283,6 +3342,83 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             angleDegrees,
             out worldPoint,
             out errorMessage);
+    }
+
+    private bool TryResolveRectangleBySidesFirstSideCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Rectangle by sides width input requires the first corner.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        double width = _commandHudInputState.Width ?? measurement.Distance ?? 0.0;
+        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
+
+        if (width <= 0)
+        {
+            errorMessage = "Rectangle by sides width must be greater than zero.";
+            return false;
+        }
+
+        return TryResolveDistanceAnglePoint(
+            width,
+            angleDegrees,
+            out worldPoint,
+            out errorMessage);
+    }
+
+    private bool TryResolveRectangleBySidesSecondSideCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.ToolController.ActiveTool is not RectangleBySidesTool rectangleBySidesTool ||
+            rectangleBySidesTool.StartPoint is null ||
+            rectangleBySidesTool.FirstSideEndPoint is null)
+        {
+            errorMessage = "Rectangle by sides height input requires the first side.";
+            return false;
+        }
+
+        double height = _commandHudInputState.Height ?? 0.0;
+
+        if (height <= 0)
+        {
+            errorMessage = "Rectangle by sides height must be greater than zero.";
+            return false;
+        }
+
+        Point2D startUserPoint = Workspace.CurrentUcs.WorldToUser(
+            rectangleBySidesTool.StartPoint.Value);
+        Point2D firstSideEndUserPoint = Workspace.CurrentUcs.WorldToUser(
+            rectangleBySidesTool.FirstSideEndPoint.Value);
+        Point2D liveUserPoint = GetLivePointerUserPoint();
+
+        Vector2D firstSide = startUserPoint.VectorTo(firstSideEndUserPoint);
+        double firstSideLength = firstSide.Length;
+
+        if (Workspace.GeometryTolerance.IsDistanceZero(firstSideLength))
+        {
+            errorMessage = "Rectangle by sides first side length must be greater than zero.";
+            return false;
+        }
+
+        Vector2D perpendicularDirection = (firstSide / firstSideLength).PerpendicularLeft();
+        double signedLiveHeight = startUserPoint.VectorTo(liveUserPoint).Dot(perpendicularDirection);
+        double sign = signedLiveHeight < 0 ? -1.0 : 1.0;
+        Point2D secondSideUserPoint = startUserPoint + perpendicularDirection * (sign * height);
+
+        worldPoint = Workspace.CurrentUcs.UserToWorld(secondSideUserPoint);
+        return true;
     }
 
     private bool TryResolveRectangleCommandHudOverridePoint(
@@ -3378,7 +3514,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if ((IsCommandHudPointOverrideTargetActive() ||
              IsCommandHudRectangleOverrideTargetActive() ||
-             IsCommandHudCircleOverrideTargetActive()) &&
+             IsCommandHudCircleOverrideTargetActive() ||
+             IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() ||
+             IsCommandHudRectangleBySidesSecondSideOverrideTargetActive()) &&
             TryResolveCommandHudOverridePoint(
                 requireCompleteCoordinates: false,
                 out Point2D worldPoint,
@@ -3447,6 +3585,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                      measurement.DeltaX is not null)
             {
                 _commandHudInputState.Width = Math.Abs(measurement.DeltaX.Value);
+            }
+
+            return;
+        }
+
+        if (IsCommandHudRectangleBySidesFirstSideOverrideTargetActive())
+        {
+            if (fieldKind == CommandHudFieldKind.Width &&
+                _commandHudInputState.AngleDegrees is null &&
+                measurement.AngleDegrees is not null)
+            {
+                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
+            }
+            else if (fieldKind == CommandHudFieldKind.Angle &&
+                     _commandHudInputState.Width is null &&
+                     measurement.Distance is not null)
+            {
+                _commandHudInputState.Width = measurement.Distance;
             }
         }
     }

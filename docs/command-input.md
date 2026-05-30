@@ -695,3 +695,44 @@ The change is visual only. It does not affect command routing, Tab cycling, mous
 
 Circle HUD input is now protected by additional regression tests. The tests verify that the center prompt exposes coordinate fields only, that radius input remains dedicated to the post-center state, and that zero or negative radius values do not create a circle. This step does not change runtime behavior.
 
+
+## Rectangle by Sides HUD resolver
+
+Rectangle by Sides now uses a dedicated HUD resolver.
+
+Supported flow:
+
+```text
+RECTSIDES
+Tab
+X
+Tab
+Y
+Enter
+Width
+Tab
+Angle
+Enter
+Height
+Enter
+```
+
+Typical mouse-assisted flow:
+
+```text
+RECTSIDES
+click first corner
+Width
+Tab
+Angle
+Enter
+Height
+Enter
+```
+
+The first side uses `Width` plus `Angle`. The second side uses `Height`; the sign is taken from the live pointer side relative to the first side. This implementation is intentionally isolated from the Line/Polyline, Rectangle and Circle HUD resolvers.
+
+
+## Step 28B - Rectangle by Sides height routing fix
+
+Fixed the logical HUD initial numeric routing so a single available `Height` field is treated as a preferred numeric target. This keeps the second side phase keyboard-driven: after setting the first side, typing a number routes to `Height` instead of the hidden generic command buffer.

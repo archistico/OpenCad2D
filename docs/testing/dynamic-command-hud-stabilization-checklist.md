@@ -154,3 +154,48 @@ Manual checks should still be used for mouse transparency, visual focus/highligh
 - `CIRCLE`, `Tab`, type X, `Tab`, type Y, `Enter`, type radius, `Enter`: center coordinates and radius are respected.
 - During circle radius input, the HUD must show `Radius`, `X`, `Y`; the mouse must remain free for canvas point selection.
 - Incomplete center coordinates (`X` without `Y`) must not create a circle and should show the existing both-coordinates validation message.
+
+## Rectangle by Sides HUD checks
+
+Manual checks:
+
+```text
+RECTSIDES
+click first corner
+10
+Tab
+0
+Enter
+5
+Enter
+```
+
+Expected: closed rectangle by sides with first side length 10 and second side height 5.
+
+```text
+RECTSIDES
+Tab
+2
+Tab
+3
+Enter
+10
+Enter
+5
+Enter
+```
+
+Expected: first corner inserted at X=2, Y=3, then rectangle by sides is created from typed width and height.
+
+Automated regression tests:
+
+- `CommandHudInput_RectangleBySidesFirstSide_ShouldExposeEditableWidthAndAngle`
+- `CommandHudInput_RectangleBySidesSecondSide_ShouldExposeEditableHeight`
+- `CommandHudInput_RectangleBySidesWidthAngleHeight_ShouldCreateRectangle`
+- `CommandHudInput_RectangleBySidesFirstCorner_ShouldAcceptAbsoluteXAndY`
+- `CommandHudInput_RectangleBySidesHeightNegative_ShouldNotCreateRectangle`
+
+
+## Step 28B - Rectangle by Sides height routing fix
+
+Fixed the logical HUD initial numeric routing so a single available `Height` field is treated as a preferred numeric target. This keeps the second side phase keyboard-driven: after setting the first side, typing a number routes to `Height` instead of the hidden generic command buffer.
