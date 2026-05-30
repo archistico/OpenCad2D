@@ -1496,6 +1496,63 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Contains("Chamfer distance set", viewModel.LastMessage);
     }
 
+
+    [Fact]
+    public void CommandHudInput_FilletRadiusZero_ShouldBeAccepted()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("FILLET");
+        viewModel.SubmitCommandInput("R");
+
+        bool handled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "0",
+            confirm: true,
+            out var result);
+
+        Assert.True(handled);
+        Assert.NotNull(result);
+        Assert.Contains("Fillet radius set to 0", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_ChamferDistanceZero_ShouldBeAccepted()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CHAMFER");
+        viewModel.SubmitCommandInput("D");
+
+        bool handled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "0",
+            confirm: true,
+            out var result);
+
+        Assert.True(handled);
+        Assert.NotNull(result);
+        Assert.Contains("Chamfer distance set to 0", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_OffsetDistanceZero_ShouldBeRejected()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("OFFSET");
+
+        bool handled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "0",
+            confirm: true,
+            out var result);
+
+        Assert.True(handled);
+        Assert.NotNull(result);
+        Assert.Contains("Distance must be greater than zero", viewModel.LastMessage);
+    }
+
     [Fact]
     public void CommandHudInput_BoundaryFillSeedPoint_ShouldExposeCoordinateFields()
     {

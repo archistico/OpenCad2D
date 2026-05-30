@@ -3163,18 +3163,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (fieldKind == CommandHudFieldKind.Distance && value <= 0)
+        if (!ValidateCommandHudScalarField(
+                fieldKind,
+                value,
+                out string? validationMessage))
         {
-            result = ToolResult.None("Distance must be greater than zero.");
-            SetLastResult(result);
-            AppendToolResultToVisibleHistory(result);
-            NotifyCommandInputStateChanged();
-            return true;
-        }
-
-        if (IsPositiveCommandHudField(fieldKind) && value <= 0)
-        {
-            result = ToolResult.None($"{fieldKind} must be greater than zero.");
+            result = ToolResult.None(validationMessage);
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
             NotifyCommandInputStateChanged();
@@ -3242,6 +3236,52 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+
+    private bool ValidateCommandHudScalarField(
+        CommandHudFieldKind fieldKind,
+        double value,
+        out string? message)
+    {
+        message = null;
+
+        if (Workspace.ToolController.ActiveTool is FilletTool { State: FilletToolState.WaitingForRadius } &&
+            fieldKind == CommandHudFieldKind.Radius)
+        {
+            if (value < 0)
+            {
+                message = "Fillet radius cannot be negative.";
+                return false;
+            }
+
+            return true;
+        }
+
+        if (Workspace.ToolController.ActiveTool is ChamferTool { State: ChamferToolState.WaitingForDistance } &&
+            fieldKind == CommandHudFieldKind.Distance)
+        {
+            if (value < 0)
+            {
+                message = "Chamfer distance cannot be negative.";
+                return false;
+            }
+
+            return true;
+        }
+
+        if (fieldKind == CommandHudFieldKind.Distance && value <= 0)
+        {
+            message = "Distance must be greater than zero.";
+            return false;
+        }
+
+        if (IsPositiveCommandHudField(fieldKind) && value <= 0)
+        {
+            message = $"{fieldKind} must be greater than zero.";
+            return false;
+        }
+
+        return true;
+    }
 
     private static bool IsPositiveCommandHudField(CommandHudFieldKind fieldKind)
     {

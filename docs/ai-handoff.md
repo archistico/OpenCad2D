@@ -1349,3 +1349,12 @@ This step is intentionally test/documentation-only. It does not change the HUD r
 - Tab is reserved for logical HUD field traversal while a command-driven tool is active; CadCanvas grip-edit Tab is now limited to SelectionTool.
 - Command option shortcuts such as Mirror Yes/No are handled by the window preview key path after the generic HUD textbox removal.
 - Manual check: MIRROR with a selected curve, Tab should enter X for first axis point; at delete-source prompt, Y/N should execute the option.
+
+### Step 30D - Offset / Fillet / Chamfer scalar validation alignment
+
+- Kept the existing HUD routing/resolvers unchanged.
+- Aligned HUD scalar validation with the underlying tools:
+  - `Offset.Distance` remains strictly positive.
+  - `Fillet.Radius` accepts zero and rejects negative values.
+  - `Chamfer.Distance` accepts zero and rejects negative values.
+- Added regression tests so this distinction is not lost while extending other modify tools.

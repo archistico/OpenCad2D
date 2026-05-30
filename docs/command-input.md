@@ -610,3 +610,13 @@ Create Block and Insert Block remain outside this path because their current wor
 - Tab is reserved for logical HUD field traversal while a command-driven tool is active; CadCanvas grip-edit Tab is now limited to SelectionTool.
 - Command option shortcuts such as Mirror Yes/No are handled by the window preview key path after the generic HUD textbox removal.
 - Manual check: MIRROR with a selected curve, Tab should enter X for first axis point; at delete-source prompt, Y/N should execute the option.
+
+### Step 30D - Offset / Fillet / Chamfer scalar validation alignment
+
+The HUD scalar validation now mirrors the modify tool rules instead of applying one global positive-distance rule everywhere.
+
+- `Offset` distance must be greater than zero.
+- `Fillet` radius may be zero; negative radius is rejected.
+- `Chamfer` distance may be zero; negative distance is rejected.
+
+This step does not alter the stable Line/Polyline/Rectangle/Circle/Rectangle-by-sides paths.

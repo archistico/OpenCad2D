@@ -91,3 +91,33 @@ Manual testing should still cover actual canvas picking for Break Point, Break S
 - Tab is reserved for logical HUD field traversal while a command-driven tool is active; CadCanvas grip-edit Tab is now limited to SelectionTool.
 - Command option shortcuts such as Mirror Yes/No are handled by the window preview key path after the generic HUD textbox removal.
 - Manual check: MIRROR with a selected curve, Tab should enter X for first axis point; at delete-source prompt, Y/N should execute the option.
+
+### Step 30D - Offset / Fillet / Chamfer scalar validation
+
+Manual checks:
+
+```text
+OFFSET
+Distance = 0
+Enter
+```
+
+Expected: rejected, distance must be greater than zero.
+
+```text
+FILLET
+R
+Radius = 0
+Enter
+```
+
+Expected: accepted, radius set to zero.
+
+```text
+CHAMFER
+D
+Distance = 0
+Enter
+```
+
+Expected: accepted, distance set to zero.
