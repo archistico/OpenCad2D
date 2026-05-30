@@ -4,6 +4,7 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 using System.Threading.Tasks;
 
 namespace OpenCad2D.Tools.Drawing;
@@ -11,7 +12,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to insert multiline text entities.
 /// </summary>
-public sealed class MultilineTextTool : IAsyncCadTool
+public sealed class MultilineTextTool : IAsyncCadTool, ICommandDrivenTool
 {
     private readonly ITextInputProvider _textInputProvider;
 
@@ -23,6 +24,35 @@ public sealed class MultilineTextTool : IAsyncCadTool
     public string Name => "Multiline Text";
 
     public Point2D? LastInsertionPoint { get; private set; }
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new CommandPromptState(
+            "MTEXT",
+            "Specify insertion point",
+            CommandInputKind.Point,
+            placeholder: "100,50   |   @50,0");
+    }
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,

@@ -202,6 +202,21 @@ Automated regression tests:
 - `CommandHudInput_EllipseMinorRadius_ShouldExposeEditableRadius`
 - `CommandHudInput_EllipseMajorRadiusAngleMinorRadius_ShouldCreateEllipse`
 - `CommandHudInput_EllipseMinorRadiusNegative_ShouldNotCreateEllipse`
+- `CommandHudInput_ArcThreePointsPointOnArc_ShouldExposeEditableDistanceAndAngle`
+- `CommandHudInput_ArcThreePointsEndPoint_ShouldExposeEditableDistanceAndAngle`
+- `CommandHudInput_ArcThreePointsDistanceAngle_ShouldCreateArc`
+- `CommandHudInput_ArcThreePointsDistanceNegative_ShouldNotAdvance`
+- `CommandHudInput_PolygonVertex_ShouldExposeEditableRadiusAndAngle`
+- `CommandHudInput_PolygonRadiusAngle_ShouldCreatePolygon`
+- `CommandHudInput_PolygonRadiusNegative_ShouldNotCreatePolygon`
+- `CommandHudInput_SplineNextPoint_ShouldExposeEditableDistanceAndAngle`
+- `CommandHudInput_SplineDistanceAngle_ShouldCreateSpline`
+- `CommandHudInput_SplineDistanceNegative_ShouldNotAddControlPoint`
+- `CommandHudInput_TextInsertionPoint_ShouldAcceptAbsoluteXAndY`
+- `CommandHudInput_MultilineTextInsertionPoint_ShouldAcceptAbsoluteXAndY`
+- `CommandHudInput_FirstPoint_ShouldExposeCoordinatesEvenAfterPreviousBasePoint`
+- `CommandHudInput_FirstPointTools_ShouldExposeCoordinateOverrides`
+- `CommandHudInput_PolygonCenterPoint_ShouldExposeCoordinateOverrides`
 
 
 ## Step 28B - Rectangle by Sides height routing fix
@@ -275,3 +290,86 @@ Enter
 Expected: center inserted at X=0, Y=0, then the ellipse is created from typed major and minor radii.
 
 Step 29B note: Ellipse uses dedicated major-axis and minor-radius resolvers. Do not route these fields through the generic Line/Polyline polar resolver.
+
+## Arc 3P HUD checks
+
+Manual checks:
+
+```text
+ARC3P
+click start point
+14.142
+Tab
+135
+Enter
+14.142
+Tab
+-135
+Enter
+```
+
+Expected: the second and third Arc 3P points are created from typed polar values relative to the previous point, and a valid arc is created.
+
+Step 29C note: Arc 3P uses its own resolver. It must not be added to the Line/Polyline polar target list as a shortcut.
+
+## Polygon HUD checks
+
+Manual checks:
+
+```text
+POLYGON
+6
+click center
+10
+Tab
+0
+Enter
+```
+
+Expected: a closed 6-sided polygon is created with the first vertex at radius 10 on the 0 degree direction.
+
+Step 29D note: side count stays in the existing command prompt. HUD editing begins at the center/vertex point phases.
+
+## Spline HUD checks
+
+Manual checks:
+
+```text
+SPLINE
+click first control point
+10
+Tab
+0
+Enter
+Enter
+```
+
+Expected: an open spline with two control points is created. `Close` and `Undo` options should still work through the command prompt while collecting control points.
+
+## Text and MText HUD checks
+
+Manual checks:
+
+```text
+TEXT
+Tab
+2
+Tab
+3
+Enter
+```
+
+Expected: the text input flow opens for insertion point X=2, Y=3, and the created text uses that insertion point.
+
+```text
+MTEXT
+Tab
+4
+Tab
+5
+Enter
+```
+
+Expected: the multiline text input flow opens for insertion point X=4, Y=5, and the created multiline text uses that insertion point.
+
+Step 29F note: HUD input only controls the insertion point. Text content, rotation and text-format selection remain in the existing text input provider/window.

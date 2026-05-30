@@ -1426,3 +1426,69 @@ Implemented behavior:
 - the Line/Polyline, Rectangle, Circle, Rectangle by Sides and Arc resolver paths remain isolated.
 
 Regression tests were added for Ellipse field exposure, typed major-radius/angle/minor-radius creation, and invalid minor-radius handling.
+
+## 2026-05-30 - Dynamic Command HUD Step 29C Arc 3P dedicated resolver
+
+Arc 3P HUD input is now enabled for its post-start phases.
+
+Implemented behavior:
+
+- start point continues to use the shared `X` / `Y` point-entry path;
+- point-on-arc and end-point phases expose editable `Distance`, `Angle`, `X` and `Y`;
+- `TryResolveArcThreePointsCommandHudOverridePoint(...)` resolves the next point from typed distance plus typed/live angle relative to the previous Arc 3P point;
+- typing distance freezes the live angle, and typing angle freezes the live distance;
+- the existing Close/Undo-style command option model is not involved in Arc 3P, so the change is isolated to point resolution.
+
+Regression tests were added for field exposure in both Arc 3P point phases, distance/angle arc creation, and invalid distance handling.
+
+## 2026-05-30 - Dynamic Command HUD Step 29D Polygon dedicated resolver
+
+Polygon HUD input is now enabled for the vertex phase.
+
+Implemented behavior:
+
+- side count remains the existing command-driven number prompt;
+- center point continues to use the shared `X` / `Y` point-entry path;
+- vertex point exposes editable `Radius` and `Angle`;
+- `TryResolvePolygonCommandHudOverridePoint(...)` resolves the vertex from typed radius plus typed/live angle;
+- typing radius freezes the live angle, and typing angle freezes the live radius.
+
+Regression tests were added for Polygon field exposure, typed radius/angle polygon creation, and invalid radius handling.
+
+## 2026-05-30 - Dynamic Command HUD Step 29E Spline dedicated resolver
+
+Spline HUD input is now enabled for the next-control-point phase.
+
+Implemented behavior:
+
+- first control point continues to use the shared `X` / `Y` point-entry path;
+- subsequent control points expose editable `Distance`, `Angle`, `X` and `Y`;
+- `TryResolveSplineCommandHudOverridePoint(...)` resolves the next control point from typed distance plus typed/live angle relative to the previous control point;
+- typing distance freezes the live angle, and typing angle freezes the live distance;
+- Enter completion plus `Close` and `Undo` options remain handled by the existing command-driven flow.
+
+Regression tests were added for Spline field exposure, typed distance/angle open spline creation, and invalid distance handling.
+
+## 2026-05-30 - Dynamic Command HUD Step 29F Text and MText insertion-point coverage
+
+Text and MText insertion points are now covered through the shared command-driven `X` / `Y` HUD path.
+
+Implemented behavior:
+
+- `TextTool` already used `ICommandDrivenTool`; ViewModel regression coverage now verifies typed `X` / `Y` insertion.
+- `MultilineTextTool` now implements `ICommandDrivenTool` with an `MTEXT` point prompt and command-input point handling.
+- HUD input only chooses the insertion point; text content, rotation and text format remain delegated to the existing text input provider/window.
+
+Regression tests were added for `TEXT` and `MTEXT` insertion from typed HUD coordinates, plus tool-level MText prompt/command-input behavior.
+
+## 2026-05-30 - Dynamic Command HUD Step 29G first-point coordinate guard
+
+The HUD first-point path was hardened after a regression where tools that accept `PointOrDistance` or have dedicated HUD builders could expose no `X` / `Y` fields at the first point.
+
+Implemented behavior:
+
+- point-accepting prompts without a live measurement now expose coordinate override fields instead of an empty HUD;
+- `ArcTool` center point and `EllipseTool` center point now explicitly return `X` / `Y` from their dedicated HUD builders;
+- first-point coordinate coverage now includes Line, Rectangle, Circle, Arc, Ellipse, Arc 3P, Spline, Text, MText and Polygon center.
+
+Regression tests were added for broad first-point `X` / `Y` field exposure and for starting Line from HUD coordinates immediately after a previous Text command.

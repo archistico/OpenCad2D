@@ -6,6 +6,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Drawing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -45,6 +46,38 @@ public sealed class MultilineTextToolTests
 
         Assert.Equal(ToolResultKind.Cancelled, result.Kind);
         Assert.Empty(context.Document.Entities.All);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithPoint_ShouldCreateMultilineTextEntity()
+    {
+        var provider = new StubTextInputProvider(new TextInputResult(
+            "First\nSecond",
+            TextFormatId.Annotation,
+            12));
+        var tool = new MultilineTextTool(provider);
+        ToolContext context = CreateContext();
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("10,20", new Point2D(10, 20)),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        MultilineTextEntity text = Assert.Single(context.Document.Entities.All.OfType<MultilineTextEntity>());
+        Assert.Equal(new Point2D(10, 20), text.InsertionPoint);
+        Assert.Equal("First\nSecond", text.Text);
+    }
+
+    [Fact]
+    public void GetPromptState_ShouldExposePointInput()
+    {
+        var tool = new MultilineTextTool(new StubTextInputProvider(null));
+        ToolContext context = CreateContext();
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+
+        Assert.Equal("MTEXT", prompt.CommandName);
+        Assert.Equal(CommandInputKind.Point, prompt.ExpectedInput);
     }
 
     private static ToolContext CreateContext()

@@ -453,11 +453,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         CommandLiveMeasurement measurement = GetLiveMeasurement();
         ICadTool activeTool = Workspace.ToolController.ActiveTool;
-
-        if (!measurement.HasValue)
-        {
-            return BuildCoordinateOverrideFields();
-        }
+        CommandPromptState promptState = GetCurrentPromptState();
 
         if (activeTool is LineTool lineTool &&
             lineTool.State == TwoPointToolState.WaitingForSecondPoint)
@@ -467,6 +463,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (activeTool is PolylineTool polylineTool &&
             polylineTool.State == PolylineToolState.CollectingVertices)
+        {
+            return BuildDistanceAngleCoordinateOverrideFields(measurement);
+        }
+
+        if (activeTool is SplineTool splineTool &&
+            splineTool.State == SplineToolState.CollectingControlPoints)
         {
             return BuildDistanceAngleCoordinateOverrideFields(measurement);
         }
@@ -497,6 +499,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 measurement);
         }
 
+        if (activeTool is ArcThreePointsTool arcThreePointsTool &&
+            arcThreePointsTool.State is
+                ArcThreePointsToolState.WaitingForPointOnArc or
+                ArcThreePointsToolState.WaitingForEndPoint)
+        {
+            return BuildDistanceAngleCoordinateOverrideFields(measurement);
+        }
+
         if (activeTool is EllipseTool ellipseTool)
         {
             return BuildEllipseFields(
@@ -507,7 +517,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (activeTool is PolygonTool polygonTool &&
             polygonTool.State == PolygonToolState.WaitingForVertex)
         {
-            return BuildRadiusAngleFields(measurement);
+            return BuildPolygonRadiusAngleFields(measurement);
         }
 
         if (activeTool is RotateTool rotateTool)
@@ -567,8 +577,20 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return BuildSingleAngleField(measurement.AngleDegrees);
         }
 
+        if (!measurement.HasValue)
+        {
+            return IsPointExpectedInput(promptState.ExpectedInput)
+                ? BuildCoordinateOverrideFields()
+                : Array.Empty<CommandHudFieldViewModel>();
+        }
+
+        if (promptState.ExpectedInput == CommandInputKind.Point)
+        {
+            return BuildCoordinateOverrideFields();
+        }
+
         return BuildFieldsFromPromptKind(
-            GetCurrentPromptState().ExpectedInput,
+            promptState.ExpectedInput,
             measurement);
     }
 
@@ -760,6 +782,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         return arcTool.State switch
         {
+            ArcToolState.WaitingForCenterPoint => BuildCoordinateOverrideFields(),
+
             ArcToolState.WaitingForStartPoint => new[]
             {
                 new CommandHudFieldViewModel(
@@ -806,6 +830,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         };
     }
 
+    private IReadOnlyList<CommandHudFieldViewModel> BuildPolygonRadiusAngleFields(
+        CommandLiveMeasurement measurement)
+    {
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "radius",
+                "Radius",
+                _commandHudInputState.Radius ?? measurement.Distance),
+            new CommandHudFieldViewModel(
+                "angle",
+                "Angle",
+                _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                "°")
+        };
+    }
+
     private static IReadOnlyList<CommandHudFieldViewModel> BuildSingleDistanceField(
         string key,
         string label,
@@ -841,6 +882,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         return ellipseTool.State switch
         {
+            EllipseToolState.WaitingForCenter => BuildCoordinateOverrideFields(),
+
             EllipseToolState.WaitingForMajorAxis => new[]
             {
                 new CommandHudFieldViewModel(
@@ -3154,8 +3197,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             IsCommandHudCircleOverrideTargetActive() ||
             IsCommandHudArcStartOverrideTargetActive() ||
             IsCommandHudArcEndOverrideTargetActive() ||
+            IsCommandHudArcThreePointsOverrideTargetActive() ||
             IsCommandHudEllipseMajorAxisOverrideTargetActive() ||
             IsCommandHudEllipseMinorRadiusOverrideTargetActive() ||
+            IsCommandHudPolygonOverrideTargetActive() ||
+            IsCommandHudSplineOverrideTargetActive() ||
             IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() ||
             IsCommandHudRectangleBySidesSecondSideOverrideTargetActive())
         {
@@ -3223,6 +3269,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         };
     }
 
+    private bool IsCommandHudArcThreePointsOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is ArcThreePointsTool
+        {
+            State: ArcThreePointsToolState.WaitingForPointOnArc or
+                   ArcThreePointsToolState.WaitingForEndPoint
+        };
+    }
+
     private bool IsCommandHudEllipseMajorAxisOverrideTargetActive()
     {
         return Workspace.ToolController.ActiveTool is EllipseTool
@@ -3236,6 +3291,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return Workspace.ToolController.ActiveTool is EllipseTool
         {
             State: EllipseToolState.WaitingForMinorRadius
+        };
+    }
+
+    private bool IsCommandHudPolygonOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is PolygonTool
+        {
+            State: PolygonToolState.WaitingForVertex
+        };
+    }
+
+    private bool IsCommandHudSplineOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is SplineTool
+        {
+            State: SplineToolState.CollectingControlPoints
         };
     }
 
@@ -3371,6 +3442,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 out errorMessage);
         }
 
+        if (IsCommandHudArcThreePointsOverrideTargetActive() &&
+            (_commandHudInputState.Distance is not null || _commandHudInputState.AngleDegrees is not null))
+        {
+            return TryResolveArcThreePointsCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
         if (IsCommandHudEllipseMajorAxisOverrideTargetActive() &&
             (_commandHudInputState.Radius is not null || _commandHudInputState.AngleDegrees is not null))
         {
@@ -3383,6 +3462,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             _commandHudInputState.Radius is not null)
         {
             return TryResolveEllipseMinorRadiusCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
+        if (IsCommandHudPolygonOverrideTargetActive() &&
+            (_commandHudInputState.Radius is not null || _commandHudInputState.AngleDegrees is not null))
+        {
+            return TryResolvePolygonCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
+        if (IsCommandHudSplineOverrideTargetActive() &&
+            (_commandHudInputState.Distance is not null || _commandHudInputState.AngleDegrees is not null))
+        {
+            return TryResolveSplineCommandHudOverridePoint(
                 out worldPoint,
                 out errorMessage);
         }
@@ -3631,6 +3726,36 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
+    private bool TryResolveArcThreePointsCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Arc 3P distance input requires the previous point.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        double distance = _commandHudInputState.Distance ?? measurement.Distance ?? 0.0;
+        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
+
+        if (distance <= 0)
+        {
+            errorMessage = "Arc 3P distance must be greater than zero.";
+            return false;
+        }
+
+        return TryResolveDistanceAnglePoint(
+            distance,
+            angleDegrees,
+            out worldPoint,
+            out errorMessage);
+    }
+
     private bool TryResolveEllipseMajorAxisCommandHudOverridePoint(
         out Point2D worldPoint,
         out string? errorMessage)
@@ -3708,6 +3833,66 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
+    private bool TryResolvePolygonCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Polygon radius input requires the center point.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        double radius = _commandHudInputState.Radius ?? measurement.Distance ?? 0.0;
+        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
+
+        if (radius <= 0)
+        {
+            errorMessage = "Polygon radius must be greater than zero.";
+            return false;
+        }
+
+        return TryResolveDistanceAnglePoint(
+            radius,
+            angleDegrees,
+            out worldPoint,
+            out errorMessage);
+    }
+
+    private bool TryResolveSplineCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Spline distance input requires the previous control point.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        double distance = _commandHudInputState.Distance ?? measurement.Distance ?? 0.0;
+        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
+
+        if (distance <= 0)
+        {
+            errorMessage = "Spline distance must be greater than zero.";
+            return false;
+        }
+
+        return TryResolveDistanceAnglePoint(
+            distance,
+            angleDegrees,
+            out worldPoint,
+            out errorMessage);
+    }
+
     private void ApplyCommandHudInputOverridesToPreview()
     {
         if (!_commandHudInputState.HasAnyOverride)
@@ -3726,8 +3911,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
              IsCommandHudCircleOverrideTargetActive() ||
              IsCommandHudArcStartOverrideTargetActive() ||
              IsCommandHudArcEndOverrideTargetActive() ||
+             IsCommandHudArcThreePointsOverrideTargetActive() ||
              IsCommandHudEllipseMajorAxisOverrideTargetActive() ||
              IsCommandHudEllipseMinorRadiusOverrideTargetActive() ||
+             IsCommandHudPolygonOverrideTargetActive() ||
+             IsCommandHudSplineOverrideTargetActive() ||
              IsCommandHudRectangleBySidesFirstSideOverrideTargetActive() ||
              IsCommandHudRectangleBySidesSecondSideOverrideTargetActive()) &&
             TryResolveCommandHudOverridePoint(
@@ -3848,6 +4036,54 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                      measurement.Distance is not null)
             {
                 _commandHudInputState.Radius = measurement.Distance;
+            }
+        }
+
+        if (IsCommandHudArcThreePointsOverrideTargetActive())
+        {
+            if (fieldKind == CommandHudFieldKind.Distance &&
+                _commandHudInputState.AngleDegrees is null &&
+                measurement.AngleDegrees is not null)
+            {
+                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
+            }
+            else if (fieldKind == CommandHudFieldKind.Angle &&
+                     _commandHudInputState.Distance is null &&
+                     measurement.Distance is not null)
+            {
+                _commandHudInputState.Distance = measurement.Distance;
+            }
+        }
+
+        if (IsCommandHudPolygonOverrideTargetActive())
+        {
+            if (fieldKind == CommandHudFieldKind.Radius &&
+                _commandHudInputState.AngleDegrees is null &&
+                measurement.AngleDegrees is not null)
+            {
+                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
+            }
+            else if (fieldKind == CommandHudFieldKind.Angle &&
+                     _commandHudInputState.Radius is null &&
+                     measurement.Distance is not null)
+            {
+                _commandHudInputState.Radius = measurement.Distance;
+            }
+        }
+
+        if (IsCommandHudSplineOverrideTargetActive())
+        {
+            if (fieldKind == CommandHudFieldKind.Distance &&
+                _commandHudInputState.AngleDegrees is null &&
+                measurement.AngleDegrees is not null)
+            {
+                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
+            }
+            else if (fieldKind == CommandHudFieldKind.Angle &&
+                     _commandHudInputState.Distance is null &&
+                     measurement.Distance is not null)
+            {
+                _commandHudInputState.Distance = measurement.Distance;
             }
         }
     }
