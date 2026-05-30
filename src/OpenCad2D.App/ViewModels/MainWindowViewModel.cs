@@ -492,7 +492,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "radius",
                     "Radius",
-                    measurement.Distance)
+                    measurement.Distance,
+                    isEditable: false)
             };
         }
 
@@ -636,12 +637,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             new CommandHudFieldViewModel(
                 "distance",
                 "Distance",
-                measurement.Distance),
+                measurement.Distance,
+                isEditable: false),
             new CommandHudFieldViewModel(
                 "angle",
                 "Angle",
                 measurement.AngleDegrees,
-                "°")
+                "°",
+                isEditable: false)
         };
     }
 
@@ -655,13 +658,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 "Width",
                 measurement.DeltaX is null
                     ? null
-                    : Math.Abs(measurement.DeltaX.Value)),
+                    : Math.Abs(measurement.DeltaX.Value),
+                isEditable: false),
             new CommandHudFieldViewModel(
                 "height",
                 "Height",
                 measurement.DeltaY is null
                     ? null
-                    : Math.Abs(measurement.DeltaY.Value))
+                    : Math.Abs(measurement.DeltaY.Value),
+                isEditable: false)
         };
     }
 
@@ -676,12 +681,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "width",
                     "Width",
-                    measurement.Distance),
+                    measurement.Distance,
+                    isEditable: false),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
                     measurement.AngleDegrees,
-                    "°")
+                    "°",
+                    isEditable: false)
             },
 
             RectangleBySidesToolState.WaitingForSecondSidePoint => new[]
@@ -689,7 +696,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "height",
                     "Height",
-                    measurement.Distance)
+                    measurement.Distance,
+                    isEditable: false)
             },
 
             _ => Array.Empty<CommandHudFieldViewModel>()
@@ -707,12 +715,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "radius",
                     "Radius",
-                    measurement.Distance),
+                    measurement.Distance,
+                    isEditable: false),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
                     measurement.AngleDegrees,
-                    "°")
+                    "°",
+                    isEditable: false)
             },
 
             ArcToolState.WaitingForEndPoint => new[]
@@ -721,7 +731,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     "angle",
                     "Angle",
                     measurement.AngleDegrees,
-                    "°")
+                    "°",
+                    isEditable: false)
             },
 
             _ => Array.Empty<CommandHudFieldViewModel>()
@@ -737,12 +748,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             new CommandHudFieldViewModel(
                 "radius",
                 "Radius",
-                measurement.Distance),
+                measurement.Distance,
+                isEditable: false),
             new CommandHudFieldViewModel(
                 "angle",
                 "Angle",
                 measurement.AngleDegrees,
-                "°")
+                "°",
+                isEditable: false)
         };
     }
 
@@ -756,7 +769,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             new CommandHudFieldViewModel(
                 key,
                 label,
-                value)
+                value,
+                isEditable: false)
         };
     }
 
@@ -769,7 +783,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 "angle",
                 "Angle",
                 value,
-                "°")
+                "°",
+                isEditable: false)
         };
     }
 
@@ -784,12 +799,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 new CommandHudFieldViewModel(
                     "major-radius",
                     "Major radius",
-                    measurement.Distance),
+                    measurement.Distance,
+                    isEditable: false),
                 new CommandHudFieldViewModel(
                     "angle",
                     "Angle",
                     measurement.AngleDegrees,
-                    "°")
+                    "°",
+                    isEditable: false)
             },
 
             EllipseToolState.WaitingForMinorRadius => BuildSingleDistanceField(

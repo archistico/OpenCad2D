@@ -1285,3 +1285,18 @@ Important constraints for future changes:
 - Do not make `X` the default target for plain numeric input during first-point prompts.
 - Do not rely on Avalonia focus for HUD numeric fields; the HUD is mouse-transparent and uses logical field state.
 - The next safe feature step should be Rectangle read-only/visual verification first, then a dedicated rectangle resolver, not a shared resolver rewrite.
+
+## 2026-05-30 — Dynamic Command HUD Step 25-quater editable-scope guard
+
+The stable editable HUD scope is now explicitly guarded. `Distance`/`Angle` and `X`/`Y` remain editable for the tested Line/Polyline workflows, but HUD fields shown by unsupported tools are read-only until each tool receives a dedicated resolver and regression tests.
+
+Changes:
+
+- Line and Polyline straight-segment HUD fields remain editable.
+- First-point `X`/`Y` coordinate fields remain editable through explicit `Tab` entry.
+- Rectangle `Width`/`Height`, Circle `Radius`, Arc, Rectangle-by-sides, Ellipse, Rotate, Scale, Offset and fallback prompt fields remain visual/read-only for now.
+- Added regression tests to lock this scope before attempting Rectangle again.
+
+Reason:
+
+A previous Rectangle implementation broke the shared routing model. New tool support must not be added by widening the common resolver first; it must start from read-only fields, then a dedicated resolver, then tests.

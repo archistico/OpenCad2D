@@ -1096,6 +1096,54 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Contains("both X and Y", viewModel.LastMessage);
     }
 
+
+    [Fact]
+    public void CommandHudInput_LineAndPolylineFields_ShouldRemainEditableCheckpoint()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Distance && field.CanAcceptTypedOverride);
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
+
+        var polylineViewModel = new MainWindowViewModel();
+
+        polylineViewModel.SubmitCommandInput("PL");
+        polylineViewModel.SubmitCommandInput("0,0");
+        polylineViewModel.SetMousePosition(new Point2D(0, 10));
+
+        Assert.Contains(
+            polylineViewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Distance && field.CanAcceptTypedOverride);
+        Assert.Contains(
+            polylineViewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Angle && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_RectangleWidthHeight_ShouldRemainReadOnlyUntilDedicatedImplementation()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("REC");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 5));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Width && !field.CanAcceptTypedOverride);
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Height && !field.CanAcceptTypedOverride);
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,

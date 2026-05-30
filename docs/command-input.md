@@ -553,3 +553,23 @@ Stable keyboard rules:
 - Overrides are cleared after each confirmed point.
 
 Rectangle, Circle, Arc and modify tools may show HUD fields, but editable routing must be added tool by tool in later isolated steps.
+
+## Dynamic HUD editable scope guard
+
+Editable HUD input is currently supported only for the stabilized Line/Polyline workflows and explicit first-point X/Y entry.
+
+Editable now:
+
+- `X` / `Y` while a point command is waiting for a first point, entered intentionally with `Tab`.
+- `Distance` / `Angle` for Line after the first point.
+- `Distance` / `Angle` for Polyline line-mode after the first vertex.
+
+Read-only until dedicated implementation:
+
+- Rectangle `Width` / `Height`.
+- Rectangle-by-sides `Width` / `Angle` / `Height`.
+- Circle `Radius`.
+- Arc fields.
+- Ellipse, Polygon, Rotate, Scale, Offset, Mirror, Break, Measure and dimension fallback fields.
+
+This guard prevents an unsupported field from being picked by numeric routing simply because it is visible in the HUD. Each new tool must first add a dedicated resolver and regression tests.
