@@ -487,14 +487,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (activeTool is CircleTool circleTool &&
             circleTool.State == TwoPointToolState.WaitingForSecondPoint)
         {
-            return new[]
-            {
-                new CommandHudFieldViewModel(
-                    "radius",
-                    "Radius",
-                    measurement.Distance,
-                    isEditable: false)
-            };
+            return BuildCircleRadiusCoordinateFields(measurement);
         }
 
         if (activeTool is ArcTool arcTool)
@@ -669,6 +662,28 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                     (measurement.DeltaY is null
                         ? null
                         : Math.Abs(measurement.DeltaY.Value))),
+            new CommandHudFieldViewModel(
+                "x",
+                "X",
+                _commandHudInputState.X ?? userPoint.X),
+            new CommandHudFieldViewModel(
+                "y",
+                "Y",
+                _commandHudInputState.Y ?? userPoint.Y)
+        };
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildCircleRadiusCoordinateFields(
+        CommandLiveMeasurement measurement)
+    {
+        Point2D userPoint = GetLivePointerUserPoint();
+
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "radius",
+                "Radius",
+                _commandHudInputState.Radius ?? measurement.Distance),
             new CommandHudFieldViewModel(
                 "x",
                 "X",
@@ -3111,7 +3126,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (IsCommandHudPointOverrideTargetActive() || IsCommandHudRectangleOverrideTargetActive())
+        if (IsCommandHudPointOverrideTargetActive() ||
+            IsCommandHudRectangleOverrideTargetActive() ||
+            IsCommandHudCircleOverrideTargetActive())
         {
             result = Workspace.PreviewPointFromCommandLine(worldPoint);
             SetLastResult(result);
@@ -3148,6 +3165,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool IsCommandHudRectangleOverrideTargetActive()
     {
         return Workspace.ToolController.ActiveTool is RectangleTool
+        {
+            State: TwoPointToolState.WaitingForSecondPoint
+        };
+    }
+
+    private bool IsCommandHudCircleOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is CircleTool
         {
             State: TwoPointToolState.WaitingForSecondPoint
         };
@@ -3229,6 +3254,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 out errorMessage);
         }
 
+        if (IsCommandHudCircleOverrideTargetActive() &&
+            _commandHudInputState.Radius is not null)
+        {
+            return TryResolveCircleCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
         if (!IsCommandHudPointOverrideTargetActive())
         {
             errorMessage = "Distance/angle input requires a base point.";
@@ -3295,6 +3328,41 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
+    private bool TryResolveCircleCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Circle radius input requires the center point.";
+            return false;
+        }
+
+        double radius = _commandHudInputState.Radius ?? 0.0;
+
+        if (radius <= 0)
+        {
+            errorMessage = "Circle radius must be greater than zero.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        double angleDegrees = measurement.AngleDegrees ?? 0.0;
+        double angleRadians = angleDegrees * Math.PI / 180.0;
+
+        Point2D centerUserPoint = Workspace.CurrentUcs.WorldToUser(
+            Workspace.Context.CurrentBasePoint.Value);
+        var radiusPointUserPoint = new Point2D(
+            centerUserPoint.X + Math.Cos(angleRadians) * radius,
+            centerUserPoint.Y + Math.Sin(angleRadians) * radius);
+
+        worldPoint = Workspace.CurrentUcs.UserToWorld(radiusPointUserPoint);
+        return true;
+    }
+
     private void ApplyCommandHudInputOverridesToPreview()
     {
         if (!_commandHudInputState.HasAnyOverride)
@@ -3308,7 +3376,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return;
         }
 
-        if ((IsCommandHudPointOverrideTargetActive() || IsCommandHudRectangleOverrideTargetActive()) &&
+        if ((IsCommandHudPointOverrideTargetActive() ||
+             IsCommandHudRectangleOverrideTargetActive() ||
+             IsCommandHudCircleOverrideTargetActive()) &&
             TryResolveCommandHudOverridePoint(
                 requireCompleteCoordinates: false,
                 out Point2D worldPoint,

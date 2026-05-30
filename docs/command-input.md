@@ -552,7 +552,7 @@ Stable keyboard rules:
 - Starting to type `Distance` freezes the visible live `Angle`; starting to type `Angle` freezes the visible live `Distance`.
 - Overrides are cleared after each confirmed point.
 
-Rectangle, Circle, Arc and modify tools may show HUD fields, but editable routing must be added tool by tool in later isolated steps.
+Arc and modify tools may show HUD fields, but editable routing must be added tool by tool in later isolated steps. Rectangle and Circle are enabled through dedicated resolvers.
 
 ## Dynamic HUD editable scope guard
 
@@ -568,7 +568,7 @@ Read-only until dedicated implementation:
 
 - Rectangle `Width` / `Height`.
 - Rectangle-by-sides `Width` / `Angle` / `Height`.
-- Circle `Radius`.
+- Circle `Radius` uses a dedicated circle resolver.
 - Arc fields.
 - Ellipse, Polygon, Rotate, Scale, Offset, Mirror, Break, Measure and dimension fallback fields.
 
@@ -634,3 +634,64 @@ Enter
 ```
 
 The rectangle resolver must remain isolated from the Line/Polyline `Distance` / `Angle` resolver. This prevents Rectangle-specific behavior from regressing the already stable polar input workflow.
+
+
+## Circle HUD resolver
+
+Circle editable HUD input is supported through a dedicated resolver. The dynamic HUD accepts:
+
+```text
+CIRCLE
+Tab
+X
+Tab
+Y
+Enter
+Radius
+Enter
+```
+
+And after a center has been selected with the mouse:
+
+```text
+CIRCLE
+click center
+Radius
+Enter
+```
+
+`Radius` must be greater than zero. The circle resolver must remain isolated from the Line/Polyline `Distance` / `Angle` resolver and the Rectangle `Width` / `Height` resolver.
+
+## Dynamic HUD compact row layout
+
+The dynamic HUD uses a deterministic compact layout for numeric fields:
+
+```text
+Distance [ ... ]  Angle [ ... ]
+X        [ ... ]  Y     [ ... ]
+```
+
+For single-value tools, the geometry value stays on its own row and coordinates stay grouped below it:
+
+```text
+Radius   [ ... ]
+X        [ ... ]  Y     [ ... ]
+```
+
+This avoids mixing geometric properties and coordinate input on the same row. Labels and value boxes use fixed widths so `Distance`, `Radius`, `X` and the corresponding value boxes remain aligned.
+
+### Step 27C: wider HUD rows
+
+The row-based HUD layout now uses a wider panel and wider field columns so the second field in paired rows is not clipped:
+
+```text
+Distance [ ... ]  Angle [ ... ]
+X        [ ... ]  Y     [ ... ]
+```
+
+The change is visual only. It does not affect command routing, Tab cycling, mouse transparency or tool resolvers.
+
+### Step 27D — Circle HUD regression guard
+
+Circle HUD input is now protected by additional regression tests. The tests verify that the center prompt exposes coordinate fields only, that radius input remains dedicated to the post-center state, and that zero or negative radius values do not create a circle. This step does not change runtime behavior.
+

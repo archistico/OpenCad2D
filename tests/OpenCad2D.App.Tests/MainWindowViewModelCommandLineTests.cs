@@ -1306,6 +1306,165 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.Contains("both X and Y", viewModel.LastMessage);
     }
 
+
+    [Fact]
+    public void CommandHudInput_CircleRadius_ShouldBeEditableWithDedicatedImplementation()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CIRCLE");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_CircleRadius_ShouldCreateCircle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CIRCLE");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "7",
+            confirm: true,
+            out _);
+
+        Assert.True(radiusHandled);
+
+        CircleEntity circle = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<CircleEntity>());
+        Assert.True(ArePointsNear(new Point2D(0, 0), circle.Center));
+        Assert.Equal(7.0, circle.Radius, 9);
+    }
+
+    [Fact]
+    public void CommandHudInput_CircleCenter_ShouldAcceptAbsoluteXAndY()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CIRCLE");
+
+        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "4",
+            confirm: false,
+            out _);
+        bool yHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "5",
+            confirm: true,
+            out _);
+
+        viewModel.SetMousePosition(new Point2D(14, 5));
+        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "10",
+            confirm: true,
+            out _);
+
+        Assert.True(xHandled);
+        Assert.True(yHandled);
+        Assert.True(radiusHandled);
+
+        CircleEntity circle = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<CircleEntity>());
+        Assert.True(ArePointsNear(new Point2D(4, 5), circle.Center));
+        Assert.Equal(10.0, circle.Radius, 9);
+    }
+
+    [Fact]
+    public void CommandHudInput_CircleCenterIncompleteCoordinates_ShouldNotCreateCircle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CIRCLE");
+
+        bool xHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: true,
+            out var result);
+
+        Assert.True(xHandled);
+        Assert.NotNull(result);
+        Assert.DoesNotContain(
+            viewModel.Workspace.Document.Entities.All,
+            entity => entity is CircleEntity);
+        Assert.Contains("both X and Y", viewModel.LastMessage);
+    }
+
+
+    [Fact]
+    public void CommandHudInput_CircleCenterPrompt_ShouldExposeOnlyCoordinateFields()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CIRCLE");
+
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.X && field.CanAcceptTypedOverride);
+        Assert.Contains(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Y && field.CanAcceptTypedOverride);
+        Assert.DoesNotContain(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Radius && field.CanAcceptTypedOverride);
+    }
+
+    [Fact]
+    public void CommandHudInput_CircleRadiusZero_ShouldNotCreateCircle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CIRCLE");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "0",
+            confirm: true,
+            out var result);
+
+        Assert.True(radiusHandled);
+        Assert.NotNull(result);
+        Assert.DoesNotContain(
+            viewModel.Workspace.Document.Entities.All,
+            entity => entity is CircleEntity);
+        Assert.Contains("greater than zero", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_CircleRadiusNegative_ShouldNotCreateCircle()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("CIRCLE");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetMousePosition(new Point2D(10, 0));
+
+        bool radiusHandled = viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Radius,
+            "-5",
+            confirm: true,
+            out var result);
+
+        Assert.True(radiusHandled);
+        Assert.NotNull(result);
+        Assert.DoesNotContain(
+            viewModel.Workspace.Document.Entities.All,
+            entity => entity is CircleEntity);
+        Assert.Contains("greater than zero", viewModel.LastMessage);
+    }
+
     private static bool ArePointsNear(
         Point2D expected,
         Point2D actual,

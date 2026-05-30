@@ -21,6 +21,7 @@ public sealed class CommandHudStateViewModel
         ToolName = toolName;
         PromptState = promptState;
         Fields = fields ?? Array.Empty<CommandHudFieldViewModel>();
+        FieldRows = BuildFieldRows(Fields);
         OptionViews = promptState.Options
             .Select(CommandHudOptionViewModel.FromOption)
             .ToList();
@@ -43,6 +44,52 @@ public sealed class CommandHudStateViewModel
         .ToList();
 
     public bool HasOptions => PromptState.Options.Count > 0;
+
+    public IReadOnlyList<CommandHudFieldViewModel> Fields { get; }
+
+    public IReadOnlyList<CommandHudFieldRowViewModel> FieldRows { get; }
+
+    private static IReadOnlyList<CommandHudFieldRowViewModel> BuildFieldRows(
+        IReadOnlyList<CommandHudFieldViewModel> fields)
+    {
+        if (fields.Count == 0)
+        {
+            return Array.Empty<CommandHudFieldRowViewModel>();
+        }
+
+        List<CommandHudFieldViewModel> geometryFields = fields
+            .Where(field => field.Kind is not CommandHudFieldKind.X and not CommandHudFieldKind.Y)
+            .ToList();
+
+        List<CommandHudFieldViewModel> coordinateFields = fields
+            .Where(field => field.Kind is CommandHudFieldKind.X or CommandHudFieldKind.Y)
+            .OrderBy(field => field.Kind == CommandHudFieldKind.X ? 0 : 1)
+            .ToList();
+
+        List<CommandHudFieldRowViewModel> rows = new();
+        AddRows(rows, geometryFields);
+        AddRows(rows, coordinateFields);
+
+        return rows;
+    }
+
+    private static void AddRows(
+        List<CommandHudFieldRowViewModel> rows,
+        IReadOnlyList<CommandHudFieldViewModel> fields)
+    {
+        for (int index = 0; index < fields.Count; index += 2)
+        {
+            rows.Add(new CommandHudFieldRowViewModel(fields.Skip(index).Take(2).ToList()));
+        }
+    }
+}
+
+public sealed class CommandHudFieldRowViewModel
+{
+    public CommandHudFieldRowViewModel(IReadOnlyList<CommandHudFieldViewModel> fields)
+    {
+        Fields = fields;
+    }
 
     public IReadOnlyList<CommandHudFieldViewModel> Fields { get; }
 }

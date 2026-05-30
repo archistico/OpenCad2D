@@ -1328,3 +1328,49 @@ Rectangle HUD input is confirmed working through a dedicated resolver. Added reg
 - the stabilization checklist now includes Rectangle-specific manual checks.
 
 Do not generalize Rectangle routing into the stable Line/Polyline distance-angle resolver. Future tools should follow the same pattern: add a dedicated resolver first, then enable their HUD fields.
+
+## 2026-05-30 — Dynamic Command HUD Step 27A circle dedicated resolver
+
+Circle HUD input is added using a dedicated resolver, following the successful Rectangle pattern.
+
+Implemented:
+
+- `CircleTool` radius phase now exposes editable `Radius` plus `X` / `Y` radius-point coordinates.
+- `TryResolveCircleCommandHudOverridePoint(...)` creates a synthetic radius point from the center, typed radius and live pointer angle, then reuses the existing Circle point submission flow.
+- Center coordinates still use the shared point `X` / `Y` path.
+- Regression tests cover radius creation, center X/Y input and incomplete center coordinates.
+
+Important guardrail: do not merge Circle radius handling into the stable Line/Polyline `Distance` / `Angle` resolver or the Rectangle `Width` / `Height` resolver. Continue adding new tool support with dedicated resolvers and tests.
+
+## 2026-05-30 — Dynamic Command HUD Step 27B compact field row layout
+
+The dynamic command HUD field layout has been refined without changing command routing or resolver behavior.
+
+Changes:
+
+- HUD fields are now grouped into deterministic rows instead of flowing through a single WrapPanel.
+- Geometry fields are displayed before coordinate fields.
+- Coordinate fields `X` / `Y` are always grouped on their own row when present.
+- Single-value tools such as Circle now show `Radius` on its own row, with `X` / `Y` on the next row.
+- Two-value tools such as Line/Polyline keep `Distance` / `Angle` on the first row and `X` / `Y` on the second row.
+- Labels and value boxes use fixed column widths so values align consistently across rows.
+
+No resolver, parser, command-state or keyboard-routing behavior was changed in this step.
+
+## 2026-05-30 — Dynamic Command HUD Step 27C wider field rows
+
+The dynamic command HUD width was increased to prevent the second field in paired rows, such as `Angle` and `Y`, from being clipped.
+
+Changes:
+
+- HUD panel width increased from `MinWidth=220` / `MaxWidth=320` to `MinWidth=390` / `MaxWidth=460`.
+- Field label columns increased from `68` to `78`.
+- Field value boxes increased from `76` to `92`.
+- Horizontal spacing between paired fields increased from `10` to `14`.
+
+This is a visual-only adjustment. Command routing, typed overrides, dedicated resolvers, Tab handling and mouse transparency are unchanged.
+
+### Step 27D — Circle HUD regression guard
+
+Circle HUD input is now protected by additional regression tests. The tests verify that the center prompt exposes coordinate fields only, that radius input remains dedicated to the post-center state, and that zero or negative radius values do not create a circle. This step does not change runtime behavior.
+

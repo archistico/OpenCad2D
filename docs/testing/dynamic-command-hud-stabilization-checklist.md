@@ -9,11 +9,13 @@ The current stable editable HUD scope is limited to:
 - Line
 - Polyline straight-segment mode
 - Rectangle opposite-corner mode through the dedicated rectangle resolver
+- Circle radius mode through the dedicated circle resolver
 - first-point absolute coordinates through `X` / `Y`
 - polar point input through `Distance` / `Angle` for Line/Polyline
 - rectangle size input through `Width` / `Height` for Rectangle
+- circle radius input through `Radius` for Circle
 
-Circle, Arc and Modify tools must not be considered fully editable until they receive dedicated incremental steps and tests.
+Arc and Modify tools must not be considered fully editable until they receive dedicated incremental steps and tests.
 
 ## Manual checks
 
@@ -137,5 +139,18 @@ The App test suite now covers the most fragile HUD behaviors so they do not need
 - `CommandHudInput_RectangleWidthOnly_ShouldFreezeVisibleLiveHeight`
 - `CommandHudInput_RectangleWidthHeight_ShouldRespectLiveQuadrant`
 - `CommandHudInput_RectangleFirstCornerIncompleteCoordinates_ShouldNotCreateRectangle`
+- `CommandHudInput_CircleRadius_ShouldCreateCircle`
+- `CommandHudInput_CircleCenter_ShouldAcceptAbsoluteXAndY`
+- `CommandHudInput_CircleCenterPrompt_ShouldExposeOnlyCoordinateFields`
+- `CommandHudInput_CircleRadiusZero_ShouldNotCreateCircle`
+- `CommandHudInput_CircleRadiusNegative_ShouldNotCreateCircle`
+- `CommandHudInput_CircleCenterIncompleteCoordinates_ShouldNotCreateCircle`
 
-Manual checks should still be used for mouse transparency and visual focus/highlight behavior, because those depend on Avalonia event routing and rendering rather than ViewModel-only logic.
+Manual checks should still be used for mouse transparency, visual focus/highlight behavior, and final HUD row alignment, because those depend on Avalonia event routing and rendering rather than ViewModel-only logic.
+
+## Circle HUD checks
+
+- `CIRCLE`, click center, type `50`, `Enter`: a circle with radius 50 is created.
+- `CIRCLE`, `Tab`, type X, `Tab`, type Y, `Enter`, type radius, `Enter`: center coordinates and radius are respected.
+- During circle radius input, the HUD must show `Radius`, `X`, `Y`; the mouse must remain free for canvas point selection.
+- Incomplete center coordinates (`X` without `Y`) must not create a circle and should show the existing both-coordinates validation message.

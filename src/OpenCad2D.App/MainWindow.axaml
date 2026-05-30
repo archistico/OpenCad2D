@@ -1561,8 +1561,8 @@
                                 BorderThickness="1"
                                 CornerRadius="5"
                                 Padding="10,8"
-                                MinWidth="220"
-                                MaxWidth="320">
+                                MinWidth="390"
+                                MaxWidth="460">
 
                             <StackPanel Spacing="6">
                                 <StackPanel Orientation="Horizontal" Spacing="7">
@@ -1591,41 +1591,54 @@
                                            TextWrapping="Wrap" />
 
                                 <ItemsControl x:Name="HudFieldsItemsControl"
-                                              ItemsSource="{Binding CommandHudState.Fields}">
+                                              ItemsSource="{Binding CommandHudState.FieldRows}">
                                     <ItemsControl.ItemsPanel>
                                         <ItemsPanelTemplate>
-                                            <WrapPanel Orientation="Horizontal" />
+                                            <StackPanel Spacing="3" />
                                         </ItemsPanelTemplate>
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
-                                        <DataTemplate x:DataType="vm:CommandHudFieldViewModel">
-                                            <Grid ColumnDefinitions="Auto,76"
-                                                  ColumnSpacing="5"
-                                                  Margin="0,1,9,2">
-                                                <TextBlock Grid.Column="0"
-                                                           Text="{Binding Label}"
-                                                           Foreground="#AAAAAA"
-                                                           FontFamily="Consolas"
-                                                           FontSize="11"
-                                                           VerticalAlignment="Center" />
+                                        <DataTemplate x:DataType="vm:CommandHudFieldRowViewModel">
+                                            <ItemsControl ItemsSource="{Binding Fields}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" Spacing="14" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="vm:CommandHudFieldViewModel">
+                                                        <Grid ColumnDefinitions="78,92"
+                                                              ColumnSpacing="6"
+                                                              Margin="0,1,0,1">
+                                                            <TextBlock Grid.Column="0"
+                                                                       Text="{Binding Label}"
+                                                                       Foreground="#AAAAAA"
+                                                                       FontFamily="Consolas"
+                                                                       FontSize="11"
+                                                                       TextAlignment="Right"
+                                                                       VerticalAlignment="Center" />
 
-                                                <TextBox Grid.Column="1"
-                                                         Text="{Binding NumericValueText, Mode=OneTime}"
-                                                         PlaceholderText="{Binding InputPlaceholder}"
-                                                         Background="#111111"
-                                                         Foreground="#FFD700"
-                                                         BorderBrush="#444444"
-                                                         BorderThickness="1"
-                                                         FontFamily="Consolas"
-                                                         FontSize="12"
-                                                         Padding="5,2"
-                                                         Width="76"
-                                                         MinHeight="22"
-                                                         IsHitTestVisible="False"
-                                                         KeyDown="HudFieldTextBox_KeyDown"
-                                                         GotFocus="HudFieldTextBox_GotFocus"
-                                                         LostFocus="HudFieldTextBox_LostFocus" />
-                                            </Grid>
+                                                            <TextBox Grid.Column="1"
+                                                                     Text="{Binding NumericValueText, Mode=OneTime}"
+                                                                     PlaceholderText="{Binding InputPlaceholder}"
+                                                                     Background="#111111"
+                                                                     Foreground="#FFD700"
+                                                                     BorderBrush="#444444"
+                                                                     BorderThickness="1"
+                                                                     FontFamily="Consolas"
+                                                                     FontSize="12"
+                                                                     Padding="5,2"
+                                                                     Width="92"
+                                                                     MinHeight="22"
+                                                                     HorizontalContentAlignment="Right"
+                                                                     IsHitTestVisible="False"
+                                                                     KeyDown="HudFieldTextBox_KeyDown"
+                                                                     GotFocus="HudFieldTextBox_GotFocus"
+                                                                     LostFocus="HudFieldTextBox_LostFocus" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
