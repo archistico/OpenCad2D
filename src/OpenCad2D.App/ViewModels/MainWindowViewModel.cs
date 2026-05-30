@@ -474,7 +474,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (activeTool is RectangleTool rectangleTool &&
             rectangleTool.State == TwoPointToolState.WaitingForSecondPoint)
         {
-            return BuildWidthHeightFields(measurement);
+            return BuildRectangleWidthHeightCoordinateFields(measurement);
         }
 
         if (activeTool is RectangleBySidesTool rectangleBySidesTool)
@@ -648,25 +648,35 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         };
     }
 
-    private static IReadOnlyList<CommandHudFieldViewModel> BuildWidthHeightFields(
+    private IReadOnlyList<CommandHudFieldViewModel> BuildRectangleWidthHeightCoordinateFields(
         CommandLiveMeasurement measurement)
     {
+        Point2D userPoint = GetLivePointerUserPoint();
+
         return new[]
         {
             new CommandHudFieldViewModel(
                 "width",
                 "Width",
-                measurement.DeltaX is null
-                    ? null
-                    : Math.Abs(measurement.DeltaX.Value),
-                isEditable: false),
+                _commandHudInputState.Width ??
+                    (measurement.DeltaX is null
+                        ? null
+                        : Math.Abs(measurement.DeltaX.Value))),
             new CommandHudFieldViewModel(
                 "height",
                 "Height",
-                measurement.DeltaY is null
-                    ? null
-                    : Math.Abs(measurement.DeltaY.Value),
-                isEditable: false)
+                _commandHudInputState.Height ??
+                    (measurement.DeltaY is null
+                        ? null
+                        : Math.Abs(measurement.DeltaY.Value))),
+            new CommandHudFieldViewModel(
+                "x",
+                "X",
+                _commandHudInputState.X ?? userPoint.X),
+            new CommandHudFieldViewModel(
+                "y",
+                "Y",
+                _commandHudInputState.Y ?? userPoint.Y)
         };
     }
 
@@ -3052,16 +3062,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (fieldKind == CommandHudFieldKind.Distance && value <= 0)
+        if (RequiresPositiveHudValue(fieldKind) && value <= 0)
         {
-            result = ToolResult.None("Distance must be greater than zero.");
+            result = ToolResult.None($"{GetHudFieldDisplayName(fieldKind)} must be greater than zero.");
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
             NotifyCommandInputStateChanged();
             return true;
         }
 
-        FreezeComplementaryPolarHudValueIfNeeded(fieldKind);
+        FreezeComplementaryHudValueIfNeeded(fieldKind);
 
         _commandHudInputState.SetOverride(
             fieldKind,
@@ -3101,7 +3111,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (IsCommandHudPointOverrideTargetActive())
+        if (IsCommandHudPointOverrideTargetActive() || IsCommandHudRectangleOverrideTargetActive())
         {
             result = Workspace.PreviewPointFromCommandLine(worldPoint);
             SetLastResult(result);
@@ -3111,6 +3121,37 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return true;
     }
 
+
+    private static bool RequiresPositiveHudValue(CommandHudFieldKind fieldKind)
+    {
+        return fieldKind is
+            CommandHudFieldKind.Distance or
+            CommandHudFieldKind.Width or
+            CommandHudFieldKind.Height or
+            CommandHudFieldKind.Radius or
+            CommandHudFieldKind.Factor;
+    }
+
+    private static string GetHudFieldDisplayName(CommandHudFieldKind fieldKind)
+    {
+        return fieldKind switch
+        {
+            CommandHudFieldKind.Distance => "Distance",
+            CommandHudFieldKind.Width => "Width",
+            CommandHudFieldKind.Height => "Height",
+            CommandHudFieldKind.Radius => "Radius",
+            CommandHudFieldKind.Factor => "Factor",
+            _ => fieldKind.ToString()
+        };
+    }
+
+    private bool IsCommandHudRectangleOverrideTargetActive()
+    {
+        return Workspace.ToolController.ActiveTool is RectangleTool
+        {
+            State: TwoPointToolState.WaitingForSecondPoint
+        };
+    }
 
     private bool IsCommandHudPointOverrideTargetActive()
     {
@@ -3180,6 +3221,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
+        if (IsCommandHudRectangleOverrideTargetActive() &&
+            _commandHudInputState.HasSizeOverride)
+        {
+            return TryResolveRectangleCommandHudOverridePoint(
+                out worldPoint,
+                out errorMessage);
+        }
+
         if (!IsCommandHudPointOverrideTargetActive())
         {
             errorMessage = "Distance/angle input requires a base point.";
@@ -3203,6 +3252,49 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             out errorMessage);
     }
 
+    private bool TryResolveRectangleCommandHudOverridePoint(
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            errorMessage = "Rectangle size input requires the first corner.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+
+        double width = _commandHudInputState.Width ??
+            (measurement.DeltaX is null ? 0.0 : Math.Abs(measurement.DeltaX.Value));
+        double height = _commandHudInputState.Height ??
+            (measurement.DeltaY is null ? 0.0 : Math.Abs(measurement.DeltaY.Value));
+
+        if (width <= 0 || height <= 0)
+        {
+            errorMessage = "Rectangle width and height must be greater than zero.";
+            return false;
+        }
+
+        double signX = measurement.DeltaX is null || measurement.DeltaX.Value >= 0
+            ? 1.0
+            : -1.0;
+        double signY = measurement.DeltaY is null || measurement.DeltaY.Value >= 0
+            ? 1.0
+            : -1.0;
+
+        Point2D firstCornerUserPoint = Workspace.CurrentUcs.WorldToUser(
+            Workspace.Context.CurrentBasePoint.Value);
+        var oppositeCornerUserPoint = new Point2D(
+            firstCornerUserPoint.X + signX * width,
+            firstCornerUserPoint.Y + signY * height);
+
+        worldPoint = Workspace.CurrentUcs.UserToWorld(oppositeCornerUserPoint);
+        return true;
+    }
+
     private void ApplyCommandHudInputOverridesToPreview()
     {
         if (!_commandHudInputState.HasAnyOverride)
@@ -3216,7 +3308,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return;
         }
 
-        if (IsCommandHudPointOverrideTargetActive() &&
+        if ((IsCommandHudPointOverrideTargetActive() || IsCommandHudRectangleOverrideTargetActive()) &&
             TryResolveCommandHudOverridePoint(
                 requireCompleteCoordinates: false,
                 out Point2D worldPoint,
@@ -3250,26 +3342,42 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             out value);
     }
 
-    private void FreezeComplementaryPolarHudValueIfNeeded(CommandHudFieldKind fieldKind)
+    private void FreezeComplementaryHudValueIfNeeded(CommandHudFieldKind fieldKind)
     {
-        if (!IsCommandHudPointOverrideTargetActive())
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+
+        if (IsCommandHudPointOverrideTargetActive())
         {
+            if (fieldKind == CommandHudFieldKind.Distance &&
+                _commandHudInputState.AngleDegrees is null &&
+                measurement.AngleDegrees is not null)
+            {
+                _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
+            }
+            else if (fieldKind == CommandHudFieldKind.Angle &&
+                     _commandHudInputState.Distance is null &&
+                     measurement.Distance is not null)
+            {
+                _commandHudInputState.Distance = measurement.Distance;
+            }
+
             return;
         }
 
-        CommandLiveMeasurement measurement = GetLiveMeasurement();
-
-        if (fieldKind == CommandHudFieldKind.Distance &&
-            _commandHudInputState.AngleDegrees is null &&
-            measurement.AngleDegrees is not null)
+        if (IsCommandHudRectangleOverrideTargetActive())
         {
-            _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
-        }
-        else if (fieldKind == CommandHudFieldKind.Angle &&
-                 _commandHudInputState.Distance is null &&
-                 measurement.Distance is not null)
-        {
-            _commandHudInputState.Distance = measurement.Distance;
+            if (fieldKind == CommandHudFieldKind.Width &&
+                _commandHudInputState.Height is null &&
+                measurement.DeltaY is not null)
+            {
+                _commandHudInputState.Height = Math.Abs(measurement.DeltaY.Value);
+            }
+            else if (fieldKind == CommandHudFieldKind.Height &&
+                     _commandHudInputState.Width is null &&
+                     measurement.DeltaX is not null)
+            {
+                _commandHudInputState.Width = Math.Abs(measurement.DeltaX.Value);
+            }
         }
     }
 

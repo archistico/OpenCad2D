@@ -573,3 +573,64 @@ Read-only until dedicated implementation:
 - Ellipse, Polygon, Rotate, Scale, Offset, Mirror, Break, Measure and dimension fallback fields.
 
 This guard prevents an unsupported field from being picked by numeric routing simply because it is visible in the HUD. Each new tool must first add a dedicated resolver and regression tests.
+
+## Dynamic HUD rectangle dedicated resolver
+
+Rectangle support is added through a tool-specific resolver.
+
+Supported rectangle workflow:
+
+```text
+RECTANGLE
+click first corner
+200        -> Width
+Tab        -> Height
+100
+Enter      -> creates the rectangle
+```
+
+Coordinate input for the first corner remains explicit:
+
+```text
+RECTANGLE
+Tab        -> X
+50
+Tab        -> Y
+25
+Enter      -> first corner at X=50, Y=25
+```
+
+After the first corner, the HUD shows:
+
+```text
+Width [ ... ]  Height [ ... ]
+X     [ ... ]  Y      [ ... ]
+```
+
+`Width` and `Height` must be greater than zero. Rectangle sizing is resolved by a dedicated rectangle resolver; it must not change the stabilized Line/Polyline `Distance` / `Angle` behavior.
+
+## Rectangle HUD regression guard
+
+Rectangle editable HUD input is supported only through its dedicated resolver. The dynamic HUD accepts:
+
+```text
+RECTANGLE
+click first corner
+Width
+Tab
+Height
+Enter
+```
+
+and first-corner absolute coordinates through intentional `Tab` navigation:
+
+```text
+RECTANGLE
+Tab
+X
+Tab
+Y
+Enter
+```
+
+The rectangle resolver must remain isolated from the Line/Polyline `Distance` / `Angle` resolver. This prevents Rectangle-specific behavior from regressing the already stable polar input workflow.

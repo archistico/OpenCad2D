@@ -13,6 +13,14 @@ public sealed class CommandHudInputState
 
     public double? AngleDegrees { get; set; }
 
+    public double? Width { get; set; }
+
+    public double? Height { get; set; }
+
+    public double? Radius { get; set; }
+
+    public double? Factor { get; set; }
+
     public double? X { get; set; }
 
     public double? Y { get; set; }
@@ -20,11 +28,14 @@ public sealed class CommandHudInputState
     public bool HasPolarOverride =>
         Distance is not null || AngleDegrees is not null;
 
+    public bool HasSizeOverride =>
+        Width is not null || Height is not null || Radius is not null || Factor is not null;
+
     public bool HasCoordinateOverride =>
         X is not null || Y is not null;
 
     public bool HasAnyOverride =>
-        HasPolarOverride || HasCoordinateOverride;
+        HasPolarOverride || HasSizeOverride || HasCoordinateOverride;
 
     public double? GetOverride(CommandHudFieldKind kind)
     {
@@ -32,6 +43,10 @@ public sealed class CommandHudInputState
         {
             CommandHudFieldKind.Distance => Distance,
             CommandHudFieldKind.Angle => AngleDegrees,
+            CommandHudFieldKind.Width => Width,
+            CommandHudFieldKind.Height => Height,
+            CommandHudFieldKind.Radius => Radius,
+            CommandHudFieldKind.Factor => Factor,
             CommandHudFieldKind.X => X,
             CommandHudFieldKind.Y => Y,
             _ => null
@@ -52,6 +67,18 @@ public sealed class CommandHudInputState
             case CommandHudFieldKind.Angle:
                 AngleDegrees = value;
                 break;
+            case CommandHudFieldKind.Width:
+                Width = value;
+                break;
+            case CommandHudFieldKind.Height:
+                Height = value;
+                break;
+            case CommandHudFieldKind.Radius:
+                Radius = value;
+                break;
+            case CommandHudFieldKind.Factor:
+                Factor = value;
+                break;
             case CommandHudFieldKind.X:
                 X = value;
                 break;
@@ -65,6 +92,10 @@ public sealed class CommandHudInputState
     {
         Distance = null;
         AngleDegrees = null;
+        Width = null;
+        Height = null;
+        Radius = null;
+        Factor = null;
         X = null;
         Y = null;
         ActiveField = CommandHudFieldKind.Distance;

@@ -1300,3 +1300,31 @@ Changes:
 Reason:
 
 A previous Rectangle implementation broke the shared routing model. New tool support must not be added by widening the common resolver first; it must start from read-only fields, then a dedicated resolver, then tests.
+
+## 2026-05-30 — Dynamic Command HUD Step 26A rectangle dedicated resolver
+
+Rectangle HUD input is reintroduced using a dedicated resolver instead of widening the shared Line/Polyline polar resolver.
+
+Changes:
+
+- Rectangle `Width` / `Height` fields are editable only when `RectangleTool` is waiting for the opposite corner.
+- Rectangle keeps the compact HUD shape `Width / Height / X / Y` after the first corner.
+- `Width` freezes the current live `Height`; `Height` freezes the current live `Width`.
+- The rectangle opposite corner is resolved by `TryResolveRectangleCommandHudOverridePoint`, which uses the first corner, the entered size values, and the current live quadrant/sign.
+- Line/Polyline polar behavior remains handled by the existing stable resolver.
+- Regression tests cover rectangle editable fields, width/height creation, first-corner X/Y input, and preserve the existing Line/Polyline tests.
+
+Important implementation constraint:
+
+- Do not merge rectangle size semantics into the Line/Polyline distance-angle resolver. Keep each non-polar tool behind a dedicated resolver until enough regression tests exist.
+
+## 2026-05-30 — Dynamic Command HUD Step 26B rectangle regression guard
+
+Rectangle HUD input is confirmed working through a dedicated resolver. Added regression coverage to protect the implementation before extending Circle/Arc/Modify tools:
+
+- width-only rectangle input freezes the live height visible when the width is typed;
+- width/height rectangle input preserves the live quadrant sign;
+- incomplete first-corner X/Y input does not create a rectangle;
+- the stabilization checklist now includes Rectangle-specific manual checks.
+
+Do not generalize Rectangle routing into the stable Line/Polyline distance-angle resolver. Future tools should follow the same pattern: add a dedicated resolver first, then enable their HUD fields.
