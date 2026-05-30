@@ -5,19 +5,50 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Architectural;
 
 /// <summary>
 /// Inserts a metric graphic scale bar made of ordinary CAD geometry.
 /// </summary>
-public sealed class ScaleBarTool : ICadTool
+public sealed class ScaleBarTool : ICadTool, ICommandDrivenTool
 {
     public const double DefaultScaleLength = 1000.0;
 
     public string Name => "Metric Scale Bar";
 
     public Point2D? LastInsertionPoint { get; private set; }
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new CommandPromptState(
+            "METRIC SCALE BAR",
+            "Specify insertion point",
+            CommandInputKind.Point,
+            placeholder: "100,50   |   @50,0");
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,

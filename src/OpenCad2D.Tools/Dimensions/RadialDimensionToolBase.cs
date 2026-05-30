@@ -3,13 +3,14 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Dimensions;
 
 /// <summary>
 /// Base class for non-associative radius and diameter dimension tools.
 /// </summary>
-public abstract class RadialDimensionToolBase : ICadTool
+public abstract class RadialDimensionToolBase : ICadTool, ICommandDrivenTool
 {
     private Point2D? _center;
     private Point2D? _pointOnCircle;
@@ -22,6 +23,56 @@ public abstract class RadialDimensionToolBase : ICadTool
     public Point2D? PointOnCircle => _pointOnCircle;
 
     public Point2D? CurrentPoint => _currentPoint;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        string commandName = Name.ToUpperInvariant();
+
+        if (_center is null)
+        {
+            return new CommandPromptState(
+                commandName,
+                "Specify center point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0");
+        }
+
+        if (_pointOnCircle is null)
+        {
+            return new CommandPromptState(
+                commandName,
+                "Specify point on circle",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   radius");
+        }
+
+        return new CommandPromptState(
+            commandName,
+            "Specify dimension text position",
+            CommandInputKind.PointOrDistance,
+            placeholder: "100,50   |   @50,0   |   distance");
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,

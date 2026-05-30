@@ -1,3 +1,4 @@
+using Avalonia;
 using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Dimensions;
@@ -12,6 +13,7 @@ using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Dimensions;
 using OpenCad2D.Tools.Input;
 using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Navigation;
@@ -30,6 +32,7 @@ using OpenCad2D.Export.Dxf.Import;
 using OpenCad2D.Export.Pdf;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -47,8 +50,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private BlockEditSession? _activeBlockEditSession;
 
     private Point2D _mousePosition = Point2D.Origin;
+    private Point? _hudScreenPosition;
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
+    private readonly CommandHudInputState _commandHudInputState = new();
     private readonly CommandInputParser _commandInputParser = new();
     private readonly CommandAliasRegistry _commandAliasRegistry = CommandAliasRegistry.CreateDefault();
     private readonly List<string> _commandLineHistory = new();
@@ -320,6 +325,32 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public string ActiveToolName =>
         Workspace.ToolController.ActiveToolName;
 
+    public Point? HudScreenPosition => _hudScreenPosition;
+
+    public bool HasLiveMeasurements =>
+        Workspace.Context.CurrentBasePoint is not null;
+
+    public bool IsCommandHudVisible =>
+        Workspace.ToolController.ActiveTool is ICommandDrivenTool;
+
+    public bool IsBottomCommandLineVisible => false;
+
+    public double? LiveDistance => GetLiveMeasurement().Distance;
+
+    public double? LiveAngle => GetLiveMeasurement().AngleDegrees;
+
+    public double? LiveDeltaX => GetLiveMeasurement().DeltaX;
+
+    public double? LiveDeltaY => GetLiveMeasurement().DeltaY;
+
+    public CommandPromptState CurrentPromptState => GetCurrentPromptState();
+
+    public CommandHudStateViewModel CommandHudState => new(
+        IsCommandHudVisible,
+        IsCommandHudVisible ? ActiveToolName : null,
+        GetCurrentPromptState(),
+        BuildCommandHudFields());
+
     public int EntityCount =>
         Workspace.Document.Entities.Count;
 
@@ -377,6 +408,459 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+    public CommandPromptState GetCurrentPromptState()
+    {
+        if (Workspace.ToolController.ActiveTool is ICommandDrivenTool commandDrivenTool)
+        {
+            return commandDrivenTool.GetPromptState(Workspace.Context);
+        }
+
+        return CommandPromptState.Idle;
+    }
+
+    private CommandLiveMeasurement GetLiveMeasurement()
+    {
+        if (Workspace.Context.CurrentBasePoint is null)
+        {
+            return CommandLiveMeasurement.Empty;
+        }
+
+        Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
+        Point2D targetPoint = _currentSnapCandidate?.Point ?? _mousePosition;
+
+        targetPoint = ToolInputConstraintService.ApplyAngleConstraint(
+            Workspace.Context,
+            basePoint,
+            targetPoint);
+
+        if (Workspace.GeometryTolerance.ArePointsEqual(basePoint, targetPoint))
+        {
+            return new CommandLiveMeasurement(0, 0, 0, 0);
+        }
+
+        Point2D baseUserPoint = Workspace.CurrentUcs.WorldToUser(basePoint);
+        Point2D targetUserPoint = Workspace.CurrentUcs.WorldToUser(targetPoint);
+        Vector2D delta = baseUserPoint.VectorTo(targetUserPoint);
+
+        return new CommandLiveMeasurement(
+            delta.Length,
+            Math.Atan2(delta.Y, delta.X) * 180.0 / Math.PI,
+            delta.X,
+            delta.Y);
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildCommandHudFields()
+    {
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        ICadTool activeTool = Workspace.ToolController.ActiveTool;
+
+        if (!measurement.HasValue)
+        {
+            return BuildCoordinateOverrideFields();
+        }
+
+        if (activeTool is LineTool lineTool &&
+            lineTool.State == TwoPointToolState.WaitingForSecondPoint)
+        {
+            return BuildDistanceAngleCoordinateOverrideFields(measurement);
+        }
+
+        if (activeTool is PolylineTool polylineTool &&
+            polylineTool.State == PolylineToolState.CollectingVertices)
+        {
+            return BuildDistanceAngleCoordinateOverrideFields(measurement);
+        }
+
+        if (activeTool is RectangleTool rectangleTool &&
+            rectangleTool.State == TwoPointToolState.WaitingForSecondPoint)
+        {
+            return BuildWidthHeightFields(measurement);
+        }
+
+        if (activeTool is RectangleBySidesTool rectangleBySidesTool)
+        {
+            return BuildRectangleBySidesFields(
+                rectangleBySidesTool,
+                measurement);
+        }
+
+        if (activeTool is CircleTool circleTool &&
+            circleTool.State == TwoPointToolState.WaitingForSecondPoint)
+        {
+            return new[]
+            {
+                new CommandHudFieldViewModel(
+                    "radius",
+                    "Radius",
+                    measurement.Distance)
+            };
+        }
+
+        if (activeTool is ArcTool arcTool)
+        {
+            return BuildArcFields(
+                arcTool,
+                measurement);
+        }
+
+        if (activeTool is EllipseTool ellipseTool)
+        {
+            return BuildEllipseFields(
+                ellipseTool,
+                measurement);
+        }
+
+        if (activeTool is PolygonTool polygonTool &&
+            polygonTool.State == PolygonToolState.WaitingForVertex)
+        {
+            return BuildRadiusAngleFields(measurement);
+        }
+
+        if (activeTool is RotateTool rotateTool)
+        {
+            return BuildRotateFields(
+                rotateTool,
+                measurement);
+        }
+
+        if (activeTool is ScaleTool scaleTool)
+        {
+            return BuildScaleFields(
+                scaleTool,
+                measurement);
+        }
+
+        if (activeTool is OffsetTool offsetTool &&
+            offsetTool.State == OffsetToolState.WaitingForDistanceSecondPoint)
+        {
+            return BuildSingleDistanceField(
+                "distance",
+                "Distance",
+                measurement.Distance);
+        }
+
+        if (activeTool is MirrorTool mirrorTool &&
+            mirrorTool.State == MirrorToolState.WaitingForSecondAxisPoint)
+        {
+            return BuildDistanceAngleFields(measurement);
+        }
+
+        if (activeTool is BreakBetweenPointsTool breakBetweenPointsTool &&
+            breakBetweenPointsTool.State == BreakBetweenPointsToolState.WaitingForSecondBreakPoint)
+        {
+            return BuildDistanceAngleFields(measurement);
+        }
+
+        if (activeTool is MeasureAngleTool measureAngleTool &&
+            measureAngleTool.State == MeasureAngleToolState.WaitingForSecondRayPoint)
+        {
+            return BuildSingleAngleField(measurement.AngleDegrees);
+        }
+
+        if (activeTool is RadialDimensionToolBase radialDimensionTool &&
+            radialDimensionTool.PointOnCircle is null)
+        {
+            return BuildSingleDistanceField(
+                "radius",
+                "Radius",
+                measurement.Distance);
+        }
+
+        if (activeTool is AngularDimensionTool angularDimensionTool &&
+            angularDimensionTool.FirstRayPoint is not null &&
+            angularDimensionTool.SecondRayPoint is null)
+        {
+            return BuildSingleAngleField(measurement.AngleDegrees);
+        }
+
+        return BuildFieldsFromPromptKind(
+            GetCurrentPromptState().ExpectedInput,
+            measurement);
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildDistanceAngleCoordinateOverrideFields(
+        CommandLiveMeasurement measurement)
+    {
+        Point2D userPoint = GetLivePointerUserPoint();
+
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "distance",
+                "Distance",
+                _commandHudInputState.Distance ?? measurement.Distance),
+            new CommandHudFieldViewModel(
+                "angle",
+                "Angle",
+                _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees,
+                "°"),
+            new CommandHudFieldViewModel(
+                "x",
+                "X",
+                _commandHudInputState.X ?? userPoint.X),
+            new CommandHudFieldViewModel(
+                "y",
+                "Y",
+                _commandHudInputState.Y ?? userPoint.Y)
+        };
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildCoordinateOverrideFields()
+    {
+        Point2D userPoint = GetLivePointerUserPoint();
+
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "x",
+                "X",
+                _commandHudInputState.X ?? userPoint.X),
+            new CommandHudFieldViewModel(
+                "y",
+                "Y",
+                _commandHudInputState.Y ?? userPoint.Y)
+        };
+    }
+
+    private Point2D GetLivePointerUserPoint()
+    {
+        Point2D targetPoint = _currentSnapCandidate?.Point ?? _mousePosition;
+        return Workspace.CurrentUcs.WorldToUser(targetPoint);
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildDistanceAngleFields(
+        CommandLiveMeasurement measurement)
+    {
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "distance",
+                "Distance",
+                measurement.Distance),
+            new CommandHudFieldViewModel(
+                "angle",
+                "Angle",
+                measurement.AngleDegrees,
+                "°")
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildWidthHeightFields(
+        CommandLiveMeasurement measurement)
+    {
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "width",
+                "Width",
+                measurement.DeltaX is null
+                    ? null
+                    : Math.Abs(measurement.DeltaX.Value)),
+            new CommandHudFieldViewModel(
+                "height",
+                "Height",
+                measurement.DeltaY is null
+                    ? null
+                    : Math.Abs(measurement.DeltaY.Value))
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildRectangleBySidesFields(
+        RectangleBySidesTool rectangleBySidesTool,
+        CommandLiveMeasurement measurement)
+    {
+        return rectangleBySidesTool.State switch
+        {
+            RectangleBySidesToolState.WaitingForFirstSideEndPoint => new[]
+            {
+                new CommandHudFieldViewModel(
+                    "width",
+                    "Width",
+                    measurement.Distance),
+                new CommandHudFieldViewModel(
+                    "angle",
+                    "Angle",
+                    measurement.AngleDegrees,
+                    "°")
+            },
+
+            RectangleBySidesToolState.WaitingForSecondSidePoint => new[]
+            {
+                new CommandHudFieldViewModel(
+                    "height",
+                    "Height",
+                    measurement.Distance)
+            },
+
+            _ => Array.Empty<CommandHudFieldViewModel>()
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildArcFields(
+        ArcTool arcTool,
+        CommandLiveMeasurement measurement)
+    {
+        return arcTool.State switch
+        {
+            ArcToolState.WaitingForStartPoint => new[]
+            {
+                new CommandHudFieldViewModel(
+                    "radius",
+                    "Radius",
+                    measurement.Distance),
+                new CommandHudFieldViewModel(
+                    "angle",
+                    "Angle",
+                    measurement.AngleDegrees,
+                    "°")
+            },
+
+            ArcToolState.WaitingForEndPoint => new[]
+            {
+                new CommandHudFieldViewModel(
+                    "angle",
+                    "Angle",
+                    measurement.AngleDegrees,
+                    "°")
+            },
+
+            _ => Array.Empty<CommandHudFieldViewModel>()
+        };
+    }
+
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildRadiusAngleFields(
+        CommandLiveMeasurement measurement)
+    {
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "radius",
+                "Radius",
+                measurement.Distance),
+            new CommandHudFieldViewModel(
+                "angle",
+                "Angle",
+                measurement.AngleDegrees,
+                "°")
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildSingleDistanceField(
+        string key,
+        string label,
+        double? value)
+    {
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                key,
+                label,
+                value)
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildSingleAngleField(
+        double? value)
+    {
+        return new[]
+        {
+            new CommandHudFieldViewModel(
+                "angle",
+                "Angle",
+                value,
+                "°")
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildEllipseFields(
+        EllipseTool ellipseTool,
+        CommandLiveMeasurement measurement)
+    {
+        return ellipseTool.State switch
+        {
+            EllipseToolState.WaitingForMajorAxis => new[]
+            {
+                new CommandHudFieldViewModel(
+                    "major-radius",
+                    "Major radius",
+                    measurement.Distance),
+                new CommandHudFieldViewModel(
+                    "angle",
+                    "Angle",
+                    measurement.AngleDegrees,
+                    "°")
+            },
+
+            EllipseToolState.WaitingForMinorRadius => BuildSingleDistanceField(
+                "minor-radius",
+                "Minor radius",
+                measurement.Distance),
+
+            _ => Array.Empty<CommandHudFieldViewModel>()
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildRotateFields(
+        RotateTool rotateTool,
+        CommandLiveMeasurement measurement)
+    {
+        return rotateTool.State switch
+        {
+            RotateToolState.WaitingForDestinationPoint when rotateTool.HasPreview => BuildSingleAngleField(
+                rotateTool.CurrentAngle.Degrees),
+
+            RotateToolState.WaitingForDestinationPoint => BuildSingleAngleField(
+                measurement.AngleDegrees),
+
+            _ => Array.Empty<CommandHudFieldViewModel>()
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildScaleFields(
+        ScaleTool scaleTool,
+        CommandLiveMeasurement measurement)
+    {
+        return scaleTool.State switch
+        {
+            ScaleToolState.WaitingForDestinationPoint when scaleTool.HasPreview => BuildSingleDistanceField(
+                "factor",
+                "Factor",
+                scaleTool.CurrentFactor),
+
+            ScaleToolState.WaitingForDestinationPoint => BuildSingleDistanceField(
+                "factor",
+                "Factor",
+                null),
+
+            _ => Array.Empty<CommandHudFieldViewModel>()
+        };
+    }
+
+    private static IReadOnlyList<CommandHudFieldViewModel> BuildFieldsFromPromptKind(
+        CommandInputKind expectedInput,
+        CommandLiveMeasurement measurement)
+    {
+        return expectedInput switch
+        {
+            CommandInputKind.PointOrDistance or
+            CommandInputKind.PointOrDistanceOrOption => BuildDistanceAngleFields(measurement),
+
+            CommandInputKind.PointOrAngle or
+            CommandInputKind.PointOrAngleOrOption => BuildSingleAngleField(measurement.AngleDegrees),
+
+            CommandInputKind.Distance or
+            CommandInputKind.DistanceOrOption => BuildSingleDistanceField(
+                "distance",
+                "Distance",
+                measurement.Distance),
+
+            CommandInputKind.Angle => BuildSingleAngleField(measurement.AngleDegrees),
+
+            _ => Array.Empty<CommandHudFieldViewModel>()
+        };
+    }
+
     public string MeasurementText
     {
         get
@@ -386,26 +870,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 return "Measure: -";
             }
 
-            Point2D basePoint = Workspace.Context.CurrentBasePoint.Value;
-            Point2D targetPoint = _currentSnapCandidate?.Point ?? _mousePosition;
+            CommandLiveMeasurement measurement = GetLiveMeasurement();
 
-            targetPoint = ToolInputConstraintService.ApplyAngleConstraint(
-                Workspace.Context,
-                basePoint,
-                targetPoint);
-
-            if (Workspace.GeometryTolerance.ArePointsEqual(basePoint, targetPoint))
+            if (!measurement.HasValue)
             {
                 return "Measure: L 0 | DX 0 | DY 0";
             }
 
-            Point2D baseUserPoint = Workspace.CurrentUcs.WorldToUser(basePoint);
-            Point2D targetUserPoint = Workspace.CurrentUcs.WorldToUser(targetPoint);
-
-            Vector2D delta = baseUserPoint.VectorTo(targetUserPoint);
-            double length = delta.Length;
-
-            return $"Measure: L {length:0.###} | DX {delta.X:0.###} | DY {delta.Y:0.###}";
+            return $"Measure: L {measurement.Distance:0.###} | DX {measurement.DeltaX:0.###} | DY {measurement.DeltaY:0.###}";
         }
     }
 
@@ -525,7 +997,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         $"Entities: {EntityCount} | " +
         $"Selected: {SelectedCount} | " +
         $"{PolarTrackingText} | " +
-        $"{MousePositionText} | " +
         $"{MeasurementText} | " +
         $"{SnapText} | " +
         $"{LastMessage}";
@@ -2204,6 +2675,88 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+
+    public bool TryCommitCommandHudFieldInput(
+        CommandHudFieldKind fieldKind,
+        string? input,
+        bool confirm,
+        out ToolResult result)
+    {
+        result = ToolResult.None();
+
+        string normalizedInput = input?.Trim() ?? string.Empty;
+
+        if (!TryCommitCommandHudFieldOverride(
+                fieldKind,
+                normalizedInput,
+                confirm,
+                out result,
+                out bool handled))
+        {
+            return false;
+        }
+
+        if (!handled)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public bool TrySubmitCommandHudFieldInput(
+        CommandHudFieldKind fieldKind,
+        string? input,
+        out ToolResult result)
+    {
+        return TryCommitCommandHudFieldInput(
+            fieldKind,
+            input,
+            confirm: true,
+            out result);
+    }
+
+    public bool TryConfirmCommandHudInputOverrides(out ToolResult result)
+    {
+        result = ToolResult.None();
+
+        if (!_commandHudInputState.HasAnyOverride)
+        {
+            return false;
+        }
+
+        if (!TryResolveCommandHudOverridePoint(
+                requireCompleteCoordinates: true,
+                out Point2D worldPoint,
+                out string? errorMessage))
+        {
+            result = ToolResult.None(errorMessage);
+            SetLastResult(result);
+            AppendToolResultToVisibleHistory(result);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        result = Workspace.SubmitPointFromCommandLine(worldPoint);
+        ClearCommandHudInputOverrides();
+        SetLastResult(result);
+        AppendToolResultToVisibleHistory(result);
+        NotifyDocumentStateChanged();
+        NotifyCommandInputStateChanged();
+        return true;
+    }
+
+    public void ClearCommandHudInputOverridesForNextInput()
+    {
+        if (!_commandHudInputState.HasAnyOverride)
+        {
+            return;
+        }
+
+        ClearCommandHudInputOverrides();
+        NotifyPointerDrivenStateChanged();
+    }
+
     public ToolResult SubmitCommandInput(string? input)
     {
         ResetCommandHistoryNavigation();
@@ -2447,6 +3000,262 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+
+    private bool TryCommitCommandHudFieldOverride(
+        CommandHudFieldKind fieldKind,
+        string input,
+        bool confirm,
+        out ToolResult result,
+        out bool handled)
+    {
+        result = ToolResult.None();
+        handled = false;
+
+        if (fieldKind is not (
+            CommandHudFieldKind.Distance or
+            CommandHudFieldKind.Angle or
+            CommandHudFieldKind.Width or
+            CommandHudFieldKind.Height or
+            CommandHudFieldKind.Radius or
+            CommandHudFieldKind.Factor or
+            CommandHudFieldKind.X or
+            CommandHudFieldKind.Y))
+        {
+            return true;
+        }
+
+        handled = true;
+
+        if (!TryParseHudDouble(input, out double value))
+        {
+            result = ToolResult.None($"Invalid {fieldKind.ToString().ToLowerInvariant()} value.");
+            SetLastResult(result);
+            AppendToolResultToVisibleHistory(result);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (fieldKind == CommandHudFieldKind.Distance && value <= 0)
+        {
+            result = ToolResult.None("Distance must be greater than zero.");
+            SetLastResult(result);
+            AppendToolResultToVisibleHistory(result);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        FreezeComplementaryPolarHudValueIfNeeded(fieldKind);
+
+        _commandHudInputState.SetOverride(
+            fieldKind,
+            value);
+
+        if (confirm)
+        {
+            AppendVisibleCommandHistoryLine($"> {input}");
+        }
+
+        if (!IsCommandHudPointInputTargetActive())
+        {
+            NotifyPointerDrivenStateChanged();
+            return true;
+        }
+
+        if (!TryResolveCommandHudOverridePoint(
+                confirm,
+                out Point2D worldPoint,
+                out string? errorMessage))
+        {
+            result = ToolResult.None(errorMessage);
+            SetLastResult(result);
+            AppendToolResultToVisibleHistory(result);
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (confirm)
+        {
+            result = Workspace.SubmitPointFromCommandLine(worldPoint);
+            ClearCommandHudInputOverrides();
+            SetLastResult(result);
+            AppendToolResultToVisibleHistory(result);
+            NotifyDocumentStateChanged();
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (IsCommandHudPointOverrideTargetActive())
+        {
+            result = Workspace.PreviewPointFromCommandLine(worldPoint);
+            SetLastResult(result);
+        }
+
+        NotifyPointerDrivenStateChanged();
+        return true;
+    }
+
+
+    private bool IsCommandHudPointOverrideTargetActive()
+    {
+        ICadTool activeTool = Workspace.ToolController.ActiveTool;
+
+        return activeTool is LineTool { State: TwoPointToolState.WaitingForSecondPoint } ||
+               activeTool is PolylineTool { State: PolylineToolState.CollectingVertices };
+    }
+
+    private bool IsCommandHudPointInputTargetActive()
+    {
+        if (IsCommandHudPointOverrideTargetActive())
+        {
+            return true;
+        }
+
+        if (Workspace.ToolController.ActiveTool is not ICommandDrivenTool commandDrivenTool)
+        {
+            return false;
+        }
+
+        return IsPointExpectedInput(
+            commandDrivenTool.GetPromptState(Workspace.Context).ExpectedInput);
+    }
+
+    private static bool IsPointExpectedInput(CommandInputKind expectedInput)
+    {
+        return expectedInput is
+            CommandInputKind.Point or
+            CommandInputKind.PointOrOption or
+            CommandInputKind.PointOrDistance or
+            CommandInputKind.PointOrDistanceOrOption or
+            CommandInputKind.PointOrAngle or
+            CommandInputKind.PointOrAngleOrOption or
+            CommandInputKind.PointOrNumber or
+            CommandInputKind.PointOrNumberOrOption;
+    }
+
+    private bool TryResolveCommandHudOverridePoint(
+        bool requireCompleteCoordinates,
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (!IsCommandHudPointInputTargetActive())
+        {
+            errorMessage = "The active command is not waiting for point input.";
+            return false;
+        }
+
+        if (_commandHudInputState.HasCoordinateOverride)
+        {
+            Point2D liveUserPoint = GetLivePointerUserPoint();
+
+            if (requireCompleteCoordinates &&
+                (_commandHudInputState.X is null || _commandHudInputState.Y is null))
+            {
+                errorMessage = "Enter both X and Y before confirming the point.";
+                return false;
+            }
+
+            double x = _commandHudInputState.X ?? liveUserPoint.X;
+            double y = _commandHudInputState.Y ?? liveUserPoint.Y;
+            worldPoint = Workspace.CurrentUcs.UserToWorld(new Point2D(x, y));
+            return true;
+        }
+
+        if (!IsCommandHudPointOverrideTargetActive())
+        {
+            errorMessage = "Distance/angle input requires a base point.";
+            return false;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+        double distance = _commandHudInputState.Distance ?? measurement.Distance ?? 0.0;
+        double angleDegrees = _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees ?? 0.0;
+
+        if (distance <= 0)
+        {
+            errorMessage = "Move the cursor or enter a distance before confirming the point.";
+            return false;
+        }
+
+        return TryResolveDistanceAnglePoint(
+            distance,
+            angleDegrees,
+            out worldPoint,
+            out errorMessage);
+    }
+
+    private void ApplyCommandHudInputOverridesToPreview()
+    {
+        if (!_commandHudInputState.HasAnyOverride)
+        {
+            return;
+        }
+
+        if (!IsCommandHudPointInputTargetActive())
+        {
+            ClearCommandHudInputOverrides();
+            return;
+        }
+
+        if (IsCommandHudPointOverrideTargetActive() &&
+            TryResolveCommandHudOverridePoint(
+                requireCompleteCoordinates: false,
+                out Point2D worldPoint,
+                out _))
+        {
+            Workspace.PreviewPointFromCommandLine(worldPoint);
+        }
+    }
+
+    public void CancelCommandHudInputOverrides()
+    {
+        ClearCommandHudInputOverrides();
+        NotifyPointerDrivenStateChanged();
+    }
+
+    private void ClearCommandHudInputOverrides()
+    {
+        _commandHudInputState.Clear();
+    }
+
+    private static bool TryParseHudDouble(
+        string input,
+        out double value)
+    {
+        string normalized = input.Trim().Replace(',', '.');
+
+        return double.TryParse(
+            normalized,
+            NumberStyles.Float,
+            CultureInfo.InvariantCulture,
+            out value);
+    }
+
+    private void FreezeComplementaryPolarHudValueIfNeeded(CommandHudFieldKind fieldKind)
+    {
+        if (!IsCommandHudPointOverrideTargetActive())
+        {
+            return;
+        }
+
+        CommandLiveMeasurement measurement = GetLiveMeasurement();
+
+        if (fieldKind == CommandHudFieldKind.Distance &&
+            _commandHudInputState.AngleDegrees is null &&
+            measurement.AngleDegrees is not null)
+        {
+            _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
+        }
+        else if (fieldKind == CommandHudFieldKind.Angle &&
+                 _commandHudInputState.Distance is null &&
+                 measurement.Distance is not null)
+        {
+            _commandHudInputState.Distance = measurement.Distance;
+        }
+    }
+
     private bool TryResolveDirectDistancePoint(
         double distance,
         out Point2D worldPoint,
@@ -2562,20 +3371,45 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         _mousePosition = point;
 
+        ApplyCommandHudInputOverridesToPreview();
+        NotifyPointerDrivenStateChanged(nameof(MousePositionText));
+    }
+
+    public void SetHudScreenPosition(Point? point)
+    {
+        _hudScreenPosition = point;
+
         OnPropertiesChanged(
-            nameof(MousePositionText),
-            nameof(MeasurementText),
-            nameof(StatusText));
+            nameof(HudScreenPosition),
+            nameof(CommandHudState),
+            nameof(IsBottomCommandLineVisible));
     }
 
     public void SetCurrentSnapCandidate(SnapCandidate? candidate)
     {
         _currentSnapCandidate = candidate;
 
+        ApplyCommandHudInputOverridesToPreview();
+        NotifyPointerDrivenStateChanged(nameof(SnapText));
+    }
+
+    private void NotifyPointerDrivenStateChanged(params string[] additionalPropertyNames)
+    {
         OnPropertiesChanged(
-            nameof(SnapText),
-            nameof(MeasurementText),
-            nameof(StatusText));
+            additionalPropertyNames
+                .Concat(new[]
+                {
+                    nameof(HasLiveMeasurements),
+                    nameof(LiveDistance),
+                    nameof(LiveAngle),
+                    nameof(LiveDeltaX),
+                    nameof(LiveDeltaY),
+                    nameof(MeasurementText),
+                    nameof(CommandHudState),
+                    nameof(StatusText)
+                })
+                .Distinct()
+                .ToArray());
     }
 
     public void SetLastResult(ToolResult result)
@@ -3007,6 +3841,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(ActiveToolName),
+            nameof(CurrentPromptState),
+            nameof(CommandHudState),
+            nameof(IsCommandHudVisible),
+            nameof(IsBottomCommandLineVisible),
             nameof(CommandPromptText),
             nameof(CommandInputPlaceholderText),
             nameof(VisibleCommandHistory),
@@ -3252,6 +4090,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(EntityCount),
             nameof(SelectedCount),
             nameof(ActiveToolName),
+            nameof(CurrentPromptState),
+            nameof(CommandHudState),
+            nameof(IsCommandHudVisible),
+            nameof(IsBottomCommandLineVisible),
             nameof(LayerNames),
             nameof(Layers),
             nameof(CurrentLayer),
@@ -3301,6 +4143,17 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
     }
 
+    private readonly record struct CommandLiveMeasurement(
+        double? Distance,
+        double? AngleDegrees,
+        double? DeltaX,
+        double? DeltaY)
+    {
+        public static CommandLiveMeasurement Empty { get; } = new(null, null, null, null);
+
+        public bool HasValue => Distance is not null;
+    }
+
     private void NotifySelectionStateChanged()
     {
         OnPropertiesChanged(
@@ -3316,6 +4169,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         OnPropertiesChanged(
             nameof(CommandPromptText),
             nameof(CommandInputPlaceholderText),
+            nameof(CurrentPromptState),
+            nameof(CommandHudState),
+            nameof(IsCommandHudVisible),
+            nameof(IsBottomCommandLineVisible),
             nameof(MeasurementText),
             nameof(StatusText),
             nameof(LastMessage),
@@ -3341,6 +4198,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentLayerText),
             nameof(CommandPromptText),
             nameof(CommandInputPlaceholderText),
+            nameof(CurrentPromptState),
+            nameof(CommandHudState),
+            nameof(IsCommandHudVisible),
+            nameof(IsBottomCommandLineVisible),
             nameof(MeasurementText),
             nameof(StatusText));
     }

@@ -4,6 +4,7 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Dimensions;
 
@@ -11,7 +12,7 @@ namespace OpenCad2D.Tools.Dimensions;
 /// Creates non-associative angular dimensions. The fourth click chooses the arc side,
 /// allowing both minor and reflex angles.
 /// </summary>
-public sealed class AngularDimensionTool : ICadTool
+public sealed class AngularDimensionTool : ICadTool, ICommandDrivenTool
 {
     private Point2D? _center;
     private Point2D? _firstRayPoint;
@@ -27,6 +28,63 @@ public sealed class AngularDimensionTool : ICadTool
     public Point2D? SecondRayPoint => _secondRayPoint;
 
     public Point2D? CurrentPoint => _currentPoint;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (_center is null)
+        {
+            return new CommandPromptState(
+                "ANGULAR DIMENSION",
+                "Specify angle center",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0");
+        }
+
+        if (_firstRayPoint is null)
+        {
+            return new CommandPromptState(
+                "ANGULAR DIMENSION",
+                "Specify first angle ray point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   distance");
+        }
+
+        if (_secondRayPoint is null)
+        {
+            return new CommandPromptState(
+                "ANGULAR DIMENSION",
+                "Specify second angle ray point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   distance");
+        }
+
+        return new CommandPromptState(
+            "ANGULAR DIMENSION",
+            "Specify dimension arc position",
+            CommandInputKind.PointOrDistance,
+            placeholder: "100,50   |   @50,0   |   distance");
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,

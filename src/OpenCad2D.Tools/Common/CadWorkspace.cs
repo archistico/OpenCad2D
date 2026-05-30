@@ -241,6 +241,24 @@ public sealed class CadWorkspace
 
     public ToolResult SubmitPointFromCommandLine(Point2D worldPoint)
     {
+        return SubmitCommandLinePointer(
+            worldPoint,
+            pointer => ToolController.OnPointerPressed(pointer));
+    }
+
+    public ToolResult PreviewPointFromCommandLine(Point2D worldPoint)
+    {
+        return SubmitCommandLinePointer(
+            worldPoint,
+            pointer => ToolController.OnPointerMoved(pointer));
+    }
+
+    private ToolResult SubmitCommandLinePointer(
+        Point2D worldPoint,
+        Func<PointerInfo, ToolResult> submit)
+    {
+        ArgumentNullException.ThrowIfNull(submit);
+
         var pointer = new PointerInfo(
             worldPoint,
             CurrentUcs.WorldToUser(worldPoint));
@@ -258,7 +276,7 @@ public sealed class CadWorkspace
             Context.AngleConstraintSettings = AngleConstraintSettings.Off;
             Context.EnabledSnaps = SnapKind.None;
 
-            return ToolController.OnPointerPressed(pointer);
+            return submit(pointer);
         }
         finally
         {

@@ -4,13 +4,14 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Drawing;
 
 /// <summary>
 /// Interactive tool used to draw circular arc entities by center, start point and end point.
 /// </summary>
-public sealed class ArcTool : ICadTool, IToolPreviewEntityProvider
+public sealed class ArcTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private Point2D? _centerPoint;
     private Point2D? _startPoint;
@@ -32,6 +33,57 @@ public sealed class ArcTool : ICadTool, IToolPreviewEntityProvider
         _centerPoint.HasValue &&
         _startPoint.HasValue &&
         _currentPoint.HasValue;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            ArcToolState.WaitingForCenterPoint => new CommandPromptState(
+                "ARC",
+                "Specify center point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0"),
+
+            ArcToolState.WaitingForStartPoint => new CommandPromptState(
+                "ARC",
+                "Specify start point or radius",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   radius"),
+
+            ArcToolState.WaitingForEndPoint => new CommandPromptState(
+                "ARC",
+                "Specify end point or angle",
+                CommandInputKind.PointOrAngle,
+                placeholder: "100,50   |   @50,0   |   angle"),
+
+            _ => new CommandPromptState(
+                "ARC",
+                "Specify point",
+                CommandInputKind.Point,
+                placeholder: "100,50")
+        };
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,

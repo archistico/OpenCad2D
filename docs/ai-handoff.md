@@ -794,9 +794,18 @@ Manual checks:
 
 ---
 
-## Current handoff — Dynamic Command HUD planning
+## Current handoff — Dynamic Command HUD implementation start
 
-The next agreed planning step is the `v0.8.121` Dynamic Command HUD refactor. The detailed specification is `docs/specs/v0.8.121-dynamic-command-hud.md`.
+The `v0.8.121` Dynamic Command HUD refactor has started with the safe, non-visual foundation step. The detailed specification remains `docs/specs/v0.8.121-dynamic-command-hud.md`.
+
+Implemented in the first code step:
+
+- `CadCanvasWorkspaceChangedEventArgs` now carries the pointer screen position through `PointerScreenPosition`.
+- `CadCanvas.NotifyWorkspaceChanged(...)` passes the current `_pointerScreenPoint`.
+- `MainWindow.CadCanvas_WorkspaceChanged(...)` forwards that screen position to the ViewModel.
+- `MainWindowViewModel` now exposes `HudScreenPosition`, `CurrentPromptState`, `CommandHudState`, `HasLiveMeasurements`, `IsCommandHudVisible`, `LiveDistance`, `LiveAngle`, `LiveDeltaX` and `LiveDeltaY`.
+- Added read-only `CommandHudStateViewModel` and `CommandHudFieldViewModel` classes so the future Avalonia HUD can bind to command state without owning command logic.
+- Existing bottom command row and input behavior are unchanged.
 
 Important direction:
 
@@ -812,12 +821,450 @@ Planned implementation order:
 
 1. HUD-0 tool prompt inventory.
 2. HUD-1 shared prompt contract cleanup.
-3. HUD-2 pointer screen position and live measurement data.
-4. HUD-3 read-only `CommandHudState`.
+3. HUD-2 pointer screen position and live measurement data. `[~] started`
+4. HUD-3 read-only `CommandHudState`. `[~] started`
 5. HUD-4 read-only visual HUD overlay.
 6. HUD-5 move the real command input into the HUD.
 7. HUD-6 remove the old bottom command row.
 8. HUD-7 editable numeric HUD fields later.
 
-Before code changes, update documentation and roadmap references so future work follows these milestones.
+Next recommended step: complete the prompt inventory and begin moving remaining ViewModel prompt fallbacks into `ICommandDrivenTool.GetPromptState(...)`, before adding any visual HUD overlay.
 
+
+
+## 2026-05-30 — Dynamic Command HUD Step 2 prompt contract cleanup
+
+The second Dynamic Command HUD code step extends the shared `CommandPromptState` contract before any visual HUD is added. This keeps the refactor safe and avoids duplicating command-phase logic in Avalonia code-behind.
+
+Implemented in this step:
+
+- `ArcTool` now implements `ICommandDrivenTool` and exposes prompt states for center, start/radius and end/angle phases.
+- `PointTool` and `TextTool` now expose command prompt states instead of relying on `MainWindowViewModel` fallback text.
+- Measurement tools now expose prompt states: `MeasureDistanceTool`, `MeasureAngleTool`, `MeasureEntityTool` and `MeasureAreaTool`.
+- Dimension tools now participate in the command prompt contract through `ThreePointDimensionToolBase`, `RadialDimensionToolBase` and `AngularDimensionTool`.
+- `ZoomWindowTool` now exposes first/opposite corner prompt states.
+- Architectural insertion tools `NorthSymbolTool` and `ScaleBarTool` now expose insertion-point prompt states.
+
+Current intentional exclusions:
+
+- `SelectionTool` remains outside the HUD contract for now because normal selection should not show the dynamic command HUD.
+- `GripEditTool` remains outside the HUD contract until the HUD behavior for grip workflows is designed explicitly.
+- `TwoPointToolBase` remains a plain base class because many derived tools already provide specialized prompt states; adding a default implementation there could create accidental duplicate semantics.
+
+Next recommended step: remove or simplify old tool-specific prompt fallbacks from `MainWindowViewModel.CommandPromptText` once this step is confirmed by build/tests, then move to the read-only visual HUD overlay.
+
+## 2026-05-30 — Dynamic Command HUD Step 3 read-only overlay
+
+The third Dynamic Command HUD code step adds the first visual HUD overlay without changing command input behavior.
+
+Implemented in this step:
+
+- `MainWindow.axaml` now wraps the CAD canvas in a `Grid` and adds a transparent `Canvas` overlay for the command HUD.
+- The HUD panel is read-only and displays:
+  - active tool name,
+  - current prompt from `CommandHudState`,
+  - live fields already exposed by the ViewModel,
+  - command options as compact shortcut labels.
+- The old bottom command line remains fully active and unchanged.
+- `MainWindow.axaml.cs` positions the HUD near the current pointer screen position with a fixed offset and clamps it inside the overlay bounds.
+- The overlay itself is not hit-test-visible, so it does not intercept canvas or command input events.
+
+Important constraints preserved:
+
+- No editable HUD numeric fields yet.
+- No move of `CommandInputTextBox` yet.
+- No removal of the old bottom command row yet.
+- No command behavior change is intended in this step.
+
+Next recommended step: validate the read-only HUD manually across draw, dimension, measurement and modify tools, then refine HUD field selection per tool before moving the real command input into the HUD.
+
+## 2026-05-30 — Dynamic Command HUD Step 4 transitional command input
+
+The fourth Dynamic Command HUD code step moves the active command input experience into the HUD while keeping a safe bottom fallback for idle/non-HUD states.
+
+Implemented in this step:
+
+- `MainWindow.axaml` adds `HudCommandInputTextBox` inside the command HUD panel.
+- The bottom command row remains present but is visible only when `IsCommandHudVisible` is false.
+- `MainWindow.axaml.cs` now treats the HUD input and the bottom input as synchronized views of the same command text.
+- Command submission, autocomplete, history navigation, Backspace, Escape and typed-character forwarding all use helper methods instead of directly reading only the old bottom `CommandInputTextBox`.
+- The HUD overlay is now hit-test-visible so the HUD textbox can be focused/clicked, while the panel remains small and clamped near the cursor.
+
+Important constraints preserved:
+
+- There are still no editable numeric HUD fields.
+- The command parser and existing `SubmitCommandInput` flow are unchanged.
+- The bottom command row is not deleted yet; it remains the fallback for idle states and selection-like workflows where the HUD is hidden.
+
+Next recommended step: test command entry both while idle and while a command HUD is visible, especially command history, autocomplete, polyline shortcuts, Align scale confirmation and Escape behavior. After that, remove the fallback row only when idle command discoverability is solved cleanly.
+
+## 2026-05-30 — Dynamic Command HUD Step 5 icon polish
+
+The fifth Dynamic Command HUD code step is a visual/UX consolidation step. It does not change command behavior.
+
+Implemented in this step:
+
+- The HUD header now uses a real `Path` named `HudToolIcon` instead of the temporary textual marker.
+- `MainWindow.axaml.cs` maps the active tool display name to the existing icon resources already defined in `Resources/Icons.axaml`.
+- Icon refresh is called from `UpdateCommandHudPosition()`, keeping the HUD header synchronized with active command changes.
+- The transitional bottom command row remains available for idle/non-HUD command entry.
+
+Important constraints preserved:
+
+- No editable HUD numeric fields yet.
+- No command parser changes.
+- No removal of the bottom command row yet.
+
+Next recommended step: manually verify icons across draw, modify, measure and dimension tools. Once stable, decide whether to implement an idle command HUD before deleting the bottom command row.
+
+## 2026-05-30 — Dynamic Command HUD Step 6 bottom fallback demotion
+
+The sixth Dynamic Command HUD code step is a conservative UX consolidation step. It does not remove the fallback input row yet, but it stops presenting it as the active command prompt UI.
+
+Implemented in this step:
+
+- `BottomCommandLinePanel` remains available only through the existing `IsBottomCommandLineVisible` fallback rule.
+- The bottom fallback now shows only a `Command` label plus the synchronized `CommandInputTextBox`.
+- The bottom fallback no longer displays `ActiveToolName` or `CommandPromptText`; active command identity and prompt information now belong to the cursor HUD.
+- No command parser, tool, focus, history or autocomplete behavior is changed.
+
+Important constraints preserved:
+
+- No editable HUD numeric fields yet.
+- No deletion of the fallback row yet.
+- The fallback remains useful for idle command entry until a dedicated idle HUD/launcher is implemented.
+
+Next recommended step: validate that idle command entry, active HUD command entry, autocomplete, history navigation and Escape still behave as before. After that, design the idle command launcher or proceed to editable HUD fields only if the fallback strategy is accepted.
+
+## 2026-05-30 — Dynamic Command HUD Step 7 contextual read-only fields
+
+The seventh Dynamic Command HUD step improves the read-only field mapping in `MainWindowViewModel.BuildCommandHudFields()`.
+
+Implemented in this step:
+
+- `RectangleTool` uses `Width` and `Height` during opposite-corner input.
+- `RectangleBySidesTool` uses `Width`/`Angle` for the first side and `Height` for the second side.
+- `CircleTool` uses `Radius` during radius input.
+- `ArcTool` uses `Radius`/`Angle` for start-point/radius input and `Angle` for end-direction input.
+- Other live-measurement phases continue to use the generic `Distance`/`Angle` field pair.
+
+Important constraints preserved:
+
+- The HUD fields remain read-only.
+- No command parser changes were made.
+- No bottom fallback removal was made.
+- No tool state machine changes were made.
+
+Next recommended step: manually verify field labels with Line, Rectangle, Rectangle Sides, Circle, Arc, Polyline and a few modify tools. After validation, proceed either to a dedicated idle command launcher or to the first editable numeric field experiment, starting with Line only.
+
+## 2026-05-30 — Dynamic Command HUD Step 8 extended contextual read-only fields
+
+The eighth Dynamic Command HUD step extends the read-only HUD field mapping beyond the first draw tools.
+
+Implemented in this step:
+
+- `EllipseTool` now shows `Major radius`/`Angle` while defining the major axis and `Minor radius` while defining the minor radius.
+- `PolygonTool` now shows `Radius`/`Angle` while defining the polygon vertex/radius.
+- `RotateTool` now shows `Angle` during the destination/angle phase, using the tool preview angle when available.
+- `ScaleTool` now shows `Factor` during the destination/factor phase, using the tool preview factor when available.
+- `OffsetTool` now shows `Distance` during the two-point distance phase.
+- `MirrorTool` and `BreakBetweenPointsTool` use `Distance`/`Angle` during their second-point phases.
+- `MeasureAngleTool` and angular dimension workflows show `Angle` in angle-defining phases.
+- Radial dimension workflows show `Radius` while defining the point on the circle.
+- A generic prompt-kind fallback now maps `PointOrDistance`, `PointOrAngle`, `Distance` and `Angle` expected inputs to suitable read-only HUD fields.
+
+Important constraints preserved:
+
+- The HUD fields remain read-only.
+- No command parser changes were made.
+- No bottom fallback removal was made.
+- No tool state machine changes were made.
+
+Next recommended step: manually verify field labels with ellipse, polygon, rotate, scale, offset, mirror, break-between, radial dimension and angular dimension. After validation, the project can either add a compact idle command launcher or begin the first editable HUD numeric field experiment, preferably limited to Line only.
+
+
+## 2026-05-30 — Dynamic Command HUD Step 9 generic option shortcuts
+
+The ninth Dynamic Command HUD step adds generic shortcut handling for command options exposed by `CommandPromptState.Options`.
+
+Implemented in this step:
+
+- `MainWindow` now checks the active `ICommandDrivenTool` prompt for matching option shortcuts when a key is pressed and the command input buffer is empty.
+- Matching shortcuts are submitted through the existing `SubmitCommandInput` pipeline, preserving parser behavior, command history, status refresh and document invalidation.
+- This brings commands such as Fillet, Trim, Chamfer and Spline closer to the same immediate option behavior already expected from Polyline.
+- Existing polyline Enter completion and Align scale confirmation logic remain in place.
+
+Important constraints preserved:
+
+- No tool state machine changes were made.
+- No parser changes were made.
+- No editable numeric HUD fields were added.
+- The bottom command fallback remains present.
+
+Next recommended step: validate direct option shortcuts in Polyline, Fillet, Trim, Chamfer and Spline. After that, the next architectural step can be either a dedicated idle command launcher or a carefully isolated first editable numeric field experiment for Line.
+
+## 2026-05-30 — Dynamic Command HUD Step 10 editable-field metadata scaffold
+
+The tenth Dynamic Command HUD step prepares the numeric HUD field model for the future editable-field milestone without changing the current UI behavior.
+
+Implemented in this step:
+
+- `CommandHudFieldViewModel` now has a `CommandHudFieldKind` classification for distance, angle, width, height, radius, factor and generic fields.
+- Numeric display formatting is separated from unit display through `NumericValueText` and `DisplayValue`.
+- Fields expose `CanAcceptTypedOverride` and `InputPlaceholder` metadata for the future typed override UI.
+- Existing HUD field builders continue to work through backward-compatible constructor parameters.
+
+Important constraints preserved:
+
+- HUD numeric fields are still rendered as read-only by the current XAML.
+- No command parser changes were made.
+- No tool state machine changes were made.
+- No geometry override is applied yet.
+- The bottom command fallback remains present.
+
+Next recommended step: after build/test validation, add an isolated `CommandHudInputOverride` model and wire it only for Line distance/angle preview. Do not enable editable fields for all tools at once.
+
+## 2026-05-30 — Dynamic Command HUD Step 11 editable field input shell
+
+The eleventh Dynamic Command HUD step turns HUD numeric field visuals into focusable text boxes, but still keeps geometry behavior conservative.
+
+Implemented in this step:
+
+- HUD numeric fields are rendered as `TextBox` controls using `NumericValueText` and `InputPlaceholder` from `CommandHudFieldViewModel`.
+- Pressing Enter while a HUD field is focused submits the typed value through the existing `SubmitCommandInput` pipeline.
+- Pressing Escape while a HUD field is focused restores the live value text and returns focus to the canvas.
+- Empty fields are restored to their current live value when focus is lost.
+- Window-level text routing now treats HUD field text boxes as command-input sources, so typing inside a field does not duplicate characters into the main command input.
+
+Important constraints preserved:
+
+- No `CommandHudInputOverride` model has been introduced yet.
+- No persistent distance/angle override is applied to previews.
+- No tool state machine changes were made.
+- Enter from a field is still a one-shot submission using the existing command parser.
+- The bottom fallback remains present.
+
+Recommended validation:
+
+- Line after first point: focus Distance, type a numeric value, press Enter, and verify the existing numeric distance behavior still works.
+- Circle after center point: focus Radius, type a numeric value, press Enter.
+- Rectangle and angle/factor fields should be treated as experimental shells until the future override model is implemented.
+
+Next recommended step: implement `CommandHudInputOverride` only for Line Distance + Angle so Tab-based `distance -> angle -> Enter` can adjust the preview before final confirmation.
+
+## 2026-05-30 — Dynamic Command HUD Step 12 Line one-shot field override
+
+The twelfth Dynamic Command HUD step introduces the first controlled geometry override from HUD numeric fields, limited to `LineTool` while it is waiting for the second point.
+
+Implemented in this step:
+
+- `MainWindowViewModel.TrySubmitCommandHudFieldInput(...)` handles HUD field submissions before falling back to the normal command input pipeline.
+- For `LineTool` in `WaitingForSecondPoint`:
+  - submitting `Distance` creates the endpoint using the typed distance and the current live angle;
+  - submitting `Angle` creates the endpoint using the current live distance and the typed angle.
+- Invalid numeric input and unsupported line field states produce normal tool-result messages.
+- Other tools continue to use the Step 11 behavior and fall back to the existing command input parser.
+
+Important constraints preserved:
+
+- No persistent `CommandHudInputOverride` model has been introduced yet.
+- No preview-freeze behavior has been added.
+- No Tab-based `distance -> angle -> Enter` workflow has been implemented yet.
+- No parser or tool state machine changes were made.
+- The bottom fallback remains present.
+
+Recommended validation:
+
+- Start Line, click the first point, focus `Distance`, type `100`, press Enter and verify that the line is created using the live cursor angle.
+- Start Line, click the first point, move the cursor to establish a live distance, focus `Angle`, type `45`, press Enter and verify that the line is created with the live distance at 45 degrees.
+- Verify that Circle/Rectangle fields still behave as Step 11 shell fields.
+
+Next recommended step: introduce a real `CommandHudInputOverride` model for Line only so Distance and Angle can be edited independently, previewed together and confirmed after Tab navigation.
+
+## 2026-05-30 — Dynamic Command HUD Step 13 Line persistent Distance/Angle override
+
+The thirteenth Dynamic Command HUD step replaces the Line-only one-shot field behavior with a small persistent override model, still limited to `LineTool` while it is waiting for the second point.
+
+Implemented in this step:
+
+- `MainWindowViewModel` now keeps Line HUD overrides for distance and angle independently.
+- Leaving a HUD field with a non-empty value commits the override without finalizing the command.
+- Pressing Enter in a HUD field commits the current value and confirms the line endpoint.
+- Distance and angle overrides are combined when both are present, enabling the intended `Distance -> Tab -> Angle -> Enter` workflow for Line.
+- The line preview is refreshed from the stored overrides while the mouse moves.
+- `CadWorkspace.PreviewPointFromCommandLine(...)` was added to update previews from already-resolved command-line/HUD points without applying snapping, ortho or angle constraints a second time.
+- Escape in a HUD field clears the temporary Line overrides and restores the live value.
+
+Important constraints preserved:
+
+- The persistent override scope is only `LineTool` in `WaitingForSecondPoint`.
+- Other tools still use the previous editable-field shell/fallback behavior.
+- No parser changes were made.
+- No direct override logic has been added yet for Rectangle, Circle, Polyline, Arc, Rotate or Scale.
+- The bottom fallback remains present.
+
+Recommended validation:
+
+- Start Line, click the first point, focus `Distance`, type `100`, press Tab or click the Angle field, type `45`, press Enter. Verify that the created line is 100 units at 45 degrees.
+- Start Line, type only Distance and press Enter. Verify that the line uses the typed distance and the current live angle.
+- Start Line, type only Angle and press Enter after moving the cursor. Verify that the line uses the live distance and typed angle.
+- Press Escape while a HUD field is focused and verify that temporary overrides are cleared.
+
+Next recommended step: after validation, either add tests around the new Line HUD override path or extend the same override model to Polyline line-mode, which can share most of the Distance/Angle logic.
+
+## 2026-05-30 — Dynamic Command HUD Step 14 Polyline line-mode Distance/Angle override
+
+The fourteenth Dynamic Command HUD step extends the persistent Distance/Angle HUD override model from `LineTool` to `PolylineTool` while it is in `PolylineToolState.CollectingVertices`.
+
+Implemented scope:
+
+- `MainWindowViewModel.BuildCommandHudFields()` now uses the override-aware Distance/Angle field builder for:
+  - `LineTool` in `WaitingForSecondPoint`;
+  - `PolylineTool` in `CollectingVertices`.
+- The HUD override commit path was generalized from a Line-only helper to a Distance/Angle point helper.
+- Supported override target detection is centralized in `IsDistanceAngleHudOverrideTargetActive()`.
+- The preview path still uses `CadWorkspace.PreviewPointFromCommandLine(...)`.
+- The confirm path still uses `CadWorkspace.SubmitPointFromCommandLine(...)`.
+
+Behavior:
+
+- In Polyline line mode, entering Distance and/or Angle in the HUD updates the preview point.
+- Pressing Enter confirms the next polyline vertex using the current override combination.
+- Arc mode is deliberately excluded; entering arc points remains handled by the normal command input and pointer flow.
+- Unsupported tools clear the temporary HUD overrides defensively.
+
+This keeps the override model incremental: Line and Polyline line-mode share the same Distance/Angle point-resolution path, while Rectangle/Circle/Arc remain future steps.
+
+
+### Dynamic Command HUD mouse transparency update
+
+The command HUD is now treated as a keyboard-driven overlay, not as a mouse target. The overlay is transparent to hit testing so fast mouse movement over `Distance`, `Angle` or the HUD command input cannot steal pointer events from the CAD canvas. Numeric HUD fields are entered from the keyboard using `Tab` from the command input, then `Tab` moves to the next numeric field and `Enter` confirms. This preserves the CAD rule that the mouse always remains free for picking points on the canvas.
+
+## 2026-05-30 — Dynamic Command HUD Step 16 Compact polar/coordinate command HUD
+
+The sixteenth Dynamic Command HUD step changes the UX direction from a generic command textbox to a compact, keyboard-driven HUD made of explicit numeric fields.
+
+Implemented in this step:
+
+- Removed the visible generic command text box from the HUD.
+- Removed the bottom command line fallback above the status bar.
+- Removed the blue `active-command-label` command box from the visible command UI by removing the bottom command row that used it.
+- The HUD field layout is now compact and wraps fields horizontally.
+- Command options no longer render as `[L]ine [A]rc [C]lose`; instead the shortcut letter is rendered in the project yellow and the remaining keyword text is rendered normally, e.g. `Line Arc Close` with only `L`, `A`, `C` highlighted.
+- Added a persistent generic `CommandHudInputState` with `Distance`, `AngleDegrees`, `X`, and `Y` overrides. The state is no longer tied to Line-specific private fields.
+- Line and Polyline line-mode now expose the compact field sequence: `Distance`, `Angle`, `X`, `Y`.
+- When no base point exists, the HUD can still show live `X` and `Y` mouse coordinates in UCS space.
+- The status bar no longer includes the live mouse coordinate text; coordinates now belong to the HUD.
+- Initial numeric typing while the CAD canvas is focused is routed to the first editable HUD field instead of the removed generic command input buffer.
+- `Tab` cycles through HUD fields instead of returning to a generic textbox.
+- `X` and `Y` overrides can resolve absolute UCS coordinates for Line and Polyline line-mode when both coordinates are supplied.
+
+Important constraints:
+
+- The mouse-transparent HUD rule remains: HUD fields are keyboard-driven and do not capture mouse hit testing.
+- Advanced command aliases still use an internal command buffer for now, but there is no longer a visible generic textbox.
+- The full geometric override behavior remains validated first on Line and Polyline line-mode. Other tools still need their own semantics before becoming fully editable through the new generic state.
+
+Recommended validation:
+
+- Start Line, click the first point, type `100`, verify the value goes into `Distance` and not into any generic textbox.
+- Press `Tab`, type `45`, press `Enter`, verify the line is confirmed using Distance/Angle.
+- Start Line, click the first point, press `Tab` until `X`, type an X coordinate, press `Tab`, type a Y coordinate, press `Enter`, verify the endpoint is set by absolute UCS coordinates.
+- Start Polyline, verify the same Distance/Angle and X/Y sequence for straight segments.
+- Verify options such as Line/Arc/Close display without brackets and with only the shortcut letter in yellow.
+- Verify there is no bottom command row above the status bar.
+
+## 2026-05-30 — Dynamic Command HUD Step 17 Numeric routing and first-point coordinates fix
+
+The seventeenth Dynamic Command HUD step fixes the first regression found after removing the generic command textbox.
+
+Changes in this step:
+
+- Initial numeric typing from the CAD canvas is now routed automatically only to a primary numeric field such as `Distance`, `Width`, `Radius`, or `Factor`.
+- Initial numeric typing is no longer routed automatically to `X` or `Y` when the command is still waiting for the first point.
+- `X`/`Y` coordinate entry remains available intentionally through `Tab` navigation.
+- Coordinate overrides are no longer limited to Line/Polyline after a base point exists: when an `ICommandDrivenTool` is expecting point input, complete `X` and `Y` values can submit an absolute UCS point.
+- Distance/Angle polar override remains restricted to Line and Polyline line-mode until other tools receive explicit semantics.
+
+Validation focus:
+
+- Start Polyline while it says to click the first point, type `100`: it must not jump into `X` automatically.
+- Press `Tab` intentionally to enter `X`, type X, press `Tab`, type Y, press `Enter`: the first point should be submitted from absolute UCS coordinates.
+- After the first point exists, typing `100` should still route to `Distance` for Line/Polyline line-mode.
+
+## 2026-05-30 — Dynamic Command HUD Step 18 Keyboard Tab focus trap fix
+
+This step fixes the second regression found after the compact HUD removed the visible generic command textbox.
+
+Problem observed:
+
+- In `Polyline`, while the command was still waiting for the first point, pressing `Tab` did not reliably focus the first HUD coordinate field `X`.
+- After clicking the first polyline point and typing `100` into `Distance`, pressing `Tab` could leave the HUD and focus the `X` property in the right property panel instead of moving to HUD `Angle`.
+
+Changes in this step:
+
+- `MainWindow` now registers a tunneling `KeyDown` handler for `Tab` using `InputElement.KeyDownEvent` and `RoutingStrategies.Tunnel`.
+- When the dynamic HUD is visible and the command input buffer is empty, `Tab` is trapped before Avalonia focus traversal can move to external controls.
+- If a HUD numeric field is focused, `Tab` commits that field without confirming the command and moves to the next editable HUD field.
+- If focus is still on the canvas, `Tab` focuses the first editable HUD field.
+- A keyboard-only active HUD field reference is tracked so that numeric text routed from the canvas to `Distance` can still advance to `Angle` even if normal focus traversal would otherwise escape.
+
+Expected validation:
+
+- Start `Polyline` and keep it at `Click first point`; press `Tab`: focus must go to HUD `X`.
+- Type X, press `Tab`: focus must move to HUD `Y`.
+- Press `Enter`: the first point should be submitted from complete X/Y coordinates.
+- Click the first polyline point, type `100`: value must go to HUD `Distance`.
+- Press `Tab`: focus must move to HUD `Angle`, not to the property panel.
+- Type `45`, press `Enter`: the next polyline vertex should be confirmed using Distance/Angle.
+
+### Dynamic Command HUD Step 21 — Logical keyboard input reset
+
+The editable HUD fields have been moved away from real Avalonia TextBox focus traversal. Numeric HUD input is now handled as a logical keyboard state in `MainWindow.axaml.cs`, so `Tab` cycles through the available HUD field kinds instead of relying on focused TextBox controls. This avoids focus escaping to the Property Panel. Pointer clicks clear the temporary HUD overrides so distance/angle values do not persist unexpectedly into the next polyline segment or command point.
+
+## 2026-05-30 — Dynamic Command HUD Step 22 active field highlight and first-point coordinates
+
+This step keeps the logical, mouse-transparent HUD model introduced in Step 21 and adds an explicit visual cue for the active logical field.
+
+Changes:
+
+- The active HUD field is now highlighted in the OpenCad2D yellow accent.
+- The highlight is driven by the logical `CommandHudFieldKind`, not by Avalonia focus.
+- HUD `TextBox` controls remain mouse-transparent; the mouse is still dedicated to the CAD canvas.
+- `Tab` navigation is still logical and cycles through available field kinds.
+- Coordinate entry for first points is supported through the existing `X`/`Y` HUD fields:
+  - while a command is waiting for the first point, press `Tab` to enter `X`;
+  - type X, press `Tab` to enter `Y`;
+  - type Y, press `Enter` to submit the absolute UCS point.
+
+Validation focus:
+
+- Start `Polyline`, before clicking the first point press `Tab`: `X` must be visibly highlighted.
+- Type an X value, press `Tab`: `Y` must be visibly highlighted.
+- Press `Enter` after both X and Y are set: the first point must be submitted.
+- After the first point, type `Distance`, press `Tab`: `Angle` must be visibly highlighted.
+
+## 2026-05-30 — Dynamic Command HUD Step 23 active-field numeric routing verification
+
+Claude's external review was checked against the current code. One proposed change was accepted and one was intentionally rejected.
+
+Accepted:
+
+- Numeric routing now respects the existing logical HUD field before falling back to the preferred initial field. This keeps the sequence `Distance -> Tab -> Angle -> type number` from routing the next number back to `Distance`.
+- The HUD commit handler now recognizes `Width`, `Height`, `Radius` and `Factor` as valid HUD numeric field kinds, preparing the common persistent input state for later tool-specific semantics.
+
+Rejected intentionally:
+
+- `X` was not added to the automatic preferred numeric field list. First-point coordinate entry must remain intentional through `Tab`; otherwise typing `100` while a command asks for the first point would again jump into `X`, which was already identified as undesirable.
+- Complete X/Y coordinate confirmation still requires both coordinates when confirming a point. Missing coordinate fallback to the live pointer may be considered later, but it is not part of this safe correction.
+
+Validation focus:
+
+- Start `Polyline`, click the first point, type `200`, press `Tab`, type `45`, press `Enter`: the second value must remain on HUD `Angle`, not return to `Distance`.
+- Start `Polyline` while it asks for the first point, press `Tab`, enter X, press `Tab`, enter Y, press `Enter`: the first point should be submitted from X/Y.
+- Typing a plain number during first-point prompt should not automatically route to X.
+
+
+### Step 24 — Freeze complementary polar HUD value
+
+When the user starts typing a polar HUD value, the complementary live value is frozen immediately. Typing `Distance` freezes the current live `Angle`; typing `Angle` freezes the current live `Distance`. This prevents the preview update from recalculating the missing polar component from a changed/stale pointer state and keeps the value that was visible when typing began.

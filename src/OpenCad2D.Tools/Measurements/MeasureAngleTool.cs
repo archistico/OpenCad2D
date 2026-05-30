@@ -4,6 +4,7 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Measurements;
 
@@ -11,7 +12,7 @@ namespace OpenCad2D.Tools.Measurements;
 /// Non-destructive tool that measures the angle defined by three points:
 /// first ray point, vertex, second ray point.
 /// </summary>
-public sealed class MeasureAngleTool : ICadTool, IToolPreviewDescriptorProvider
+public sealed class MeasureAngleTool : ICadTool, ICommandDrivenTool, IToolPreviewDescriptorProvider
 {
     private Point2D? _firstRayPoint;
     private Point2D? _vertex;
@@ -31,6 +32,38 @@ public sealed class MeasureAngleTool : ICadTool, IToolPreviewDescriptorProvider
     public bool HasPreview =>
         _currentPoint.HasValue &&
         State != MeasureAngleToolState.WaitingForFirstRayPoint;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State switch
+        {
+            MeasureAngleToolState.WaitingForFirstRayPoint => new CommandPromptState(
+                "MEASURE ANGLE",
+                "Specify first ray point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0"),
+
+            MeasureAngleToolState.WaitingForVertex => new CommandPromptState(
+                "MEASURE ANGLE",
+                "Specify vertex point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   distance"),
+
+            MeasureAngleToolState.WaitingForSecondRayPoint => new CommandPromptState(
+                "MEASURE ANGLE",
+                "Specify second ray point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   distance"),
+
+            _ => new CommandPromptState(
+                "MEASURE ANGLE",
+                "Specify point",
+                CommandInputKind.Point,
+                placeholder: "100,50")
+        };
+    }
 
     public IReadOnlyList<LineEntity> GetPreviewEntities()
     {
@@ -88,6 +121,25 @@ public sealed class MeasureAngleTool : ICadTool, IToolPreviewDescriptorProvider
         return new ToolPreviewDescriptor(
             entities: entities,
             markers: markers);
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
     }
 
     public ToolResult OnPointerPressed(

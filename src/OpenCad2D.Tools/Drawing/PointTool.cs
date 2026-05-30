@@ -1,20 +1,51 @@
-﻿using OpenCad2D.Core.Commands;
+using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Drawing;
 
 /// <summary>
 /// Interactive tool used to insert point entities.
 /// </summary>
-public sealed class PointTool : ICadTool
+public sealed class PointTool : ICadTool, ICommandDrivenTool
 {
     public string Name => "Point";
 
     public Point2D? LastCreatedPosition { get; private set; }
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new CommandPromptState(
+            "POINT",
+            "Specify point",
+            CommandInputKind.Point,
+            placeholder: "100,50   |   @50,0");
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return CreatePoint(
+            context,
+            input.Point.Value);
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,
@@ -27,6 +58,16 @@ public sealed class PointTool : ICadTool
             context,
             pointer.ModelPoint);
 
+        return CreatePoint(
+            context,
+            position);
+    }
+
+
+    private ToolResult CreatePoint(
+        ToolContext context,
+        Point2D position)
+    {
         var point = new PointEntity(
             position,
             layerId: context.Creation.CurrentLayerId);

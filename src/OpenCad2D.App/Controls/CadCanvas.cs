@@ -1079,7 +1079,8 @@ public sealed class CadCanvas : Control
                 result,
                 mousePosition,
                 _currentSnapCandidate,
-                isPointerPressed));
+                isPointerPressed,
+                _pointerScreenPoint));
     }
 
     private void DrawActiveToolPreview(DrawingContext context)

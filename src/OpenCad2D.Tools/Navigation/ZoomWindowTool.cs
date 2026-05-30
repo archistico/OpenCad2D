@@ -1,12 +1,13 @@
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Navigation;
 
 /// <summary>
 /// Interactive two-point navigation tool used by the UI viewport to fit a user-drawn window.
 /// </summary>
-public sealed class ZoomWindowTool : ICadTool, IToolPreviewDescriptorProvider
+public sealed class ZoomWindowTool : ICadTool, ICommandDrivenTool, IToolPreviewDescriptorProvider
 {
     private Point2D? _firstPoint;
     private Point2D? _currentPoint;
@@ -23,6 +24,23 @@ public sealed class ZoomWindowTool : ICadTool, IToolPreviewDescriptorProvider
     public bool HasPreview =>
         _firstPoint.HasValue &&
         _currentPoint.HasValue;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return _firstPoint is null
+            ? new CommandPromptState(
+                "ZOOM WINDOW",
+                "Specify first corner",
+                CommandInputKind.Point,
+                placeholder: "100,50")
+            : new CommandPromptState(
+                "ZOOM WINDOW",
+                "Specify opposite corner",
+                CommandInputKind.Point,
+                placeholder: "100,50");
+    }
 
     public BoundingBox2D? GetPreviewWindow()
     {
@@ -55,6 +73,25 @@ public sealed class ZoomWindowTool : ICadTool, IToolPreviewDescriptorProvider
                     window.Value,
                     ToolPreviewWindowKind.Zoom)
             });
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
     }
 
     public ToolResult OnPointerPressed(

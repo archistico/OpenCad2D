@@ -1,7 +1,11 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.VisualTree;
+using Avalonia.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,6 +34,7 @@ using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Measurements;
+using OpenCad2D.Tools.Input;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -38,6 +43,10 @@ namespace OpenCad2D.App;
 
 public partial class MainWindow : Window
 {
+    private string _commandInputBuffer = string.Empty;
+    private TextBox? _activeKeyboardHudField;
+    private CommandHudFieldKind? _activeLogicalHudFieldKind;
+    private string _activeLogicalHudFieldText = string.Empty;
     private static readonly FilePickerFileType OpenCad2DFileType = new("OpenCad2D drawing")
     {
         Patterns = new[] { "*.opencad2d.json" },
@@ -78,6 +87,12 @@ public partial class MainWindow : Window
         _viewModel = new MainWindowViewModel(new AvaloniaTextInputProvider(this));
 
         DataContext = _viewModel;
+
+        AddHandler(
+            InputElement.KeyDownEvent,
+            Window_PreviewKeyDown,
+            RoutingStrategies.Tunnel,
+            handledEventsToo: true);
 
         RefreshAllUiAfterDocumentChange(clearSnapMarker: false, focusCanvas: false);
 
@@ -2362,10 +2377,72 @@ public partial class MainWindow : Window
         CadCanvas.Focus();
     }
 
+    private void Window_PreviewKeyDown(
+        object? sender,
+        KeyEventArgs e)
+    {
+        if (!_viewModel.IsCommandHudVisible ||
+            HasNonWhiteSpaceCommandInputText())
+        {
+            return;
+        }
+
+        if (e.Key == Key.Tab &&
+            e.KeyModifiers == KeyModifiers.None)
+        {
+            CommitActiveLogicalHudField(confirm: false);
+            MoveToNextLogicalHudField();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Enter &&
+            e.KeyModifiers == KeyModifiers.None &&
+            _activeLogicalHudFieldKind is not null)
+        {
+            if (!CommitActiveLogicalHudField(confirm: true))
+            {
+                ConfirmCommandHudOverrides();
+            }
+
+            ClearLogicalHudFieldInput();
+            CadCanvas.Focus();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Back &&
+            e.KeyModifiers == KeyModifiers.None &&
+            _activeLogicalHudFieldKind is not null)
+        {
+            RemoveLastLogicalHudInputCharacter();
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape &&
+            _activeLogicalHudFieldKind is not null)
+        {
+            ClearLogicalHudFieldInput();
+            _viewModel.CancelCommandHudInputOverrides();
+            RefreshStatus();
+            RefreshLogicalHudFieldVisuals();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+            CadCanvas.Focus();
+            e.Handled = true;
+        }
+    }
+
     private void CommandInputTextBox_KeyDown(
         object? sender,
         KeyEventArgs e)
     {
+        if (TryFocusFirstHudFieldKey(e))
+        {
+            return;
+        }
+
         if (TryHandleCommandAutocompleteKey(e))
         {
             return;
@@ -2377,6 +2454,11 @@ public partial class MainWindow : Window
         }
 
         if (TryHandleAlignScaleConfirmationKey(e))
+        {
+            return;
+        }
+
+        if (TryHandleCommandOptionShortcutKey(e))
         {
             return;
         }
@@ -2395,7 +2477,7 @@ public partial class MainWindow : Window
 
         if (e.Key == Key.Escape)
         {
-            if (!string.IsNullOrEmpty(CommandInputTextBox.Text))
+            if (HasCommandInputText())
             {
                 ClearCommandInputText();
             }
@@ -2410,12 +2492,144 @@ public partial class MainWindow : Window
             e.Handled = true;
         }
     }
+    private void HudFieldTextBox_KeyDown(
+        object? sender,
+        KeyEventArgs e)
+    {
+        if (sender is not TextBox textBox ||
+            textBox.DataContext is not CommandHudFieldViewModel field)
+        {
+            return;
+        }
+
+        if (e.Key == Key.Tab)
+        {
+            CommitHudFieldInput(
+                textBox,
+                field,
+                confirm: false);
+            FocusNextHudField(textBox);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Enter)
+        {
+            SubmitHudFieldInput(textBox, field);
+            e.Handled = true;
+            return;
+        }
+
+        if (e.Key == Key.Escape)
+        {
+            _viewModel.CancelCommandHudInputOverrides();
+            ResetHudFieldTextBox(textBox, field);
+            CadCanvas.Focus();
+            e.Handled = true;
+        }
+    }
+
+    private void HudFieldTextBox_GotFocus(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (sender is TextBox textBox)
+        {
+            _activeKeyboardHudField = textBox;
+            textBox.SelectAll();
+        }
+    }
+
+    private void HudFieldTextBox_LostFocus(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        if (sender is not TextBox textBox ||
+            textBox.DataContext is not CommandHudFieldViewModel field)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(textBox.Text))
+        {
+            ResetHudFieldTextBox(textBox, field);
+            return;
+        }
+
+        CommitHudFieldInput(
+            textBox,
+            field,
+            confirm: false);
+    }
+
+    private void SubmitHudFieldInput(
+        TextBox textBox,
+        CommandHudFieldViewModel field)
+    {
+        CommitHudFieldInput(
+            textBox,
+            field,
+            confirm: true);
+    }
+
+    private void CommitHudFieldInput(
+        TextBox textBox,
+        CommandHudFieldViewModel field,
+        bool confirm)
+    {
+        if (!field.CanAcceptTypedOverride)
+        {
+            ResetHudFieldTextBox(textBox, field);
+            return;
+        }
+
+        string input = (textBox.Text ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            ResetHudFieldTextBox(textBox, field);
+            return;
+        }
+
+        if (_viewModel.TryCommitCommandHudFieldInput(
+                field.Kind,
+                input,
+                confirm,
+                out _))
+        {
+            ClearCommandInputText();
+            RefreshStatus();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+
+            if (confirm)
+            {
+                CadCanvas.Focus();
+            }
+
+            return;
+        }
+
+        if (confirm)
+        {
+            SubmitCommandInputText(input);
+        }
+    }
+
+    private static void ResetHudFieldTextBox(
+        TextBox textBox,
+        CommandHudFieldViewModel field)
+    {
+        textBox.Text = field.NumericValueText;
+        textBox.CaretIndex = textBox.Text?.Length ?? 0;
+    }
+
 
     private void Window_TextInput(
         object? sender,
         TextInputEventArgs e)
     {
-        if (ReferenceEquals(e.Source, CommandInputTextBox))
+        if (IsCommandInputSource(e.Source))
         {
             return;
         }
@@ -2427,276 +2641,311 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (TryRouteInitialNumericTextToHudField(text))
+        {
+            e.Handled = true;
+            return;
+        }
+
         AppendTextToCommandInput(text);
 
         e.Handled = true;
     }
 
-    private void Window_KeyDown(
-        object? sender,
-        KeyEventArgs e)
+    private bool TryRouteInitialNumericTextToHudField(string text)
     {
-        if (TryHandleFileShortcut(e))
+        if (!_viewModel.IsCommandHudVisible ||
+            HasNonWhiteSpaceCommandInputText() ||
+            !IsNumericHudText(text))
         {
-            return;
+            return false;
         }
 
-        if (ReferenceEquals(e.Source, CommandInputTextBox))
+        CommandHudFieldKind? targetKind = _activeLogicalHudFieldKind;
+
+        if (targetKind is null ||
+            !IsHudFieldKindCurrentlyAvailable(targetKind.Value))
         {
-            return;
+            targetKind = GetDefaultLogicalHudFieldKindForNumericText();
         }
 
-        if (e.Source is TextBox)
+        if (targetKind is null)
         {
-            return;
+            return false;
         }
 
-        if (TryHandleCommandAutocompleteKey(e))
+        _activeLogicalHudFieldKind = targetKind.Value;
+        _activeLogicalHudFieldText += text;
+
+        if (_viewModel.TryCommitCommandHudFieldInput(
+                targetKind.Value,
+                _activeLogicalHudFieldText,
+                confirm: false,
+                out _))
         {
-            return;
+            RefreshStatus();
+            RefreshLogicalHudFieldVisuals();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
         }
 
-        if (TryHandleCommandHistoryNavigationKey(e))
+        return true;
+    }
+
+    private static bool IsPreferredInitialNumericHudField(CommandHudFieldKind kind)
+    {
+        return kind is
+            CommandHudFieldKind.Distance or
+            CommandHudFieldKind.Width or
+            CommandHudFieldKind.Radius or
+            CommandHudFieldKind.Factor;
+    }
+
+    private static bool IsNumericHudText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
         {
-            return;
+            return false;
         }
 
-        if (TryHandleAlignScaleConfirmationKey(e))
+        foreach (char character in text)
         {
-            return;
-        }
-
-        if (TryHandlePolylineCompletionKey(e))
-        {
-            return;
-        }
-
-        if (e.Key == Key.Enter)
-        {
-            SubmitCommandInputText();
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.Back && !string.IsNullOrEmpty(CommandInputTextBox.Text))
-        {
-            RemoveLastCommandInputCharacter();
-            e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.Escape)
-        {
-            if (!string.IsNullOrEmpty(CommandInputTextBox.Text))
+            if (!char.IsDigit(character) &&
+                character is not '.' and not ',' and not '-' and not '+')
             {
-                ClearCommandInputText();
+                return false;
             }
-            else
-            {
-                _viewModel.Escape();
-                RefreshStatus();
-                CadCanvas.ClearSnapMarker();
-                CadCanvas.InvalidateVisual();
-            }
-
-            e.Handled = true;
         }
+
+        return true;
     }
 
-
-    private bool TryHandleFileShortcut(KeyEventArgs e)
+    private bool TryFocusFirstHudFieldKey(KeyEventArgs e)
     {
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control))
+        if (e.Key != Key.Tab ||
+            HasNonWhiteSpaceCommandInputText() ||
+            !_viewModel.IsCommandHudVisible)
         {
             return false;
         }
 
-        if (e.Key == Key.N)
-        {
-            New_Click(this, new RoutedEventArgs());
-            e.Handled = true;
-            return true;
-        }
-
-        if (e.Key == Key.O)
-        {
-            Open_Click(this, new RoutedEventArgs());
-            e.Handled = true;
-            return true;
-        }
-
-        if (e.Key == Key.S && e.KeyModifiers.HasFlag(KeyModifiers.Shift))
-        {
-            SaveAs_Click(this, new RoutedEventArgs());
-            e.Handled = true;
-            return true;
-        }
-
-        if (e.Key == Key.S)
-        {
-            Save_Click(this, new RoutedEventArgs());
-            e.Handled = true;
-            return true;
-        }
-
-        return false;
-    }
-
-
-    private void CadCanvas_RepeatLastCommandRequested(
-        object? sender,
-        EventArgs e)
-    {
-        _viewModel.RepeatLastCommandFromCanvas();
-        RefreshStatus();
-        CadCanvas.ClearSnapMarker();
-        CadCanvas.InvalidateVisual();
-        CadCanvas.Focus();
-    }
-
-    private void SubmitCommandInputText()
-    {
-        string input = CommandInputTextBox.Text ?? string.Empty;
-
-        _viewModel.SubmitCommandInput(input);
-
-        ClearCommandInputText();
-
-        RefreshStatus();
-
-        CadCanvas.ClearSnapMarker();
-        CadCanvas.InvalidateVisual();
-
-        if (!FocusCommandInputIfAlignScaleConfirmation())
-        {
-            CadCanvas.Focus();
-        }
-    }
-
-    private bool TryHandlePolylineCompletionKey(KeyEventArgs e)
-    {
-        if (_viewModel.Workspace.ToolController.ActiveTool is not PolylineTool polylineTool ||
-            !string.IsNullOrWhiteSpace(CommandInputTextBox.Text) ||
-            !TryMapPolylineShortcutKey(e.Key, out CadToolKey toolKey))
-        {
-            return false;
-        }
-
-        if (!polylineTool.TryHandleKey(
-                _viewModel.Workspace.Context,
-                toolKey,
-                out ToolResult result))
-        {
-            return false;
-        }
-
-        ApplyPolylineShortcutResult(result);
+        CommitActiveLogicalHudField(confirm: false);
+        MoveToNextLogicalHudField();
         e.Handled = true;
         return true;
     }
 
-    private static bool TryMapPolylineShortcutKey(
-        Key key,
-        out CadToolKey toolKey)
+    private void RemoveLastLogicalHudInputCharacter()
     {
-        switch (key)
-        {
-            case Key.Enter:
-                toolKey = CadToolKey.Enter;
-                return true;
-
-            case Key.C:
-                toolKey = CadToolKey.C;
-                return true;
-
-            case Key.A:
-                toolKey = CadToolKey.A;
-                return true;
-
-            case Key.L:
-                toolKey = CadToolKey.L;
-                return true;
-
-            case Key.U:
-                toolKey = CadToolKey.U;
-                return true;
-
-            default:
-                toolKey = default;
-                return false;
-        }
-    }
-
-    private void ApplyPolylineShortcutResult(ToolResult result)
-    {
-        ClearCommandInputText();
-
-        _viewModel.SetLastResult(result);
-        _viewModel.NotifyDocumentStateChanged();
-        RefreshStatus();
-        CadCanvas.ClearSnapMarker();
-        CadCanvas.InvalidateVisual();
-        CadCanvas.Focus();
-    }
-
-    private bool TryHandleAlignScaleConfirmationKey(KeyEventArgs e)
-    {
-        if (_viewModel.Workspace.ToolController.ActiveTool is not AlignTool alignTool ||
-            alignTool.State != AlignToolState.WaitingForScaleConfirmation ||
-            !string.IsNullOrWhiteSpace(CommandInputTextBox.Text))
-        {
-            return false;
-        }
-
-        if (e.Key == Key.Enter || e.Key == Key.N)
-        {
-            ConfirmAlignScale(applyScale: false);
-            e.Handled = true;
-            return true;
-        }
-
-        if (e.Key == Key.Y)
-        {
-            ConfirmAlignScale(applyScale: true);
-            e.Handled = true;
-            return true;
-        }
-
-        return false;
-    }
-
-    private void ConfirmAlignScale(bool applyScale)
-    {
-        if (_viewModel.Workspace.ToolController.ActiveTool is not AlignTool alignTool)
+        if (string.IsNullOrEmpty(_activeLogicalHudFieldText))
         {
             return;
         }
 
-        ToolResult result = applyScale
-            ? alignTool.ConfirmWithScale(_viewModel.Workspace.Context)
-            : alignTool.ConfirmWithoutScale(_viewModel.Workspace.Context);
+        _activeLogicalHudFieldText = _activeLogicalHudFieldText[..^1];
 
-        ClearCommandInputText();
+        if (string.IsNullOrWhiteSpace(_activeLogicalHudFieldText))
+        {
+            _viewModel.CancelCommandHudInputOverrides();
+            RefreshStatus();
+            RefreshLogicalHudFieldVisuals();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+            return;
+        }
 
-        _viewModel.SetLastResult(result);
-        _viewModel.NotifyDocumentStateChanged();
-        RefreshStatus();
-        CadCanvas.ClearSnapMarker();
-        CadCanvas.InvalidateVisual();
-        CadCanvas.Focus();
+        if (_activeLogicalHudFieldKind is not null &&
+            _viewModel.TryCommitCommandHudFieldInput(
+                _activeLogicalHudFieldKind.Value,
+                _activeLogicalHudFieldText,
+                confirm: false,
+                out _))
+        {
+            RefreshStatus();
+            RefreshLogicalHudFieldVisuals();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+        }
     }
 
-    private bool FocusCommandInputIfAlignScaleConfirmation()
+    private bool CommitActiveLogicalHudField(bool confirm)
     {
-        if (_viewModel.Workspace.ToolController.ActiveTool is not AlignTool alignTool ||
-            alignTool.State != AlignToolState.WaitingForScaleConfirmation)
+        if (_activeLogicalHudFieldKind is null ||
+            string.IsNullOrWhiteSpace(_activeLogicalHudFieldText))
         {
             return false;
         }
 
-        ClearCommandInputText();
-        CommandInputTextBox.Focus();
-        return true;
+        CommandHudFieldKind fieldKind = _activeLogicalHudFieldKind.Value;
+        string input = _activeLogicalHudFieldText;
+        bool handled = _viewModel.TryCommitCommandHudFieldInput(
+            fieldKind,
+            input,
+            confirm,
+            out _);
+
+        if (handled)
+        {
+            RefreshStatus();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+        }
+
+        if (confirm)
+        {
+            ClearLogicalHudFieldInput();
+        }
+        else
+        {
+            _activeLogicalHudFieldText = string.Empty;
+        }
+
+        return handled;
+    }
+
+    private void ConfirmCommandHudOverrides()
+    {
+        if (_viewModel.TryConfirmCommandHudInputOverrides(out _))
+        {
+            RefreshStatus();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+        }
+    }
+
+    private void MoveToNextLogicalHudField()
+    {
+        List<CommandHudFieldKind> availableKinds = GetAvailableHudFieldKinds().ToList();
+
+        if (availableKinds.Count == 0)
+        {
+            ClearLogicalHudFieldInput();
+            CadCanvas.Focus();
+            return;
+        }
+
+        int currentIndex = _activeLogicalHudFieldKind is null
+            ? -1
+            : availableKinds.IndexOf(_activeLogicalHudFieldKind.Value);
+
+        int nextIndex = currentIndex < 0 || currentIndex >= availableKinds.Count - 1
+            ? 0
+            : currentIndex + 1;
+
+        _activeLogicalHudFieldKind = availableKinds[nextIndex];
+        _activeLogicalHudFieldText = string.Empty;
+        CadCanvas.Focus();
+        RefreshLogicalHudFieldVisuals();
+        Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+    }
+
+    private CommandHudFieldKind? GetDefaultLogicalHudFieldKindForNumericText()
+    {
+        if (_activeLogicalHudFieldKind is not null &&
+            IsHudFieldKindCurrentlyAvailable(_activeLogicalHudFieldKind.Value))
+        {
+            return _activeLogicalHudFieldKind.Value;
+        }
+
+        foreach (CommandHudFieldKind kind in GetAvailableHudFieldKinds())
+        {
+            if (IsPreferredInitialNumericHudField(kind))
+            {
+                return kind;
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsHudFieldKindCurrentlyAvailable(CommandHudFieldKind kind)
+    {
+        return GetAvailableHudFieldKinds().Contains(kind);
+    }
+
+    private IEnumerable<CommandHudFieldKind> GetAvailableHudFieldKinds()
+    {
+        return _viewModel.CommandHudState.Fields
+            .Where(field => field.CanAcceptTypedOverride)
+            .Select(field => field.Kind)
+            .Distinct();
+    }
+
+    private void ClearLogicalHudFieldInput()
+    {
+        _activeLogicalHudFieldKind = null;
+        _activeLogicalHudFieldText = string.Empty;
+        _activeKeyboardHudField = null;
+        RefreshLogicalHudFieldVisuals();
+        Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+    }
+
+    private void RefreshLogicalHudFieldVisuals()
+    {
+        if (HudFieldsItemsControl is null)
+        {
+            return;
+        }
+
+        foreach (TextBox textBox in HudFieldsItemsControl.GetVisualDescendants().OfType<TextBox>())
+        {
+            if (textBox.DataContext is not CommandHudFieldViewModel field)
+            {
+                continue;
+            }
+
+            bool isActive = _activeLogicalHudFieldKind == field.Kind;
+
+            textBox.BorderBrush = isActive
+                ? new SolidColorBrush(Color.Parse("#FFD700"))
+                : new SolidColorBrush(Color.Parse("#444444"));
+
+            textBox.BorderThickness = isActive
+                ? new Thickness(2)
+                : new Thickness(1);
+
+            textBox.Background = isActive
+                ? new SolidColorBrush(Color.Parse("#241E04"))
+                : new SolidColorBrush(Color.Parse("#111111"));
+
+            textBox.Foreground = isActive
+                ? Brushes.White
+                : new SolidColorBrush(Color.Parse("#FFD700"));
+
+            if (isActive)
+            {
+                textBox.Text = string.IsNullOrEmpty(_activeLogicalHudFieldText)
+                    ? field.NumericValueText
+                    : _activeLogicalHudFieldText;
+            }
+            else
+            {
+                textBox.Text = field.NumericValueText;
+            }
+
+            textBox.CaretIndex = textBox.Text?.Length ?? 0;
+        }
+    }
+
+    private bool FocusFirstHudField()
+    {
+        MoveToNextLogicalHudField();
+        return _activeLogicalHudFieldKind is not null;
+    }
+
+    private void FocusNextHudField(TextBox currentField)
+    {
+        MoveToNextLogicalHudField();
+    }
+
+    private bool IsCurrentHudFieldTextBox(TextBox candidate)
+    {
+        return false;
+    }
+
+    private IEnumerable<TextBox> GetHudFieldTextBoxes()
+    {
+        return Enumerable.Empty<TextBox>();
     }
 
     private bool TryHandleCommandAutocompleteKey(KeyEventArgs e)
@@ -2706,7 +2955,7 @@ public partial class MainWindow : Window
             return false;
         }
 
-        string currentText = CommandInputTextBox.Text ?? string.Empty;
+        string currentText = GetCommandInputText();
 
         if (string.IsNullOrWhiteSpace(currentText))
         {
@@ -2721,7 +2970,7 @@ public partial class MainWindow : Window
         }
 
         SetCommandInputText(suggestion);
-        CommandInputTextBox.Focus();
+        CadCanvas.Focus();
         e.Handled = true;
         return true;
     }
@@ -2738,20 +2987,20 @@ public partial class MainWindow : Window
             : _viewModel.NavigateCommandHistoryNext();
 
         SetCommandInputText(commandText);
-        CommandInputTextBox.Focus();
+        CadCanvas.Focus();
         e.Handled = true;
         return true;
     }
 
     private void AppendTextToCommandInput(string text)
     {
-        SetCommandInputText((CommandInputTextBox.Text ?? string.Empty) + text);
-        CommandInputTextBox.Focus();
+        SetCommandInputText(GetCommandInputText() + text);
+        CadCanvas.Focus();
     }
 
     private void RemoveLastCommandInputCharacter()
     {
-        string text = CommandInputTextBox.Text ?? string.Empty;
+        string text = GetCommandInputText();
 
         if (text.Length == 0)
         {
@@ -2759,7 +3008,7 @@ public partial class MainWindow : Window
         }
 
         SetCommandInputText(text[..^1]);
-        CommandInputTextBox.Focus();
+        CadCanvas.Focus();
     }
 
     private void ClearCommandInputText()
@@ -2767,10 +3016,123 @@ public partial class MainWindow : Window
         SetCommandInputText(string.Empty);
     }
 
+    private bool HasCommandInputText()
+    {
+        return GetCommandInputText().Length > 0;
+    }
+
+    private bool HasNonWhiteSpaceCommandInputText()
+    {
+        return !string.IsNullOrWhiteSpace(GetCommandInputText());
+    }
+
+    private string GetCommandInputText()
+    {
+        return _commandInputBuffer;
+    }
+
+    private void SubmitCommandInputText()
+    {
+        SubmitCommandInputText(GetCommandInputText());
+    }
+
+    private void SubmitCommandInputText(string? text)
+    {
+        ToolResult result = _viewModel.SubmitCommandInput(text);
+        _viewModel.SetLastResult(result);
+
+        ClearCommandInputText();
+        ClearLogicalHudFieldInput();
+
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private static bool IsCommandInputSource(object? source)
+    {
+        return source is TextBox;
+    }
+
+    private bool TryHandleAlignScaleConfirmationKey(KeyEventArgs e)
+    {
+        if (HasNonWhiteSpaceCommandInputText() ||
+            _viewModel.Workspace.ToolController.ActiveTool is not AlignTool alignTool ||
+            alignTool.State != AlignToolState.WaitingForScaleConfirmation)
+        {
+            return false;
+        }
+
+        if (e.Key == Key.Y)
+        {
+            SubmitCommandInputText("Y");
+            e.Handled = true;
+            return true;
+        }
+
+        if (e.Key == Key.N)
+        {
+            SubmitCommandInputText("N");
+            e.Handled = true;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool TryHandleCommandOptionShortcutKey(KeyEventArgs e)
+    {
+        if (HasNonWhiteSpaceCommandInputText() ||
+            e.KeyModifiers != KeyModifiers.None ||
+            _viewModel.Workspace.ToolController.ActiveTool is not ICommandDrivenTool commandDrivenTool)
+        {
+            return false;
+        }
+
+        string shortcut = e.Key.ToString();
+        CommandPromptState promptState = commandDrivenTool.GetPromptState(_viewModel.Workspace.Context);
+        CommandOption? option = promptState.Options
+            .FirstOrDefault(candidate =>
+                string.Equals(candidate.Shortcut, shortcut, StringComparison.OrdinalIgnoreCase));
+
+        if (option is null)
+        {
+            return false;
+        }
+
+        SubmitCommandInputText(option.Keyword);
+        e.Handled = true;
+        return true;
+    }
+
+    private bool TryHandlePolylineCompletionKey(KeyEventArgs e)
+    {
+        if (e.Key != Key.Enter ||
+            HasNonWhiteSpaceCommandInputText() ||
+            _viewModel.Workspace.ToolController.ActiveTool is not PolylineTool)
+        {
+            return false;
+        }
+
+        SubmitCommandInputText(string.Empty);
+        e.Handled = true;
+        return true;
+    }
+
+    private void FocusCommandInputIfAlignScaleConfirmation()
+    {
+        if (_viewModel.Workspace.ToolController.ActiveTool is AlignTool alignTool &&
+            alignTool.State == AlignToolState.WaitingForScaleConfirmation)
+        {
+            ClearLogicalHudFieldInput();
+            CadCanvas.Focus();
+        }
+    }
+
     private void SetCommandInputText(string text)
     {
-        CommandInputTextBox.Text = text;
-        CommandInputTextBox.CaretIndex = text.Length;
+        _commandInputBuffer = text;
     }
 
     private static bool IsCommandInputText(string text)
@@ -2798,12 +3160,28 @@ public partial class MainWindow : Window
         return true;
     }
 
+
+    private void CadCanvas_RepeatLastCommandRequested(
+        object? sender,
+        EventArgs e)
+    {
+        ToolResult result = _viewModel.RepeatLastCommandFromCanvas();
+        _viewModel.SetLastResult(result);
+
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
     private async void CadCanvas_WorkspaceChanged(
         object? sender,
         CadCanvasWorkspaceChangedEventArgs e)
     {
         _viewModel.SetMousePosition(e.MousePosition);
         _viewModel.SetCurrentSnapCandidate(e.SnapCandidate);
+        _viewModel.SetHudScreenPosition(e.PointerScreenPosition);
+        UpdateCommandHudPosition();
 
         if (_viewModel.IsCreateBlockBasePointPickPending)
         {
@@ -2912,6 +3290,12 @@ public partial class MainWindow : Window
             _viewModel.SetLastResult(e.Result);
         }
 
+        if (e.IsPointerPressed)
+        {
+            ClearLogicalHudFieldInput();
+            _viewModel.ClearCommandHudInputOverridesForNextInput();
+        }
+
         _viewModel.NotifyDocumentStateChanged();
 
         RefreshStatus();
@@ -2927,6 +3311,111 @@ public partial class MainWindow : Window
             : "Props";
 
         RefreshActiveToolUi();
+        UpdateCommandHudPosition();
+    }
+
+    private void UpdateCommandHudPosition()
+    {
+        if (!_viewModel.IsCommandHudVisible || _viewModel.HudScreenPosition is not { } pointerPosition)
+        {
+            CommandHudPanel.IsVisible = false;
+            return;
+        }
+
+        CommandHudPanel.IsVisible = true;
+        UpdateCommandHudIcon();
+        RefreshLogicalHudFieldVisuals();
+        Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+
+        const double offsetX = 20;
+        const double offsetY = 15;
+        const double margin = 8;
+
+        double hudWidth = CommandHudPanel.Bounds.Width > 0
+            ? CommandHudPanel.Bounds.Width
+            : 240;
+
+        double hudHeight = CommandHudPanel.Bounds.Height > 0
+            ? CommandHudPanel.Bounds.Height
+            : 130;
+
+        double maxX = Math.Max(margin, CommandHudOverlay.Bounds.Width - hudWidth - margin);
+        double maxY = Math.Max(margin, CommandHudOverlay.Bounds.Height - hudHeight - margin);
+
+        double x = Math.Clamp(pointerPosition.X + offsetX, margin, maxX);
+        double y = Math.Clamp(pointerPosition.Y + offsetY, margin, maxY);
+
+        Canvas.SetLeft(CommandHudPanel, x);
+        Canvas.SetTop(CommandHudPanel, y);
+    }
+
+
+    private void UpdateCommandHudIcon()
+    {
+        string? resourceKey = GetCommandHudIconResourceKey(_viewModel.ActiveToolName);
+
+        if (resourceKey is null ||
+            !this.TryGetResource(resourceKey, null, out object? resource) ||
+            resource is not Avalonia.Media.Geometry geometry)
+        {
+            HudToolIcon.Data = null;
+            HudToolIcon.IsVisible = false;
+            return;
+        }
+
+        HudToolIcon.Data = geometry;
+        HudToolIcon.IsVisible = true;
+    }
+
+    private static string? GetCommandHudIconResourceKey(string activeToolName)
+    {
+        return activeToolName switch
+        {
+            "Zoom Window" => "IconZoomWindow",
+            "Point" => "IconPoint",
+            "Text" => "IconText",
+            "MText" => "IconMText",
+            "Line" => "IconLine",
+            "Rectangle" => "IconRectangle",
+            "Rect Sides" => "IconRectSides",
+            "Circle" => "IconCircle",
+            "Ellipse" => "IconEllipse",
+            "Arc" => "IconArc",
+            "Arc 3P" => "IconArc3P",
+            "Polyline" => "IconPolyline",
+            "Spline" => "IconSpline",
+            "Polygon" => "IconPolygon",
+            "North Symbol" => "IconPoint",
+            "Metric Scale Bar" => "IconDistance",
+            "Horizontal Dim" => "IconHorizontalDim",
+            "Vertical Dim" => "IconVerticalDim",
+            "Aligned Dim" => "IconAlignedDim",
+            "Radius Dim" => "IconRadiusDim",
+            "Diameter Dim" => "IconDiameterDim",
+            "Angular Dim" => "IconAngularDim",
+            "Move" => "IconMove",
+            "Copy" => "IconCopy",
+            "Rotate" => "IconRotate",
+            "Scale" => "IconScale",
+            "Align" => "IconAlign",
+            "Break Point" => "IconBreakPt",
+            "Break Segment" => "IconBreakSeg",
+            "Extend" => "IconExtend",
+            "Trim" => "IconTrim",
+            "Offset" => "IconOffset",
+            "Boundary Fill" => "IconBoundaryFill",
+            "Fillet" => "IconFillet",
+            "Chamfer" => "IconChamfer",
+            "Mirror" => "IconMirror",
+            "Explode" => "IconExplode",
+            "Join" => "IconJoin",
+            "Delete" => "IconDelete",
+            "Distance" => "IconDistance",
+            "Entity" => "IconSelect",
+            "Angle" => "IconAngle",
+            "Area" => "IconArea",
+            _ => null
+        };
     }
 
     private void RefreshSnapControls()

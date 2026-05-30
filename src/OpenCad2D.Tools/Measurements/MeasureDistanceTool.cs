@@ -2,15 +2,50 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Measurements;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Measurements;
 
 /// <summary>
 /// Non-destructive tool that measures distance, delta and angle between two points.
 /// </summary>
-public sealed class MeasureDistanceTool : TwoPointToolBase, IToolPreviewEntityProvider
+public sealed class MeasureDistanceTool : TwoPointToolBase, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     public override string Name => "Measure Distance";
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return State == TwoPointToolState.WaitingForFirstPoint
+            ? new CommandPromptState(
+                "MEASURE DISTANCE",
+                "Specify first point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0")
+            : new CommandPromptState(
+                "MEASURE DISTANCE",
+                "Specify second point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   distance");
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? "MEASURE DISTANCE expects a point input.");
+        }
+
+        return SubmitResolvedPoint(context, input.Point.Value);
+    }
 
     public LineEntity? GetPreviewEntity()
     {

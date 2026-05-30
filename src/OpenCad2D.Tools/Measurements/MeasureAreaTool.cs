@@ -3,13 +3,14 @@ using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Core.Measurements;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Measurements;
 
 /// <summary>
 /// Non-destructive tool that reports area information for a closed polyline.
 /// </summary>
-public sealed class MeasureAreaTool : ICadTool, ISnapModeProvider
+public sealed class MeasureAreaTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 {
     private EntityId? _lastMeasuredEntityId;
 
@@ -17,11 +18,41 @@ public sealed class MeasureAreaTool : ICadTool, ISnapModeProvider
 
     public EntityId? LastMeasuredEntityId => _lastMeasuredEntityId;
 
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return new CommandPromptState(
+            "MEASURE AREA",
+            "Select closed polyline",
+            CommandInputKind.Selection,
+            placeholder: "Click closed polyline; Ctrl+click cycles overlaps");
+    }
+
     public SnapKind GetActiveSnapKind(ToolContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
         return SnapKind.EntityOnly;
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
     }
 
     public ToolResult OnPointerPressed(

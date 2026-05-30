@@ -3,6 +3,7 @@ using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Dimensions;
 
@@ -10,7 +11,7 @@ namespace OpenCad2D.Tools.Dimensions;
 /// Base class for non-associative dimension tools that collect two measured points
 /// and one placement point.
 /// </summary>
-public abstract class ThreePointDimensionToolBase : ICadTool, IToolPreviewEntityProvider
+public abstract class ThreePointDimensionToolBase : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
     private Point2D? _firstPoint;
     private Point2D? _secondPoint;
@@ -33,6 +34,56 @@ public abstract class ThreePointDimensionToolBase : ICadTool, IToolPreviewEntity
         _firstPoint.HasValue &&
         _secondPoint.HasValue &&
         _currentPoint.HasValue;
+
+    public CommandPromptState GetPromptState(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        string commandName = Name.ToUpperInvariant();
+
+        if (_firstPoint is null)
+        {
+            return new CommandPromptState(
+                commandName,
+                "Specify first dimension point",
+                CommandInputKind.Point,
+                placeholder: "100,50   |   @50,0");
+        }
+
+        if (_secondPoint is null)
+        {
+            return new CommandPromptState(
+                commandName,
+                "Specify second dimension point",
+                CommandInputKind.PointOrDistance,
+                placeholder: "100,50   |   @50,0   |   distance");
+        }
+
+        return new CommandPromptState(
+            commandName,
+            "Specify dimension line position",
+            CommandInputKind.PointOrDistance,
+            placeholder: "100,50   |   @50,0   |   distance");
+    }
+
+
+    public ToolResult HandleCommandInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
+        {
+            return ToolResult.None(
+                input.ErrorMessage ?? $"{Name} expects a point input.");
+        }
+
+        return OnPointerPressed(
+            context,
+            new PointerInfo(input.Point.Value));
+    }
 
     public ToolResult OnPointerPressed(
         ToolContext context,

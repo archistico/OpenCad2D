@@ -1,4 +1,5 @@
-﻿using OpenCad2D.Geometry.Primitives;
+using Avalonia;
+using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using System;
@@ -11,12 +12,14 @@ public sealed class CadCanvasWorkspaceChangedEventArgs : EventArgs
         ToolResult result,
         Point2D mousePosition,
         SnapCandidate? snapCandidate = null,
-        bool isPointerPressed = false)
+        bool isPointerPressed = false,
+        Point? pointerScreenPosition = null)
     {
         Result = result;
         MousePosition = mousePosition;
         SnapCandidate = snapCandidate;
         IsPointerPressed = isPointerPressed;
+        PointerScreenPosition = pointerScreenPosition;
     }
 
     public ToolResult Result { get; }
@@ -26,4 +29,7 @@ public sealed class CadCanvasWorkspaceChangedEventArgs : EventArgs
     public SnapCandidate? SnapCandidate { get; }
 
     public bool IsPointerPressed { get; }
+
+    public Point? PointerScreenPosition { get; }
 }
+
