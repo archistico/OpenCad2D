@@ -1716,3 +1716,12 @@ Important implementation guidance for future work:
 ## 2026-05-31 - SmartPoint tracking intersections
 
 Added `SnapKind.TrackingIntersection` and extended `TrackingEngine` so horizontal/vertical tracking lines from different SmartPoints can create temporary intersection snap candidates. The candidate carries no tracking origin/direction, so direct numeric tracking distance remains limited to `SnapKind.Tracking` line candidates. `CadCanvas` renders tracking intersections with a small circular tracking marker.
+
+
+## 2026-05-31 - Entity extension tracking for SmartPoints
+
+Added first-pass entity-extension tracking on top of the SmartPoint tracking foundation. `TrackingEngine` now builds both horizontal/vertical axis lines and `EntityExtension` lines. Extension lines are generated from line entities and from straight polyline segments when the captured SmartPoint belongs to the source entity. Bulged/arc polyline segments are intentionally skipped for stability.
+
+Added `SnapKind.Extension`, `TrackingLineKind.EntityExtension`, extension snap marker rendering in `CadCanvas`, and tests covering line extension, projection onto an extension candidate, and straight polyline segment extension. Extension candidates carry `TrackingOrigin` and signed `TrackingDirection`, so existing plain-distance input can resolve points along the real entity direction without tool-specific code.
+
+Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.

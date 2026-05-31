@@ -75,7 +75,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
 | Explode / Join essentials | [x] | EXPLODE converts straight and mixed polylines into lines/arcs; JOIN converts connected lines, arcs and open polylines into one or more polylines, with bulge preservation, diagnostics, undo and targeted tests. |
 | External raster references | [x] | PNG/JPG/JPEG files can be attached as external references, transformed as oriented rectangles, snapped, relinked, collected into portable folders and managed through Image References Manager. |
-| Advanced snapping foundation | [~] | Nearest exists as a low-priority opt-in snap, disabled by default. Temporary SmartPoint capture, horizontal/vertical tracking lines and manual distance input on active tracking lines are in place as the base for Extension/SmartTrack; tracking intersections and entity-extension tracking remain next. |
+| Advanced snapping foundation | [~] | Nearest exists as a low-priority opt-in snap, disabled by default. Temporary SmartPoint capture, horizontal/vertical tracking lines, manual distance input, tracking intersections and first-pass entity-extension tracking for lines/straight polyline segments are in place. Remaining work: broader polar directions, richer extension/tangent behavior and final UI/settings polish. |
 
 ---
 

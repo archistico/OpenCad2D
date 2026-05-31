@@ -389,7 +389,10 @@ public sealed class CadCanvas : Control
 
     private void DrawTrackingLines(DrawingContext context)
     {
-        if (!CanUseSmartPointTracking() ||
+        CadWorkspace? workspace = Workspace;
+
+        if (workspace is null ||
+            !CanUseSmartPointTracking() ||
             _smartPointStore.Points.Count == 0 ||
             Bounds.Width <= 0 ||
             Bounds.Height <= 0)
@@ -400,27 +403,44 @@ public sealed class CadCanvas : Control
         BoundingBox2D visibleBounds = _viewport
             .GetVisibleWorldBounds(new Size(Bounds.Width, Bounds.Height));
 
-        foreach (TrackingLine line in _trackingEngine.BuildAxisLines(_smartPointStore.Points))
+        foreach (TrackingLine line in _trackingEngine.BuildLines(_smartPointStore.Points, workspace.Document))
         {
-            Point2D start;
-            Point2D end;
-
-            if (line.Kind == TrackingLineKind.Horizontal)
-            {
-                start = new Point2D(visibleBounds.MinX, line.Origin.Y);
-                end = new Point2D(visibleBounds.MaxX, line.Origin.Y);
-            }
-            else
-            {
-                start = new Point2D(line.Origin.X, visibleBounds.MinY);
-                end = new Point2D(line.Origin.X, visibleBounds.MaxY);
-            }
+            (Point2D start, Point2D end) = GetVisibleTrackingLineSegment(
+                line,
+                visibleBounds);
 
             context.DrawLine(
                 _trackingLinePen,
                 ToScreenPoint(start),
                 ToScreenPoint(end));
         }
+    }
+
+    private static (Point2D Start, Point2D End) GetVisibleTrackingLineSegment(
+        TrackingLine line,
+        BoundingBox2D visibleBounds)
+    {
+        if (line.Kind == TrackingLineKind.Horizontal)
+        {
+            return (
+                new Point2D(visibleBounds.MinX, line.Origin.Y),
+                new Point2D(visibleBounds.MaxX, line.Origin.Y));
+        }
+
+        if (line.Kind == TrackingLineKind.Vertical)
+        {
+            return (
+                new Point2D(line.Origin.X, visibleBounds.MinY),
+                new Point2D(line.Origin.X, visibleBounds.MaxY));
+        }
+
+        double width = visibleBounds.MaxX - visibleBounds.MinX;
+        double height = visibleBounds.MaxY - visibleBounds.MinY;
+        double length = Math.Sqrt(width * width + height * height) * 2.0;
+
+        return (
+            line.Origin + line.Direction * -length,
+            line.Origin + line.Direction * length);
     }
 
     private void DrawSmartPointMarkers(DrawingContext context)
@@ -518,6 +538,10 @@ public sealed class CadCanvas : Control
 
             case SnapKind.TrackingIntersection:
                 DrawTrackingIntersectionSnapMarker(context, point);
+                break;
+
+            case SnapKind.Extension:
+                DrawExtensionSnapMarker(context, point);
                 break;
 
             default:
@@ -758,6 +782,31 @@ public sealed class CadCanvas : Control
             new Point(point.X, point.Y + size));
     }
 
+    private void DrawExtensionSnapMarker(
+        DrawingContext context,
+        Point point)
+    {
+        const double radius = 5;
+        const double diagonal = 3.5;
+
+        context.DrawEllipse(
+            null,
+            _smartPointPen,
+            point,
+            radius,
+            radius);
+
+        context.DrawLine(
+            _smartPointPen,
+            new Point(point.X - diagonal, point.Y - diagonal),
+            new Point(point.X + diagonal, point.Y + diagonal));
+
+        context.DrawLine(
+            _smartPointPen,
+            new Point(point.X - diagonal, point.Y + diagonal),
+            new Point(point.X + diagonal, point.Y - diagonal));
+    }
+
     private void DrawDefaultSnapMarker(
         DrawingContext context,
         Point point)
@@ -822,7 +871,8 @@ public sealed class CadCanvas : Control
         return _trackingEngine.FindNearestTrackingCandidate(
             _smartPointStore.Points,
             modelPoint,
-            Workspace.Context.SnapTolerance);
+            Workspace.Context.SnapTolerance,
+            Workspace.Document);
     }
 
     private static SnapCandidate? ChooseSnapCandidate(

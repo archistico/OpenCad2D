@@ -1,3 +1,6 @@
+using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Entities;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Interaction.Snapping;
@@ -35,17 +38,45 @@ public sealed class TrackingEngine
         return lines;
     }
 
+    public IReadOnlyList<TrackingLine> BuildLines(
+        IEnumerable<SmartPoint> smartPoints,
+        CadDocument? document = null)
+    {
+        ArgumentNullException.ThrowIfNull(smartPoints);
+
+        var points = smartPoints.ToList();
+        var lines = new List<TrackingLine>(BuildAxisLines(points));
+
+        if (document is null)
+        {
+            return lines;
+        }
+
+        foreach (SmartPoint smartPoint in points)
+        {
+            AddEntityExtensionLines(
+                document,
+                smartPoint,
+                lines);
+        }
+
+        return lines;
+    }
+
     public SnapCandidate? FindNearestTrackingCandidate(
         IEnumerable<SmartPoint> smartPoints,
         Point2D cursorPoint,
-        double tolerance)
+        double tolerance,
+        CadDocument? document = null)
     {
         if (tolerance <= 0)
         {
             return null;
         }
 
-        IReadOnlyList<TrackingLine> lines = BuildAxisLines(smartPoints);
+        IReadOnlyList<TrackingLine> lines = BuildLines(
+            smartPoints,
+            document);
 
         SnapCandidate? intersectionCandidate = FindNearestTrackingIntersectionCandidate(
             lines,
@@ -76,9 +107,11 @@ public sealed class TrackingEngine
                     line);
 
                 bestCandidate = new SnapCandidate(
-                    SnapKind.Tracking,
+                    line.Kind == TrackingLineKind.EntityExtension
+                        ? SnapKind.Extension
+                        : SnapKind.Tracking,
                     projected,
-                    null,
+                    line.SourcePoint.SourceEntityId,
                     distance,
                     line.Origin,
                     signedDirection);
@@ -86,6 +119,135 @@ public sealed class TrackingEngine
         }
 
         return bestCandidate;
+    }
+
+    private static void AddEntityExtensionLines(
+        CadDocument document,
+        SmartPoint smartPoint,
+        List<TrackingLine> lines)
+    {
+        if (!smartPoint.SourceEntityId.HasValue ||
+            !document.Entities.TryGet(smartPoint.SourceEntityId.Value, out CadEntity? entity) ||
+            entity is null ||
+            !document.IsEntityVisible(entity))
+        {
+            return;
+        }
+
+        switch (entity)
+        {
+            case LineEntity line:
+                AddLineExtension(
+                    smartPoint,
+                    line.Start,
+                    line.End,
+                    lines);
+                break;
+
+            case PolylineEntity polyline:
+                AddPolylineExtensionLines(
+                    smartPoint,
+                    polyline,
+                    lines);
+                break;
+        }
+    }
+
+    private static void AddPolylineExtensionLines(
+        SmartPoint smartPoint,
+        PolylineEntity polyline,
+        List<TrackingLine> lines)
+    {
+        for (int index = 0; index < polyline.SegmentCount; index++)
+        {
+            if (!Tolerance.IsZero(polyline.SegmentBulges[index]))
+            {
+                continue;
+            }
+
+            Point2D start = polyline.Vertices[index];
+            Point2D end = polyline.Vertices[(index + 1) % polyline.Vertices.Count];
+
+            if (IsSmartPointOnSegmentReference(
+                    smartPoint.Position,
+                    start,
+                    end))
+            {
+                AddLineExtension(
+                    smartPoint,
+                    start,
+                    end,
+                    lines);
+            }
+        }
+    }
+
+    private static bool IsSmartPointOnSegmentReference(
+        Point2D smartPoint,
+        Point2D start,
+        Point2D end)
+    {
+        if (Tolerance.ArePointsEqual(smartPoint, start) ||
+            Tolerance.ArePointsEqual(smartPoint, end))
+        {
+            return true;
+        }
+
+        Point2D midpoint = new LineSegment2D(start, end).Midpoint;
+        return Tolerance.ArePointsEqual(smartPoint, midpoint);
+    }
+
+    private static void AddLineExtension(
+        SmartPoint smartPoint,
+        Point2D start,
+        Point2D end,
+        List<TrackingLine> lines)
+    {
+        Vector2D direction = start.VectorTo(end);
+
+        if (direction.LengthSquared <= 0)
+        {
+            return;
+        }
+
+        TrackingLine candidate = new(
+            smartPoint.Position,
+            direction,
+            TrackingLineKind.EntityExtension,
+            smartPoint);
+
+        if (ContainsEquivalentLine(lines, candidate))
+        {
+            return;
+        }
+
+        lines.Add(candidate);
+    }
+
+    private static bool ContainsEquivalentLine(
+        IEnumerable<TrackingLine> lines,
+        TrackingLine candidate)
+    {
+        foreach (TrackingLine line in lines)
+        {
+            if (!ReferenceEquals(line.SourcePoint, candidate.SourcePoint))
+            {
+                continue;
+            }
+
+            if (line.Kind != candidate.Kind)
+            {
+                continue;
+            }
+
+            if (Math.Abs(line.Direction.Cross(candidate.Direction)) <= ParallelTolerance &&
+                line.Direction.Dot(candidate.Direction) > 0)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static SnapCandidate? FindNearestTrackingIntersectionCandidate(

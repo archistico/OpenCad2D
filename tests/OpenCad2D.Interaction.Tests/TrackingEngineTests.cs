@@ -1,4 +1,6 @@
-﻿using OpenCad2D.Core.Identifiers;
+﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 
@@ -154,12 +156,102 @@ public sealed class TrackingEngineTests
         Assert.Null(candidate);
     }
 
+
+    [Fact]
+    public void BuildLines_ShouldCreateEntityExtensionForLineSmartPoint()
+    {
+        var engine = new TrackingEngine();
+        var document = new CadDocument();
+        var line = new LineEntity(
+            new Point2D(10, 20),
+            new Point2D(30, 40));
+        document.AddEntity(line);
+
+        SmartPoint smartPoint = CreateSmartPoint(
+            line.Start,
+            line.Id);
+
+        IReadOnlyList<TrackingLine> lines = engine.BuildLines(
+            new[] { smartPoint },
+            document);
+
+        Assert.Contains(lines, trackingLine =>
+            trackingLine.Kind == TrackingLineKind.EntityExtension &&
+            trackingLine.Origin == line.Start &&
+            Math.Abs(trackingLine.Direction.Cross(new Vector2D(20, 20).Normalize())) <= 1e-9);
+    }
+
+    [Fact]
+    public void FindNearestTrackingCandidate_ShouldProjectPointOnLineEntityExtension()
+    {
+        var engine = new TrackingEngine();
+        var document = new CadDocument();
+        var line = new LineEntity(
+            new Point2D(10, 20),
+            new Point2D(30, 40));
+        document.AddEntity(line);
+
+        SmartPoint smartPoint = CreateSmartPoint(
+            line.Start,
+            line.Id);
+
+        SnapCandidate? candidate = engine.FindNearestTrackingCandidate(
+            new[] { smartPoint },
+            new Point2D(39, 51),
+            tolerance: 2,
+            document: document);
+
+        Assert.NotNull(candidate);
+        Assert.Equal(SnapKind.Extension, candidate.Kind);
+        Assert.Equal(line.Id, candidate.EntityId);
+        Assert.Equal(smartPoint.Position, candidate.TrackingOrigin);
+        Assert.NotNull(candidate.TrackingDirection);
+    }
+
+    [Fact]
+    public void BuildLines_ShouldCreateEntityExtensionForStraightPolylineSegment()
+    {
+        var engine = new TrackingEngine();
+        var document = new CadDocument();
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(10, 10),
+            new Point2D(20, 10)
+        });
+        document.AddEntity(polyline);
+
+        SmartPoint smartPoint = CreateSmartPoint(
+            new Point2D(5, 5),
+            polyline.Id,
+            SnapKind.Midpoint);
+
+        IReadOnlyList<TrackingLine> lines = engine.BuildLines(
+            new[] { smartPoint },
+            document);
+
+        Assert.Contains(lines, trackingLine =>
+            trackingLine.Kind == TrackingLineKind.EntityExtension &&
+            trackingLine.Origin == smartPoint.Position &&
+            Math.Abs(trackingLine.Direction.Cross(new Vector2D(10, 10).Normalize())) <= 1e-9);
+    }
+
     private static SmartPoint CreateSmartPoint(double x, double y)
     {
-        return new SmartPoint(
+        return CreateSmartPoint(
             new Point2D(x, y),
-            SnapKind.Endpoint,
-            EntityId.New(),
+            EntityId.New());
+    }
+
+    private static SmartPoint CreateSmartPoint(
+        Point2D position,
+        EntityId entityId,
+        SnapKind sourceSnapKind = SnapKind.Endpoint)
+    {
+        return new SmartPoint(
+            position,
+            sourceSnapKind,
+            entityId,
             DateTimeOffset.UtcNow);
     }
 }

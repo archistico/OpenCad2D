@@ -623,3 +623,17 @@ The current abstraction is ready for these improvements without moving snap logi
 ### SmartPoint tracking intersections
 
 SmartPoint tracking now also exposes a temporary snap at the intersection of two tracking lines generated from different SmartPoints. The candidate is only produced when the cursor is within the active snap tolerance. Parallel tracking lines and the horizontal/vertical pair belonging to the same SmartPoint are ignored. Geometric snaps still have priority; tracking intersections only replace weak candidates such as Grid or Nearest.
+
+
+## Entity extension tracking
+
+SmartPoint tracking now also supports linear entity extension lines. When a captured SmartPoint comes from a real line entity, OpenCad2D generates an additional temporary tracking line using that line direction. For polylines, only straight segments are considered; bulged/arc segments are intentionally ignored for the first stable implementation.
+
+Supported extension sources:
+
+- line entities;
+- straight polyline segments from endpoint or segment-midpoint SmartPoints.
+
+Extension candidates use `SnapKind.Extension`. They carry the same `TrackingOrigin` and signed `TrackingDirection` metadata as normal tracking-line candidates, so plain distance input can resolve points along the entity extension. The extension overlay is runtime-only: it is not persisted, selectable, undoable or exported.
+
+Geometric object snaps still have priority over extension tracking. Extension can override weaker candidates such as Grid and Nearest when the cursor is within snap tolerance of the temporary extension line.

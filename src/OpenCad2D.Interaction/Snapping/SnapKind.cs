@@ -44,6 +44,12 @@ public enum SnapKind
     /// </summary>
     TrackingIntersection = 2048,
 
+    /// <summary>
+    /// Temporary extension snap generated from the real direction of a linear entity or straight polyline segment.
+    /// It is intentionally excluded from All because it is not an object snap persisted in settings.
+    /// </summary>
+    Extension = 4096,
+
     All = Endpoint
         | Midpoint
         | Center

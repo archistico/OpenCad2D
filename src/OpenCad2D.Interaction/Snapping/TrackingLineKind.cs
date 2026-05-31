@@ -6,5 +6,10 @@ namespace OpenCad2D.Interaction.Snapping;
 public enum TrackingLineKind
 {
     Horizontal,
-    Vertical
+    Vertical,
+
+    /// <summary>
+    /// Temporary line generated from the real direction of a linear entity or a straight polyline segment.
+    /// </summary>
+    EntityExtension
 }
