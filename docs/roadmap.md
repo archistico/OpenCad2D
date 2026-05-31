@@ -487,3 +487,12 @@ Deferred beyond this milestone: arc/tangent extension, curve intersections, pers
 ### 2026-05-31 - DIVIDE command foundation
 
 Added the AutoCAD-style `DIVIDE` command as a draw/construction tool. The first version works on a single selected or picked `LineEntity`, `ArcEntity`, `CircleEntity` or `PolylineEntity`. It asks for an integer segment count from 2 to 1000 and creates persistent `PointEntity` markers on the current layer without modifying or splitting the source entity. Open entities create `N - 1` internal points; closed entities create `N` points starting from their conventional start point. All created points are committed through one `AddEntityCommand`, so undo/redo treats the operation as a single step.
+
+
+### 2026-05-31 - DIVIDE and deferred HUD integer input consolidation
+
+Stabilized the AutoCAD-style `DIVIDE` command after manual testing. The command is now considered part of the pre-v0.9 construction-tool set. It keeps the finalized behavior contract: source entities are not split, persistent `PointEntity` markers are created on the current layer, open entities create `N - 1` points, closed entities create `N` points, segment count is limited to integers from 2 to 1000, and undo/redo is single-step for all generated points.
+
+The same pass fixed a shared Dynamic Command HUD issue affecting both `DIVIDE` and `POLYGON`: whole-number scalar fields such as `Segments` and `Sides` must allow the user to type and edit the value while the field is active. They are now treated as deferred integer fields and validated only on confirmation, so typed values are not immediately reset to the command default/minimum.
+
+Manual verification reference: `docs/testing/divide-command-manual-verification-2026-05-31.md`.

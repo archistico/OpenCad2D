@@ -48,7 +48,7 @@ Implemented:
 - `PolylineTool`
 - `SplineTool`
 
-`DIVIDE` follows AutoCAD naming/semantics: it selects one line, arc, circle or polyline, asks for an integer segment count from 2 to 1000, and creates persistent `PointEntity` markers at equal divisions without splitting the source entity. Open entities create `N - 1` internal points; closed entities create `N` points from the conventional start point. Points are created on the current layer and committed as one undoable operation.
+`DIVIDE` follows AutoCAD naming/semantics: it selects one line, arc, circle or polyline, asks for an integer segment count from 2 to 1000, and creates persistent `PointEntity` markers at equal divisions without splitting the source entity. Open entities create `N - 1` internal points; closed entities create `N` points from the conventional start point. Points are created on the current layer and committed as one undoable operation. The segment count is edited through the dynamic HUD `Segments` field; like `Polygon` sides, this whole-number scalar is validated only on confirmation so intermediate typed values are not clamped back while the user is still editing.
 
 `MTEXT` inserts multiline annotation text through the text dialog. `LINE` creates a single segment and then ends. `POLYLINE` supports `Close`, `Undo` and Enter/right-click to finish an open polyline. `SPLINE` creates an open or closed Bezier spline from control points, with `Undo`, `Close` and Enter/right-click-to-finish command flow.
 

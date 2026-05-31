@@ -173,6 +173,20 @@ Empty Enter repeats the last command only when no command is active.
 
 ---
 
+## Divide
+
+- `DIVIDE` / `DIV` starts the AutoCAD-style divide command.
+- Workflow: select exactly one supported entity, enter the segment count, then confirm.
+- Supported source entities in v1: line, arc, circle and polyline.
+- The command creates real persistent `PointEntity` markers and never splits or edits the source entity.
+- Segment count must be a whole number from 2 to 1000.
+- Open entities create `N - 1` internal points; closed entities create `N` points from the entity's conventional start point.
+- Points are created on the current layer. The source entity layer is not reused automatically.
+- All points created by a single `DIVIDE` run are committed as one undoable operation.
+- The HUD exposes a dedicated `Segments` field. While the field is being edited, typed whole-number text is deferred and must not be immediately clamped back to the default/minimum value. Validation occurs on Enter/confirm.
+
+---
+
 ## External image reference UI actions
 
 The raster image reference commands are currently toolbar/dialog actions rather than command-line aliases:

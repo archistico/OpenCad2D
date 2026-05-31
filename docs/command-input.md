@@ -30,7 +30,10 @@ Editable numeric fields
 Command options
 ```
 
-Examples include `Distance/Angle` for line-like phases, `Width/Height` for rectangles, radius-like distance fields for circles/arcs/ellipses/polygons, `X/Y` for absolute coordinate point phases, and scalar fields such as `Sides`, `Factor`, `Radius` or `Distance` when a command expects a numeric setting.
+Examples include `Distance/Angle` for line-like phases, `Width/Height` for rectangles, radius-like distance fields for circles/arcs/ellipses/polygons, `X/Y` for absolute coordinate point phases, and scalar fields such as `Sides`, `Segments`, `Factor`, `Radius` or `Distance` when a command expects a numeric setting.
+
+Whole-number scalar HUD fields such as `Polygon` `Sides` and `DIVIDE` `Segments` use deferred integer editing: while the field is active, typed text is preserved exactly enough for the user to finish editing, and min/max validation is applied only when the field is confirmed. This prevents transient values such as `1`, `2` or `5` from being immediately replaced by a tool default/minimum before Enter.
+
 
 ---
 
@@ -116,7 +119,7 @@ Implemented command-driven tools include:
 
 | Area | Tools |
 |---|---|
-| Draw | Point, Text, MTEXT, Line, Rectangle, Rect Sides, Circle, Arc, Arc 3P, Ellipse, Polyline, Polygon, Spline, symbol/helper tools where registered |
+| Draw | Point, Divide, Text, MTEXT, Line, Rectangle, Rect Sides, Circle, Arc, Arc 3P, Ellipse, Polyline, Polygon, Spline, symbol/helper tools where registered |
 | Transform | Move, Copy, Rotate, Scale, point-based Align |
 | Modify | Delete, Break Point, Break Segment, Extend, Trim, Offset, Fillet, Chamfer, Explode, Join and other registered modify tools |
 | Navigation | Zoom Window, Zoom Extents |

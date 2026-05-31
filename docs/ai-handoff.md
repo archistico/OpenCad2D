@@ -1837,3 +1837,20 @@ Behavior contract:
 - Points are placed on the current layer, not the source entity layer.
 - One `AddEntityCommand` is used for all generated points, so undo/redo is single-step.
 - Polylines are divided by cumulative path length. Bulged polylines use their interaction approximation; exact curved-polyline division can be improved later if needed.
+
+
+## 2026-05-31 - DIVIDE command stabilization and HUD integer editing
+
+`DIVIDE` is stabilized as an AutoCAD-compatible draw/construction command. Use the command name `DIVIDE` and alias `DIV` in code, docs and tests. The tool works on one selected or picked source entity at a time and supports `LineEntity`, `ArcEntity`, `CircleEntity` and `PolylineEntity`. It never breaks or edits the source entity. It creates persistent `PointEntity` markers on the current layer. Open entities create `N - 1` points; closed entities create `N` points from the conventional start point. Segment count must be an integer between 2 and 1000. All generated points must be added through one undoable document command so undo/redo is single-step.
+
+Important HUD note: `DIVIDE` uses a dedicated `Segments` field. `POLYGON` uses `Sides`. Both are whole-number scalar fields and must use deferred typing behavior: while the logical HUD field is active, numeric text typed by the user must remain editable and must not be immediately clamped or restored to the default. Validation happens when the field is confirmed. This fixed the observed issue where Polygon kept returning to `6` and Divide could not accept a custom segment count.
+
+Regression expectations:
+
+- `DIVIDE` with a 300-unit line and `Segments = 3` creates two points at 100 and 200.
+- `DIVIDE` invalid values such as 1 or 1001 do not create points.
+- `DIVIDE` undo removes all generated points together.
+- `POLYGON` `Sides` can be changed through the HUD, for example to 5, without reverting to 6 while typing.
+- `DIVIDE` `Segments` can be changed through the HUD, for example to 3, without reverting while typing.
+
+Manual verification reference: `docs/testing/divide-command-manual-verification-2026-05-31.md`.
