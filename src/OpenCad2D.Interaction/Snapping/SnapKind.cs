@@ -1,4 +1,4 @@
-﻿namespace OpenCad2D.Interaction.Snapping;
+namespace OpenCad2D.Interaction.Snapping;
 
 /// <summary>
 /// Defines the available object snap modes.
@@ -49,6 +49,24 @@ public enum SnapKind
     /// It is intentionally excluded from All because it is not an object snap persisted in settings.
     /// </summary>
     Extension = 4096,
+
+    /// <summary>
+    /// Temporary snap generated directly from a captured smart point.
+    /// It is intentionally excluded from All because it is not an object snap persisted in settings.
+    /// </summary>
+    SmartPoint = 8192,
+
+    /// <summary>
+    /// Temporary snap generated when an enabled grid node lies on an active tracking or extension line.
+    /// The tracking or extension line remains the dominant constraint; the grid node is used only when it is on that line.
+    /// </summary>
+    TrackingGridIntersection = 16384,
+
+    /// <summary>
+    /// Temporary snap generated when an enabled grid node lies on an active entity extension line.
+    /// The extension line remains the dominant constraint; the grid node is used only when it is on that line.
+    /// </summary>
+    ExtensionGridIntersection = 32768,
 
     All = Endpoint
         | Midpoint

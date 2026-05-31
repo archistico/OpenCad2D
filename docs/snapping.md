@@ -1,4 +1,4 @@
-﻿# Snapping
+# Snapping
 
 Snapping helps the user place points precisely.
 
@@ -540,16 +540,19 @@ SmartPoint capture is intentionally conservative:
 - it clears pending hover state when the pointer leaves the canvas, when panning starts, or when snap state is cleared;
 - completed/cancelled tool results clear captured SmartPoints.
 
-The current implementation captures and displays SmartPoints, then generates temporary horizontal and vertical tracking lines from each captured point while a non-selection command is active. When the cursor is within snap tolerance of a tracking line, OpenCad2D shows a temporary tracking snap marker and feeds the projected tracking point to the active tool. Direct distance input can now use the active tracking line: typing a plain distance while the tracking candidate is active resolves the point from the SmartPoint origin along the signed cursor-side tracking direction.
+The current implementation captures and displays SmartPoints, then generates temporary horizontal, vertical and active Polar Tracking direction lines from each captured point while a non-selection command is active. When the cursor is within snap tolerance of a tracking line, OpenCad2D shows a temporary tracking snap marker and feeds the projected tracking point to the active tool. Direct distance input can now use the active tracking line: typing a plain distance while the tracking candidate is active resolves the point from the SmartPoint origin along the signed cursor-side tracking direction.
 
 ## Basic SmartPoint tracking lines
 
-Each captured SmartPoint currently emits two runtime-only construction lines:
+Each captured SmartPoint currently emits runtime-only construction lines:
 
 ```text
 horizontal through the SmartPoint
 vertical through the SmartPoint
+active Polar Tracking directions through the SmartPoint, when Polar Tracking is enabled
 ```
+
+For example, with Polar Tracking set to 45°, SmartPoint Tracking also emits diagonal 45° and 135° construction lines. With Polar Tracking set to 30°, it emits 30°, 60°, 120° and 150° directions. 0° and 90° are not duplicated because they are already represented by the horizontal and vertical tracking lines.
 
 These lines are drawn as cyan dashed overlays. They are not document entities, are not selectable, are not exported, and are cleared together with the SmartPoints at the end of the command.
 
@@ -612,7 +615,7 @@ The snapping system can be improved in several ways:
 screen-based snap tolerance
 apparent intersection
 parallel snap
-broader polar tracking directions for SmartPoint tracking
+additional SmartPoint Tracking behaviors only after manual validation
 entity-extension tracking for arcs and tangent directions
 better tangent handling for arcs and complex entities
 spatial index implementation beyond LinearSpatialIndex
@@ -621,10 +624,37 @@ spatial index implementation beyond LinearSpatialIndex
 The current abstraction is ready for these improvements without moving snap logic into the UI.
 
 
+
+### SmartPoint Tracking and Polar Tracking directions
+
+When Polar Tracking is enabled from the top bar, SmartPoint Tracking reuses the same angular step to emit additional temporary construction lines from each captured SmartPoint. This keeps the behavior consistent with the existing drafting constraint instead of introducing a separate angle setting.
+
+Rules:
+
+- Polar Tracking Off: SmartPoint Tracking emits only horizontal, vertical and entity-extension lines.
+- Polar 90°: no extra polar lines are added because horizontal/vertical already cover the step.
+- Polar 45°: 45° and 135° tracking lines are added.
+- Polar 30°: 30°, 60°, 120° and 150° tracking lines are added.
+- Polar 15°: every 15° half-turn direction is added except 0° and 90°.
+
+The generated polar lines use normal `SnapKind.Tracking` candidates. They support the same projected-point behavior and the same plain-distance input as horizontal/vertical tracking lines.
+
 ### SmartPoint tracking intersections
 
 SmartPoint tracking now also exposes a temporary snap at the intersection of two tracking lines generated from different SmartPoints. The candidate is only produced when the cursor is within the active snap tolerance. Parallel tracking lines and the horizontal/vertical pair belonging to the same SmartPoint are ignored. Geometric snaps still have priority; tracking intersections only replace weak candidates such as Grid or Nearest. When the circular marker with the internal cross is shown, pointer input is resolved to that temporary intersection point, so it behaves as a real snap for the active command.
 
+
+
+### Tracking intersections with real linear geometry
+
+SmartPoint Tracking now also exposes temporary snap candidates where a tracking line crosses real linear geometry. The first implementation is intentionally limited to:
+
+- line entities;
+- straight polyline segments.
+
+Bulged polyline segments, arcs, circles, splines and tangent intersections remain deferred. The candidate uses the same circular marker with an internal cross as other tracking intersections and is returned as `SnapKind.TrackingIntersection`. When the marker is visible, pointer input is resolved to the computed intersection point before the active tool receives the click.
+
+The intersection is only offered when the cursor is within the active snap tolerance and the computed point lies on the finite real segment. Parallel/collinear cases are ignored for now to avoid ambiguous overlapping-line behavior. Strong geometric snaps still have priority; tracking/real-geometry intersections only replace weak candidates such as Grid and Nearest.
 
 ## Entity extension tracking
 
@@ -649,3 +679,25 @@ docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md
 ```
 
 Use that checklist before extending SmartTrack further or before packaging the next v0.9 stabilization build.
+
+### SmartPoint Tracking HUD label
+
+Temporary SmartPoint Tracking candidates display a compact HUD label beside the snap marker. This makes it clearer that the visible marker is a real snap candidate and shows the construction information used by direct distance input.
+
+Current labels:
+
+```text
+TRACK L=120 A=0°
+EXT L=250 A=45°
+TRACK INT
+```
+
+`Tracking` and `Extension` candidates use the candidate `TrackingOrigin` and signed `TrackingDirection` metadata to report distance and angle. `TrackingIntersection` is point-only, so it displays only the intersection kind unless future metadata is added.
+
+### Direct SmartPoint snap
+
+Captured SmartPoints are now also direct temporary snap candidates. When the cursor is within snap tolerance of a captured SmartPoint marker, OpenCad2D returns a `SnapKind.SmartPoint` candidate at the exact captured point. Pointer input is resolved to that point, so the marker can be clicked directly instead of only being used as an origin for tracking lines.
+
+This keeps SmartPoint Tracking closer to Rhino SmartTrack behavior: captured points can be used both as construction origins and as real temporary snap points. Object snaps on real geometry still have priority when present; the SmartPoint candidate is mainly useful when the captured reference point remains available as a temporary construction point during the current command.
+
+The label is runtime-only. It is not a drawing entity, is not persisted, is not exported and does not participate in undo/redo.

@@ -9,6 +9,11 @@ public enum TrackingLineKind
     Vertical,
 
     /// <summary>
+    /// Temporary line generated from the currently enabled polar tracking angular step.
+    /// </summary>
+    Polar,
+
+    /// <summary>
     /// Temporary line generated from the real direction of a linear entity or a straight polyline segment.
     /// </summary>
     EntityExtension

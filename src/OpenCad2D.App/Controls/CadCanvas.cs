@@ -1,4 +1,4 @@
-﻿using Avalonia;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
@@ -74,6 +74,8 @@ public sealed class CadCanvas : Control
         new SolidColorBrush(Color.FromArgb(170, 110, 210, 255)),
         1,
         new DashStyle(new[] { 7.0, 5.0 }, 0));
+    private readonly IBrush _trackingHudTextBrush = new SolidColorBrush(Color.FromRgb(210, 245, 255));
+    private readonly IBrush _trackingHudBackgroundBrush = new SolidColorBrush(Color.FromArgb(210, 20, 45, 55));
     private const int SmartPointHoverDelayMilliseconds = 400;
     private readonly SmartPointStore _smartPointStore = new(maximumCount: 5);
     private readonly TrackingEngine _trackingEngine = new();
@@ -244,6 +246,7 @@ public sealed class CadCanvas : Control
         DrawSmartPointMarkers(context);
         DrawCrosshair(context);
         DrawSnapMarker(context);
+        DrawTrackingCandidateHud(context);
     }
 
     private IReadOnlyList<CadEntity> GetRenderableEntities()
@@ -426,7 +429,10 @@ public sealed class CadCanvas : Control
         BoundingBox2D visibleBounds = _viewport
             .GetVisibleWorldBounds(new Size(Bounds.Width, Bounds.Height));
 
-        foreach (TrackingLine line in _trackingEngine.BuildLines(_smartPointStore.Points, workspace.Document))
+        foreach (TrackingLine line in _trackingEngine.BuildLines(
+                     _smartPointStore.Points,
+                     workspace.Document,
+                     GetActivePolarTrackingStepDegrees(workspace)))
         {
             (Point2D start, Point2D end) = GetVisibleTrackingLineSegment(
                 line,
@@ -560,11 +566,17 @@ public sealed class CadCanvas : Control
                 break;
 
             case SnapKind.TrackingIntersection:
+            case SnapKind.TrackingGridIntersection:
+            case SnapKind.ExtensionGridIntersection:
                 DrawTrackingIntersectionSnapMarker(context, point);
                 break;
 
             case SnapKind.Extension:
                 DrawExtensionSnapMarker(context, point);
+                break;
+
+            case SnapKind.SmartPoint:
+                DrawSmartPointSnapMarker(context, point);
                 break;
 
             default:
@@ -830,6 +842,154 @@ public sealed class CadCanvas : Control
             new Point(point.X + diagonal, point.Y - diagonal));
     }
 
+    private void DrawSmartPointSnapMarker(
+        DrawingContext context,
+        Point point)
+    {
+        const double size = 5;
+
+        var rect = new Rect(
+            point.X - size,
+            point.Y - size,
+            size * 2,
+            size * 2);
+
+        context.DrawRectangle(
+            null,
+            _snapMarkerPen,
+            rect);
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - size, point.Y),
+            new Point(point.X + size, point.Y));
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X, point.Y - size),
+            new Point(point.X, point.Y + size));
+    }
+
+    private void DrawTrackingCandidateHud(DrawingContext context)
+    {
+        SnapCandidate? candidate = _currentSnapCandidate;
+
+        if (candidate is null ||
+            !IsResolvedTemporarySnap(candidate.Kind))
+        {
+            return;
+        }
+
+        string label = FormatTrackingCandidateHud(candidate);
+
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            return;
+        }
+
+        var formattedText = new FormattedText(
+            label,
+            CultureInfo.CurrentCulture,
+            FlowDirection.LeftToRight,
+            new Typeface("Segoe UI"),
+            11,
+            _trackingHudTextBrush);
+
+        const double paddingX = 6;
+        const double paddingY = 3;
+        Rect backgroundRect = GetTrackingCandidateHudRect(
+            formattedText.Width,
+            formattedText.Height,
+            paddingX,
+            paddingY);
+
+        context.DrawRectangle(
+            _trackingHudBackgroundBrush,
+            null,
+            backgroundRect);
+
+        context.DrawText(
+            formattedText,
+            new Point(backgroundRect.X + paddingX, backgroundRect.Y + paddingY));
+    }
+
+    private Rect GetTrackingCandidateHudRect(
+        double textWidth,
+        double textHeight,
+        double paddingX,
+        double paddingY)
+    {
+        const double margin = 14;
+        double width = textWidth + paddingX * 2;
+        double height = textHeight + paddingY * 2;
+
+        double x = margin;
+        double y = Bounds.Height - height - margin;
+
+        if (y < margin)
+        {
+            y = margin;
+        }
+
+        if (x + width > Bounds.Width - margin)
+        {
+            x = Math.Max(margin, Bounds.Width - width - margin);
+        }
+
+        return new Rect(x, y, width, height);
+    }
+
+    private static string FormatTrackingCandidateHud(SnapCandidate candidate)
+    {
+        if (candidate.TrackingOrigin is not Point2D origin ||
+            candidate.TrackingDirection is not Vector2D direction)
+        {
+            return candidate.Kind switch
+            {
+                SnapKind.TrackingIntersection => "TRACK INT",
+                SnapKind.TrackingGridIntersection => "TRACK GRID",
+                SnapKind.ExtensionGridIntersection => "EXT GRID",
+                SnapKind.Extension => "EXT",
+                SnapKind.SmartPoint => "SMART POINT",
+                SnapKind.Tracking => "TRACK",
+                _ => string.Empty
+            };
+        }
+
+        double distance = origin.DistanceTo(candidate.Point);
+        double angleDegrees = Math.Atan2(direction.Y, direction.X) * 180.0 / Math.PI;
+
+        if (angleDegrees < 0)
+        {
+            angleDegrees += 360.0;
+        }
+
+        if (Math.Abs(angleDegrees - 360.0) < 1e-9)
+        {
+            angleDegrees = 0.0;
+        }
+
+        string prefix = candidate.Kind switch
+        {
+            SnapKind.Extension => "EXT",
+            SnapKind.TrackingGridIntersection => "TRACK GRID",
+            SnapKind.ExtensionGridIntersection => "EXT GRID",
+            SnapKind.TrackingIntersection => "TRACK INT",
+            SnapKind.SmartPoint => "SMART POINT",
+            SnapKind.Tracking => "TRACK",
+            _ => string.Empty
+        };
+
+        return string.IsNullOrEmpty(prefix)
+            ? string.Empty
+            : string.Format(
+                CultureInfo.CurrentCulture,
+                "{0} L={1:0.##} A={2:0.##}°",
+                prefix,
+                distance,
+                angleDegrees);
+    }
+
     private void DrawDefaultSnapMarker(
         DrawingContext context,
         Point point)
@@ -895,7 +1055,16 @@ public sealed class CadCanvas : Control
             _smartPointStore.Points,
             modelPoint,
             Workspace.Context.SnapTolerance,
-            Workspace.Document);
+            Workspace.Document,
+            GetActivePolarTrackingStepDegrees(Workspace));
+    }
+
+    private static double? GetActivePolarTrackingStepDegrees(CadWorkspace workspace)
+    {
+        AngleConstraintSettings settings = workspace.Context.AngleConstraintSettings;
+        return settings.IsEnabled
+            ? settings.StepDegrees
+            : null;
     }
 
     private static SnapCandidate? ChooseSnapCandidate(
@@ -912,9 +1081,72 @@ public sealed class CadCanvas : Control
             return trackingCandidate;
         }
 
+        if (objectSnapCandidate.Kind == SnapKind.Grid &&
+            TryCreateTrackingGridIntersectionCandidate(
+                objectSnapCandidate,
+                trackingCandidate,
+                out SnapCandidate? trackingGridCandidate))
+        {
+            return trackingGridCandidate;
+        }
+
         return objectSnapCandidate.Kind is SnapKind.Grid or SnapKind.Nearest
             ? trackingCandidate
             : objectSnapCandidate;
+    }
+
+    private static bool TryCreateTrackingGridIntersectionCandidate(
+        SnapCandidate gridCandidate,
+        SnapCandidate trackingCandidate,
+        out SnapCandidate? combinedCandidate)
+    {
+        combinedCandidate = null;
+
+        if (trackingCandidate.Kind is not (SnapKind.Tracking or SnapKind.Extension) ||
+            trackingCandidate.TrackingOrigin is not Point2D origin ||
+            trackingCandidate.TrackingDirection is not Vector2D direction)
+        {
+            return false;
+        }
+
+        double distanceFromGridToTrackingLine = DistancePointToTrackingLine(
+            gridCandidate.Point,
+            origin,
+            direction);
+
+        if (distanceFromGridToTrackingLine > Tolerance.Default)
+        {
+            return false;
+        }
+
+        Vector2D originToGrid = origin.VectorTo(gridCandidate.Point);
+        Vector2D signedDirection = originToGrid.Dot(direction) < 0
+            ? direction * -1.0
+            : direction;
+
+        SnapKind combinedKind = trackingCandidate.Kind == SnapKind.Extension
+            ? SnapKind.ExtensionGridIntersection
+            : SnapKind.TrackingGridIntersection;
+
+        combinedCandidate = new SnapCandidate(
+            combinedKind,
+            gridCandidate.Point,
+            trackingCandidate.EntityId,
+            Math.Min(gridCandidate.DistanceToCursor, trackingCandidate.DistanceToCursor),
+            origin,
+            signedDirection);
+
+        return true;
+    }
+
+    private static double DistancePointToTrackingLine(
+        Point2D point,
+        Point2D origin,
+        Vector2D direction)
+    {
+        Vector2D normalizedDirection = direction.Normalize();
+        Vector2D originToPoint = origin.VectorTo(point);
+        return Math.Abs(originToPoint.Cross(normalizedDirection));
     }
 
     private void UpdateSmartPointHoverCandidate()
@@ -1546,10 +1778,11 @@ public sealed class CadCanvas : Control
 
             try
             {
-                result = await Workspace.ToolController.OnPointerPressedAsync(
-                    CreatePointerInfo(
-                        position,
-                        e.KeyModifiers));
+                result = await ExecuteWithResolvedTemporarySnapExactPointAsync(
+                    () => Workspace.ToolController.OnPointerPressedAsync(
+                        CreatePointerInfo(
+                            position,
+                            e.KeyModifiers)));
             }
             finally
             {
@@ -1559,10 +1792,11 @@ public sealed class CadCanvas : Control
         }
         else
         {
-            result = Workspace.ToolController.OnPointerPressed(
-                CreatePointerInfo(
-                    position,
-                    e.KeyModifiers));
+            result = ExecuteWithResolvedTemporarySnapExactPoint(
+                () => Workspace.ToolController.OnPointerPressed(
+                    CreatePointerInfo(
+                        position,
+                        e.KeyModifiers)));
         }
 
         result = ApplyZoomWindowIfCompleted(result);
@@ -1631,10 +1865,11 @@ public sealed class CadCanvas : Control
         UpdateCurrentSnapCandidate(point);
         UpdateSmartPointHoverCandidate();
 
-        ToolResult result = Workspace.ToolController.OnPointerMoved(
-            CreatePointerInfo(
-                position,
-                e.KeyModifiers));
+        ToolResult result = ExecuteWithResolvedTemporarySnapExactPoint(
+            () => Workspace.ToolController.OnPointerMoved(
+                CreatePointerInfo(
+                    position,
+                    e.KeyModifiers)));
 
         NotifyWorkspaceChanged(
             result,
@@ -2077,6 +2312,72 @@ public sealed class CadCanvas : Control
         InvalidateVisual();
     }
 
+    private ToolResult ExecuteWithResolvedTemporarySnapExactPoint(
+        Func<ToolResult> submit)
+    {
+        ArgumentNullException.ThrowIfNull(submit);
+
+        if (Workspace is null ||
+            !IsResolvedTemporarySnap(_currentSnapCandidate?.Kind))
+        {
+            return submit();
+        }
+
+        bool originalOrthoState = Workspace.Context.IsOrthoEnabled;
+        AngleConstraintSettings originalAngleConstraintSettings = Workspace.Context.AngleConstraintSettings;
+        SnapKind originalEnabledSnaps = Workspace.Context.EnabledSnaps;
+
+        try
+        {
+            // SmartPoint Tracking candidates have already been resolved by the canvas.
+            // Disable the regular tool-level snapping/angle pass for this single event;
+            // otherwise Grid/Nearest can re-snap the exact temporary point after the
+            // visual marker has correctly selected Tracking, Extension or SmartPoint.
+            Workspace.Context.IsOrthoEnabled = false;
+            Workspace.Context.AngleConstraintSettings = AngleConstraintSettings.Off;
+            Workspace.Context.EnabledSnaps = SnapKind.None;
+
+            return submit();
+        }
+        finally
+        {
+            Workspace.Context.IsOrthoEnabled = originalOrthoState;
+            Workspace.Context.AngleConstraintSettings = originalAngleConstraintSettings;
+            Workspace.Context.EnabledSnaps = originalEnabledSnaps;
+        }
+    }
+
+    private async Task<ToolResult> ExecuteWithResolvedTemporarySnapExactPointAsync(
+        Func<Task<ToolResult>> submit)
+    {
+        ArgumentNullException.ThrowIfNull(submit);
+
+        if (Workspace is null ||
+            !IsResolvedTemporarySnap(_currentSnapCandidate?.Kind))
+        {
+            return await submit().ConfigureAwait(true);
+        }
+
+        bool originalOrthoState = Workspace.Context.IsOrthoEnabled;
+        AngleConstraintSettings originalAngleConstraintSettings = Workspace.Context.AngleConstraintSettings;
+        SnapKind originalEnabledSnaps = Workspace.Context.EnabledSnaps;
+
+        try
+        {
+            Workspace.Context.IsOrthoEnabled = false;
+            Workspace.Context.AngleConstraintSettings = AngleConstraintSettings.Off;
+            Workspace.Context.EnabledSnaps = SnapKind.None;
+
+            return await submit().ConfigureAwait(true);
+        }
+        finally
+        {
+            Workspace.Context.IsOrthoEnabled = originalOrthoState;
+            Workspace.Context.AngleConstraintSettings = originalAngleConstraintSettings;
+            Workspace.Context.EnabledSnaps = originalEnabledSnaps;
+        }
+    }
+
     private PointerInfo CreatePointerInfo(
         Point screenPoint,
         KeyModifiers keyModifiers)
@@ -2098,6 +2399,9 @@ public sealed class CadCanvas : Control
     {
         return snapKind is SnapKind.Tracking or
             SnapKind.TrackingIntersection or
-            SnapKind.Extension;
+            SnapKind.TrackingGridIntersection or
+            SnapKind.ExtensionGridIntersection or
+            SnapKind.Extension or
+            SnapKind.SmartPoint;
     }
 }

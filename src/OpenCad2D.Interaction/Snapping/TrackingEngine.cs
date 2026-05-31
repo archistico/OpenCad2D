@@ -13,6 +13,7 @@ public sealed class TrackingEngine
     private static readonly Vector2D HorizontalDirection = new(1, 0);
     private static readonly Vector2D VerticalDirection = new(0, 1);
     private const double ParallelTolerance = 1e-9;
+    private const double AxisAngleToleranceDegrees = 1e-9;
 
     public IReadOnlyList<TrackingLine> BuildAxisLines(IEnumerable<SmartPoint> smartPoints)
     {
@@ -40,25 +41,29 @@ public sealed class TrackingEngine
 
     public IReadOnlyList<TrackingLine> BuildLines(
         IEnumerable<SmartPoint> smartPoints,
-        CadDocument? document = null)
+        CadDocument? document = null,
+        double? polarTrackingStepDegrees = null)
     {
         ArgumentNullException.ThrowIfNull(smartPoints);
 
         var points = smartPoints.ToList();
         var lines = new List<TrackingLine>(BuildAxisLines(points));
 
-        if (document is null)
+        if (document is not null)
         {
-            return lines;
+            foreach (SmartPoint smartPoint in points)
+            {
+                AddEntityExtensionLines(
+                    document,
+                    smartPoint,
+                    lines);
+            }
         }
 
-        foreach (SmartPoint smartPoint in points)
-        {
-            AddEntityExtensionLines(
-                document,
-                smartPoint,
-                lines);
-        }
+        AddPolarTrackingLines(
+            points,
+            polarTrackingStepDegrees,
+            lines);
 
         return lines;
     }
@@ -67,16 +72,30 @@ public sealed class TrackingEngine
         IEnumerable<SmartPoint> smartPoints,
         Point2D cursorPoint,
         double tolerance,
-        CadDocument? document = null)
+        CadDocument? document = null,
+        double? polarTrackingStepDegrees = null)
     {
         if (tolerance <= 0)
         {
             return null;
         }
 
+        var points = smartPoints.ToList();
+
+        SnapCandidate? smartPointCandidate = FindNearestSmartPointCandidate(
+            points,
+            cursorPoint,
+            tolerance);
+
+        if (smartPointCandidate is not null)
+        {
+            return smartPointCandidate;
+        }
+
         IReadOnlyList<TrackingLine> lines = BuildLines(
-            smartPoints,
-            document);
+            points,
+            document,
+            polarTrackingStepDegrees);
 
         SnapCandidate? intersectionCandidate = FindNearestTrackingIntersectionCandidate(
             lines,
@@ -86,6 +105,19 @@ public sealed class TrackingEngine
         if (intersectionCandidate is not null)
         {
             return intersectionCandidate;
+        }
+
+        SnapCandidate? entityIntersectionCandidate = document is null
+            ? null
+            : FindNearestTrackingEntityIntersectionCandidate(
+                lines,
+                document,
+                cursorPoint,
+                tolerance);
+
+        if (entityIntersectionCandidate is not null)
+        {
+            return entityIntersectionCandidate;
         }
 
         SnapCandidate? bestCandidate = null;
@@ -119,6 +151,100 @@ public sealed class TrackingEngine
         }
 
         return bestCandidate;
+    }
+
+    private static SnapCandidate? FindNearestSmartPointCandidate(
+        IReadOnlyList<SmartPoint> smartPoints,
+        Point2D cursorPoint,
+        double tolerance)
+    {
+        SnapCandidate? bestCandidate = null;
+
+        foreach (SmartPoint smartPoint in smartPoints)
+        {
+            double distance = cursorPoint.DistanceTo(smartPoint.Position);
+
+            if (distance > tolerance)
+            {
+                continue;
+            }
+
+            if (bestCandidate is null || distance < bestCandidate.DistanceToCursor)
+            {
+                bestCandidate = new SnapCandidate(
+                    SnapKind.SmartPoint,
+                    smartPoint.Position,
+                    smartPoint.SourceEntityId,
+                    distance);
+            }
+        }
+
+        return bestCandidate;
+    }
+
+
+    private static void AddPolarTrackingLines(
+        IReadOnlyList<SmartPoint> smartPoints,
+        double? polarTrackingStepDegrees,
+        List<TrackingLine> lines)
+    {
+        if (polarTrackingStepDegrees is not > 0 ||
+            !double.IsFinite(polarTrackingStepDegrees.Value) ||
+            polarTrackingStepDegrees.Value > 180)
+        {
+            return;
+        }
+
+        for (double angle = polarTrackingStepDegrees.Value;
+             angle < 180.0 - AxisAngleToleranceDegrees;
+             angle += polarTrackingStepDegrees.Value)
+        {
+            double normalizedAngle = NormalizeHalfTurnAngle(angle);
+
+            if (IsAxisAngle(normalizedAngle))
+            {
+                continue;
+            }
+
+            double radians = normalizedAngle * Math.PI / 180.0;
+            Vector2D direction = new(Math.Cos(radians), Math.Sin(radians));
+
+            foreach (SmartPoint smartPoint in smartPoints)
+            {
+                TrackingLine candidate = new(
+                    smartPoint.Position,
+                    direction,
+                    TrackingLineKind.Polar,
+                    smartPoint);
+
+                if (!ContainsEquivalentLine(
+                        lines,
+                        candidate,
+                        allowPolarAxisAndExtensionEquivalence: true))
+                {
+                    lines.Add(candidate);
+                }
+            }
+        }
+    }
+
+    private static double NormalizeHalfTurnAngle(double angleDegrees)
+    {
+        double normalized = angleDegrees % 180.0;
+
+        if (normalized < 0)
+        {
+            normalized += 180.0;
+        }
+
+        return normalized;
+    }
+
+    private static bool IsAxisAngle(double angleDegrees)
+    {
+        return Math.Abs(angleDegrees) <= AxisAngleToleranceDegrees ||
+            Math.Abs(angleDegrees - 90.0) <= AxisAngleToleranceDegrees ||
+            Math.Abs(angleDegrees - 180.0) <= AxisAngleToleranceDegrees;
     }
 
     private static void AddEntityExtensionLines(
@@ -226,7 +352,8 @@ public sealed class TrackingEngine
 
     private static bool ContainsEquivalentLine(
         IEnumerable<TrackingLine> lines,
-        TrackingLine candidate)
+        TrackingLine candidate,
+        bool allowPolarAxisAndExtensionEquivalence = false)
     {
         foreach (TrackingLine line in lines)
         {
@@ -235,7 +362,14 @@ public sealed class TrackingEngine
                 continue;
             }
 
-            if (line.Kind != candidate.Kind)
+            if (line.Kind != candidate.Kind &&
+                !allowPolarAxisAndExtensionEquivalence)
+            {
+                continue;
+            }
+
+            if (line.Kind != candidate.Kind &&
+                candidate.Kind != TrackingLineKind.Polar)
             {
                 continue;
             }
@@ -295,6 +429,113 @@ public sealed class TrackingEngine
         }
 
         return bestCandidate;
+    }
+
+
+    private static SnapCandidate? FindNearestTrackingEntityIntersectionCandidate(
+        IReadOnlyList<TrackingLine> lines,
+        CadDocument document,
+        Point2D cursorPoint,
+        double tolerance)
+    {
+        SnapCandidate? bestCandidate = null;
+
+        foreach (TrackingLine line in lines)
+        {
+            foreach (CadEntity entity in document.Entities.All)
+            {
+                if (!document.IsEntityVisible(entity))
+                {
+                    continue;
+                }
+
+                foreach (LineSegment2D segment in GetLinearSegments(entity))
+                {
+                    Point2D? intersection = TryIntersectLineSegment(
+                        line,
+                        segment);
+
+                    if (intersection is null)
+                    {
+                        continue;
+                    }
+
+                    double distance = cursorPoint.DistanceTo(intersection.Value);
+
+                    if (distance > tolerance)
+                    {
+                        continue;
+                    }
+
+                    if (bestCandidate is null || distance < bestCandidate.DistanceToCursor)
+                    {
+                        bestCandidate = new SnapCandidate(
+                            SnapKind.TrackingIntersection,
+                            intersection.Value,
+                            entity.Id,
+                            distance);
+                    }
+                }
+            }
+        }
+
+        return bestCandidate;
+    }
+
+    private static IEnumerable<LineSegment2D> GetLinearSegments(CadEntity entity)
+    {
+        switch (entity)
+        {
+            case LineEntity line:
+                yield return new LineSegment2D(line.Start, line.End);
+                break;
+
+            case PolylineEntity polyline:
+                for (int index = 0; index < polyline.SegmentCount; index++)
+                {
+                    if (!Tolerance.IsZero(polyline.SegmentBulges[index]))
+                    {
+                        continue;
+                    }
+
+                    yield return new LineSegment2D(
+                        polyline.Vertices[index],
+                        polyline.Vertices[(index + 1) % polyline.Vertices.Count]);
+                }
+
+                break;
+        }
+    }
+
+    private static Point2D? TryIntersectLineSegment(
+        TrackingLine line,
+        LineSegment2D segment)
+    {
+        Vector2D segmentDirection = segment.Start.VectorTo(segment.End);
+
+        if (segmentDirection.LengthSquared <= 0)
+        {
+            return null;
+        }
+
+        double denominator = line.Direction.Cross(segmentDirection);
+
+        if (Math.Abs(denominator) <= ParallelTolerance)
+        {
+            return null;
+        }
+
+        Vector2D betweenOrigins = line.Origin.VectorTo(segment.Start);
+        double segmentDistance = betweenOrigins.Cross(line.Direction) / denominator;
+
+        if (segmentDistance < -Tolerance.Default ||
+            segmentDistance > 1.0 + Tolerance.Default)
+        {
+            return null;
+        }
+
+        double lineDistance = betweenOrigins.Cross(segmentDirection) / denominator;
+        return line.Origin + line.Direction * lineDistance;
     }
 
     private static Point2D? TryIntersect(

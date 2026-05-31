@@ -1,4 +1,4 @@
-﻿using OpenCad2D.Core.Documents;
+using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
@@ -25,6 +25,23 @@ public sealed class TrackingEngineTests
             line.Kind == TrackingLineKind.Vertical &&
             line.Origin == smartPoint.Position &&
             line.Direction == new Vector2D(0, 1));
+    }
+
+    [Fact]
+    public void FindNearestTrackingCandidate_ShouldReturnSmartPointWhenCursorIsNearCapturedPoint()
+    {
+        var engine = new TrackingEngine();
+        SmartPoint smartPoint = CreateSmartPoint(10, 20);
+
+        SnapCandidate? candidate = engine.FindNearestTrackingCandidate(
+            new[] { smartPoint },
+            new Point2D(10.5, 20.5),
+            tolerance: 2);
+
+        Assert.NotNull(candidate);
+        Assert.Equal(SnapKind.SmartPoint, candidate.Kind);
+        Assert.Equal(smartPoint.Position, candidate.Point);
+        Assert.Equal(smartPoint.SourceEntityId, candidate.EntityId);
     }
 
     [Fact]
@@ -236,6 +253,135 @@ public sealed class TrackingEngineTests
             Math.Abs(trackingLine.Direction.Cross(new Vector2D(10, 10).Normalize())) <= 1e-9);
     }
 
+
+    [Fact]
+    public void BuildLines_WithPolarTrackingStep_ShouldCreatePolarLinesForEachSmartPoint()
+    {
+        var engine = new TrackingEngine();
+        SmartPoint smartPoint = CreateSmartPoint(10, 20);
+
+        IReadOnlyList<TrackingLine> lines = engine.BuildLines(
+            new[] { smartPoint },
+            polarTrackingStepDegrees: 45);
+
+        Assert.Contains(lines, line =>
+            line.Kind == TrackingLineKind.Polar &&
+            line.Origin == smartPoint.Position &&
+            Math.Abs(line.Direction.Cross(new Vector2D(1, 1).Normalize())) <= 1e-9);
+        Assert.Contains(lines, line =>
+            line.Kind == TrackingLineKind.Polar &&
+            line.Origin == smartPoint.Position &&
+            Math.Abs(line.Direction.Cross(new Vector2D(-1, 1).Normalize())) <= 1e-9);
+    }
+
+    [Fact]
+    public void BuildLines_WithNinetyDegreePolarTrackingStep_ShouldNotDuplicateAxisLines()
+    {
+        var engine = new TrackingEngine();
+        SmartPoint smartPoint = CreateSmartPoint(10, 20);
+
+        IReadOnlyList<TrackingLine> lines = engine.BuildLines(
+            new[] { smartPoint },
+            polarTrackingStepDegrees: 90);
+
+        Assert.Equal(2, lines.Count);
+        Assert.DoesNotContain(lines, line => line.Kind == TrackingLineKind.Polar);
+    }
+
+    [Fact]
+    public void FindNearestTrackingCandidate_WithPolarTrackingStep_ShouldProjectPointOnPolarLine()
+    {
+        var engine = new TrackingEngine();
+        SmartPoint smartPoint = CreateSmartPoint(10, 20);
+
+        SnapCandidate? candidate = engine.FindNearestTrackingCandidate(
+            new[] { smartPoint },
+            new Point2D(20, 31),
+            tolerance: 2,
+            polarTrackingStepDegrees: 45);
+
+        Assert.NotNull(candidate);
+        Assert.Equal(SnapKind.Tracking, candidate.Kind);
+        Assert.Equal(smartPoint.Position, candidate.TrackingOrigin);
+        Assert.NotNull(candidate.TrackingDirection);
+        Assert.True(
+            Math.Abs(candidate.TrackingDirection.Value.Cross(new Vector2D(1, 1).Normalize())) <= 1e-9);
+        AssertPointNear(new Point2D(20.5, 30.5), candidate.Point);
+    }
+
+    [Fact]
+    public void FindNearestTrackingCandidate_ShouldReturnTrackingIntersectionWithLineEntity()
+    {
+        var engine = new TrackingEngine();
+        var document = new CadDocument();
+        var line = new LineEntity(
+            new Point2D(30, 0),
+            new Point2D(30, 50));
+        document.AddEntity(line);
+
+        SmartPoint smartPoint = CreateSmartPoint(10, 20);
+
+        SnapCandidate? candidate = engine.FindNearestTrackingCandidate(
+            new[] { smartPoint },
+            new Point2D(30.5, 20.5),
+            tolerance: 2,
+            document: document);
+
+        Assert.NotNull(candidate);
+        Assert.Equal(SnapKind.TrackingIntersection, candidate.Kind);
+        Assert.Equal(line.Id, candidate.EntityId);
+        Assert.Equal(new Point2D(30, 20), candidate.Point);
+    }
+
+    [Fact]
+    public void FindNearestTrackingCandidate_ShouldReturnTrackingIntersectionWithStraightPolylineSegment()
+    {
+        var engine = new TrackingEngine();
+        var document = new CadDocument();
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, 30),
+            new Point2D(50, 30),
+            new Point2D(50, 60)
+        });
+        document.AddEntity(polyline);
+
+        SmartPoint smartPoint = CreateSmartPoint(20, 10);
+
+        SnapCandidate? candidate = engine.FindNearestTrackingCandidate(
+            new[] { smartPoint },
+            new Point2D(20.5, 30.5),
+            tolerance: 2,
+            document: document);
+
+        Assert.NotNull(candidate);
+        Assert.Equal(SnapKind.TrackingIntersection, candidate.Kind);
+        Assert.Equal(polyline.Id, candidate.EntityId);
+        Assert.Equal(new Point2D(20, 30), candidate.Point);
+    }
+
+    [Fact]
+    public void FindNearestTrackingCandidate_ShouldIgnoreTrackingEntityIntersectionOutsideSegment()
+    {
+        var engine = new TrackingEngine();
+        var document = new CadDocument();
+        var line = new LineEntity(
+            new Point2D(30, 0),
+            new Point2D(30, 10));
+        document.AddEntity(line);
+
+        SmartPoint smartPoint = CreateSmartPoint(10, 20);
+
+        SnapCandidate? candidate = engine.FindNearestTrackingCandidate(
+            new[] { smartPoint },
+            new Point2D(30.5, 20.5),
+            tolerance: 2,
+            document: document);
+
+        Assert.NotNull(candidate);
+        Assert.Equal(SnapKind.Tracking, candidate.Kind);
+    }
+
     private static SmartPoint CreateSmartPoint(double x, double y)
     {
         return CreateSmartPoint(
@@ -253,5 +399,15 @@ public sealed class TrackingEngineTests
             sourceSnapKind,
             entityId,
             DateTimeOffset.UtcNow);
+    }
+
+    private static void AssertPointNear(
+        Point2D expected,
+        Point2D actual,
+        double tolerance = 1e-9)
+    {
+        Assert.True(
+            expected.DistanceTo(actual) <= tolerance,
+            $"Expected {expected}, actual {actual}.");
     }
 }

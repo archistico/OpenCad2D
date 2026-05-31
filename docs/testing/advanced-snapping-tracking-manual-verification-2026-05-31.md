@@ -158,6 +158,29 @@ Manual checks:
 [ ] Finish or cancel the command: extension overlays disappear.
 ```
 
+
+---
+
+## Tracking intersections with real geometry
+
+Expected behavior:
+
+- A tracking line can expose a temporary intersection snap with a real line entity.
+- A tracking line can expose a temporary intersection snap with a straight polyline segment.
+- The candidate is shown only when the cursor is near the computed intersection.
+- The real segment intersection must be finite; intersections outside the line/polyline segment are ignored.
+- Curved/tangent/overlapping cases are intentionally deferred.
+
+Manual checks:
+
+```text
+[ ] Capture a SmartPoint and move along its horizontal/vertical tracking line near a real line crossing: circular TrackingIntersection marker appears.
+[ ] Click while the marker is visible: the command uses the computed crossing point, not the raw cursor point.
+[ ] Repeat with a straight polyline segment crossing the tracking line.
+[ ] Move near where the infinite extension would cross but the finite segment does not: no TrackingIntersection is exposed.
+[ ] Verify strong real snaps still win if an Endpoint/Midpoint/Intersection is also within tolerance.
+```
+
 ---
 
 ## Regression rules
@@ -172,3 +195,29 @@ Do not regress these behaviors while extending SmartTrack:
 [ ] Nearest must remain disabled by default.
 [ ] Strong geometric snaps must keep priority over Tracking, TrackingIntersection, Extension, Nearest and Grid.
 ```
+
+---
+
+## SmartPoint Tracking HUD label
+
+Expected behavior:
+
+- When a `Tracking` marker is active, a compact label appears near the marker.
+- Tracking and Extension labels show distance and angle from the captured SmartPoint origin.
+- TrackingIntersection labels show `TRACK INT` when no distance direction is available.
+- The label is temporary UI only; it must not be saved, exported, selected or added to undo/redo.
+
+Manual checks:
+
+```text
+[ ] Capture a SmartPoint and move along a horizontal/vertical tracking line: label shows TRACK with length and angle.
+[ ] Enable Polar Tracking and move along a diagonal SmartPoint tracking line: label angle follows the diagonal direction.
+[ ] Move along an entity extension: label shows EXT with length and angle.
+[ ] Move near a tracking intersection: label shows TRACK INT.
+[ ] Turn off SmartPoint Tracking: marker, tracking line and label disappear.
+```
+
+
+### Direct SmartPoint snap update
+
+Captured SmartPoints now produce `SnapKind.SmartPoint` temporary candidates when the cursor is close to the marker. The click is resolved to the captured point, and the marker can therefore be used directly as a snap point as well as a tracking/extension origin.
