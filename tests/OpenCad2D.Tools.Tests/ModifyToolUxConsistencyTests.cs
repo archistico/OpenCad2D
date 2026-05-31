@@ -6,6 +6,7 @@ using OpenCad2D.Interaction.Selection;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
@@ -73,6 +74,53 @@ public sealed class ModifyToolUxConsistencyTests
 
         Assert.Equal(AlignToolState.WaitingForScaleConfirmation, tool.State);
         Assert.Equal(SnapKind.None, tool.GetActiveSnapKind(context));
+    }
+
+
+    [Fact]
+    public void ModifyTools_WhenWaitingForEntitySelection_ShouldUseEntityOnlySnap()
+    {
+        (string Name, Func<ISnapModeProvider> CreateTool, Action<ISnapModeProvider, ToolContext> PrepareEntitySelection)[] tools =
+        [
+            ("Align", () => new AlignTool(), (_, _) => { }),
+            ("Break at point", () => new BreakAtPointTool(), (_, _) => { }),
+            ("Break between points", () => new BreakBetweenPointsTool(), (_, _) => { }),
+            ("Chamfer", () => new ChamferTool(), (_, _) => { }),
+            ("Copy", () => new CopyTool(), (_, _) => { }),
+            ("Delete", () => new DeleteTool(), (_, _) => { }),
+            ("Explode", () => new ExplodeTool(), (_, _) => { }),
+            ("Extend", () => new ExtendTool(), (_, _) => { }),
+            ("Fillet", () => new FilletTool(), (_, _) => { }),
+            ("Join", () => new JoinTool(), (_, _) => { }),
+            ("Mirror", () => new MirrorTool(), (_, _) => { }),
+            ("Move", () => new MoveTool(), (_, _) => { }),
+            ("Offset", () => new OffsetTool(), (tool, context) =>
+            {
+                var offsetTool = Assert.IsType<OffsetTool>(tool);
+                offsetTool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+                Assert.Equal(OffsetToolState.WaitingForEntity, offsetTool.State);
+            }),
+            ("Rotate", () => new RotateTool(), (_, _) => { }),
+            ("Scale", () => new ScaleTool(), (_, _) => { }),
+            ("Trim", () => new TrimTool(), (_, _) => { })
+        ];
+
+        foreach (var (name, createTool, prepareEntitySelection) in tools)
+        {
+            ToolContext context = CreateContextWithLine(out _);
+            ISnapModeProvider tool = createTool();
+
+            Assert.False(
+                context.Selection.HasSelection,
+                $"{name}: the audit context must start without a preselection.");
+
+            prepareEntitySelection(tool, context);
+
+            SnapKind actual = tool.GetActiveSnapKind(context);
+            Assert.True(
+                actual == SnapKind.EntityOnly,
+                $"{name}: expected EntityOnly snap while waiting for entity selection, but got {actual}.");
+        }
     }
 
     [Fact]

@@ -658,14 +658,20 @@ public sealed class CadCanvas : Control
             return SnapKind.None;
         }
 
+        if (Workspace.ToolController.ActiveTool is ISnapModeProvider provider &&
+            Workspace.ToolController.ActiveTool is not SelectionTool)
+        {
+            return provider.GetActiveSnapKind(Workspace.Context);
+        }
+
         if (_enabledSnapsOverride.HasValue)
         {
             return _enabledSnapsOverride.Value;
         }
 
-        if (Workspace.ToolController.ActiveTool is ISnapModeProvider provider)
+        if (Workspace.ToolController.ActiveTool is ISnapModeProvider selectionProvider)
         {
-            return provider.GetActiveSnapKind(Workspace.Context);
+            return selectionProvider.GetActiveSnapKind(Workspace.Context);
         }
 
         return Workspace.Context.EnabledSnaps;

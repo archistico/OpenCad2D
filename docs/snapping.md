@@ -274,6 +274,8 @@ Mixed polylines with DXF bulges are converted through `PolylineEntity.GetInterac
 
 It also supports first-pass curve intersections for `EllipseEntity` and `BezierSplineEntity` by converting curves to a high-resolution polyline approximation for snapping. This covers practical line/ellipse, polyline/ellipse, circle/ellipse, ellipse/ellipse, line/spline, polyline/spline, circle/spline, ellipse/spline and spline/spline intersections.
 
+For entity pairs not covered by the snap provider's exact fast paths, intersection snapping delegates to the core `CadEntityIntersectionService`. This keeps snapping aligned with edit-command intersection support and covers native curve combinations such as arc/arc, arc/polyline, line/elliptical-arc and polyline/elliptical-arc.
+
 Intersection snapping should use the document search area to collect candidate entities near the cursor, then evaluate actual geometric intersections.
 
 Future work can replace the sampled curve path with exact analytic/NURBS-specific solvers where needed.
@@ -473,6 +475,10 @@ This makes contextual snaps work naturally.
 For example, `LineTool` can use tangent snapping only after the first click, because before that there is no base point.
 
 `SelectionTool` implements `ISnapModeProvider` and always returns `SnapKind.EntityOnly`. `MoveTool` implements the same interface and returns `SnapKind.EntityOnly` only while it is waiting for entities to move; after that it returns the normal enabled geometric snap set.
+
+Modify tools that are waiting for entity selection must always return `SnapKind.EntityOnly`, regardless of the user's enabled geometric snap modes. This applies to Break Point, Break Segment, Trim, Extend, Offset target selection, Fillet, Chamfer, Move, Copy, Rotate, Scale, Mirror, Align, Explode, Join and Delete. When those tools later move to a point-input phase they may return the normal geometric snap set or a narrowed snap set appropriate to the command phase.
+
+The UI also gives non-selection active tools priority over temporary canvas snap overrides. Temporary overrides are reserved for modal pending-placement workflows such as block/library/import insertion, where the active tool is still the selection tool but the UI is asking for a placement point. This prevents stale placement overrides from leaking into modify tools and showing endpoint/midpoint markers while the command is actually asking the user to select an entity.
 
 ---
 

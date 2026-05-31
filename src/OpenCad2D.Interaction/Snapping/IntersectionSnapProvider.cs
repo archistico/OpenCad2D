@@ -1,3 +1,4 @@
+using OpenCad2D.Core.Editing;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Operations;
@@ -188,8 +189,19 @@ public sealed class IntersectionSnapProvider : ISnapProvider
                     arc.Geometry,
                     circle.Geometry),
 
-            _ => Array.Empty<Point2D>()
+            _ => IntersectWithCoreFallback(first, second)
         };
+    }
+
+
+    private static IReadOnlyList<Point2D> IntersectWithCoreFallback(
+        CadEntity first,
+        CadEntity second)
+    {
+        return CadEntityIntersectionService.Intersect(
+            first,
+            second,
+            GeometryTolerance.Default);
     }
 
     private static IReadOnlyList<Point2D> IntersectLineLine(

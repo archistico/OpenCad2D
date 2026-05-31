@@ -76,11 +76,11 @@ Left tool panel      Select, Draw, Dimension, Measure, Edit, Order, Align/Distri
 Center canvas        drawing area with CAD crosshair and previews
 Right panel          editable Property Panel
 Bottom snap bar      snap toggles and drafting toggles
-Command row / HUD    active tool, contextual prompt and command input; planned migration to cursor-adjacent HUD
+Command HUD          cursor-adjacent active tool, contextual prompt, options and editable numeric fields
 Status bar           coordinates, snap state, measurements, rendered count and messages
 ```
 
-The current command row is intentionally compact. The active v0.8.121 roadmap replaces it with a dynamic cursor-adjacent command HUD after the prompt/input contract has been unified across all interactive tools.
+The former bottom command row has been replaced by a dynamic cursor-adjacent command HUD. Command aliases, option shortcuts and numeric point entry remain available through the HUD/internal keyboard buffer.
 
 ---
 

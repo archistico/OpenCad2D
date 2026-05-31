@@ -212,6 +212,62 @@ public sealed class MainWindowViewModelOpenCad2DImportTests
         }
     }
 
+    [Fact]
+    public void CommandHudInput_PendingImportDrawing_ShouldAcceptCoordinateFields()
+    {
+        string filePath = CreateTemporaryOpenCad2DDrawing(document =>
+        {
+            document.AddEntity(new CircleEntity(
+                new Point2D(2, 3),
+                4));
+        });
+
+        try
+        {
+            var viewModel = new MainWindowViewModel();
+
+            viewModel.BeginImportDrawingPlacementFromFile(
+                filePath,
+                new OpenCad2DImportPlacementOptions(1, 0));
+
+            Assert.True(viewModel.IsCommandHudVisible);
+            Assert.Equal("Import Drawing", viewModel.CommandHudState.ToolName);
+            Assert.Equal("IMPORTDRAWING", viewModel.CurrentPromptState.CommandName);
+            Assert.Equal(new[] { CommandHudFieldKind.X, CommandHudFieldKind.Y }, GetEditableHudFieldKinds(viewModel));
+
+            Assert.True(viewModel.TryCommitCommandHudFieldInput(
+                CommandHudFieldKind.X,
+                "10",
+                confirm: false,
+                out _));
+            Assert.True(viewModel.TryCommitCommandHudFieldInput(
+                CommandHudFieldKind.Y,
+                "20",
+                confirm: true,
+                out var result));
+
+            Assert.True(result.Changed);
+            Assert.False(viewModel.IsImportDrawingPlacementPending);
+            Assert.False(viewModel.IsCommandHudVisible);
+
+            CircleEntity importedCircle = Assert.IsType<CircleEntity>(
+                viewModel.Workspace.Document.Entities.All.Single());
+            AssertNearlyEqual(new Point2D(12, 23), importedCircle.Center);
+        }
+        finally
+        {
+            File.Delete(filePath);
+        }
+    }
+
+    private static CommandHudFieldKind[] GetEditableHudFieldKinds(MainWindowViewModel viewModel)
+    {
+        return viewModel.CommandHudState.Fields
+            .Where(field => field.CanAcceptTypedOverride)
+            .Select(field => field.Kind)
+            .ToArray();
+    }
+
     private static string CreateTemporaryOpenCad2DDrawing(Action<CadDocument> configure)
     {
         var document = new CadDocument();

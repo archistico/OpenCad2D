@@ -1270,11 +1270,17 @@ public partial class MainWindow : Window
         CadCanvas.Focus();
     }
 
+    private void ActivateTool(ToolId toolId)
+    {
+        EndPointPlacementSnapping();
+        _viewModel.SetTool(toolId);
+    }
+
     private void Select_Click(
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Selection);
+        ActivateTool(ToolId.Selection);
 
         RefreshStatus();
 
@@ -1324,7 +1330,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Point);
+        ActivateTool(ToolId.Point);
 
         RefreshStatus();
 
@@ -1335,7 +1341,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Text);
+        ActivateTool(ToolId.Text);
         RefreshStatus();
         CadCanvas.Focus();
     }
@@ -1344,7 +1350,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.MultilineText);
+        ActivateTool(ToolId.MultilineText);
         RefreshStatus();
         CadCanvas.Focus();
     }
@@ -1353,7 +1359,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Line);
+        ActivateTool(ToolId.Line);
 
         RefreshStatus();
 
@@ -1364,7 +1370,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Rectangle);
+        ActivateTool(ToolId.Rectangle);
 
         RefreshStatus();
 
@@ -1375,7 +1381,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.RectangleBySides);
+        ActivateTool(ToolId.RectangleBySides);
 
         RefreshStatus();
 
@@ -1386,7 +1392,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Circle);
+        ActivateTool(ToolId.Circle);
 
         RefreshStatus();
 
@@ -1397,7 +1403,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Ellipse);
+        ActivateTool(ToolId.Ellipse);
 
         RefreshStatus();
 
@@ -1408,7 +1414,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Arc);
+        ActivateTool(ToolId.Arc);
 
         RefreshStatus();
 
@@ -1419,7 +1425,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.ArcThreePoints);
+        ActivateTool(ToolId.ArcThreePoints);
 
         RefreshStatus();
 
@@ -1430,7 +1436,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Polyline);
+        ActivateTool(ToolId.Polyline);
 
         RefreshStatus();
 
@@ -1441,7 +1447,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Spline);
+        ActivateTool(ToolId.Spline);
 
         RefreshStatus();
 
@@ -1452,7 +1458,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Polygon);
+        ActivateTool(ToolId.Polygon);
 
         RefreshStatus();
 
@@ -1463,7 +1469,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.NorthSymbol);
+        ActivateTool(ToolId.NorthSymbol);
 
         RefreshStatus();
 
@@ -1474,7 +1480,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.ScaleBar);
+        ActivateTool(ToolId.ScaleBar);
 
         RefreshStatus();
 
@@ -1486,7 +1492,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.HorizontalDimension);
+        ActivateTool(ToolId.HorizontalDimension);
 
         RefreshStatus();
 
@@ -1497,7 +1503,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.VerticalDimension);
+        ActivateTool(ToolId.VerticalDimension);
 
         RefreshStatus();
 
@@ -1508,7 +1514,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.AlignedDimension);
+        ActivateTool(ToolId.AlignedDimension);
 
         RefreshStatus();
 
@@ -1519,7 +1525,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.RadiusDimension);
+        ActivateTool(ToolId.RadiusDimension);
 
         RefreshStatus();
 
@@ -1530,7 +1536,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.DiameterDimension);
+        ActivateTool(ToolId.DiameterDimension);
 
         RefreshStatus();
 
@@ -1541,7 +1547,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.AngularDimension);
+        ActivateTool(ToolId.AngularDimension);
 
         RefreshStatus();
 
@@ -1552,7 +1558,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.ZoomWindow);
+        ActivateTool(ToolId.ZoomWindow);
 
         RefreshStatus();
 
@@ -1563,7 +1569,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Move);
+        ActivateTool(ToolId.Move);
 
         RefreshStatus();
 
@@ -1574,7 +1580,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Copy);
+        ActivateTool(ToolId.Copy);
 
         RefreshStatus();
 
@@ -1585,7 +1591,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Rotate);
+        ActivateTool(ToolId.Rotate);
 
         RefreshStatus();
 
@@ -1596,7 +1602,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Scale);
+        ActivateTool(ToolId.Scale);
 
         RefreshStatus();
 
@@ -1607,7 +1613,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Align);
+        ActivateTool(ToolId.Align);
 
         RefreshStatus();
 
@@ -1618,7 +1624,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.BreakAtPoint);
+        ActivateTool(ToolId.BreakAtPoint);
 
         RefreshStatus();
 
@@ -1629,7 +1635,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.BreakBetweenPoints);
+        ActivateTool(ToolId.BreakBetweenPoints);
 
         RefreshStatus();
 
@@ -1640,7 +1646,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Extend);
+        ActivateTool(ToolId.Extend);
 
         RefreshStatus();
 
@@ -1651,7 +1657,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Trim);
+        ActivateTool(ToolId.Trim);
 
         RefreshStatus();
 
@@ -1662,7 +1668,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Offset);
+        ActivateTool(ToolId.Offset);
 
         RefreshStatus();
 
@@ -1673,7 +1679,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.BoundaryFill);
+        ActivateTool(ToolId.BoundaryFill);
 
         RefreshStatus();
 
@@ -1684,7 +1690,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Fillet);
+        ActivateTool(ToolId.Fillet);
 
         RefreshStatus();
 
@@ -1695,7 +1701,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Chamfer);
+        ActivateTool(ToolId.Chamfer);
 
         RefreshStatus();
 
@@ -1706,7 +1712,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Mirror);
+        ActivateTool(ToolId.Mirror);
 
         RefreshStatus();
 
@@ -1972,7 +1978,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Explode);
+        ActivateTool(ToolId.Explode);
 
         RefreshStatus();
 
@@ -1983,7 +1989,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.Join);
+        ActivateTool(ToolId.Join);
 
         RefreshStatus();
 
@@ -2138,7 +2144,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.MeasureDistance);
+        ActivateTool(ToolId.MeasureDistance);
 
         RefreshStatus();
 
@@ -2149,7 +2155,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.MeasureEntity);
+        ActivateTool(ToolId.MeasureEntity);
 
         RefreshStatus();
 
@@ -2160,7 +2166,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.MeasureAngle);
+        ActivateTool(ToolId.MeasureAngle);
 
         RefreshStatus();
 
@@ -2171,7 +2177,7 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        _viewModel.SetTool(ToolId.MeasureArea);
+        ActivateTool(ToolId.MeasureArea);
 
         RefreshStatus();
 

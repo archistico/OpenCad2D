@@ -1,6 +1,6 @@
 # Command Input
 
-OpenCad2D currently has a compact CAD-style command input. The active roadmap replaces the fixed bottom command row with a dynamic cursor-adjacent command HUD.
+OpenCad2D now uses a dynamic cursor-adjacent command HUD as the primary command-input surface. The former fixed bottom command row has been removed; advanced typed aliases and option shortcuts still use an internal keyboard buffer.
 
 The command input is not only a visual widget: it is the shared interaction contract between the UI and every command-driven tool. The active prompt tells the user what the current command expects, and both mouse input and typed input feed the same tool state machine.
 
@@ -17,33 +17,20 @@ Mouse input and typed input feed the same tool state machine.
 
 ---
 
-## Dynamic Command HUD roadmap
+## Dynamic Command HUD
 
-The fixed bottom command row is being replaced by a cursor-adjacent HUD in milestone `v0.8.121`. The full specification is `docs/specs/v0.8.121-dynamic-command-hud.md`.
+The fixed bottom command row has been replaced by the cursor-adjacent HUD described in `docs/specs/v0.8.121-dynamic-command-hud.md`.
 
-The migration must happen in safe stages:
-
-1. inventory every command-driven tool and its prompt phases;
-2. make `CommandPromptState` the common source for prompts, options and expected input;
-3. propagate pointer screen position and reusable live measurements;
-4. expose a read-only `CommandHudState`;
-5. render a read-only visual HUD while the old command row remains active;
-6. move the single real `CommandInputTextBox` into the HUD;
-7. remove the fixed row only after regression;
-8. implement editable numeric HUD fields later.
-
-Until that migration is complete, this document describes the command-input behavior that must be preserved.
-
-The final HUD should show, when meaningful:
+The HUD shows, when meaningful:
 
 ```text
 [tool icon] TOOL NAME
-Prompt or live fields
+Prompt
+Editable numeric fields
 Command options
-Command input
 ```
 
-Examples of live fields include Distance/Angle for line-like phases, Width/Height for opposite-corner rectangles and Radius for circle phases. The first HUD implementation should show these fields read-only. Directly editable HUD fields are deferred because they require temporary distance/angle/width/radius overrides rather than ordinary one-shot command-input submission.
+Examples include `Distance/Angle` for line-like phases, `Width/Height` for rectangles, radius-like distance fields for circles/arcs/ellipses/polygons, `X/Y` for absolute coordinate point phases, and scalar fields such as `Sides`, `Factor`, `Radius` or `Distance` when a command expects a numeric setting.
 
 ---
 

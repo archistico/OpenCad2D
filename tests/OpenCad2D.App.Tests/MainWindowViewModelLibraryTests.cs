@@ -104,6 +104,47 @@ public sealed class MainWindowViewModelLibraryTests
         Assert.Empty(viewModel.Workspace.Document.BlockDefinitions.All);
     }
 
+    [Fact]
+    public void CommandHudInput_LibraryInsertion_ShouldAcceptCoordinateFields()
+    {
+        var viewModel = new MainWindowViewModel();
+        LibraryCatalogItem item = CreateLibraryItem("arredo", "chair");
+
+        viewModel.BeginInsertLibraryItem(item);
+
+        Assert.True(viewModel.IsCommandHudVisible);
+        Assert.Equal("Library", viewModel.CommandHudState.ToolName);
+        Assert.Equal("LIBRARY", viewModel.CurrentPromptState.CommandName);
+        Assert.Equal(new[] { CommandHudFieldKind.X, CommandHudFieldKind.Y }, GetEditableHudFieldKinds(viewModel));
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "20",
+            confirm: true,
+            out var result));
+
+        Assert.True(result.Changed);
+        Assert.False(viewModel.IsLibraryInsertionPending);
+        Assert.False(viewModel.IsCommandHudVisible);
+
+        BlockReferenceEntity reference = Assert.IsType<BlockReferenceEntity>(
+            viewModel.Workspace.Document.Entities.All.Single());
+        Assert.Equal(new Point2D(10, 20), reference.InsertionPoint);
+    }
+
+    private static CommandHudFieldKind[] GetEditableHudFieldKinds(MainWindowViewModel viewModel)
+    {
+        return viewModel.CommandHudState.Fields
+            .Where(field => field.CanAcceptTypedOverride)
+            .Select(field => field.Kind)
+            .ToArray();
+    }
+
     private static LibraryCatalogItem CreateLibraryItem(
         string category,
         string title)

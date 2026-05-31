@@ -1516,3 +1516,48 @@ Important guardrail: do not broaden the shared HUD resolver while finishing the 
   - circle intersection with an axis-aligned closed rectangle polyline;
   - circle intersection with a rotated closed rectangle polyline, matching Rectangle by Sides geometry.
 - Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31J - Intersection snap fallback audit
+
+- Added a conservative `CadEntityIntersectionService.Intersect(...)` fallback to `IntersectionSnapProvider` for entity pairs that are not covered by the provider's exact fast-path switch.
+- Kept the existing exact/direct cases for line-line, line/polyline, polyline/polyline, line/circle, circle/circle, circle/polyline, line/arc and circle/arc.
+- The fallback now covers previously fragile or missing curve-pair combinations such as:
+  - `ArcEntity` + `ArcEntity`;
+  - `ArcEntity` + `PolylineEntity`;
+  - `LineEntity` + `EllipticalArcEntity`;
+  - `PolylineEntity` + `EllipticalArcEntity`;
+  - other native curve pairs already supported by the core editing intersection service.
+- Added regression coverage for arc/arc, arc/polyline, line/elliptical-arc and polyline/elliptical-arc intersection snaps.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31K - Pending placement HUD completion
+
+- Extended the dynamic HUD to pending point-placement workflows that do not run as normal `ICommandDrivenTool` instances.
+- `IsCommandHudVisible`, `CommandHudToolName`, `GetCurrentPromptState()` and the HUD point submission path now cover:
+  - Create Block base-point pick;
+  - Insert Block insertion point;
+  - Library item insertion point;
+  - OpenCad2D import drawing insertion point.
+- These workflows expose only absolute `X/Y` coordinate fields while waiting for the placement point. Dialog-owned options remain in their dialogs.
+- Added regression coverage for HUD-driven Library insertion and HUD-driven OpenCad2D import placement. Existing block tests already cover Create Block and Insert Block.
+- Updated `docs/command-input.md`, `README.md` and `docs/specs/v0.8.121-dynamic-command-hud.md` so the documentation describes the dynamic HUD as implemented rather than as a future migration.
+- Internal command-buffer helpers were intentionally kept because aliases, option shortcuts, autocomplete and history navigation still depend on them after removal of the visible bottom command row.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31L - Modify-tool entity selection snap guard
+
+- Fixed a UI-level snapping leak where a temporary point-placement snap override could remain active when switching to a modify tool.
+- `CadCanvas.GetEffectiveEnabledSnaps()` now gives non-selection active tools priority over canvas-level snap overrides; the override remains available for modal pending-placement workflows that still run while the selection tool is active.
+- Added `MainWindow.ActivateTool(...)` so toolbar tool activation clears pending point-placement snapping before changing the active tool.
+- Audited modify tools that wait for entity selection and added a consolidated regression test asserting `SnapKind.EntityOnly` for Align, Break Point, Break Segment, Chamfer, Copy, Delete, Explode, Extend, Fillet, Join, Mirror, Move, Offset, Rotate, Scale and Trim.
+- This keeps Break tools and other selection-oriented modify tools on the entity rectangle marker while they ask for a target entity, then allows geometric snaps only after the command transitions to a point-input phase.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+### Step 31M - Modify-tool snap audit test isolation fix
+
+- Fixed the consolidated modify-tool snap audit so each tool is created and evaluated with its own fresh `ToolContext`.
+- This avoids false regressions caused by sharing mutable selection/tool state across different tools inside the same test.
+- The audit still checks the same contract: when a modify tool starts in an entity-selection phase with no preselection, `GetActiveSnapKind(...)` must return `SnapKind.EntityOnly`.
+- The assertion now includes the tool name in the failure message so any future regression identifies the offending tool directly.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.

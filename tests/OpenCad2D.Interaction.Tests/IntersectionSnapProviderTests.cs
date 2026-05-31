@@ -492,6 +492,151 @@ public sealed class IntersectionSnapProviderTests
         Assert.Equal(4.8, result.Point.Y, precision: 10);
     }
 
+
+    [Fact]
+    public void Snap_ArcArcIntersection_ShouldReturnNearestIntersection()
+    {
+        var document = new CadDocument();
+
+        var first = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(180));
+
+        var second = new ArcEntity(
+            new Point2D(10, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(180));
+
+        document.AddEntity(first);
+        document.AddEntity(second);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(5, 8.5),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(5, result.Point.X, precision: 10);
+        Assert.Equal(Math.Sqrt(75), result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_ArcPolylineIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            5,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(180));
+
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, -10),
+            new Point2D(0, 10)
+        });
+
+        document.AddEntity(arc);
+        document.AddEntity(polyline);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(0.1, 5.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(0, result.Point.X, precision: 10);
+        Assert.Equal(5, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_LineEllipticalArcIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(0, -10),
+            new Point2D(0, 10));
+
+        var ellipticalArc = new EllipticalArcEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5,
+            0,
+            Math.PI);
+
+        document.AddEntity(line);
+        document.AddEntity(ellipticalArc);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(0.1, 5.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(0, result.Point.X, precision: 10);
+        Assert.Equal(5, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_PolylineEllipticalArcIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var polyline = new PolylineEntity(new[]
+        {
+            new Point2D(0, -10),
+            new Point2D(0, 10)
+        });
+
+        var ellipticalArc = new EllipticalArcEntity(
+            new Point2D(0, 0),
+            new Vector2D(10, 0),
+            5,
+            0,
+            Math.PI);
+
+        document.AddEntity(polyline);
+        document.AddEntity(ellipticalArc);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(0.1, 5.1),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(0, result.Point.X, precision: 10);
+        Assert.Equal(5, result.Point.Y, precision: 10);
+    }
+
     [Fact]
     public void Snap_IntersectionDisabled_ShouldReturnNull()
     {

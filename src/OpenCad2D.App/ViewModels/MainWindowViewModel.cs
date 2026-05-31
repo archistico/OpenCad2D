@@ -333,9 +333,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             ? "Create Block"
             : IsBlockInsertionPending
                 ? "Insert Block"
-                : IsCommandHudVisible
-                    ? ActiveToolName
-                    : null;
+                : IsLibraryInsertionPending
+                    ? "Library"
+                    : IsImportDrawingPlacementPending
+                        ? "Import Drawing"
+                        : IsCommandHudVisible
+                            ? ActiveToolName
+                            : null;
 
     public Point? HudScreenPosition => _hudScreenPosition;
 
@@ -345,7 +349,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public bool IsCommandHudVisible =>
         Workspace.ToolController.ActiveTool is ICommandDrivenTool ||
         IsCreateBlockBasePointPickPending ||
-        IsBlockInsertionPending;
+        IsBlockInsertionPending ||
+        IsLibraryInsertionPending ||
+        IsImportDrawingPlacementPending;
 
     public bool IsBottomCommandLineVisible => false;
 
@@ -437,6 +443,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             return new CommandPromptState(
                 "INSERTBLOCK",
+                "Specify insertion point",
+                CommandInputKind.Point,
+                placeholder: "click insertion point or enter X/Y");
+        }
+
+        if (IsLibraryInsertionPending)
+        {
+            return new CommandPromptState(
+                "LIBRARY",
+                "Specify insertion point",
+                CommandInputKind.Point,
+                placeholder: "click insertion point or enter X/Y");
+        }
+
+        if (IsImportDrawingPlacementPending)
+        {
+            return new CommandPromptState(
+                "IMPORTDRAWING",
                 "Specify insertion point",
                 CommandInputKind.Point,
                 placeholder: "click insertion point or enter X/Y");
@@ -3003,7 +3027,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return (true, result);
         }
 
-        result = TrySubmitPendingBlockHudPoint(
+        result = TrySubmitPendingPlacementHudPoint(
             worldPoint,
             out ToolResult pendingResult)
             ? pendingResult
@@ -3038,7 +3062,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        result = TrySubmitPendingBlockHudPoint(
+        result = TrySubmitPendingPlacementHudPoint(
             worldPoint,
             out ToolResult pendingResult)
             ? pendingResult
@@ -3394,7 +3418,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (confirm)
         {
-            result = TrySubmitPendingBlockHudPoint(
+            result = TrySubmitPendingPlacementHudPoint(
                 worldPoint,
                 out ToolResult pendingResult)
                 ? pendingResult
@@ -3645,7 +3669,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private bool IsCommandHudPointInputTargetActive()
     {
         if (IsCreateBlockBasePointPickPending ||
-            IsBlockInsertionPending)
+            IsBlockInsertionPending ||
+            IsLibraryInsertionPending ||
+            IsImportDrawingPlacementPending)
         {
             return true;
         }
@@ -3677,7 +3703,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandInputKind.PointOrNumberOrOption;
     }
 
-    private bool TrySubmitPendingBlockHudPoint(
+    private bool TrySubmitPendingPlacementHudPoint(
         Point2D worldPoint,
         out ToolResult result)
     {
@@ -3690,6 +3716,18 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (IsBlockInsertionPending)
         {
             result = CommitPendingBlockInsertion(worldPoint);
+            return true;
+        }
+
+        if (IsLibraryInsertionPending)
+        {
+            result = CommitPendingLibraryInsertion(worldPoint);
+            return true;
+        }
+
+        if (IsImportDrawingPlacementPending)
+        {
+            result = CommitPendingImportDrawing(worldPoint);
             return true;
         }
 
