@@ -40,14 +40,14 @@ public sealed class SnapCandidate
     public double DistanceToCursor { get; }
 
     /// <summary>
-    /// Origin of the temporary tracking line that generated this candidate.
-    /// Only populated for <see cref="SnapKind.Tracking" /> candidates.
+    /// Origin of the temporary tracking or extension line that generated this candidate.
+    /// Populated for <see cref="SnapKind.Tracking" /> and <see cref="SnapKind.Extension" /> candidates.
     /// </summary>
     public Point2D? TrackingOrigin { get; }
 
     /// <summary>
     /// Signed direction from <see cref="TrackingOrigin" /> toward the live cursor side.
-    /// Only populated for <see cref="SnapKind.Tracking" /> candidates.
+    /// Populated for <see cref="SnapKind.Tracking" /> and <see cref="SnapKind.Extension" /> candidates.
     /// </summary>
     public Vector2D? TrackingDirection { get; }
 }

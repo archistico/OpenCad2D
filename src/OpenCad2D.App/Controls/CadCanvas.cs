@@ -81,6 +81,7 @@ public sealed class CadCanvas : Control
     private SnapCandidate? _pendingSmartPointCandidate;
     private SnapCandidate? _currentSnapCandidate;
     private SnapKind? _enabledSnapsOverride;
+    private bool _isSmartPointTrackingEnabled = true;
     private readonly Pen _gridMinorPen = new(
         new SolidColorBrush(Color.FromRgb(45, 45, 45)),
         1);
@@ -133,6 +134,28 @@ public sealed class CadCanvas : Control
         {
             _enabledSnapsOverride = value;
             _currentSnapCandidate = null;
+            InvalidateVisual();
+        }
+    }
+
+    public bool IsSmartPointTrackingEnabled
+    {
+        get => _isSmartPointTrackingEnabled;
+        set
+        {
+            if (_isSmartPointTrackingEnabled == value)
+            {
+                return;
+            }
+
+            _isSmartPointTrackingEnabled = value;
+
+            if (!_isSmartPointTrackingEnabled)
+            {
+                ClearSmartPoints();
+                _currentSnapCandidate = null;
+            }
+
             InvalidateVisual();
         }
     }
@@ -917,7 +940,8 @@ public sealed class CadCanvas : Control
 
     private bool CanUseSmartPointTracking()
     {
-        return Workspace is not null &&
+        return IsSmartPointTrackingEnabled &&
+            Workspace is not null &&
             Workspace.ToolController.ActiveTool is not SelectionTool;
     }
 
@@ -2057,8 +2081,8 @@ public sealed class CadCanvas : Control
         Point screenPoint,
         KeyModifiers keyModifiers)
     {
-        Point2D modelPoint = _currentSnapCandidate?.Kind == SnapKind.Tracking
-            ? _currentSnapCandidate.Point
+        Point2D modelPoint = IsResolvedTemporarySnap(_currentSnapCandidate?.Kind)
+            ? _currentSnapCandidate!.Point
             : ToModelPoint(screenPoint);
         Point2D userPoint = Workspace is null
             ? modelPoint
@@ -2068,5 +2092,12 @@ public sealed class CadCanvas : Control
             modelPoint,
             userPoint,
             GetModifiers(keyModifiers));
+    }
+
+    private static bool IsResolvedTemporarySnap(SnapKind? snapKind)
+    {
+        return snapKind is SnapKind.Tracking or
+            SnapKind.TrackingIntersection or
+            SnapKind.Extension;
     }
 }

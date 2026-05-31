@@ -75,7 +75,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
 | Explode / Join essentials | [x] | EXPLODE converts straight and mixed polylines into lines/arcs; JOIN converts connected lines, arcs and open polylines into one or more polylines, with bulge preservation, diagnostics, undo and targeted tests. |
 | External raster references | [x] | PNG/JPG/JPEG files can be attached as external references, transformed as oriented rectangles, snapped, relinked, collected into portable folders and managed through Image References Manager. |
-| Advanced snapping foundation | [~] | Nearest exists as a low-priority opt-in snap, disabled by default. Temporary SmartPoint capture, horizontal/vertical tracking lines, manual distance input, tracking intersections and first-pass entity-extension tracking for lines/straight polyline segments are in place. Remaining work: broader polar directions, richer extension/tangent behavior and final UI/settings polish. |
+| Advanced snapping foundation | [~] | Nearest exists as a low-priority opt-in snap, disabled by default. SmartPoint Tracking is exposed as an independent Snap bar toggle. Temporary SmartPoint capture, horizontal/vertical tracking lines, manual distance input, tracking intersections and first-pass entity-extension tracking for lines/straight polyline segments are in place. TrackingIntersection/Extension markers now resolve as real temporary snap points. Remaining work: broader polar directions and richer extension/tangent behavior. |
 
 ---
 
@@ -419,6 +419,19 @@ Candidate v1.0 gates:
   - Invalid hover positions no longer fall back to generic messages when the failure reason is known.
   - BREAK endpoint and coincident-point hover regressions are covered by passing tests.
 
+
+### 2026-05-31 - Advanced snapping and SmartPoint tracking consolidation
+
+Consolidated the pre-v0.9 advanced snapping milestone after local compile/test verification by the maintainer. The current completed scope is:
+
+- opt-in `Nearest` snap, disabled by default;
+- SmartPoint capture from strong geometric snaps with a five-point runtime cap;
+- horizontal/vertical SmartPoint tracking overlays;
+- direct distance input along active tracking lines;
+- tracking intersections from different SmartPoints;
+- first-pass entity-extension tracking for lines and straight polyline segments.
+
+A manual verification checklist was added at `docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md`. Remaining advanced tracking work is intentionally deferred unless it becomes necessary before v0.9: broader polar directions, tangent/arc extension and richer snap/settings UI polish.
 
 ### 2026-05-31 - SmartPoint tracking intersections
 

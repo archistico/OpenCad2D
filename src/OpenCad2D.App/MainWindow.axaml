@@ -1841,6 +1841,13 @@
                           IsChecked="True"
                           Click="SnapGrid_Changed" />
 
+                <CheckBox x:Name="SmartPointTrackingCheckBox"
+                          Classes="snap-check"
+                          Content="SmartPoint Tracking"
+                          IsChecked="True"
+                          ToolTip.Tip="Temporary smart points, tracking lines, tracking intersections and entity extensions."
+                          Click="SmartPointTracking_Changed" />
+
                 <Separator Margin="4,0" />
 
                 <CheckBox x:Name="OrthoCheckBox"

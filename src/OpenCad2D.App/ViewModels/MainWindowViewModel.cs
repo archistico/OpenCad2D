@@ -4112,9 +4112,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         worldPoint = Point2D.Origin;
         errorMessage = null;
 
-        if (_currentSnapCandidate?.Kind != SnapKind.Tracking ||
-            _currentSnapCandidate.TrackingOrigin is null ||
-            _currentSnapCandidate.TrackingDirection is null)
+        SnapCandidate? candidate = _currentSnapCandidate;
+
+        if (candidate is null ||
+            (candidate.Kind != SnapKind.Tracking && candidate.Kind != SnapKind.Extension) ||
+            candidate.TrackingOrigin is null ||
+            candidate.TrackingDirection is null)
         {
             return false;
         }
@@ -4125,8 +4128,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return false;
         }
 
-        worldPoint = _currentSnapCandidate.TrackingOrigin.Value +
-            _currentSnapCandidate.TrackingDirection.Value * distance;
+        worldPoint = candidate.TrackingOrigin.Value +
+            candidate.TrackingDirection.Value * distance;
         return true;
     }
 

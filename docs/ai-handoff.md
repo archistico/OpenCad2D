@@ -1725,3 +1725,33 @@ Added first-pass entity-extension tracking on top of the SmartPoint tracking fou
 Added `SnapKind.Extension`, `TrackingLineKind.EntityExtension`, extension snap marker rendering in `CadCanvas`, and tests covering line extension, projection onto an extension candidate, and straight polyline segment extension. Extension candidates carry `TrackingOrigin` and signed `TrackingDirection`, so existing plain-distance input can resolve points along the real entity direction without tool-specific code.
 
 Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+## 2026-05-31 - Advanced snapping / SmartPoint tracking consolidation
+
+Current verified state before resuming the remaining v0.9 work:
+
+- `Nearest` is exposed in the Snap bar but remains disabled by default. It is intentionally low priority: strong geometric snaps win; Grid remains lower.
+- SmartPoint capture is command-scoped and runtime-only. It captures Endpoint, Midpoint, Center, Quadrant and Intersection after about 400 ms hover, with a maximum of five stored points.
+- SmartPoint tracking currently emits horizontal and vertical dashed overlays. Candidates are produced only near the cursor and are lower priority than explicit geometric snaps.
+- Plain numeric distance input can resolve along active `Tracking` and `Extension` candidates using `SnapCandidate.TrackingOrigin` and signed `TrackingDirection`.
+- `TrackingIntersection` is available for intersections between tracking lines from different SmartPoints. It deliberately carries no direct-distance metadata.
+- `Extension` is available for line entities and straight polyline segments only. Bulged polyline segments, arcs, tangent extension and richer polar-direction tracking remain deferred.
+- The manual verification checklist is documented in `docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md`.
+
+Important future guidance:
+
+- Keep `Nearest` opt-in. Do not enable it by default.
+- Do not let SmartPoint capture use `Nearest`, `Grid`, `Entity`, `Perpendicular` or `Tangent` without a deliberate UX review.
+- Keep tracking overlays non-persistent, non-selectable, non-exported and outside undo/redo.
+- For selection phases, continue to prefer `SnapKind.EntityOnly`; tracking must not leak into object-selection prompts.
+- Before adding tangent/arc extension, add isolated geometry tests and keep the first implementation conservative.
+
+## 2026-05-31 - SmartPoint Tracking toggle and resolved temporary snap input
+
+Addressed a usability issue where `TrackingIntersection` and `Extension` markers could be displayed as candidates but pointer input still used the raw cursor position. `CadCanvas.CreatePointerInfo()` now resolves temporary candidates (`Tracking`, `TrackingIntersection`, `Extension`) to the candidate point before forwarding the click to tools, so the circular tracking-intersection marker behaves as a real snap.
+
+Added a Snap bar checkbox named **SmartPoint Tracking**. It controls the runtime SmartPoint/Tracking subsystem independently from normal object snaps. Disabling it clears pending SmartPoints, tracking markers and current temporary snap candidates.
+
+Also updated direct distance handling so both `Tracking` and `Extension` candidates use `TrackingOrigin`/`TrackingDirection` for distance input. `TrackingIntersection` remains point-only and intentionally carries no distance direction metadata.
+

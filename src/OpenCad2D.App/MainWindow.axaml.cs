@@ -3682,6 +3682,7 @@ public partial class MainWindow : Window
         SnapTangentCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Tangent);
         SnapNearestCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Nearest);
         SnapGridCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Grid);
+        SmartPointTrackingCheckBox.IsChecked = CadCanvas.IsSmartPointTrackingEnabled;
         OrthoCheckBox.IsChecked = _viewModel.IsOrthoEnabled;
     }
 
@@ -3764,6 +3765,22 @@ public partial class MainWindow : Window
         SetSnapFromCheckBox(
             SnapKind.Nearest,
             SnapNearestCheckBox.IsChecked == true);
+    }
+
+    private void SmartPointTracking_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        CadCanvas.IsSmartPointTrackingEnabled = SmartPointTrackingCheckBox.IsChecked == true;
+
+        _viewModel.SetMessage(CadCanvas.IsSmartPointTrackingEnabled
+            ? "SmartPoint Tracking enabled."
+            : "SmartPoint Tracking disabled.");
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
     }
 
     private void Ortho_Changed(

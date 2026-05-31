@@ -517,7 +517,9 @@ This gives immediate visual feedback and makes the cursor behavior more CAD-like
 
 ## Temporary SmartPoint capture foundation
 
-The advanced tracking/extension work starts with temporary SmartPoints. A SmartPoint is a runtime-only reference point captured from a strong object snap while a point-based command is active.
+The advanced tracking/extension feature is exposed in the Snap bar as **SmartPoint Tracking**. It is enabled by default, but it can be disabled independently from normal object snap modes when the temporary tracking aids are not needed.
+
+A SmartPoint is a runtime-only reference point captured from a strong object snap while a point-based command is active.
 
 Current behavior:
 
@@ -608,11 +610,10 @@ The snapping system can be improved in several ways:
 
 ```text
 screen-based snap tolerance
-extension snap
 apparent intersection
 parallel snap
-object tracking
-polar tracking
+broader polar tracking directions for SmartPoint tracking
+entity-extension tracking for arcs and tangent directions
 better tangent handling for arcs and complex entities
 spatial index implementation beyond LinearSpatialIndex
 ```
@@ -622,7 +623,7 @@ The current abstraction is ready for these improvements without moving snap logi
 
 ### SmartPoint tracking intersections
 
-SmartPoint tracking now also exposes a temporary snap at the intersection of two tracking lines generated from different SmartPoints. The candidate is only produced when the cursor is within the active snap tolerance. Parallel tracking lines and the horizontal/vertical pair belonging to the same SmartPoint are ignored. Geometric snaps still have priority; tracking intersections only replace weak candidates such as Grid or Nearest.
+SmartPoint tracking now also exposes a temporary snap at the intersection of two tracking lines generated from different SmartPoints. The candidate is only produced when the cursor is within the active snap tolerance. Parallel tracking lines and the horizontal/vertical pair belonging to the same SmartPoint are ignored. Geometric snaps still have priority; tracking intersections only replace weak candidates such as Grid or Nearest. When the circular marker with the internal cross is shown, pointer input is resolved to that temporary intersection point, so it behaves as a real snap for the active command.
 
 
 ## Entity extension tracking
@@ -637,3 +638,14 @@ Supported extension sources:
 Extension candidates use `SnapKind.Extension`. They carry the same `TrackingOrigin` and signed `TrackingDirection` metadata as normal tracking-line candidates, so plain distance input can resolve points along the entity extension. The extension overlay is runtime-only: it is not persisted, selectable, undoable or exported.
 
 Geometric object snaps still have priority over extension tracking. Extension can override weaker candidates such as Grid and Nearest when the cursor is within snap tolerance of the temporary extension line.
+
+
+## Manual verification checklist
+
+The current advanced snapping milestone is covered by the manual checklist in:
+
+```text
+docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md
+```
+
+Use that checklist before extending SmartTrack further or before packaging the next v0.9 stabilization build.
