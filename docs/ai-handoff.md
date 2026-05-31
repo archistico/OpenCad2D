@@ -1,4 +1,4 @@
-# OpenCad2D roadmap
+﻿# OpenCad2D roadmap
 
 This roadmap tracks the active development path from the current v0.9 stabilization work toward the first stable v1.0 release.
 
@@ -1678,3 +1678,41 @@ Important implementation guidance for future work:
 - Updated snapping documentation and roadmap notes to describe Nearest as an opt-in drafting aid.
 - Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
 
+
+### Step 31W - SmartPoint capture foundation
+
+- Added `SmartPoint` and `SmartPointStore` in `OpenCad2D.Interaction.Snapping` as bounded, runtime-only tracking references.
+- The store deduplicates refreshed references, keeps only the newest entries and caps the active SmartPoint list at five points.
+- `CadCanvas` now captures SmartPoints after a 400 ms hover over strong geometric snaps while a non-selection command is active.
+- Captured snap kinds are intentionally limited to Endpoint, Midpoint, Center, Quadrant and Intersection; Entity, Grid and Nearest are excluded to avoid noisy or selection-oriented tracking references.
+- SmartPoints are drawn as small cyan temporary markers and are cleared with snap-state reset, pointer leave/pan pending-state reset, and completed/cancelled tool results.
+- This step does not yet generate tracking lines, tracking intersections or manual distance input. It is the stable infrastructure layer for the next Extension/SmartTrack step.
+- Added `SmartPointStoreTests` for maximum count, dedup/refresh and clear behavior.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31X - Basic SmartPoint tracking lines
+
+- Added `TrackingLineKind`, `TrackingLine` and `TrackingEngine` in `OpenCad2D.Interaction.Snapping`.
+- Each captured SmartPoint now generates horizontal and vertical runtime-only tracking lines.
+- `CadCanvas` renders the tracking lines as cyan dashed overlays before the SmartPoint markers and snap marker.
+- When the cursor is within snap tolerance of a tracking line, the canvas exposes a temporary `SnapKind.Tracking` candidate.
+- Explicit object snaps still win over tracking; tracking can override lower-priority Grid/Nearest candidates.
+- Pointer input now uses the projected tracking point when the active candidate is `SnapKind.Tracking`, allowing existing point-based tools to consume tracking points without tool-specific code.
+- Added `TrackingEngineTests` for line creation, horizontal/vertical projection and tolerance rejection.
+- Manual distance input along the active tracking line was added in Step 31Y.
+
+
+### Step 31Y - Manual distance input on active tracking line
+
+- `SnapCandidate` now carries optional `TrackingOrigin` and signed `TrackingDirection` metadata for `SnapKind.Tracking` candidates.
+- `TrackingEngine` populates that metadata when it projects the cursor onto a horizontal/vertical SmartPoint tracking line.
+- Plain direct-distance command input now resolves from the SmartPoint origin along the signed tracking direction when a tracking candidate is active.
+- HUD distance input also avoids freezing the normal base-point angle while the current candidate is Tracking, so distance-only confirmation can resolve along the tracking line.
+- Explicit coordinate input remains higher priority than tracking distance input.
+- Added regression coverage for positive and negative signed tracking directions and command-line direct distance resolution through a tracking snap.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+## 2026-05-31 - SmartPoint tracking intersections
+
+Added `SnapKind.TrackingIntersection` and extended `TrackingEngine` so horizontal/vertical tracking lines from different SmartPoints can create temporary intersection snap candidates. The candidate carries no tracking origin/direction, so direct numeric tracking distance remains limited to `SnapKind.Tracking` line candidates. `CadCanvas` renders tracking intersections with a small circular tracking marker.

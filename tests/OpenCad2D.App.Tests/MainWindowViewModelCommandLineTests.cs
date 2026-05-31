@@ -2,6 +2,7 @@ using OpenCad2D.App.ViewModels;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Measurements;
@@ -295,6 +296,61 @@ public sealed class MainWindowViewModelCommandLineTests
             viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
             line => line.Start == new Point2D(0, 0) &&
                     line.End == new Point2D(5, 0));
+        Assert.NotNull(result);
+    }
+
+
+    [Fact]
+    public void SubmitCommandInput_WithDirectDistanceAndTrackingSnap_ShouldUseTrackingOriginAndDirection()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetCurrentSnapCandidate(new SnapCandidate(
+            SnapKind.Tracking,
+            new Point2D(30, 20),
+            null,
+            0,
+            new Point2D(10, 20),
+            new Vector2D(1, 0)));
+
+        var result = viewModel.SubmitCommandInput("5");
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Line created.", viewModel.LastMessage);
+        Assert.Contains(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
+            line => line.Start == new Point2D(0, 0) &&
+                    line.End == new Point2D(15, 20));
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void SubmitCommandInput_WithDirectDistanceAndTrackingSnap_ShouldUseSignedNegativeDirection()
+    {
+        var viewModel = new MainWindowViewModel();
+        int initialCount = viewModel.Workspace.Document.Entities.Count;
+
+        viewModel.SubmitCommandInput("L");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SetCurrentSnapCandidate(new SnapCandidate(
+            SnapKind.Tracking,
+            new Point2D(5, 20),
+            null,
+            0,
+            new Point2D(10, 20),
+            new Vector2D(-1, 0)));
+
+        var result = viewModel.SubmitCommandInput("5");
+
+        Assert.Equal(initialCount + 1, viewModel.Workspace.Document.Entities.Count);
+        Assert.Equal("Line created.", viewModel.LastMessage);
+        Assert.Contains(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
+            line => line.Start == new Point2D(0, 0) &&
+                    line.End == new Point2D(5, 20));
         Assert.NotNull(result);
     }
 

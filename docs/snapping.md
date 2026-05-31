@@ -1,4 +1,4 @@
-# Snapping
+﻿# Snapping
 
 Snapping helps the user place points precisely.
 
@@ -504,7 +504,7 @@ Midpoint       X marker
 Center         circle marker
 Quadrant       diamond marker
 Intersection   plus marker
-Nearest        square marker
+Nearest        small circle with internal X marker
 Perpendicular  T marker
 Tangent        circle plus tangent line
 Grid           grid-like marker
@@ -512,6 +512,73 @@ Entity         simple rectangle marker
 ```
 
 This gives immediate visual feedback and makes the cursor behavior more CAD-like.
+
+---
+
+## Temporary SmartPoint capture foundation
+
+The advanced tracking/extension work starts with temporary SmartPoints. A SmartPoint is a runtime-only reference point captured from a strong object snap while a point-based command is active.
+
+Current behavior:
+
+```text
+Hover delay: 400 ms
+Maximum captured SmartPoints: 5
+Captured snap kinds: Endpoint, Midpoint, Center, Quadrant, Intersection
+Excluded snap kinds: Entity, Grid, Nearest, Perpendicular, Tangent
+Lifetime: current command / transient canvas state only
+Persistence/export: never saved, never exported
+```
+
+SmartPoint capture is intentionally conservative:
+
+- it is disabled while the Selection tool is active;
+- it does not capture `EntityOnly` selection prompts;
+- it does not capture `Nearest`, because Nearest is too noisy as a tracking reference;
+- it clears pending hover state when the pointer leaves the canvas, when panning starts, or when snap state is cleared;
+- completed/cancelled tool results clear captured SmartPoints.
+
+The current implementation captures and displays SmartPoints, then generates temporary horizontal and vertical tracking lines from each captured point while a non-selection command is active. When the cursor is within snap tolerance of a tracking line, OpenCad2D shows a temporary tracking snap marker and feeds the projected tracking point to the active tool. Direct distance input can now use the active tracking line: typing a plain distance while the tracking candidate is active resolves the point from the SmartPoint origin along the signed cursor-side tracking direction.
+
+## Basic SmartPoint tracking lines
+
+Each captured SmartPoint currently emits two runtime-only construction lines:
+
+```text
+horizontal through the SmartPoint
+vertical through the SmartPoint
+```
+
+These lines are drawn as cyan dashed overlays. They are not document entities, are not selectable, are not exported, and are cleared together with the SmartPoints at the end of the command.
+
+Tracking snap priority is conservative:
+
+- explicit object snaps such as Endpoint, Midpoint, Center, Quadrant and Intersection still win;
+- Tracking can win over Grid and Nearest, because both are lower-priority drafting aids;
+- Tracking is not included in persisted snap settings and is generated only from active SmartPoints.
+
+
+## Manual distance input on active tracking lines
+
+When the active snap candidate is `SnapKind.Tracking`, plain distance input is resolved from the tracking line origin instead of from the command base point.
+
+Example:
+
+```text
+SmartPoint at 10,20
+cursor on the horizontal tracking line to the right
+typed input: 5
+resolved point: 15,20
+```
+
+The tracking candidate stores both:
+
+```text
+TrackingOrigin
+TrackingDirection
+```
+
+`TrackingDirection` is signed according to the cursor side, so moving left/down from the SmartPoint and typing a distance creates a point in that negative direction. Explicit coordinate input still has priority over tracking distance input.
 
 ---
 
@@ -551,3 +618,8 @@ spatial index implementation beyond LinearSpatialIndex
 ```
 
 The current abstraction is ready for these improvements without moving snap logic into the UI.
+
+
+### SmartPoint tracking intersections
+
+SmartPoint tracking now also exposes a temporary snap at the intersection of two tracking lines generated from different SmartPoints. The candidate is only produced when the cursor is within the active snap tolerance. Parallel tracking lines and the horizontal/vertical pair belonging to the same SmartPoint are ignored. Geometric snaps still have priority; tracking intersections only replace weak candidates such as Grid or Nearest.

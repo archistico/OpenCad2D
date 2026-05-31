@@ -3898,6 +3898,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return false;
         }
 
+        if (_commandHudInputState.Distance is not null &&
+            _commandHudInputState.AngleDegrees is null &&
+            TryResolveTrackingDistancePoint(
+                _commandHudInputState.Distance.Value,
+                out worldPoint,
+                out errorMessage))
+        {
+            return true;
+        }
+
         if (!IsCommandHudPointOverrideTargetActive())
         {
             errorMessage = "Distance/angle input requires a base point.";
@@ -4039,7 +4049,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (fieldKind == CommandHudFieldKind.Distance &&
             _commandHudInputState.AngleDegrees is null &&
-            measurement.AngleDegrees is not null)
+            measurement.AngleDegrees is not null &&
+            _currentSnapCandidate?.Kind != SnapKind.Tracking)
         {
             _commandHudInputState.AngleDegrees = measurement.AngleDegrees;
         }
@@ -4056,6 +4067,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         out Point2D worldPoint,
         out string? errorMessage)
     {
+        if (TryResolveTrackingDistancePoint(
+                distance,
+                out worldPoint,
+                out errorMessage))
+        {
+            return true;
+        }
+
         worldPoint = Point2D.Origin;
         errorMessage = null;
 
@@ -4082,6 +4101,32 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         worldPoint = basePoint + direction.Normalize() * distance;
+        return true;
+    }
+
+    private bool TryResolveTrackingDistancePoint(
+        double distance,
+        out Point2D worldPoint,
+        out string? errorMessage)
+    {
+        worldPoint = Point2D.Origin;
+        errorMessage = null;
+
+        if (_currentSnapCandidate?.Kind != SnapKind.Tracking ||
+            _currentSnapCandidate.TrackingOrigin is null ||
+            _currentSnapCandidate.TrackingDirection is null)
+        {
+            return false;
+        }
+
+        if (distance <= 0)
+        {
+            errorMessage = "Tracking distance must be greater than zero.";
+            return false;
+        }
+
+        worldPoint = _currentSnapCandidate.TrackingOrigin.Value +
+            _currentSnapCandidate.TrackingDirection.Value * distance;
         return true;
     }
 

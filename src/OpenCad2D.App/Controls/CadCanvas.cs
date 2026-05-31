@@ -1,8 +1,9 @@
-using Avalonia;
+﻿using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Threading;
 using OpenCad2D.App.Diagnostics;
 using OpenCad2D.App.Rendering;
 using OpenCad2D.App.Viewport;
@@ -66,6 +67,18 @@ public sealed class CadCanvas : Control
     private readonly Pen _snapMarkerPen = new(
         new SolidColorBrush(Color.FromRgb(255, 230, 80)),
         2);
+    private readonly Pen _smartPointPen = new(
+        new SolidColorBrush(Color.FromRgb(110, 210, 255)),
+        1.5);
+    private readonly Pen _trackingLinePen = new(
+        new SolidColorBrush(Color.FromArgb(170, 110, 210, 255)),
+        1,
+        new DashStyle(new[] { 7.0, 5.0 }, 0));
+    private const int SmartPointHoverDelayMilliseconds = 400;
+    private readonly SmartPointStore _smartPointStore = new(maximumCount: 5);
+    private readonly TrackingEngine _trackingEngine = new();
+    private readonly DispatcherTimer _smartPointHoverTimer;
+    private SnapCandidate? _pendingSmartPointCandidate;
     private SnapCandidate? _currentSnapCandidate;
     private SnapKind? _enabledSnapsOverride;
     private readonly Pen _gridMinorPen = new(
@@ -138,6 +151,12 @@ public sealed class CadCanvas : Control
         PointerEntered += OnPointerEntered;
         PointerExited += OnPointerExited;
         KeyDown += OnKeyDown;
+
+        _smartPointHoverTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(SmartPointHoverDelayMilliseconds)
+        };
+        _smartPointHoverTimer.Tick += OnSmartPointHoverTimerTick;
     }
 
     private void OnPointerEntered(
@@ -155,6 +174,7 @@ public sealed class CadCanvas : Control
     {
         _isPointerInside = false;
         _pointerScreenPoint = null;
+        ResetPendingSmartPointCandidate();
         InvalidateVisual();
     }
 
@@ -197,6 +217,8 @@ public sealed class CadCanvas : Control
         }
 
         DrawActiveToolPreview(context);
+        DrawTrackingLines(context);
+        DrawSmartPointMarkers(context);
         DrawCrosshair(context);
         DrawSnapMarker(context);
     }
@@ -365,6 +387,80 @@ public sealed class CadCanvas : Control
             : string.Join(";", values.Select(value => value.ToString("G17", CultureInfo.InvariantCulture)));
     }
 
+    private void DrawTrackingLines(DrawingContext context)
+    {
+        if (!CanUseSmartPointTracking() ||
+            _smartPointStore.Points.Count == 0 ||
+            Bounds.Width <= 0 ||
+            Bounds.Height <= 0)
+        {
+            return;
+        }
+
+        BoundingBox2D visibleBounds = _viewport
+            .GetVisibleWorldBounds(new Size(Bounds.Width, Bounds.Height));
+
+        foreach (TrackingLine line in _trackingEngine.BuildAxisLines(_smartPointStore.Points))
+        {
+            Point2D start;
+            Point2D end;
+
+            if (line.Kind == TrackingLineKind.Horizontal)
+            {
+                start = new Point2D(visibleBounds.MinX, line.Origin.Y);
+                end = new Point2D(visibleBounds.MaxX, line.Origin.Y);
+            }
+            else
+            {
+                start = new Point2D(line.Origin.X, visibleBounds.MinY);
+                end = new Point2D(line.Origin.X, visibleBounds.MaxY);
+            }
+
+            context.DrawLine(
+                _trackingLinePen,
+                ToScreenPoint(start),
+                ToScreenPoint(end));
+        }
+    }
+
+    private void DrawSmartPointMarkers(DrawingContext context)
+    {
+        foreach (SmartPoint smartPoint in _smartPointStore.Points)
+        {
+            DrawSmartPointMarker(
+                context,
+                ToScreenPoint(smartPoint.Position));
+        }
+    }
+
+    private void DrawSmartPointMarker(
+        DrawingContext context,
+        Point point)
+    {
+        const double size = 4;
+
+        context.DrawLine(
+            _smartPointPen,
+            new Point(point.X - size, point.Y),
+            new Point(point.X + size, point.Y));
+
+        context.DrawLine(
+            _smartPointPen,
+            new Point(point.X, point.Y - size),
+            new Point(point.X, point.Y + size));
+
+        var rect = new Rect(
+            point.X - size,
+            point.Y - size,
+            size * 2,
+            size * 2);
+
+        context.DrawRectangle(
+            null,
+            _smartPointPen,
+            rect);
+    }
+
     private void DrawSnapMarker(DrawingContext context)
     {
         if (_currentSnapCandidate is null)
@@ -414,6 +510,14 @@ public sealed class CadCanvas : Control
 
             case SnapKind.Entity:
                 DrawEntitySnapMarker(context, point);
+                break;
+
+            case SnapKind.Tracking:
+                DrawTrackingSnapMarker(context, point);
+                break;
+
+            case SnapKind.TrackingIntersection:
+                DrawTrackingIntersectionSnapMarker(context, point);
                 break;
 
             default:
@@ -612,6 +716,48 @@ public sealed class CadCanvas : Control
             rect);
     }
 
+    private void DrawTrackingSnapMarker(
+        DrawingContext context,
+        Point point)
+    {
+        const double size = 5;
+
+        context.DrawLine(
+            _smartPointPen,
+            new Point(point.X - size, point.Y),
+            new Point(point.X + size, point.Y));
+
+        context.DrawLine(
+            _smartPointPen,
+            new Point(point.X, point.Y - size),
+            new Point(point.X, point.Y + size));
+    }
+
+    private void DrawTrackingIntersectionSnapMarker(
+        DrawingContext context,
+        Point point)
+    {
+        const double radius = 5;
+        const double size = 3;
+
+        context.DrawEllipse(
+            null,
+            _smartPointPen,
+            point,
+            radius,
+            radius);
+
+        context.DrawLine(
+            _smartPointPen,
+            new Point(point.X - size, point.Y),
+            new Point(point.X + size, point.Y));
+
+        context.DrawLine(
+            _smartPointPen,
+            new Point(point.X, point.Y - size),
+            new Point(point.X, point.Y + size));
+    }
+
     private void DrawDefaultSnapMarker(
         DrawingContext context,
         Point point)
@@ -656,7 +802,142 @@ public sealed class CadCanvas : Control
             basePoint,
             Workspace.Context.GridSettings);
 
-        _currentSnapCandidate = Workspace.SnapService.Snap(request);
+        SnapCandidate? objectSnapCandidate = Workspace.SnapService.Snap(request);
+        SnapCandidate? trackingCandidate = GetTrackingSnapCandidate(modelPoint);
+
+        _currentSnapCandidate = ChooseSnapCandidate(
+            objectSnapCandidate,
+            trackingCandidate);
+    }
+
+    private SnapCandidate? GetTrackingSnapCandidate(Point2D modelPoint)
+    {
+        if (!CanUseSmartPointTracking() ||
+            _smartPointStore.Points.Count == 0 ||
+            Workspace is null)
+        {
+            return null;
+        }
+
+        return _trackingEngine.FindNearestTrackingCandidate(
+            _smartPointStore.Points,
+            modelPoint,
+            Workspace.Context.SnapTolerance);
+    }
+
+    private static SnapCandidate? ChooseSnapCandidate(
+        SnapCandidate? objectSnapCandidate,
+        SnapCandidate? trackingCandidate)
+    {
+        if (trackingCandidate is null)
+        {
+            return objectSnapCandidate;
+        }
+
+        if (objectSnapCandidate is null)
+        {
+            return trackingCandidate;
+        }
+
+        return objectSnapCandidate.Kind is SnapKind.Grid or SnapKind.Nearest
+            ? trackingCandidate
+            : objectSnapCandidate;
+    }
+
+    private void UpdateSmartPointHoverCandidate()
+    {
+        if (!CanCaptureCurrentSnapAsSmartPoint())
+        {
+            ResetPendingSmartPointCandidate();
+            return;
+        }
+
+        SnapCandidate current = _currentSnapCandidate!;
+
+        if (_pendingSmartPointCandidate is not null &&
+            IsSameSnapReference(_pendingSmartPointCandidate, current))
+        {
+            return;
+        }
+
+        _pendingSmartPointCandidate = current;
+        _smartPointHoverTimer.Stop();
+        _smartPointHoverTimer.Start();
+    }
+
+    private bool CanUseSmartPointTracking()
+    {
+        return Workspace is not null &&
+            Workspace.ToolController.ActiveTool is not SelectionTool;
+    }
+
+    private bool CanCaptureCurrentSnapAsSmartPoint()
+    {
+        if (!CanUseSmartPointTracking() ||
+            _currentSnapCandidate is null)
+        {
+            return false;
+        }
+
+        return _currentSnapCandidate.Kind is SnapKind.Endpoint or
+            SnapKind.Midpoint or
+            SnapKind.Center or
+            SnapKind.Quadrant or
+            SnapKind.Intersection;
+    }
+
+    private void OnSmartPointHoverTimerTick(
+        object? sender,
+        EventArgs e)
+    {
+        _smartPointHoverTimer.Stop();
+
+        if (_pendingSmartPointCandidate is null ||
+            _currentSnapCandidate is null ||
+            !IsSameSnapReference(_pendingSmartPointCandidate, _currentSnapCandidate) ||
+            !CanCaptureCurrentSnapAsSmartPoint())
+        {
+            ResetPendingSmartPointCandidate();
+            return;
+        }
+
+        _smartPointStore.AddOrRefresh(new SmartPoint(
+            _currentSnapCandidate.Point,
+            _currentSnapCandidate.Kind,
+            _currentSnapCandidate.EntityId,
+            DateTimeOffset.UtcNow));
+
+        _pendingSmartPointCandidate = null;
+        InvalidateVisual();
+    }
+
+    private void ResetPendingSmartPointCandidate()
+    {
+        _smartPointHoverTimer.Stop();
+        _pendingSmartPointCandidate = null;
+    }
+
+    private void ClearSmartPoints()
+    {
+        ResetPendingSmartPointCandidate();
+        _smartPointStore.Clear();
+    }
+
+    private void ApplySmartPointLifecycle(ToolResult result)
+    {
+        if (result.Kind is ToolResultKind.Completed or ToolResultKind.Cancelled)
+        {
+            ClearSmartPoints();
+        }
+    }
+
+    private static bool IsSameSnapReference(
+        SnapCandidate left,
+        SnapCandidate right)
+    {
+        return left.Kind == right.Kind &&
+            left.Point == right.Point &&
+            Nullable.Equals(left.EntityId, right.EntityId);
     }
 
     private SnapKind GetEffectiveEnabledSnaps()
@@ -1163,6 +1444,8 @@ public sealed class CadCanvas : Control
                 // the user does not see endpoint/midpoint/center snaps while choosing
                 // the base point.
                 UpdateCurrentSnapCandidate(rightClickModelPoint);
+                UpdateSmartPointHoverCandidate();
+                ApplySmartPointLifecycle(rightClickResult);
 
                 NotifyWorkspaceChanged(
                     rightClickResult,
@@ -1209,6 +1492,7 @@ public sealed class CadCanvas : Control
         }
 
         result = ApplyZoomWindowIfCompleted(result);
+        ApplySmartPointLifecycle(result);
 
         NotifyWorkspaceChanged(
             result,
@@ -1259,6 +1543,7 @@ public sealed class CadCanvas : Control
 
             Point2D modelPoint = ToModelPoint(position);
             _currentSnapCandidate = null;
+            ResetPendingSmartPointCandidate();
 
             NotifyWorkspaceChanged(
                 ToolResult.Updated("Pan."),
@@ -1270,6 +1555,7 @@ public sealed class CadCanvas : Control
 
         Point2D point = ToModelPoint(position);
         UpdateCurrentSnapCandidate(point);
+        UpdateSmartPointHoverCandidate();
 
         ToolResult result = Workspace.ToolController.OnPointerMoved(
             CreatePointerInfo(
@@ -1318,6 +1604,7 @@ public sealed class CadCanvas : Control
                 e.KeyModifiers));
 
         result = ApplyZoomWindowIfCompleted(result);
+        ApplySmartPointLifecycle(result);
 
         NotifyWorkspaceChanged(
             result,
@@ -1382,6 +1669,8 @@ public sealed class CadCanvas : Control
 
         if (result is not null)
         {
+            ApplySmartPointLifecycle(result);
+
             NotifyWorkspaceChanged(
                 result,
                 Point2D.Origin);
@@ -1705,6 +1994,7 @@ public sealed class CadCanvas : Control
     public void ClearSnapMarker()
     {
         _currentSnapCandidate = null;
+        ClearSmartPoints();
 
         NotifyWorkspaceChanged(
             ToolResult.None(),
@@ -1717,7 +2007,9 @@ public sealed class CadCanvas : Control
         Point screenPoint,
         KeyModifiers keyModifiers)
     {
-        Point2D modelPoint = ToModelPoint(screenPoint);
+        Point2D modelPoint = _currentSnapCandidate?.Kind == SnapKind.Tracking
+            ? _currentSnapCandidate.Point
+            : ToModelPoint(screenPoint);
         Point2D userPoint = Workspace is null
             ? modelPoint
             : Workspace.CurrentUcs.WorldToUser(modelPoint);
