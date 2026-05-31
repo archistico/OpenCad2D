@@ -507,17 +507,25 @@ public sealed class CadCanvas : Control
         DrawingContext context,
         Point point)
     {
-        const double size = 6;
-        var rect = new Rect(
-            point.X - size,
-            point.Y - size,
-            size * 2,
-            size * 2);
+        const double radius = 4;
+        const double crossSize = 2.5;
 
-        context.DrawRectangle(
+        context.DrawEllipse(
             null,
             _snapMarkerPen,
-            rect);
+            point,
+            radius,
+            radius);
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - crossSize, point.Y - crossSize),
+            new Point(point.X + crossSize, point.Y + crossSize));
+
+        context.DrawLine(
+            _snapMarkerPen,
+            new Point(point.X - crossSize, point.Y + crossSize),
+            new Point(point.X + crossSize, point.Y - crossSize));
     }
 
     private void DrawPerpendicularSnapMarker(

@@ -288,9 +288,11 @@ Nearest snapping finds the closest point on an entity to the cursor. For raster 
 
 It is more generic than endpoint, midpoint or intersection snapping.
 
-For this reason it has lower priority than more explicit snap modes.
+For this reason it has lower priority than more explicit snap modes. Endpoint, midpoint, center, quadrant, intersection, perpendicular and tangent candidates win before Nearest; Grid remains below Nearest.
 
-Nearest snapping is useful, but it can be noisy if enabled together with many precise snaps.
+Nearest snapping is intentionally disabled by default because it can be noisy when drafting near existing geometry. Users can enable it from the Snap bar only for workflows where closest-point picking is useful.
+
+Implementation note: Nearest is already part of the document/application snap settings, so enabling it can be persisted, but new documents and missing legacy snap settings keep it off unless explicitly enabled.
 
 ---
 

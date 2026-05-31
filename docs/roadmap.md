@@ -27,6 +27,7 @@ Primary v0.8.100+ themes:
 - architectural symbols and technical drafting helpers;
 - stair plan/elevation/front-elevation generation;
 - explicit-boundary hatch and fill workflows;
+- advanced drafting aids such as opt-in Nearest snapping and temporary extension/tracking points;
 - careful documentation/specification before implementation.
 
 See `docs/roadmap-v0.8.100.md` for the detailed v0.8.100+ plan and `docs/specs/` for milestone specifications.
@@ -74,6 +75,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
 | Explode / Join essentials | [x] | EXPLODE converts straight and mixed polylines into lines/arcs; JOIN converts connected lines, arcs and open polylines into one or more polylines, with bulge preservation, diagnostics, undo and targeted tests. |
 | External raster references | [x] | PNG/JPG/JPEG files can be attached as external references, transformed as oriented rectangles, snapped, relinked, collected into portable folders and managed through Image References Manager. |
+| Advanced snapping foundation | [~] | Nearest exists as a low-priority snap and is now exposed as an opt-in Snap bar toggle, disabled by default. Extension/SmartTrack planning remains next. |
 
 ---
 

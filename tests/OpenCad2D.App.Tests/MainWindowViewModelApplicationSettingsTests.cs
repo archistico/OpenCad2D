@@ -99,6 +99,18 @@ public sealed class MainWindowViewModelApplicationSettingsTests : IDisposable
         Assert.Equal(13, viewModel.Workspace.Context.SnapTolerance);
     }
 
+    [Fact]
+    public void Constructor_WithNoSavedSnappingDefaults_ShouldKeepNearestDisabledByDefault()
+    {
+        var store = new InMemoryApplicationSettingsStore();
+
+        var viewModel = new MainWindowViewModel(applicationSettingsStore: store);
+
+        Assert.True(viewModel.IsSnapEnabled(SnapKind.Endpoint));
+        Assert.True(viewModel.IsSnapEnabled(SnapKind.Grid));
+        Assert.False(viewModel.IsSnapEnabled(SnapKind.Nearest));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory))

@@ -1668,3 +1668,13 @@ Important implementation guidance for future work:
 - Do not reintroduce a visible bottom command row.
 - Do not route new command phases by ad-hoc key handling in the Window. Use prompt contracts, HUD field definitions and narrow regression tests.
 - For any tool that asks for entity selection, verify `SnapKind.EntityOnly` so endpoint/midpoint/intersection snaps do not leak into selection prompts.
+
+### Step 31V - Opt-in Nearest snap toggle
+
+- Exposed the existing `SnapKind.Nearest` mode in the Snap bar with a dedicated `Nearest` checkbox.
+- Kept Nearest disabled by default for new documents and missing legacy snap settings, because closest-point snapping is useful but too noisy as a permanent default.
+- Kept the existing SnapService priority policy where Nearest is below explicit geometric snaps and above Grid.
+- Added regression coverage to assert that a ViewModel created without saved snap defaults has Endpoint/Grid enabled but Nearest disabled.
+- Updated snapping documentation and roadmap notes to describe Nearest as an opt-in drafting aid.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+

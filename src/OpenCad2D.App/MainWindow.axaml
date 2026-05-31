@@ -1826,6 +1826,13 @@
                           IsChecked="True"
                           Click="SnapTangent_Changed" />
 
+                <CheckBox x:Name="SnapNearestCheckBox"
+                          Classes="snap-check"
+                          Content="Nearest"
+                          IsChecked="False"
+                          ToolTip.Tip="Low-priority snap to the closest point on an entity. Disabled by default because it can be noisy."
+                          Click="SnapNearest_Changed" />
+
                 <Separator Margin="4,0" />
 
                 <CheckBox x:Name="SnapGridCheckBox"

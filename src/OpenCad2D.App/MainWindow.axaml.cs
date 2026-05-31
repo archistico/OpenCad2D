@@ -3680,6 +3680,7 @@ public partial class MainWindow : Window
         SnapIntersectionCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Intersection);
         SnapPerpendicularCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Perpendicular);
         SnapTangentCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Tangent);
+        SnapNearestCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Nearest);
         SnapGridCheckBox.IsChecked = _viewModel.IsSnapEnabled(SnapKind.Grid);
         OrthoCheckBox.IsChecked = _viewModel.IsOrthoEnabled;
     }
@@ -3754,6 +3755,15 @@ public partial class MainWindow : Window
         SetSnapFromCheckBox(
             SnapKind.Tangent,
             SnapTangentCheckBox.IsChecked == true);
+    }
+
+    private void SnapNearest_Changed(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        SetSnapFromCheckBox(
+            SnapKind.Nearest,
+            SnapNearestCheckBox.IsChecked == true);
     }
 
     private void Ortho_Changed(
