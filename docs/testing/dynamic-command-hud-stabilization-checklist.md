@@ -217,6 +217,9 @@ Automated regression tests:
 - `CommandHudInput_SplineDistanceNegative_ShouldNotAddControlPoint`
 - `CommandHudInput_TextInsertionPoint_ShouldAcceptAbsoluteXAndY`
 - `CommandHudInput_MultilineTextInsertionPoint_ShouldAcceptAbsoluteXAndY`
+- `CommandHudInput_Point_ShouldAcceptAbsoluteXAndY`
+- `CommandHudInput_ZoomWindowSecondCorner_ShouldExposeCoordinateOverrides`
+- `CommandHudInput_MeasureDistanceSecondPoint_ShouldAcceptDistanceAngle`
 - `CommandHudInput_FirstPoint_ShouldExposeCoordinatesEvenAfterPreviousBasePoint`
 - `CommandHudInput_FirstPointTools_ShouldExposeCoordinateOverrides`
 - `CommandHudInput_PolygonCenterPoint_ShouldExposeCoordinateOverrides`

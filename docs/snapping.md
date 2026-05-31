@@ -266,9 +266,11 @@ For arcs, only quadrant points that actually lie on the arc are returned.
 
 Intersection snapping finds intersections between visible entities.
 
-It supports exact intersections for common analytic combinations such as line-line, line-polyline, polyline-polyline, line-circle, circle-circle, line-arc and circle-arc when the entities are represented analytically or by straight segments.
+It supports exact intersections for common analytic combinations such as line-line, line-polyline, polyline-polyline, line-circle, circle-circle, circle-polyline, line-arc and circle-arc when the entities are represented analytically or by straight segments.
 
-Mixed polylines with DXF bulges are converted through `PolylineEntity.GetInteractionGeometry()` before intersection snapping. This makes line/polyline and polyline/polyline snaps follow the visible curved segment instead of the original chord.
+Closed rectangles are stored as `PolylineEntity` objects. Circle/rectangle intersection snapping therefore uses the circle-polyline path, checking each rectangle side as a segment and returning distinct intersection points. This covers both axis-aligned rectangles and rotated rectangles created by Rectangle by Sides.
+
+Mixed polylines with DXF bulges are converted through `PolylineEntity.GetInteractionGeometry()` before intersection snapping. This makes line/polyline, polyline/polyline and circle/polyline snaps follow the visible curved segment instead of the original chord.
 
 It also supports first-pass curve intersections for `EllipseEntity` and `BezierSplineEntity` by converting curves to a high-resolution polyline approximation for snapping. This covers practical line/ellipse, polyline/ellipse, circle/ellipse, ellipse/ellipse, line/spline, polyline/spline, circle/spline, ellipse/spline and spline/spline intersections.
 

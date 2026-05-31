@@ -1,4 +1,5 @@
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Operations;
 using OpenCad2D.Geometry.Primitives;
 
@@ -80,6 +81,16 @@ public sealed class IntersectionSnapProvider : ISnapProvider
                 CircleIntersectionService.IntersectCircleCircle(
                     circle1.Geometry,
                     circle2.Geometry),
+
+            (PolylineEntity polyline, CircleEntity circle) =>
+                IntersectPolylineCircle(
+                    ToIntersectionPolyline(polyline),
+                    circle.Geometry),
+
+            (CircleEntity circle, PolylineEntity polyline) =>
+                IntersectPolylineCircle(
+                    ToIntersectionPolyline(polyline),
+                    circle.Geometry),
 
             (LineEntity line, EllipseEntity ellipse) =>
                 IntersectSegmentCurveApproximation(
@@ -230,6 +241,35 @@ public sealed class IntersectionSnapProvider : ISnapProvider
             curveApproximation);
     }
 
+    private static IReadOnlyList<Point2D> IntersectPolylineCircle(
+        Polyline2D polyline,
+        Circle2D circle)
+    {
+        var result = new List<Point2D>();
+
+        foreach (LineSegment2D segment in polyline.GetSegments())
+        {
+            foreach (Point2D point in CircleIntersectionService.IntersectSegmentCircle(segment, circle))
+            {
+                AddDistinct(result, point);
+            }
+        }
+
+        return result;
+    }
+
+    private static void AddDistinct(
+        List<Point2D> points,
+        Point2D point)
+    {
+        bool alreadyExists = points.Any(existing =>
+            GeometryTolerance.Default.AreCoordinatesEqual(existing, point));
+
+        if (!alreadyExists)
+        {
+            points.Add(point);
+        }
+    }
 
     private static Polyline2D ToIntersectionPolyline(PolylineEntity polyline)
     {

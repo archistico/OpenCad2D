@@ -417,6 +417,82 @@ public sealed class IntersectionSnapProviderTests
     }
 
     [Fact]
+    public void Snap_CircleClosedRectanglePolylineIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var rectangle = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 10),
+                new Point2D(0, 10)
+            },
+            isClosed: true);
+
+        var circle = new CircleEntity(
+            new Point2D(5, 5),
+            Math.Sqrt(34));
+
+        document.AddEntity(rectangle);
+        document.AddEntity(circle);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(10.05, 8.05),
+            tolerance: 0.25,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(10, result.Point.X, precision: 10);
+        Assert.Equal(8, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_CircleRotatedClosedRectanglePolylineIntersection_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var rectangle = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(8, 6),
+                new Point2D(4.4, 10.8),
+                new Point2D(-3.6, 4.8)
+            },
+            isClosed: true);
+
+        var circle = new CircleEntity(
+            new Point2D(4, 3),
+            3);
+
+        document.AddEntity(rectangle);
+        document.AddEntity(circle);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(6.4, 4.8),
+            tolerance: 0.25,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(6.4, result.Point.X, precision: 10);
+        Assert.Equal(4.8, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
     public void Snap_IntersectionDisabled_ShouldReturnNull()
     {
         var document = new CadDocument();

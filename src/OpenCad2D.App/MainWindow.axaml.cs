@@ -86,6 +86,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         _viewModel = new MainWindowViewModel(new AvaloniaTextInputProvider(this));
+        _viewModel.CommandHudInputOverridesCleared += (_, _) => ClearLogicalHudFieldInput();
 
         DataContext = _viewModel;
 
@@ -2378,7 +2379,7 @@ public partial class MainWindow : Window
         CadCanvas.Focus();
     }
 
-    private void Window_PreviewKeyDown(
+    private async void Window_PreviewKeyDown(
         object? sender,
         KeyEventArgs e)
     {
@@ -2401,9 +2402,16 @@ public partial class MainWindow : Window
             e.KeyModifiers == KeyModifiers.None &&
             _activeLogicalHudFieldKind is not null)
         {
-            if (!CommitActiveLogicalHudField(confirm: true))
+            try
             {
-                ConfirmCommandHudOverrides();
+                if (!await CommitActiveLogicalHudFieldAsync(confirm: true).ConfigureAwait(true))
+                {
+                    ConfirmCommandHudOverrides();
+                }
+            }
+            catch (Exception exception)
+            {
+                HandleCommandHudInputException(exception);
             }
 
             ClearLogicalHudFieldInput();
@@ -2501,7 +2509,7 @@ public partial class MainWindow : Window
             e.Handled = true;
         }
     }
-    private void HudFieldTextBox_KeyDown(
+    private async void HudFieldTextBox_KeyDown(
         object? sender,
         KeyEventArgs e)
     {
@@ -2524,7 +2532,15 @@ public partial class MainWindow : Window
 
         if (e.Key == Key.Enter)
         {
-            SubmitHudFieldInput(textBox, field);
+            try
+            {
+                await SubmitHudFieldInputAsync(textBox, field).ConfigureAwait(true);
+            }
+            catch (Exception exception)
+            {
+                HandleCommandHudInputException(exception);
+            }
+
             e.Handled = true;
             return;
         }
@@ -2606,14 +2622,14 @@ public partial class MainWindow : Window
             confirm: false);
     }
 
-    private void SubmitHudFieldInput(
+    private async Task SubmitHudFieldInputAsync(
         TextBox textBox,
         CommandHudFieldViewModel field)
     {
-        CommitHudFieldInput(
+        await CommitHudFieldInputAsync(
             textBox,
             field,
-            confirm: true);
+            confirm: true).ConfigureAwait(true);
     }
 
     private void CommitHudFieldInput(
@@ -2658,6 +2674,63 @@ public partial class MainWindow : Window
         {
             SubmitCommandInputText(input);
         }
+    }
+
+    private async Task CommitHudFieldInputAsync(
+        TextBox textBox,
+        CommandHudFieldViewModel field,
+        bool confirm)
+    {
+        if (!confirm)
+        {
+            CommitHudFieldInput(
+                textBox,
+                field,
+                confirm: false);
+            return;
+        }
+
+        if (!field.CanAcceptTypedOverride)
+        {
+            ResetHudFieldTextBox(textBox, field);
+            return;
+        }
+
+        string input = (textBox.Text ?? string.Empty).Trim();
+
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            ResetHudFieldTextBox(textBox, field);
+            return;
+        }
+
+        var commit = await _viewModel
+            .TryCommitCommandHudFieldInputAsync(
+                field.Kind,
+                input,
+                confirm: true)
+            .ConfigureAwait(true);
+
+        if (commit.Handled)
+        {
+            ClearCommandInputText();
+            RefreshStatus();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+            CadCanvas.Focus();
+            return;
+        }
+
+        SubmitCommandInputText(input);
+    }
+
+    private void HandleCommandHudInputException(Exception exception)
+    {
+        _viewModel.SetMessage("Command HUD input failed: " + exception.Message);
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
     }
 
     private static void ResetHudFieldTextBox(
@@ -2706,13 +2779,7 @@ public partial class MainWindow : Window
     private bool TryRouteInitialNumericTextToHudField(string text)
     {
         if (!_viewModel.IsCommandHudVisible ||
-            !IsNumericHudText(text))
-        {
-            return false;
-        }
-
-        if (_activeLogicalHudFieldKind is null &&
-            HasNonWhiteSpaceCommandInputText())
+            !CommandHudFieldRoutingPolicy.IsNumericHudText(text))
         {
             return false;
         }
@@ -2748,35 +2815,6 @@ public partial class MainWindow : Window
         else
         {
             RefreshLogicalHudFieldVisuals();
-        }
-
-        return true;
-    }
-
-    private static bool IsPreferredInitialNumericHudField(CommandHudFieldKind kind)
-    {
-        return kind is
-            CommandHudFieldKind.Distance or
-            CommandHudFieldKind.Width or
-            CommandHudFieldKind.Height or
-            CommandHudFieldKind.Radius or
-            CommandHudFieldKind.Factor;
-    }
-
-    private static bool IsNumericHudText(string text)
-    {
-        if (string.IsNullOrEmpty(text))
-        {
-            return false;
-        }
-
-        foreach (char character in text)
-        {
-            if (!char.IsDigit(character) &&
-                character is not '.' and not ',' and not '-' and not '+')
-            {
-                return false;
-            }
         }
 
         return true;
@@ -2865,6 +2903,40 @@ public partial class MainWindow : Window
         return handled;
     }
 
+    private async Task<bool> CommitActiveLogicalHudFieldAsync(bool confirm)
+    {
+        if (!confirm)
+        {
+            return CommitActiveLogicalHudField(confirm: false);
+        }
+
+        if (_activeLogicalHudFieldKind is null ||
+            string.IsNullOrWhiteSpace(_activeLogicalHudFieldText))
+        {
+            return false;
+        }
+
+        CommandHudFieldKind fieldKind = _activeLogicalHudFieldKind.Value;
+        string input = _activeLogicalHudFieldText;
+        var commit = await _viewModel
+            .TryCommitCommandHudFieldInputAsync(
+                fieldKind,
+                input,
+                confirm: true)
+            .ConfigureAwait(true);
+
+        if (commit.Handled)
+        {
+            RefreshStatus();
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+        }
+
+        ClearLogicalHudFieldInput();
+
+        return commit.Handled;
+    }
+
     private void ConfirmCommandHudOverrides()
     {
         if (_viewModel.TryConfirmCommandHudInputOverrides(out _))
@@ -2903,21 +2975,9 @@ public partial class MainWindow : Window
 
     private CommandHudFieldKind? GetDefaultLogicalHudFieldKindForNumericText()
     {
-        if (_activeLogicalHudFieldKind is not null &&
-            IsHudFieldKindCurrentlyAvailable(_activeLogicalHudFieldKind.Value))
-        {
-            return _activeLogicalHudFieldKind.Value;
-        }
-
-        foreach (CommandHudFieldKind kind in GetAvailableHudFieldKinds())
-        {
-            if (IsPreferredInitialNumericHudField(kind))
-            {
-                return kind;
-            }
-        }
-
-        return null;
+        return CommandHudFieldRoutingPolicy.GetDefaultFieldKindForNumericText(
+            GetAvailableHudFieldKinds(),
+            _activeLogicalHudFieldKind);
     }
 
     private bool IsHudFieldKindCurrentlyAvailable(CommandHudFieldKind kind)

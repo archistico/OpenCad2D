@@ -1408,6 +1408,28 @@ This step is intentionally test/documentation-only. It does not change the HUD r
 - `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 306 tests.
 - `dotnet test OpenCad2D.sln` passes with 2054 tests.
 
+### Step 31B - Additional point-driven commands
+
+- Fixed the generic HUD field fallback so `CommandInputKind.Point` and `PointOrOption` still expose editable `X/Y` even after a previous base point/live measurement exists.
+- Added HUD coordinate regression coverage for:
+  - `Point`;
+  - `Text`;
+  - `Multiline Text`;
+  - `Zoom Window` second corner.
+- Extended `Measure Distance` second-point HUD support to expose `Distance/Angle/X/Y`, matching the command-line direct-distance behavior.
+- Added regression coverage for `Measure Distance` typed `Distance/Angle` completion through the HUD.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 311 tests.
+
+### Step 31C - Text HUD async confirmation fix
+
+- Fixed a crash introduced by the `Text` / `Multiline Text` HUD coordinate path.
+- Root cause: HUD `Enter` confirmation used the synchronous ViewModel point submission path, while the real Avalonia text provider intentionally throws from `RequestText()` and must be called through `RequestTextAsync()`.
+- Added `MainWindowViewModel.TryCommitCommandHudFieldInputAsync(...)` for HUD confirmations when the active tool implements `IAsyncCadTool`.
+- Window-level HUD `Enter` handling now awaits that async path, so `Text` and `Multiline Text` open their dialog through the same non-blocking route as canvas clicks.
+- Added regression coverage with an async-only text provider that throws if the synchronous path is used.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 313 tests.
+- `dotnet test OpenCad2D.sln` passes with 2061 tests.
+
 ### Dynamic Command HUD — remaining work checkpoint after Step 31
 
 Current stable HUD coverage includes Line, Polyline, Rectangle, Rectangle by Sides, Circle, Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer. The fixed bottom command row and generic command textbox are removed; HUD input is logical, mouse-transparent and keyboard-driven.
@@ -1419,3 +1441,78 @@ Remaining work to resume next session:
    - Remove or simplify residual legacy command-line helper code only after all HUD flows are covered.
 
 Important guardrail: do not broaden the shared HUD resolver while finishing the remaining tools. Continue using narrow tool/phase-specific behavior and regression tests, as done for Rectangle, Circle, Rectangle by Sides and modify tools.
+
+### Step 31D - HUD stability hardening
+
+- Added `CommandHudFieldRoutingPolicy` to centralize logical keyboard routing for editable HUD fields.
+- Replaced the hard-coded Window-only preferred-field heuristic with a priority policy that supports:
+  - active field preservation when the field still exists;
+  - scalar-first routing for Distance/Radius/Width/Height/Factor;
+  - Angle-only phases such as rotate/angle tools;
+  - Sides-only phases such as Polygon side count;
+  - coordinate-only phases using `X` as the first logical field.
+- Removed the non-command-source blocker that prevented numeric HUD routing when stale command text was present; routed HUD numeric input now clears the command text deliberately.
+- Added a ViewModel-to-Window event, `CommandHudInputOverridesCleared`, so ViewModel-level override resets can explicitly clear the Window logical HUD field state instead of relying on manual paired calls.
+- Extended HUD scalar handling to include `Sides` and added validation for whole numbers greater than or equal to 3.
+- Polygon now exposes an editable `Sides` HUD field while waiting for side count and accepts it through the same HUD commit path.
+- Added regression coverage for the routing policy and Polygon side-count HUD input.
+- Test note: this environment did not have the `dotnet` executable available, so the test suite could not be executed here. Run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31E - Rectangle HUD width/height stabilization
+
+- Fixed a Rectangle HUD regression where typed `Width`/`Height` values were stored in `CommandHudInputState` but the displayed HUD fields continued to show live mouse-derived `DeltaX/DeltaY` after `Tab` or pointer movement.
+- `BuildWidthHeightFields(...)` now prefers typed HUD overrides before falling back to live measurements.
+- Added a Rectangle-specific size resolver that converts typed `Width`/`Height` into the opposite corner point while preserving the cursor quadrant/sign.
+- HUD preview now applies resolvable size overrides, not only polar `Distance/Angle` overrides.
+- Added regression coverage for:
+  - typed Rectangle width remaining visible after mouse movement;
+  - typed Rectangle width + height creating an exact closed polyline rectangle.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31F - Rectangle by Sides HUD polar/height fix
+
+- Fixed a Rectangle by Sides HUD regression where the first side was exposed as `Width`, causing the generic size override resolver to intercept the value instead of resolving a polar first-side endpoint.
+- Rectangle by Sides first-side HUD now exposes `Distance/Angle` and participates in the shared polar point override target list while waiting for the first side endpoint.
+- Rectangle by Sides second-side `Height` confirmation is handled as a dedicated scalar command input, matching the tool's existing exact-distance command path.
+- Added regression coverage for:
+  - typed `Distance/Angle` advancing Rectangle by Sides from first-side input to height input;
+  - typed `Height` creating the expected closed polyline rectangle.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31G - HUD polar/radius audit
+
+- Audited draw and dimension tools that displayed radius-like HUD labels but could not resolve those typed values into tool points.
+- Fixed the shared HUD field builders so radius-like geometric point phases use `CommandHudFieldKind.Distance` when the value is actually a polar distance from a base point.
+- HUD fields now preserve typed overrides instead of reverting to live mouse measurements for:
+  - Circle radius;
+  - Arc start radius/angle;
+  - Arc end angle;
+  - Ellipse major radius/angle;
+  - Ellipse minor radius;
+  - Polygon radius/angle;
+  - generic `PointOrDistance` / `PointOrAngle` prompts where a base point exists.
+- Broadened polar HUD point resolution through the active command prompt instead of relying only on a brittle manual whitelist.
+- Added dedicated geometry resolution for:
+  - Arc end angle, which must use the existing arc radius rather than the current mouse distance;
+  - Ellipse minor radius, which must create a point perpendicular to the major axis instead of depending on the current mouse direction.
+- Added regression coverage for Circle, Polygon, Arc and Ellipse HUD input.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31H - Ellipse major-axis HUD regression fix
+
+- Fixed the Ellipse major-axis HUD commit path after the polar/radius audit.
+- Ellipse `WaitingForMajorAxis` displays `Major radius` + `Angle`, but its command prompt is a plain `Point`; it therefore must be explicitly treated as a polar HUD point override target.
+- Without that explicit target, typed `Distance/Angle + Enter` was handled but did not advance to the minor-radius phase.
+- Tightened the Ellipse regression test so it asserts that confirming the major-axis angle advances to the minor-axis prompt before entering the minor radius.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31I - Intersection snap circle/polyline regression fix
+
+- Fixed an intersection snapping gap where `CircleEntity` did not intersect with `PolylineEntity`.
+- Rectangles and Rectangle by Sides results are stored as closed polylines, so circle/rectangle intersection snap could not be found even though line/circle and polyline/ellipse already worked.
+- `IntersectionSnapProvider` now handles both `PolylineEntity + CircleEntity` and `CircleEntity + PolylineEntity` using exact segment-circle intersections over the polyline interaction geometry.
+- Added distinct-point filtering so intersections shared by adjacent segments are not duplicated.
+- Added regression coverage for:
+  - circle intersection with an axis-aligned closed rectangle polyline;
+  - circle intersection with a rotated closed rectangle polyline, matching Rectangle by Sides geometry.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
