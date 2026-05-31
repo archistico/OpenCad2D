@@ -1359,29 +1359,62 @@ This step is intentionally test/documentation-only. It does not change the HUD r
   - `Chamfer.Distance` accepts zero and rejects negative values.
 - Added regression tests so this distinction is not lost while extending other modify tools.
 
+### Step 30E - Break / Boundary Fill HUD regression guard
 
-### Dynamic Command HUD — remaining work checkpoint after Step 30D
+- Kept the existing Break / Boundary Fill HUD routing unchanged.
+- Added ViewModel-level regression coverage for:
+  - `Break Point` after entity selection: HUD exposes `X/Y` only and coordinate confirmation breaks a line at the projected point.
+  - `Break Segment`: first break point exposes `X/Y`; second break point exposes `Distance/Angle/X/Y`; distance/angle confirmation removes the expected segment.
+  - `Boundary Fill`: seed point `X/Y` creates a filled closed polyline inside a line boundary.
+  - `Boundary Fill`: outside seed point leaves the drawing unchanged and reports the no-boundary message.
+  - `Delete` is now included with `Trim`, `Extend`, `Explode`, and `Join` in the selection-only no-scalar-HUD guard.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 291 tests.
+
+### Step 30F - Selection-only tools regression guard
+
+- Kept the existing selection-only command routing unchanged.
+- Added ViewModel-level regression coverage for:
+  - `Trim`, `Extend`, `Delete`, `Explode`, and `Join` expose no editable scalar HUD fields.
+  - All five commands cancel back to Selection with `Escape`.
+  - `Delete` selects by pointer and confirms with Enter.
+  - `Explode` selects a polyline by pointer and confirms with Enter.
+  - `Join` selects connected lines by pointer and confirms with Enter.
+  - `Trim` and `Extend` complete their boundary/target pointer flows through the ViewModel/tool pipeline.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 301 tests.
+
+### Step 31 - Block tools HUD point input
+
+- Kept `Create Block` and `Insert Block` outside the normal `ICommandDrivenTool` pipeline.
+- The existing dialogs still own block name, picked-base-point choice, selected definition, scale and rotation.
+- Pending `Create Block` base-point pick now makes the command HUD visible as `Create Block` with editable `X/Y` only.
+- Pending `Insert Block` placement now makes the command HUD visible as `Insert Block` with editable `X/Y` only.
+- Confirming complete HUD coordinates calls the existing pending commit methods:
+  - `CommitCreateBlockBasePointPick(...)`;
+  - `CommitPendingBlockInsertion(...)`.
+- The shared Distance/Angle resolver was not broadened for blocks.
+- Added ViewModel-level regression coverage for HUD visibility/fields and coordinate confirmation for both block pending flows.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 303 tests.
+
+### Step 31A - Escape cancellation regression
+
+- Restored the pre-HUD `Escape` behavior for active commands: pressing `Esc` while the command HUD or an editable HUD field has focus now cancels the active command and returns to Selection instead of only clearing HUD text.
+- `MainWindowViewModel.Escape()` now clears HUD overrides and cancels pending non-tool workflows first:
+  - `Create Block` base-point pick;
+  - `Insert Block` placement;
+  - library insertion;
+  - imported drawing placement.
+- Window-level HUD key handling now routes `Esc` through the same active-command escape path and ends point-placement snapping after pending workflows are cancelled.
+- Added ViewModel-level regression coverage for HUD coordinate override cancellation plus `Create Block` / `Insert Block` pending cancellation.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 306 tests.
+- `dotnet test OpenCad2D.sln` passes with 2054 tests.
+
+### Dynamic Command HUD — remaining work checkpoint after Step 31
 
 Current stable HUD coverage includes Line, Polyline, Rectangle, Rectangle by Sides, Circle, Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer. The fixed bottom command row and generic command textbox are removed; HUD input is logical, mouse-transparent and keyboard-driven.
 
 Remaining work to resume next session:
 
-1. **Step 30E — Break / Boundary Fill HUD input**
-   - Verify/fix `Break Point` after entity selection with `X/Y` break-point entry.
-   - Verify/fix `Break Segment` first point with `X/Y` and second point with `Distance/Angle/X/Y`.
-   - Verify/fix `Boundary Fill` seed point with `X/Y`.
-   - Add automated coverage where possible and keep manual checks for hit-testing/picking behavior.
-
-2. **Step 30F — Selection-only tools cleanup**
-   - Audit `Trim`, `Extend`, `Delete`, `Explode` and `Join`.
-   - These tools should show clear prompt/options only and should not expose editable scalar HUD fields.
-   - Verify `Tab`, `Enter`, `Esc`, command options and mouse picking remain consistent.
-
-3. **Step 31 — Block tools**
-   - Treat `Create Block` and `Insert Block` separately because they use option dialogs and pending placement state instead of the normal command-driven tool pipeline.
-   - Do not fold them into the common HUD resolver without a dedicated plan and tests.
-
-4. **Final cleanup**
+1. **Final cleanup**
    - Update `docs/ai-handoff.md`, `docs/command-input.md`, `docs/tools.md`, `docs/commands.md`, and the HUD specification.
    - Remove or simplify residual legacy command-line helper code only after all HUD flows are covered.
 

@@ -35,6 +35,7 @@ using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
 using OpenCad2D.Tools.Measurements;
 using OpenCad2D.Tools.Input;
+using OpenCad2D.Tools.Selection;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -2382,7 +2383,7 @@ public partial class MainWindow : Window
         KeyEventArgs e)
     {
         if (!_viewModel.IsCommandHudVisible ||
-            HasNonWhiteSpaceCommandInputText())
+            IsCommandInputBlockingHudKeyboard())
         {
             return;
         }
@@ -2421,15 +2422,9 @@ public partial class MainWindow : Window
         }
 
         if (e.Key == Key.Escape &&
-            _activeLogicalHudFieldKind is not null)
+            e.KeyModifiers == KeyModifiers.None)
         {
-            ClearLogicalHudFieldInput();
-            _viewModel.CancelCommandHudInputOverrides();
-            RefreshStatus();
-            RefreshLogicalHudFieldVisuals();
-            CadCanvas.ClearSnapMarker();
-            CadCanvas.InvalidateVisual();
-            CadCanvas.Focus();
+            EscapeActiveCommandFromKeyboard();
             e.Handled = true;
             return;
         }
@@ -2493,16 +2488,14 @@ public partial class MainWindow : Window
 
         if (e.Key == Key.Escape)
         {
-            if (HasCommandInputText())
+            if (HasCommandInputText() &&
+                !IsActiveCommandOrPendingWorkflow())
             {
                 ClearCommandInputText();
             }
             else
             {
-                _viewModel.Escape();
-                RefreshStatus();
-                CadCanvas.ClearSnapMarker();
-                CadCanvas.InvalidateVisual();
+                EscapeActiveCommandFromKeyboard();
             }
 
             e.Handled = true;
@@ -2538,11 +2531,46 @@ public partial class MainWindow : Window
 
         if (e.Key == Key.Escape)
         {
-            _viewModel.CancelCommandHudInputOverrides();
-            ResetHudFieldTextBox(textBox, field);
-            CadCanvas.Focus();
+            EscapeActiveCommandFromKeyboard();
             e.Handled = true;
         }
+    }
+
+    private void EscapeActiveCommandFromKeyboard()
+    {
+        bool pointPlacementWasPending =
+            _viewModel.IsCreateBlockBasePointPickPending ||
+            _viewModel.IsBlockInsertionPending ||
+            _viewModel.IsLibraryInsertionPending ||
+            _viewModel.IsImportDrawingPlacementPending;
+
+        ClearLogicalHudFieldInput();
+
+        _viewModel.Escape();
+
+        if (pointPlacementWasPending &&
+            !_viewModel.IsCreateBlockBasePointPickPending &&
+            !_viewModel.IsBlockInsertionPending &&
+            !_viewModel.IsLibraryInsertionPending &&
+            !_viewModel.IsImportDrawingPlacementPending)
+        {
+            EndPointPlacementSnapping();
+        }
+
+        RefreshStatus();
+        RefreshLogicalHudFieldVisuals();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+        CadCanvas.Focus();
+    }
+
+    private bool IsActiveCommandOrPendingWorkflow()
+    {
+        return _viewModel.Workspace.ToolController.ActiveTool is not SelectionTool ||
+               _viewModel.IsCreateBlockBasePointPickPending ||
+               _viewModel.IsBlockInsertionPending ||
+               _viewModel.IsLibraryInsertionPending ||
+               _viewModel.IsImportDrawingPlacementPending;
     }
 
     private void HudFieldTextBox_GotFocus(
@@ -2645,14 +2673,21 @@ public partial class MainWindow : Window
         object? sender,
         TextInputEventArgs e)
     {
-        if (IsCommandInputSource(e.Source))
+        string text = e.Text ?? string.Empty;
+
+        if (!IsCommandInputText(text))
         {
             return;
         }
 
-        string text = e.Text ?? string.Empty;
+        if (_activeLogicalHudFieldKind is not null &&
+            TryRouteInitialNumericTextToHudField(text))
+        {
+            e.Handled = true;
+            return;
+        }
 
-        if (!IsCommandInputText(text))
+        if (IsCommandInputSource(e.Source))
         {
             return;
         }
@@ -2671,8 +2706,13 @@ public partial class MainWindow : Window
     private bool TryRouteInitialNumericTextToHudField(string text)
     {
         if (!_viewModel.IsCommandHudVisible ||
-            HasNonWhiteSpaceCommandInputText() ||
             !IsNumericHudText(text))
+        {
+            return false;
+        }
+
+        if (_activeLogicalHudFieldKind is null &&
+            HasNonWhiteSpaceCommandInputText())
         {
             return false;
         }
@@ -2692,6 +2732,7 @@ public partial class MainWindow : Window
 
         _activeLogicalHudFieldKind = targetKind.Value;
         _activeLogicalHudFieldText += text;
+        ClearCommandInputText();
 
         if (_viewModel.TryCommitCommandHudFieldInput(
                 targetKind.Value,
@@ -2703,6 +2744,10 @@ public partial class MainWindow : Window
             RefreshLogicalHudFieldVisuals();
             CadCanvas.ClearSnapMarker();
             CadCanvas.InvalidateVisual();
+        }
+        else
+        {
+            RefreshLogicalHudFieldVisuals();
         }
 
         return true;
@@ -2740,7 +2785,7 @@ public partial class MainWindow : Window
     private bool TryFocusFirstHudFieldKey(KeyEventArgs e)
     {
         if (e.Key != Key.Tab ||
-            HasNonWhiteSpaceCommandInputText() ||
+            IsCommandInputBlockingHudKeyboard() ||
             !_viewModel.IsCommandHudVisible)
         {
             return false;
@@ -3041,6 +3086,12 @@ public partial class MainWindow : Window
     private bool HasNonWhiteSpaceCommandInputText()
     {
         return !string.IsNullOrWhiteSpace(GetCommandInputText());
+    }
+
+    private bool IsCommandInputBlockingHudKeyboard()
+    {
+        return HasNonWhiteSpaceCommandInputText() &&
+               _activeLogicalHudFieldKind is null;
     }
 
     private string GetCommandInputText()

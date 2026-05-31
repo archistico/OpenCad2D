@@ -1,6 +1,7 @@
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Tools.Common;
 using System;
 using System.Linq;
 
@@ -1554,6 +1555,119 @@ public sealed class MainWindowViewModelCommandLineTests
     }
 
     [Fact]
+    public void CommandHudInput_BreakAtPoint_ShouldAcceptCoordinateFields()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        viewModel.Workspace.Document.AddEntity(line);
+
+        viewModel.SubmitCommandInput("BREAKPOINT");
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 0)));
+
+        CommandHudFieldKind[] editableKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.X, editableKinds);
+        Assert.Contains(CommandHudFieldKind.Y, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Distance, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Angle, editableKinds);
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "5",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "0",
+            confirm: true,
+            out var result));
+
+        Assert.NotNull(result);
+        Assert.Equal("Entity broken at point.", viewModel.LastMessage);
+
+        LineEntity[] lines = viewModel.Workspace.Document.Entities.All
+            .OfType<LineEntity>()
+            .ToArray();
+
+        Assert.Equal(2, lines.Length);
+        Assert.Contains(lines, segment =>
+            ArePointsNear(new Point2D(0, 0), segment.Start) &&
+            ArePointsNear(new Point2D(5, 0), segment.End));
+        Assert.Contains(lines, segment =>
+            ArePointsNear(new Point2D(5, 0), segment.Start) &&
+            ArePointsNear(new Point2D(10, 0), segment.End));
+    }
+
+    [Fact]
+    public void CommandHudInput_BreakSegment_ShouldAcceptCoordinateThenDistanceAngleFields()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        viewModel.Workspace.Document.AddEntity(line);
+
+        viewModel.SubmitCommandInput("BREAK");
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(1, 0)));
+
+        CommandHudFieldKind[] firstPointKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.X, firstPointKinds);
+        Assert.Contains(CommandHudFieldKind.Y, firstPointKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Distance, firstPointKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Angle, firstPointKinds);
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "2",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "0",
+            confirm: true,
+            out _));
+
+        viewModel.SetMousePosition(new Point2D(6, 0));
+
+        CommandHudFieldKind[] secondPointKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Contains(CommandHudFieldKind.Distance, secondPointKinds);
+        Assert.Contains(CommandHudFieldKind.Angle, secondPointKinds);
+        Assert.Contains(CommandHudFieldKind.X, secondPointKinds);
+        Assert.Contains(CommandHudFieldKind.Y, secondPointKinds);
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Distance,
+            "4",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Angle,
+            "0",
+            confirm: true,
+            out var result));
+
+        Assert.NotNull(result);
+        Assert.Equal("Entity segment removed.", viewModel.LastMessage);
+
+        LineEntity[] lines = viewModel.Workspace.Document.Entities.All
+            .OfType<LineEntity>()
+            .ToArray();
+
+        Assert.Equal(2, lines.Length);
+        Assert.Contains(lines, segment =>
+            ArePointsNear(new Point2D(0, 0), segment.Start) &&
+            ArePointsNear(new Point2D(2, 0), segment.End));
+        Assert.Contains(lines, segment =>
+            ArePointsNear(new Point2D(6, 0), segment.Start) &&
+            ArePointsNear(new Point2D(10, 0), segment.End));
+    }
+
+    [Fact]
     public void CommandHudInput_BoundaryFillSeedPoint_ShouldExposeCoordinateFields()
     {
         var viewModel = new MainWindowViewModel();
@@ -1567,9 +1681,64 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.DoesNotContain(CommandHudFieldKind.Angle, editableKinds);
     }
 
+    [Fact]
+    public void CommandHudInput_BoundaryFillSeedPoint_ShouldCreateFillFromCoordinates()
+    {
+        var viewModel = new MainWindowViewModel();
+        AddRectangleBoundary(viewModel);
+
+        viewModel.SubmitCommandInput("BOUNDARYFILL");
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "5",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "2",
+            confirm: true,
+            out var result));
+
+        Assert.NotNull(result);
+        Assert.Equal("Boundary fill created.", viewModel.LastMessage);
+        Assert.Equal(5, viewModel.Workspace.Document.Entities.Count);
+
+        PolylineEntity fill = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.True(fill.IsClosed);
+        Assert.True(fill.IsFilled);
+    }
+
+    [Fact]
+    public void CommandHudInput_BoundaryFillSeedPointOutsideBoundary_ShouldNotCreateFill()
+    {
+        var viewModel = new MainWindowViewModel();
+        AddRectangleBoundary(viewModel);
+
+        viewModel.SubmitCommandInput("BOUNDARYFILL");
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "20",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "20",
+            confirm: true,
+            out var result));
+
+        Assert.NotNull(result);
+        Assert.Equal("No closed boundary was found around the picked point.", viewModel.LastMessage);
+        Assert.Equal(4, viewModel.Workspace.Document.Entities.Count);
+        Assert.Empty(viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+    }
+
     [Theory]
     [InlineData("TRIM")]
     [InlineData("EXTEND")]
+    [InlineData("DELETE")]
     [InlineData("EXPLODE")]
     [InlineData("JOIN")]
     public void CommandHudInput_SelectionOnlyModifyTools_ShouldNotExposeNumericOverrides(string command)
@@ -1585,6 +1754,204 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.DoesNotContain(CommandHudFieldKind.Height, editableKinds);
         Assert.DoesNotContain(CommandHudFieldKind.Radius, editableKinds);
         Assert.DoesNotContain(CommandHudFieldKind.Factor, editableKinds);
+    }
+
+    [Theory]
+    [InlineData("TRIM")]
+    [InlineData("EXTEND")]
+    [InlineData("DELETE")]
+    [InlineData("EXPLODE")]
+    [InlineData("JOIN")]
+    public void CommandHudInput_SelectionOnlyModifyTools_ShouldCancelToSelectionWithEscape(string command)
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput(command);
+
+        Assert.True(viewModel.IsCommandHudVisible);
+
+        ToolResult result = viewModel.Escape();
+
+        Assert.NotNull(result);
+        Assert.Equal("Selection", viewModel.ActiveToolName);
+        Assert.False(viewModel.IsCommandHudVisible);
+        Assert.Contains("Selection tool active", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_EscapeWithActiveCoordinateOverride_ShouldCancelToSelection()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("L");
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+
+        ToolResult result = viewModel.Escape();
+
+        Assert.NotNull(result);
+        Assert.Equal("Selection", viewModel.ActiveToolName);
+        Assert.False(viewModel.IsCommandHudVisible);
+        Assert.Contains("Line command cancelled", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_Delete_ShouldSelectByPointerAndConfirmWithEnter()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        viewModel.Workspace.Document.AddEntity(line);
+
+        viewModel.SubmitCommandInput("DELETE");
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.True(viewModel.Workspace.SelectionSet.Contains(line.Id));
+
+        ToolResult result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.NotNull(result);
+        Assert.Equal("Selected entity deleted.", viewModel.LastMessage);
+        Assert.False(viewModel.Workspace.Document.Entities.Contains(line.Id));
+        Assert.True(viewModel.Workspace.SelectionSet.IsEmpty);
+    }
+
+    [Fact]
+    public void CommandHudInput_Explode_ShouldSelectByPointerAndConfirmWithEnter()
+    {
+        var viewModel = new MainWindowViewModel();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5)
+            },
+            isClosed: false);
+
+        viewModel.Workspace.Document.AddEntity(polyline);
+
+        viewModel.SubmitCommandInput("EXPLODE");
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.True(viewModel.Workspace.SelectionSet.Contains(polyline.Id));
+
+        ToolResult result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.NotNull(result);
+        Assert.Equal("Polyline exploded into 2 entities.", viewModel.LastMessage);
+        Assert.False(viewModel.Workspace.Document.Entities.Contains(polyline.Id));
+        Assert.Equal(2, viewModel.Workspace.Document.Entities.All.OfType<LineEntity>().Count());
+        Assert.True(viewModel.Workspace.SelectionSet.IsEmpty);
+    }
+
+    [Fact]
+    public void CommandHudInput_Join_ShouldSelectByPointerAndConfirmWithEnter()
+    {
+        var viewModel = new MainWindowViewModel();
+        var firstLine = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+        var secondLine = new LineEntity(
+            new Point2D(10, 0),
+            new Point2D(20, 0));
+
+        viewModel.Workspace.Document.AddEntity(firstLine);
+        viewModel.Workspace.Document.AddEntity(secondLine);
+
+        viewModel.SubmitCommandInput("JOIN");
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 0)));
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(15, 0)));
+
+        Assert.Equal(2, viewModel.Workspace.SelectionSet.Count);
+
+        ToolResult result = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.NotNull(result);
+        Assert.Equal("2 entities joined into 1 polyline.", viewModel.LastMessage);
+        Assert.Empty(viewModel.Workspace.Document.Entities.All.OfType<LineEntity>());
+        PolylineEntity joined = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.Equal(
+            new[] { new Point2D(0, 0), new Point2D(10, 0), new Point2D(20, 0) },
+            joined.Vertices);
+    }
+
+    [Fact]
+    public void CommandHudInput_Trim_ShouldPickBoundaryAndTarget()
+    {
+        var viewModel = new MainWindowViewModel();
+        var boundary = new LineEntity(
+            new Point2D(5, -5),
+            new Point2D(5, 5));
+        var target = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(10, 0));
+
+        viewModel.Workspace.Document.AddEntity(boundary);
+        viewModel.Workspace.Document.AddEntity(target);
+
+        viewModel.SubmitCommandInput("TRIM");
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 2)));
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(8, 0)));
+
+        Assert.Equal("Trim", viewModel.ActiveToolName);
+        Assert.False(viewModel.Workspace.Document.Entities.Contains(target.Id));
+        LineEntity trimmed = Assert.Single(
+            viewModel.Workspace.Document.Entities.All.OfType<LineEntity>(),
+            line => !line.Id.Equals(boundary.Id));
+        Assert.True(ArePointsNear(new Point2D(0, 0), trimmed.Start));
+        Assert.True(ArePointsNear(new Point2D(5, 0), trimmed.End));
+    }
+
+    [Fact]
+    public void CommandHudInput_Extend_ShouldPickBoundaryAndTarget()
+    {
+        var viewModel = new MainWindowViewModel();
+        var boundary = new LineEntity(
+            new Point2D(10, -5),
+            new Point2D(10, 5));
+        var target = new LineEntity(
+            new Point2D(0, 0),
+            new Point2D(5, 0));
+
+        viewModel.Workspace.Document.AddEntity(boundary);
+        viewModel.Workspace.Document.AddEntity(target);
+
+        viewModel.SubmitCommandInput("EXTEND");
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(10, 2)));
+        viewModel.Workspace.ToolController.OnPointerPressed(
+            new PointerInfo(new Point2D(5, 0)));
+
+        Assert.Equal("Extend", viewModel.ActiveToolName);
+        LineEntity extended = Assert.IsType<LineEntity>(
+            viewModel.Workspace.Document.Entities.GetRequired(target.Id));
+        Assert.True(ArePointsNear(new Point2D(0, 0), extended.Start));
+        Assert.True(ArePointsNear(new Point2D(10, 0), extended.End));
+    }
+
+    private static void AddRectangleBoundary(MainWindowViewModel viewModel)
+    {
+        viewModel.Workspace.Document.AddEntity(
+            new LineEntity(new Point2D(0, 0), new Point2D(10, 0)));
+        viewModel.Workspace.Document.AddEntity(
+            new LineEntity(new Point2D(10, 0), new Point2D(10, 5)));
+        viewModel.Workspace.Document.AddEntity(
+            new LineEntity(new Point2D(10, 5), new Point2D(0, 5)));
+        viewModel.Workspace.Document.AddEntity(
+            new LineEntity(new Point2D(0, 5), new Point2D(0, 0)));
     }
 
     private static CommandHudFieldKind[] GetEditableHudFieldKinds(MainWindowViewModel viewModel)

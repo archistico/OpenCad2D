@@ -87,7 +87,43 @@ public sealed class MainWindowViewModelBlockBasePointPickTests
             new CreateBlockOptions("Door", 0, 0, PickBasePointFromDrawing: true));
 
         Assert.True(viewModel.IsCreateBlockBasePointPickPending);
+        Assert.True(viewModel.IsCommandHudVisible);
+        Assert.Equal("Create Block", viewModel.CommandHudState.ToolName);
+        Assert.Equal("CREATEBLOCK", viewModel.CurrentPromptState.CommandName);
+        Assert.Equal(new[] { CommandHudFieldKind.X, CommandHudFieldKind.Y }, GetEditableHudFieldKinds(viewModel));
         Assert.Equal(OpenCad2D.Tools.Common.ToolResultKind.Started, result.Kind);
+    }
+
+    [Fact]
+    public void CommandHudInput_CreateBlockBasePointPick_ShouldAcceptCoordinateFields()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(10, 20),
+            new Point2D(15, 20));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.ReplaceWith(line.Id);
+        viewModel.BeginCreateBlockBasePointPick(
+            new CreateBlockOptions("Door", 0, 0, PickBasePointFromDrawing: true));
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "20",
+            confirm: true,
+            out var result));
+
+        Assert.NotNull(result);
+        Assert.Equal("Block 'Door' created from 1 selected entities.", viewModel.LastMessage);
+        Assert.False(viewModel.IsCreateBlockBasePointPickPending);
+        Assert.False(viewModel.IsCommandHudVisible);
+        BlockReferenceEntity reference = Assert.IsType<BlockReferenceEntity>(
+            viewModel.Workspace.Document.Entities.All.Single());
+        Assert.Equal(new Point2D(10, 20), reference.InsertionPoint);
     }
 
     [Fact]
@@ -128,6 +164,34 @@ public sealed class MainWindowViewModelBlockBasePointPickTests
         Assert.Empty(viewModel.Workspace.Document.BlockDefinitions.All);
         Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.All.Single());
     }
+
+    [Fact]
+    public void EscapeCreateBlockBasePointPick_ShouldCancelPendingWorkflow()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(Point2D.Origin, new Point2D(1, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.ReplaceWith(line.Id);
+        viewModel.BeginCreateBlockBasePointPick(
+            new CreateBlockOptions("Door", 0, 0, PickBasePointFromDrawing: true));
+
+        var result = viewModel.Escape();
+
+        Assert.NotNull(result);
+        Assert.False(viewModel.IsCreateBlockBasePointPickPending);
+        Assert.False(viewModel.IsCommandHudVisible);
+        Assert.Equal("Create block cancelled.", viewModel.LastMessage);
+        Assert.Empty(viewModel.Workspace.Document.BlockDefinitions.All);
+        Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.All.Single());
+    }
+
+    private static CommandHudFieldKind[] GetEditableHudFieldKinds(MainWindowViewModel viewModel)
+    {
+        return viewModel.CommandHudState.Fields
+            .Where(field => field.CanAcceptTypedOverride)
+            .Select(field => field.Kind)
+            .ToArray();
+    }
 }
 
 public sealed class MainWindowViewModelInsertBlockTests
@@ -142,7 +206,47 @@ public sealed class MainWindowViewModelInsertBlockTests
             new InsertBlockOptions(definitionId, "Door", 1, 0));
 
         Assert.True(viewModel.IsBlockInsertionPending);
+        Assert.True(viewModel.IsCommandHudVisible);
+        Assert.Equal("Insert Block", viewModel.CommandHudState.ToolName);
+        Assert.Equal("INSERTBLOCK", viewModel.CurrentPromptState.CommandName);
+        Assert.Equal(new[] { CommandHudFieldKind.X, CommandHudFieldKind.Y }, GetEditableHudFieldKinds(viewModel));
         Assert.Equal(OpenCad2D.Tools.Common.ToolResultKind.Started, result.Kind);
+    }
+
+    [Fact]
+    public void CommandHudInput_InsertBlockPlacement_ShouldAcceptCoordinateFields()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        var definitionId = originalReference.BlockDefinitionId;
+        viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(definitionId, "Door", 2, 90));
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "20",
+            confirm: true,
+            out var result));
+
+        Assert.NotNull(result);
+        Assert.Equal("Block 'Door' inserted.", viewModel.LastMessage);
+        Assert.False(viewModel.IsBlockInsertionPending);
+        Assert.False(viewModel.IsCommandHudVisible);
+
+        BlockReferenceEntity inserted = viewModel.Workspace.Document.Entities.All
+            .OfType<BlockReferenceEntity>()
+            .Single(reference => reference.Id != originalReference.Id);
+
+        Assert.Equal(definitionId, inserted.BlockDefinitionId);
+        Assert.Equal(new Point2D(10, 20), inserted.InsertionPoint);
+        Assert.Equal(0, inserted.XAxis.X, 12);
+        Assert.Equal(2, inserted.XAxis.Y, 12);
+        Assert.Equal(-2, inserted.YAxis.X, 12);
+        Assert.Equal(0, inserted.YAxis.Y, 12);
     }
 
     [Fact]
@@ -205,6 +309,24 @@ public sealed class MainWindowViewModelInsertBlockTests
         Assert.Equal(originalReference.Id, viewModel.Workspace.Document.Entities.All.Single().Id);
     }
 
+    [Fact]
+    public void EscapePendingBlockInsertion_ShouldCancelPendingWorkflow()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        var definitionId = originalReference.BlockDefinitionId;
+        viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(definitionId, "Door", 1, 0));
+
+        var result = viewModel.Escape();
+
+        Assert.NotNull(result);
+        Assert.False(viewModel.IsBlockInsertionPending);
+        Assert.False(viewModel.IsCommandHudVisible);
+        Assert.Equal("Insert block cancelled.", viewModel.LastMessage);
+        Assert.Single(viewModel.Workspace.Document.Entities.All);
+        Assert.Equal(originalReference.Id, viewModel.Workspace.Document.Entities.All.Single().Id);
+    }
+
     private static MainWindowViewModel CreateViewModelWithDoorBlock(
         out BlockReferenceEntity originalReference)
     {
@@ -218,6 +340,14 @@ public sealed class MainWindowViewModelInsertBlockTests
             viewModel.Workspace.Document.Entities.All.Single());
 
         return viewModel;
+    }
+
+    private static CommandHudFieldKind[] GetEditableHudFieldKinds(MainWindowViewModel viewModel)
+    {
+        return viewModel.CommandHudState.Fields
+            .Where(field => field.CanAcceptTypedOverride)
+            .Select(field => field.Kind)
+            .ToArray();
     }
 }
 

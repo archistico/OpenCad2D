@@ -325,13 +325,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     public string ActiveToolName =>
         Workspace.ToolController.ActiveToolName;
 
+    private string? CommandHudToolName =>
+        IsCreateBlockBasePointPickPending
+            ? "Create Block"
+            : IsBlockInsertionPending
+                ? "Insert Block"
+                : IsCommandHudVisible
+                    ? ActiveToolName
+                    : null;
+
     public Point? HudScreenPosition => _hudScreenPosition;
 
     public bool HasLiveMeasurements =>
         Workspace.Context.CurrentBasePoint is not null;
 
     public bool IsCommandHudVisible =>
-        Workspace.ToolController.ActiveTool is ICommandDrivenTool;
+        Workspace.ToolController.ActiveTool is ICommandDrivenTool ||
+        IsCreateBlockBasePointPickPending ||
+        IsBlockInsertionPending;
 
     public bool IsBottomCommandLineVisible => false;
 
@@ -347,7 +358,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public CommandHudStateViewModel CommandHudState => new(
         IsCommandHudVisible,
-        IsCommandHudVisible ? ActiveToolName : null,
+        CommandHudToolName,
         GetCurrentPromptState(),
         BuildCommandHudFields());
 
@@ -410,6 +421,24 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public CommandPromptState GetCurrentPromptState()
     {
+        if (IsCreateBlockBasePointPickPending)
+        {
+            return new CommandPromptState(
+                "CREATEBLOCK",
+                "Specify base point",
+                CommandInputKind.Point,
+                placeholder: "click base point or enter X/Y");
+        }
+
+        if (IsBlockInsertionPending)
+        {
+            return new CommandPromptState(
+                "INSERTBLOCK",
+                "Specify insertion point",
+                CommandInputKind.Point,
+                placeholder: "click insertion point or enter X/Y");
+        }
+
         if (Workspace.ToolController.ActiveTool is ICommandDrivenTool commandDrivenTool)
         {
             return commandDrivenTool.GetPromptState(Workspace.Context);
@@ -2865,7 +2894,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        result = Workspace.SubmitPointFromCommandLine(worldPoint);
+        result = TrySubmitPendingBlockHudPoint(
+            worldPoint,
+            out ToolResult pendingResult)
+            ? pendingResult
+            : Workspace.SubmitPointFromCommandLine(worldPoint);
         ClearCommandHudInputOverrides();
         SetLastResult(result);
         AppendToolResultToVisibleHistory(result);
@@ -3216,7 +3249,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (confirm)
         {
-            result = Workspace.SubmitPointFromCommandLine(worldPoint);
+            result = TrySubmitPendingBlockHudPoint(
+                worldPoint,
+                out ToolResult pendingResult)
+                ? pendingResult
+                : Workspace.SubmitPointFromCommandLine(worldPoint);
             ClearCommandHudInputOverrides();
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
@@ -3402,6 +3439,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private bool IsCommandHudPointInputTargetActive()
     {
+        if (IsCreateBlockBasePointPickPending ||
+            IsBlockInsertionPending)
+        {
+            return true;
+        }
+
         if (IsCommandHudPointOverrideTargetActive())
         {
             return true;
@@ -3427,6 +3470,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandInputKind.PointOrAngleOrOption or
             CommandInputKind.PointOrNumber or
             CommandInputKind.PointOrNumberOrOption;
+    }
+
+    private bool TrySubmitPendingBlockHudPoint(
+        Point2D worldPoint,
+        out ToolResult result)
+    {
+        if (IsCreateBlockBasePointPickPending)
+        {
+            result = CommitCreateBlockBasePointPick(worldPoint);
+            return true;
+        }
+
+        if (IsBlockInsertionPending)
+        {
+            result = CommitPendingBlockInsertion(worldPoint);
+            return true;
+        }
+
+        result = ToolResult.None();
+        return false;
     }
 
     private bool TryResolveCommandHudOverridePoint(
@@ -4220,6 +4283,28 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public ToolResult Escape()
     {
+        ClearCommandHudInputOverrides();
+
+        if (IsCreateBlockBasePointPickPending)
+        {
+            return CancelCreateBlockBasePointPick();
+        }
+
+        if (IsBlockInsertionPending)
+        {
+            return CancelPendingBlockInsertion();
+        }
+
+        if (IsLibraryInsertionPending)
+        {
+            return CancelPendingLibraryInsertion();
+        }
+
+        if (IsImportDrawingPlacementPending)
+        {
+            return CancelPendingImportDrawing();
+        }
+
         ToolResult result = Workspace.Escape();
 
         SetLastResult(result);

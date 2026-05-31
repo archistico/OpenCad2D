@@ -70,7 +70,7 @@ These tools should not show editable numeric HUD fields. They should show prompt
 
 ## Block commands
 
-`Create Block` and `Insert Block` are still driven by modal option windows plus pending canvas picks, not by the normal `ICommandDrivenTool` pipeline. Their HUD integration should be handled in a later dedicated step.
+`Create Block` and `Insert Block` are still driven by modal option windows plus pending canvas picks, not by the normal `ICommandDrivenTool` pipeline. Their pending point picks now expose dedicated `X/Y` HUD input; dialog-owned options remain outside the shared resolver.
 
 ## Automated regression coverage added in Step 30B
 
@@ -81,7 +81,7 @@ The following cases are now covered by `MainWindowViewModelCommandLineTests`:
 - Fillet radius option field exposure and typed radius acceptance.
 - Chamfer distance option field exposure and typed distance acceptance.
 - Boundary Fill seed-point `X/Y` exposure.
-- Selection-only tools (`TRIM`, `EXTEND`, `EXPLODE`, `JOIN`) do not expose scalar HUD overrides.
+- Selection-only tools (`TRIM`, `EXTEND`, `DELETE`, `EXPLODE`, `JOIN`) do not expose scalar HUD overrides.
 
 Manual testing should still cover actual canvas picking for Break Point, Break Segment, Trim, Extend, Join, and Offset side selection because those behaviors depend on hit testing and pointer interaction.
 
@@ -123,9 +123,43 @@ Enter
 Expected: accepted, distance set to zero.
 
 
+## Automated regression coverage added in Step 30E
+
+- `Break Point` after target selection exposes only `X/Y`, accepts coordinate confirmation and breaks a line at the projected point.
+- `Break Segment` exposes `X/Y` for the first break point, then `Distance/Angle/X/Y` for the second break point, and removes the expected line segment.
+- `Boundary Fill` seed point `X/Y` creates a filled closed polyline inside a closed line boundary.
+- `Boundary Fill` outside seed point leaves the drawing unchanged and reports a clear no-boundary message.
+- `DELETE` is included in the selection-only no-scalar-HUD guard.
+
+Manual testing should still cover actual canvas picking, hover previews, Tab focus traversal, and failure messaging because the automated tests drive pointer selection directly through the ViewModel/tool pipeline.
+
+
+## Automated regression coverage added in Step 30F
+
+- `Trim`, `Extend`, `Delete`, `Explode`, and `Join` expose no editable scalar HUD fields.
+- `Trim`, `Extend`, `Delete`, `Explode`, and `Join` cancel back to Selection with `Escape`.
+- `Delete` selects by pointer and confirms with Enter.
+- `Explode` selects a polyline by pointer and confirms with Enter.
+- `Join` selects connected lines by pointer and confirms with Enter.
+- `Trim` and `Extend` complete their boundary/target pointer flows through the ViewModel/tool pipeline.
+
+Manual testing should still cover actual UI `Tab` interception and hover feedback. The window-level handler reserves `Tab` while the command HUD is visible, and tools with no editable fields keep focus on the canvas instead of entering grip edit.
+
+
+## Automated regression coverage added in Step 31
+
+- `Create Block` picked-base-point pending state shows the command HUD as `Create Block`.
+- `Create Block` pending point exposes `X/Y` only and accepts complete HUD coordinates as the block base point.
+- `Insert Block` pending placement state shows the command HUD as `Insert Block`.
+- `Insert Block` pending point exposes `X/Y` only and accepts complete HUD coordinates as the insertion point.
+- Block name, definition selection, scale and rotation remain owned by their existing dialogs; the HUD only supplies the final picked point.
+
+Manual testing should still cover the dialog-to-canvas transition, snap-assisted mouse picking and Escape cancellation from the real canvas.
+
+
 ## Remaining manual checks to resume next session
 
-### Step 30E — Break / Boundary Fill
+### Step 30E — Break / Boundary Fill smoke checks
 
 - `BREAK PT`
   - Select a supported curve/entity.
@@ -145,7 +179,7 @@ Expected: accepted, distance set to zero.
   - Verify a fill entity is created.
   - Repeat with a point outside the boundary and verify a clear failure/no-op.
 
-### Step 30F — selection-only cleanup
+### Step 30F — selection-only smoke checks
 
 For each of `TRIM`, `EXTEND`, `DELETE`, `EXPLODE`, and `JOIN`:
 
@@ -156,12 +190,14 @@ For each of `TRIM`, `EXTEND`, `DELETE`, `EXPLODE`, and `JOIN`:
 - Verify `Esc` cancels the command and preserves the expected selection behavior.
 - Verify mouse picking still works.
 
-### Step 31 — Block tools
+### Step 31 - Block tools smoke checks
 
 - `CREATE BLOCK`
-  - Verify current dialog-driven workflow still works.
-  - Verify base point behavior before attempting HUD integration.
+  - Verify the dialog-driven workflow still works.
+  - With `Pick base point from drawing`, press `Tab`, enter `X/Y`, then press `Enter`.
+  - Verify the created block reference uses the typed base point.
 
 - `INSERT BLOCK`
-  - Verify current dialog/pending placement workflow still works.
-  - Verify insertion point can be isolated as the only first HUD candidate before adding scale/rotation HUD fields.
+  - Verify the dialog/pending placement workflow still works.
+  - Press `Tab`, enter insertion `X/Y`, then press `Enter`.
+  - Verify scale/rotation still come from the dialog and insertion point comes from HUD coordinates.

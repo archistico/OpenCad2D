@@ -153,7 +153,7 @@ Implementation should follow the order above. Import Drawing and Blocks are foun
 
 ## Active UI refactor checkpoint — Dynamic Command HUD
 
-Status: [~] in progress; main HUD architecture and most draw/modify flows are implemented. Remaining work is limited to Break/Boundary Fill, selection-only cleanup, block tools, final docs and legacy helper cleanup.
+Status: [~] in progress; main HUD architecture, draw/modify flows and block pending point input are implemented. Remaining work is limited to final docs and legacy helper cleanup.
 
 Specification: `docs/specs/v0.8.121-dynamic-command-hud.md`.
 
@@ -169,9 +169,9 @@ Milestone order:
 6. [x] **HUD-5 Remove generic command textbox and fixed bottom command row** — HUD input is now logical, keyboard-driven and mouse-transparent.
 7. [x] **HUD-6 Editable fields for primary draw tools** — Line, Polyline, Rectangle, Rectangle by Sides and Circle are covered with tool-specific routing/resolvers.
 8. [x] **HUD-7 Transform/modify first pass** — Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer are covered or validated.
-9. [ ] **HUD-8 Step 30E Break / Boundary Fill** — finish Break Point, Break Segment and Boundary Fill HUD input.
-10. [ ] **HUD-9 Step 30F selection-only cleanup** — verify Trim, Extend, Delete, Explode and Join remain prompt/options-only and do not expose numeric fields.
-11. [ ] **HUD-10 Step 31 block tools** — handle Create Block and Insert Block separately because they use modal/pending workflows.
+9. [x] **HUD-8 Step 30E Break / Boundary Fill** — Break Point, Break Segment and Boundary Fill HUD input have ViewModel-level regression coverage.
+10. [x] **HUD-9 Step 30F selection-only cleanup** — Trim, Extend, Delete, Explode and Join remain prompt/options-only and have ViewModel-level regression coverage.
+11. [x] **HUD-10 Step 31 block tools** — Create Block base-point pick and Insert Block placement expose dedicated pending-point `X/Y` HUD input without entering the common tool resolver.
 12. [ ] **HUD-11 Final cleanup** — update docs and remove residual legacy command-line helper code only after regression coverage is complete.
 
 Regression requirement: this work must continue to cover draw, dimension, transform, modify, measure, navigation and selection/order tools. It must not be validated only on Line, Polyline, Rectangle and Circle.
