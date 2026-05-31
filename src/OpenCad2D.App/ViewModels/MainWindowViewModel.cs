@@ -354,8 +354,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         IsLibraryInsertionPending ||
         IsImportDrawingPlacementPending;
 
-    public bool IsBottomCommandLineVisible => false;
-
     public double? LiveDistance => GetLiveMeasurement().Distance;
 
     public double? LiveAngle => GetLiveMeasurement().AngleDegrees;
@@ -2096,6 +2094,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return rejected;
         }
 
+        ClearCommandHudInputOverrides();
         _pendingBlockInsertion = options;
 
         ToolResult result = ToolResult.Started(
@@ -2116,6 +2115,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         InsertBlockOptions options = _pendingBlockInsertion;
         _pendingBlockInsertion = null;
+        ClearCommandHudInputOverrides();
 
         if (!Workspace.Document.BlockDefinitions.TryGet(options.BlockDefinitionId, out BlockDefinition? definition) ||
             definition is null)
@@ -2168,6 +2168,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         _pendingBlockInsertion = null;
+        ClearCommandHudInputOverrides();
 
         ToolResult result = ToolResult.None("Insert block cancelled.");
 
@@ -4193,8 +4194,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(HudScreenPosition),
-            nameof(CommandHudState),
-            nameof(IsBottomCommandLineVisible));
+            nameof(CommandHudState));
     }
 
     public void SetCurrentSnapCandidate(SnapCandidate? candidate)
@@ -4656,7 +4656,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentPromptState),
             nameof(CommandHudState),
             nameof(IsCommandHudVisible),
-            nameof(IsBottomCommandLineVisible),
             nameof(CommandPromptText),
             nameof(CommandInputPlaceholderText),
             nameof(VisibleCommandHistory),
@@ -4927,7 +4926,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentPromptState),
             nameof(CommandHudState),
             nameof(IsCommandHudVisible),
-            nameof(IsBottomCommandLineVisible),
             nameof(LayerNames),
             nameof(Layers),
             nameof(CurrentLayer),
@@ -5008,7 +5006,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentPromptState),
             nameof(CommandHudState),
             nameof(IsCommandHudVisible),
-            nameof(IsBottomCommandLineVisible),
             nameof(MeasurementText),
             nameof(StatusText),
             nameof(LastMessage),
@@ -5037,7 +5034,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(CurrentPromptState),
             nameof(CommandHudState),
             nameof(IsCommandHudVisible),
-            nameof(IsBottomCommandLineVisible),
             nameof(MeasurementText),
             nameof(StatusText));
     }

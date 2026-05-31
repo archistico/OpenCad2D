@@ -42,7 +42,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - compact ColorPicker support in line/text format managers;
 - editable Property Panel for supported entities, including MTEXT value/reference-width editing and read-only draw order display;
 - independent draw order / Z-order, separate from layers;
-- CAD-style command input with contextual prompts, command aliases, coordinates, relative coordinates, polar input, direct distances, command history navigation and first-pass autocomplete; a dynamic cursor-adjacent command HUD is planned to replace the fixed bottom row;
+- CAD-style command input with a dynamic cursor-adjacent command HUD, contextual prompts, editable numeric fields, command aliases, coordinates, relative coordinates, polar input, direct distances, command history navigation and first-pass autocomplete; the old fixed bottom command row has been removed;
 - object snapping, grid snapping, Ortho mode and Polar Tracking;
 - selection, Select All, Select Last and Deselect;
 - drawing tools for points, single-line text, multiline text, lines, rectangles, circles, ellipses, arcs, polylines, polygons and Bezier splines;
@@ -170,6 +170,7 @@ Important documents:
 | `docs/roadmap.md` | current roadmap, completed stabilization work and next milestones |
 | `docs/roadmap-v0.8.100.md` | extended v0.8.100+ roadmap before the next stabilization gate |
 | `docs/specs/` | detailed specifications for import drawing, blocks, dynamic command HUD, symbols, stairs and hatch milestones |
+| `docs/testing/dynamic-command-hud-manual-verification-2026-05-31.md` | manual verification notes for the stabilized HUD and block workflows |
 | `docs/commands.md` | commands, aliases and undoable command rules |
 | `docs/curve-editing.md` | Trim/Break curve-editing architecture, native precision and shared cut-point rules |
 | `docs/command-input.md` | command input syntax and tool workflow |

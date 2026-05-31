@@ -139,7 +139,7 @@ The following milestones are planned before the future v0.9 stabilization gate:
 | v0.8.114 | [x] | `docs/specs/v0.8.110-blocks.md` | Add snap candidates from block-internal geometry. |
 | v0.8.115 | [x] | `docs/specs/v0.8.110-blocks.md` | Add Explode Block and the first in-place Edit Block session workflow. |
 | v0.8.120 | [~] | `docs/specs/v0.8.120-architectural-symbols.md` | Keep first-pass North Symbol and Metric Scale Bar; reserve future direct tools for parametric helpers rather than many fixed-symbol toolbar buttons. |
-| v0.8.121 | [ ] | `docs/specs/v0.8.121-dynamic-command-hud.md` | Replace the fixed command row with a dynamic cursor-adjacent command HUD after unifying command prompt state across all interactive tools. |
+| v0.8.121 | [x] | `docs/specs/v0.8.121-dynamic-command-hud.md` | Fixed command row replaced by a dynamic cursor-adjacent command HUD with unified prompt state, editable numeric fields, block placement flows and regression coverage. |
 | v0.8.122 | [ ] | `docs/specs/v0.8.122-library-browser.md` | Add Library browser for reusable `.opencad2d.json` snippets grouped by category, with preview and insert workflow. |
 | v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
 | v0.8.140 | [~] | `docs/specs/v0.8.140-hatch.md` | Boundary Fill v1 is implemented as click-inside linear face detection that creates filled closed polylines; HatchEntity remains planned. |
@@ -153,11 +153,11 @@ Implementation should follow the order above. Import Drawing and Blocks are foun
 
 ## Active UI refactor checkpoint — Dynamic Command HUD
 
-Status: [~] in progress; main HUD architecture, draw/modify flows and block pending point input are implemented. Remaining work is limited to final docs and legacy helper cleanup.
+Status: [x] completed for the current stabilization scope. The HUD architecture, draw/modify flows, selection-only modify tools, block pending-point workflows, manual validation pass and final command-line cleanup are documented.
 
 Specification: `docs/specs/v0.8.121-dynamic-command-hud.md`.
 
-This checkpoint must be treated as a command-input architecture refactor, not as a visual-only task. The fixed bottom command row should be removed only after the new HUD has passed prompt, input, focus and manual command regression checks.
+This checkpoint was treated as a command-input architecture refactor, not as a visual-only task. The fixed bottom command row has been removed after HUD prompt, input, focus, command-buffer and manual workflow regression checks.
 
 Milestone order:
 
@@ -172,9 +172,9 @@ Milestone order:
 9. [x] **HUD-8 Step 30E Break / Boundary Fill** — Break Point, Break Segment and Boundary Fill HUD input have ViewModel-level regression coverage.
 10. [x] **HUD-9 Step 30F selection-only cleanup** — Trim, Extend, Delete, Explode and Join remain prompt/options-only and have ViewModel-level regression coverage.
 11. [x] **HUD-10 Step 31 block tools** — Create Block base-point pick and Insert Block placement expose dedicated pending-point `X/Y` HUD input without entering the common tool resolver.
-12. [ ] **HUD-11 Final cleanup** — update docs and remove residual legacy command-line helper code only after regression coverage is complete.
+12. [x] **HUD-11 Final cleanup** — docs updated and residual visible command-line helper code removed; the internal command buffer remains intentionally for aliases, options, autocomplete and history.
 
-Regression requirement: this work must continue to cover draw, dimension, transform, modify, measure, navigation and selection/order tools. It must not be validated only on Line, Polyline, Rectangle and Circle.
+Regression requirement satisfied for the current scope through targeted automated tests plus the manual verification pass documented in `docs/testing/dynamic-command-hud-manual-verification-2026-05-31.md`. Future command phases must still add narrow regression tests whenever they introduce non-standard HUD routing.
 
 ---
 

@@ -45,7 +45,6 @@ namespace OpenCad2D.App;
 public partial class MainWindow : Window
 {
     private string _commandInputBuffer = string.Empty;
-    private TextBox? _activeKeyboardHudField;
     private CommandHudFieldKind? _activeLogicalHudFieldKind;
     private string _activeLogicalHudFieldText = string.Empty;
     private CreateBlockOptions? _pendingCreateBlockOptionsDraft;
@@ -2439,6 +2438,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (TryHandleCommandBufferKey(e))
+        {
+            return;
+        }
+
         if (!_viewModel.IsCommandHudVisible ||
             IsCommandInputBlockingHudKeyboard())
         {
@@ -2507,64 +2511,16 @@ public partial class MainWindow : Window
         {
             return;
         }
-    }
 
-    private void CommandInputTextBox_KeyDown(
-        object? sender,
-        KeyEventArgs e)
-    {
-        if (TryFocusFirstHudFieldKey(e))
-        {
-            return;
-        }
-
-        if (TryHandleCommandAutocompleteKey(e))
-        {
-            return;
-        }
-
-        if (TryHandleCommandHistoryNavigationKey(e))
-        {
-            return;
-        }
-
-        if (TryHandleAlignScaleConfirmationKey(e))
-        {
-            return;
-        }
-
-        if (TryHandleCommandOptionShortcutKey(e))
-        {
-            return;
-        }
-
-        if (TryHandlePolylineCompletionKey(e))
-        {
-            return;
-        }
-
-        if (e.Key == Key.Enter)
+        if (e.Key == Key.Enter &&
+            e.KeyModifiers == KeyModifiers.None &&
+            _activeLogicalHudFieldKind is null)
         {
             SubmitCommandInputText();
             e.Handled = true;
-            return;
-        }
-
-        if (e.Key == Key.Escape)
-        {
-            if (HasCommandInputText() &&
-                !IsActiveCommandOrPendingWorkflow())
-            {
-                ClearCommandInputText();
-            }
-            else
-            {
-                EscapeActiveCommandFromKeyboard();
-            }
-
-            e.Handled = true;
         }
     }
+
     private async void HudFieldTextBox_KeyDown(
         object? sender,
         KeyEventArgs e)
@@ -2656,7 +2612,6 @@ public partial class MainWindow : Window
     {
         if (sender is TextBox textBox)
         {
-            _activeKeyboardHudField = textBox;
             textBox.SelectAll();
         }
     }
@@ -2881,21 +2836,6 @@ public partial class MainWindow : Window
         return true;
     }
 
-    private bool TryFocusFirstHudFieldKey(KeyEventArgs e)
-    {
-        if (e.Key != Key.Tab ||
-            IsCommandInputBlockingHudKeyboard() ||
-            !_viewModel.IsCommandHudVisible)
-        {
-            return false;
-        }
-
-        CommitActiveLogicalHudField(confirm: false);
-        MoveToNextLogicalHudField();
-        e.Handled = true;
-        return true;
-    }
-
     private void RemoveLastLogicalHudInputCharacter()
     {
         if (string.IsNullOrEmpty(_activeLogicalHudFieldText))
@@ -3074,7 +3014,6 @@ public partial class MainWindow : Window
     {
         _activeLogicalHudFieldKind = null;
         _activeLogicalHudFieldText = string.Empty;
-        _activeKeyboardHudField = null;
         RefreshLogicalHudFieldVisuals();
         Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
     }
@@ -3137,14 +3076,57 @@ public partial class MainWindow : Window
         MoveToNextLogicalHudField();
     }
 
-    private bool IsCurrentHudFieldTextBox(TextBox candidate)
-    {
-        return false;
-    }
 
-    private IEnumerable<TextBox> GetHudFieldTextBoxes()
+    private bool TryHandleCommandBufferKey(KeyEventArgs e)
     {
-        return Enumerable.Empty<TextBox>();
+        if (TryHandleCommandAutocompleteKey(e))
+        {
+            return true;
+        }
+
+        if (TryHandleCommandHistoryNavigationKey(e))
+        {
+            return true;
+        }
+
+        if (e.Key == Key.Back &&
+            e.KeyModifiers == KeyModifiers.None &&
+            _activeLogicalHudFieldKind is null &&
+            HasCommandInputText())
+        {
+            RemoveLastCommandInputCharacter();
+            e.Handled = true;
+            return true;
+        }
+
+        if (e.Key == Key.Enter &&
+            e.KeyModifiers == KeyModifiers.None &&
+            HasNonWhiteSpaceCommandInputText())
+        {
+            SubmitCommandInputText();
+            e.Handled = true;
+            return true;
+        }
+
+        if (e.Key == Key.Escape &&
+            e.KeyModifiers == KeyModifiers.None &&
+            HasCommandInputText())
+        {
+            if (!IsActiveCommandOrPendingWorkflow())
+            {
+                ClearCommandInputText();
+                CadCanvas.Focus();
+            }
+            else
+            {
+                EscapeActiveCommandFromKeyboard();
+            }
+
+            e.Handled = true;
+            return true;
+        }
+
+        return false;
     }
 
     private bool TryHandleCommandAutocompleteKey(KeyEventArgs e)

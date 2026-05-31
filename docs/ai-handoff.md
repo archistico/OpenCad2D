@@ -923,7 +923,7 @@ The sixth Dynamic Command HUD code step is a conservative UX consolidation step.
 
 Implemented in this step:
 
-- `BottomCommandLinePanel` remains available only through the existing `IsBottomCommandLineVisible` fallback rule.
+- Historical transition note: the bottom command fallback was still available at this point in the HUD migration; it has since been removed.
 - The bottom fallback now shows only a `Command` label plus the synchronized `CommandInputTextBox`.
 - The bottom fallback no longer displays `ActiveToolName` or `CommandPromptText`; active command identity and prompt information now belong to the cursor HUD.
 - No command parser, tool, focus, history or autocomplete behavior is changed.
@@ -1617,3 +1617,54 @@ Important guardrail: do not broaden the shared HUD resolver while finishing the 
 - When the selection was made with `Shift`, the dialog no longer reopens after every click/toggle; the user can keep adding/removing entities and press `Enter` to finish the multi-selection and return to the dialog.
 - `CadCanvasWorkspaceChangedEventArgs` now carries the current `KeyModifiers`, allowing `MainWindow` to distinguish normal selection completion from SHIFT accumulation without depending on localized tool-result messages.
 - `Escape` now also clears a pending Create Block entity-selection review loop.
+
+### Step 31T - Insert Block HUD insertion cleanup
+
+- Consolidated the Insert Block pending-placement workflow to mirror the other dialog-driven placement paths.
+- `BeginInsertBlockPlacement(...)` now clears stale HUD `X/Y` overrides before exposing the insertion-point HUD fields.
+- `CommitPendingBlockInsertion(...)` and `CancelPendingBlockInsertion()` now also clear HUD overrides, so a partially typed insertion point cannot leak into a later block insertion or a different command.
+- Scale and rotation remain dialog options; the dynamic HUD for Insert Block exposes only insertion-point `X/Y`.
+- Existing Insert Block creation/undo/cancel behavior is unchanged: the block reference is still created only after a click or confirmed HUD coordinate point.
+- Added regression coverage for stale `X/Y` cleanup on begin, cancel and commit.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+### Step 31U - Final HUD command-line cleanup checkpoint
+
+- Removed the now-obsolete `IsBottomCommandLineVisible` ViewModel property and the remaining property-change notifications for it. The XAML no longer contains a bottom command row, so this flag was dead compatibility state.
+- Removed the unused `CommandInputTextBox_KeyDown(...)` handler that belonged to the transitional bottom command input.
+- Removed dead HUD textbox helpers that returned constant/empty values after the HUD became mouse-transparent and logical-field driven.
+- Added window-level command-buffer key handling for the no-bottom-row UI: typed aliases/options can still be submitted with Enter, edited with Backspace, cleared/cancelled with Escape, autocompleted with Tab and recalled with Up/Down.
+- Kept the internal `_commandInputBuffer` and command submission helpers intentionally: aliases, autocomplete, history navigation, option shortcuts such as `Y/N`, and command-name typing still use that buffer even without a visible bottom command row.
+- Updated `docs/command-input.md`, `docs/tools.md`, `docs/commands.md` and the HUD specification to describe the current HUD-first input model, Create Block review loop and Insert Block pending-placement cleanup.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+## 2026-05-31 — Dynamic HUD stabilization documentation update
+
+Status: [x] completed for the current HUD stabilization scope.
+
+Summary:
+
+- The dynamic cursor-adjacent HUD is now the primary visible command-input surface.
+- The fixed bottom command row and its obsolete visibility flag have been removed.
+- The internal command buffer remains intentionally for aliases, command options, autocomplete, history navigation and single-key option responses.
+- Manual verification after the latest HUD/Create Block/Insert Block pass is documented in `docs/testing/dynamic-command-hud-manual-verification-2026-05-31.md`.
+- `docs/roadmap.md` now marks v0.8.121 / HUD-11 as completed for the current scope.
+- `docs/specs/v0.8.121-dynamic-command-hud.md` now has a final stabilization summary and no longer describes the HUD milestone as merely planned/in-progress.
+
+Current stable HUD scope:
+
+- primary draw tools: Line, Polyline, Rectangle, Rectangle by Sides, Circle, Arc, Ellipse, Polygon and Spline prompt flow;
+- transform/modify numeric phases: Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer;
+- break/fill phases: Break Point, Break Segment and Boundary Fill;
+- selection-only modify tools: Trim, Extend, Delete, Explode and Join;
+- pending placement flows: Create Block base point, Insert Block insertion point, Library insertion and OpenCad2D import placement.
+
+Important implementation guidance for future work:
+
+- Keep `CommandHudFieldRoutingPolicy` as the first-numeric-character routing authority.
+- Keep ViewModel override clearing synchronized with the Window logical HUD input state through `CommandHudInputOverridesCleared`.
+- Do not reintroduce a visible bottom command row.
+- Do not route new command phases by ad-hoc key handling in the Window. Use prompt contracts, HUD field definitions and narrow regression tests.
+- For any tool that asks for entity selection, verify `SnapKind.EntityOnly` so endpoint/midpoint/intersection snaps do not leak into selection prompts.

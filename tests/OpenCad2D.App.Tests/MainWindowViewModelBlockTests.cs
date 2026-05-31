@@ -387,6 +387,76 @@ public sealed class MainWindowViewModelInsertBlockTests
     }
 
     [Fact]
+    public void BeginInsertBlockPlacement_ShouldClearStaleHudCoordinateOverrides()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        var definitionId = originalReference.BlockDefinitionId;
+        viewModel.SetMousePosition(new Point2D(3, 4));
+
+        viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(definitionId, "Door", 1, 0));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+        Assert.Equal("10", GetHudField(viewModel, CommandHudFieldKind.X).DisplayValue);
+
+        viewModel.CancelPendingBlockInsertion();
+        viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(definitionId, "Door", 1, 0));
+
+        Assert.Equal("3", GetHudField(viewModel, CommandHudFieldKind.X).DisplayValue);
+        Assert.Equal("4", GetHudField(viewModel, CommandHudFieldKind.Y).DisplayValue);
+    }
+
+    [Fact]
+    public void CancelPendingBlockInsertion_ShouldClearHudCoordinateOverrides()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        var definitionId = originalReference.BlockDefinitionId;
+        viewModel.SetMousePosition(new Point2D(1, 2));
+
+        viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(definitionId, "Door", 1, 0));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+
+        viewModel.CancelPendingBlockInsertion();
+        viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(definitionId, "Door", 1, 0));
+
+        Assert.Equal("1", GetHudField(viewModel, CommandHudFieldKind.X).DisplayValue);
+        Assert.Equal("2", GetHudField(viewModel, CommandHudFieldKind.Y).DisplayValue);
+    }
+
+    [Fact]
+    public void CommitPendingBlockInsertion_ShouldClearHudCoordinateOverrides()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        var definitionId = originalReference.BlockDefinitionId;
+        viewModel.SetMousePosition(new Point2D(5, 6));
+
+        viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(definitionId, "Door", 1, 0));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+
+        viewModel.CommitPendingBlockInsertion(new Point2D(10, 20));
+        viewModel.BeginInsertBlockPlacement(
+            new InsertBlockOptions(definitionId, "Door", 1, 0));
+
+        Assert.Equal("5", GetHudField(viewModel, CommandHudFieldKind.X).DisplayValue);
+        Assert.Equal("6", GetHudField(viewModel, CommandHudFieldKind.Y).DisplayValue);
+    }
+
+    [Fact]
     public void CommitPendingBlockInsertion_ShouldCreateReferenceAtPickedPoint()
     {
         var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
@@ -477,6 +547,13 @@ public sealed class MainWindowViewModelInsertBlockTests
             viewModel.Workspace.Document.Entities.All.Single());
 
         return viewModel;
+    }
+
+    private static CommandHudFieldViewModel GetHudField(
+        MainWindowViewModel viewModel,
+        CommandHudFieldKind kind)
+    {
+        return viewModel.CommandHudState.Fields.Single(field => field.Kind == kind);
     }
 
     private static CommandHudFieldKind[] GetEditableHudFieldKinds(MainWindowViewModel viewModel)

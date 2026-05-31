@@ -1,6 +1,6 @@
 # Commands
 
-OpenCad2D uses undoable document commands for mutations and command-line aliases for user actions.
+OpenCad2D uses undoable document commands for mutations and command-line aliases for user actions. The visible command surface is the dynamic HUD; the internal command buffer still accepts aliases, options, autocomplete and history navigation without a fixed bottom command row.
 
 ---
 
@@ -191,11 +191,11 @@ All image reference mutations are executed through undoable replace/add commands
 
 ## Insert Block
 
-`Insert Block` creates a new instance of an existing block definition. The command opens an options dialog where the user selects the block definition and enters a uniform scale plus rotation in degrees. After confirmation, the canvas asks for an insertion point; active snaps are honored. Escape cancels the pending insertion without modifying the document. Undo removes the inserted block reference as a single operation.
+`Insert Block` creates a new instance of an existing block definition. The command opens an options dialog where the user selects the block definition and enters a uniform scale plus rotation in degrees. After confirmation, the canvas/HUD asks only for the insertion point through click/snap or editable `X/Y` fields. Escape cancels the pending insertion without modifying the document and clears stale HUD coordinates. Undo removes the inserted block reference as a single operation.
 
 ## Create Block
 
-`Create Block` converts the current selection into a reusable block definition. The command asks for a block name and a base point. The base point can be typed numerically or picked from the drawing with the mouse/snap workflow. The selected entities are stored in local block coordinates and replaced by a single `BlockReferenceEntity` at the same visible location. The operation is undoable as one step.
+`Create Block` converts the current non-empty selection into a reusable block definition. The dialog shows the selected-entity counter and blocks empty creation. It can temporarily close for entity selection and then reopen: normal single selection returns immediately, while `Shift` selection stays active until `Enter`. The base point can be typed numerically, entered through HUD `X/Y`, or picked from the drawing; picked points return to the dialog for review. The selected entities are stored in local block coordinates and replaced by a single `BlockReferenceEntity` only when OK is pressed. The operation is undoable as one step.
 
 Current limitation: nested blocks are not supported yet. Existing block references should be exploded before they are included in a new block.
 

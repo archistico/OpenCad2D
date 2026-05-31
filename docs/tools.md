@@ -18,6 +18,18 @@ Command-driven tools implement `ICommandDrivenTool`.
 
 ---
 
+
+## HUD and snap rules for interactive tools
+
+The dynamic HUD is the primary visible command-input surface. A tool phase should expose only fields that are meaningful for that phase:
+
+- point phases may expose `X/Y` or `Distance/Angle` when a base point exists;
+- scalar phases may expose one scalar field such as radius, sides, distance, factor or height;
+- entity-selection phases should not expose editable numeric point fields;
+- dialog-owned values such as block name, selected block definition, block scale and block rotation stay in the dialog, not in the HUD.
+
+Selection phases in modify tools must request `SnapKind.EntityOnly`. Point snaps such as endpoint, midpoint and intersection should not be active while the user is being asked to pick an entity rather than a geometric point.
+
 ## Drawing tools
 
 Implemented:
@@ -364,7 +376,9 @@ Image references participate in selection, snapping, transform tools and grip ed
 
 ## Create Block
 
-The Create Block tool is the first block workflow. It requires a non-empty selection, asks for a block name and base point, then replaces the selection with a block reference. The visual geometry stays in place because the selected entities are translated into the block definition relative to the base point.
+The Create Block workflow requires a non-empty selection. The dialog shows the current entity count and disables creation when the count is zero. From the dialog the user can return to the drawing to select entities; a normal single selection reopens the dialog immediately, while `Shift` selection keeps accumulating entities until `Enter` finishes the selection loop.
+
+The base point can be typed in the dialog, entered through HUD `X/Y`, or picked from the drawing. Picking the base point returns to the dialog for review; the block is created only when the user presses OK. The visual geometry stays in place because the selected entities are translated into the block definition relative to the base point.
 
 
 ## Current fixed-symbol tools

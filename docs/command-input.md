@@ -19,7 +19,7 @@ Mouse input and typed input feed the same tool state machine.
 
 ## Dynamic Command HUD
 
-The fixed bottom command row has been replaced by the cursor-adjacent HUD described in `docs/specs/v0.8.121-dynamic-command-hud.md`.
+The fixed bottom command row has been replaced by the cursor-adjacent HUD described in `docs/specs/v0.8.121-dynamic-command-hud.md`. Keyboard command text is still captured globally: command aliases, options, autocomplete, history and Enter submission do not require a visible textbox.
 
 The HUD shows, when meaningful:
 
@@ -181,6 +181,13 @@ Radius `0` creates a sharp-corner join in Trim mode. With a positive radius, the
 
 ---
 
+
+## Current stabilization checkpoint
+
+The 2026-05-31 HUD stabilization pass treats the dynamic HUD as the visible command surface and the internal command buffer as an implementation detail. The manual verification notes for this pass are in `docs/testing/dynamic-command-hud-manual-verification-2026-05-31.md`.
+
+New command phases should not depend on a visible command textbox. They should expose prompt/options through the shared command prompt contract and, when they need typed numeric values, expose those values as HUD fields.
+
 ## Parser architecture
 
 Main command-input types live in `OpenCad2D.Tools/Input`:
@@ -207,14 +214,14 @@ can mean distance for `OFFSET`, angle for `ROTATE`, scale factor for `SCALE`, or
 
 ## Notes
 
-The earlier large always-visible command history panel was removed. The current UI still uses a compact command row, but the active roadmap replaces it with a dynamic command HUD that preserves the same command parser and tool state machines.
+The earlier large always-visible command history panel and the fixed bottom command row have been removed. The current UI uses the dynamic command HUD as the visible command surface; the internal command buffer remains only for aliases, option shortcuts, autocomplete and history navigation.
 
 
 ## Dynamic Command HUD Step 2 — prompt contract cleanup
 
 The dynamic HUD must read the active command state from `ICommandDrivenTool.GetPromptState(...)`. The following tools have been converted from ViewModel fallback prompt text into the shared prompt contract: arc, point, text, measurement tools, dimension tools, zoom window and architectural insertion tools.
 
-The old command input row remains active until the HUD has a read-only visual overlay and then safely moves the single existing `CommandInputTextBox`.
+Historical note: the old command input row was kept during the early HUD migration, then removed once HUD keyboard routing, options, autocomplete and history were stable.
 
 ## Dynamic Command HUD — Step 3 read-only overlay
 
