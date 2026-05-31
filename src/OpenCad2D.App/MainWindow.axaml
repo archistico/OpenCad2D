@@ -210,6 +210,39 @@
                             </Button>
 
                     <Button Classes="global-button"
+                            ToolTip.Tip="Save the current drawing"
+                            Click="Save_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconSave}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Save" />
+                                </Grid>
+                            </Button>
+
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Save the current drawing to a new file"
+                            Click="SaveAs_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconSaveAs}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Save As" />
+                                </Grid>
+                            </Button>
+
+                    <Separator Margin="5,0" />
+
+                    <TextBlock Text="Import:"
+                               Foreground="#CCCCCC"
+                               VerticalAlignment="Center"
+                               Margin="0,0,2,0" />
+
+                    <Button Classes="global-button"
                             ToolTip.Tip="Import an ASCII DXF drawing into a new OpenCad2D document"
                             Click="ImportDxf_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
@@ -235,6 +268,58 @@
                                 </Grid>
                             </Button>
 
+                    <Separator Margin="5,0" />
+
+                    <TextBlock Text="Export:"
+                               Foreground="#CCCCCC"
+                               VerticalAlignment="Center"
+                               Margin="0,0,2,0" />
+
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Export the drawing as SVG"
+                            Click="ExportSvg_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExportSVG}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Export SVG" />
+                                </Grid>
+                            </Button>
+
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Export the drawing as DXF"
+                            Click="ExportDxf_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExportDXF}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Export DXF" />
+                                </Grid>
+                            </Button>
+
+                    <Button Classes="global-button"
+                            ToolTip.Tip="Export a print-friendly PDF drawing"
+                            Click="ExportPdf_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconExportPDF}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Export PDF" />
+                                </Grid>
+                            </Button>
+
+                    <Separator Margin="5,0" />
+
+                    <TextBlock Text="Image Refs:"
+                               Foreground="#CCCCCC"
+                               VerticalAlignment="Center"
+                               Margin="0,0,2,0" />
 
                     <Button Classes="global-button"
                             ToolTip.Tip="Attach a PNG or JPG as an external image reference"
@@ -311,73 +396,6 @@
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Manage Refs" />
-                                </Grid>
-                            </Button>
-
-                    <Button Classes="global-button"
-                            ToolTip.Tip="Save the current drawing"
-                            Click="Save_Click" >
-                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
-                                    <Path Grid.Column="0"
-                                          Classes="icon-button-path"
-                                          Data="{StaticResource IconSave}" />
-                                    <TextBlock Grid.Column="1"
-                                               Classes="icon-button-text"
-                                               Text="Save" />
-                                </Grid>
-                            </Button>
-
-                    <Button Classes="global-button"
-                            ToolTip.Tip="Save the current drawing to a new file"
-                            Click="SaveAs_Click" >
-                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
-                                    <Path Grid.Column="0"
-                                          Classes="icon-button-path"
-                                          Data="{StaticResource IconSaveAs}" />
-                                    <TextBlock Grid.Column="1"
-                                               Classes="icon-button-text"
-                                               Text="Save As" />
-                                </Grid>
-                            </Button>
-
-                    <Separator Margin="5,0" />
-
-                    <Button Classes="global-button"
-                            ToolTip.Tip="Export the drawing as SVG"
-                            Click="ExportSvg_Click" >
-                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
-                                    <Path Grid.Column="0"
-                                          Classes="icon-button-path"
-                                          Data="{StaticResource IconExportSVG}" />
-                                    <TextBlock Grid.Column="1"
-                                               Classes="icon-button-text"
-                                               Text="Export SVG" />
-                                </Grid>
-                            </Button>
-
-                    <Button Classes="global-button"
-                            ToolTip.Tip="Export the drawing as DXF"
-                            Click="ExportDxf_Click" >
-                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
-                                    <Path Grid.Column="0"
-                                          Classes="icon-button-path"
-                                          Data="{StaticResource IconExportDXF}" />
-                                    <TextBlock Grid.Column="1"
-                                               Classes="icon-button-text"
-                                               Text="Export DXF" />
-                                </Grid>
-                            </Button>
-
-                    <Button Classes="global-button"
-                            ToolTip.Tip="Export a print-friendly PDF drawing"
-                            Click="ExportPdf_Click" >
-                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
-                                    <Path Grid.Column="0"
-                                          Classes="icon-button-path"
-                                          Data="{StaticResource IconExportPDF}" />
-                                    <TextBlock Grid.Column="1"
-                                               Classes="icon-button-text"
-                                               Text="Export PDF" />
                                 </Grid>
                             </Button>
 
