@@ -182,15 +182,16 @@ public sealed class OpenCad2DImportMerger
 
         foreach (LineFormat sourceFormat in source.LineFormats.All)
         {
-            if (target.LineFormats.TryGetById(sourceFormat.Id, out LineFormat? existingFormat) &&
-                existingFormat is not null &&
-                AreEquivalent(existingFormat, sourceFormat))
+            LineFormat? equivalentFormat = result.FirstOrDefault(format =>
+                AreEquivalent(format, sourceFormat));
+
+            if (equivalentFormat is not null)
             {
-                idMap[sourceFormat.Id] = sourceFormat.Id;
+                idMap[sourceFormat.Id] = equivalentFormat.Id;
                 continue;
             }
 
-            LineFormatId targetId = target.LineFormats.Contains(sourceFormat.Id)
+            LineFormatId targetId = result.Any(format => format.Id == sourceFormat.Id)
                 ? new LineFormatId(CreateUniqueId(
                     sourceFormat.Id.Value,
                     result.Select(format => format.Id.Value)))
@@ -235,15 +236,16 @@ public sealed class OpenCad2DImportMerger
 
         foreach (TextFormat sourceFormat in source.TextFormats.All)
         {
-            if (target.TextFormats.TryGetById(sourceFormat.Id, out TextFormat? existingFormat) &&
-                existingFormat is not null &&
-                AreEquivalent(existingFormat, sourceFormat))
+            TextFormat? equivalentFormat = result.FirstOrDefault(format =>
+                AreEquivalent(format, sourceFormat));
+
+            if (equivalentFormat is not null)
             {
-                idMap[sourceFormat.Id] = sourceFormat.Id;
+                idMap[sourceFormat.Id] = equivalentFormat.Id;
                 continue;
             }
 
-            TextFormatId targetId = target.TextFormats.Contains(sourceFormat.Id)
+            TextFormatId targetId = result.Any(format => format.Id == sourceFormat.Id)
                 ? new TextFormatId(CreateUniqueId(
                     sourceFormat.Id.Value,
                     result.Select(format => format.Id.Value)))
@@ -294,15 +296,16 @@ public sealed class OpenCad2DImportMerger
                 ? sourceRemappedTextFormatId
                 : TextFormatId.Standard;
 
-            if (target.DimensionStyles.TryGetById(sourceStyle.Id, out DimensionStyle? existingStyle) &&
-                existingStyle is not null &&
-                AreEquivalent(existingStyle, sourceStyle, sourceTargetTextFormatId))
+            DimensionStyle? equivalentStyle = result.FirstOrDefault(style =>
+                AreEquivalent(style, sourceStyle, sourceTargetTextFormatId));
+
+            if (equivalentStyle is not null)
             {
-                idMap[sourceStyle.Id] = sourceStyle.Id;
+                idMap[sourceStyle.Id] = equivalentStyle.Id;
                 continue;
             }
 
-            DimensionStyleId targetId = target.DimensionStyles.Contains(sourceStyle.Id)
+            DimensionStyleId targetId = result.Any(style => style.Id == sourceStyle.Id)
                 ? new DimensionStyleId(CreateUniqueId(
                     sourceStyle.Id.Value,
                     result.Select(style => style.Id.Value)))
@@ -364,15 +367,16 @@ public sealed class OpenCad2DImportMerger
                 ? sourceRemappedLineFormatId
                 : LineFormatId.Continuous;
 
-            if (target.Layers.TryGet(sourceLayer.Id, out Layer? existingLayer) &&
-                existingLayer is not null &&
-                AreEquivalent(existingLayer, sourceLayer, sourceTargetLineFormatId))
+            Layer? equivalentLayer = result.FirstOrDefault(layer =>
+                AreEquivalent(layer, sourceLayer, sourceTargetLineFormatId));
+
+            if (equivalentLayer is not null)
             {
-                idMap[sourceLayer.Id] = sourceLayer.Id;
+                idMap[sourceLayer.Id] = equivalentLayer.Id;
                 continue;
             }
 
-            LayerId targetId = target.Layers.Contains(sourceLayer.Id)
+            LayerId targetId = result.Any(layer => layer.Id == sourceLayer.Id)
                 ? new LayerId(CreateUniqueId(
                     sourceLayer.Id.Value,
                     result.Select(layer => layer.Id.Value)))

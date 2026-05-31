@@ -363,9 +363,7 @@ public sealed class CadEntityRenderer
         Pen pen,
         bool isSelected)
     {
-        Pen dimensionPen = dimension.IsStale && !isSelected
-            ? CreateStaleDimensionPen(pen)
-            : pen;
+        Pen dimensionPen = pen;
 
         DimensionStyle style = ResolveDimensionStyle(
             workspace,
@@ -405,17 +403,6 @@ public sealed class CadEntityRenderer
             style,
             dimensionPen,
             isSelected);
-    }
-
-    private static Pen CreateStaleDimensionPen(Pen sourcePen)
-    {
-        double thickness = sourcePen.Thickness;
-        var brush = new SolidColorBrush(Color.FromRgb(255, 183, 77));
-
-        return new Pen(
-            brush,
-            thickness,
-            new DashStyle(new double[] { 6, 4 }, 0));
     }
 
     private void DrawDimensionArc(

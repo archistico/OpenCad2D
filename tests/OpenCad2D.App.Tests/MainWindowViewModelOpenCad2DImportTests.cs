@@ -7,6 +7,7 @@ using OpenCad2D.Core.Layers;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Persistence;
 using OpenCad2D.Persistence.Dto;
+using OpenCad2D.Core.Styling;
 
 namespace OpenCad2D.App.Tests;
 
@@ -112,6 +113,63 @@ public sealed class MainWindowViewModelOpenCad2DImportTests
         }
     }
 
+
+
+    [Fact]
+    public void ImportDrawingMerger_ShouldReuseEquivalentResourcesByName()
+    {
+        var target = new CadDocument();
+        target.Layers.Add(new Layer(
+            new LayerId("Annotations"),
+            "Annotations",
+            LineFormatId.Annotations));
+        int initialLineFormatCount = target.LineFormats.Count;
+        int initialLayerCount = target.Layers.Count;
+
+        var source = new CadDocument();
+        var sourceLineFormatId = new LineFormatId("ImportedAnnotationsFormat");
+        var sourceLayerId = new LayerId("ImportedAnnotationsLayer");
+
+        source.LineFormats.ReplaceAll(new[]
+        {
+            source.LineFormats.GetById(LineFormatId.Continuous),
+            new LineFormat(
+                sourceLineFormatId,
+                "Annotations",
+                CadColor.FromRgb(160, 160, 160),
+                LineWeight.FromMillimeters(0.8),
+                LineStyle.Continuous)
+        });
+
+        source.Layers.Add(new Layer(
+            sourceLayerId,
+            "Annotations",
+            sourceLineFormatId));
+        source.AddEntity(new LineEntity(
+            Point2D.Origin,
+            new Point2D(10, 0),
+            layerId: sourceLayerId));
+
+        var merger = new OpenCad2DImportMerger();
+        OpenCad2DImportMergeResult result = merger.Merge(target, source);
+
+        Assert.Equal(0, result.AddedLineFormatCount);
+        Assert.Equal(0, result.AddedLayerCount);
+        Assert.Equal(initialLineFormatCount, target.LineFormats.Count);
+        Assert.Equal(initialLayerCount, target.Layers.Count);
+
+        result.Command.Execute(target);
+
+        Assert.Equal(initialLineFormatCount, target.LineFormats.Count);
+        Assert.Equal(initialLayerCount, target.Layers.Count);
+
+        LineEntity importedLine = Assert.IsType<LineEntity>(
+            target.Entities.All.Single());
+        Assert.Equal(new LayerId("Annotations"), importedLine.LayerId);
+        Assert.DoesNotContain(
+            target.Layers.All,
+            layer => layer.Name == "Annotations" && layer.Id != new LayerId("Annotations"));
+    }
 
     [Fact]
     public void ImportDrawingFromFile_WithPlacementOptions_ShouldScaleRotateAndTranslateImportedEntities()
