@@ -696,7 +696,7 @@
 
                             <Button x:Name="DivideButton"
                                     Classes="tool-button"
-                                    ToolTip.Tip="DIVIDE: place points at equal divisions of one selected entity"
+                                    ToolTip.Tip="Divide an entity into equal segments by placing point entities"
                                     Click="Divide_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
@@ -1307,7 +1307,7 @@
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
                                           Classes="icon-button-path"
-                                          Data="{StaticResource IconRectangle}" />
+                                          Data="{StaticResource IconCreateBlock}" />
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Create Block" />
@@ -1321,7 +1321,7 @@
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
                                           Classes="icon-button-path"
-                                          Data="{StaticResource IconRectangle}" />
+                                          Data="{StaticResource IconInsertBlock}" />
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Insert Block" />
@@ -1335,7 +1335,7 @@
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
                                           Classes="icon-button-path"
-                                          Data="{StaticResource IconRectangle}" />
+                                          Data="{StaticResource IconBlockManager}" />
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Block Manager" />
@@ -1349,7 +1349,7 @@
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
                                           Classes="icon-button-path"
-                                          Data="{StaticResource IconRectangle}" />
+                                          Data="{StaticResource IconEditBlock}" />
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Edit Block" />
@@ -1363,7 +1363,7 @@
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
                                           Classes="icon-button-path"
-                                          Data="{StaticResource IconRectangle}" />
+                                          Data="{StaticResource IconSaveBlockEdit}" />
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Save Block Edit" />
@@ -1377,7 +1377,7 @@
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
                                           Classes="icon-button-path"
-                                          Data="{StaticResource IconRectangle}" />
+                                          Data="{StaticResource IconCancelBlockEdit}" />
                                     <TextBlock Grid.Column="1"
                                                Classes="icon-button-text"
                                                Text="Cancel Block Edit" />

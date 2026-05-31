@@ -30,11 +30,11 @@
     <!-- Angular_Dim.svg -->
     <StreamGeometry x:Key="IconAngularDim">M21 19h-18l9 -15 M20.615 15.171h.015 M19.515 11.771h.015 M17.715 8.671h.015 M15.415 5.971h.015</StreamGeometry>
 
-    <!-- Arc.svg -->
-    <StreamGeometry x:Key="IconArc">M17 4a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M3 18a1 1 0 0 1 1 -1h2a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-2a1 1 0 0 1 -1 -1l0 -2 M17 5c-6.627 0 -12 5.373 -12 12</StreamGeometry>
+    <!-- Arc.svg: simple clean arc icon. -->
+    <StreamGeometry x:Key="IconArc">M5 17 A10 10 0 0 1 19 7</StreamGeometry>
 
-    <!-- Arc_3P.svg -->
-    <StreamGeometry x:Key="IconArc3P">M12 3a9 9 0 1 0 9 9</StreamGeometry>
+    <!-- Arc_3P.svg: custom three-point arc icon with start/mid/end markers. -->
+    <StreamGeometry x:Key="IconArc3P">M5 17 A10 10 0 0 1 19 7 M4 16h3v3h-3z M10.5 8.5h3v3h-3z M18 6h3v3h-3z</StreamGeometry>
 
     <!-- Area.svg -->
     <StreamGeometry x:Key="IconArea">M17 5h2a1 1 0 0 1 1 1v1a1 1 0 0 1 -1 1h-1a1 1 0 0 0 -1 1v1a1 1 0 0 0 1 1h2 M4 12v6 M4 14a2 2 0 0 1 2 -2h.5a2.5 2.5 0 0 1 2.5 2.5v3.5 M9 15.5v-1a2.5 2.5 0 1 1 5 0v3.5</StreamGeometry>
@@ -53,6 +53,19 @@
 
     <!-- Boundary_Fill.svg -->
     <StreamGeometry x:Key="IconBoundaryFill">M4 6h16v12h-16z M7 15l8 -8 M9 17h8v-8</StreamGeometry>
+
+    <!-- Block icons: custom family based on overlapping square/circle block geometry. -->
+    <StreamGeometry x:Key="IconCreateBlock">M4 6h10v10h-10z M19 13a5.5 5.5 0 1 0 -11 0a5.5 5.5 0 1 0 11 0</StreamGeometry>
+
+    <StreamGeometry x:Key="IconInsertBlock">M4 6h10v10h-10z M19 13a5.5 5.5 0 1 0 -11 0a5.5 5.5 0 1 0 11 0 M16.5 16.5h3v3h-3z M14 18h2.5 M18 14v2.5</StreamGeometry>
+
+    <StreamGeometry x:Key="IconBlockManager">M4 6h9v9h-9z M18 12.5a5 5 0 1 0 -10 0a5 5 0 1 0 10 0 M16 6h5 M16 10h5 M16 14h5 M16 18h5</StreamGeometry>
+
+    <StreamGeometry x:Key="IconEditBlock">M4 6h9v9h-9z M18 12.5a5 5 0 1 0 -10 0a5 5 0 1 0 10 0 M14 18l4.5 -4.5l2 2l-4.5 4.5h-2z</StreamGeometry>
+
+    <StreamGeometry x:Key="IconSaveBlockEdit">M4 6h9v9h-9z M18 12.5a5 5 0 1 0 -10 0a5 5 0 1 0 10 0 M15 17l2 2l4 -5</StreamGeometry>
+
+    <StreamGeometry x:Key="IconCancelBlockEdit">M4 6h9v9h-9z M18 12.5a5 5 0 1 0 -10 0a5 5 0 1 0 10 0 M15 15l5 5 M20 15l-5 5</StreamGeometry>
 
     <!-- Circle.svg -->
     <StreamGeometry x:Key="IconCircle">M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0</StreamGeometry>
@@ -134,8 +147,8 @@
     <!-- Line_formats.svg -->
     <StreamGeometry x:Key="IconLineFormats">M4 18v.01 M8 18v.01 M12 18v.01 M16 18v.01 M20 18v.01 M18 12h2 M11 12h2 M4 12h2 M4 6h16</StreamGeometry>
 
-    <!-- MText.svg -->
-    <StreamGeometry x:Key="IconMText">M4 20l3 0 M14 20l7 0 M6.9 15l6.9 0 M10.2 6.3l5.8 13.7 M5 20l6 -16l2 0l7 16</StreamGeometry>
+    <!-- MText.svg: custom M matching the Text icon family. -->
+    <StreamGeometry x:Key="IconMText">M4 20h4 M16 20h4 M5 20v-16 M19 20v-16 M5 4l7 10l7 -10 M9 20h6</StreamGeometry>
 
     <!-- Mirror.svg -->
     <StreamGeometry x:Key="IconMirror">M12 3l0 18 M16 7l0 10l5 0l-5 -10 M8 7l0 10l-5 0l5 -10</StreamGeometry>
@@ -155,8 +168,8 @@
     <!-- Point.svg: custom cross point marker. -->
     <StreamGeometry x:Key="IconPoint">M12 8v8 M8 12h8 M12 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0</StreamGeometry>
 
-    <!-- Divide.svg: curve divided into equal point markers. -->
-    <StreamGeometry x:Key="IconDivide">M4 12h16 M7 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0 M12 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0 M17 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0 M7 8v8 M12 8v8 M17 8v8</StreamGeometry>
+    <!-- Divide.svg: equal division points on a construction segment. -->
+    <StreamGeometry x:Key="IconDivide">M4 12h16 M8 9v6 M12 9v6 M16 9v6 M4 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0 M20 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0 M8 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M16 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0</StreamGeometry>
 
     <!-- Polar.svg -->
     <StreamGeometry x:Key="IconPolar">M10 3h4v4h-4l0 -4 M3 17h4v4h-4l0 -4 M17 17h4v4h-4l0 -4 M7 17l5 -4l5 4 M12 7l0 6</StreamGeometry>
@@ -173,8 +186,8 @@
     <!-- Radius_Dim.svg -->
     <StreamGeometry x:Key="IconRadiusDim">M4 12a8 8 0 1 0 16 0a8 8 0 1 0 -16 0 M12 12m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0 M12 12l5 -5 M14.5 7h2.5v2.5</StreamGeometry>
 
-    <!-- Rect_Sides.svg -->
-    <StreamGeometry x:Key="IconRectSides">M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2l0 -14</StreamGeometry>
+    <!-- Rect_Sides.svg: custom rotated rectangle icon. -->
+    <StreamGeometry x:Key="IconRectSides">M7 6l11 4l-4 8l-11 -4z M6.2 5.2h2.6v2.6h-2.6z M17.2 9.2h2.6v2.6h-2.6z M13.2 17.2h2.6v2.6h-2.6z M2.2 13.2h2.6v2.6h-2.6z</StreamGeometry>
 
     <!-- Rectangle.svg -->
     <StreamGeometry x:Key="IconRectangle">M3 7a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v10a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-10</StreamGeometry>
