@@ -46,6 +46,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     private PendingOpenCad2DImport? _pendingOpenCad2DImport;
     private CreateBlockOptions? _pendingCreateBlockBasePointPick;
+    private CreateBlockOptions? _completedCreateBlockBasePointPick;
     private InsertBlockOptions? _pendingBlockInsertion;
     private PendingLibraryBlockInsertion? _pendingLibraryBlockInsertion;
     private BlockEditSession? _activeBlockEditSession;
@@ -376,6 +377,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public int SelectedCount =>
         Workspace.SelectionSet.Count;
+
+    public int CreateBlockSelectedEntityCount =>
+        GetCreateBlockCandidateEntities().Count;
+
+    public bool CanCreateBlockFromCurrentSelection =>
+        CreateBlockSelectedEntityCount > 0;
 
     public bool IsPropertyPanelVisible =>
         _isPropertyPanelVisible;
@@ -1959,6 +1966,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
 
     public bool IsCreateBlockBasePointPickPending => _pendingCreateBlockBasePointPick is not null;
+    public CreateBlockOptions? ConsumeCompletedCreateBlockBasePointPick()
+    {
+        CreateBlockOptions? options = _completedCreateBlockBasePointPick;
+        _completedCreateBlockBasePointPick = null;
+        return options;
+    }
+
 
     public bool IsBlockInsertionPending => _pendingBlockInsertion is not null;
 
@@ -2452,6 +2466,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return rejected;
         }
 
+        if (GetCreateBlockCandidateEntities().Count == 0)
+        {
+            ToolResult rejected = ToolResult.None(
+                "Select one or more editable entities before creating a block.");
+
+            SetLastResult(rejected);
+            NotifyDocumentStateChanged();
+
+            return rejected;
+        }
+
+        ClearCommandHudInputOverrides();
+
         _pendingCreateBlockBasePointPick = options with
         {
             Name = blockName,
@@ -2467,22 +2494,46 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
-    public ToolResult CommitCreateBlockBasePointPick(Point2D basePoint)
+    public CreateBlockOptions? CompleteCreateBlockBasePointPick(Point2D basePoint, out ToolResult result)
     {
         if (_pendingCreateBlockBasePointPick is null)
         {
-            return ToolResult.None();
+            result = ToolResult.None();
+            return null;
         }
 
-        CreateBlockOptions pendingOptions = _pendingCreateBlockBasePointPick;
-        _pendingCreateBlockBasePointPick = null;
-
-        return CreateBlockFromSelection(pendingOptions with
+        CreateBlockOptions completedOptions = _pendingCreateBlockBasePointPick with
         {
             BasePointX = basePoint.X,
             BasePointY = basePoint.Y,
-            PickBasePointFromDrawing = false
-        });
+            PickBasePointFromDrawing = false,
+            PickEntitiesFromDrawing = false
+        };
+
+        _pendingCreateBlockBasePointPick = null;
+        ClearCommandHudInputOverrides();
+
+        result = ToolResult.Completed(
+            $"Create block '{completedOptions.Name}': base point selected. Review options and press OK.");
+
+        SetLastResult(result);
+        NotifyDocumentStateChanged();
+
+        return completedOptions;
+    }
+
+    public ToolResult CommitCreateBlockBasePointPick(Point2D basePoint)
+    {
+        CreateBlockOptions? completedOptions = CompleteCreateBlockBasePointPick(
+            basePoint,
+            out ToolResult result);
+
+        if (completedOptions is null)
+        {
+            return result;
+        }
+
+        return CreateBlockFromSelection(completedOptions);
     }
 
     public ToolResult CancelCreateBlockBasePointPick()
@@ -2493,6 +2544,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         _pendingCreateBlockBasePointPick = null;
+        ClearCommandHudInputOverrides();
 
         ToolResult result = ToolResult.None("Create block cancelled.");
 
@@ -2672,6 +2724,14 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     }
 
 
+    private IReadOnlyList<CadEntity> GetCreateBlockCandidateEntities()
+    {
+        return Workspace.SelectionSet.SelectedIds
+            .Select(id => Workspace.Document.Entities.TryGet(id, out CadEntity? entity) ? entity : null)
+            .OfType<CadEntity>()
+            .Where(Workspace.Document.IsEntitySelectable)
+            .ToList();
+    }
 
     public ToolResult CreateBlockFromSelection(CreateBlockOptions options)
     {
@@ -2701,11 +2761,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return rejected;
         }
 
-        IReadOnlyList<CadEntity> selectedEntities = Workspace.SelectionSet.SelectedIds
-            .Select(id => Workspace.Document.Entities.TryGet(id, out CadEntity? entity) ? entity : null)
-            .OfType<CadEntity>()
-            .Where(Workspace.Document.IsEntitySelectable)
-            .ToList();
+        IReadOnlyList<CadEntity> selectedEntities = GetCreateBlockCandidateEntities();
 
         if (selectedEntities.Count == 0)
         {
@@ -3709,7 +3765,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         if (IsCreateBlockBasePointPickPending)
         {
-            result = CommitCreateBlockBasePointPick(worldPoint);
+            _completedCreateBlockBasePointPick = CompleteCreateBlockBasePointPick(
+                worldPoint,
+                out result);
             return true;
         }
 
@@ -4934,6 +4992,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         OnPropertiesChanged(
             nameof(SelectedCount),
+            nameof(CreateBlockSelectedEntityCount),
+            nameof(CanCreateBlockFromCurrentSelection),
             nameof(HasSingleSelectedImageReference),
             nameof(PropertyPanel),
             nameof(LastMessage),

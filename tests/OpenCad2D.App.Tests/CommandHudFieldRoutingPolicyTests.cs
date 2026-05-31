@@ -52,6 +52,37 @@ public sealed class CommandHudFieldRoutingPolicyTests
         Assert.Equal(CommandHudFieldKind.X, result);
     }
 
+
+    [Fact]
+    public void GetDefaultFieldKindForNumericText_ShouldUseDistanceBeforeCoordinatesForSecondBreakPoint()
+    {
+        CommandHudFieldKind? result = CommandHudFieldRoutingPolicy.GetDefaultFieldKindForNumericText(
+            new[]
+            {
+                CommandHudFieldKind.Distance,
+                CommandHudFieldKind.Angle,
+                CommandHudFieldKind.X,
+                CommandHudFieldKind.Y
+            },
+            activeKind: null);
+
+        Assert.Equal(CommandHudFieldKind.Distance, result);
+    }
+
+    [Fact]
+    public void GetDefaultFieldKindForNumericText_ShouldKeepYWhenCoordinateHudTabsToY()
+    {
+        CommandHudFieldKind? result = CommandHudFieldRoutingPolicy.GetDefaultFieldKindForNumericText(
+            new[]
+            {
+                CommandHudFieldKind.X,
+                CommandHudFieldKind.Y
+            },
+            CommandHudFieldKind.Y);
+
+        Assert.Equal(CommandHudFieldKind.Y, result);
+    }
+
     [Theory]
     [InlineData("10", true)]
     [InlineData("-10.5", true)]

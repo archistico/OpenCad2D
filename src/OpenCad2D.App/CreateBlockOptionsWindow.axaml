@@ -3,14 +3,14 @@
         x:Class="OpenCad2D.App.CreateBlockOptionsWindow"
         Title="Create Block"
         Icon="/Assets/app-icon.ico"
-        Width="460"
-        Height="315"
+        Width="500"
+        Height="390"
         CanResize="False"
         WindowStartupLocation="CenterOwner"
         Background="#252526">
 
     <Border Padding="18">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto"
               RowSpacing="14">
 
             <TextBlock Grid.Row="0"
@@ -19,7 +19,33 @@
                        FontSize="18"
                        FontWeight="Bold" />
 
-            <StackPanel Grid.Row="1"
+            <Border Grid.Row="1"
+                    Padding="10"
+                    Background="#1E1E1E"
+                    BorderBrush="#3E3E42"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                <Grid RowDefinitions="Auto,Auto"
+                      RowSpacing="8">
+                    <TextBlock x:Name="SelectedEntityCountTextBlock"
+                               Grid.Row="0"
+                               Foreground="#FFFFFF"
+                               FontWeight="SemiBold" />
+                    <StackPanel Grid.Row="1"
+                                Orientation="Horizontal"
+                                Spacing="10">
+                        <TextBlock x:Name="SelectionHelpTextBlock"
+                                   VerticalAlignment="Center"
+                                   Foreground="#CCCCCC" />
+                        <Button x:Name="SelectEntitiesButton"
+                                Content="Select entities from drawing"
+                                MinWidth="190"
+                                Click="SelectEntities_Click" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <StackPanel Grid.Row="2"
                         Spacing="5">
                 <TextBlock Text="Block name"
                            Foreground="#CCCCCC" />
@@ -28,7 +54,7 @@
                          MinWidth="320" />
             </StackPanel>
 
-            <Grid Grid.Row="2"
+            <Grid Grid.Row="3"
                   ColumnDefinitions="*,*"
                   ColumnSpacing="12">
                 <StackPanel Grid.Column="0"
@@ -50,20 +76,21 @@
                 </StackPanel>
             </Grid>
 
-            <Button Grid.Row="3"
+            <Button Grid.Row="4"
                     Content="Pick base point from drawing"
                     HorizontalAlignment="Left"
                     MinWidth="200"
                     Click="PickBasePoint_Click" />
 
-            <StackPanel Grid.Row="4"
+            <StackPanel Grid.Row="5"
                         Orientation="Horizontal"
                         HorizontalAlignment="Right"
                         Spacing="8">
                 <Button Content="Cancel"
                         MinWidth="80"
                         Click="Cancel_Click" />
-                <Button Content="OK"
+                <Button x:Name="OkButton"
+                        Content="OK"
                         MinWidth="80"
                         Click="Ok_Click" />
             </StackPanel>

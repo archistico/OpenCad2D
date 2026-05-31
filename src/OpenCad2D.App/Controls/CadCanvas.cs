@@ -1077,7 +1077,8 @@ public sealed class CadCanvas : Control
     private void NotifyWorkspaceChanged(
         ToolResult result,
         Point2D mousePosition,
-        bool isPointerPressed = false)
+        bool isPointerPressed = false,
+        KeyModifiers keyModifiers = KeyModifiers.None)
     {
         WorkspaceChanged?.Invoke(
             this,
@@ -1086,7 +1087,8 @@ public sealed class CadCanvas : Control
                 mousePosition,
                 _currentSnapCandidate,
                 isPointerPressed,
-                _pointerScreenPoint));
+                _pointerScreenPoint,
+                keyModifiers));
     }
 
     private void DrawActiveToolPreview(DrawingContext context)
@@ -1203,7 +1205,8 @@ public sealed class CadCanvas : Control
         NotifyWorkspaceChanged(
             result,
             modelPoint,
-            isPointerPressed: true);
+            isPointerPressed: true,
+            keyModifiers: e.KeyModifiers);
 
         InvalidateVisual();
     }
@@ -1310,7 +1313,8 @@ public sealed class CadCanvas : Control
 
         NotifyWorkspaceChanged(
             result,
-            modelPoint);
+            modelPoint,
+            keyModifiers: e.KeyModifiers);
 
         InvalidateVisual();
     }

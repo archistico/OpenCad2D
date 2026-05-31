@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Input;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
@@ -13,13 +14,15 @@ public sealed class CadCanvasWorkspaceChangedEventArgs : EventArgs
         Point2D mousePosition,
         SnapCandidate? snapCandidate = null,
         bool isPointerPressed = false,
-        Point? pointerScreenPosition = null)
+        Point? pointerScreenPosition = null,
+        KeyModifiers keyModifiers = KeyModifiers.None)
     {
         Result = result;
         MousePosition = mousePosition;
         SnapCandidate = snapCandidate;
         IsPointerPressed = isPointerPressed;
         PointerScreenPosition = pointerScreenPosition;
+        KeyModifiers = keyModifiers;
     }
 
     public ToolResult Result { get; }
@@ -31,5 +34,7 @@ public sealed class CadCanvasWorkspaceChangedEventArgs : EventArgs
     public bool IsPointerPressed { get; }
 
     public Point? PointerScreenPosition { get; }
+
+    public KeyModifiers KeyModifiers { get; }
 }
 

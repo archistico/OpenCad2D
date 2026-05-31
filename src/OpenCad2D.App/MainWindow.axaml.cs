@@ -48,6 +48,8 @@ public partial class MainWindow : Window
     private TextBox? _activeKeyboardHudField;
     private CommandHudFieldKind? _activeLogicalHudFieldKind;
     private string _activeLogicalHudFieldText = string.Empty;
+    private CreateBlockOptions? _pendingCreateBlockOptionsDraft;
+    private bool _isCreateBlockEntitySelectionPending;
     private static readonly FilePickerFileType OpenCad2DFileType = new("OpenCad2D drawing")
     {
         Patterns = new[] { "*.opencad2d.json" },
@@ -1739,33 +1741,76 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        var optionsWindow = new CreateBlockOptionsWindow();
+        await ShowCreateBlockOptionsAsync(_pendingCreateBlockOptionsDraft).ConfigureAwait(true);
+    }
+
+    private async Task ShowCreateBlockOptionsAsync(CreateBlockOptions? initialOptions = null)
+    {
+        var optionsWindow = new CreateBlockOptionsWindow(
+            _viewModel.CreateBlockSelectedEntityCount,
+            initialOptions);
+
         CreateBlockOptions? options = await optionsWindow
-            .ShowDialog<CreateBlockOptions?>(this);
+            .ShowDialog<CreateBlockOptions?>(this)
+            .ConfigureAwait(true);
 
         if (options is null)
         {
             return;
         }
 
-        ToolResult result = options.PickBasePointFromDrawing
-            ? _viewModel.BeginCreateBlockBasePointPick(options)
-            : _viewModel.CreateBlockFromSelection(options);
+        _pendingCreateBlockOptionsDraft = options with
+        {
+            PickBasePointFromDrawing = false,
+            PickEntitiesFromDrawing = false
+        };
+
+        if (options.PickEntitiesFromDrawing)
+        {
+            _isCreateBlockEntitySelectionPending = true;
+            ActivateTool(ToolId.Selection);
+            _viewModel.SetMessage("Select one entity to reopen Create Block immediately. Hold Shift to add/remove multiple entities, then press Enter to finish.");
+            RefreshStatus();
+            CadCanvas.InvalidateVisual();
+            CadCanvas.Focus();
+            return;
+        }
 
         if (options.PickBasePointFromDrawing)
         {
-            BeginPointPlacementSnapping(result);
+            ToolResult pickResult = _viewModel.BeginCreateBlockBasePointPick(options);
+            BeginPointPlacementSnapping(pickResult);
+
+            RefreshStatus();
+            CadCanvas.InvalidateVisual();
+            CadCanvas.Focus();
+
+            if (pickResult.Message is not null && pickResult.Kind != ToolResultKind.Started)
+            {
+                await ShowMessageAsync(
+                    "Create Block",
+                    pickResult.Message).ConfigureAwait(true);
+            }
+
+            return;
+        }
+
+        ToolResult result = _viewModel.CreateBlockFromSelection(options);
+
+        if (result.Kind == ToolResultKind.Completed)
+        {
+            _pendingCreateBlockOptionsDraft = null;
         }
 
         RefreshStatus();
         CadCanvas.InvalidateVisual();
         CadCanvas.Focus();
 
-        if (result.Message is not null && result.Kind != ToolResultKind.Completed && !options.PickBasePointFromDrawing)
+        if (result.Message is not null && result.Kind != ToolResultKind.Completed)
         {
             await ShowMessageAsync(
                 "Create Block",
-                result.Message);
+                result.Message).ConfigureAwait(true);
         }
     }
 
@@ -2389,6 +2434,11 @@ public partial class MainWindow : Window
         object? sender,
         KeyEventArgs e)
     {
+        if (await TryCompletePendingCreateBlockEntitySelectionFromKeyboardAsync(e).ConfigureAwait(true))
+        {
+            return;
+        }
+
         if (!_viewModel.IsCommandHudVisible ||
             IsCommandInputBlockingHudKeyboard())
         {
@@ -2412,7 +2462,7 @@ public partial class MainWindow : Window
             {
                 if (!await CommitActiveLogicalHudFieldAsync(confirm: true).ConfigureAwait(true))
                 {
-                    ConfirmCommandHudOverrides();
+                    await ConfirmCommandHudOverridesAsync().ConfigureAwait(true);
                 }
             }
             catch (Exception exception)
@@ -2565,6 +2615,11 @@ public partial class MainWindow : Window
             _viewModel.IsBlockInsertionPending ||
             _viewModel.IsLibraryInsertionPending ||
             _viewModel.IsImportDrawingPlacementPending;
+
+        if (_isCreateBlockEntitySelectionPending)
+        {
+            _isCreateBlockEntitySelectionPending = false;
+        }
 
         ClearLogicalHudFieldInput();
 
@@ -2936,6 +2991,7 @@ public partial class MainWindow : Window
             RefreshStatus();
             CadCanvas.ClearSnapMarker();
             CadCanvas.InvalidateVisual();
+            await ReopenCreateBlockDialogIfBasePointWasPickedAsync().ConfigureAwait(true);
         }
 
         ClearLogicalHudFieldInput();
@@ -2943,14 +2999,29 @@ public partial class MainWindow : Window
         return commit.Handled;
     }
 
-    private void ConfirmCommandHudOverrides()
+    private async Task ConfirmCommandHudOverridesAsync()
     {
         if (_viewModel.TryConfirmCommandHudInputOverrides(out _))
         {
             RefreshStatus();
             CadCanvas.ClearSnapMarker();
             CadCanvas.InvalidateVisual();
+            await ReopenCreateBlockDialogIfBasePointWasPickedAsync().ConfigureAwait(true);
         }
+    }
+
+    private async Task ReopenCreateBlockDialogIfBasePointWasPickedAsync()
+    {
+        CreateBlockOptions? completedOptions = _viewModel.ConsumeCompletedCreateBlockBasePointPick();
+
+        if (completedOptions is null)
+        {
+            return;
+        }
+
+        _pendingCreateBlockOptionsDraft = completedOptions;
+        EndPointPlacementSnapping();
+        await ShowCreateBlockOptionsAsync(completedOptions).ConfigureAwait(true);
     }
 
     private void MoveToNextLogicalHudField()
@@ -3329,11 +3400,20 @@ public partial class MainWindow : Window
             else if (e.IsPointerPressed)
             {
                 Point2D basePoint = e.SnapCandidate?.Point ?? e.MousePosition;
-                createBlockResult = _viewModel.CommitCreateBlockBasePointPick(basePoint);
+                CreateBlockOptions? completedOptions = _viewModel.CompleteCreateBlockBasePointPick(
+                    basePoint,
+                    out createBlockResult);
+
                 EndPointPlacementSnapping();
 
                 CadCanvas.ClearSnapMarker();
                 CadCanvas.InvalidateVisual();
+
+                if (completedOptions is not null)
+                {
+                    _pendingCreateBlockOptionsDraft = completedOptions;
+                    await ShowCreateBlockOptionsAsync(completedOptions).ConfigureAwait(true);
+                }
             }
             else
             {
@@ -3419,6 +3499,17 @@ public partial class MainWindow : Window
 
             _viewModel.SetLastResult(importResult);
         }
+        else if (_isCreateBlockEntitySelectionPending &&
+                 _viewModel.CreateBlockSelectedEntityCount > 0 &&
+                 IsCreateBlockSelectionCompletionResult(e.Result))
+        {
+            _viewModel.SetLastResult(e.Result);
+
+            if (ShouldReopenCreateBlockDialogAfterSelection(e))
+            {
+                await CompletePendingCreateBlockEntitySelectionAsync().ConfigureAwait(true);
+            }
+        }
         else
         {
             _viewModel.SetLastResult(e.Result);
@@ -3434,6 +3525,52 @@ public partial class MainWindow : Window
 
         RefreshStatus();
         FocusCommandInputIfAlignScaleConfirmation();
+    }
+
+
+    private async Task<bool> TryCompletePendingCreateBlockEntitySelectionFromKeyboardAsync(KeyEventArgs e)
+    {
+        if (!_isCreateBlockEntitySelectionPending ||
+            e.Key != Key.Enter ||
+            e.KeyModifiers != KeyModifiers.None ||
+            _viewModel.CreateBlockSelectedEntityCount <= 0)
+        {
+            return false;
+        }
+
+        await CompletePendingCreateBlockEntitySelectionAsync().ConfigureAwait(true);
+        e.Handled = true;
+        return true;
+    }
+
+    private async Task CompletePendingCreateBlockEntitySelectionAsync()
+    {
+        _isCreateBlockEntitySelectionPending = false;
+        RefreshStatus();
+        CadCanvas.ClearSnapMarker();
+        CadCanvas.InvalidateVisual();
+
+        await ShowCreateBlockOptionsAsync(_pendingCreateBlockOptionsDraft).ConfigureAwait(true);
+    }
+
+    private static bool ShouldReopenCreateBlockDialogAfterSelection(CadCanvasWorkspaceChangedEventArgs e)
+    {
+        return !e.KeyModifiers.HasFlag(KeyModifiers.Shift);
+    }
+
+    private static bool IsCreateBlockSelectionCompletionResult(ToolResult result)
+    {
+        if (result.Kind != ToolResultKind.Updated)
+        {
+            return false;
+        }
+
+        string message = result.Message ?? string.Empty;
+
+        return message.Contains("selected", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("selection completed", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("selection toggled", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("overlapping entity", StringComparison.OrdinalIgnoreCase);
     }
 
     private void RefreshStatus()

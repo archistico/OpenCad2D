@@ -74,6 +74,36 @@ public sealed class MainWindowViewModelBlockTests
         LineEntity restoredLine = Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.All.Single());
         Assert.Equal(line.Id, restoredLine.Id);
     }
+
+    [Fact]
+    public void CreateBlockFromSelection_ShouldRejectEmptySelection()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        var result = viewModel.CreateBlockFromSelection(new CreateBlockOptions("Empty", 0, 0));
+
+        Assert.False(result.Changed);
+        Assert.Empty(viewModel.Workspace.Document.BlockDefinitions.All);
+        Assert.Equal("Select one or more editable entities before creating a block.", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CreateBlockSelectedEntityCount_ShouldTrackSelectedBlockCandidates()
+    {
+        var viewModel = new MainWindowViewModel();
+        var first = new LineEntity(Point2D.Origin, new Point2D(1, 0));
+        var second = new LineEntity(new Point2D(0, 1), new Point2D(1, 1));
+        viewModel.Workspace.Document.AddEntity(first);
+        viewModel.Workspace.Document.AddEntity(second);
+
+        Assert.Equal(0, viewModel.CreateBlockSelectedEntityCount);
+        Assert.False(viewModel.CanCreateBlockFromCurrentSelection);
+
+        viewModel.Workspace.SelectionSet.ReplaceWith(new[] { first.Id, second.Id });
+
+        Assert.Equal(2, viewModel.CreateBlockSelectedEntityCount);
+        Assert.True(viewModel.CanCreateBlockFromCurrentSelection);
+    }
 }
 
 public sealed class MainWindowViewModelBlockBasePointPickTests
@@ -82,6 +112,9 @@ public sealed class MainWindowViewModelBlockBasePointPickTests
     public void BeginCreateBlockBasePointPick_ShouldStartPendingWorkflow()
     {
         var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(Point2D.Origin, new Point2D(1, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.ReplaceWith(line.Id);
 
         var result = viewModel.BeginCreateBlockBasePointPick(
             new CreateBlockOptions("Door", 0, 0, PickBasePointFromDrawing: true));
@@ -95,7 +128,21 @@ public sealed class MainWindowViewModelBlockBasePointPickTests
     }
 
     [Fact]
-    public void CommandHudInput_CreateBlockBasePointPick_ShouldAcceptCoordinateFields()
+    public void BeginCreateBlockBasePointPick_ShouldRejectEmptySelection()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        var result = viewModel.BeginCreateBlockBasePointPick(
+            new CreateBlockOptions("Door", 0, 0, PickBasePointFromDrawing: true));
+
+        Assert.False(result.Changed);
+        Assert.False(viewModel.IsCreateBlockBasePointPickPending);
+        Assert.False(viewModel.IsCommandHudVisible);
+        Assert.Equal("Select one or more editable entities before creating a block.", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void CommandHudInput_CreateBlockBasePointPick_ShouldReturnDraftForReview()
     {
         var viewModel = new MainWindowViewModel();
         var line = new LineEntity(
@@ -118,12 +165,43 @@ public sealed class MainWindowViewModelBlockBasePointPickTests
             out var result));
 
         Assert.NotNull(result);
-        Assert.Equal("Block 'Door' created from 1 selected entities.", viewModel.LastMessage);
+        Assert.Equal("Create block 'Door': base point selected. Review options and press OK.", viewModel.LastMessage);
         Assert.False(viewModel.IsCreateBlockBasePointPickPending);
         Assert.False(viewModel.IsCommandHudVisible);
-        BlockReferenceEntity reference = Assert.IsType<BlockReferenceEntity>(
-            viewModel.Workspace.Document.Entities.All.Single());
-        Assert.Equal(new Point2D(10, 20), reference.InsertionPoint);
+        Assert.Single(viewModel.Workspace.Document.Entities.All);
+        Assert.Empty(viewModel.Workspace.Document.BlockDefinitions.All);
+
+        CreateBlockOptions? completedOptions = viewModel.ConsumeCompletedCreateBlockBasePointPick();
+
+        Assert.NotNull(completedOptions);
+        Assert.Equal("Door", completedOptions.Name);
+        Assert.Equal(10, completedOptions.BasePointX);
+        Assert.Equal(20, completedOptions.BasePointY);
+    }
+
+    [Fact]
+    public void CompleteCreateBlockBasePointPick_ShouldReturnDraftWithoutCreatingBlock()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(
+            new Point2D(10, 20),
+            new Point2D(15, 20));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.ReplaceWith(line.Id);
+        viewModel.BeginCreateBlockBasePointPick(
+            new CreateBlockOptions("Door", 0, 0, PickBasePointFromDrawing: true));
+
+        CreateBlockOptions? completedOptions = viewModel.CompleteCreateBlockBasePointPick(
+            new Point2D(10, 20),
+            out var result);
+
+        Assert.NotNull(completedOptions);
+        Assert.Equal(OpenCad2D.Tools.Common.ToolResultKind.Completed, result.Kind);
+        Assert.False(viewModel.IsCreateBlockBasePointPickPending);
+        Assert.Single(viewModel.Workspace.Document.Entities.All);
+        Assert.Empty(viewModel.Workspace.Document.BlockDefinitions.All);
+        Assert.Equal(10, completedOptions.BasePointX);
+        Assert.Equal(20, completedOptions.BasePointY);
     }
 
     [Fact]
@@ -183,6 +261,65 @@ public sealed class MainWindowViewModelBlockBasePointPickTests
         Assert.Equal("Create block cancelled.", viewModel.LastMessage);
         Assert.Empty(viewModel.Workspace.Document.BlockDefinitions.All);
         Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.All.Single());
+    }
+
+
+    [Fact]
+    public void BeginCreateBlockBasePointPick_ShouldClearStaleHudCoordinateOverrides()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(Point2D.Origin, new Point2D(1, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.ReplaceWith(line.Id);
+        viewModel.SetMousePosition(new Point2D(3, 4));
+
+        viewModel.BeginCreateBlockBasePointPick(
+            new CreateBlockOptions("Door", 0, 0, PickBasePointFromDrawing: true));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+        Assert.Equal("10", GetHudField(viewModel, CommandHudFieldKind.X).DisplayValue);
+
+        viewModel.CancelCreateBlockBasePointPick();
+        viewModel.BeginCreateBlockBasePointPick(
+            new CreateBlockOptions("Window", 0, 0, PickBasePointFromDrawing: true));
+
+        Assert.Equal("3", GetHudField(viewModel, CommandHudFieldKind.X).DisplayValue);
+        Assert.Equal("4", GetHudField(viewModel, CommandHudFieldKind.Y).DisplayValue);
+    }
+
+    [Fact]
+    public void CancelCreateBlockBasePointPick_ShouldClearHudCoordinateOverrides()
+    {
+        var viewModel = new MainWindowViewModel();
+        var line = new LineEntity(Point2D.Origin, new Point2D(1, 0));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.SelectionSet.ReplaceWith(line.Id);
+        viewModel.SetMousePosition(new Point2D(1, 2));
+
+        viewModel.BeginCreateBlockBasePointPick(
+            new CreateBlockOptions("Door", 0, 0, PickBasePointFromDrawing: true));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "10",
+            confirm: false,
+            out _));
+
+        viewModel.CancelCreateBlockBasePointPick();
+        viewModel.BeginCreateBlockBasePointPick(
+            new CreateBlockOptions("Door2", 0, 0, PickBasePointFromDrawing: true));
+
+        Assert.Equal("1", GetHudField(viewModel, CommandHudFieldKind.X).DisplayValue);
+        Assert.Equal("2", GetHudField(viewModel, CommandHudFieldKind.Y).DisplayValue);
+    }
+
+    private static CommandHudFieldViewModel GetHudField(
+        MainWindowViewModel viewModel,
+        CommandHudFieldKind kind)
+    {
+        return viewModel.CommandHudState.Fields.Single(field => field.Kind == kind);
     }
 
     private static CommandHudFieldKind[] GetEditableHudFieldKinds(MainWindowViewModel viewModel)

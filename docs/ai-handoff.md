@@ -1561,3 +1561,59 @@ Important guardrail: do not broaden the shared HUD resolver while finishing the 
 - The audit still checks the same contract: when a modify tool starts in an entity-selection phase with no preselection, `GetActiveSnapKind(...)` must return `SnapKind.EntityOnly`.
 - The assertion now includes the tool name in the failure message so any future regression identifies the offending tool directly.
 - Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+### Step 31N - Break and Boundary Fill HUD 30E consolidation
+
+- Audited the Step 30E HUD contract for Break Point, Break Segment and Boundary Fill against the current codebase.
+- Confirmed Break Point exposes only `X/Y` after target-entity selection; the entered point is still projected/validated by the native break service.
+- Confirmed Break Segment exposes `X/Y` for the first break point, then `Distance/Angle/X/Y` for the second break point, using the same polar override path as other two-point flows.
+- Confirmed Boundary Fill exposes only `X/Y` for the seed point and keeps click-based seed selection supported.
+- Added routing-policy regression coverage for the two most fragile keyboard cases in this group: coordinate-only HUD retaining `Y` after Tab, and second break-point HUD preferring `Distance` over coordinates for the first numeric keystroke.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31O - HUD 30F selection-only modify command consolidation
+
+- Audited the Step 30F HUD contract for Trim, Extend, Delete, Explode and Join.
+- These commands intentionally keep the dynamic HUD visible only as a prompt/options surface while they are waiting for entity selections.
+- They must not expose editable numeric HUD fields during selection phases; entity picking remains canvas-driven with `SnapKind.EntityOnly` covered by the modify-tool snap audit.
+- Added ViewModel-level regression coverage asserting that Delete, Explode, Join, Trim and Extend expose no editable HUD fields while waiting for entity selection, including the second Trim/Extend target-selection phase after a boundary has been picked.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31P - Create Block HUD base-point cleanup
+
+- Hardened the Create Block base-point pick workflow against stale HUD coordinate overrides.
+- `BeginCreateBlockBasePointPick(...)` now clears previous HUD overrides before exposing the `X/Y` base-point fields.
+- `CommitCreateBlockBasePointPick(...)` and `CancelCreateBlockBasePointPick()` now clear HUD overrides as part of ending the pending workflow, so a partially typed base point cannot leak into the next command or the next Create Block attempt.
+- Added regression coverage for stale `X`/`Y` override cleanup across Create Block cancellation and restart.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31Q - Create Block empty-selection guard and selection counter
+
+- Hardened the Create Block UI so the modal dialog no longer allows creating an empty block.
+- `CreateBlockOptionsWindow` now receives the current Create Block candidate count and displays `Entities in block: N`.
+- When the count is zero, the OK button is disabled and the base-point pick button refuses to continue.
+- The dialog now includes a `Select entities from drawing` action. It closes the dialog and returns control to the Selection tool with a message telling the user to select one or more entities and reopen Create Block.
+- `MainWindowViewModel` exposes `CreateBlockSelectedEntityCount` and `CanCreateBlockFromCurrentSelection` for the UI-level guard.
+- `BeginCreateBlockBasePointPick(...)` now also rejects empty selection, so the base-point workflow cannot be started for an empty block even if called directly.
+- `CreateBlockFromSelection(...)` still keeps the final safety check and rejects empty selection before creating any block definition or command history entry.
+- Added regression coverage for empty-selection rejection and candidate-count tracking.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31R - Create Block guided selection and base-point review loop
+
+- Changed the Create Block workflow so the dialog can be temporarily closed for canvas interaction and then reopened automatically.
+- `Select entities from drawing` now preserves the current draft block name/base point, activates the Selection tool, and reopens the Create Block dialog after an entity/window selection completes.
+- `Pick base point from drawing` now picks the base point and returns to the Create Block dialog with the picked `X/Y` filled in, instead of immediately creating the block.
+- The final block is created only when the user presses OK in the dialog, so the user can review the entity counter, block name and base point before creation.
+- The ViewModel now exposes `CompleteCreateBlockBasePointPick(...)` for UI review workflows while keeping `CommitCreateBlockBasePointPick(...)` available for direct programmatic creation paths.
+- `TrySubmitPendingPlacementHudPoint(...)` stores a completed Create Block base-point draft instead of silently creating the block from HUD coordinates, allowing the window to reopen the dialog after HUD Enter as well.
+- Selection-state notifications now also raise `CreateBlockSelectedEntityCount` and `CanCreateBlockFromCurrentSelection`.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31S - Create Block SHIFT multi-selection completion
+
+- Refined the guided `Create Block` selection review loop so a normal single entity/window selection reopens the Create Block dialog immediately.
+- When the selection was made with `Shift`, the dialog no longer reopens after every click/toggle; the user can keep adding/removing entities and press `Enter` to finish the multi-selection and return to the dialog.
+- `CadCanvasWorkspaceChangedEventArgs` now carries the current `KeyModifiers`, allowing `MainWindow` to distinguish normal selection completion from SHIFT accumulation without depending on localized tool-result messages.
+- `Escape` now also clears a pending Create Block entity-selection review loop.
