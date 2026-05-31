@@ -20,6 +20,7 @@ public static class CommandHudFieldRoutingPolicy
         CommandHudFieldKind.Factor,
         CommandHudFieldKind.Angle,
         CommandHudFieldKind.Sides,
+        CommandHudFieldKind.Segments,
         CommandHudFieldKind.X,
         CommandHudFieldKind.Y
     };

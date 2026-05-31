@@ -155,6 +155,9 @@
     <!-- Point.svg: custom cross point marker. -->
     <StreamGeometry x:Key="IconPoint">M12 8v8 M8 12h8 M12 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0</StreamGeometry>
 
+    <!-- Divide.svg: curve divided into equal point markers. -->
+    <StreamGeometry x:Key="IconDivide">M4 12h16 M7 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0 M12 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0 M17 12m-1.25 0a1.25 1.25 0 1 0 2.5 0a1.25 1.25 0 1 0 -2.5 0 M7 8v8 M12 8v8 M17 8v8</StreamGeometry>
+
     <!-- Polar.svg -->
     <StreamGeometry x:Key="IconPolar">M10 3h4v4h-4l0 -4 M3 17h4v4h-4l0 -4 M17 17h4v4h-4l0 -4 M7 17l5 -4l5 4 M12 7l0 6</StreamGeometry>
 

@@ -35,6 +35,7 @@ Selection phases in modify tools must request `SnapKind.EntityOnly`. Point snaps
 Implemented:
 
 - `PointTool`
+- `DivideTool`
 - `TextTool`
 - `MultilineTextTool`
 - `LineTool`
@@ -46,6 +47,8 @@ Implemented:
 - `ArcThreePointsTool`
 - `PolylineTool`
 - `SplineTool`
+
+`DIVIDE` follows AutoCAD naming/semantics: it selects one line, arc, circle or polyline, asks for an integer segment count from 2 to 1000, and creates persistent `PointEntity` markers at equal divisions without splitting the source entity. Open entities create `N - 1` internal points; closed entities create `N` points from the conventional start point. Points are created on the current layer and committed as one undoable operation.
 
 `MTEXT` inserts multiline annotation text through the text dialog. `LINE` creates a single segment and then ends. `POLYLINE` supports `Close`, `Undo` and Enter/right-click to finish an open polyline. `SPLINE` creates an open or closed Bezier spline from control points, with `Undo`, `Close` and Enter/right-click-to-finish command flow.
 

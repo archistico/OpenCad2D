@@ -1338,6 +1338,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Divide_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ActivateTool(ToolId.Divide);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
     private void Text_Click(
         object? sender,
         RoutedEventArgs e)
@@ -2449,6 +2460,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (TryAppendActiveLogicalHudFieldInputFromKey(e))
+        {
+            return;
+        }
+
         if (e.Key == Key.Tab &&
             e.KeyModifiers == KeyModifiers.None)
         {
@@ -2817,6 +2833,13 @@ public partial class MainWindow : Window
         _activeLogicalHudFieldText += text;
         ClearCommandInputText();
 
+        if (IsDeferredLogicalHudField(targetKind.Value))
+        {
+            RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+            return true;
+        }
+
         if (_viewModel.TryCommitCommandHudFieldInput(
                 targetKind.Value,
                 _activeLogicalHudFieldText,
@@ -2825,15 +2848,88 @@ public partial class MainWindow : Window
         {
             RefreshStatus();
             RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
             CadCanvas.ClearSnapMarker();
             CadCanvas.InvalidateVisual();
         }
         else
         {
             RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
         }
 
         return true;
+    }
+
+    private bool TryAppendActiveLogicalHudFieldInputFromKey(KeyEventArgs e)
+    {
+        if (_activeLogicalHudFieldKind is null ||
+            e.KeyModifiers != KeyModifiers.None)
+        {
+            return false;
+        }
+
+        string? text = GetNumericHudKeyText(e.Key);
+
+        if (text is null)
+        {
+            return false;
+        }
+
+        _activeLogicalHudFieldText += text;
+        ClearCommandInputText();
+
+        if (IsDeferredLogicalHudField(_activeLogicalHudFieldKind.Value))
+        {
+            RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+            e.Handled = true;
+            return true;
+        }
+
+        if (_viewModel.TryCommitCommandHudFieldInput(
+                _activeLogicalHudFieldKind.Value,
+                _activeLogicalHudFieldText,
+                confirm: false,
+                out _))
+        {
+            RefreshStatus();
+            RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+            CadCanvas.ClearSnapMarker();
+            CadCanvas.InvalidateVisual();
+        }
+        else
+        {
+            RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+        }
+
+        e.Handled = true;
+        return true;
+    }
+
+    private static bool IsDeferredLogicalHudField(CommandHudFieldKind kind)
+    {
+        return kind is CommandHudFieldKind.Sides or CommandHudFieldKind.Segments;
+    }
+
+    private static string? GetNumericHudKeyText(Key key)
+    {
+        return key switch
+        {
+            Key.D0 or Key.NumPad0 => "0",
+            Key.D1 or Key.NumPad1 => "1",
+            Key.D2 or Key.NumPad2 => "2",
+            Key.D3 or Key.NumPad3 => "3",
+            Key.D4 or Key.NumPad4 => "4",
+            Key.D5 or Key.NumPad5 => "5",
+            Key.D6 or Key.NumPad6 => "6",
+            Key.D7 or Key.NumPad7 => "7",
+            Key.D8 or Key.NumPad8 => "8",
+            Key.D9 or Key.NumPad9 => "9",
+            _ => null
+        };
     }
 
     private void RemoveLastLogicalHudInputCharacter()
@@ -2847,11 +2943,28 @@ public partial class MainWindow : Window
 
         if (string.IsNullOrWhiteSpace(_activeLogicalHudFieldText))
         {
+            if (_activeLogicalHudFieldKind is not null &&
+                IsDeferredLogicalHudField(_activeLogicalHudFieldKind.Value))
+            {
+                RefreshLogicalHudFieldVisuals();
+                Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+                return;
+            }
+
             _viewModel.CancelCommandHudInputOverrides();
             RefreshStatus();
             RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
             CadCanvas.ClearSnapMarker();
             CadCanvas.InvalidateVisual();
+            return;
+        }
+
+        if (_activeLogicalHudFieldKind is not null &&
+            IsDeferredLogicalHudField(_activeLogicalHudFieldKind.Value))
+        {
+            RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
             return;
         }
 
@@ -2864,6 +2977,7 @@ public partial class MainWindow : Window
         {
             RefreshStatus();
             RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
             CadCanvas.ClearSnapMarker();
             CadCanvas.InvalidateVisual();
         }
@@ -2874,6 +2988,14 @@ public partial class MainWindow : Window
         if (_activeLogicalHudFieldKind is null ||
             string.IsNullOrWhiteSpace(_activeLogicalHudFieldText))
         {
+            return false;
+        }
+
+        if (!confirm && IsDeferredLogicalHudField(_activeLogicalHudFieldKind.Value))
+        {
+            _activeLogicalHudFieldText = string.Empty;
+            RefreshLogicalHudFieldVisuals();
+            Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
             return false;
         }
 
@@ -3626,6 +3748,7 @@ public partial class MainWindow : Window
         {
             "Zoom Window" => "IconZoomWindow",
             "Point" => "IconPoint",
+            "Divide" => "IconDivide",
             "Text" => "IconText",
             "MText" => "IconMText",
             "Line" => "IconLine",
@@ -3820,6 +3943,10 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             PointButton,
             activeToolName.Equals("Point", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            DivideButton,
+            activeToolName.Equals("Divide", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             TextButton,

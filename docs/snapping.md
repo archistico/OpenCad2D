@@ -701,3 +701,47 @@ Captured SmartPoints are now also direct temporary snap candidates. When the cur
 This keeps SmartPoint Tracking closer to Rhino SmartTrack behavior: captured points can be used both as construction origins and as real temporary snap points. Object snaps on real geometry still have priority when present; the SmartPoint candidate is mainly useful when the captured reference point remains available as a temporary construction point during the current command.
 
 The label is runtime-only. It is not a drawing entity, is not persisted, is not exported and does not participate in undo/redo.
+
+## Advanced snapping final consolidation - 2026-05-31
+
+The current pre-v0.9 advanced snapping scope is now considered consolidated. The user-facing name for the runtime tracking subsystem is **SmartPoint Tracking**. It is exposed as an independent Snap bar toggle next to the ordinary snap modes. Turning it off clears all captured SmartPoints, temporary tracking overlays, temporary snap markers and related HUD labels without changing the normal snap settings.
+
+Implemented advanced snap kinds and roles:
+
+```text
+Nearest                    opt-in closest-point snap on real geometry; disabled by default
+SmartPoint                 direct snap to a captured temporary reference point
+Tracking                   projected point on a SmartPoint tracking line
+Extension                  projected point on a real linear entity extension
+TrackingIntersection       temporary tracking/tracking or tracking/real-geometry intersection
+TrackingGridIntersection   temporary marker for a grid node that also lies on Tracking/Extension
+```
+
+Priority rules:
+
+- strong real object snaps such as Endpoint, Midpoint, Center, Quadrant and Intersection still win;
+- SmartPoint Tracking candidates win over weak drafting aids such as Grid and Nearest;
+- when Grid and Tracking/Extension are both active, Grid must not pull the point away from the visible temporary line;
+- a grid node is highlighted only when it also lies on the active Tracking/Extension line, producing `TRACK GRID` or `EXT GRID`;
+- in that combined case the temporary line remains dominant: the chosen point is constrained to the tracking/extension line and coincides with the grid node only because the grid node lies on that line.
+
+Pointer input resolution rule:
+
+```text
+If a temporary SmartPoint Tracking marker is visible, the click must use that displayed candidate point.
+The active tool must not re-snap that point to Grid, Ortho or Polar in a way that moves it away from the marker.
+```
+
+HUD labels are now drawn in the lower-left canvas overlay area instead of directly beside the marker, to avoid overlapping the Dynamic Command HUD. Current labels include:
+
+```text
+TRACK L=120 A=0°
+EXT L=250 A=45°
+TRACK INT
+TRACK GRID L=120 A=0°
+EXT GRID L=250 A=45°
+SMART POINT
+```
+
+The labels, SmartPoints, tracking lines and temporary markers remain runtime-only: they are never persisted, exported, selectable or undoable.
+

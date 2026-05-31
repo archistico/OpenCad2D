@@ -82,6 +82,9 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("POINT", ToolId.Point);
         yield return new CommandAlias("PO", ToolId.Point);
 
+        yield return new CommandAlias("DIVIDE", ToolId.Divide);
+        yield return new CommandAlias("DIV", ToolId.Divide);
+
         yield return new CommandAlias("TEXT", ToolId.Text);
         yield return new CommandAlias("T", ToolId.Text);
         yield return new CommandAlias("MTEXT", ToolId.MultilineText);

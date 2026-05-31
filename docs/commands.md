@@ -74,7 +74,8 @@ Aliases are case-insensitive.
 
 | Tool | Aliases |
 |---|---|
-| Point | `POINT`, `PT` |
+| Point | `POINT`, `PO` |
+| Divide | `DIVIDE`, `DIV` |
 | Text | `TEXT`, `T` |
 | Multiline text | `MTEXT`, `MT` |
 | Line | `LINE`, `L` |

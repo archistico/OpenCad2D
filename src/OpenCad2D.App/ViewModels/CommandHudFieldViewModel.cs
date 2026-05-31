@@ -14,6 +14,7 @@ public enum CommandHudFieldKind
     Radius,
     Factor,
     Sides,
+    Segments,
     X,
     Y
 }
@@ -80,6 +81,7 @@ public sealed class CommandHudFieldViewModel
         CommandHudFieldKind.Radius => "radius",
         CommandHudFieldKind.Factor => "factor",
         CommandHudFieldKind.Sides => "sides",
+        CommandHudFieldKind.Segments => "segments",
         CommandHudFieldKind.X => "x",
         CommandHudFieldKind.Y => "y",
         _ => string.Empty
@@ -118,6 +120,11 @@ public sealed class CommandHudFieldViewModel
         if (ContainsInvariant(key, "sides") || ContainsInvariant(label, "sides"))
         {
             return CommandHudFieldKind.Sides;
+        }
+
+        if (ContainsInvariant(key, "segments") || ContainsInvariant(label, "segments"))
+        {
+            return CommandHudFieldKind.Segments;
         }
 
         if (string.Equals(key, "x", System.StringComparison.OrdinalIgnoreCase) ||

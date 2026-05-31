@@ -75,7 +75,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
 | Explode / Join essentials | [x] | EXPLODE converts straight and mixed polylines into lines/arcs; JOIN converts connected lines, arcs and open polylines into one or more polylines, with bulge preservation, diagnostics, undo and targeted tests. |
 | External raster references | [x] | PNG/JPG/JPEG files can be attached as external references, transformed as oriented rectangles, snapped, relinked, collected into portable folders and managed through Image References Manager. |
-| Advanced snapping foundation | [~] | Nearest exists as a low-priority opt-in snap, disabled by default. SmartPoint Tracking is exposed as an independent Snap bar toggle. Temporary SmartPoint capture, horizontal/vertical tracking lines, manual distance input, tracking intersections and first-pass entity-extension tracking for lines/straight polyline segments are in place. TrackingIntersection/Extension markers now resolve as real temporary snap points. Remaining work: broader polar directions and richer extension/tangent behavior. |
+| Advanced snapping foundation | [x] | Consolidated pre-v0.9 scope. Nearest is opt-in and disabled by default. SmartPoint Tracking has its own Snap bar toggle and includes SmartPoint capture, direct SmartPoint snap, horizontal/vertical/polar tracking, numeric distance input, tracking intersections, tracking/real linear geometry intersections, line/straight-polyline extension tracking, temporary HUD labels, and guarded Grid/Tracking overlap behavior. Arc/tangent extension remains deferred. |
 
 ---
 
@@ -463,3 +463,27 @@ Added a visual polish step for the advanced snapping milestone: active `Tracking
 ### Direct SmartPoint snap update
 
 Captured SmartPoints now produce `SnapKind.SmartPoint` temporary candidates when the cursor is close to the marker. The click is resolved to the captured point, and the marker can therefore be used directly as a snap point as well as a tracking/extension origin.
+
+### 2026-05-31 - Advanced snapping final consolidation
+
+Consolidated the Advanced Snapping / SmartPoint Tracking milestone before resuming the remaining v0.9 work. Final validated scope:
+
+- `Nearest` is available as an opt-in snap and remains disabled by default.
+- **SmartPoint Tracking** is the official UI name for the advanced temporary tracking subsystem.
+- The Snap bar includes an independent **SmartPoint Tracking** toggle. Disabling it clears SmartPoints, tracking lines, temporary markers and tracking HUD labels.
+- SmartPoints are captured only from strong object snaps and can be clicked directly via `SnapKind.SmartPoint`.
+- Tracking lines include horizontal, vertical and active Polar Tracking directions.
+- Entity extension tracking supports line entities and straight polyline segments.
+- Tracking intersections work between temporary tracking lines and between tracking lines and real linear geometry.
+- Numeric distance input works along active `Tracking` and `Extension` candidates.
+- Temporary markers are resolved as real candidate points; tools must not re-snap them to Grid/Ortho/Polar after selection.
+- Grid overlap with Tracking/Extension is handled conservatively: `TRACK GRID` / `EXT GRID` is shown only when the grid node lies on the temporary line, while the tracking/extension constraint remains dominant.
+- The tracking HUD label is drawn in the lower-left canvas overlay area to avoid the Dynamic Command HUD.
+
+Deferred beyond this milestone: arc/tangent extension, curve intersections, persistent/pinned SmartPoints and richer SmartPoint management UI.
+
+
+
+### 2026-05-31 - DIVIDE command foundation
+
+Added the AutoCAD-style `DIVIDE` command as a draw/construction tool. The first version works on a single selected or picked `LineEntity`, `ArcEntity`, `CircleEntity` or `PolylineEntity`. It asks for an integer segment count from 2 to 1000 and creates persistent `PointEntity` markers on the current layer without modifying or splitting the source entity. Open entities create `N - 1` internal points; closed entities create `N` points starting from their conventional start point. All created points are committed through one `AddEntityCommand`, so undo/redo treats the operation as a single step.

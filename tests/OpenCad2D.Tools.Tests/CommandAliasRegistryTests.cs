@@ -10,6 +10,8 @@ public sealed class CommandAliasRegistryTests
     [InlineData("line", ToolId.Line)]
     [InlineData("MTEXT", ToolId.MultilineText)]
     [InlineData("mt", ToolId.MultilineText)]
+    [InlineData("DIVIDE", ToolId.Divide)]
+    [InlineData("div", ToolId.Divide)]
     [InlineData("C", ToolId.Circle)]
     [InlineData("EL", ToolId.Ellipse)]
     [InlineData("ellipse", ToolId.Ellipse)]

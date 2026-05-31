@@ -23,6 +23,8 @@ public sealed class CommandHudInputState
 
     public double? Sides { get; set; }
 
+    public double? Segments { get; set; }
+
     public double? X { get; set; }
 
     public double? Y { get; set; }
@@ -34,7 +36,7 @@ public sealed class CommandHudInputState
         Width is not null || Height is not null || Radius is not null || Factor is not null;
 
     public bool HasNumberOverride =>
-        Sides is not null;
+        Sides is not null || Segments is not null;
 
     public bool HasCoordinateOverride =>
         X is not null || Y is not null;
@@ -53,6 +55,7 @@ public sealed class CommandHudInputState
             CommandHudFieldKind.Radius => Radius,
             CommandHudFieldKind.Factor => Factor,
             CommandHudFieldKind.Sides => Sides,
+            CommandHudFieldKind.Segments => Segments,
             CommandHudFieldKind.X => X,
             CommandHudFieldKind.Y => Y,
             _ => null
@@ -88,6 +91,9 @@ public sealed class CommandHudInputState
             case CommandHudFieldKind.Sides:
                 Sides = value;
                 break;
+            case CommandHudFieldKind.Segments:
+                Segments = value;
+                break;
             case CommandHudFieldKind.X:
                 X = value;
                 break;
@@ -106,6 +112,7 @@ public sealed class CommandHudInputState
         Radius = null;
         Factor = null;
         Sides = null;
+        Segments = null;
         X = null;
         Y = null;
         ActiveField = CommandHudFieldKind.Distance;

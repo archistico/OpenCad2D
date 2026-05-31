@@ -221,3 +221,59 @@ Manual checks:
 ### Direct SmartPoint snap update
 
 Captured SmartPoints now produce `SnapKind.SmartPoint` temporary candidates when the cursor is close to the marker. The click is resolved to the captured point, and the marker can therefore be used directly as a snap point as well as a tracking/extension origin.
+
+---
+
+## Final consolidation checks after Grid/Tracking priority fixes
+
+Expected behavior:
+
+- SmartPoint Tracking candidates are real temporary snap points.
+- When a `Tracking`, `Extension`, `TrackingIntersection`, `TrackingGridIntersection` or `SmartPoint` marker is visible, the click must use the displayed point.
+- Grid Snap must not pull a displayed SmartPoint Tracking candidate away from its temporary line.
+- Grid can combine with Tracking/Extension only when the grid node lies on the temporary line.
+- In combined cases the label is `TRACK GRID` or `EXT GRID`; the point is both on the temporary line and on the grid node.
+
+Manual checks:
+
+```text
+[ ] Enable Grid Snap and SmartPoint Tracking.
+[ ] Capture a SmartPoint and move along a horizontal/vertical/polar Tracking line.
+[ ] Click while a Tracking marker is visible but not on a grid node: the point stays on the tracking line and is not moved to the nearest grid node.
+[ ] Move to a grid node that lies exactly on the tracking line: TRACK GRID appears.
+[ ] Click TRACK GRID: the point is the grid node and remains on the tracking line.
+[ ] Repeat the same checks on an Entity Extension line: EXT stays on the extension, EXT GRID appears only when the grid node lies on the extension.
+[ ] Move near a grid node outside the temporary line: the candidate must not leave the tracking/extension line.
+[ ] Disable SmartPoint Tracking: all SmartPoints, tracking lines, combined markers and labels disappear while normal Grid Snap remains available.
+```
+
+---
+
+## Final implemented scope summary
+
+```text
+[x] Nearest opt-in snap, disabled by default
+[x] SmartPoint Tracking Snap bar toggle
+[x] SmartPoint capture from strong snaps only
+[x] Direct SmartPoint snap
+[x] Horizontal/vertical tracking lines
+[x] Polar-direction tracking lines
+[x] Direct numeric distance input on Tracking/Extension
+[x] Tracking-line / tracking-line intersections
+[x] Tracking-line / real line and straight polyline segment intersections
+[x] Entity Extension for lines and straight polyline segments
+[x] SmartPoint Tracking HUD label moved away from Dynamic Command HUD
+[x] Temporary snap candidates beat Grid when a visible marker is active
+[x] TRACK GRID / EXT GRID combined markers only when Grid lies on the temporary line
+```
+
+Deferred:
+
+```text
+[ ] Arc/circle tangent tracking
+[ ] Arc extension tracking
+[ ] Curve intersections
+[ ] Persistent or pinned SmartPoints
+[ ] Manual SmartPoint removal UI
+```
+

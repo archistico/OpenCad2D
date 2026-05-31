@@ -540,6 +540,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 _commandHudInputState.Sides ?? polygonSidesTool.SideCount);
         }
 
+        if (activeTool is DivideTool divideTool &&
+            divideTool.IsWaitingForSegmentCount(Workspace.Context))
+        {
+            return BuildSingleNumberField(
+                "segments",
+                "Segments",
+                _commandHudInputState.Segments ?? DivideTool.DefaultSegmentCount,
+                CommandHudFieldKind.Segments);
+        }
+
         if (activeTool is FilletTool { State: FilletToolState.WaitingForRadius } filletTool)
         {
             return BuildSingleDistanceField(
@@ -939,14 +949,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private static IReadOnlyList<CommandHudFieldViewModel> BuildSingleNumberField(
         string key,
         string label,
-        double? value)
+        double? value,
+        CommandHudFieldKind? kind = null)
     {
         return new[]
         {
             new CommandHudFieldViewModel(
                 key,
                 label,
-                value)
+                value,
+                kind: kind)
         };
     }
 
@@ -3021,6 +3033,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Radius or
             CommandHudFieldKind.Factor or
             CommandHudFieldKind.Sides or
+            CommandHudFieldKind.Segments or
             CommandHudFieldKind.X or
             CommandHudFieldKind.Y))
         {
@@ -3405,6 +3418,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Radius or
             CommandHudFieldKind.Factor or
             CommandHudFieldKind.Sides or
+            CommandHudFieldKind.Segments or
             CommandHudFieldKind.X or
             CommandHudFieldKind.Y))
         {
@@ -3548,6 +3562,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
+        if (fieldKind == CommandHudFieldKind.Segments)
+        {
+            if (value < DivideTool.MinimumSegmentCount ||
+                value > DivideTool.MaximumSegmentCount ||
+                Math.Abs(value - Math.Round(value)) > 0.000001)
+            {
+                message = $"Segments must be a whole number between {DivideTool.MinimumSegmentCount} and {DivideTool.MaximumSegmentCount}.";
+                return false;
+            }
+
+            return true;
+        }
+
         if (IsPositiveCommandHudField(fieldKind) && value <= 0)
         {
             message = $"{fieldKind} must be greater than zero.";
@@ -3578,6 +3605,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (Workspace.ToolController.ActiveTool is PolygonTool { State: PolygonToolState.WaitingForSides } &&
             fieldKind == CommandHudFieldKind.Sides)
+        {
+            if (!confirm)
+            {
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
+            result = SubmitCommandInput(((int)Math.Round(value)).ToString(CultureInfo.InvariantCulture));
+            ClearCommandHudInputOverrides();
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (Workspace.ToolController.ActiveTool is DivideTool divideTool &&
+            divideTool.IsWaitingForSegmentCount(Workspace.Context) &&
+            fieldKind == CommandHudFieldKind.Segments)
         {
             if (!confirm)
             {

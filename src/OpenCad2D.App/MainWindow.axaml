@@ -676,6 +676,20 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="DivideButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="DIVIDE: place points at equal divisions of one selected entity"
+                                    Click="Divide_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDivide}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Divide" />
+                                </Grid>
+                            </Button>
+
                             <Button x:Name="TextButton"
                                     Classes="tool-button"
                                     ToolTip.Tip="Place a text entity"

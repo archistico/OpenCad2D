@@ -1793,3 +1793,47 @@ The label is visual-only and does not change snap resolution, persistence, expor
 ### Direct SmartPoint snap update
 
 Captured SmartPoints now produce `SnapKind.SmartPoint` temporary candidates when the cursor is close to the marker. The click is resolved to the captured point, and the marker can therefore be used directly as a snap point as well as a tracking/extension origin.
+
+## 2026-05-31 - Advanced Snapping / SmartPoint Tracking final consolidation
+
+The pre-v0.9 Advanced Snapping milestone is consolidated. Treat **SmartPoint Tracking** as the official feature name in UI/docs. It is a runtime drafting-aid subsystem, not persisted document geometry.
+
+Final implemented scope:
+
+- `Nearest` snap is exposed but disabled by default. It remains a low-priority opt-in snap because it is useful but noisy.
+- SmartPoint capture is active only during point-based commands and only from strong real object snaps: Endpoint, Midpoint, Center, Quadrant and Intersection. Nearest, Grid, Entity, Perpendicular and Tangent must not create SmartPoints without a deliberate UX decision.
+- Captured SmartPoints are command-scoped, capped at five, deduplicated/refreshed, cleared on command end/cancel and available as direct `SnapKind.SmartPoint` candidates.
+- SmartPoint Tracking emits horizontal/vertical lines and additional Polar Tracking directions when Polar Tracking is enabled.
+- Entity extension tracking is implemented for `LineEntity` and straight `PolylineEntity` segments only. Bulged polyline segments, arcs, circles and tangents remain deferred.
+- Temporary intersections are implemented for tracking-line/tracking-line and tracking-line/real-linear-geometry cases.
+- `Tracking` and `Extension` candidates carry `TrackingOrigin` and signed `TrackingDirection`, so plain numeric input can resolve distance along the active temporary line.
+- Temporary candidates must behave as real snap results. When their marker is visible, pointer input must use the displayed candidate point and must not be re-snapped away to Grid, Ortho or Polar constraints.
+- Grid overlap is special: Grid may be shown together with Tracking/Extension only when the grid node lies on the temporary line. Labels are `TRACK GRID` or `EXT GRID`. The temporary line remains dominant; Grid must not pull the point off the line.
+- The SmartPoint Tracking HUD label is drawn in the lower-left canvas overlay area to avoid overlapping the Dynamic Command HUD. It is visual-only and not part of persistence, export, selection or undo/redo.
+
+Important regression guard: do not let SmartPoint Tracking become active during selection-only prompts. Selection-only tools should keep using `EntityOnly` semantics.
+
+Manual verification checklist: `docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md`.
+
+
+
+## 2026-05-31 - DIVIDE command foundation
+
+Implemented AutoCAD-compatible `DIVIDE` naming and behavior. New/updated files include:
+
+- `OpenCad2D.Core/Editing/DivideEntityService.cs` and `DivideEntityResult.cs` for pure geometry calculation.
+- `OpenCad2D.Tools/Editing/DivideTool.cs` for the interactive command.
+- `ToolId.Divide`, `ToolRegistry` registration, and `CommandAliasRegistry` aliases `DIVIDE` / `DIV`.
+- Main toolbar button in the Draw section and `IconDivide` resource.
+
+Behavior contract:
+
+- Does not split or modify the source entity.
+- Creates real persistent `PointEntity` markers.
+- Supports one source entity at a time in v1.
+- Supports `LineEntity`, `ArcEntity`, `CircleEntity` and `PolylineEntity`.
+- Segment count must be an integer between 2 and 1000.
+- Open entities create `N - 1` points; closed entities create `N` points.
+- Points are placed on the current layer, not the source entity layer.
+- One `AddEntityCommand` is used for all generated points, so undo/redo is single-step.
+- Polylines are divided by cumulative path length. Bulged polylines use their interaction approximation; exact curved-polyline division can be improved later if needed.

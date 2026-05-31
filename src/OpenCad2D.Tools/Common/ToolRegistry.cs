@@ -47,6 +47,14 @@ public sealed class ToolRegistry
 
         Register(
             new ToolDescriptor(
+                ToolId.Divide,
+                "Divide",
+                "Divide",
+                "Draw"),
+            () => new DivideTool());
+
+        Register(
+            new ToolDescriptor(
                 ToolId.Text,
                 "Text",
                 "Text",
