@@ -47,6 +47,7 @@ public partial class MainWindow : Window
     private string _commandInputBuffer = string.Empty;
     private CommandHudFieldKind? _activeLogicalHudFieldKind;
     private string _activeLogicalHudFieldText = string.Empty;
+    private bool _isFocusingHudFieldTextBoxFromKeyboard;
     private CreateBlockOptions? _pendingCreateBlockOptionsDraft;
     private bool _isCreateBlockEntitySelectionPending;
     private static readonly FilePickerFileType OpenCad2DFileType = new("OpenCad2D drawing")
@@ -2449,6 +2450,11 @@ public partial class MainWindow : Window
             return;
         }
 
+        if (IsHudFieldTextBoxEventSource(e.Source))
+        {
+            return;
+        }
+
         if (TryHandleCommandBufferKey(e))
         {
             return;
@@ -2626,10 +2632,27 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
-        if (sender is TextBox textBox)
+        if (sender is not TextBox textBox ||
+            textBox.DataContext is not CommandHudFieldViewModel field)
         {
-            textBox.SelectAll();
+            return;
         }
+
+        if (!_isFocusingHudFieldTextBoxFromKeyboard)
+        {
+            CadCanvas.Focus();
+            e.Handled = true;
+            return;
+        }
+
+        if (field.CanAcceptTypedOverride)
+        {
+            _activeLogicalHudFieldKind = field.Kind;
+            _activeLogicalHudFieldText = string.Empty;
+            RefreshLogicalHudFieldVisuals();
+        }
+
+        textBox.SelectAll();
     }
 
     private void HudFieldTextBox_LostFocus(
@@ -2638,6 +2661,11 @@ public partial class MainWindow : Window
     {
         if (sender is not TextBox textBox ||
             textBox.DataContext is not CommandHudFieldViewModel field)
+        {
+            return;
+        }
+
+        if (!IsHudFieldKindCurrentlyAvailable(field.Kind))
         {
             return;
         }
@@ -3107,9 +3135,12 @@ public partial class MainWindow : Window
 
         _activeLogicalHudFieldKind = availableKinds[nextIndex];
         _activeLogicalHudFieldText = string.Empty;
-        CadCanvas.Focus();
         RefreshLogicalHudFieldVisuals();
-        Dispatcher.UIThread.Post(RefreshLogicalHudFieldVisuals, DispatcherPriority.Background);
+        Dispatcher.UIThread.Post(() =>
+        {
+            RefreshLogicalHudFieldVisuals();
+            FocusHudFieldTextBox(_activeLogicalHudFieldKind);
+        }, DispatcherPriority.Background);
     }
 
     private CommandHudFieldKind? GetDefaultLogicalHudFieldKindForNumericText()
@@ -3154,7 +3185,7 @@ public partial class MainWindow : Window
                 continue;
             }
 
-            bool isActive = _activeLogicalHudFieldKind == field.Kind;
+            bool isActive = _activeLogicalHudFieldKind == field.Kind || textBox.IsFocused;
 
             textBox.BorderBrush = isActive
                 ? new SolidColorBrush(Color.Parse("#FFD700"))
@@ -3172,19 +3203,76 @@ public partial class MainWindow : Window
                 ? Brushes.White
                 : new SolidColorBrush(Color.Parse("#FFD700"));
 
-            if (isActive)
+            if (textBox.IsFocused)
             {
-                textBox.Text = string.IsNullOrEmpty(_activeLogicalHudFieldText)
-                    ? field.NumericValueText
-                    : _activeLogicalHudFieldText;
+                continue;
             }
-            else
+
+            string targetText = isActive && !string.IsNullOrEmpty(_activeLogicalHudFieldText)
+                ? _activeLogicalHudFieldText
+                : field.NumericValueText;
+
+            if (!string.Equals(textBox.Text, targetText, StringComparison.Ordinal))
             {
-                textBox.Text = field.NumericValueText;
+                textBox.Text = targetText;
             }
 
             textBox.CaretIndex = textBox.Text?.Length ?? 0;
         }
+    }
+
+    private void FocusHudFieldTextBox(CommandHudFieldKind? fieldKind)
+    {
+        if (fieldKind is null ||
+            HudFieldsItemsControl is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        TextBox? textBox = HudFieldsItemsControl
+            .GetVisualDescendants()
+            .OfType<TextBox>()
+            .FirstOrDefault(candidate =>
+                candidate.DataContext is CommandHudFieldViewModel field &&
+                field.Kind == fieldKind.Value &&
+                field.CanAcceptTypedOverride);
+
+        if (textBox is null)
+        {
+            CadCanvas.Focus();
+            return;
+        }
+
+        _isFocusingHudFieldTextBoxFromKeyboard = true;
+
+        try
+        {
+            textBox.Focus();
+            textBox.SelectAll();
+        }
+        finally
+        {
+            _isFocusingHudFieldTextBoxFromKeyboard = false;
+        }
+    }
+
+    private static bool IsHudFieldTextBoxEventSource(object? source)
+    {
+        if (source is TextBox directTextBox &&
+            directTextBox.DataContext is CommandHudFieldViewModel)
+        {
+            return true;
+        }
+
+        if (source is not Visual visual)
+        {
+            return false;
+        }
+
+        return visual.GetVisualAncestors()
+            .OfType<TextBox>()
+            .Any(textBox => textBox.DataContext is CommandHudFieldViewModel);
     }
 
     private bool FocusFirstHudField()

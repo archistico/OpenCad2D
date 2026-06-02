@@ -1854,3 +1854,40 @@ Regression expectations:
 - `DIVIDE` `Segments` can be changed through the HUD, for example to 3, without reverting while typing.
 
 Manual verification reference: `docs/testing/divide-command-manual-verification-2026-05-31.md`.
+
+## 2026-06-02 - HUD textbox editing for Fillet and Chamfer
+
+Fixed the Dynamic Command HUD editing path for scalar textbox fields such as `FilletTool` radius and `ChamferTool` distance.
+
+Behavior contract:
+
+- `FILLET` -> `R` -> `Tab` must focus the Radius textbox, select the current value, allow direct replacement, and commit with Enter.
+- `CHAMFER` -> `D` -> `Tab` must do the same for Distance.
+- While a HUD textbox has focus, `Window_PreviewKeyDown` must not intercept numeric keys, Tab, Enter, Backspace or Escape before the textbox handler sees them.
+- `RefreshLogicalHudFieldVisuals()` must not overwrite the `TextBox.Text` or caret while that textbox has focus.
+- The full HUD overlay can receive hit testing, but only the HUD controls should consume HUD input; normal canvas interaction must remain available outside the HUD panel.
+
+Implementation notes:
+
+- `CommandHudOverlay` is hit-test enabled and editable field textboxes bind `IsHitTestVisible` to `CanAcceptTypedOverride`.
+- `MoveToNextLogicalHudField()` now focuses the matching HUD textbox instead of only changing the logical active field and returning focus to the canvas.
+- Focused HUD textboxes are treated as the active field and are visually highlighted without forcing their text back to the live value.
+
+## 2026-06-02 - HUD textbox mouse-pass-through stabilization
+
+Follow-up stabilization for Dynamic Command HUD textbox editing.
+
+Important behavior contract:
+
+- The Dynamic Command HUD is visual-only for mouse input during drawing/edit commands. It must not block the canvas when the cursor moves over it.
+- HUD textboxes must not be mouse-focusable. They are intentionally `IsHitTestVisible="False"`.
+- A HUD textbox may receive focus only through the keyboard path handled by `Tab` / `MoveToNextLogicalHudField()` / `FocusHudFieldTextBox()`.
+- This prevents the previously recurring freeze/stall when the user moves the mouse quickly and the cursor crosses the HUD/textbox panel.
+- The supported scalar editing flow remains: command option key such as `R` for Fillet radius or `D` for Chamfer distance, then `Tab`, type the value, press `Enter`, continue the command.
+
+Implementation notes:
+
+- `CommandHudOverlay` is back to `IsHitTestVisible="False"`, so mouse input passes through to `CadCanvas` even when the HUD is near the pointer.
+- HUD field `TextBox` controls are also `IsHitTestVisible="False"`; they stay keyboard-editable through explicit programmatic focus.
+- `HudFieldTextBox_GotFocus()` rejects accidental/non-keyboard focus and returns focus to the canvas.
+- `FocusHudFieldTextBox()` wraps programmatic focus with `_isFocusingHudFieldTextBoxFromKeyboard`, making the intended Tab-driven focus path explicit.
