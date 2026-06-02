@@ -1891,3 +1891,45 @@ Implementation notes:
 - HUD field `TextBox` controls are also `IsHitTestVisible="False"`; they stay keyboard-editable through explicit programmatic focus.
 - `HudFieldTextBox_GotFocus()` rejects accidental/non-keyboard focus and returns focus to the canvas.
 - `FocusHudFieldTextBox()` wraps programmatic focus with `_isFocusingHudFieldTextBoxFromKeyboard`, making the intended Tab-driven focus path explicit.
+
+## 2026-06-02 - Viewport-aware snap tolerance and intentional SmartPoint hover
+
+Implemented zoom-proportional snapping and less aggressive SmartPoint capture.
+
+Behavior contract:
+
+- `Workspace.Context.SnapTolerance` remains the configured snap tolerance value, but the Avalonia canvas now treats it as a screen-space pixel radius.
+- `CadCanvas` converts that value through `ViewportTransform.ScreenLengthToModel(...)` before building object-snap and SmartPoint Tracking requests.
+- The lower-level snapping providers still receive model-space tolerances; only the UI boundary knows about viewport scale.
+- Zooming in reduces the effective model-space snap radius, so visually close snap points can be separated with the mouse wheel.
+- SmartPoint capture now requires a more intentional hover, currently 700 ms on the same strong snap candidate.
+- A pending SmartPoint capture is rejected if the mouse drifts more than 3 screen pixels while waiting for the hover timer.
+
+Implementation notes:
+
+- Main code path: `src/OpenCad2D.App/Controls/CadCanvas.cs`.
+- `UpdateCurrentSnapCandidate(...)` and `GetTrackingSnapCandidate(...)` both use `GetEffectiveModelSnapTolerance()`.
+- `_pendingSmartPointScreenPoint` records the screen position at hover start; `HasPendingSmartPointMouseMovedTooFar()` guards the timer callback.
+
+Manual verification expectations:
+
+- Draw two very close entities with endpoint/midpoint snaps. At a distant zoom the snap may choose the closest visible candidate, but zooming in must make the two candidates independently selectable.
+- During Line/Polyline input, moving quickly over an endpoint must not immediately create a SmartPoint.
+- Holding the cursor still over an endpoint/midpoint/center/intersection for roughly 700 ms should create the SmartPoint marker and tracking aids.
+- Slight mouse movement while hovering should cancel/restart the pending capture rather than creating accidental tracking references.
+
+
+## 2026-06-02 - Tool-level viewport-aware snap tolerance follow-up
+
+Follow-up to the viewport-aware snap tolerance change. The first pass converted the tolerance for canvas snap marker calculation and SmartPoint Tracking. This follow-up also applies the same conversion while dispatching pointer events to active tools.
+
+Key implementation point:
+
+- `CadCanvas.ExecuteWithResolvedTemporarySnapExactPoint(...)` and the async counterpart now temporarily replace `Workspace.Context.SnapTolerance` with `GetEffectiveModelSnapTolerance()` before calling the active tool, then restore the original configured value in `finally`.
+- `OnPointerReleased(...)` now uses the same wrapper as press/move, so commit-time snapping is consistent with preview-time snapping.
+
+This is important for tools that still create their own `SnapRequest` from `context.SnapTolerance`, especially Move and Grip Edit. Their internal snap pass must receive model units, while user settings continue to store the tolerance as a pixel radius.
+
+Regression/manual check:
+
+- Grid step 5: Move and Grip Edit should move by one cell as 5 units when the visible target is the adjacent grid node, not jump to a farther node because an unconverted tolerance was interpreted as model units.

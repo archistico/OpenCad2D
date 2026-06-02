@@ -76,11 +76,13 @@ public sealed class CadCanvas : Control
         new DashStyle(new[] { 7.0, 5.0 }, 0));
     private readonly IBrush _trackingHudTextBrush = new SolidColorBrush(Color.FromRgb(210, 245, 255));
     private readonly IBrush _trackingHudBackgroundBrush = new SolidColorBrush(Color.FromArgb(210, 20, 45, 55));
-    private const int SmartPointHoverDelayMilliseconds = 400;
+    private const int SmartPointHoverDelayMilliseconds = 700;
+    private const double SmartPointHoverMoveTolerancePixels = 3.0;
     private readonly SmartPointStore _smartPointStore = new(maximumCount: 5);
     private readonly TrackingEngine _trackingEngine = new();
     private readonly DispatcherTimer _smartPointHoverTimer;
     private SnapCandidate? _pendingSmartPointCandidate;
+    private Point? _pendingSmartPointScreenPoint;
     private SnapCandidate? _currentSnapCandidate;
     private SnapKind? _enabledSnapsOverride;
     private bool _isSmartPointTrackingEnabled = true;
@@ -1026,10 +1028,12 @@ public sealed class CadCanvas : Control
 
         Point2D? basePoint = Workspace.Context.CurrentBasePoint;
 
+        double snapTolerance = GetEffectiveModelSnapTolerance();
+
         var request = new SnapRequest(
             Workspace.Document,
             modelPoint,
-            Workspace.Context.SnapTolerance,
+            snapTolerance,
             enabledSnaps,
             basePoint,
             Workspace.Context.GridSettings);
@@ -1054,9 +1058,21 @@ public sealed class CadCanvas : Control
         return _trackingEngine.FindNearestTrackingCandidate(
             _smartPointStore.Points,
             modelPoint,
-            Workspace.Context.SnapTolerance,
+            GetEffectiveModelSnapTolerance(),
             Workspace.Document,
             GetActivePolarTrackingStepDegrees(Workspace));
+    }
+
+
+    private double GetEffectiveModelSnapTolerance()
+    {
+        if (Workspace is null ||
+            Workspace.Context.SnapTolerance <= 0)
+        {
+            return 0;
+        }
+
+        return _viewport.ScreenLengthToModel(Workspace.Context.SnapTolerance);
     }
 
     private static double? GetActivePolarTrackingStepDegrees(CadWorkspace workspace)
@@ -1162,10 +1178,16 @@ public sealed class CadCanvas : Control
         if (_pendingSmartPointCandidate is not null &&
             IsSameSnapReference(_pendingSmartPointCandidate, current))
         {
-            return;
+            if (!HasPendingSmartPointMouseMovedTooFar())
+            {
+                return;
+            }
+
+            ResetPendingSmartPointCandidate();
         }
 
         _pendingSmartPointCandidate = current;
+        _pendingSmartPointScreenPoint = _pointerScreenPoint;
         _smartPointHoverTimer.Stop();
         _smartPointHoverTimer.Start();
     }
@@ -1200,6 +1222,7 @@ public sealed class CadCanvas : Control
 
         if (_pendingSmartPointCandidate is null ||
             _currentSnapCandidate is null ||
+            HasPendingSmartPointMouseMovedTooFar() ||
             !IsSameSnapReference(_pendingSmartPointCandidate, _currentSnapCandidate) ||
             !CanCaptureCurrentSnapAsSmartPoint())
         {
@@ -1214,13 +1237,27 @@ public sealed class CadCanvas : Control
             DateTimeOffset.UtcNow));
 
         _pendingSmartPointCandidate = null;
+        _pendingSmartPointScreenPoint = null;
         InvalidateVisual();
+    }
+
+    private bool HasPendingSmartPointMouseMovedTooFar()
+    {
+        if (_pendingSmartPointScreenPoint is null ||
+            _pointerScreenPoint is null)
+        {
+            return false;
+        }
+
+        Vector delta = _pointerScreenPoint.Value - _pendingSmartPointScreenPoint.Value;
+        return Math.Sqrt((delta.X * delta.X) + (delta.Y * delta.Y)) > SmartPointHoverMoveTolerancePixels;
     }
 
     private void ResetPendingSmartPointCandidate()
     {
         _smartPointHoverTimer.Stop();
         _pendingSmartPointCandidate = null;
+        _pendingSmartPointScreenPoint = null;
     }
 
     private void ClearSmartPoints()
@@ -1907,10 +1944,11 @@ public sealed class CadCanvas : Control
             return;
         }
 
-        ToolResult result = Workspace.ToolController.OnPointerReleased(
-            CreatePointerInfo(
-                position,
-                e.KeyModifiers));
+        ToolResult result = ExecuteWithResolvedTemporarySnapExactPoint(
+            () => Workspace.ToolController.OnPointerReleased(
+                CreatePointerInfo(
+                    position,
+                    e.KeyModifiers)));
 
         result = ApplyZoomWindowIfCompleted(result);
         ApplySmartPointLifecycle(result);
@@ -2317,25 +2355,31 @@ public sealed class CadCanvas : Control
     {
         ArgumentNullException.ThrowIfNull(submit);
 
-        if (Workspace is null ||
-            !IsResolvedTemporarySnap(_currentSnapCandidate?.Kind))
+        if (Workspace is null)
         {
             return submit();
         }
 
+        bool useResolvedTemporarySnap = IsResolvedTemporarySnap(_currentSnapCandidate?.Kind);
         bool originalOrthoState = Workspace.Context.IsOrthoEnabled;
         AngleConstraintSettings originalAngleConstraintSettings = Workspace.Context.AngleConstraintSettings;
         SnapKind originalEnabledSnaps = Workspace.Context.EnabledSnaps;
+        double originalSnapTolerance = Workspace.Context.SnapTolerance;
 
         try
         {
-            // SmartPoint Tracking candidates have already been resolved by the canvas.
-            // Disable the regular tool-level snapping/angle pass for this single event;
-            // otherwise Grid/Nearest can re-snap the exact temporary point after the
-            // visual marker has correctly selected Tracking, Extension or SmartPoint.
-            Workspace.Context.IsOrthoEnabled = false;
-            Workspace.Context.AngleConstraintSettings = AngleConstraintSettings.Off;
-            Workspace.Context.EnabledSnaps = SnapKind.None;
+            Workspace.Context.SnapTolerance = GetEffectiveModelSnapTolerance();
+
+            if (useResolvedTemporarySnap)
+            {
+                // SmartPoint Tracking candidates have already been resolved by the canvas.
+                // Disable the regular tool-level snapping/angle pass for this single event;
+                // otherwise Grid/Nearest can re-snap the exact temporary point after the
+                // visual marker has correctly selected Tracking, Extension or SmartPoint.
+                Workspace.Context.IsOrthoEnabled = false;
+                Workspace.Context.AngleConstraintSettings = AngleConstraintSettings.Off;
+                Workspace.Context.EnabledSnaps = SnapKind.None;
+            }
 
             return submit();
         }
@@ -2344,6 +2388,7 @@ public sealed class CadCanvas : Control
             Workspace.Context.IsOrthoEnabled = originalOrthoState;
             Workspace.Context.AngleConstraintSettings = originalAngleConstraintSettings;
             Workspace.Context.EnabledSnaps = originalEnabledSnaps;
+            Workspace.Context.SnapTolerance = originalSnapTolerance;
         }
     }
 
@@ -2352,21 +2397,27 @@ public sealed class CadCanvas : Control
     {
         ArgumentNullException.ThrowIfNull(submit);
 
-        if (Workspace is null ||
-            !IsResolvedTemporarySnap(_currentSnapCandidate?.Kind))
+        if (Workspace is null)
         {
             return await submit().ConfigureAwait(true);
         }
 
+        bool useResolvedTemporarySnap = IsResolvedTemporarySnap(_currentSnapCandidate?.Kind);
         bool originalOrthoState = Workspace.Context.IsOrthoEnabled;
         AngleConstraintSettings originalAngleConstraintSettings = Workspace.Context.AngleConstraintSettings;
         SnapKind originalEnabledSnaps = Workspace.Context.EnabledSnaps;
+        double originalSnapTolerance = Workspace.Context.SnapTolerance;
 
         try
         {
-            Workspace.Context.IsOrthoEnabled = false;
-            Workspace.Context.AngleConstraintSettings = AngleConstraintSettings.Off;
-            Workspace.Context.EnabledSnaps = SnapKind.None;
+            Workspace.Context.SnapTolerance = GetEffectiveModelSnapTolerance();
+
+            if (useResolvedTemporarySnap)
+            {
+                Workspace.Context.IsOrthoEnabled = false;
+                Workspace.Context.AngleConstraintSettings = AngleConstraintSettings.Off;
+                Workspace.Context.EnabledSnaps = SnapKind.None;
+            }
 
             return await submit().ConfigureAwait(true);
         }
@@ -2375,6 +2426,7 @@ public sealed class CadCanvas : Control
             Workspace.Context.IsOrthoEnabled = originalOrthoState;
             Workspace.Context.AngleConstraintSettings = originalAngleConstraintSettings;
             Workspace.Context.EnabledSnaps = originalEnabledSnaps;
+            Workspace.Context.SnapTolerance = originalSnapTolerance;
         }
     }
 

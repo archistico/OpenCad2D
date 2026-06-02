@@ -407,13 +407,15 @@ The visual grid in the Avalonia canvas and the snapping grid should remain conce
 
 Snap tolerance controls how far the cursor can be from a candidate.
 
-If the distance between the cursor and the candidate is greater than the tolerance, the candidate is ignored.
+The configured `SnapTolerance` value is now interpreted as a screen-space pixel radius by the Avalonia canvas. Before creating a `SnapRequest`, `CadCanvas` converts that pixel radius to model units through the current `ViewportTransform`.
 
-The tolerance is stored in the snapping context.
+This keeps snapping visually consistent at every zoom level:
 
-The UI currently passes model-space cursor points to the snapping system, so the tolerance is interpreted in model units.
+- zoomed out: the same pixel radius covers a larger model-space distance;
+- zoomed in: the same pixel radius covers a smaller model-space distance;
+- when two snap candidates are visually close, zooming in makes them easier to choose independently.
 
-A future improvement should define pick and snap tolerance in screen pixels and convert them to model units through the viewport transform. This is closer to typical CAD behavior and makes snapping feel consistent at different zoom levels.
+The lower-level snapping providers still receive and compare a model-space tolerance. The screen-to-model conversion is intentionally kept at the UI boundary so the interaction layer remains independent from Avalonia viewport state.
 
 ---
 
@@ -524,7 +526,7 @@ A SmartPoint is a runtime-only reference point captured from a strong object sna
 Current behavior:
 
 ```text
-Hover delay: 400 ms
+Hover delay: about 700 ms on the same snap candidate
 Maximum captured SmartPoints: 5
 Captured snap kinds: Endpoint, Midpoint, Center, Quadrant, Intersection
 Excluded snap kinds: Entity, Grid, Nearest, Perpendicular, Tangent
@@ -537,6 +539,8 @@ SmartPoint capture is intentionally conservative:
 - it is disabled while the Selection tool is active;
 - it does not capture `EntityOnly` selection prompts;
 - it does not capture `Nearest`, because Nearest is too noisy as a tracking reference;
+- it requires an intentional hover on the same snap candidate for about 700 ms;
+- it rejects the pending capture if the mouse moves more than a few screen pixels during the hover delay;
 - it clears pending hover state when the pointer leaves the canvas, when panning starts, or when snap state is cleared;
 - completed/cancelled tool results clear captured SmartPoints.
 
@@ -745,3 +749,23 @@ SMART POINT
 
 The labels, SmartPoints, tracking lines and temporary markers remain runtime-only: they are never persisted, exported, selectable or undoable.
 
+
+## 2026-06-02 - Tool-level viewport-aware snap tolerance
+
+Follow-up stabilization for zoom-proportional snapping.
+
+The canvas-level snap marker and the lower-level tool input path must use the same effective tolerance. `Workspace.Context.SnapTolerance` remains the configured screen-space pixel radius, but pointer events sent to active tools are now executed with a temporary model-space tolerance computed from the current viewport.
+
+Behavior contract:
+
+- the saved/configured snap tolerance stays in pixels;
+- `CadCanvas` converts that pixel value to model units for each pointer press, move and release;
+- active tools such as Move and Grip Edit that perform their own `SnapRequest` receive the converted model-space tolerance;
+- after the pointer event returns, the original configured pixel value is restored immediately;
+- Grid snap, object snap, Move preview and Grip Edit preview should therefore agree with the visible snap marker at the current zoom.
+
+Manual verification expectations:
+
+- With grid step 5 and grid snap enabled, moving an entity or grip by one visible grid cell should propose 5, not unexpectedly jump to 10 or another farther grid node.
+- Zooming in should make adjacent grid/object snap candidates easier to distinguish without requiring any setting change.
+- Releasing the pointer after a grip or move operation should commit to the same snap target shown by the preview marker.
