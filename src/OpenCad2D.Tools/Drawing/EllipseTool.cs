@@ -11,7 +11,7 @@ namespace OpenCad2D.Tools.Drawing;
 /// <summary>
 /// Interactive tool used to draw ellipse entities by center, major axis point and minor radius point.
 /// </summary>
-public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
+public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, IToolPreviewDescriptorProvider
 {
     public string Name => "Ellipse";
 
@@ -116,6 +116,66 @@ public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEnti
         return preview is null
             ? Array.Empty<CadEntity>()
             : new CadEntity[] { preview };
+    }
+
+    public ToolPreviewDescriptor GetPreviewDescriptor(ToolContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        var entities = new List<CadEntity>();
+        var lines = new List<ToolPreviewLine>();
+        var markers = new List<ToolPreviewMarker>();
+
+        EllipseEntity? preview = GetPreviewEntity();
+        if (preview is not null)
+        {
+            entities.Add(preview);
+        }
+
+        if (Center is null)
+        {
+            return new ToolPreviewDescriptor(entities: entities);
+        }
+
+        markers.Add(new ToolPreviewMarker(
+            Center.Value,
+            ToolPreviewMarkerKind.Primary));
+
+        if (State == EllipseToolState.WaitingForMajorAxis)
+        {
+            AddAxisPreview(
+                lines,
+                markers,
+                Center.Value,
+                CurrentPoint);
+        }
+        else if (MajorAxisPoint is not null)
+        {
+            Vector2D majorAxis = Center.Value.VectorTo(MajorAxisPoint.Value);
+
+            if (majorAxis.Length > 0)
+            {
+                lines.Add(new ToolPreviewLine(
+                    Center.Value - majorAxis,
+                    Center.Value + majorAxis,
+                    ToolPreviewLineKind.Axis));
+            }
+
+            markers.Add(new ToolPreviewMarker(
+                MajorAxisPoint.Value,
+                ToolPreviewMarkerKind.Secondary));
+
+            AddAxisPreview(
+                lines,
+                markers,
+                Center.Value,
+                GetMinorAxisPreviewPoint(CurrentPoint));
+        }
+
+        return new ToolPreviewDescriptor(
+            entities: entities,
+            lines: lines,
+            markers: markers);
     }
 
     public EllipseEntity? GetPreviewEntity()
@@ -240,10 +300,21 @@ public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEnti
             _ => context.CurrentBasePoint
         };
 
-        return ApplySnap(
+        Point2D point = ApplySnap(
             context,
             cursorPoint,
             basePoint);
+
+        if (State == EllipseToolState.WaitingForMajorAxis &&
+            basePoint is not null)
+        {
+            point = ToolInputConstraintService.ApplyAngleConstraint(
+                context,
+                basePoint.Value,
+                point);
+        }
+
+        return point;
     }
 
     private static Point2D ApplySnap(
@@ -284,6 +355,55 @@ public sealed class EllipseTool : ICadTool, ICommandDrivenTool, IToolPreviewEnti
         Vector2D perpendicular = centerToPoint - majorDirection * projection;
 
         return perpendicular.Length;
+    }
+
+    private Point2D? GetMinorAxisPreviewPoint(Point2D? point)
+    {
+        if (Center is null ||
+            MajorAxisPoint is null ||
+            point is null)
+        {
+            return null;
+        }
+
+        Vector2D majorAxis = Center.Value.VectorTo(MajorAxisPoint.Value);
+
+        if (majorAxis.Length <= 0)
+        {
+            return null;
+        }
+
+        Vector2D minorDirection = majorAxis.Normalize().PerpendicularLeft();
+        double signedMinorRadius = Center.Value.VectorTo(point.Value).Dot(minorDirection);
+
+        if (Tolerance.IsZero(signedMinorRadius))
+        {
+            return null;
+        }
+
+        return Center.Value + minorDirection * signedMinorRadius;
+    }
+
+    private static void AddAxisPreview(
+        ICollection<ToolPreviewLine> lines,
+        ICollection<ToolPreviewMarker> markers,
+        Point2D start,
+        Point2D? end)
+    {
+        if (end is null ||
+            Tolerance.ArePointsEqual(start, end.Value))
+        {
+            return;
+        }
+
+        lines.Add(new ToolPreviewLine(
+            start,
+            end.Value,
+            ToolPreviewLineKind.Axis));
+
+        markers.Add(new ToolPreviewMarker(
+            end.Value,
+            ToolPreviewMarkerKind.Secondary));
     }
 
     private void Reset()

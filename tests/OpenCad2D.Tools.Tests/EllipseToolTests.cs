@@ -228,16 +228,160 @@ public sealed class EllipseToolTests
         Assert.Equal(new Vector2D(200, 100), preview.MajorAxis);
     }
 
+    [Fact]
+    public void MajorAxisPointerMove_WithOrthoEnabled_ShouldConstrainPreviewAxis()
+    {
+        var context = CreateContext(isOrthoEnabled: true);
+        var tool = new EllipseTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(10, 4)));
+
+        Assert.Equal(new Point2D(10, 0), tool.CurrentPoint);
+
+        EllipseEntity preview = Assert.IsType<EllipseEntity>(
+            Assert.Single(tool.GetPreviewEntities(context)));
+
+        Assert.Equal(new Vector2D(10, 0), preview.MajorAxis);
+    }
+
+    [Fact]
+    public void MajorAxisPointerPress_WithEndpointSnapAndPolarTracking_ShouldApplySnapThenPolar()
+    {
+        var document = new CadDocument();
+
+        var snapSource = new LineEntity(
+            new Point2D(10, 10),
+            new Point2D(20, 20));
+
+        document.AddEntity(snapSource);
+
+        var context = CreateContext(
+            document,
+            enabledSnaps: SnapKind.Endpoint,
+            snapTolerance: 5,
+            angleConstraintSettings: AngleConstraintSettings.FromStep(90));
+
+        var tool = new EllipseTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(Point2D.Origin));
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(11, 9)));
+
+        AssertPointNear(
+            new Point2D(0, Math.Sqrt(200)),
+            tool.MajorAxisPoint!.Value);
+        AssertPointNear(
+            new Point2D(0, Math.Sqrt(200)),
+            tool.CurrentPoint!.Value);
+    }
+
+    [Fact]
+    public void GetPreviewDescriptor_WhileSelectingMajorAxis_ShouldExposeAxisLineAndMarkers()
+    {
+        var context = CreateContext();
+        var tool = new EllipseTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(Point2D.Origin));
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+
+        var provider = Assert.IsAssignableFrom<IToolPreviewDescriptorProvider>(tool);
+        ToolPreviewDescriptor descriptor = provider.GetPreviewDescriptor(context);
+
+        Assert.Single(descriptor.Entities.OfType<EllipseEntity>());
+
+        ToolPreviewLine axis = Assert.Single(descriptor.Lines);
+        Assert.Equal(ToolPreviewLineKind.Axis, axis.Kind);
+        Assert.Equal(Point2D.Origin, axis.Start);
+        Assert.Equal(new Point2D(10, 0), axis.End);
+
+        Assert.Contains(
+            descriptor.Markers,
+            marker => marker.Position == Point2D.Origin);
+        Assert.Contains(
+            descriptor.Markers,
+            marker => marker.Position == new Point2D(10, 0));
+    }
+
+    [Fact]
+    public void GetPreviewDescriptor_WhileSelectingMinorRadius_ShouldExposeMajorAndMinorAxisLines()
+    {
+        var context = CreateContext();
+        var tool = new EllipseTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(Point2D.Origin));
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(2, 4)));
+
+        var provider = Assert.IsAssignableFrom<IToolPreviewDescriptorProvider>(tool);
+        ToolPreviewDescriptor descriptor = provider.GetPreviewDescriptor(context);
+
+        Assert.Single(descriptor.Entities.OfType<EllipseEntity>());
+        Assert.Equal(2, descriptor.Lines.Count);
+
+        Assert.Contains(
+            descriptor.Lines,
+            line => line.Start == new Point2D(-10, 0) &&
+                line.End == new Point2D(10, 0) &&
+                line.Kind == ToolPreviewLineKind.Axis);
+        Assert.Contains(
+            descriptor.Lines,
+            line => line.Start == Point2D.Origin &&
+                line.End == new Point2D(0, 4) &&
+                line.Kind == ToolPreviewLineKind.Axis);
+
+        Assert.Contains(
+            descriptor.Markers,
+            marker => marker.Position == new Point2D(10, 0));
+        Assert.Contains(
+            descriptor.Markers,
+            marker => marker.Position == new Point2D(0, 4));
+    }
+
     private static ToolContext CreateContext(
         CadDocument? document = null,
         SnapKind enabledSnaps = SnapKind.None,
-        double snapTolerance = 0)
+        double snapTolerance = 0,
+        bool isOrthoEnabled = false,
+        AngleConstraintSettings? angleConstraintSettings = null)
     {
-        return new ToolContext(
+        var context = new ToolContext(
             document ?? new CadDocument(),
             new CommandHistory(),
             new SnapService(),
             enabledSnaps: enabledSnaps,
-            snapTolerance: snapTolerance);
+            snapTolerance: snapTolerance,
+            angleConstraintSettings: angleConstraintSettings);
+
+        context.IsOrthoEnabled = isOrthoEnabled;
+
+        return context;
+    }
+
+    private static void AssertPointNear(
+        Point2D expected,
+        Point2D actual)
+    {
+        Assert.Equal(expected.X, actual.X, precision: 10);
+        Assert.Equal(expected.Y, actual.Y, precision: 10);
     }
 }
