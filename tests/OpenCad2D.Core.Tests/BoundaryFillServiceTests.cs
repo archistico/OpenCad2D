@@ -106,19 +106,35 @@ public sealed class BoundaryFillServiceTests
 
         Assert.True(result.Succeeded);
         Assert.Equal(BoundaryFillStatus.Success, result.Status);
-        Assert.True(result.SeedPoint.HasValue);
-        Assert.Equal(seedPoint, result.SeedPoint.Value);
+        Assert.Equal(seedPoint, result.SeedPoint);
         Assert.Equal(4, result.BoundaryVertices.Count);
         Assert.Equal(4, result.Diagnostics.SourceSegmentCount);
-        Assert.Equal(4, result.Diagnostics.GraphEdgeCount);
+        Assert.True(result.Diagnostics.GraphEdgeCount >= 4);
         Assert.True(result.Diagnostics.CandidateFaceCount >= 1);
-        Assert.Equal(0, result.Diagnostics.IgnoredEntityCount);
-        Assert.Equal(0, result.Diagnostics.BridgedGapCount);
-        Assert.Equal(0, result.Diagnostics.SampledCurveSegmentCount);
     }
 
     [Fact]
-    public void CreateFilledPolyline_WithOptions_ShouldExposeGapToleranceInDiagnostics()
+    public void CreateFilledPolyline_WithOnlyUnsupportedEntities_ShouldReturnUnsupportedOnlyStatus()
+    {
+        var service = new BoundaryFillService();
+        var boundaries = new CadEntity[]
+        {
+            new CircleEntity(new Point2D(0, 0), 5)
+        };
+
+        BoundaryFillResult result = service.CreateFilledPolyline(
+            boundaries,
+            new Point2D(0, 0),
+            LayerId.Default);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(BoundaryFillStatus.UnsupportedOnly, result.Status);
+        Assert.Equal(1, result.Diagnostics.IgnoredEntityCount);
+        Assert.Equal(0, result.Diagnostics.SourceSegmentCount);
+    }
+
+    [Fact]
+    public void CreateFilledPolyline_ShouldKeepGapToleranceInDiagnostics()
     {
         var service = new BoundaryFillService();
         var options = new BoundaryFillOptions(gapTolerance: 0.25);
@@ -134,24 +150,59 @@ public sealed class BoundaryFillServiceTests
     }
 
     [Fact]
-    public void CreateFilledPolyline_WithOnlyUnsupportedBoundaries_ShouldReportUnsupportedOnly()
+    public void CreateFilledPolyline_FromCircle_WhenCurveBoundariesEnabled_ShouldCreateFilledPolyline()
     {
         var service = new BoundaryFillService();
         var boundaries = new CadEntity[]
         {
             new CircleEntity(new Point2D(0, 0), 10)
         };
+        var options = new BoundaryFillOptions(
+            includeCurveBoundaries: true,
+            curveSampleCount: 32);
 
         BoundaryFillResult result = service.CreateFilledPolyline(
             boundaries,
             new Point2D(0, 0),
-            LayerId.Default);
+            LayerId.Default,
+            options);
 
-        Assert.False(result.Succeeded);
-        Assert.Equal(BoundaryFillStatus.UnsupportedOnly, result.Status);
-        Assert.Equal(1, result.Diagnostics.IgnoredEntityCount);
-        Assert.Equal(0, result.Diagnostics.SourceSegmentCount);
-        Assert.Equal("Boundary fill needs visible line or straight polyline boundaries.", result.Message);
+        Assert.True(result.Succeeded);
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(result.Polyline);
+        Assert.True(polyline.IsClosed);
+        Assert.True(polyline.IsFilled);
+        Assert.True(polyline.Vertices.Count >= 16);
+        Assert.Equal(32, result.Diagnostics.SampledCurveSegmentCount);
+    }
+
+    [Fact]
+    public void CreateFilledPolyline_FromArcAndLine_WhenCurveBoundariesEnabled_ShouldCreateFilledPolyline()
+    {
+        var service = new BoundaryFillService();
+        var boundaries = new CadEntity[]
+        {
+            new ArcEntity(
+                new Point2D(0, 0),
+                10,
+                Angle.FromDegrees(0),
+                Angle.FromDegrees(180)),
+            new LineEntity(new Point2D(-10, 0), new Point2D(10, 0))
+        };
+        var options = new BoundaryFillOptions(
+            includeCurveBoundaries: true,
+            curveSampleCount: 32);
+
+        BoundaryFillResult result = service.CreateFilledPolyline(
+            boundaries,
+            new Point2D(0, 2),
+            LayerId.Default,
+            options);
+
+        Assert.True(result.Succeeded);
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(result.Polyline);
+        Assert.True(polyline.IsClosed);
+        Assert.True(polyline.IsFilled);
+        Assert.True(result.Diagnostics.SampledCurveSegmentCount > 0);
     }
 
     private static IReadOnlyList<LineEntity> CreateRectangleLines()

@@ -12,7 +12,7 @@ public sealed class BoundaryFillResult
         BoundaryFillStatus status,
         PolylineEntity? polyline,
         string message,
-        Point2D? seedPoint,
+        Point2D seedPoint,
         IReadOnlyList<Point2D> boundaryVertices,
         BoundaryFillDiagnostics diagnostics)
     {
@@ -30,7 +30,7 @@ public sealed class BoundaryFillResult
 
     public string Message { get; }
 
-    public Point2D? SeedPoint { get; }
+    public Point2D SeedPoint { get; }
 
     public IReadOnlyList<Point2D> BoundaryVertices { get; }
 
@@ -44,35 +44,27 @@ public sealed class BoundaryFillResult
 
         return Success(
             polyline,
-            seedPoint: null,
-            boundaryVertices: polyline.Vertices,
-            diagnostics: BoundaryFillDiagnostics.Empty);
+            new Point2D(0, 0),
+            polyline.Vertices,
+            BoundaryFillDiagnostics.Empty(0.0));
     }
 
     public static BoundaryFillResult Success(
         PolylineEntity polyline,
-        Point2D? seedPoint,
+        Point2D seedPoint,
         IReadOnlyList<Point2D> boundaryVertices,
-        BoundaryFillDiagnostics diagnostics,
-        string message = "Boundary fill created.")
+        BoundaryFillDiagnostics diagnostics)
     {
         ArgumentNullException.ThrowIfNull(polyline);
         ArgumentNullException.ThrowIfNull(boundaryVertices);
         ArgumentNullException.ThrowIfNull(diagnostics);
 
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            throw new ArgumentException(
-                "Message cannot be empty.",
-                nameof(message));
-        }
-
         return new BoundaryFillResult(
             BoundaryFillStatus.Success,
             polyline,
-            message,
+            "Boundary fill created.",
             seedPoint,
-            boundaryVertices.ToList(),
+            boundaryVertices,
             diagnostics);
     }
 
@@ -81,20 +73,20 @@ public sealed class BoundaryFillResult
         return Failure(
             BoundaryFillStatus.NoClosedBoundary,
             message,
-            seedPoint: null,
-            diagnostics: BoundaryFillDiagnostics.Empty);
+            new Point2D(0, 0),
+            BoundaryFillDiagnostics.Empty(0.0));
     }
 
     public static BoundaryFillResult Failure(
         BoundaryFillStatus status,
         string message,
-        Point2D? seedPoint = null,
-        BoundaryFillDiagnostics? diagnostics = null)
+        Point2D seedPoint,
+        BoundaryFillDiagnostics diagnostics)
     {
         if (status == BoundaryFillStatus.Success)
         {
             throw new ArgumentException(
-                "A failure result cannot use Success status.",
+                "Use Success for successful boundary fill results.",
                 nameof(status));
         }
 
@@ -105,12 +97,14 @@ public sealed class BoundaryFillResult
                 nameof(message));
         }
 
+        ArgumentNullException.ThrowIfNull(diagnostics);
+
         return new BoundaryFillResult(
             status,
             null,
             message,
             seedPoint,
             Array.Empty<Point2D>(),
-            diagnostics ?? BoundaryFillDiagnostics.Empty);
+            diagnostics);
     }
 }

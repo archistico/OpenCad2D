@@ -1,6 +1,6 @@
-# OpenCad2D roadmap
+﻿# OpenCad2D roadmap
 
-This roadmap tracks the active development path from the current extended v0.8 line toward the next stabilization gate and, later, the first stable v1.0 release.
+This roadmap tracks the active development path from the current v0.9 stabilization work toward the first stable v1.0 release.
 
 OpenCad2D grows in small, testable phases. Each phase should compile, pass the relevant tests, update documentation and leave a clear handoff before the next phase begins.
 
@@ -15,38 +15,18 @@ Legend:
 
 ---
 
-## Current release target: v0.8.100+ expansion line
+## Current release target: v0.9 stabilization
 
-The v0.9 stabilization gate is deferred. The project will continue inside the v0.8 line, using v0.8.100+ milestones for larger drafting foundations before the next general stabilization release.
+v0.9 is a stabilization release. Its goal is not to add a large new feature group, but to make the current CAD foundation predictable, precise and safe enough to move toward v1.0.
 
-Primary v0.8.100+ themes:
-
-- import another `.opencad2d.json` drawing into the current document;
-- reusable block definitions and block references;
-- dynamic cursor-adjacent command HUD and command UX unification;
-- architectural symbols and technical drafting helpers;
-- stair plan/elevation/front-elevation generation;
-- explicit-boundary hatch and fill workflows;
-- advanced drafting aids such as opt-in Nearest snapping and temporary extension/tracking points;
-- careful documentation/specification before implementation.
-
-See `docs/roadmap-v0.8.100.md` for the detailed v0.8.100+ plan and `docs/specs/` for milestone specifications.
-
----
-
-## Deferred target: v0.9 stabilization
-
-v0.9 remains the next stabilization release after the v0.8.100+ expansion line. Its goal is not to add another large feature group, but to make the expanded CAD foundation predictable, precise and safe enough to move toward v1.0.
-
-Primary future v0.9 themes:
+Primary v0.9 themes:
 
 - native curve editing precision;
 - predictable modify-tool UX;
 - reliable save/export behavior;
 - DXF/SVG/PDF compatibility checks;
 - documented limitations;
-- clean release packaging;
-- documented external raster-image reference workflow.
+- clean release packaging.
 
 ---
 
@@ -57,130 +37,26 @@ The following foundations are considered complete for the active roadmap. Older 
 | Area | Status | Notes |
 |---|---:|---|
 | Core geometry/document model | [x] | Geometry primitives, entities, layers, line formats, text formats, dimension styles, command history and undo/redo are in place. |
-| Application shell | [x] | Avalonia canvas, file command bar, top CAD bar, left tool panel, property panel, Dynamic Command HUD, snap bar and status bar are established. |
+| Application shell | [x] | Avalonia canvas, file command bar, top CAD bar, left tool panel, property panel, command row, snap bar and status bar are established. |
 | Native persistence | [x] | `.opencad2d.json` save/load, dirty state, save-changes prompt, partial recovery, viewport/document settings persistence and layer/entity fill persistence are implemented. |
-| Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; SVG export includes external raster image references; ASCII DXF import covers the practical 2D entity set currently supported, including LWPOLYLINE bulge preservation for mixed line/arc polylines. |
+| Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; ASCII DXF import covers the practical 2D entity set currently supported. |
 | Command input | [x] | Aliases, prompt phases, coordinate input, relative/polar input, direct distances, history and first-pass autocomplete are implemented. |
 | Drafting aids | [x] | Snap system, grid, Ortho, Polar Tracking, Zoom Window, Zoom Extents, pan and crosshair are implemented. |
-| Draw tools baseline | [x] | Points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, mixed line/arc polylines, polygons and open Bezier splines are supported. Rectangles and polygons are closed polylines for fill/editing purposes. |
+| Draw tools baseline | [x] | Points, text, MTEXT, lines, rectangles, circles, arcs, ellipses, polylines, polygons and open Bezier splines are supported. Rectangles and polygons are closed polylines for fill/editing purposes. |
 | Dimensions baseline | [x] | Horizontal, vertical, aligned, radius, diameter and angular dimensions exist, with conservative stale marking after model edits. |
 | Transform tools | [x] | Move, Copy, Rotate, Scale, Mirror and point-based Align are usable and tested. |
 | Selection and hit testing | [x] | Selection, Select All, Select Last, Deselect, entity cycling, text/MTEXT bounding-box hit testing and locked/hidden layer behavior are implemented. |
-| Native curve editing | [x] | TRIM, BREAK and supported EXTEND flows use native parameters, shared cut points and adapter-backed splitting for supported curves. Mixed polylines preserve bulge segments where supported; curved-end EXTEND is intentionally conservative. |
+| Native curve editing | [x] | TRIM, BREAK and supported EXTEND flows use native parameters, shared cut points and adapter-backed splitting for supported curves. |
 | Elliptical arcs | [x] | `EllipticalArcEntity` exists with rendering, snapping, persistence and SVG/PDF/DXF export support. |
-| Boundary Fill v1 | [x] | `BFILL`/`FILL`/`RIEMPIMENTO` click inside a closed visible linear boundary, build planar faces and create a filled closed `PolylineEntity` on the current layer. |
 | Open Bezier split | [x] | Open Bezier splines can be split/extracted natively and are no longer permanently degraded to polylines in TRIM/BREAK. |
 | Preview UX base | [x] | TRIM/BREAK removal previews are dashed; EXTEND addition previews are highlighted; selected boundaries stay visible. |
 | Save/export UX clarity | [x] | Export creates derived files and does not clear dirty state or replace the current native file path; user messages make this explicit. |
 | Modify-tool confirmation policy | [x] | Right click/Enter confirmation, EntityOnly selection phases and clean transient-state reset are established for supported prompts and command phases. |
-| Explode / Join essentials | [x] | EXPLODE converts straight and mixed polylines into lines/arcs; JOIN converts connected lines, arcs and open polylines into one or more polylines, with bulge preservation, diagnostics, undo and targeted tests. |
-| External raster references | [x] | PNG/JPG/JPEG files can be attached as external references, transformed as oriented rectangles, snapped, relinked, collected into portable folders and managed through Image References Manager. |
-| Advanced snapping foundation | [x] | Consolidated pre-v0.9 scope. Nearest is opt-in and disabled by default. SmartPoint Tracking has its own Snap bar toggle and includes SmartPoint capture, direct SmartPoint snap, horizontal/vertical/polar tracking, numeric distance input, tracking intersections, tracking/real linear geometry intersections, line/straight-polyline extension tracking, temporary HUD labels, and guarded Grid/Tracking overlap behavior. Arc/tangent extension remains deferred. |
+| Explode / Join essentials | [x] | EXPLODE converts selected polylines into lines/arcs and block references into world-space entities; JOIN converts connected selected lines/arcs/open polylines into bulge-capable polylines, with command aliases, buttons, undo and targeted tests. |
 
 ---
 
-## Mixed polyline stabilization checkpoint
-
-Status: [x] completed for the current mixed-polyline foundation.
-
-Completed:
-
-- [x] `PolylineEntity` supports DXF-compatible `SegmentBulges` for AutoCAD-style mixed line/arc segments.
-- [x] DXF `LWPOLYLINE` import/export preserves bulge values instead of exploding compound polylines.
-- [x] JSON persistence keeps older straight polylines compatible and writes bulges only when needed.
-- [x] Polyline drawing supports explicit `POLYLINE LINE` and `POLYLINE ARC` modes, with three-point arc segment creation.
-- [x] Hit testing, crossing selection, snapping and measurement use the visible mixed-polyline interaction geometry.
-- [x] Property Panel exposes editable per-segment bulge rows for precise low-level edits.
-- [x] Grip editing preserves existing bulges and adds a first visual arc-shape grip for curved segments.
-- [x] JOIN supports lines, arcs and open polylines, reports clear failure reasons and creates mixed polylines where needed.
-- [x] EXPLODE converts mixed polylines back into `LineEntity` and `ArcEntity` fragments.
-- [x] BREAK/TRIM preserve bulged segments where supported; EXTEND preserves existing bulges for straight open-polyline endpoints and refuses curved endpoints instead of flattening them.
-- [x] OFFSET supports straight polylines natively and mixed/bulged polylines through a conservative linear approximation of the offset result, without modifying or flattening the source object.
-- [x] FILLET and CHAMFER support standalone lines, adjacent straight segments of the same polyline, single-segment separate polylines and terminal segments of separate open linear multi-segment polylines.
-
-Manual regression checklist:
-
-- [ ] Draw a polyline with straight segments, switch to Arc, create a three-point arc, then return to Line.
-- [ ] Close a mixed polyline and verify selection/hit testing on the curved segment.
-- [ ] Edit a segment bulge from the Property Panel and undo/redo the edit.
-- [ ] Drag the arc-shape grip and verify the curved segment changes without moving unrelated segments.
-- [ ] JOIN line + arc, arc + line and open polyline + line; verify command-line diagnostics for invalid selections.
-- [ ] EXPLODE a mixed open polyline and a mixed closed polyline.
-- [ ] BREAK/TRIM a mixed polyline and confirm curved fragments remain curved.
-- [ ] OFFSET a mixed polyline and confirm the source remains bulged while the result is an explicit linear approximation.
-- [ ] FILLET/CHAMFER adjacent straight segments of one polyline and terminal segments of separate polylines.
-
-Deferred refinements:
-
-- [>] friendly segment editor modal with radius/included-angle display and Straight/Arc CW/Arc CCW actions;
-- [>] additional polyline arc construction modes beyond three-point arcs;
-- [>] native curved-end EXTEND for bulged polyline endpoints;
-- [>] true analytic Offset for bulged mixed polylines that preserves arc/bulge segments in the result;
-- [>] center/quadrant/tangent/perpendicular snaps that expose individual polyline arc-segment geometry directly.
-
-Consolidation added after this checkpoint:
-
-- [x] DXF automated coverage now includes mixed-polyline bulge group export and OpenCad2D round-trip preservation.
-- [x] Known limitations were updated to distinguish supported conservative approximations from future analytic curve-preserving operations.
-
----
-
-## Active v0.8.100+ specification plan
-
-Status: [~] reconciled roadmap. The expanded v0.8 line has completed Import Drawing, Blocks, Dynamic HUD and the first Library Browser pass. Remaining planned work starts after those foundations.
-
-The following milestones define the path before the future v0.9 stabilization gate:
-
-| Milestone | Status | Specification | Goal |
-|---|---:|---|---|
-| v0.8.100 | [x] | `docs/specs/v0.8.100-import-drawing.md` | Import another `.opencad2d.json` drawing into the current document. |
-| v0.8.110 | [x] | `docs/specs/v0.8.110-blocks.md` | Introduce block definitions, block references and persistence. |
-| v0.8.111 | [x] | `docs/specs/v0.8.110-blocks.md` | Create Block from selected entities with optional picked base point. |
-| v0.8.112 | [x] | `docs/specs/v0.8.110-blocks.md` | Insert existing block definitions with scale, rotation and picked insertion point. |
-| v0.8.113 | [x] | `docs/specs/v0.8.110-blocks.md` | Add minimal Block Manager for rename, unused delete and insert-selected workflow. |
-| v0.8.114 | [x] | `docs/specs/v0.8.110-blocks.md` | Add snap candidates from block-internal geometry. |
-| v0.8.115 | [x] | `docs/specs/v0.8.110-blocks.md` | Add Explode Block and the first in-place Edit Block session workflow. |
-| v0.8.120 | [~] | `docs/specs/v0.8.120-architectural-symbols.md` | Keep first-pass North Symbol and Metric Scale Bar; reserve future direct tools for parametric helpers rather than many fixed-symbol toolbar buttons. |
-| v0.8.121 | [x] | `docs/specs/v0.8.121-dynamic-command-hud.md` | Fixed command row replaced by a dynamic cursor-adjacent command HUD with unified prompt state, editable numeric fields, block placement flows and regression coverage. |
-| v0.8.122 | [x] | `docs/specs/v0.8.122-library-browser.md` | First-pass Library Browser implemented: scans `library/**/*.opencad2d.json`, groups by category, previews items and inserts them as reusable block references. |
-| v0.8.130 | [~] | `docs/specs/v0.8.130-stairs.md` | Stair first pass is implemented with parametric core model, generated linework, renderer integration, snap/selection support, JSON persistence, SVG/PDF/DXF linework export, Property Panel editing, toolbar/HUD insertion with Plan/Side/Front options, and plan annotations for direction arrow plus optional 30-degree section marker. Manual smoke checks remain before marking the milestone fully closed. |
-| v0.8.140 | [~] | `docs/specs/v0.8.140-hatch.md` | Boundary Fill v1 is implemented as click-inside linear face detection that creates filled closed polylines; HatchEntity remains planned. |
-| v0.8.145 | [~] | `docs/specs/v0.8.145-boundary-fill-v2.md` | Boundary Fill v2 audit/specification and result/options model are in place; next work is boundary segment extraction, sampled curves, gap tolerance and preview. |
-| v0.8.150 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add real HatchEntity support for holes/islands and composite hatch boundaries. |
-| v0.8.160+ | [ ] | `docs/roadmap-v0.8.100.md` | Consolidate the expanded v0.8 line before the next release gate. |
-
-Implementation has now progressed through Import Drawing, Blocks, the Dynamic Command HUD and the first Library Browser pass. The remaining active roadmap should not reopen those completed foundations unless bugs are found. Fixed symbols, furniture and reusable drawing snippets should continue to live as `.opencad2d.json` Library items instead of becoming separate toolbar buttons. Parametric tools should remain for objects that need dimensions/options before generation, such as stairs and future doors/windows. The Stair insertion command now uses default values width 100, tread count 18, tread depth 28, riser height 17 and slab thickness 3, exposes Plan/Side/Front HUD options before placement, and supports plan annotations through `Plan arrow` and `Plan section marker` Property Panel rows. Boundary Fill v1 has started the click-inside workflow conservatively for linear boundaries. Boundary Fill v2 now has a separate specification in `docs/specs/v0.8.145-boundary-fill-v2.md`. The first implementation checkpoint added a richer result/options model (`BoundaryFillOptions`, `BoundaryFillStatus`, `BoundaryFillDiagnostics`) without changing the user-visible v1 workflow. The next implementation work should centralize boundary segment collection, add sampled arc/circle segments, introduce explicit gap tolerance and then separate preview from creation. HatchEntity remains the next milestone for holes/islands.
-
----
-
-## Active UI refactor checkpoint — Dynamic Command HUD
-
-Status: [x] completed for the current stabilization scope. The HUD architecture, draw/modify flows, selection-only modify tools, block pending-point workflows, manual validation pass and final command-line cleanup are documented.
-
-Specification: `docs/specs/v0.8.121-dynamic-command-hud.md`.
-
-This checkpoint was treated as a command-input architecture refactor, not as a visual-only task. The fixed bottom command row has been removed after HUD prompt, input, focus, command-buffer and manual workflow regression checks.
-
-Milestone order:
-
-1. [x] **HUD-0 Tool prompt inventory** — list every command-driven tool, its phases, prompts, options, expected input, Enter/right-click policy, Escape behavior and possible live fields.
-2. [x] **HUD-1 Shared prompt contract cleanup** — make `CommandPromptState` the common source of truth for interactive tools and reduce ViewModel-specific prompt fallbacks.
-3. [x] **HUD-2 Pointer position and live measurements** — propagate pointer screen position and extract reusable live distance/angle/delta measurements.
-4. [x] **HUD-3 Read-only `CommandHudState`** — expose a ViewModel-level HUD model independent from Avalonia controls.
-5. [x] **HUD-4 Read-only visual HUD overlay** — add the cursor-adjacent overlay.
-6. [x] **HUD-5 Remove generic command textbox and fixed bottom command row** — HUD input is now logical, keyboard-driven and mouse-transparent.
-7. [x] **HUD-6 Editable fields for primary draw tools** — Line, Polyline, Rectangle, Rectangle by Sides and Circle are covered with tool-specific routing/resolvers.
-8. [x] **HUD-7 Transform/modify first pass** — Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer are covered or validated.
-9. [x] **HUD-8 Step 30E Break / Boundary Fill** — Break Point, Break Segment and Boundary Fill HUD input have ViewModel-level regression coverage.
-10. [x] **HUD-9 Step 30F selection-only cleanup** — Trim, Extend, Delete, Explode and Join remain prompt/options-only and have ViewModel-level regression coverage.
-11. [x] **HUD-10 Step 31 block tools** — Create Block base-point pick and Insert Block placement expose dedicated pending-point `X/Y` HUD input without entering the common tool resolver.
-12. [x] **HUD-11 Final cleanup** — docs updated and residual visible command-line helper code removed; the internal command buffer remains intentionally for aliases, options, autocomplete and history.
-
-Regression requirement satisfied for the current scope through targeted automated tests plus the manual verification pass documented in `docs/testing/dynamic-command-hud-manual-verification-2026-05-31.md`. Future command phases must still add narrow regression tests whenever they introduce non-standard HUD routing.
-
----
-
-## Legacy v0.9 stabilization backlog
+## Active v0.9 work
 
 ### 1. Modify Tools UX cleanup
 
@@ -254,8 +130,6 @@ Current limits:
 - no per-entity fill color;
 - open polylines never render/export fill;
 - general editable hatch workflows remain future work.
-
-Boundary Fill v1 is available as a bridge between current solid-fill support and future hatch entities. It detects the visible linear face containing a picked point and creates a new filled closed `PolylineEntity`. BF v2 should now follow `docs/specs/v0.8.145-boundary-fill-v2.md`: keep the same filled-polyline output, but add detection preview, sampled arc/circle boundaries, explicit small-gap tolerance, richer diagnostics and tests. Holes/islands should wait for a real `HatchEntity`, because subtractive inner loops do not fit the current single-polyline fill model.
 
 ### 4. Curve editing regression checklist
 
@@ -346,23 +220,6 @@ Deferred / future UI polish:
 - [>] Broader enum/boolean audit for future entity properties.
 
 
-
-### External raster image references
-
-Status: [x] basic foundation implemented.
-
-OpenCad2D can now attach local PNG/JPG files as external image references. The drawing stores the source path and an oriented rectangle, never the raster bytes. The reference can be selected and transformed like other rectangular entities: move, copy, rotate, scale, mirror and grip-edit are supported. Missing files are shown as selectable placeholders so drawings remain recoverable. A selected raster reference can also be relinked/replaced and reset to its natural pixel aspect ratio. Missing raster references are reported on open and can be relinked with a dedicated command while preserving drawing geometry. Image paths are normalized on save: when possible, fully qualified paths are written relative to the `.opencad2d.json` document folder and resolved again on load. The `Collect Refs` workflow can copy linked PNG/JPG files into an `images/` folder beside the drawing and save the project with portable relative references. The `Manage Refs` window provides a compact reference manager with status, path, pixel size, CAD size, rotation, transparency percentage, instance count, select/relink/replace/open-folder actions and an undoable transparency update.
-
-Current limitations and deferred work:
-
-- relative image paths are supported for project portability; older absolute paths remain compatible;
-- `Collect Refs` packages existing linked PNG/JPG files into a sibling `images/` folder and preserves geometry;
-- `Manage Refs` lists external raster references, groups duplicate file paths by instance count and offers select/relink/replace/open-folder actions;
-- missing image references are detected on open and can be relinked without changing position, size or rotation;
-- SVG export links the external raster through `<image href="...">`;
-- DXF/PDF raster-image output remains deferred;
-- future reference types such as PDF underlays, DXF underlays or block-style XREFs are not part of this raster-only workflow.
-
 ## Deferred beyond the active v0.9 scope
 
 These are valid future tasks but should not block the current stabilization flow unless they become critical bugs.
@@ -370,12 +227,9 @@ These are valid future tasks but should not block the current stabilization flow
 - [>] closed Bezier spline splitting/editing policy;
 - [>] Break Point convention for full circles/full ellipses as almost-full open arcs;
 - [>] true associative dimensions;
-- [x] native blocks, block references, block creation/insertion/manager/explode/edit first workflow and Library insertion are implemented for OpenCad2D native drawings;
-- [>] DXF `BLOCK`/`INSERT` interoperability remains a separate import/export compatibility task;
-- [>] general hatch/pattern tools beyond the current solid fill and Boundary Fill v1 support;
-- [x] external raster references for PNG/JPG/JPEG as non-embedded image entities;
-- [x] raster-reference management, relinking, relative paths and Collect Refs packaging;
-- [>] DXF/PDF raster-image export parity;
+- [>] blocks;
+- [>] general hatch/pattern tools beyond the current solid fill support;
+- [>] raster references;
 - [>] advanced NURBS fidelity;
 - [>] autosave/recovery v2;
 - [>] major renderer rewrite;
@@ -416,84 +270,1731 @@ Candidate v1.0 gates:
   - BREAK SEGMENT now explains coincident points, off-entity second points and unsupported closed spline cases.
   - EXTEND now distinguishes no projected boundary intersection from wrong endpoint-side selection.
 
-- [x] Preview no-op feedback is consistent with commit-click feedback for TRIM, BREAK POINT, BREAK SEGMENT and EXTEND.
-  - Invalid hover positions no longer fall back to generic messages when the failure reason is known.
-  - BREAK endpoint and coincident-point hover regressions are covered by passing tests.
+## 2026-05-21 — Curve-editing preview descriptor follow-up
+
+Break Point now implements `IToolPreviewDescriptorProvider`. Its descriptor keeps the selected target visible as an Emphasis overlay and shows a Hot marker at the projected native break point when a valid preview exists.
+
+Break Segment descriptors now also keep the selected target visible as an Emphasis overlay. They show a Primary marker at the first break point and a Hot marker at the projected second break point when a removable interval preview exists.
+
+This aligns BREAK previews with the existing TRIM/EXTEND rule: selected context geometry remains visible while the operation-specific preview uses semantic highlighting/markers. Next manual regression should include the new `Passata 0.5 — Preview visiva comune` checks in `docs/testing/curve-editing-evening-run-2026-05-21.md`.
 
 
-### 2026-05-31 - Advanced snapping and SmartPoint tracking consolidation
+## 2026-05-21 — TRIM/EXTEND preview target markers
 
-Consolidated the pre-v0.9 advanced snapping milestone after local compile/test verification by the maintainer. The current completed scope is:
-
-- opt-in `Nearest` snap, disabled by default;
-- SmartPoint capture from strong geometric snaps with a five-point runtime cap;
-- horizontal/vertical SmartPoint tracking overlays;
-- direct distance input along active tracking lines;
-- tracking intersections from different SmartPoints;
-- first-pass entity-extension tracking for lines and straight polyline segments.
-
-A manual verification checklist was added at `docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md`. Remaining advanced tracking work is intentionally deferred unless it becomes necessary before v0.9: broader polar directions, tangent/arc extension and richer snap/settings UI polish.
-
-### 2026-05-31 - SmartPoint tracking intersections
-
-Implemented temporary snap candidates at intersections between tracking lines generated by different SmartPoints. This completes the base SmartTrack workflow before adding entity-extension tracking.
+TRIM and EXTEND preview descriptors now keep the hovered target visible as an `Emphasis` overlay when a valid preview exists. TRIM also emits a Hot marker on the picked side that would be removed; EXTEND emits a Hot marker on the picked endpoint side that would be extended. This completes the visual context rule for the manual curve-editing regression pass: boundary/target context remains visible, and the operation-specific interval is still rendered with Removal or Addition semantics.
 
 
-## 2026-05-31 update - SmartPoint Tracking polar directions
+## 2026-05-21 — TRIM/EXTEND no-preview status messages
 
-Completed an incremental extension of Advanced Snapping:
+TRIM and EXTEND now reuse the granular curve-editing status-message logic during hover, not only after a failed commit click. When the pointer is over a target but no preview can be built, TRIM reports the same missing-intersection/picked-side/unsupported/non-editable reasons that the commit would report. EXTEND does the same for no projected boundary intersection, wrong endpoint side, unsupported closed targets and non-editable targets.
 
-- SmartPoint Tracking now reuses the active Polar Tracking step.
-- Captured SmartPoints emit additional polar-direction construction lines when Polar Tracking is enabled.
-- Polar 90° does not duplicate horizontal/vertical tracking.
-- Polar 45°, 30° and 15° add the expected diagonal/intermediate directions.
-- Polar-direction candidates behave as normal `Tracking` snaps and support direct distance input.
-
-Manual verification should confirm that the **SmartPoint Tracking** checkbox disables these polar overlays together with the rest of the temporary SmartPoint subsystem.
+The evening regression sheet now includes `PREVIEW-TRIM-03` and `PREVIEW-EXT-03` so manual testing checks both valid previews and clear no-preview feedback.
 
 
-### 2026-05-31 - SmartPoint tracking intersections with real linear geometry
+### 2026-05-21 - Curve editing BREAK hover status follow-up
 
-Extended SmartPoint Tracking so temporary tracking lines can snap to intersections with real line entities and straight polyline segments. The behavior remains conservative: candidates are only produced near the cursor, only finite segment intersections are accepted, and curved/tangent cases remain deferred.
+- BREAK POINT invalid hover positions now reuse `EditingStatusMessageBuilder.BuildBreakAtPointFailureMessage(...)` instead of the generic “inside target entity” message.
+- BREAK SEGMENT invalid second-point hover positions now reuse `EditingStatusMessageBuilder.BuildBreakBetweenPointsFailureMessage(...)` instead of the generic “different and on target entity” message.
+- Regression docs now require invalid BREAK previews to report the same reason as the commit click.
 
-### 2026-05-31 - SmartPoint Tracking HUD label
+## 2026-05-21 — Curve editing status/preview consolidation
 
-Added a visual polish step for the advanced snapping milestone: active `Tracking`, `Extension` and `TrackingIntersection` candidates now show a compact HUD label near the snap marker. Distance/angle are shown for candidates that carry tracking origin/direction metadata; point-only intersections show `TRACK INT`. This does not change geometry behavior, but improves manual drafting feedback before resuming the remaining v0.9 work.
+The granular status-message pass is test-green for TRIM, BREAK POINT, BREAK SEGMENT and EXTEND. Invalid hover/no-preview feedback now mirrors commit-click failure reasons across the four tools. The last fixes covered two regressions: BREAK POINT hover directly on a line endpoint now reports the endpoint/tolerance message instead of the generic inside-target message, and BREAK SEGMENT hover with coincident second point now reports the distinct-points message.
+
+Next manual work should resume from `docs/testing/curve-editing-evening-run-2026-05-21.md`, starting with Passata 0 and Passata 0.5 only as quick smoke checks, then moving to real geometry validation: TRIM base, polylines/advanced curves, BREAK and EXTEND/micro-gap checks.
+
+## 2026-05-25 — External raster image references
+
+Implemented the first raster-reference foundation for PNG/JPG files.
+
+- Added `ImageReferenceEntity` in Core. It stores only an external file path plus oriented-rectangle geometry: origin, width vector and height vector. The image bytes are not embedded in the `.opencad2d.json` document.
+- Image references participate in the normal entity pipeline: bounding box, hit testing, closest point, layer visibility/locking, selection, move/copy/rotate/scale/mirror transforms and draw order.
+- Added JSON persistence through `ImageReferenceEntityDto` and the polymorphic entity converter.
+- Added Avalonia rendering with a small bitmap cache. If the external file is missing/unreadable, the rectangle is still drawn with a diagonal placeholder so the reference remains selectable and recoverable.
+- Added `Attach Image` in the file toolbar for local `.png`, `.jpg` and `.jpeg` files. The inserted image is selected immediately and sized to about 30% of the current visible world width, preserving the source pixel aspect ratio.
+- Added grip support: four corner grips and one center move grip. General transform tools can still be used for precise rotation and scaling.
+- SVG export writes an external `<image href="...">` reference plus an outline polygon. DXF/PDF export currently skip the raster content; this should be documented as a current limitation until dedicated external-image support is designed for those formats.
+
+Recommended manual checks:
+
+1. Attach a PNG and JPG from local disk.
+2. Save, close, reopen and verify the image reloads from the external path.
+3. Move, copy, rotate, scale and mirror the reference.
+4. Hide/lock the layer and verify rendering/selection behavior is consistent with other entities.
+5. Rename or move the external image and reopen the drawing; the placeholder rectangle should remain visible/selectable.
+
+
+### 2026-05-25 — Image reference editing and relinking
+
+Follow-up improvements for external raster references:
+
+- `ImageReferenceEntity` now exposes helper methods for relinking, origin edits, size edits, rotation edits and transparency/opacity edits while keeping the external-reference model intact.
+- The Property Panel exposes editable fields for the selected image reference: file path, origin X/Y, width, height, rotation and transparency percentage. Edits are applied through normal replace-entity commands, so undo/redo remains coherent.
+- Added a `Replace Image` toolbar action. It requires exactly one selected image reference, opens the same PNG/JPG picker and relinks the selected entity while preserving its current drawing geometry. Pixel dimensions are refreshed from the newly selected raster file.
+- Added tests for relinking, rotation around center, size-preserving vector direction, and ViewModel relink behavior.
+
+Manual checks:
+
+1. Attach a PNG/JPG, select it and change width/height/rotation from the Property Panel.
+2. Use Replace Image on a selected reference and verify geometry is preserved while the visual raster changes.
+3. Try Replace Image with no selected image and verify the explanatory message is shown.
+4. Undo/redo Property Panel edits and Replace Image.
+
+### 2026-05-25 — Image aspect reset refinement
+
+Follow-up refinement for external raster references:
+
+- `ImageReferenceEntity` now exposes `NaturalAspectRatio`, `HasNaturalAspectRatio`, `WithSizeAroundCenter(...)` and `WithNaturalAspectRatio()`.
+- Added a `Reset Aspect` toolbar action for exactly one selected image reference. It restores the rectangle height from the linked raster pixel metadata while preserving width, center, rotation and the external-reference model.
+- The Property Panel now shows the natural pixel aspect ratio when pixel metadata is available.
+- Added Core and App tests for centered resizing, natural aspect reset and the no-selection rejection path.
+
+Manual checks:
+
+1. Attach a landscape or portrait PNG/JPG.
+2. Distort width/height from the Property Panel or grips.
+3. Select the image and use `Reset Aspect`.
+4. Verify the center and rotation stay stable while height returns to the pixel aspect ratio.
+5. Try `Reset Aspect` with no image selected and verify the explanatory message.
+
+### 2026-05-25 — Image reference relative path persistence
+
+Follow-up persistence refinement for external raster references:
+
+- Added `ExternalReferencePathHelper` in `OpenCad2D.Persistence`.
+- `JsonDocumentSerializer.SaveToFile(...)` now normalizes image reference paths before writing JSON. Fully qualified image paths are stored relative to the `.opencad2d.json` document folder whenever possible.
+- `JsonDocumentSerializer.LoadFromFile(...)` now resolves relative image paths against the folder containing the loaded drawing before deserialization.
+- Existing absolute paths remain supported for compatibility and for references that cannot be safely relativized.
+- Added persistence tests for saving an attached image as a relative path and loading a relative image path as a resolved full path.
+
+Manual checks:
+
+1. Save a drawing next to an `images/` folder and attach `images/plan.png`.
+2. Inspect the `.opencad2d.json`: the image path should be similar to `images/plan.png`, not a machine-specific absolute path.
+3. Close and reopen: the raster should render normally.
+4. Move the drawing together with the `images/` folder and reopen: the reference should still resolve.
+5. Open an older drawing that contains absolute image paths and verify it remains compatible.
+
+### 2026-05-25 — Missing image reference workflow
+
+Follow-up workflow refinement for external raster references:
+
+- `MainWindowViewModel` now exposes `MissingImageReferenceCount` and `HasMissingImageReferences`, computed from the current `ImageReferenceEntity` file paths.
+- Opening a drawing now warns the user when one or more external raster references cannot be found.
+- Added a `Relink Missing` toolbar action. It relinks the selected missing image reference, or the first missing image reference in the document, to a newly chosen PNG/JPG while preserving the existing CAD geometry: center, size, rotation and layer state remain unchanged.
+- Added `SelectNextMissingImageReference()` in the view model for diagnostics/testability and future UI workflows.
+- Added App tests for missing-reference counting, selecting the first missing image and relinking while preserving geometry.
+
+Manual checks:
+
+1. Attach an image, save, then rename or move the external PNG/JPG.
+2. Reopen the drawing and verify that a missing-reference warning is shown.
+3. Use `Relink Missing` and select the new image file.
+4. Verify the raster reappears in the same CAD position, size and rotation.
+5. Save/reopen again and verify the warning no longer appears.
+
+### 2026-05-25 — Raster image snap support
+
+Follow-up snapping refinement for external raster references:
+
+- `EndpointSnapProvider` now exposes the four corners of `ImageReferenceEntity` as endpoint snap candidates.
+- `MidpointSnapProvider` now exposes the midpoint of each image border.
+- `CenterSnapProvider` now exposes the image rectangle center.
+- `ImageReferenceEntity.GetClosestPoint(...)` now returns the closest point on the image border, so nearest snap works on the rectangle outline instead of returning an arbitrary point inside the filled raster area.
+- Added interaction tests for endpoint, midpoint, center and nearest snapping on image references.
+
+Manual checks:
+
+1. Attach an image.
+2. Enable Endpoint and verify snap markers on the four corners.
+3. Enable Midpoint and verify snap markers on the four border midpoints.
+4. Enable Center and verify the center snap.
+5. Enable Nearest and verify the cursor snaps to the image border.
+
+### 2026-05-25 — Collect external image references
+
+Follow-up project-portability refinement for external raster references:
+
+- Added a `Collect Refs` toolbar action for raster image references.
+- The command requires the drawing to be saved first, so the target package folder can be derived from the current `.opencad2d.json` path.
+- Existing linked PNG/JPG files are copied into an `images/` folder beside the drawing file.
+- Duplicate source images are collected only once; multiple references can point to the same collected file.
+- If two different source images have the same filename, the collector creates a unique filename such as `name_2.png` rather than overwriting an existing file.
+- Missing references are skipped and reported; their placeholder/relink workflow remains unchanged.
+- CAD geometry is preserved: position, size, rotation, pixel metadata, layer and entity ids are not changed.
+- The UI saves the drawing after collecting, so `JsonDocumentSerializer.SaveToFile(...)` persists the collected paths as relative references like `images/plan.png`.
+- Added App tests for collecting into the drawing folder, reusing one copied file for duplicate source references and rejecting collection for unsaved drawings.
+
+Manual checks:
+
+1. Save a drawing.
+2. Attach one PNG/JPG from another folder.
+3. Use `Collect Refs`.
+4. Verify an `images/` folder appears beside the `.opencad2d.json` file.
+5. Inspect the JSON and verify the image path is relative.
+6. Move the drawing file together with the `images/` folder and reopen.
+
+### 2026-05-25 — Image References Manager
+
+Implemented a first `Manage Refs` workflow for external raster image references.
+
+- Added `ImageReferenceManagerWindow` and `ImageReferenceManagerWindowViewModel`.
+- The manager lists linked PNG/JPG references with status (`OK` / `Missing`), filename, path, pixel size, CAD size, rotation and instance count.
+- References that use the same file path are grouped into one row; the instance count shows how many image entities use that linked file.
+- Added manager actions:
+  - `Select`: selects the reference in the drawing.
+  - `Relink`: chooses a new local PNG/JPG and updates the selected reference while preserving geometry.
+  - `Replace`: same file replacement workflow for non-missing references, also preserving geometry.
+  - `Open Folder`: opens the containing folder with the system shell when it exists.
+- Added `MainWindowViewModel.SelectImageReference(...)`, `ReplaceImageReference(...)` and `RelinkImageReference(...)` to support manager-driven operations by entity id.
+- Added App tests for selecting image references by id, replacing by id while preserving geometry, grouping duplicate file paths in the manager and summarizing missing references.
+
+Manual checks:
+
+1. Attach two images and open `Manage Refs`.
+2. Verify status, path, pixel size, CAD size, rotation and instance count.
+3. Use `Select` and verify the reference is selected in the drawing.
+4. Rename one linked image, reopen the drawing and verify the manager shows `Missing`.
+5. Use `Relink` from the manager and verify geometry is preserved.
+6. Use `Open Folder` for an existing reference.
+
+### 2026-05-25 — Documentation and v0.9 release preparation
+
+Documentation consolidation for the external raster-image reference milestone and the v0.9 release gate.
+
+Updated:
+
+- `README.md` now mentions external raster image references, relative paths, Collect Refs, Manage Refs and the current SVG/DXF/PDF export distinction.
+- `docs/roadmap.md` now treats raster-reference management, relinking, relative paths and Collect Refs as completed v0.9 work; DXF/PDF raster-image export parity remains deferred.
+- `docs/known-limitations.md` no longer says that a reference manager/relink dialog is missing; it now describes the remaining raster-reference limitations more accurately.
+- `docs/persistence.md` documents image-reference metadata, relative path normalization, load-time resolution and the portable `images/` folder workflow.
+- `docs/svg-export.md` and `docs/export.md` document SVG external `<image href="...">` output and clarify that PDF/DXF raster output is deferred.
+- `docs/architecture.md` now describes the split of image-reference responsibilities across Core, Persistence, Interaction, App and Export.
+
+Added release preparation files:
+
+- `docs/release-v0.9.md`
+- `docs/release-checklist-v0.9.md`
+- `docs/release-publish-v0.9.md`
+
+Before tagging v0.9, run the full build/test gate and perform the manual smoke tests listed in `docs/release-checklist-v0.9.md`, especially the external image-reference workflow and SVG/DXF/PDF export expectations.
+
+
+---
+
+## Current planning pivot — v0.8.100+ expansion line
+
+The project is intentionally staying in the v0.8 line before the next v0.9 stabilization gate. The next work should be treated as v0.8.100+ milestones, not as an immediate v0.9 release.
+
+The planned order is:
+
+1. `v0.8.100` — Import another `.opencad2d.json` drawing into the current document.
+2. `v0.8.110` — Block model with `BlockDefinition` and `BlockReferenceEntity`.
+3. `v0.8.115` — Block tools: Create Block, Insert Block, Edit Block, Explode and minimal Block Manager.
+4. `v0.8.120` — Architectural symbols: north symbol, metric scale, section/elevation markers and title block/testalino helpers.
+5. `v0.8.130` — Stair tools for plan, side elevation and front elevation, including optional slab/structure line.
+6. `v0.8.140+` — Boundary Fill v1 exists for click-inside linear regions that generate filled polylines; BF v2 should add preview, sampled arc/circle boundaries and gap tolerance before a true HatchEntity handles holes/islands and composite boundaries.
+7. `v0.8.160+` — Consolidation before the future v0.9 release gate.
+
+North Symbol note: the current default geometry is circle + upward arrow made with ordinary entities. The picked point is the `(0,0)` symbol base point; the `N` label is offset beside/above the arrow tip and must not overlap the arrow shaft.
+
+Detailed planning documents added for this pivot:
+
+- `docs/roadmap-v0.8.100.md`
+- `docs/specs/v0.8.100-import-drawing.md`
+- `docs/specs/v0.8.110-blocks.md`
+- `docs/specs/v0.8.120-architectural-symbols.md`
+- `docs/specs/v0.8.130-stairs.md`
+- `docs/specs/v0.8.140-hatch.md`
+
+Important implementation opinion preserved from planning: do not jump from BF v1 directly to full AutoCAD-style hatch detection. The implemented linear click-inside workflow is a useful bridge, but the next steps should be preview, sampled curve boundaries and controlled gap tolerance before holes/islands or associative hatch behavior. Blocks should be implemented before symbol/stair libraries so that generated architectural content can reuse definitions instead of becoming disconnected one-off geometry.
+
+
+## v0.8.100-v0.8.102 Import Drawing
+
+Implemented the first native OpenCad2D import workflow. The toolbar exposes `Import Drawing`, which loads another `.opencad2d.json` and appends it to the current document. The active document is not replaced and the current file path is preserved. Imported entities receive fresh IDs and are selected after import. Layers, line formats, text formats and dimension styles are merged with conflict-safe remapping. The whole merge is committed as a single undoable command.
+
+The workflow now uses a pending placement step. After file selection, v0.8.102 shows a small options dialog with uniform `Scale` and `Rotation °`. The imported drawing is then committed when the user clicks an insertion point in the canvas; an active snap candidate is used when available. Escape cancels the pending import without changing the document.
+
+Deferred refinements: live import preview, command-line alias and a dedicated import report window.
+
+## Blocks foundation — v0.8.110
+
+The project now has the first block model layer:
+
+- `BlockDefinitionId` in `OpenCad2D.Core/Identifiers`.
+- `BlockDefinition` and `BlockDefinitionCollection` in `OpenCad2D.Core/Blocks`.
+- `BlockReferenceEntity` in `OpenCad2D.Core/Entities`.
+- `CadDocument.BlockDefinitions` stores reusable definitions separately from drawing entities.
+- `EntityKind.BlockReference` identifies block reference entities.
+- JSON persistence supports `blockDefinitions` at document level and `BlockReference` entities.
+- `CadEntityRenderer` can render a block reference by transforming definition entities into world coordinates.
+
+This foundation checkpoint has since grown into user-facing Create Block, Insert Block, Block Manager, internal snapping, Explode Block and first in-place Edit Block workflows.
+
+
+## v0.8.111 block workflow handoff
+
+Create Block from selection is implemented as the first user-facing block workflow. The main pieces are:
+
+- `AddBlockDefinitionCommand` in Core for undoable definition creation/removal.
+- `CreateBlockOptionsWindow` for block name, numeric base point and optional canvas base-point picking.
+- `CreateBlockOptions` in the App ViewModels/Blocks namespace.
+- `MainWindowViewModel.CreateBlockFromSelection(...)` creates the definition, converts selected entities into local block coordinates by translating them by `-basePoint`, replaces the selection with a `BlockReferenceEntity`, and selects the reference.
+
+Canvas picking for the block base point is supported through `BeginCreateBlockBasePointPick`, `CommitCreateBlockBasePointPick` and `CancelCreateBlockBasePointPick` on `MainWindowViewModel`; active snap candidates are used when available. Nested block creation is intentionally rejected for now.
+
+Insert Block is implemented through `InsertBlockOptions`, `InsertBlockOptionsWindow`, `BeginInsertBlockPlacement`, `CommitPendingBlockInsertion` and `CancelPendingBlockInsertion`. It inserts an additional `BlockReferenceEntity` for an existing definition with uniform scale, rotation and a picked insertion point. Active snap candidates are honored and Escape cancels the pending insert without modifying the document.
+
+The v0.8.113 minimal Block Manager is implemented through `BlockManagerWindow`, `BlockManagerWindowViewModel`, `EditableBlockDefinitionViewModel`, `BlockManagerResult` and `BlockManagerAction`. It lists definitions, shows entity/reference counts and bounds, allows direct rename validation, deletes only unused definitions, and can start insertion of the selected definition. Changes are applied with `UpdateBlockDefinitionsCommand`, so rename/delete operations are undoable. Internal block snapping, Explode Block and the first in-place Edit Block session are now implemented.
+
+
+## v0.8.114-v0.8.115 block snap and explode handoff
+
+Block references are now usable through their internal transformed geometry for click selection and object snaps. This fixes the earlier limitation where a block was effectively selectable only by its reference bounds/window. Endpoint, midpoint, center and nearest snap providers can resolve candidates from child geometry transformed into world coordinates.
+
+`ExplodeTool` supports selected `PolylineEntity` instances and selected `BlockReferenceEntity` instances. For polylines it now decomposes each segment: straight segments become `LineEntity` instances and bulged segments become `ArcEntity` instances. Closing segments on closed polylines are included, so a closing bulge becomes a closing arc. For block references it reads the matching `BlockDefinition`, transforms each definition entity through `BlockReferenceEntity.TransformContainedEntity(...)`, assigns each resulting entity a fresh `EntityId`, and commits the replacement through `ModifyEntitiesCommand`. Undo restores the original polyline or block reference. The shared block definition is intentionally kept in the document because other references may still use it.
+
+Recommended next step: stabilize the first `Edit Block` workflow with manual testing, then decide whether a later isolated block editor is needed.
+
+## v0.8.115 first Edit Block handoff
+
+The first Edit Block workflow is implemented as an in-place edit session started from a selected `BlockReferenceEntity`.
+
+Current behavior:
+
+- `BeginEditSelectedBlock()` requires exactly one editable block reference selected.
+- The selected reference is temporarily replaced by world-space copies of its definition entities through `ModifyEntitiesCommand`.
+- The temporary edit entities are selected so the user can move, edit, delete or replace them with normal tools.
+- `SaveActiveBlockEdit()` updates the source `BlockDefinition` from the currently selected non-block entities when any are selected; otherwise it uses the tracked temporary edit entities.
+- Save converts edited world-space geometry back into block-local coordinates through `Matrix2D.Invert()` and restores the original block reference id with updated definition bounds.
+- `CancelActiveBlockEdit()` removes the temporary edit entities and restores the original reference without changing the definition.
+
+This is intentionally not a full isolated block editor yet. It gives a safe, testable first workflow while keeping nested blocks unsupported.
+
+
+## v0.8.120 Architectural symbols — North Symbol first pass
+
+The architectural-symbols milestone has started with `NorthSymbolTool`. The tool is registered as `ToolId.NorthSymbol` in the `Symbols` category and exposed in the left toolbar under a new `SYMBOLS` section. Command aliases are `NORTH`, `NORTHSYMBOL` and `NS`.
+
+Current North Symbol behavior: one click inserts a fixed-size north arrow at the snapped insertion point. The symbol is intentionally made of ordinary entities rather than a specialized entity type: three `LineEntity` objects, one `CircleEntity` and one `TextEntity` with label `N`. Geometry uses the current layer and current text format. Insertion is committed as a single undoable composite command.
+
+Orientation note: the north arrow uses the picked point as its local `(0,0)` base point; the arrow tip points visually upward and the `N` label is offset beside the arrow rather than overlapping the shaft.
+
+Metric Scale Bar first pass: `ScaleBarTool` is registered as `ToolId.ScaleBar` in the `Symbols` category and exposed in the left toolbar under `SYMBOLS`. Command aliases are `SCALEBAR`, `SBAR` and `GRAPHICSCALE`. One click inserts a fixed metric scale bar at the snapped insertion point. The generated geometry is ordinary geometry. After the latest geometry update it creates the requested 0–1000 bar using 6 closed polylines, 7 vertical tick lines and 7 text labels. Geometry uses the current layer and current text format. Insertion is committed as a single undoable composite command.
+
+Tests cover registry creation/category, command aliases, basic insertion, current-layer assignment, undo, endpoint snapping and deterministic generated geometry for the symbol tools.
+
+Recommended next step changed: do not continue adding many fixed-symbol toolbar buttons. Add a `Library` workflow first. Fixed reusable content should be stored as `.opencad2d.json` files under a `library/` folder and shown in a modal browser with categories and preview. Keep direct symbol/tool buttons for parametric generators only.
+
+
+## Modify tool preview vectors
+
+Move already exposed a base-to-current measurement vector. The preview pass extends the same visual guidance to Copy, Rotate and Scale:
+
+- Copy draws the displacement vector from base point to current destination while preserving the copied-entity preview.
+- Rotate and Scale now update a transient reference preview while the user is choosing the reference point, then draw base-to-reference and base-to-destination guide vectors during the final destination phase.
+- The implementation lives in `CadToolPreviewRenderer`; `RotateTool` and `ScaleTool` also update `CurrentDestinationPoint` during `WaitingForReferencePoint` so the renderer can show the live reference vector before the reference point is accepted.
+
+
+## Latest handoff — Metric Scale Bar geometry
+
+- `ScaleBarTool` uses the picked point as local origin `(0,0)` and offsets the requested 0–1000 scale bar geometry from there.
+- Output entity count: 20 entities = 6 closed polylines, 7 vertical ticks, 7 text labels.
+- `MainWindow` includes active-button synchronization for both North Symbol and Scale Bar.
+
+
+## Latest planning handoff — Library Browser direction
+
+The next milestone should be `v0.8.122 Library Browser`, documented in `docs/specs/v0.8.122-library-browser.md`.
+
+Decision:
+
+- Avoid adding one toolbar button per fixed symbol.
+- Add a single `Library` button/window for fixed reusable `.opencad2d.json` snippets.
+- Group snippets by category folders under `library/`, for example `arredo`, `simboli`, `sanitari`, `porte-finestre`, `annotazioni`.
+- The modal window should show categories, item list/grid, preview, Insert and Cancel.
+- Default insertion policy should create/reuse a block definition and place a `BlockReferenceEntity` at the picked point.
+- Use `(0,0)` in the library file as the item base point.
+- Honor active snaps for the insertion point.
+- Keep direct `Symbols`/tool buttons for parametric generators such as doors, windows, stairs, configurable section/elevation markers and title blocks.
+
+Recommended implementation sequence:
+
+1. Add `library/` folder convention and a `LibraryItemCatalog` service that scans folders.
+2. Add a minimal `LibraryWindow` with categories and item list.
+3. Add a first vector preview control using the native document loader and bounding-box fit.
+4. Add pending insertion workflow: select item -> close dialog -> pick insertion point.
+5. Insert as block reference by default, using import/block infrastructure and one undoable command.
+6. Add tests for scan, grouping, preview-load safety, insertion, snap and undo.
+
+
+## v0.8.130 Geometry note — arc selection and mixed lightweight polylines
+
+Implemented a first core pass for AutoCAD-style mixed `PolylineEntity` geometry. `PolylineEntity` now owns `SegmentBulges`, where each segment has a DXF-compatible bulge value: `0` for straight segments and non-zero for circular arc segments. Existing straight polylines remain compatible because the constructor defaults all bulges to zero.
+
+DXF `LWPOLYLINE` import now preserves bulge values on one `PolylineEntity` instead of exploding mixed geometry into separate `LineEntity` and `ArcEntity` instances. DXF export writes group code `42` for non-zero segment bulges. Persistence writes `SegmentBulges` only when curved segments exist, so older JSON files remain readable.
+
+Canvas rendering, hit testing, closest-point logic, bounding boxes, SVG/PDF export and HATCH fallback use an internal polyline approximation for curved segments. This allows clicking/selecting curved polyline portions and keeps downstream export stable. Advanced edit commands that still operate on straight `Polyline2D` adapters currently use the approximation for mixed polylines; future work should add native segment-aware editing/grips for bulge segments.
+
+Added regression coverage for: clicking an `ArcEntity` stroke, clicking a bulged polyline arc segment, preserving DXF bulges on import, writing bulge group `42` on export, and bounding/distance behavior for curved polyline segments.
+
+## Latest handoff — mixed polyline grip/property stabilization
+
+The mixed-polyline pass has been stabilized so common editing surfaces no longer accidentally drop DXF bulge data.
+
+Implemented refinements:
+
+- `PolylineGripProvider` now preserves `SegmentBulges` when moving a vertex or moving the whole polyline.
+- Insert grips on curved polyline segments are placed on the approximated arc instead of on the chord midpoint.
+- Inserting a vertex into a curved segment keeps the polyline valid by replacing that one curved segment with two straight segments; other segment bulges are preserved.
+- Deleting a polyline vertex preserves unaffected segment bulges and sets the newly merged segment to straight.
+- Rectangle-specific grip behavior is disabled for closed four-vertex polylines that contain arc bulges, so mixed polylines are edited with generic polyline grips.
+- The Property Panel preserves `SegmentBulges` when editing vertex coordinates and resizes the bulge list safely when toggling the closed flag.
+- Polyline Geometry now shows segment count and arc segment count; length and area use the internal approximation when a polyline contains arc segments.
+
+Recommended next step: add a real segment editor for mixed polylines: select segment, convert line/arc, edit bulge/radius, split arc natively, and expose per-segment data in a dedicated modal instead of overloading the basic Property Panel.
+
+
+## Latest handoff — mixed polyline interaction geometry
+
+Mixed `PolylineEntity` segments now expose a shared interaction approximation through `GetInteractionGeometry()`. This keeps hit/selection/snap/measurement behavior consistent for DXF bulge segments without forcing every caller to know how bulges are represented internally.
+
+Implemented refinements:
+
+- Crossing-window selection now tests bulged polylines against the approximated curved path, not only against the original chord-based `Polyline2D`.
+- Midpoint snapping on mixed polylines returns the length midpoint of each curved segment approximation, so a semicircular bulge snaps near the visual arc midpoint instead of the chord midpoint.
+- Intersection snapping now converts mixed polylines through the same interaction approximation before line-polyline, polyline-polyline, polyline-ellipse and polyline-spline intersection checks.
+- Core `MeasurementService` now calculates polyline length and closed-polyline area from the interaction geometry when bulges are present.
+
+New regression coverage was added for arc-segment midpoint snaps, line/bulged-polyline intersection snaps, crossing-window selection on a curved polyline portion, and measurement of open/closed bulged polylines.
+
+Recommended next step: introduce native segment-level operations for bulged polylines instead of relying on approximation in edit services. Priority targets are perpendicular snap to curved segments, center/quadrant snaps for arc segments, and TRIM/BREAK/EXTEND preserving bulge topology where feasible.
+
+## Latest handoff — editable mixed-polyline segment bulges
+
+Mixed polylines now expose per-segment bulge editing in the Property Panel. A selected `PolylineEntity` gets a dedicated `Segments` section with editable rows named `Segment N bulge`. This allows a straight segment to be converted into an arc segment, an arc segment to be flattened by entering `0`, or the arc direction/curvature to be changed by editing the signed DXF bulge value directly.
+
+Implementation notes:
+
+- `SelectionPropertyPanelBuilder` adds `BuildPolylineSegmentsSection` and caps displayed segment rows to keep the panel responsive on large imported DXF polylines.
+- `ReplacePolylineSegmentBulge` replaces the entity through the normal undoable command path and preserves all other entity metadata.
+- Invalid non-numeric values are rejected by the existing invariant-culture numeric parser.
+- Tests cover row exposure, undo support and invalid-value rejection.
+
+Recommended next step: replace the raw bulge value editor with a friendlier segment editor modal that can show segment type, bulge, included angle/radius and quick actions such as Straight, Arc CW and Arc CCW.
+
+## 2026-05-28 - Polyline draw tool: three-point arc segments
+
+The `PolylineTool` now supports creating curved segments during drawing.
+
+Implementation notes:
+
+- `PolylineToolState` now includes `WaitingForArcPointOnArc` and `WaitingForArcEndPoint`.
+- `PolylineTool` keeps a `_segmentBulges` list in parallel with committed segments.
+- Option `Arc` / `A` starts a three-point arc segment. The previous polyline vertex is the arc start point.
+- The point-on-arc input is stored temporarily in `_arcPointOnArc`; the following point becomes the segment endpoint.
+- `ArcCreationService.TryCreateFromThreePoints` is used to validate the three points and calculate the circular arc.
+- The arc is converted to a DXF-compatible bulge with `tan(sweep / 4)`. In the current coordinate convention, clockwise arcs produce positive bulges and counter-clockwise arcs produce negative bulges, matching the existing `PolylineEntity` approximation logic.
+- Completing a closed polyline appends a straight closing bulge for now.
+- The next segment returns to straight mode after one three-point arc. Future work may add persistent arc mode or additional arc construction modes.
+
+Tests were added in `PolylineToolTests` for command-line arc mode, pointer input, preview bulge, incomplete arc completion, and undo behaviour.
+
+## 2026-05-28 - Join tool stabilization for mixed polylines
+
+The `JoinTool` now supports `LineEntity`, `ArcEntity` and open `PolylineEntity` inputs. It converts selected entities into oriented join segments, builds endpoint-connected chains, rejects branching junctions, and creates `PolylineEntity` results. Arc inputs become bulge segments; reversed arc/polyline segments invert bulge signs.
+
+Important diagnostics were added so command-line feedback explains failure causes: unsupported entity kinds, closed polylines, incompatible layer/style metadata, disconnected endpoints and branching junctions. Undo/redo remains atomic through a `CompositeCommand` that deletes consumed source entities and adds the generated polylines.
+## 2026-05-28 - Explode stabilization for mixed polylines
+
+The `ExplodeTool` now handles mixed `PolylineEntity` geometry. It iterates `PolylineEntity.SegmentCount`, reads the corresponding `SegmentBulges` value, creates `LineEntity` for zero-bulge segments and reconstructs `ArcEntity` for non-zero bulge segments. Source layer/style/visibility/lock/draw-order metadata are preserved on every generated entity. Closed polylines include the closing segment, including closing arcs.
+
+This completes the practical inverse of `JOIN` for mixed polylines: line/arc chains can be joined into a bulge-capable `PolylineEntity`, then exploded back into explicit lines and arcs with undo/redo support through `ModifyEntitiesCommand`.
+
+
+## 2026-05-28 - Fillet on adjacent linear polyline segments
+
+`FilletTool` has been extended beyond Line-Line fillets. It can now pick two adjacent straight segments from the same `PolylineEntity` and replace the shared corner with a tangent bulge segment while keeping the result as one polyline. This is implemented in `FilletTool` by introducing an internal fillet pick model that stores the picked entity and, for polylines, the closest segment index.
+
+Important constraints:
+
+- Line-Line behavior remains unchanged, including Radius, Trim/NoTrim, radius 0, preview and undo/redo.
+- Polyline fillet only supports adjacent straight segments from the same polyline.
+- Polyline fillet requires Trim mode and radius greater than zero.
+- Existing curved/bulged polyline segments are rejected with a clear diagnostic rather than approximated.
+- The replacement entity is a new `PolylineEntity` with preserved layer/style/visibility/lock/draw-order/fill metadata and a non-zero bulge on the generated fillet segment.
+
+Regression tests were added for successful adjacent-segment fillet, undo restoration, non-adjacent rejection and existing-bulge rejection.
+
+## 2026-05-28 - Fillet/Chamfer polyline segment pick stabilization
+
+`FilletTool` now resolves selectable objects through `SelectAllByPoint` and supports excluding the first selected polyline segment when resolving the second segment. This fixes the workflow where a second click at the shared polyline vertex selected the same segment again.
+
+`ChamferTool` now supports two adjacent linear segments of the same `PolylineEntity`, mirroring the existing fillet behavior. It preserves the entity as a single polyline and inserts a straight chamfer segment. Existing bulged segments remain intentionally unsupported for this phase.
+
+### 2026-05-28 - Polyline fillet radius correction
+
+Fixed polyline segment fillet geometry for non-90 degree corners. The tangent distance still uses `radius / tan(cornerAngle / 2)`, but the bulge now uses the fillet arc sweep `PI - cornerAngle`, not the original corner angle. This keeps the generated bulge arc tangent to both trimmed polyline segments with the requested radius.
+
+
+## 2026-05-28 - Fillet support for separate simple polylines
+
+`FilletTool` now also supports terminal segments of separate open linear `PolylineEntity` objects. The tool converts the picked polyline segments to temporary `LineEntity` geometry, reuses the existing Line-Line fillet solver, then converts trimmed line results back to simple polylines while keeping the fillet as an `ArcEntity`.
+
+This intentionally does not yet support separate multi-segment polylines, because replacing only one selected segment while preserving all unrelated vertices needs a more complete segment-surgery implementation. Such cases return a clear conservative diagnostic instead of modifying the drawing.
+
+## 2026-05-28 - Chamfer support for separate simple polylines and line/polyline pairs
+
+`ChamferTool` now supports separate object chamfers where the selected objects are either terminal segments of separate open linear `PolylineEntity` objects, or one standalone `LineEntity` plus one terminal segment of an open linear `PolylineEntity`.
+
+The implementation reuses the existing Line-Line chamfer solver, then converts only the trimmed source that came from a polyline back into a simple `PolylineEntity`. The generated chamfer edge remains a `LineEntity`. Separate multi-segment polylines remain intentionally unsupported and return a clear conservative diagnostic.
+
+
+## 2026-05-28 - Fillet/Chamfer support for terminal segments of separate multi-segment polylines
+
+`FilletTool` and `ChamferTool` now support separate multi-segment open linear polylines when the picked segment is terminal, meaning segment 0 or the last segment. The tools reuse the existing Line-Line solvers, then write the trimmed endpoint back into the original polyline so the source remains a `PolylineEntity`. This allows CAD-like operations on polyline ends without exploding the geometry.
+
+The implementation intentionally rejects internal segment trims on separate polylines because moving an internal vertex would either disconnect adjacent segments or require a more complex local topology edit. Curved/bulged segments remain unsupported for Fillet/Chamfer in this phase.
+
+## 2026-05-28 - Consolidation pass for mixed polylines and DXF regressions
+
+After the mixed-polyline, JOIN/EXPLODE, OFFSET, FILLET and CHAMFER work, the consolidation pass adds automated DXF regression coverage and documentation cleanup rather than new editing geometry.
+
+New DXF regression tests:
+
+- `DxfExportCompatibilityTests.Export_MixedPolyline_ShouldWriteBulgeGroupsOnOwningVertices` verifies that `PolylineEntity.SegmentBulges` are exported as LWPOLYLINE group code `42` values on the owning vertices. Zero bulges are intentionally omitted.
+- `DxfRoundTripTests.ExportThenImport_WithMixedPolylineBulges_ShouldPreserveCompoundPolylineTopology` verifies that a closed mixed polyline round-trips through DXF as one `PolylineEntity`, preserving positive, negative and zero bulges.
+
+Documentation updates:
+
+- `docs/dxf-compatibility.md` now states that bulged `LWPOLYLINE` imports remain a single `PolylineEntity` with `SegmentBulges`, not exploded line/arc entities.
+- `docs/known-limitations.md` now distinguishes implemented conservative mixed-polyline offset from the deferred analytic bulge-preserving offset.
+- `docs/roadmap.md` now records the completed mixed-polyline modify-tool consolidation and the new automated DXF coverage.
+
+Manual release validation still needs a recorded external viewer pass in LibreCAD/QCAD/Autodesk tools with exact versions. The automated tests protect OpenCad2D's internal DXF contract, but do not prove broad external interoperability by themselves.
+
+### 2026-05-28 — Image reference transparency
+
+Added per-image transparency support for external raster references.
+
+- `ImageReferenceEntity` now stores `Opacity` internally as a normalized `0.0` to `1.0` value and exposes `TransparencyPercent` for UI-facing editing.
+- JSON persistence now writes/reads the image reference opacity, defaulting older drawings to fully opaque.
+- Avalonia rendering applies the stored opacity when drawing linked raster files; missing-image placeholders remain normal vector placeholders.
+- SVG export emits the opacity on external `<image>` elements when the reference is partially transparent.
+- `Manage Refs` now displays a transparency percentage column and provides an Apply action for the selected image reference.
+- The selected-image Property Panel also exposes an editable `Transparency %` row. All edits use normal replace-entity commands, so undo/redo remains coherent.
+
+Manual checks:
+
+1. Attach a PNG/JPG, open `Manage Refs`, set transparency to `50` and verify the canvas displays the image at half opacity.
+2. Save, close and reopen the drawing and verify the transparency is preserved.
+3. Export SVG and verify the external `<image>` element keeps the expected opacity.
+4. Undo/redo a transparency edit from either `Manage Refs` or the Property Panel.
+
+---
+
+## Current handoff — Dynamic Command HUD implementation start
+
+The `v0.8.121` Dynamic Command HUD refactor has started with the safe, non-visual foundation step. The detailed specification remains `docs/specs/v0.8.121-dynamic-command-hud.md`.
+
+Implemented in the first code step:
+
+- `CadCanvasWorkspaceChangedEventArgs` now carries the pointer screen position through `PointerScreenPosition`.
+- `CadCanvas.NotifyWorkspaceChanged(...)` passes the current `_pointerScreenPoint`.
+- `MainWindow.CadCanvas_WorkspaceChanged(...)` forwards that screen position to the ViewModel.
+- `MainWindowViewModel` now exposes `HudScreenPosition`, `CurrentPromptState`, `CommandHudState`, `HasLiveMeasurements`, `IsCommandHudVisible`, `LiveDistance`, `LiveAngle`, `LiveDeltaX` and `LiveDeltaY`.
+- Added read-only `CommandHudStateViewModel` and `CommandHudFieldViewModel` classes so the future Avalonia HUD can bind to command state without owning command logic.
+- Existing bottom command row and input behavior are unchanged.
+
+Important direction:
+
+- Treat this as a command-input architecture refactor, not as a visual-only task.
+- Do not implement only for Line, Polyline, Rectangle and Circle; every command-driven tool must be reviewed.
+- First stabilize the command prompt contract through `CommandPromptState`.
+- Keep the old bottom command row until the HUD has passed regression.
+- Add the HUD read-only before moving the real `CommandInputTextBox`.
+- Keep one operational command input; do not create duplicate command boxes.
+- Defer editable numeric HUD fields until after the read-only HUD and moved command input are stable.
+
+Planned implementation order:
+
+1. HUD-0 tool prompt inventory.
+2. HUD-1 shared prompt contract cleanup.
+3. HUD-2 pointer screen position and live measurement data. `[~] started`
+4. HUD-3 read-only `CommandHudState`. `[~] started`
+5. HUD-4 read-only visual HUD overlay.
+6. HUD-5 move the real command input into the HUD.
+7. HUD-6 remove the old bottom command row.
+8. HUD-7 editable numeric HUD fields later.
+
+Next recommended step: complete the prompt inventory and begin moving remaining ViewModel prompt fallbacks into `ICommandDrivenTool.GetPromptState(...)`, before adding any visual HUD overlay.
+
+
+
+## 2026-05-30 — Dynamic Command HUD Step 2 prompt contract cleanup
+
+The second Dynamic Command HUD code step extends the shared `CommandPromptState` contract before any visual HUD is added. This keeps the refactor safe and avoids duplicating command-phase logic in Avalonia code-behind.
+
+Implemented in this step:
+
+- `ArcTool` now implements `ICommandDrivenTool` and exposes prompt states for center, start/radius and end/angle phases.
+- `PointTool` and `TextTool` now expose command prompt states instead of relying on `MainWindowViewModel` fallback text.
+- Measurement tools now expose prompt states: `MeasureDistanceTool`, `MeasureAngleTool`, `MeasureEntityTool` and `MeasureAreaTool`.
+- Dimension tools now participate in the command prompt contract through `ThreePointDimensionToolBase`, `RadialDimensionToolBase` and `AngularDimensionTool`.
+- `ZoomWindowTool` now exposes first/opposite corner prompt states.
+- Architectural insertion tools `NorthSymbolTool` and `ScaleBarTool` now expose insertion-point prompt states.
+
+Current intentional exclusions:
+
+- `SelectionTool` remains outside the HUD contract for now because normal selection should not show the dynamic command HUD.
+- `GripEditTool` remains outside the HUD contract until the HUD behavior for grip workflows is designed explicitly.
+- `TwoPointToolBase` remains a plain base class because many derived tools already provide specialized prompt states; adding a default implementation there could create accidental duplicate semantics.
+
+Next recommended step: remove or simplify old tool-specific prompt fallbacks from `MainWindowViewModel.CommandPromptText` once this step is confirmed by build/tests, then move to the read-only visual HUD overlay.
+
+## 2026-05-30 — Dynamic Command HUD Step 3 read-only overlay
+
+The third Dynamic Command HUD code step adds the first visual HUD overlay without changing command input behavior.
+
+Implemented in this step:
+
+- `MainWindow.axaml` now wraps the CAD canvas in a `Grid` and adds a transparent `Canvas` overlay for the command HUD.
+- The HUD panel is read-only and displays:
+  - active tool name,
+  - current prompt from `CommandHudState`,
+  - live fields already exposed by the ViewModel,
+  - command options as compact shortcut labels.
+- The old bottom command line remains fully active and unchanged.
+- `MainWindow.axaml.cs` positions the HUD near the current pointer screen position with a fixed offset and clamps it inside the overlay bounds.
+- The overlay itself is not hit-test-visible, so it does not intercept canvas or command input events.
+
+Important constraints preserved:
+
+- No editable HUD numeric fields yet.
+- No move of `CommandInputTextBox` yet.
+- No removal of the old bottom command row yet.
+- No command behavior change is intended in this step.
+
+Next recommended step: validate the read-only HUD manually across draw, dimension, measurement and modify tools, then refine HUD field selection per tool before moving the real command input into the HUD.
+
+## 2026-05-30 — Dynamic Command HUD Step 4 transitional command input
+
+The fourth Dynamic Command HUD code step moves the active command input experience into the HUD while keeping a safe bottom fallback for idle/non-HUD states.
+
+Implemented in this step:
+
+- `MainWindow.axaml` adds `HudCommandInputTextBox` inside the command HUD panel.
+- The bottom command row remains present but is visible only when `IsCommandHudVisible` is false.
+- `MainWindow.axaml.cs` now treats the HUD input and the bottom input as synchronized views of the same command text.
+- Command submission, autocomplete, history navigation, Backspace, Escape and typed-character forwarding all use helper methods instead of directly reading only the old bottom `CommandInputTextBox`.
+- The HUD overlay is now hit-test-visible so the HUD textbox can be focused/clicked, while the panel remains small and clamped near the cursor.
+
+Important constraints preserved:
+
+- There are still no editable numeric HUD fields.
+- The command parser and existing `SubmitCommandInput` flow are unchanged.
+- The bottom command row is not deleted yet; it remains the fallback for idle states and selection-like workflows where the HUD is hidden.
+
+Next recommended step: test command entry both while idle and while a command HUD is visible, especially command history, autocomplete, polyline shortcuts, Align scale confirmation and Escape behavior. After that, remove the fallback row only when idle command discoverability is solved cleanly.
+
+## 2026-05-30 — Dynamic Command HUD Step 5 icon polish
+
+The fifth Dynamic Command HUD code step is a visual/UX consolidation step. It does not change command behavior.
+
+Implemented in this step:
+
+- The HUD header now uses a real `Path` named `HudToolIcon` instead of the temporary textual marker.
+- `MainWindow.axaml.cs` maps the active tool display name to the existing icon resources already defined in `Resources/Icons.axaml`.
+- Icon refresh is called from `UpdateCommandHudPosition()`, keeping the HUD header synchronized with active command changes.
+- The transitional bottom command row remains available for idle/non-HUD command entry.
+
+Important constraints preserved:
+
+- No editable HUD numeric fields yet.
+- No command parser changes.
+- No removal of the bottom command row yet.
+
+Next recommended step: manually verify icons across draw, modify, measure and dimension tools. Once stable, decide whether to implement an idle command HUD before deleting the bottom command row.
+
+## 2026-05-30 — Dynamic Command HUD Step 6 bottom fallback demotion
+
+The sixth Dynamic Command HUD code step is a conservative UX consolidation step. It does not remove the fallback input row yet, but it stops presenting it as the active command prompt UI.
+
+Implemented in this step:
+
+- Historical transition note: the bottom command fallback was still available at this point in the HUD migration; it has since been removed.
+- The bottom fallback now shows only a `Command` label plus the synchronized `CommandInputTextBox`.
+- The bottom fallback no longer displays `ActiveToolName` or `CommandPromptText`; active command identity and prompt information now belong to the cursor HUD.
+- No command parser, tool, focus, history or autocomplete behavior is changed.
+
+Important constraints preserved:
+
+- No editable HUD numeric fields yet.
+- No deletion of the fallback row yet.
+- The fallback remains useful for idle command entry until a dedicated idle HUD/launcher is implemented.
+
+Next recommended step: validate that idle command entry, active HUD command entry, autocomplete, history navigation and Escape still behave as before. After that, design the idle command launcher or proceed to editable HUD fields only if the fallback strategy is accepted.
+
+## 2026-05-30 — Dynamic Command HUD Step 7 contextual read-only fields
+
+The seventh Dynamic Command HUD step improves the read-only field mapping in `MainWindowViewModel.BuildCommandHudFields()`.
+
+Implemented in this step:
+
+- `RectangleTool` uses `Width` and `Height` during opposite-corner input.
+- `RectangleBySidesTool` uses `Width`/`Angle` for the first side and `Height` for the second side.
+- `CircleTool` uses `Radius` during radius input.
+- `ArcTool` uses `Radius`/`Angle` for start-point/radius input and `Angle` for end-direction input.
+- Other live-measurement phases continue to use the generic `Distance`/`Angle` field pair.
+
+Important constraints preserved:
+
+- The HUD fields remain read-only.
+- No command parser changes were made.
+- No bottom fallback removal was made.
+- No tool state machine changes were made.
+
+Next recommended step: manually verify field labels with Line, Rectangle, Rectangle Sides, Circle, Arc, Polyline and a few modify tools. After validation, proceed either to a dedicated idle command launcher or to the first editable numeric field experiment, starting with Line only.
+
+## 2026-05-30 — Dynamic Command HUD Step 8 extended contextual read-only fields
+
+The eighth Dynamic Command HUD step extends the read-only HUD field mapping beyond the first draw tools.
+
+Implemented in this step:
+
+- `EllipseTool` now shows `Major radius`/`Angle` while defining the major axis and `Minor radius` while defining the minor radius.
+- `PolygonTool` now shows `Radius`/`Angle` while defining the polygon vertex/radius.
+- `RotateTool` now shows `Angle` during the destination/angle phase, using the tool preview angle when available.
+- `ScaleTool` now shows `Factor` during the destination/factor phase, using the tool preview factor when available.
+- `OffsetTool` now shows `Distance` during the two-point distance phase.
+- `MirrorTool` and `BreakBetweenPointsTool` use `Distance`/`Angle` during their second-point phases.
+- `MeasureAngleTool` and angular dimension workflows show `Angle` in angle-defining phases.
+- Radial dimension workflows show `Radius` while defining the point on the circle.
+- A generic prompt-kind fallback now maps `PointOrDistance`, `PointOrAngle`, `Distance` and `Angle` expected inputs to suitable read-only HUD fields.
+
+Important constraints preserved:
+
+- The HUD fields remain read-only.
+- No command parser changes were made.
+- No bottom fallback removal was made.
+- No tool state machine changes were made.
+
+Next recommended step: manually verify field labels with ellipse, polygon, rotate, scale, offset, mirror, break-between, radial dimension and angular dimension. After validation, the project can either add a compact idle command launcher or begin the first editable HUD numeric field experiment, preferably limited to Line only.
+
+
+## 2026-05-30 — Dynamic Command HUD Step 9 generic option shortcuts
+
+The ninth Dynamic Command HUD step adds generic shortcut handling for command options exposed by `CommandPromptState.Options`.
+
+Implemented in this step:
+
+- `MainWindow` now checks the active `ICommandDrivenTool` prompt for matching option shortcuts when a key is pressed and the command input buffer is empty.
+- Matching shortcuts are submitted through the existing `SubmitCommandInput` pipeline, preserving parser behavior, command history, status refresh and document invalidation.
+- This brings commands such as Fillet, Trim, Chamfer and Spline closer to the same immediate option behavior already expected from Polyline.
+- Existing polyline Enter completion and Align scale confirmation logic remain in place.
+
+Important constraints preserved:
+
+- No tool state machine changes were made.
+- No parser changes were made.
+- No editable numeric HUD fields were added.
+- The bottom command fallback remains present.
+
+Next recommended step: validate direct option shortcuts in Polyline, Fillet, Trim, Chamfer and Spline. After that, the next architectural step can be either a dedicated idle command launcher or a carefully isolated first editable numeric field experiment for Line.
+
+## 2026-05-30 — Dynamic Command HUD Step 10 editable-field metadata scaffold
+
+The tenth Dynamic Command HUD step prepares the numeric HUD field model for the future editable-field milestone without changing the current UI behavior.
+
+Implemented in this step:
+
+- `CommandHudFieldViewModel` now has a `CommandHudFieldKind` classification for distance, angle, width, height, radius, factor and generic fields.
+- Numeric display formatting is separated from unit display through `NumericValueText` and `DisplayValue`.
+- Fields expose `CanAcceptTypedOverride` and `InputPlaceholder` metadata for the future typed override UI.
+- Existing HUD field builders continue to work through backward-compatible constructor parameters.
+
+Important constraints preserved:
+
+- HUD numeric fields are still rendered as read-only by the current XAML.
+- No command parser changes were made.
+- No tool state machine changes were made.
+- No geometry override is applied yet.
+- The bottom command fallback remains present.
+
+Next recommended step: after build/test validation, add an isolated `CommandHudInputOverride` model and wire it only for Line distance/angle preview. Do not enable editable fields for all tools at once.
+
+## 2026-05-30 — Dynamic Command HUD Step 11 editable field input shell
+
+The eleventh Dynamic Command HUD step turns HUD numeric field visuals into focusable text boxes, but still keeps geometry behavior conservative.
+
+Implemented in this step:
+
+- HUD numeric fields are rendered as `TextBox` controls using `NumericValueText` and `InputPlaceholder` from `CommandHudFieldViewModel`.
+- Pressing Enter while a HUD field is focused submits the typed value through the existing `SubmitCommandInput` pipeline.
+- Pressing Escape while a HUD field is focused restores the live value text and returns focus to the canvas.
+- Empty fields are restored to their current live value when focus is lost.
+- Window-level text routing now treats HUD field text boxes as command-input sources, so typing inside a field does not duplicate characters into the main command input.
+
+Important constraints preserved:
+
+- No `CommandHudInputOverride` model has been introduced yet.
+- No persistent distance/angle override is applied to previews.
+- No tool state machine changes were made.
+- Enter from a field is still a one-shot submission using the existing command parser.
+- The bottom fallback remains present.
+
+Recommended validation:
+
+- Line after first point: focus Distance, type a numeric value, press Enter, and verify the existing numeric distance behavior still works.
+- Circle after center point: focus Radius, type a numeric value, press Enter.
+- Rectangle and angle/factor fields should be treated as experimental shells until the future override model is implemented.
+
+Next recommended step: implement `CommandHudInputOverride` only for Line Distance + Angle so Tab-based `distance -> angle -> Enter` can adjust the preview before final confirmation.
+
+## 2026-05-30 — Dynamic Command HUD Step 12 Line one-shot field override
+
+The twelfth Dynamic Command HUD step introduces the first controlled geometry override from HUD numeric fields, limited to `LineTool` while it is waiting for the second point.
+
+Implemented in this step:
+
+- `MainWindowViewModel.TrySubmitCommandHudFieldInput(...)` handles HUD field submissions before falling back to the normal command input pipeline.
+- For `LineTool` in `WaitingForSecondPoint`:
+  - submitting `Distance` creates the endpoint using the typed distance and the current live angle;
+  - submitting `Angle` creates the endpoint using the current live distance and the typed angle.
+- Invalid numeric input and unsupported line field states produce normal tool-result messages.
+- Other tools continue to use the Step 11 behavior and fall back to the existing command input parser.
+
+Important constraints preserved:
+
+- No persistent `CommandHudInputOverride` model has been introduced yet.
+- No preview-freeze behavior has been added.
+- No Tab-based `distance -> angle -> Enter` workflow has been implemented yet.
+- No parser or tool state machine changes were made.
+- The bottom fallback remains present.
+
+Recommended validation:
+
+- Start Line, click the first point, focus `Distance`, type `100`, press Enter and verify that the line is created using the live cursor angle.
+- Start Line, click the first point, move the cursor to establish a live distance, focus `Angle`, type `45`, press Enter and verify that the line is created with the live distance at 45 degrees.
+- Verify that Circle/Rectangle fields still behave as Step 11 shell fields.
+
+Next recommended step: introduce a real `CommandHudInputOverride` model for Line only so Distance and Angle can be edited independently, previewed together and confirmed after Tab navigation.
+
+## 2026-05-30 — Dynamic Command HUD Step 13 Line persistent Distance/Angle override
+
+The thirteenth Dynamic Command HUD step replaces the Line-only one-shot field behavior with a small persistent override model, still limited to `LineTool` while it is waiting for the second point.
+
+Implemented in this step:
+
+- `MainWindowViewModel` now keeps Line HUD overrides for distance and angle independently.
+- Leaving a HUD field with a non-empty value commits the override without finalizing the command.
+- Pressing Enter in a HUD field commits the current value and confirms the line endpoint.
+- Distance and angle overrides are combined when both are present, enabling the intended `Distance -> Tab -> Angle -> Enter` workflow for Line.
+- The line preview is refreshed from the stored overrides while the mouse moves.
+- `CadWorkspace.PreviewPointFromCommandLine(...)` was added to update previews from already-resolved command-line/HUD points without applying snapping, ortho or angle constraints a second time.
+- Escape in a HUD field clears the temporary Line overrides and restores the live value.
+
+Important constraints preserved:
+
+- The persistent override scope is only `LineTool` in `WaitingForSecondPoint`.
+- Other tools still use the previous editable-field shell/fallback behavior.
+- No parser changes were made.
+- No direct override logic has been added yet for Rectangle, Circle, Polyline, Arc, Rotate or Scale.
+- The bottom fallback remains present.
+
+Recommended validation:
+
+- Start Line, click the first point, focus `Distance`, type `100`, press Tab or click the Angle field, type `45`, press Enter. Verify that the created line is 100 units at 45 degrees.
+- Start Line, type only Distance and press Enter. Verify that the line uses the typed distance and the current live angle.
+- Start Line, type only Angle and press Enter after moving the cursor. Verify that the line uses the live distance and typed angle.
+- Press Escape while a HUD field is focused and verify that temporary overrides are cleared.
+
+Next recommended step: after validation, either add tests around the new Line HUD override path or extend the same override model to Polyline line-mode, which can share most of the Distance/Angle logic.
+
+## 2026-05-30 — Dynamic Command HUD Step 14 Polyline line-mode Distance/Angle override
+
+The fourteenth Dynamic Command HUD step extends the persistent Distance/Angle HUD override model from `LineTool` to `PolylineTool` while it is in `PolylineToolState.CollectingVertices`.
+
+Implemented scope:
+
+- `MainWindowViewModel.BuildCommandHudFields()` now uses the override-aware Distance/Angle field builder for:
+  - `LineTool` in `WaitingForSecondPoint`;
+  - `PolylineTool` in `CollectingVertices`.
+- The HUD override commit path was generalized from a Line-only helper to a Distance/Angle point helper.
+- Supported override target detection is centralized in `IsDistanceAngleHudOverrideTargetActive()`.
+- The preview path still uses `CadWorkspace.PreviewPointFromCommandLine(...)`.
+- The confirm path still uses `CadWorkspace.SubmitPointFromCommandLine(...)`.
+
+Behavior:
+
+- In Polyline line mode, entering Distance and/or Angle in the HUD updates the preview point.
+- Pressing Enter confirms the next polyline vertex using the current override combination.
+- Arc mode is deliberately excluded; entering arc points remains handled by the normal command input and pointer flow.
+- Unsupported tools clear the temporary HUD overrides defensively.
+
+This keeps the override model incremental: Line and Polyline line-mode share the same Distance/Angle point-resolution path, while Rectangle/Circle/Arc remain future steps.
+
+
+### Dynamic Command HUD mouse transparency update
+
+The command HUD is now treated as a keyboard-driven overlay, not as a mouse target. The overlay is transparent to hit testing so fast mouse movement over `Distance`, `Angle` or the HUD command input cannot steal pointer events from the CAD canvas. Numeric HUD fields are entered from the keyboard using `Tab` from the command input, then `Tab` moves to the next numeric field and `Enter` confirms. This preserves the CAD rule that the mouse always remains free for picking points on the canvas.
+
+## 2026-05-30 — Dynamic Command HUD Step 16 Compact polar/coordinate command HUD
+
+The sixteenth Dynamic Command HUD step changes the UX direction from a generic command textbox to a compact, keyboard-driven HUD made of explicit numeric fields.
+
+Implemented in this step:
+
+- Removed the visible generic command text box from the HUD.
+- Removed the bottom command line fallback above the status bar.
+- Removed the blue `active-command-label` command box from the visible command UI by removing the bottom command row that used it.
+- The HUD field layout is now compact and wraps fields horizontally.
+- Command options no longer render as `[L]ine [A]rc [C]lose`; instead the shortcut letter is rendered in the project yellow and the remaining keyword text is rendered normally, e.g. `Line Arc Close` with only `L`, `A`, `C` highlighted.
+- Added a persistent generic `CommandHudInputState` with `Distance`, `AngleDegrees`, `X`, and `Y` overrides. The state is no longer tied to Line-specific private fields.
+- Line and Polyline line-mode now expose the compact field sequence: `Distance`, `Angle`, `X`, `Y`.
+- When no base point exists, the HUD can still show live `X` and `Y` mouse coordinates in UCS space.
+- The status bar no longer includes the live mouse coordinate text; coordinates now belong to the HUD.
+- Initial numeric typing while the CAD canvas is focused is routed to the first editable HUD field instead of the removed generic command input buffer.
+- `Tab` cycles through HUD fields instead of returning to a generic textbox.
+- `X` and `Y` overrides can resolve absolute UCS coordinates for Line and Polyline line-mode when both coordinates are supplied.
+
+Important constraints:
+
+- The mouse-transparent HUD rule remains: HUD fields are keyboard-driven and do not capture mouse hit testing.
+- Advanced command aliases still use an internal command buffer for now, but there is no longer a visible generic textbox.
+- The full geometric override behavior remains validated first on Line and Polyline line-mode. Other tools still need their own semantics before becoming fully editable through the new generic state.
+
+Recommended validation:
+
+- Start Line, click the first point, type `100`, verify the value goes into `Distance` and not into any generic textbox.
+- Press `Tab`, type `45`, press `Enter`, verify the line is confirmed using Distance/Angle.
+- Start Line, click the first point, press `Tab` until `X`, type an X coordinate, press `Tab`, type a Y coordinate, press `Enter`, verify the endpoint is set by absolute UCS coordinates.
+- Start Polyline, verify the same Distance/Angle and X/Y sequence for straight segments.
+- Verify options such as Line/Arc/Close display without brackets and with only the shortcut letter in yellow.
+- Verify there is no bottom command row above the status bar.
+
+## 2026-05-30 — Dynamic Command HUD Step 17 Numeric routing and first-point coordinates fix
+
+The seventeenth Dynamic Command HUD step fixes the first regression found after removing the generic command textbox.
+
+Changes in this step:
+
+- Initial numeric typing from the CAD canvas is now routed automatically only to a primary numeric field such as `Distance`, `Width`, `Radius`, or `Factor`.
+- Initial numeric typing is no longer routed automatically to `X` or `Y` when the command is still waiting for the first point.
+- `X`/`Y` coordinate entry remains available intentionally through `Tab` navigation.
+- Coordinate overrides are no longer limited to Line/Polyline after a base point exists: when an `ICommandDrivenTool` is expecting point input, complete `X` and `Y` values can submit an absolute UCS point.
+- Distance/Angle polar override remains restricted to Line and Polyline line-mode until other tools receive explicit semantics.
+
+Validation focus:
+
+- Start Polyline while it says to click the first point, type `100`: it must not jump into `X` automatically.
+- Press `Tab` intentionally to enter `X`, type X, press `Tab`, type Y, press `Enter`: the first point should be submitted from absolute UCS coordinates.
+- After the first point exists, typing `100` should still route to `Distance` for Line/Polyline line-mode.
+
+## 2026-05-30 — Dynamic Command HUD Step 18 Keyboard Tab focus trap fix
+
+This step fixes the second regression found after the compact HUD removed the visible generic command textbox.
+
+Problem observed:
+
+- In `Polyline`, while the command was still waiting for the first point, pressing `Tab` did not reliably focus the first HUD coordinate field `X`.
+- After clicking the first polyline point and typing `100` into `Distance`, pressing `Tab` could leave the HUD and focus the `X` property in the right property panel instead of moving to HUD `Angle`.
+
+Changes in this step:
+
+- `MainWindow` now registers a tunneling `KeyDown` handler for `Tab` using `InputElement.KeyDownEvent` and `RoutingStrategies.Tunnel`.
+- When the dynamic HUD is visible and the command input buffer is empty, `Tab` is trapped before Avalonia focus traversal can move to external controls.
+- If a HUD numeric field is focused, `Tab` commits that field without confirming the command and moves to the next editable HUD field.
+- If focus is still on the canvas, `Tab` focuses the first editable HUD field.
+- A keyboard-only active HUD field reference is tracked so that numeric text routed from the canvas to `Distance` can still advance to `Angle` even if normal focus traversal would otherwise escape.
+
+Expected validation:
+
+- Start `Polyline` and keep it at `Click first point`; press `Tab`: focus must go to HUD `X`.
+- Type X, press `Tab`: focus must move to HUD `Y`.
+- Press `Enter`: the first point should be submitted from complete X/Y coordinates.
+- Click the first polyline point, type `100`: value must go to HUD `Distance`.
+- Press `Tab`: focus must move to HUD `Angle`, not to the property panel.
+- Type `45`, press `Enter`: the next polyline vertex should be confirmed using Distance/Angle.
+
+### Dynamic Command HUD Step 21 — Logical keyboard input reset
+
+The editable HUD fields have been moved away from real Avalonia TextBox focus traversal. Numeric HUD input is now handled as a logical keyboard state in `MainWindow.axaml.cs`, so `Tab` cycles through the available HUD field kinds instead of relying on focused TextBox controls. This avoids focus escaping to the Property Panel. Pointer clicks clear the temporary HUD overrides so distance/angle values do not persist unexpectedly into the next polyline segment or command point.
+
+## 2026-05-30 — Dynamic Command HUD Step 22 active field highlight and first-point coordinates
+
+This step keeps the logical, mouse-transparent HUD model introduced in Step 21 and adds an explicit visual cue for the active logical field.
+
+Changes:
+
+- The active HUD field is now highlighted in the OpenCad2D yellow accent.
+- The highlight is driven by the logical `CommandHudFieldKind`, not by Avalonia focus.
+- HUD `TextBox` controls remain mouse-transparent; the mouse is still dedicated to the CAD canvas.
+- `Tab` navigation is still logical and cycles through available field kinds.
+- Coordinate entry for first points is supported through the existing `X`/`Y` HUD fields:
+  - while a command is waiting for the first point, press `Tab` to enter `X`;
+  - type X, press `Tab` to enter `Y`;
+  - type Y, press `Enter` to submit the absolute UCS point.
+
+Validation focus:
+
+- Start `Polyline`, before clicking the first point press `Tab`: `X` must be visibly highlighted.
+- Type an X value, press `Tab`: `Y` must be visibly highlighted.
+- Press `Enter` after both X and Y are set: the first point must be submitted.
+- After the first point, type `Distance`, press `Tab`: `Angle` must be visibly highlighted.
+
+## 2026-05-30 — Dynamic Command HUD Step 23 active-field numeric routing verification
+
+Claude's external review was checked against the current code. One proposed change was accepted and one was intentionally rejected.
+
+Accepted:
+
+- Numeric routing now respects the existing logical HUD field before falling back to the preferred initial field. This keeps the sequence `Distance -> Tab -> Angle -> type number` from routing the next number back to `Distance`.
+- The HUD commit handler now recognizes `Width`, `Height`, `Radius` and `Factor` as valid HUD numeric field kinds, preparing the common persistent input state for later tool-specific semantics.
+
+Rejected intentionally:
+
+- `X` was not added to the automatic preferred numeric field list. First-point coordinate entry must remain intentional through `Tab`; otherwise typing `100` while a command asks for the first point would again jump into `X`, which was already identified as undesirable.
+- Complete X/Y coordinate confirmation still requires both coordinates when confirming a point. Missing coordinate fallback to the live pointer may be considered later, but it is not part of this safe correction.
+
+Validation focus:
+
+- Start `Polyline`, click the first point, type `200`, press `Tab`, type `45`, press `Enter`: the second value must remain on HUD `Angle`, not return to `Distance`.
+- Start `Polyline` while it asks for the first point, press `Tab`, enter X, press `Tab`, enter Y, press `Enter`: the first point should be submitted from X/Y.
+- Typing a plain number during first-point prompt should not automatically route to X.
+
+
+### Step 24 — Freeze complementary polar HUD value
+
+When the user starts typing a polar HUD value, the complementary live value is frozen immediately. Typing `Distance` freezes the current live `Angle`; typing `Angle` freezes the current live `Distance`. This prevents the preview update from recalculating the missing polar component from a changed/stale pointer state and keeps the value that was visible when typing began.
+
+## 2026-05-30 — Dynamic Command HUD Step 25-bis stabilization checkpoint
+
+The active stable baseline is the dynamic HUD after Step 24. A later attempt to extend Rectangle routing caused broad regressions, so expansion is paused until the Line/Polyline HUD behavior is protected by tests.
+
+This checkpoint adds regression coverage for the stable behavior without adding new UI features:
+
+- Line distance entry freezes the live angle that was visible when typing started.
+- Polyline first point can be created through HUD `X`/`Y` coordinate fields.
+- Polyline `Distance`/`Angle` creates the next vertex and clears the override so subsequent segments start from live values.
+
+Important constraints for future changes:
+
+- Do not generalize `TryResolveCommandHudOverridePoint` for Rectangle/Circle/Arc without tool-specific tests.
+- Do not make `X` the default target for plain numeric input during first-point prompts.
+- Do not rely on Avalonia focus for HUD numeric fields; the HUD is mouse-transparent and uses logical field state.
+- The next safe feature step should be Rectangle read-only/visual verification first, then a dedicated rectangle resolver, not a shared resolver rewrite.
+
+### Step 29A — Dynamic Command HUD for Move/Copy
+
+The dynamic command HUD has been extended to the first modify tools: `MoveTool` and `CopyTool`.
+
+Scope:
+
+- `MOVE` and `COPY` still accept base points through the existing point input path, including HUD `X / Y`.
+- During destination point input, both tools now expose editable `Distance / Angle / X / Y` fields.
+- The implementation reuses the stable Line/Polyline distance-angle point resolver only for the destination phase of Move/Copy.
+- Existing dedicated resolvers for Rectangle/Circle/Rectangle by Sides remain isolated and unchanged.
+
+Regression tests cover:
+
+- moving a selected line with HUD `Distance / Angle`;
+- copying a selected line with HUD `Distance / Angle`;
+- verifying that the Move destination phase exposes editable `Distance / Angle / X / Y` fields.
+
+### Dynamic Command HUD - Step 29B fix
+
+- Fixed contextual command input parsing for `PointOrAngle` and `PointOrNumber` prompt kinds.
+- `Rotate` can now accept a scalar angle through the HUD `Angle` field in the destination phase.
+- `Scale` can now accept a scalar factor through the HUD `Factor` field in the destination phase.
+- The fix is in `CommandInputParser` and does not change the stabilized HUD resolvers for Line, Polyline, Rectangle, Circle, Rectangle by Sides, Move or Copy.
+
+## Dynamic Command HUD — modify tools audit step
+
+The dynamic HUD has been extended/audited for the first group of modify tools without changing the stable Line/Polyline/Rectangle/Circle/Rectangle-by-sides paths.
+
+Implemented HUD behavior:
+
+- `Mirror`: first axis point uses `X/Y`; second axis point uses `Distance/Angle/X/Y`; final `Yes/No` option remains command-option based.
+- `Break Point`: after selecting the entity, the break point phase exposes `X/Y` only.
+- `Break Segment`: first break point exposes `X/Y`; second break point exposes `Distance/Angle/X/Y`.
+- `Offset`: distance phase exposes `Distance`; second distance point exposes `Distance/X/Y`; side point remains point-based via `X/Y` or click.
+- `Fillet`: radius setup phase exposes `Radius`.
+- `Chamfer`: distance setup phase exposes `Distance`.
+- `Boundary Fill`: seed point uses `X/Y` through the generic point-input path.
+- `Trim`, `Extend`, `Delete`, `Explode`, and `Join` remain selection-only/confirm tools with no editable numeric HUD fields.
+- `Create Block` and `Insert Block` are not normal `ICommandDrivenTool` tools; they remain modal/pending-placement flows and need a later dedicated HUD step.
+
+A manual checklist was added at `docs/testing/dynamic-command-hud-modify-tools-checklist.md`.
+
+### Dynamic Command HUD — Step 30B modify tools regression guard
+
+Added automated regression coverage for the modify tools audited in Step 30A.
+
+Covered behaviors:
+
+- `Mirror` selected-entity flow exposes `X/Y` for the first axis point and `Distance/Angle/X/Y` for the second axis point.
+- `Offset` exposes editable `Distance` in the initial distance phase and accepts a typed distance.
+- `Fillet` exposes editable `Radius` after the `Radius` option and accepts a typed radius.
+- `Chamfer` exposes editable `Distance` after the `Distance` option and accepts a typed distance.
+- `Boundary Fill` exposes only `X/Y` for the seed point.
+- `Trim`, `Extend`, `Explode`, and `Join` do not expose scalar HUD overrides.
+
+This step is intentionally test/documentation-only. It does not change the HUD routing or any tool resolver.
+
+
+### Step 30C - Mirror HUD Tab and option fix
+
+- Tab is reserved for logical HUD field traversal while a command-driven tool is active; CadCanvas grip-edit Tab is now limited to SelectionTool.
+- Command option shortcuts such as Mirror Yes/No are handled by the window preview key path after the generic HUD textbox removal.
+- Manual check: MIRROR with a selected curve, Tab should enter X for first axis point; at delete-source prompt, Y/N should execute the option.
+
+### Step 30D - Offset / Fillet / Chamfer scalar validation alignment
+
+- Kept the existing HUD routing/resolvers unchanged.
+- Aligned HUD scalar validation with the underlying tools:
+  - `Offset.Distance` remains strictly positive.
+  - `Fillet.Radius` accepts zero and rejects negative values.
+  - `Chamfer.Distance` accepts zero and rejects negative values.
+- Added regression tests so this distinction is not lost while extending other modify tools.
+
+### Step 30E - Break / Boundary Fill HUD regression guard
+
+- Kept the existing Break / Boundary Fill HUD routing unchanged.
+- Added ViewModel-level regression coverage for:
+  - `Break Point` after entity selection: HUD exposes `X/Y` only and coordinate confirmation breaks a line at the projected point.
+  - `Break Segment`: first break point exposes `X/Y`; second break point exposes `Distance/Angle/X/Y`; distance/angle confirmation removes the expected segment.
+  - `Boundary Fill`: seed point `X/Y` creates a filled closed polyline inside a line boundary.
+  - `Boundary Fill`: outside seed point leaves the drawing unchanged and reports the no-boundary message.
+  - `Delete` is now included with `Trim`, `Extend`, `Explode`, and `Join` in the selection-only no-scalar-HUD guard.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 291 tests.
+
+### Step 30F - Selection-only tools regression guard
+
+- Kept the existing selection-only command routing unchanged.
+- Added ViewModel-level regression coverage for:
+  - `Trim`, `Extend`, `Delete`, `Explode`, and `Join` expose no editable scalar HUD fields.
+  - All five commands cancel back to Selection with `Escape`.
+  - `Delete` selects by pointer and confirms with Enter.
+  - `Explode` selects a polyline by pointer and confirms with Enter.
+  - `Join` selects connected lines by pointer and confirms with Enter.
+  - `Trim` and `Extend` complete their boundary/target pointer flows through the ViewModel/tool pipeline.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 301 tests.
+
+### Step 31 - Block tools HUD point input
+
+- Kept `Create Block` and `Insert Block` outside the normal `ICommandDrivenTool` pipeline.
+- The existing dialogs still own block name, picked-base-point choice, selected definition, scale and rotation.
+- Pending `Create Block` base-point pick now makes the command HUD visible as `Create Block` with editable `X/Y` only.
+- Pending `Insert Block` placement now makes the command HUD visible as `Insert Block` with editable `X/Y` only.
+- Confirming complete HUD coordinates calls the existing pending commit methods:
+  - `CommitCreateBlockBasePointPick(...)`;
+  - `CommitPendingBlockInsertion(...)`.
+- The shared Distance/Angle resolver was not broadened for blocks.
+- Added ViewModel-level regression coverage for HUD visibility/fields and coordinate confirmation for both block pending flows.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 303 tests.
+
+### Step 31A - Escape cancellation regression
+
+- Restored the pre-HUD `Escape` behavior for active commands: pressing `Esc` while the command HUD or an editable HUD field has focus now cancels the active command and returns to Selection instead of only clearing HUD text.
+- `MainWindowViewModel.Escape()` now clears HUD overrides and cancels pending non-tool workflows first:
+  - `Create Block` base-point pick;
+  - `Insert Block` placement;
+  - library insertion;
+  - imported drawing placement.
+- Window-level HUD key handling now routes `Esc` through the same active-command escape path and ends point-placement snapping after pending workflows are cancelled.
+- Added ViewModel-level regression coverage for HUD coordinate override cancellation plus `Create Block` / `Insert Block` pending cancellation.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 306 tests.
+- `dotnet test OpenCad2D.sln` passes with 2054 tests.
+
+### Step 31B - Additional point-driven commands
+
+- Fixed the generic HUD field fallback so `CommandInputKind.Point` and `PointOrOption` still expose editable `X/Y` even after a previous base point/live measurement exists.
+- Added HUD coordinate regression coverage for:
+  - `Point`;
+  - `Text`;
+  - `Multiline Text`;
+  - `Zoom Window` second corner.
+- Extended `Measure Distance` second-point HUD support to expose `Distance/Angle/X/Y`, matching the command-line direct-distance behavior.
+- Added regression coverage for `Measure Distance` typed `Distance/Angle` completion through the HUD.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 311 tests.
+
+### Step 31C - Text HUD async confirmation fix
+
+- Fixed a crash introduced by the `Text` / `Multiline Text` HUD coordinate path.
+- Root cause: HUD `Enter` confirmation used the synchronous ViewModel point submission path, while the real Avalonia text provider intentionally throws from `RequestText()` and must be called through `RequestTextAsync()`.
+- Added `MainWindowViewModel.TryCommitCommandHudFieldInputAsync(...)` for HUD confirmations when the active tool implements `IAsyncCadTool`.
+- Window-level HUD `Enter` handling now awaits that async path, so `Text` and `Multiline Text` open their dialog through the same non-blocking route as canvas clicks.
+- Added regression coverage with an async-only text provider that throws if the synchronous path is used.
+- `dotnet test tests\OpenCad2D.App.Tests\OpenCad2D.App.Tests.csproj` passes with 313 tests.
+- `dotnet test OpenCad2D.sln` passes with 2061 tests.
+
+### Dynamic Command HUD — remaining work checkpoint after Step 31
+
+Current stable HUD coverage includes Line, Polyline, Rectangle, Rectangle by Sides, Circle, Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer. The fixed bottom command row and generic command textbox are removed; HUD input is logical, mouse-transparent and keyboard-driven.
+
+Remaining work to resume next session:
+
+1. **Final cleanup**
+   - Update `docs/ai-handoff.md`, `docs/command-input.md`, `docs/tools.md`, `docs/commands.md`, and the HUD specification.
+   - Remove or simplify residual legacy command-line helper code only after all HUD flows are covered.
+
+Important guardrail: do not broaden the shared HUD resolver while finishing the remaining tools. Continue using narrow tool/phase-specific behavior and regression tests, as done for Rectangle, Circle, Rectangle by Sides and modify tools.
+
+### Step 31D - HUD stability hardening
+
+- Added `CommandHudFieldRoutingPolicy` to centralize logical keyboard routing for editable HUD fields.
+- Replaced the hard-coded Window-only preferred-field heuristic with a priority policy that supports:
+  - active field preservation when the field still exists;
+  - scalar-first routing for Distance/Radius/Width/Height/Factor;
+  - Angle-only phases such as rotate/angle tools;
+  - Sides-only phases such as Polygon side count;
+  - coordinate-only phases using `X` as the first logical field.
+- Removed the non-command-source blocker that prevented numeric HUD routing when stale command text was present; routed HUD numeric input now clears the command text deliberately.
+- Added a ViewModel-to-Window event, `CommandHudInputOverridesCleared`, so ViewModel-level override resets can explicitly clear the Window logical HUD field state instead of relying on manual paired calls.
+- Extended HUD scalar handling to include `Sides` and added validation for whole numbers greater than or equal to 3.
+- Polygon now exposes an editable `Sides` HUD field while waiting for side count and accepts it through the same HUD commit path.
+- Added regression coverage for the routing policy and Polygon side-count HUD input.
+- Test note: this environment did not have the `dotnet` executable available, so the test suite could not be executed here. Run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31E - Rectangle HUD width/height stabilization
+
+- Fixed a Rectangle HUD regression where typed `Width`/`Height` values were stored in `CommandHudInputState` but the displayed HUD fields continued to show live mouse-derived `DeltaX/DeltaY` after `Tab` or pointer movement.
+- `BuildWidthHeightFields(...)` now prefers typed HUD overrides before falling back to live measurements.
+- Added a Rectangle-specific size resolver that converts typed `Width`/`Height` into the opposite corner point while preserving the cursor quadrant/sign.
+- HUD preview now applies resolvable size overrides, not only polar `Distance/Angle` overrides.
+- Added regression coverage for:
+  - typed Rectangle width remaining visible after mouse movement;
+  - typed Rectangle width + height creating an exact closed polyline rectangle.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31F - Rectangle by Sides HUD polar/height fix
+
+- Fixed a Rectangle by Sides HUD regression where the first side was exposed as `Width`, causing the generic size override resolver to intercept the value instead of resolving a polar first-side endpoint.
+- Rectangle by Sides first-side HUD now exposes `Distance/Angle` and participates in the shared polar point override target list while waiting for the first side endpoint.
+- Rectangle by Sides second-side `Height` confirmation is handled as a dedicated scalar command input, matching the tool's existing exact-distance command path.
+- Added regression coverage for:
+  - typed `Distance/Angle` advancing Rectangle by Sides from first-side input to height input;
+  - typed `Height` creating the expected closed polyline rectangle.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31G - HUD polar/radius audit
+
+- Audited draw and dimension tools that displayed radius-like HUD labels but could not resolve those typed values into tool points.
+- Fixed the shared HUD field builders so radius-like geometric point phases use `CommandHudFieldKind.Distance` when the value is actually a polar distance from a base point.
+- HUD fields now preserve typed overrides instead of reverting to live mouse measurements for:
+  - Circle radius;
+  - Arc start radius/angle;
+  - Arc end angle;
+  - Ellipse major radius/angle;
+  - Ellipse minor radius;
+  - Polygon radius/angle;
+  - generic `PointOrDistance` / `PointOrAngle` prompts where a base point exists.
+- Broadened polar HUD point resolution through the active command prompt instead of relying only on a brittle manual whitelist.
+- Added dedicated geometry resolution for:
+  - Arc end angle, which must use the existing arc radius rather than the current mouse distance;
+  - Ellipse minor radius, which must create a point perpendicular to the major axis instead of depending on the current mouse direction.
+- Added regression coverage for Circle, Polygon, Arc and Ellipse HUD input.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31H - Ellipse major-axis HUD regression fix
+
+- Fixed the Ellipse major-axis HUD commit path after the polar/radius audit.
+- Ellipse `WaitingForMajorAxis` displays `Major radius` + `Angle`, but its command prompt is a plain `Point`; it therefore must be explicitly treated as a polar HUD point override target.
+- Without that explicit target, typed `Distance/Angle + Enter` was handled but did not advance to the minor-radius phase.
+- Tightened the Ellipse regression test so it asserts that confirming the major-axis angle advances to the minor-axis prompt before entering the minor radius.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31I - Intersection snap circle/polyline regression fix
+
+- Fixed an intersection snapping gap where `CircleEntity` did not intersect with `PolylineEntity`.
+- Rectangles and Rectangle by Sides results are stored as closed polylines, so circle/rectangle intersection snap could not be found even though line/circle and polyline/ellipse already worked.
+- `IntersectionSnapProvider` now handles both `PolylineEntity + CircleEntity` and `CircleEntity + PolylineEntity` using exact segment-circle intersections over the polyline interaction geometry.
+- Added distinct-point filtering so intersections shared by adjacent segments are not duplicated.
+- Added regression coverage for:
+  - circle intersection with an axis-aligned closed rectangle polyline;
+  - circle intersection with a rotated closed rectangle polyline, matching Rectangle by Sides geometry.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31J - Intersection snap fallback audit
+
+- Added a conservative `CadEntityIntersectionService.Intersect(...)` fallback to `IntersectionSnapProvider` for entity pairs that are not covered by the provider's exact fast-path switch.
+- Kept the existing exact/direct cases for line-line, line/polyline, polyline/polyline, line/circle, circle/circle, circle/polyline, line/arc and circle/arc.
+- The fallback now covers previously fragile or missing curve-pair combinations such as:
+  - `ArcEntity` + `ArcEntity`;
+  - `ArcEntity` + `PolylineEntity`;
+  - `LineEntity` + `EllipticalArcEntity`;
+  - `PolylineEntity` + `EllipticalArcEntity`;
+  - other native curve pairs already supported by the core editing intersection service.
+- Added regression coverage for arc/arc, arc/polyline, line/elliptical-arc and polyline/elliptical-arc intersection snaps.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31K - Pending placement HUD completion
+
+- Extended the dynamic HUD to pending point-placement workflows that do not run as normal `ICommandDrivenTool` instances.
+- `IsCommandHudVisible`, `CommandHudToolName`, `GetCurrentPromptState()` and the HUD point submission path now cover:
+  - Create Block base-point pick;
+  - Insert Block insertion point;
+  - Library item insertion point;
+  - OpenCad2D import drawing insertion point.
+- These workflows expose only absolute `X/Y` coordinate fields while waiting for the placement point. Dialog-owned options remain in their dialogs.
+- Added regression coverage for HUD-driven Library insertion and HUD-driven OpenCad2D import placement. Existing block tests already cover Create Block and Insert Block.
+- Updated `docs/command-input.md`, `README.md` and `docs/specs/v0.8.121-dynamic-command-hud.md` so the documentation describes the dynamic HUD as implemented rather than as a future migration.
+- Internal command-buffer helpers were intentionally kept because aliases, option shortcuts, autocomplete and history navigation still depend on them after removal of the visible bottom command row.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31L - Modify-tool entity selection snap guard
+
+- Fixed a UI-level snapping leak where a temporary point-placement snap override could remain active when switching to a modify tool.
+- `CadCanvas.GetEffectiveEnabledSnaps()` now gives non-selection active tools priority over canvas-level snap overrides; the override remains available for modal pending-placement workflows that still run while the selection tool is active.
+- Added `MainWindow.ActivateTool(...)` so toolbar tool activation clears pending point-placement snapping before changing the active tool.
+- Audited modify tools that wait for entity selection and added a consolidated regression test asserting `SnapKind.EntityOnly` for Align, Break Point, Break Segment, Chamfer, Copy, Delete, Explode, Extend, Fillet, Join, Mirror, Move, Offset, Rotate, Scale and Trim.
+- This keeps Break tools and other selection-oriented modify tools on the entity rectangle marker while they ask for a target entity, then allows geometric snaps only after the command transitions to a point-input phase.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+### Step 31M - Modify-tool snap audit test isolation fix
+
+- Fixed the consolidated modify-tool snap audit so each tool is created and evaluated with its own fresh `ToolContext`.
+- This avoids false regressions caused by sharing mutable selection/tool state across different tools inside the same test.
+- The audit still checks the same contract: when a modify tool starts in an entity-selection phase with no preselection, `GetActiveSnapKind(...)` must return `SnapKind.EntityOnly`.
+- The assertion now includes the tool name in the failure message so any future regression identifies the offending tool directly.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+### Step 31N - Break and Boundary Fill HUD 30E consolidation
+
+- Audited the Step 30E HUD contract for Break Point, Break Segment and Boundary Fill against the current codebase.
+- Confirmed Break Point exposes only `X/Y` after target-entity selection; the entered point is still projected/validated by the native break service.
+- Confirmed Break Segment exposes `X/Y` for the first break point, then `Distance/Angle/X/Y` for the second break point, using the same polar override path as other two-point flows.
+- Confirmed Boundary Fill exposes only `X/Y` for the seed point and keeps click-based seed selection supported.
+- Added routing-policy regression coverage for the two most fragile keyboard cases in this group: coordinate-only HUD retaining `Y` after Tab, and second break-point HUD preferring `Distance` over coordinates for the first numeric keystroke.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31O - HUD 30F selection-only modify command consolidation
+
+- Audited the Step 30F HUD contract for Trim, Extend, Delete, Explode and Join.
+- These commands intentionally keep the dynamic HUD visible only as a prompt/options surface while they are waiting for entity selections.
+- They must not expose editable numeric HUD fields during selection phases; entity picking remains canvas-driven with `SnapKind.EntityOnly` covered by the modify-tool snap audit.
+- Added ViewModel-level regression coverage asserting that Delete, Explode, Join, Trim and Extend expose no editable HUD fields while waiting for entity selection, including the second Trim/Extend target-selection phase after a boundary has been picked.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31P - Create Block HUD base-point cleanup
+
+- Hardened the Create Block base-point pick workflow against stale HUD coordinate overrides.
+- `BeginCreateBlockBasePointPick(...)` now clears previous HUD overrides before exposing the `X/Y` base-point fields.
+- `CommitCreateBlockBasePointPick(...)` and `CancelCreateBlockBasePointPick()` now clear HUD overrides as part of ending the pending workflow, so a partially typed base point cannot leak into the next command or the next Create Block attempt.
+- Added regression coverage for stale `X`/`Y` override cleanup across Create Block cancellation and restart.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31Q - Create Block empty-selection guard and selection counter
+
+- Hardened the Create Block UI so the modal dialog no longer allows creating an empty block.
+- `CreateBlockOptionsWindow` now receives the current Create Block candidate count and displays `Entities in block: N`.
+- When the count is zero, the OK button is disabled and the base-point pick button refuses to continue.
+- The dialog now includes a `Select entities from drawing` action. It closes the dialog and returns control to the Selection tool with a message telling the user to select one or more entities and reopen Create Block.
+- `MainWindowViewModel` exposes `CreateBlockSelectedEntityCount` and `CanCreateBlockFromCurrentSelection` for the UI-level guard.
+- `BeginCreateBlockBasePointPick(...)` now also rejects empty selection, so the base-point workflow cannot be started for an empty block even if called directly.
+- `CreateBlockFromSelection(...)` still keeps the final safety check and rejects empty selection before creating any block definition or command history entry.
+- Added regression coverage for empty-selection rejection and candidate-count tracking.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31R - Create Block guided selection and base-point review loop
+
+- Changed the Create Block workflow so the dialog can be temporarily closed for canvas interaction and then reopened automatically.
+- `Select entities from drawing` now preserves the current draft block name/base point, activates the Selection tool, and reopens the Create Block dialog after an entity/window selection completes.
+- `Pick base point from drawing` now picks the base point and returns to the Create Block dialog with the picked `X/Y` filled in, instead of immediately creating the block.
+- The final block is created only when the user presses OK in the dialog, so the user can review the entity counter, block name and base point before creation.
+- The ViewModel now exposes `CompleteCreateBlockBasePointPick(...)` for UI review workflows while keeping `CommitCreateBlockBasePointPick(...)` available for direct programmatic creation paths.
+- `TrySubmitPendingPlacementHudPoint(...)` stores a completed Create Block base-point draft instead of silently creating the block from HUD coordinates, allowing the window to reopen the dialog after HUD Enter as well.
+- Selection-state notifications now also raise `CreateBlockSelectedEntityCount` and `CanCreateBlockFromCurrentSelection`.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31S - Create Block SHIFT multi-selection completion
+
+- Refined the guided `Create Block` selection review loop so a normal single entity/window selection reopens the Create Block dialog immediately.
+- When the selection was made with `Shift`, the dialog no longer reopens after every click/toggle; the user can keep adding/removing entities and press `Enter` to finish the multi-selection and return to the dialog.
+- `CadCanvasWorkspaceChangedEventArgs` now carries the current `KeyModifiers`, allowing `MainWindow` to distinguish normal selection completion from SHIFT accumulation without depending on localized tool-result messages.
+- `Escape` now also clears a pending Create Block entity-selection review loop.
+
+### Step 31T - Insert Block HUD insertion cleanup
+
+- Consolidated the Insert Block pending-placement workflow to mirror the other dialog-driven placement paths.
+- `BeginInsertBlockPlacement(...)` now clears stale HUD `X/Y` overrides before exposing the insertion-point HUD fields.
+- `CommitPendingBlockInsertion(...)` and `CancelPendingBlockInsertion()` now also clear HUD overrides, so a partially typed insertion point cannot leak into a later block insertion or a different command.
+- Scale and rotation remain dialog options; the dynamic HUD for Insert Block exposes only insertion-point `X/Y`.
+- Existing Insert Block creation/undo/cancel behavior is unchanged: the block reference is still created only after a click or confirmed HUD coordinate point.
+- Added regression coverage for stale `X/Y` cleanup on begin, cancel and commit.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+### Step 31U - Final HUD command-line cleanup checkpoint
+
+- Removed the now-obsolete `IsBottomCommandLineVisible` ViewModel property and the remaining property-change notifications for it. The XAML no longer contains a bottom command row, so this flag was dead compatibility state.
+- Removed the unused `CommandInputTextBox_KeyDown(...)` handler that belonged to the transitional bottom command input.
+- Removed dead HUD textbox helpers that returned constant/empty values after the HUD became mouse-transparent and logical-field driven.
+- Added window-level command-buffer key handling for the no-bottom-row UI: typed aliases/options can still be submitted with Enter, edited with Backspace, cleared/cancelled with Escape, autocompleted with Tab and recalled with Up/Down.
+- Kept the internal `_commandInputBuffer` and command submission helpers intentionally: aliases, autocomplete, history navigation, option shortcuts such as `Y/N`, and command-name typing still use that buffer even without a visible bottom command row.
+- Updated `docs/command-input.md`, `docs/tools.md`, `docs/commands.md` and the HUD specification to describe the current HUD-first input model, Create Block review loop and Insert Block pending-placement cleanup.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+## 2026-05-31 — Dynamic HUD stabilization documentation update
+
+Status: [x] completed for the current HUD stabilization scope.
+
+Summary:
+
+- The dynamic cursor-adjacent HUD is now the primary visible command-input surface.
+- The fixed bottom command row and its obsolete visibility flag have been removed.
+- The internal command buffer remains intentionally for aliases, command options, autocomplete, history navigation and single-key option responses.
+- Manual verification after the latest HUD/Create Block/Insert Block pass is documented in `docs/testing/dynamic-command-hud-manual-verification-2026-05-31.md`.
+- `docs/roadmap.md` now marks v0.8.121 / HUD-11 as completed for the current scope.
+- `docs/specs/v0.8.121-dynamic-command-hud.md` now has a final stabilization summary and no longer describes the HUD milestone as merely planned/in-progress.
+
+Current stable HUD scope:
+
+- primary draw tools: Line, Polyline, Rectangle, Rectangle by Sides, Circle, Arc, Ellipse, Polygon and Spline prompt flow;
+- transform/modify numeric phases: Move, Copy, Rotate, Scale, Align, Mirror, Offset, Fillet and Chamfer;
+- break/fill phases: Break Point, Break Segment and Boundary Fill;
+- selection-only modify tools: Trim, Extend, Delete, Explode and Join;
+- pending placement flows: Create Block base point, Insert Block insertion point, Library insertion and OpenCad2D import placement.
+
+Important implementation guidance for future work:
+
+- Keep `CommandHudFieldRoutingPolicy` as the first-numeric-character routing authority.
+- Keep ViewModel override clearing synchronized with the Window logical HUD input state through `CommandHudInputOverridesCleared`.
+- Do not reintroduce a visible bottom command row.
+- Do not route new command phases by ad-hoc key handling in the Window. Use prompt contracts, HUD field definitions and narrow regression tests.
+- For any tool that asks for entity selection, verify `SnapKind.EntityOnly` so endpoint/midpoint/intersection snaps do not leak into selection prompts.
+
+### Step 31V - Opt-in Nearest snap toggle
+
+- Exposed the existing `SnapKind.Nearest` mode in the Snap bar with a dedicated `Nearest` checkbox.
+- Kept Nearest disabled by default for new documents and missing legacy snap settings, because closest-point snapping is useful but too noisy as a permanent default.
+- Kept the existing SnapService priority policy where Nearest is below explicit geometric snaps and above Grid.
+- Added regression coverage to assert that a ViewModel created without saved snap defaults has Endpoint/Grid enabled but Nearest disabled.
+- Updated snapping documentation and roadmap notes to describe Nearest as an opt-in drafting aid.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+### Step 31W - SmartPoint capture foundation
+
+- Added `SmartPoint` and `SmartPointStore` in `OpenCad2D.Interaction.Snapping` as bounded, runtime-only tracking references.
+- The store deduplicates refreshed references, keeps only the newest entries and caps the active SmartPoint list at five points.
+- `CadCanvas` now captures SmartPoints after a 400 ms hover over strong geometric snaps while a non-selection command is active.
+- Captured snap kinds are intentionally limited to Endpoint, Midpoint, Center, Quadrant and Intersection; Entity, Grid and Nearest are excluded to avoid noisy or selection-oriented tracking references.
+- SmartPoints are drawn as small cyan temporary markers and are cleared with snap-state reset, pointer leave/pan pending-state reset, and completed/cancelled tool results.
+- This step does not yet generate tracking lines, tracking intersections or manual distance input. It is the stable infrastructure layer for the next Extension/SmartTrack step.
+- Added `SmartPointStoreTests` for maximum count, dedup/refresh and clear behavior.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+### Step 31X - Basic SmartPoint tracking lines
+
+- Added `TrackingLineKind`, `TrackingLine` and `TrackingEngine` in `OpenCad2D.Interaction.Snapping`.
+- Each captured SmartPoint now generates horizontal and vertical runtime-only tracking lines.
+- `CadCanvas` renders the tracking lines as cyan dashed overlays before the SmartPoint markers and snap marker.
+- When the cursor is within snap tolerance of a tracking line, the canvas exposes a temporary `SnapKind.Tracking` candidate.
+- Explicit object snaps still win over tracking; tracking can override lower-priority Grid/Nearest candidates.
+- Pointer input now uses the projected tracking point when the active candidate is `SnapKind.Tracking`, allowing existing point-based tools to consume tracking points without tool-specific code.
+- Added `TrackingEngineTests` for line creation, horizontal/vertical projection and tolerance rejection.
+- Manual distance input along the active tracking line was added in Step 31Y.
+
+
+### Step 31Y - Manual distance input on active tracking line
+
+- `SnapCandidate` now carries optional `TrackingOrigin` and signed `TrackingDirection` metadata for `SnapKind.Tracking` candidates.
+- `TrackingEngine` populates that metadata when it projects the cursor onto a horizontal/vertical SmartPoint tracking line.
+- Plain direct-distance command input now resolves from the SmartPoint origin along the signed tracking direction when a tracking candidate is active.
+- HUD distance input also avoids freezing the normal base-point angle while the current candidate is Tracking, so distance-only confirmation can resolve along the tracking line.
+- Explicit coordinate input remains higher priority than tracking distance input.
+- Added regression coverage for positive and negative signed tracking directions and command-line direct distance resolution through a tracking snap.
+- Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+## 2026-05-31 - SmartPoint tracking intersections
+
+Added `SnapKind.TrackingIntersection` and extended `TrackingEngine` so horizontal/vertical tracking lines from different SmartPoints can create temporary intersection snap candidates. The candidate carries no tracking origin/direction, so direct numeric tracking distance remains limited to `SnapKind.Tracking` line candidates. `CadCanvas` renders tracking intersections with a small circular tracking marker.
+
+
+## 2026-05-31 - Entity extension tracking for SmartPoints
+
+Added first-pass entity-extension tracking on top of the SmartPoint tracking foundation. `TrackingEngine` now builds both horizontal/vertical axis lines and `EntityExtension` lines. Extension lines are generated from line entities and from straight polyline segments when the captured SmartPoint belongs to the source entity. Bulged/arc polyline segments are intentionally skipped for stability.
+
+Added `SnapKind.Extension`, `TrackingLineKind.EntityExtension`, extension snap marker rendering in `CadCanvas`, and tests covering line extension, projection onto an extension candidate, and straight polyline segment extension. Extension candidates carry `TrackingOrigin` and signed `TrackingDirection`, so existing plain-distance input can resolve points along the real entity direction without tool-specific code.
+
+Test note: this environment did not have the `dotnet` executable available, so run `dotnet test OpenCad2D.sln` locally after applying the patch.
+
+
+## 2026-05-31 - Advanced snapping / SmartPoint tracking consolidation
+
+Current verified state before resuming the remaining v0.9 work:
+
+- `Nearest` is exposed in the Snap bar but remains disabled by default. It is intentionally low priority: strong geometric snaps win; Grid remains lower.
+- SmartPoint capture is command-scoped and runtime-only. It captures Endpoint, Midpoint, Center, Quadrant and Intersection after about 400 ms hover, with a maximum of five stored points.
+- SmartPoint tracking currently emits horizontal and vertical dashed overlays. Candidates are produced only near the cursor and are lower priority than explicit geometric snaps.
+- Plain numeric distance input can resolve along active `Tracking` and `Extension` candidates using `SnapCandidate.TrackingOrigin` and signed `TrackingDirection`.
+- `TrackingIntersection` is available for intersections between tracking lines from different SmartPoints. It deliberately carries no direct-distance metadata.
+- `Extension` is available for line entities and straight polyline segments only. Bulged polyline segments, arcs, tangent extension and richer polar-direction tracking remain deferred.
+- The manual verification checklist is documented in `docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md`.
+
+Important future guidance:
+
+- Keep `Nearest` opt-in. Do not enable it by default.
+- Do not let SmartPoint capture use `Nearest`, `Grid`, `Entity`, `Perpendicular` or `Tangent` without a deliberate UX review.
+- Keep tracking overlays non-persistent, non-selectable, non-exported and outside undo/redo.
+- For selection phases, continue to prefer `SnapKind.EntityOnly`; tracking must not leak into object-selection prompts.
+- Before adding tangent/arc extension, add isolated geometry tests and keep the first implementation conservative.
+
+## 2026-05-31 - SmartPoint Tracking toggle and resolved temporary snap input
+
+Addressed a usability issue where `TrackingIntersection` and `Extension` markers could be displayed as candidates but pointer input still used the raw cursor position. `CadCanvas.CreatePointerInfo()` now resolves temporary candidates (`Tracking`, `TrackingIntersection`, `Extension`) to the candidate point before forwarding the click to tools, so the circular tracking-intersection marker behaves as a real snap.
+
+Added a Snap bar checkbox named **SmartPoint Tracking**. It controls the runtime SmartPoint/Tracking subsystem independently from normal object snaps. Disabling it clears pending SmartPoints, tracking markers and current temporary snap candidates.
+
+Also updated direct distance handling so both `Tracking` and `Extension` candidates use `TrackingOrigin`/`TrackingDirection` for distance input. `TrackingIntersection` remains point-only and intentionally carries no distance direction metadata.
+
+
+
+## 2026-05-31 - SmartPoint Tracking polar directions
+
+Extended SmartPoint Tracking to reuse the active Polar Tracking angular step. `TrackingEngine.BuildLines(...)` and `FindNearestTrackingCandidate(...)` now accept an optional `polarTrackingStepDegrees` value. When provided, the engine adds `TrackingLineKind.Polar` lines through each SmartPoint for every half-turn direction generated by the step, excluding 0° and 90° because horizontal/vertical tracking lines already cover them.
+
+`CadCanvas` passes the current `Workspace.Context.AngleConstraintSettings.StepDegrees` only when Polar Tracking is enabled. The feature remains controlled by the **SmartPoint Tracking** checkbox: disabling SmartPoint Tracking still disables horizontal/vertical tracking, tracking intersections, entity extension and the new polar-direction tracking overlays.
+
+Implementation notes:
+
+- `TrackingLineKind.Polar` was added as a runtime-only line kind.
+- Polar tracking lines produce normal `SnapKind.Tracking` candidates.
+- Plain distance input works on polar tracking candidates through the existing `TrackingOrigin` and signed `TrackingDirection` metadata.
+- 90° polar mode intentionally adds no extra lines, avoiding duplicates of horizontal/vertical tracking.
+- The interaction layer remains decoupled from the app ViewModel and receives only the optional step value.
+
+
+## 2026-05-31 - SmartPoint Tracking real-geometry intersections
+
+Added tracking-line intersections against real linear drawing geometry. `TrackingEngine.FindNearestTrackingCandidate(...)` now checks, after tracking-line/tracking-line intersections and before plain line projection, whether any generated tracking line intersects a visible `LineEntity` or a straight `PolylineEntity` segment near the cursor. Matching candidates are returned as `SnapKind.TrackingIntersection` with the intersected entity id.
+
+Important constraints:
+
+- only finite line/straight-polyline-segment intersections are accepted;
+- parallel and collinear/overlapping cases are ignored;
+- bulged polyline segments, arcs, circles, splines and tangent intersections remain deferred;
+- `CadCanvas.CreatePointerInfo()` already resolves `TrackingIntersection` candidates to their candidate point, so clicks use the computed intersection rather than the raw cursor position.
+
+## 2026-05-31 - SmartPoint Tracking HUD label
+
+Added a small runtime HUD label for temporary SmartPoint Tracking candidates in `CadCanvas`. When the active snap candidate is `Tracking`, `Extension` or `TrackingIntersection`, the canvas now draws a compact label near the marker. `Tracking` and `Extension` candidates show distance and signed angle from their `TrackingOrigin`/`TrackingDirection` metadata, for example `TRACK L=100 A=45°` or `EXT L=250 A=0°`. `TrackingIntersection` candidates without direction metadata show `TRACK INT`.
+
+The label is visual-only and does not change snap resolution, persistence, export, selection or undo/redo behavior. It is intended to make the temporary circular/cross tracking markers easier to understand during manual drafting.
 
 
 ### Direct SmartPoint snap update
 
 Captured SmartPoints now produce `SnapKind.SmartPoint` temporary candidates when the cursor is close to the marker. The click is resolved to the captured point, and the marker can therefore be used directly as a snap point as well as a tracking/extension origin.
 
-### 2026-05-31 - Advanced snapping final consolidation
+## 2026-05-31 - Advanced Snapping / SmartPoint Tracking final consolidation
 
-Consolidated the Advanced Snapping / SmartPoint Tracking milestone before resuming the remaining v0.9 work. Final validated scope:
+The pre-v0.9 Advanced Snapping milestone is consolidated. Treat **SmartPoint Tracking** as the official feature name in UI/docs. It is a runtime drafting-aid subsystem, not persisted document geometry.
 
-- `Nearest` is available as an opt-in snap and remains disabled by default.
-- **SmartPoint Tracking** is the official UI name for the advanced temporary tracking subsystem.
-- The Snap bar includes an independent **SmartPoint Tracking** toggle. Disabling it clears SmartPoints, tracking lines, temporary markers and tracking HUD labels.
-- SmartPoints are captured only from strong object snaps and can be clicked directly via `SnapKind.SmartPoint`.
-- Tracking lines include horizontal, vertical and active Polar Tracking directions.
-- Entity extension tracking supports line entities and straight polyline segments.
-- Tracking intersections work between temporary tracking lines and between tracking lines and real linear geometry.
-- Numeric distance input works along active `Tracking` and `Extension` candidates.
-- Temporary markers are resolved as real candidate points; tools must not re-snap them to Grid/Ortho/Polar after selection.
-- Grid overlap with Tracking/Extension is handled conservatively: `TRACK GRID` / `EXT GRID` is shown only when the grid node lies on the temporary line, while the tracking/extension constraint remains dominant.
-- The tracking HUD label is drawn in the lower-left canvas overlay area to avoid the Dynamic Command HUD.
+Final implemented scope:
 
-Deferred beyond this milestone: arc/tangent extension, curve intersections, persistent/pinned SmartPoints and richer SmartPoint management UI.
+- `Nearest` snap is exposed but disabled by default. It remains a low-priority opt-in snap because it is useful but noisy.
+- SmartPoint capture is active only during point-based commands and only from strong real object snaps: Endpoint, Midpoint, Center, Quadrant and Intersection. Nearest, Grid, Entity, Perpendicular and Tangent must not create SmartPoints without a deliberate UX decision.
+- Captured SmartPoints are command-scoped, capped at five, deduplicated/refreshed, cleared on command end/cancel and available as direct `SnapKind.SmartPoint` candidates.
+- SmartPoint Tracking emits horizontal/vertical lines and additional Polar Tracking directions when Polar Tracking is enabled.
+- Entity extension tracking is implemented for `LineEntity` and straight `PolylineEntity` segments only. Bulged polyline segments, arcs, circles and tangents remain deferred.
+- Temporary intersections are implemented for tracking-line/tracking-line and tracking-line/real-linear-geometry cases.
+- `Tracking` and `Extension` candidates carry `TrackingOrigin` and signed `TrackingDirection`, so plain numeric input can resolve distance along the active temporary line.
+- Temporary candidates must behave as real snap results. When their marker is visible, pointer input must use the displayed candidate point and must not be re-snapped away to Grid, Ortho or Polar constraints.
+- Grid overlap is special: Grid may be shown together with Tracking/Extension only when the grid node lies on the temporary line. Labels are `TRACK GRID` or `EXT GRID`. The temporary line remains dominant; Grid must not pull the point off the line.
+- The SmartPoint Tracking HUD label is drawn in the lower-left canvas overlay area to avoid overlapping the Dynamic Command HUD. It is visual-only and not part of persistence, export, selection or undo/redo.
 
+Important regression guard: do not let SmartPoint Tracking become active during selection-only prompts. Selection-only tools should keep using `EntityOnly` semantics.
 
-
-### 2026-05-31 - DIVIDE command foundation
-
-Added the AutoCAD-style `DIVIDE` command as a draw/construction tool. The first version works on a single selected or picked `LineEntity`, `ArcEntity`, `CircleEntity` or `PolylineEntity`. It asks for an integer segment count from 2 to 1000 and creates persistent `PointEntity` markers on the current layer without modifying or splitting the source entity. Open entities create `N - 1` internal points; closed entities create `N` points starting from their conventional start point. All created points are committed through one `AddEntityCommand`, so undo/redo treats the operation as a single step.
+Manual verification checklist: `docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md`.
 
 
-### 2026-05-31 - DIVIDE and deferred HUD integer input consolidation
 
-Stabilized the AutoCAD-style `DIVIDE` command after manual testing. The command is now considered part of the pre-v0.9 construction-tool set. It keeps the finalized behavior contract: source entities are not split, persistent `PointEntity` markers are created on the current layer, open entities create `N - 1` points, closed entities create `N` points, segment count is limited to integers from 2 to 1000, and undo/redo is single-step for all generated points.
+## 2026-05-31 - DIVIDE command foundation
 
-The same pass fixed a shared Dynamic Command HUD issue affecting both `DIVIDE` and `POLYGON`: whole-number scalar fields such as `Segments` and `Sides` must allow the user to type and edit the value while the field is active. They are now treated as deferred integer fields and validated only on confirmation, so typed values are not immediately reset to the command default/minimum.
+Implemented AutoCAD-compatible `DIVIDE` naming and behavior. New/updated files include:
+
+- `OpenCad2D.Core/Editing/DivideEntityService.cs` and `DivideEntityResult.cs` for pure geometry calculation.
+- `OpenCad2D.Tools/Editing/DivideTool.cs` for the interactive command.
+- `ToolId.Divide`, `ToolRegistry` registration, and `CommandAliasRegistry` aliases `DIVIDE` / `DIV`.
+- Main toolbar button in the Draw section and `IconDivide` resource.
+
+Behavior contract:
+
+- Does not split or modify the source entity.
+- Creates real persistent `PointEntity` markers.
+- Supports one source entity at a time in v1.
+- Supports `LineEntity`, `ArcEntity`, `CircleEntity` and `PolylineEntity`.
+- Segment count must be an integer between 2 and 1000.
+- Open entities create `N - 1` points; closed entities create `N` points.
+- Points are placed on the current layer, not the source entity layer.
+- One `AddEntityCommand` is used for all generated points, so undo/redo is single-step.
+- Polylines are divided by cumulative path length. Bulged polylines use their interaction approximation; exact curved-polyline division can be improved later if needed.
+
+
+## 2026-05-31 - DIVIDE command stabilization and HUD integer editing
+
+`DIVIDE` is stabilized as an AutoCAD-compatible draw/construction command. Use the command name `DIVIDE` and alias `DIV` in code, docs and tests. The tool works on one selected or picked source entity at a time and supports `LineEntity`, `ArcEntity`, `CircleEntity` and `PolylineEntity`. It never breaks or edits the source entity. It creates persistent `PointEntity` markers on the current layer. Open entities create `N - 1` points; closed entities create `N` points from the conventional start point. Segment count must be an integer between 2 and 1000. All generated points must be added through one undoable document command so undo/redo is single-step.
+
+Important HUD note: `DIVIDE` uses a dedicated `Segments` field. `POLYGON` uses `Sides`. Both are whole-number scalar fields and must use deferred typing behavior: while the logical HUD field is active, numeric text typed by the user must remain editable and must not be immediately clamped or restored to the default. Validation happens when the field is confirmed. This fixed the observed issue where Polygon kept returning to `6` and Divide could not accept a custom segment count.
+
+Regression expectations:
+
+- `DIVIDE` with a 300-unit line and `Segments = 3` creates two points at 100 and 200.
+- `DIVIDE` invalid values such as 1 or 1001 do not create points.
+- `DIVIDE` undo removes all generated points together.
+- `POLYGON` `Sides` can be changed through the HUD, for example to 5, without reverting to 6 while typing.
+- `DIVIDE` `Segments` can be changed through the HUD, for example to 3, without reverting while typing.
 
 Manual verification reference: `docs/testing/divide-command-manual-verification-2026-05-31.md`.
+
+## 2026-06-02 - HUD textbox editing for Fillet and Chamfer
+
+Fixed the Dynamic Command HUD editing path for scalar textbox fields such as `FilletTool` radius and `ChamferTool` distance.
+
+Behavior contract:
+
+- `FILLET` -> `R` -> `Tab` must focus the Radius textbox, select the current value, allow direct replacement, and commit with Enter.
+- `CHAMFER` -> `D` -> `Tab` must do the same for Distance.
+- While a HUD textbox has focus, `Window_PreviewKeyDown` must not intercept numeric keys, Tab, Enter, Backspace or Escape before the textbox handler sees them.
+- `RefreshLogicalHudFieldVisuals()` must not overwrite the `TextBox.Text` or caret while that textbox has focus.
+- The full HUD overlay can receive hit testing, but only the HUD controls should consume HUD input; normal canvas interaction must remain available outside the HUD panel.
+
+Implementation notes:
+
+- `CommandHudOverlay` is hit-test enabled and editable field textboxes bind `IsHitTestVisible` to `CanAcceptTypedOverride`.
+- `MoveToNextLogicalHudField()` now focuses the matching HUD textbox instead of only changing the logical active field and returning focus to the canvas.
+- Focused HUD textboxes are treated as the active field and are visually highlighted without forcing their text back to the live value.
+
+## 2026-06-02 - HUD textbox mouse-pass-through stabilization
+
+Follow-up stabilization for Dynamic Command HUD textbox editing.
+
+Important behavior contract:
+
+- The Dynamic Command HUD is visual-only for mouse input during drawing/edit commands. It must not block the canvas when the cursor moves over it.
+- HUD textboxes must not be mouse-focusable. They are intentionally `IsHitTestVisible="False"`.
+- A HUD textbox may receive focus only through the keyboard path handled by `Tab` / `MoveToNextLogicalHudField()` / `FocusHudFieldTextBox()`.
+- This prevents the previously recurring freeze/stall when the user moves the mouse quickly and the cursor crosses the HUD/textbox panel.
+- The supported scalar editing flow remains: command option key such as `R` for Fillet radius or `D` for Chamfer distance, then `Tab`, type the value, press `Enter`, continue the command.
+
+Implementation notes:
+
+- `CommandHudOverlay` is back to `IsHitTestVisible="False"`, so mouse input passes through to `CadCanvas` even when the HUD is near the pointer.
+- HUD field `TextBox` controls are also `IsHitTestVisible="False"`; they stay keyboard-editable through explicit programmatic focus.
+- `HudFieldTextBox_GotFocus()` rejects accidental/non-keyboard focus and returns focus to the canvas.
+- `FocusHudFieldTextBox()` wraps programmatic focus with `_isFocusingHudFieldTextBoxFromKeyboard`, making the intended Tab-driven focus path explicit.
+
+## 2026-06-02 - Viewport-aware snap tolerance and intentional SmartPoint hover
+
+Implemented zoom-proportional snapping and less aggressive SmartPoint capture.
+
+Behavior contract:
+
+- `Workspace.Context.SnapTolerance` remains the configured snap tolerance value, but the Avalonia canvas now treats it as a screen-space pixel radius.
+- `CadCanvas` converts that value through `ViewportTransform.ScreenLengthToModel(...)` before building object-snap and SmartPoint Tracking requests.
+- The lower-level snapping providers still receive model-space tolerances; only the UI boundary knows about viewport scale.
+- Zooming in reduces the effective model-space snap radius, so visually close snap points can be separated with the mouse wheel.
+- SmartPoint capture now requires a more intentional hover, currently 700 ms on the same strong snap candidate.
+- A pending SmartPoint capture is rejected if the mouse drifts more than 3 screen pixels while waiting for the hover timer.
+
+Implementation notes:
+
+- Main code path: `src/OpenCad2D.App/Controls/CadCanvas.cs`.
+- `UpdateCurrentSnapCandidate(...)` and `GetTrackingSnapCandidate(...)` both use `GetEffectiveModelSnapTolerance()`.
+- `_pendingSmartPointScreenPoint` records the screen position at hover start; `HasPendingSmartPointMouseMovedTooFar()` guards the timer callback.
+
+Manual verification expectations:
+
+- Draw two very close entities with endpoint/midpoint snaps. At a distant zoom the snap may choose the closest visible candidate, but zooming in must make the two candidates independently selectable.
+- During Line/Polyline input, moving quickly over an endpoint must not immediately create a SmartPoint.
+- Holding the cursor still over an endpoint/midpoint/center/intersection for roughly 700 ms should create the SmartPoint marker and tracking aids.
+- Slight mouse movement while hovering should cancel/restart the pending capture rather than creating accidental tracking references.
+
+
+## 2026-06-02 - Tool-level viewport-aware snap tolerance follow-up
+
+Follow-up to the viewport-aware snap tolerance change. The first pass converted the tolerance for canvas snap marker calculation and SmartPoint Tracking. This follow-up also applies the same conversion while dispatching pointer events to active tools.
+
+Key implementation point:
+
+- `CadCanvas.ExecuteWithResolvedTemporarySnapExactPoint(...)` and the async counterpart now temporarily replace `Workspace.Context.SnapTolerance` with `GetEffectiveModelSnapTolerance()` before calling the active tool, then restore the original configured value in `finally`.
+- `OnPointerReleased(...)` now uses the same wrapper as press/move, so commit-time snapping is consistent with preview-time snapping.
+
+This is important for tools that still create their own `SnapRequest` from `context.SnapTolerance`, especially Move and Grip Edit. Their internal snap pass must receive model units, while user settings continue to store the tolerance as a pixel radius.
+
+Regression/manual check:
+
+- Grid step 5: Move and Grip Edit should move by one cell as 5 units when the visible target is the adjacent grid node, not jump to a farther node because an unconverted tolerance was interpreted as model units.
+
+## 2026-06-20 - Clockwise arc tolerance and intersection regressions
+
+Fixed a geometric kernel regression affecting clockwise circular arcs that cross the zero-degree axis.
+
+Behavior contract:
+
+- `Arc2D.ContainsAngle(...)` must work symmetrically for counter-clockwise and clockwise arcs.
+- A clockwise arc from 10° to 350° must contain the 0°, 5° and 355° directions, and must not contain 180°.
+- `Arc2D.ContainsPoint(...)` must therefore accept points on that clockwise arc across the 0° boundary.
+- Arc/circle and line/arc intersection snapping must not lose valid tangent/intersection points on clockwise arcs that cross 0°.
+- `CircleIntersectionService.IntersectLineCircle(...)` now treats a zero-direction `Line2D` as a degenerate input and returns no intersections instead of allowing `NormalizedDirection` to throw.
+
+Implementation notes:
+
+- `Arc2D` now computes angular containment through normalized sweep/delta values for both directions.
+- The circular tolerance check explicitly accepts points near the start and end boundaries, including the wrap-around boundary at 0°/360°.
+- Regression coverage was added in `Arc2DTests`, `CircleIntersectionServiceTests`, and `IntersectionSnapProviderTests`.
+- Coincident circle/arc overlap semantics were intentionally left unchanged. They still require a separate design decision because the current circle intersection API returns only point intersections, not overlap intervals.
+
+Manual verification expectations:
+
+- Create or load a clockwise arc from about 10° to 350° and test intersection snap near the positive X-axis. The snap should find the point on the arc at 0°.
+- Existing counter-clockwise arc snapping, circle-circle tangency, and line-circle intersection behavior should remain unchanged.
+
+## 2026-06-20 - Explicit overlap boundary cuts in detailed intersections
+
+Implemented the next geometry-kernel follow-up after the clockwise arc fix: detailed CAD intersections now surface finite overlap boundaries instead of silently losing them.
+
+Behavior contract:
+
+- `CadEntityIntersectionService.IntersectDetailed(...)` still returns point-like cut locations, not arbitrary infinite intersection sets.
+- Line/line overlaps now produce the two finite boundary cut points marked with `CadIntersectionKind.Overlap`.
+- Circle/arc overlaps on the same circular support produce the arc start/end points marked as `Overlap`.
+- Arc/arc overlaps on the same circular support produce the boundary points of each finite overlapping angular interval, including cases that cross the 0°/360° boundary.
+- Coincident full circles remain deliberately point-empty because they have infinitely many shared points and no finite overlap boundary. No synthetic snap/cut point is created for that case.
+- Point-based snap behavior remains unchanged: coincident circles/arcs are not converted into fake intersection snap points.
+
+Implementation notes:
+
+- `CircleIntersectionService.AreCoincident(...)` centralizes same-support circle detection and documents why `IntersectCircleCircle(...)` still returns no point intersections for coincident full circles.
+- `IntersectDetailed(...)` now adds overlap boundary cuts before ordinary point intersections. If the same geometric point appears through both paths, the overlap classification wins because it is inserted first and `AddDistinct(...)` deduplicates by distance.
+- Current finite overlap handling is intentionally limited to native line/circle/arc entities. Ellipse/spline overlap semantics are not approximated from sample segments, avoiding false overlap cuts from rendering/sampling artifacts.
+
+Regression coverage:
+
+- `CadEntityIntersectionDetailedTests` now covers line/line overlap, circle/arc same-support overlap, arc/arc partial overlap, arc/arc overlap across 0°, and coincident full circles without finite boundary points.
+- `CircleIntersectionServiceTests` now documents coincident circle detection and point-empty circle-circle behavior.
+
+Manual verification expectations:
+
+- TRIM/BREAK-style commands that later consume `IntersectDetailed(...)` can distinguish overlap boundary cuts from ordinary crossings through `CadIntersectionKind.Overlap`.
+- Existing intersection snap should not start snapping to arbitrary locations on coincident circles or coincident arcs.
+
+
+## 2026-06-20 - Arc overlap endpoint projection regression fix
+
+After validating the overlap-boundary work, one regression test exposed a floating-point endpoint projection issue in `ArcCurveAdapter.TryProjectPointToCut`. A boundary point exactly at an arc start angle can be reconstructed through `atan2` as an angle infinitesimally before the start angle; the generic directed-angle parameter calculation can then wrap it to almost a full revolution and reject the point as outside `[0, 1]`.
+
+`ArcCurveAdapter.TryProjectPointToCut` now snaps projected points that are within distance tolerance of the circular arc start/end points directly to parameters `0.0` and `1.0` before computing the generic angular parameter. This keeps overlap boundary cuts stable for arcs crossing zero degrees and preserves exact endpoint cut semantics for Trim/Break/Extend workflows.
+
+
+## 2026-06-20 — Boundary Fill v2 core progress
+
+Validated so far: the Boundary Fill v2 audit/specification, the result/options model, and the dedicated boundary segment collector. This update adds sampled curve-boundary support at core/service level: `CircleEntity`, `ArcEntity` and bulged polylines can be converted to metadata-rich `BoundarySegment` instances when `BoundaryFillOptions.IncludeCurveBoundaries` is enabled. The interactive tool remains conservative until preview, diagnostics and gap tolerance are implemented. `BridgedGapCount` is reserved for the next endpoint-clustering/gap-tolerance step.

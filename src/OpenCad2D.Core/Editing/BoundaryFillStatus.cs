@@ -1,7 +1,7 @@
 namespace OpenCad2D.Core.Editing;
 
 /// <summary>
-/// High-level outcome of a Boundary Fill detection attempt.
+/// Machine-readable status produced by a boundary fill search.
 /// </summary>
 public enum BoundaryFillStatus
 {

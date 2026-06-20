@@ -7,10 +7,12 @@ using OpenCad2D.Geometry.Primitives;
 namespace OpenCad2D.Core.Editing;
 
 /// <summary>
-/// Builds a filled closed polyline from the visible linear boundaries around a seed point.
+/// Builds a filled closed polyline from the visible boundaries around a seed point.
 /// </summary>
 public sealed class BoundaryFillService
 {
+    private readonly BoundarySegmentCollector _segmentCollector = new();
+
     public BoundaryFillResult CreateFilledPolyline(
         IEnumerable<CadEntity> boundaryEntities,
         Point2D seedPoint,
@@ -34,22 +36,23 @@ public sealed class BoundaryFillService
         ArgumentNullException.ThrowIfNull(options);
 
         GeometryTolerance effectiveTolerance = options.GeometryTolerance;
-        BoundarySegmentCollection sourceSegments = CollectLinearSegments(boundaryEntities, effectiveTolerance);
+        BoundarySegmentCollection collection = _segmentCollector.Collect(boundaryEntities, options);
+        IReadOnlyList<BoundarySegment> sourceSegments = collection.Segments;
 
-        if (sourceSegments.Segments.Count == 0)
+        if (sourceSegments.Count == 0)
         {
+            BoundaryFillStatus status = collection.IgnoredEntityCount > 0
+                ? BoundaryFillStatus.UnsupportedOnly
+                : BoundaryFillStatus.NoUsableSegments;
+
             return BoundaryFillResult.Failure(
-                BoundaryFillStatus.UnsupportedOnly,
-                "Boundary fill needs visible line or straight polyline boundaries.",
+                status,
+                "Boundary fill needs visible line, polyline, arc or circle boundaries.",
                 seedPoint,
-                CreateDiagnostics(
-                    sourceSegments,
-                    graphEdgeCount: 0,
-                    candidateFaceCount: 0,
-                    options));
+                CreateDiagnostics(collection, 0, 0, options));
         }
 
-        PlanarGraph graph = BuildPlanarGraph(sourceSegments.Segments, effectiveTolerance);
+        PlanarGraph graph = BuildPlanarGraph(sourceSegments, effectiveTolerance);
 
         if (graph.EdgeCount == 0)
         {
@@ -57,11 +60,7 @@ public sealed class BoundaryFillService
                 BoundaryFillStatus.NoUsableSegments,
                 "No usable boundary segments were found.",
                 seedPoint,
-                CreateDiagnostics(
-                    sourceSegments,
-                    graph.EdgeCount,
-                    candidateFaceCount: 0,
-                    options));
+                CreateDiagnostics(collection, graph.EdgeCount, 0, options));
         }
 
         IReadOnlyList<IReadOnlyList<Point2D>> faces = FindInteriorFaces(graph, effectiveTolerance);
@@ -70,19 +69,13 @@ public sealed class BoundaryFillService
             .OrderBy(face => Math.Abs(SignedArea(face)))
             .FirstOrDefault();
 
-        BoundaryFillDiagnostics diagnostics = CreateDiagnostics(
-            sourceSegments,
-            graph.EdgeCount,
-            faces.Count,
-            options);
-
         if (containingFace is null)
         {
             return BoundaryFillResult.Failure(
                 BoundaryFillStatus.NoClosedBoundary,
                 "No closed boundary was found around the picked point.",
                 seedPoint,
-                diagnostics);
+                CreateDiagnostics(collection, graph.EdgeCount, faces.Count, options));
         }
 
         IReadOnlyList<Point2D> vertices = RemoveCollinearVertices(containingFace, effectiveTolerance);
@@ -93,7 +86,7 @@ public sealed class BoundaryFillService
                 BoundaryFillStatus.DegenerateBoundary,
                 "The detected boundary is degenerate.",
                 seedPoint,
-                diagnostics);
+                CreateDiagnostics(collection, graph.EdgeCount, faces.Count, options));
         }
 
         var polyline = new PolylineEntity(
@@ -106,78 +99,22 @@ public sealed class BoundaryFillService
             polyline,
             seedPoint,
             vertices,
-            diagnostics);
-    }
-
-    private static BoundarySegmentCollection CollectLinearSegments(
-        IEnumerable<CadEntity> entities,
-        GeometryTolerance tolerance)
-    {
-        var segments = new List<BoundarySegment>();
-        int ignoredEntityCount = 0;
-
-        foreach (CadEntity entity in entities)
-        {
-            switch (entity)
-            {
-                case LineEntity line when line.Start.DistanceTo(line.End) > tolerance.Distance:
-                    segments.Add(new BoundarySegment(line.Start, line.End));
-                    break;
-
-                case PolylineEntity { HasArcSegments: false } polyline:
-                    AddPolylineSegments(segments, polyline, tolerance);
-                    break;
-
-                default:
-                    ignoredEntityCount++;
-                    break;
-            }
-        }
-
-        return new BoundarySegmentCollection(segments, ignoredEntityCount);
-    }
-
-    private static void AddPolylineSegments(
-        List<BoundarySegment> segments,
-        PolylineEntity polyline,
-        GeometryTolerance tolerance)
-    {
-        IReadOnlyList<Point2D> vertices = polyline.Vertices;
-
-        if (vertices.Count < 2)
-        {
-            return;
-        }
-
-        int segmentCount = polyline.IsClosed
-            ? vertices.Count
-            : vertices.Count - 1;
-
-        for (int index = 0; index < segmentCount; index++)
-        {
-            Point2D start = vertices[index];
-            Point2D end = vertices[(index + 1) % vertices.Count];
-
-            if (start.DistanceTo(end) > tolerance.Distance)
-            {
-                segments.Add(new BoundarySegment(start, end));
-            }
-        }
+            CreateDiagnostics(collection, graph.EdgeCount, faces.Count, options));
     }
 
     private static BoundaryFillDiagnostics CreateDiagnostics(
-        BoundarySegmentCollection sourceSegments,
+        BoundarySegmentCollection collection,
         int graphEdgeCount,
         int candidateFaceCount,
         BoundaryFillOptions options)
     {
         return new BoundaryFillDiagnostics(
-            sourceSegments.Segments.Count,
+            collection.Segments.Count,
             graphEdgeCount,
             candidateFaceCount,
-            sourceSegments.IgnoredEntityCount,
-            bridgedGapCount: 0,
-            sampledCurveSegmentCount: 0,
+            collection.IgnoredEntityCount,
+            BridgedGapCount: 0,
+            collection.SampledCurveSegmentCount,
             options.GapTolerance);
     }
 
@@ -404,7 +341,12 @@ public sealed class BoundaryFillService
             Point2D current = polygon[currentIndex];
             Point2D previous = polygon[previousIndex];
 
-            if (IsPointOnSegment(point, new BoundarySegment(previous, current), tolerance))
+            if (IsPointOnSegment(point, new BoundarySegment(
+                    previous,
+                    current,
+                    EntityId.Empty,
+                    BoundarySegmentSourceKind.Line),
+                    tolerance))
             {
                 return true;
             }
@@ -544,28 +486,6 @@ public sealed class BoundaryFillService
         }
 
         return area / 2.0;
-    }
-
-    private sealed class BoundarySegmentCollection
-    {
-        public BoundarySegmentCollection(
-            IReadOnlyList<BoundarySegment> segments,
-            int ignoredEntityCount)
-        {
-            Segments = segments;
-            IgnoredEntityCount = ignoredEntityCount;
-        }
-
-        public IReadOnlyList<BoundarySegment> Segments { get; }
-
-        public int IgnoredEntityCount { get; }
-    }
-
-    private readonly record struct BoundarySegment(
-        Point2D Start,
-        Point2D End)
-    {
-        public LineSegment2D ToLineSegment() => new(Start, End);
     }
 
     private readonly record struct DirectedEdge(

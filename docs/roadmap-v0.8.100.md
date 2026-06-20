@@ -76,11 +76,11 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.110-blocks.md`.
 
-Status: implemented through v0.8.115 native block workflow.
+Status: v0.8.111 in progress/implemented.
 
 Goal: introduce reusable block definitions and block references.
 
-Implemented scope:
+Initial scope:
 
 - Add `BlockDefinition` to the document model.
 - Add `BlockReferenceEntity` as a drawing entity.
@@ -89,10 +89,7 @@ Implemented scope:
 - Support selection, hit testing and basic transforms of block references.
 - v0.8.110: add block definitions, block references, persistence and rendering foundation.
 - v0.8.111: create block from selection with numeric base point and undo as a single operation.
-- v0.8.112: insert existing block definitions with pending insertion-point workflow.
-- v0.8.113: add first Block Manager workflow.
-- v0.8.114: support snapping to transformed geometry inside block references.
-- v0.8.115: add Explode Block and first Edit Block session workflow.
+- Support snapping to transformed geometry inside block references.
 
 Exit criteria:
 
@@ -107,23 +104,23 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.110-blocks.md`.
 
-Status: implemented for the first native OpenCad2D block workflow.
+Status: planned.
 
 Goal: make blocks usable from the UI.
 
-Implemented scope:
+Initial scope:
 
 - Create Block from selection.
 - Insert Block.
-- Edit Block definition in a first isolated/session workflow.
+- Edit Block definition in a simple isolated editing workflow.
 - Explode Block into regular entities.
 - Minimal Block Manager.
 
-Current conservative policy:
+Recommended first implementation:
 
-- The first edit workflow avoids advanced dynamic-block behavior.
-- Nested blocks remain constrained where needed, especially for library snippets.
-- Attributes, dynamic blocks and per-reference layer overrides remain deferred.
+- Use a separate block-editing mode or window instead of in-place editing.
+- Avoid nested blocks initially unless the document model naturally permits them safely.
+- Defer attributes, dynamic blocks and per-reference layer overrides.
 
 Exit criteria:
 
@@ -142,7 +139,7 @@ Specifications:
 - `docs/specs/v0.8.120-architectural-symbols.md`
 - `docs/specs/v0.8.122-library-browser.md`
 
-Status: first-pass Library Browser implemented. North Symbol and Metric Scale Bar remain direct first-pass tools, while future fixed symbols should move through the Library workflow instead of adding many toolbar buttons.
+Status: direction updated. North Symbol and Metric Scale Bar first passes are implemented, but future fixed symbols should move toward the Library workflow instead of adding many toolbar buttons.
 
 Goal: separate two concepts that should not grow into one overloaded toolbar:
 
@@ -155,8 +152,8 @@ Updated scope:
 - Add a `Library` button that opens a modal browser.
 - Load `.opencad2d.json` items from `library/<category>/...`.
 - Group items by folder/category, for example `arredo`, `simboli`, `sanitari`, `porte-finestre`, `scale`, `annotazioni`.
-- Show a vector preview for each item.
-- Insert selected items using the existing block infrastructure as reusable block references.
+- Show a preview for each item.
+- Insert selected items using the existing import/block infrastructure.
 - Reserve the `Symbols`/parametric tools area for objects that need parameters before generation.
 
 Recommended insertion policy:
@@ -182,26 +179,22 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.121-dynamic-command-hud.md`.
 
-Status: implemented for the current command-input scope.
+Status: planned.
 
 Goal: replace the fixed bottom command row with a cursor-adjacent dynamic HUD while using one coherent command-state contract across all interactive tools.
 
 This milestone is intentionally placed before the Library Browser because it touches the global command UX. It should be stabilized before adding more modal insertion workflows and parametric tools.
 
-Implemented sequence:
+Implementation sequence:
 
 - HUD-0: command tool prompt inventory.
 - HUD-1: shared `CommandPromptState` cleanup.
 - HUD-2: pointer screen position and live measurement data.
 - HUD-3: read-only `CommandHudState`.
-- HUD-4: visual HUD overlay.
-- HUD-5: remove the generic command textbox and fixed bottom command row; keep keyboard command capture as a logical buffer.
-- HUD-6: editable numeric fields for primary draw tools.
-- HUD-7: transform/modify tool coverage.
-- HUD-8: Break Point, Break Segment and Boundary Fill HUD coverage.
-- HUD-9: selection-only cleanup for Trim, Extend, Delete, Explode and Join.
-- HUD-10: Create Block and Insert Block pending-point `X/Y` coverage.
-- HUD-11: documentation cleanup and residual command-line UI removal.
+- HUD-4: read-only visual HUD overlay while the old command row remains active.
+- HUD-5: move the real command input into the HUD.
+- HUD-6: remove the old bottom command row.
+- HUD-7: later editable numeric HUD fields.
 
 Exit criteria:
 
@@ -211,7 +204,7 @@ Exit criteria:
 - There is only one operational command input.
 - Existing command aliases, typed coordinates, relative input, polar input, direct distances, history, autocomplete, Enter, right click and Escape behavior still work.
 - Manual regression covers draw, dimension, transform, modify, measure, navigation and selection/order tools.
-- The fixed command row has been removed after HUD regression and manual workflow checks.
+- The fixed command row is removed only after the HUD passes regression.
 
 ---
 
@@ -219,9 +212,9 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.130-stairs.md`.
 
-Status: in progress / first pass implemented.
+Status: planned.
 
-Goal: generate persistent parametric stair drawings for plan and elevations.
+Goal: generate stair drawings for plan and elevations.
 
 Initial scope:
 
@@ -229,17 +222,14 @@ Initial scope:
 - Side elevation.
 - Front elevation.
 - Optional underlying slab/structure line.
-- Plan direction arrow and optional 30-degree plan section marker.
-- Parameters for riser, tread, width, step count, slab thickness and plan annotations.
+- Parameters for riser, tread, width, step count and slab thickness.
 
 Exit criteria:
 
-- The tool can insert a persistent parametric straight stair in plan, side elevation or front elevation.
+- The tool can generate a basic straight stair in plan.
 - The tool can generate a side elevation with risers/treads.
 - The tool can generate a front elevation useful for sections/elevations.
-- The slab/structure line uses a configurable thickness, defaulting to 3 drawing units.
-- Plan view can show a direction arrow from first-to-last or last-to-first and an optional 30-degree section marker.
-- Native JSON persistence and SVG/PDF/DXF export preserve or emit the stair representation.
+- The slab/structure line can be offset from the inner tread/riser corner by a configurable thickness, defaulting to 25 cm.
 
 ---
 
@@ -291,20 +281,18 @@ Exit criteria:
 
 ## Milestone v0.8.145 — Boundary Fill v2
 
-Specification: `docs/specs/v0.8.145-boundary-fill-v2.md`.
+Specification: `docs/specs/v0.8.140-hatch.md`.
 
-Status: in progress. Audit/specification and the result/options model are implemented; visible behavior still matches Boundary Fill v1.
+Status: planned.
 
 Goal: improve the existing click-inside BF workflow before introducing a true hatch entity.
 
 Scope:
 
-- Use `BoundaryFillOptions`, `BoundaryFillStatus` and `BoundaryFillDiagnostics` as the stable detection contract.
-- Separate detection/preview from document creation.
-- Sampled arc and circle boundary support while still emitting filled closed polylines.
-- Configurable gap tolerance for small endpoint gaps, with ambiguity checks.
-- Better diagnostics for ambiguous, open, unsupported, degenerate or self-intersecting detected regions.
-- Explicit statement that holes/islands remain deferred until `HatchEntity`.
+- Hover/preview of the boundary that would be generated.
+- Sampled arc and circle boundary support.
+- Configurable gap tolerance for small endpoint gaps.
+- Better diagnostics for ambiguous, open or self-intersecting detected regions.
 
 Deferred beyond BF v2:
 
@@ -381,13 +369,14 @@ Implemented as the first structural block milestone:
 - canvas rendering of block references by transforming contained entities
 - selection/hit testing through the transformed definition bounding box
 
-This milestone originally did not include the full block UI. The follow-up native block workflow is now implemented through v0.8.115:
+This milestone intentionally does not yet include the full block UI. The next blocks-focused milestones should add:
 
-- create block from selection — implemented in v0.8.111;
-- insert block from existing definition — implemented in v0.8.112;
-- block manager — implemented in v0.8.113;
-- snaps against transformed block contents — implemented in v0.8.114;
-- edit block definition workflow and explode block — implemented in v0.8.115.
+- create block from selection — implemented in v0.8.111
+- insert block from existing definition
+- block manager
+- edit block definition workflow
+- explode block
+- snaps against transformed block contents
 
 
 ## v0.8.111 — Create Block from selection
@@ -405,11 +394,16 @@ Implemented as the first usable block workflow:
 
 `v0.8.112 — Insert Block from existing definition` is implemented. It adds a toolbar command, options dialog, pending insertion-point workflow, snap support, Escape cancellation and single-step undo for newly inserted block references.
 
-The follow-up Block Manager, block-internal snapping, Explode Block and first Edit Block workflow are now implemented as part of the completed v0.8.110-v0.8.115 block line.
+Next recommended blocks-focused milestone: `v0.8.113 — Block Manager`.
 
 
-## Dynamic Command HUD completion note
+## Dynamic Command HUD remaining steps
 
-The dynamic command HUD milestone is complete for the current scope. Step 30E, Step 30F and Step 31 are implemented and covered by targeted ViewModel regression tests: Break Point, Break Segment and Boundary Fill expose their required point/measurement fields; Trim, Extend, Delete, Explode and Join remain selection-only or prompt/options-only; Create Block and Insert Block expose pending-point `X/Y` fields through dedicated placement states.
+The dynamic command HUD milestone is active and mostly implemented. Before treating v0.8.121 as complete, finish these focused steps:
 
-Future commands should continue using tool/phase-specific HUD behavior with focused regression tests rather than broad generalization of the shared resolver.
+- Step 30E: Break Point, Break Segment and Boundary Fill HUD input.
+- Step 30F: Trim, Extend, Delete, Explode and Join as selection-only cleanup tools.
+- Step 31: Create Block and Insert Block as a separate modal/pending-placement HUD integration.
+- Final pass: documentation, `ai-handoff`, regression checklist updates and removal of residual legacy command-line code.
+
+Do not generalize the shared HUD resolver while finishing these tasks; continue using tool/phase-specific behavior with regression tests.

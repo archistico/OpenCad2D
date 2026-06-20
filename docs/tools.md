@@ -115,7 +115,7 @@ Implemented:
 | Extend | line/arc/open-polyline target support |
 | Trim | cutting edges including ellipses, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
-| Boundary Fill | click inside a closed linear boundary to create a filled closed polyline |
+| Boundary Fill | click inside a closed linear boundary to create a filled closed polyline; v2 core support for sampled curve boundaries is in progress behind service options |
 | Fillet | line-line plus adjacent linear-polyline segments, Radius and Trim/NoTrim options, radius 0 sharp join for lines |
 | Mirror | two-point mirror axis, keeps source by default, optional source deletion |
 | Explode | selected polylines become individual lines/arcs; block references become world-space entities |
@@ -178,13 +178,12 @@ Current first-pass boundary support:
 
 Curved boundaries, blocks, hatch patterns, holes and associative boundary updates are deferred. Aliases: `BFILL`, `BF`, `BOUNDARYFILL`, `FILL`, `RIEMPIMENTO`.
 
-Boundary Fill v2 sequence is specified in `docs/specs/v0.8.145-boundary-fill-v2.md`. The audit/specification and result/options model are now in place; visible behavior still matches v1 until preview and curve support are added:
+Planned v2 sequence:
 
-1. Centralize boundary segment extraction and metadata.
+1. Preview the detected boundary under the cursor before creation.
 2. Add sampled curve boundaries for arcs and circles, keeping the generated result as a filled `PolylineEntity`.
-3. Add configurable gap tolerance for small endpoint gaps, with clear diagnostics when the gap cannot be closed safely or is ambiguous.
-4. Separate detection/preview from final creation, so the user can confirm or cancel the detected region.
-5. Keep holes/islands for a later real `HatchEntity`, because a single `PolylineEntity` cannot represent subtractive inner loops.
+3. Add configurable gap tolerance for small endpoint gaps, with clear diagnostics when the gap cannot be closed safely.
+4. Revisit holes/islands through a real `HatchEntity`, because a single `PolylineEntity` cannot represent subtractive inner loops.
 
 ---
 
