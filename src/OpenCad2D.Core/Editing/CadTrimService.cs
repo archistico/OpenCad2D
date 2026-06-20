@@ -310,12 +310,39 @@ public static class CadTrimService
 
         foreach (CadEntity boundary in boundaries)
         {
-            intersections.AddRange(CadEntityIntersectionService.Intersect(
-                target,
-                boundary,
-                tolerance));
+            foreach (Point2D point in CadEntityIntersectionService.Intersect(
+                         target,
+                         boundary,
+                         tolerance))
+            {
+                AddDistinct(intersections, point, tolerance);
+            }
+
+            foreach (CadIntersectionPoint detailedIntersection in CadEntityIntersectionService.IntersectDetailed(
+                         target,
+                         boundary,
+                         tolerance))
+            {
+                if (detailedIntersection.Kind == CadIntersectionKind.Overlap)
+                {
+                    AddDistinct(intersections, detailedIntersection.Point, tolerance);
+                }
+            }
         }
 
         return intersections;
+    }
+
+    private static void AddDistinct(
+        List<Point2D> points,
+        Point2D point,
+        GeometryTolerance tolerance)
+    {
+        if (points.Any(existing => tolerance.ArePointsEqual(existing, point)))
+        {
+            return;
+        }
+
+        points.Add(point);
     }
 }

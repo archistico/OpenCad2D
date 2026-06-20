@@ -100,6 +100,69 @@ public sealed class CadTrimServiceTests
     }
 
     [Fact]
+    public void TrimLine_ByOverlappingLineBoundary_ShouldUseOverlapBoundaryCut()
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var boundary = new LineEntity(new Point2D(5, 0), new Point2D(15, 0));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            new Point2D(7, 0));
+
+        LineEntity kept = Assert.IsType<LineEntity>(Assert.Single(result));
+
+        Assert.Equal(new Point2D(0, 0), kept.Start);
+        Assert.Equal(new Point2D(5, 0), kept.End);
+    }
+
+    [Fact]
+    public void TrimCircle_ByOverlappingArcBoundary_ShouldUseArcEndpointCuts()
+    {
+        var target = new CircleEntity(new Point2D(0, 0), 10);
+        var boundary = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            PointOnCircle(10, 45));
+
+        ArcEntity kept = Assert.IsType<ArcEntity>(Assert.Single(result));
+
+        Assert.True(kept.Geometry.ContainsPoint(PointOnCircle(10, 180)));
+        Assert.False(kept.Geometry.ContainsPoint(PointOnCircle(10, 45)));
+    }
+
+    [Fact]
+    public void TrimArc_ByOverlappingArcBoundary_ShouldUseOverlapBoundaryCut()
+    {
+        var target = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(180));
+        var boundary = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(90),
+            Angle.FromDegrees(270));
+
+        IReadOnlyList<CadEntity> result = CadTrimService.TrimByBoundary(
+            target,
+            boundary,
+            PointOnCircle(10, 135));
+
+        ArcEntity kept = Assert.IsType<ArcEntity>(Assert.Single(result));
+
+        Assert.True(kept.Geometry.ContainsPoint(PointOnCircle(10, 45)));
+        Assert.False(kept.Geometry.ContainsPoint(PointOnCircle(10, 135)));
+    }
+
+    [Fact]
     public void TrimPolyline_ByLineBoundary_ShouldCreatePolylineFragments()
     {
         var target = new PolylineEntity(new[]
@@ -309,6 +372,15 @@ public sealed class CadTrimServiceTests
 
         Assert.NotEmpty(result);
         Assert.DoesNotContain(result, entity => entity is PolylineEntity);
+    }
+
+    private static Point2D PointOnCircle(double radius, double degrees)
+    {
+        double radians = degrees * Math.PI / 180.0;
+
+        return new Point2D(
+            Math.Cos(radians) * radius,
+            Math.Sin(radians) * radius);
     }
 }
 

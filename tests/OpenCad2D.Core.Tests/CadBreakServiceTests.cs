@@ -120,6 +120,79 @@ public sealed class CadBreakServiceTests
         Assert.Empty(result);
     }
 
+
+    [Fact]
+    public void BreakAtPoint_WithClockwiseArcCrossingZero_ShouldCreateTwoClockwiseArcs()
+    {
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakAtPoint(
+            arc,
+            PointOnCircle(10, 0));
+
+        Assert.Equal(2, result.Count);
+
+        var first = Assert.IsType<ArcEntity>(result[0]);
+        var second = Assert.IsType<ArcEntity>(result[1]);
+
+        Assert.False(first.IsCounterClockwise);
+        Assert.False(second.IsCounterClockwise);
+        AssertNormalizedAngleDegrees(10, first.StartAngle);
+        AssertNormalizedAngleDegrees(0, first.EndAngle);
+        AssertNormalizedAngleDegrees(0, second.StartAngle);
+        AssertNormalizedAngleDegrees(350, second.EndAngle);
+    }
+
+    [Fact]
+    public void BreakBetweenPoints_WithClockwiseArcCrossingZero_ShouldRemoveSegmentAcrossZero()
+    {
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakBetweenPoints(
+            arc,
+            PointOnCircle(10, 5),
+            PointOnCircle(10, 355));
+
+        Assert.Equal(2, result.Count);
+
+        var first = Assert.IsType<ArcEntity>(result[0]);
+        var second = Assert.IsType<ArcEntity>(result[1]);
+
+        Assert.False(first.IsCounterClockwise);
+        Assert.False(second.IsCounterClockwise);
+        AssertNormalizedAngleDegrees(10, first.StartAngle);
+        AssertNormalizedAngleDegrees(5, first.EndAngle);
+        AssertNormalizedAngleDegrees(355, second.StartAngle);
+        AssertNormalizedAngleDegrees(350, second.EndAngle);
+    }
+
+    [Fact]
+    public void BreakAtPoint_WithClockwiseArcCrossingZeroEndpoint_ShouldReturnNoSegments()
+    {
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+
+        IReadOnlyList<CadEntity> result = CadBreakService.BreakAtPoint(
+            arc,
+            PointOnCircle(10, 10));
+
+        Assert.Empty(result);
+    }
+
     [Fact]
     public void BreakAtPoint_WithOpenPolyline_ShouldCreateTwoOpenPolylines()
     {
@@ -585,6 +658,16 @@ public sealed class CadBreakServiceTests
         Assert.NotEqual(0.0, first.SegmentBulges[0], precision: 10);
         Assert.NotEqual(0.0, second.SegmentBulges[0], precision: 10);
         Assert.Equal(0.0, second.SegmentBulges[1], precision: 10);
+    }
+
+    private static void AssertNormalizedAngleDegrees(
+        double expectedDegrees,
+        Angle actualAngle)
+    {
+        Assert.Equal(
+            expectedDegrees,
+            actualAngle.NormalizePositive().Degrees,
+            precision: 10);
     }
 
 }

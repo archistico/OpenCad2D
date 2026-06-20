@@ -1993,3 +1993,55 @@ Manual verification expectations:
 After validating the overlap-boundary work, one regression test exposed a floating-point endpoint projection issue in `ArcCurveAdapter.TryProjectPointToCut`. A boundary point exactly at an arc start angle can be reconstructed through `atan2` as an angle infinitesimally before the start angle; the generic directed-angle parameter calculation can then wrap it to almost a full revolution and reject the point as outside `[0, 1]`.
 
 `ArcCurveAdapter.TryProjectPointToCut` now snaps projected points that are within distance tolerance of the circular arc start/end points directly to parameters `0.0` and `1.0` before computing the generic angular parameter. This keeps overlap boundary cuts stable for arcs crossing zero degrees and preserves exact endpoint cut semantics for Trim/Break/Extend workflows.
+
+## 2026-06-20 - Trim now consumes finite overlap boundary cuts
+
+Follow-up to the explicit overlap-boundary work. `CadTrimService` now keeps the legacy point-intersection collection path and augments it with `CadEntityIntersectionService.IntersectDetailed(...)` entries classified as `CadIntersectionKind.Overlap`.
+
+Behavior contract:
+
+- Point-based intersection behavior remains unchanged for ordinary TRIM boundaries.
+- Finite overlap boundaries are now usable as TRIM cut points for the native curve split pipeline.
+- Open target endpoint intersections are still filtered out by `CollectTrimIntersections(...)`, preserving the existing rule that an endpoint-only boundary does not trim an open curve.
+- The change is intentionally limited to TRIM and TRIM preview (`GetRemovedIntervalByBoundaries`). BREAK still uses explicit user-selected points, and EXTEND is not changed because coincident/overlapping extension needs separate direction-specific behavior.
+
+Regression coverage added:
+
+- Trimming a line by an overlapping line boundary removes the picked overlapped part using the overlap start as a cut.
+- Trimming a circle by a same-support arc boundary uses the arc endpoints as finite cut points and removes the picked arc interval.
+- Trimming an arc by a partially overlapping arc boundary uses the overlap boundary cut and preserves the non-picked arc fragment.
+
+Manual verification expectations:
+
+- Draw a line from 0 to 10 and an overlapping boundary line from 5 to 15. TRIM the target on the overlapped portion from 5 to 10: the target should become 0 to 5.
+- Draw a circle and an arc on the same support. TRIM the circle by picking inside the arc span: the picked arc portion should be removed, leaving the complementary native arc.
+- Draw overlapping circular arcs on the same support. TRIM the target by picking inside the overlapped interval: the overlapped portion should be removed when at least one finite overlap boundary lies inside the target.
+
+## 2026-06-20 - Break clockwise arc regression coverage
+
+Added targeted regression coverage for Break Point and Break Segment on clockwise circular arcs that cross the 0°/360° axis.
+
+Behavior contract:
+
+- `CadBreakService.BreakAtPoint(...)` must split a clockwise arc from 10° to 350° at the 0° point into two clockwise native arc fragments: 10°→0° and 0°→350°.
+- `CadBreakService.BreakBetweenPoints(...)` must remove the selected segment across the zero-degree boundary and keep the two remaining clockwise native arc fragments.
+- A Break Point placed on the start endpoint of that clockwise arc must remain a no-op, preserving the existing rule that open-curve endpoint breaks do not create degenerate fragments.
+
+Implementation notes:
+
+- No production code change was required in this pass. The previous `Arc2D.ContainsAngle(...)` fix and the `ArcCurveAdapter.TryProjectPointToCut(...)` endpoint projection fix already make the Break pipeline behave correctly.
+- The tests intentionally exercise the native curve split service through `CadBreakService`, because Break Point and Break Segment do not consume boundary entities the way Trim does; they operate on explicit user-picked points projected onto the target curve.
+
+Manual verification expectations:
+
+- Draw a clockwise arc crossing the positive X axis, for example start 10° and end 350°.
+- Break Point at the positive X axis should create two clockwise arc fragments.
+- Break Segment between nearby points on either side of the positive X axis should remove the small segment crossing 0° and keep two clockwise arc fragments.
+
+## 2026-06-20 - Break clockwise arc test angle normalization
+
+The Break clockwise-arc regression tests were adjusted after validation showed that the production geometry returned equivalent negative angle values for fragments crossing the 0°/360° axis, for example `-10°` instead of `350°` and `-5°` instead of `355°`.
+
+This is geometrically correct because `Angle` stores raw radians and does not guarantee positive-normalized degree output. The test intent is to validate the split geometry and clockwise orientation, not to require a specific raw angle representation. The new assertions compare `Angle.NormalizePositive().Degrees` for the zero-crossing break cases.
+
+No production code was changed in this pass.
