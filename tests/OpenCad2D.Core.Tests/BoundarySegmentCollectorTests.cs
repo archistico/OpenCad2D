@@ -221,4 +221,49 @@ public sealed class BoundarySegmentCollectorTests
         Assert.NotEqual(collection.Segments[0].Start, collection.Segments[1].Start);
     }
 
+
+    [Fact]
+    public void Collect_WithSmallEndpointToSegmentGapWithinTolerance_ShouldBridgeToProjectedPoint()
+    {
+        var collector = new BoundarySegmentCollector();
+        var lines = new[]
+        {
+            new LineEntity(new Point2D(0, 0), new Point2D(10, 0)),
+            new LineEntity(new Point2D(5, 0.25), new Point2D(5, 5))
+        };
+
+        BoundarySegmentCollection collection = collector.Collect(
+            lines,
+            new BoundaryFillOptions(gapTolerance: 0.5));
+
+        Assert.Equal(3, collection.Segments.Count);
+        Assert.Equal(1, collection.BridgedGapCount);
+        BoundarySegment bridge = Assert.Single(collection.Segments, segment =>
+            segment.SourceKind == BoundarySegmentSourceKind.GapBridge);
+        Assert.Equal(new Point2D(5, 0.25), bridge.Start);
+        Assert.Equal(new Point2D(5, 0), bridge.End);
+        Assert.Equal(new Point2D(0, 0), collection.Segments[0].Start);
+        Assert.Equal(new Point2D(10, 0), collection.Segments[0].End);
+    }
+
+    [Fact]
+    public void Collect_WithEndpointToSegmentGapAboveTolerance_ShouldNotBridgeToProjectedPoint()
+    {
+        var collector = new BoundarySegmentCollector();
+        var lines = new[]
+        {
+            new LineEntity(new Point2D(0, 0), new Point2D(10, 0)),
+            new LineEntity(new Point2D(5, 0.75), new Point2D(5, 5))
+        };
+
+        BoundarySegmentCollection collection = collector.Collect(
+            lines,
+            new BoundaryFillOptions(gapTolerance: 0.5));
+
+        Assert.Equal(2, collection.Segments.Count);
+        Assert.Equal(0, collection.BridgedGapCount);
+        Assert.DoesNotContain(collection.Segments, segment =>
+            segment.SourceKind == BoundarySegmentSourceKind.GapBridge);
+    }
+
 }

@@ -2020,3 +2020,15 @@ The v2 documentation now treats `v0.8.145` as complete for the current filled-po
 ## 2026-06-20 — Boundary Fill v2 gap bridge correction
 
 A manual test using `boundary-gap.opencad2d.json` exposed two issues after the first editable-gap pass. First, changing the gap tolerance was not reachable enough from the canvas workflow, so `CadToolKey.G` is now mapped and `BoundaryFillTool.TryHandleKey(...)` opens the same `Gap` prompt as the command option. Second, endpoint-gap handling no longer normalizes source endpoints to an averaged point. The collector now preserves all original boundary segment endpoints and adds a short synthetic `BoundarySegmentSourceKind.GapBridge` segment between the two endpoint groups when the gap is within tolerance. This prevents the preview from distorting existing horizontal/vertical boundary edges and keeps the gap closure explicit in the planar graph.
+
+### Boundary Fill HUD gap field fix
+
+Boundary Fill keeps the normal Dynamic HUD screen focused on seed-point coordinates (`X`/`Y`) only. The `Gap` value is edited from an explicit `Gap` / `G` sub-prompt: while that prompt is active, the HUD exposes only the `Gap` field, `TAB` focuses its textbox, and `Enter` confirms the new tolerance. Confirming the Gap field updates the tool tolerance and recalculates the active preview when present. Direct numeric typing in the normal BFILL screen therefore remains coordinate input, not gap editing.
+
+
+
+## 2026-06-20 — Boundary Fill endpoint-to-segment gap bridge fix
+
+A second manual `boundary-gap.opencad2d.json` case showed that the small-gap tolerance must cover not only endpoint-to-endpoint gaps, but also endpoint-to-segment gaps. The example has one line endpoint within less than `0.5` drawing units of the interior of another boundary segment, so no endpoint cluster is formed and the previous collector left the graph open.
+
+`BoundarySegmentCollector` now preserves the existing endpoint-to-endpoint `GapBridge` behavior and additionally projects unbridged endpoints onto nearby segment interiors. When exactly one segment interior is within `BoundaryFillOptions.GapTolerance`, the collector adds a short synthetic `GapBridge` from the endpoint to the projected point. The target segment is then split by the normal planar graph intersection pass. Ambiguous endpoint-to-segment cases are skipped conservatively. Regression coverage was added for collector-level endpoint-to-segment bridges and service-level fill success/failure using the manual geometry.

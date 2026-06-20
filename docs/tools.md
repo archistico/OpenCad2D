@@ -444,3 +444,8 @@ Separate multi-segment polylines are still rejected conservatively. This avoids 
 ### Boundary Fill gap bridging note
 
 Boundary Fill v2 closes small endpoint gaps by adding short internal `GapBridge` segments to the boundary graph. It does not average or move existing line endpoints. This keeps the source boundaries visually faithful while still allowing the preview/fill loop to close gaps within the active `Gap` tolerance.
+
+### Boundary Fill HUD gap field fix
+
+Boundary Fill keeps the normal Dynamic HUD screen focused on seed-point coordinates (`X`/`Y`) only. The `Gap` value is edited from an explicit `Gap` / `G` sub-prompt: while that prompt is active, the HUD exposes only the `Gap` field, `TAB` focuses its textbox, and `Enter` confirms the new tolerance. Confirming the Gap field updates the tool tolerance and recalculates the active preview when present. Direct numeric typing in the normal BFILL screen therefore remains coordinate input, not gap editing.
+

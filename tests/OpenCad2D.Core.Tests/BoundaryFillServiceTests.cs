@@ -300,6 +300,63 @@ public sealed class BoundaryFillServiceTests
         Assert.Equal(0, result.Diagnostics.BridgedGapCount);
     }
 
+
+
+    [Fact]
+    public void CreateFilledPolyline_WithEndpointToSegmentGapWithinTolerance_ShouldBridgeGap()
+    {
+        var service = new BoundaryFillService();
+        IReadOnlyList<LineEntity> boundaries = CreateEndpointToSegmentGapBoundary();
+        var options = new BoundaryFillOptions(gapTolerance: 0.5);
+
+        BoundaryFillResult result = service.CreateFilledPolyline(
+            boundaries,
+            new Point2D(550, 700),
+            LayerId.Default,
+            options);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Diagnostics.BridgedGapCount);
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(result.Polyline);
+        Assert.True(polyline.IsClosed);
+        Assert.True(polyline.IsFilled);
+        Assert.Contains(polyline.Vertices, point =>
+            point.DistanceTo(new Point2D(841.9411046471998, 782.3688655982155)) <= 1e-9);
+        Assert.Contains(polyline.Vertices, point =>
+            point.DistanceTo(new Point2D(842.0358367859737, 782.6771886540562)) <= 1e-9);
+    }
+
+    [Fact]
+    public void CreateFilledPolyline_WithEndpointToSegmentGapAboveTolerance_ShouldFail()
+    {
+        var service = new BoundaryFillService();
+        IReadOnlyList<LineEntity> boundaries = CreateEndpointToSegmentGapBoundary();
+        var options = new BoundaryFillOptions(gapTolerance: 0.1);
+
+        BoundaryFillResult result = service.CreateFilledPolyline(
+            boundaries,
+            new Point2D(550, 700),
+            LayerId.Default,
+            options);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(BoundaryFillStatus.NoClosedBoundary, result.Status);
+        Assert.Equal(0, result.Diagnostics.BridgedGapCount);
+    }
+
+
+
+    private static IReadOnlyList<LineEntity> CreateEndpointToSegmentGapBoundary()
+    {
+        return new[]
+        {
+            new LineEntity(new Point2D(300, 620), new Point2D(760, 470)),
+            new LineEntity(new Point2D(550, 430), new Point2D(841.9411046471998, 782.3688655982155)),
+            new LineEntity(new Point2D(300, 520), new Point2D(460, 940)),
+            new LineEntity(new Point2D(330, 940), new Point2D(917.3153197503055, 759.5475968447078))
+        };
+    }
+
     private static IReadOnlyList<LineEntity> CreateRectangleLines()
     {
         return new[]

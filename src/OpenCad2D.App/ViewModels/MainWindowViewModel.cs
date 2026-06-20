@@ -566,6 +566,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 _commandHudInputState.Distance ?? chamferTool.Distance);
         }
 
+        if (activeTool is BoundaryFillTool boundaryFillTool)
+        {
+            return BuildBoundaryFillFields(boundaryFillTool);
+        }
+
         if (!measurement.HasValue)
         {
             return IsPointExpectedInput(GetCurrentPromptState().ExpectedInput)
@@ -765,6 +770,23 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 "Y",
                 _commandHudInputState.Y ?? userPoint.Y)
         };
+    }
+
+    private IReadOnlyList<CommandHudFieldViewModel> BuildBoundaryFillFields(BoundaryFillTool boundaryFillTool)
+    {
+        if (boundaryFillTool.IsEditingGapTolerance)
+        {
+            return new[]
+            {
+                new CommandHudFieldViewModel(
+                    "gap",
+                    "Gap",
+                    _commandHudInputState.Gap ?? boundaryFillTool.GapTolerance,
+                    kind: CommandHudFieldKind.Gap)
+            };
+        }
+
+        return BuildCoordinateOverrideFields();
     }
 
     private IReadOnlyList<CommandHudFieldViewModel> BuildSingleDistanceCoordinateOverrideField(
@@ -3034,6 +3056,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Factor or
             CommandHudFieldKind.Sides or
             CommandHudFieldKind.Segments or
+            CommandHudFieldKind.Gap or
             CommandHudFieldKind.X or
             CommandHudFieldKind.Y))
         {
@@ -3419,6 +3442,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Factor or
             CommandHudFieldKind.Sides or
             CommandHudFieldKind.Segments or
+            CommandHudFieldKind.Gap or
             CommandHudFieldKind.X or
             CommandHudFieldKind.Y))
         {
@@ -3590,7 +3614,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Width or
             CommandHudFieldKind.Height or
             CommandHudFieldKind.Radius or
-            CommandHudFieldKind.Factor;
+            CommandHudFieldKind.Factor or
+            CommandHudFieldKind.Gap;
     }
 
     private bool TryHandleDedicatedScalarCommandHudOverride(
@@ -3720,6 +3745,27 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
             result = SubmitCommandInput(FormatHudNumber(value));
             ClearCommandHudInputOverrides();
+            NotifyCommandInputStateChanged();
+            return true;
+        }
+
+        if (Workspace.ToolController.ActiveTool is BoundaryFillTool boundaryFillTool &&
+            fieldKind == CommandHudFieldKind.Gap)
+        {
+            if (!confirm)
+            {
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
+            AppendVisibleCommandHistoryLine($"> {input}");
+            result = boundaryFillTool.SetGapToleranceFromHud(
+                Workspace.Context,
+                value);
+            ClearCommandHudInputOverrides();
+            SetLastResult(result);
+            AppendToolResultToVisibleHistory(result);
+            NotifyPointerDrivenStateChanged();
             NotifyCommandInputStateChanged();
             return true;
         }

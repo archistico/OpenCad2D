@@ -2226,17 +2226,90 @@ public sealed class MainWindowViewModelCommandLineTests
     }
 
     [Fact]
-    public void CommandHudInput_BoundaryFillSeedPoint_ShouldExposeCoordinateFields()
+    public void CommandHudInput_BoundaryFillSeedPoint_ShouldExposeCoordinateFieldsOnly()
     {
         var viewModel = new MainWindowViewModel();
 
         viewModel.SubmitCommandInput("BOUNDARYFILL");
 
         CommandHudFieldKind[] editableKinds = GetEditableHudFieldKinds(viewModel);
-        Assert.Contains(CommandHudFieldKind.X, editableKinds);
-        Assert.Contains(CommandHudFieldKind.Y, editableKinds);
+        Assert.Equal(
+            new[]
+            {
+                CommandHudFieldKind.X,
+                CommandHudFieldKind.Y
+            },
+            editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Gap, editableKinds);
         Assert.DoesNotContain(CommandHudFieldKind.Distance, editableKinds);
         Assert.DoesNotContain(CommandHudFieldKind.Angle, editableKinds);
+    }
+
+    [Fact]
+    public void CommandHudInput_BoundaryFillGapOption_ShouldExposeOnlyGapField()
+    {
+        var viewModel = new MainWindowViewModel();
+
+        viewModel.SubmitCommandInput("BOUNDARYFILL");
+        viewModel.SubmitCommandInput("G");
+
+        CommandHudFieldKind[] editableKinds = GetEditableHudFieldKinds(viewModel);
+        Assert.Equal(
+            new[]
+            {
+                CommandHudFieldKind.Gap
+            },
+            editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.X, editableKinds);
+        Assert.DoesNotContain(CommandHudFieldKind.Y, editableKinds);
+    }
+
+    [Fact]
+    public void CommandHudInput_BoundaryFillGap_ShouldBeEditableFromHudField()
+    {
+        var viewModel = new MainWindowViewModel();
+        AddRectangleBoundaryWithSmallGap(viewModel);
+
+        viewModel.SubmitCommandInput("BOUNDARYFILL");
+        viewModel.SubmitCommandInput("G");
+
+        CommandHudFieldViewModel gapField = Assert.Single(
+            viewModel.CommandHudState.Fields,
+            field => field.Kind == CommandHudFieldKind.Gap);
+        AssertDecimalDisplayValue("0.5", gapField.DisplayValue);
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Gap,
+            "0.1",
+            confirm: true,
+            out var gapResult));
+
+        Assert.NotNull(gapResult);
+        AssertDecimalMessage(
+            "Boundary fill gap tolerance set to 0.1.",
+            viewModel.LastMessage);
+
+        Assert.Equal(
+            new[]
+            {
+                CommandHudFieldKind.X,
+                CommandHudFieldKind.Y
+            },
+            GetEditableHudFieldKinds(viewModel));
+
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.X,
+            "5",
+            confirm: false,
+            out _));
+        Assert.True(viewModel.TryCommitCommandHudFieldInput(
+            CommandHudFieldKind.Y,
+            "2",
+            confirm: true,
+            out _));
+
+        Assert.Equal("No closed boundary was found around the picked point.", viewModel.LastMessage);
+        Assert.Empty(viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
     }
 
     [Fact]
@@ -2513,6 +2586,36 @@ public sealed class MainWindowViewModelCommandLineTests
             new LineEntity(new Point2D(0, 0), new Point2D(10, 0)));
         viewModel.Workspace.Document.AddEntity(
             new LineEntity(new Point2D(10, 0), new Point2D(10, 5)));
+        viewModel.Workspace.Document.AddEntity(
+            new LineEntity(new Point2D(10, 5), new Point2D(0, 5)));
+        viewModel.Workspace.Document.AddEntity(
+            new LineEntity(new Point2D(0, 5), new Point2D(0, 0)));
+    }
+
+
+    private static void AssertDecimalDisplayValue(string expectedInvariant, string actual)
+    {
+        Assert.True(
+            string.Equals(expectedInvariant, actual, StringComparison.Ordinal) ||
+            string.Equals(expectedInvariant.Replace('.', ','), actual, StringComparison.Ordinal),
+            $"Expected decimal display value '{expectedInvariant}' or '{expectedInvariant.Replace('.', ',')}', but got '{actual}'.");
+    }
+
+    private static void AssertDecimalMessage(string expectedInvariant, string? actual)
+    {
+        string expectedLocalized = expectedInvariant.Replace('.', ',');
+        Assert.True(
+            string.Equals(expectedInvariant, actual, StringComparison.Ordinal) ||
+            string.Equals(expectedLocalized, actual, StringComparison.Ordinal),
+            $"Expected message '{expectedInvariant}' or '{expectedLocalized}', but got '{actual}'.");
+    }
+
+    private static void AddRectangleBoundaryWithSmallGap(MainWindowViewModel viewModel)
+    {
+        viewModel.Workspace.Document.AddEntity(
+            new LineEntity(new Point2D(0, 0), new Point2D(10, 0)));
+        viewModel.Workspace.Document.AddEntity(
+            new LineEntity(new Point2D(10, 0.25), new Point2D(10, 5)));
         viewModel.Workspace.Document.AddEntity(
             new LineEntity(new Point2D(10, 5), new Point2D(0, 5)));
         viewModel.Workspace.Document.AddEntity(

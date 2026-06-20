@@ -304,8 +304,36 @@ public sealed class BoundarySegmentCollector
         }
 
         var result = new List<BoundarySegment>(segments);
+        var bridgedEndpointIndexes = new HashSet<int>();
 
-        foreach (List<int> cluster in clusters.Values)
+        bridgedGapCount += AddEndpointEndpointBridges(
+            result,
+            clusters.Values,
+            endpoints,
+            tolerance,
+            bridgedEndpointIndexes);
+
+        bridgedGapCount += AddEndpointSegmentBridges(
+            result,
+            segments,
+            endpoints,
+            bridgedEndpointIndexes,
+            options,
+            tolerance);
+
+        return result;
+    }
+
+    private static int AddEndpointEndpointBridges(
+        List<BoundarySegment> result,
+        IEnumerable<List<int>> clusters,
+        IReadOnlyList<EndpointRef> endpoints,
+        GeometryTolerance tolerance,
+        HashSet<int> bridgedEndpointIndexes)
+    {
+        int bridgedGapCount = 0;
+
+        foreach (List<int> cluster in clusters)
         {
             if (cluster.Count < 2)
             {
@@ -340,10 +368,122 @@ public sealed class BoundarySegmentCollector
                 end,
                 EntityId.Empty,
                 BoundarySegmentSourceKind.GapBridge));
+
+            foreach (int endpointIndex in cluster)
+            {
+                bridgedEndpointIndexes.Add(endpointIndex);
+            }
+
             bridgedGapCount++;
         }
 
-        return result;
+        return bridgedGapCount;
+    }
+
+    private static int AddEndpointSegmentBridges(
+        List<BoundarySegment> result,
+        IReadOnlyList<BoundarySegment> segments,
+        IReadOnlyList<EndpointRef> endpoints,
+        IReadOnlySet<int> bridgedEndpointIndexes,
+        BoundaryFillOptions options,
+        GeometryTolerance tolerance)
+    {
+        int bridgedGapCount = 0;
+
+        for (int endpointIndex = 0; endpointIndex < endpoints.Count; endpointIndex++)
+        {
+            if (bridgedEndpointIndexes.Contains(endpointIndex))
+            {
+                continue;
+            }
+
+            EndpointRef endpoint = endpoints[endpointIndex];
+            var candidates = new List<EndpointSegmentBridgeCandidate>();
+
+            for (int segmentIndex = 0; segmentIndex < segments.Count; segmentIndex++)
+            {
+                if (segmentIndex == endpoint.SegmentIndex)
+                {
+                    continue;
+                }
+
+                BoundarySegment segment = segments[segmentIndex];
+
+                if (!TryProjectToSegmentInterior(
+                        endpoint.Point,
+                        segment,
+                        tolerance,
+                        out Point2D projection,
+                        out double distance))
+                {
+                    continue;
+                }
+
+                if (distance <= tolerance.Distance ||
+                    distance > options.GapTolerance)
+                {
+                    continue;
+                }
+
+                candidates.Add(new EndpointSegmentBridgeCandidate(
+                    segmentIndex,
+                    projection,
+                    distance));
+            }
+
+            if (candidates.Count != 1)
+            {
+                continue;
+            }
+
+            EndpointSegmentBridgeCandidate candidate = candidates[0];
+
+            result.Add(new BoundarySegment(
+                endpoint.Point,
+                candidate.Projection,
+                EntityId.Empty,
+                BoundarySegmentSourceKind.GapBridge));
+
+            bridgedGapCount++;
+        }
+
+        return bridgedGapCount;
+    }
+
+    private static bool TryProjectToSegmentInterior(
+        Point2D point,
+        BoundarySegment segment,
+        GeometryTolerance tolerance,
+        out Point2D projection,
+        out double distance)
+    {
+        projection = default;
+        distance = 0.0;
+
+        double dx = segment.End.X - segment.Start.X;
+        double dy = segment.End.Y - segment.Start.Y;
+        double lengthSquared = dx * dx + dy * dy;
+
+        if (lengthSquared <= tolerance.VectorLength * tolerance.VectorLength)
+        {
+            return false;
+        }
+
+        double parameter =
+            ((point.X - segment.Start.X) * dx +
+             (point.Y - segment.Start.Y) * dy) / lengthSquared;
+
+        if (parameter <= tolerance.Parameter ||
+            parameter >= 1.0 - tolerance.Parameter)
+        {
+            return false;
+        }
+
+        projection = new Point2D(
+            segment.Start.X + dx * parameter,
+            segment.Start.Y + dy * parameter);
+        distance = point.DistanceTo(projection);
+        return true;
     }
 
     private static bool ClusterTouchesSameSegmentTwice(
@@ -414,6 +554,11 @@ public sealed class BoundarySegmentCollector
     private readonly record struct EndpointPointGroup(
         Point2D Point,
         int Count);
+
+    private readonly record struct EndpointSegmentBridgeCandidate(
+        int SegmentIndex,
+        Point2D Projection,
+        double Distance);
 
     private readonly record struct EndpointRef(
         int SegmentIndex,

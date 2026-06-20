@@ -95,4 +95,20 @@ public sealed class CommandHudFieldRoutingPolicyTests
     {
         Assert.Equal(expected, CommandHudFieldRoutingPolicy.IsNumericHudText(text));
     }
+
+    [Fact]
+    public void GetDefaultFieldKindForNumericText_WithGapAndCoordinates_ShouldPreferX()
+    {
+        CommandHudFieldKind? result = CommandHudFieldRoutingPolicy.GetDefaultFieldKindForNumericText(
+            new[]
+            {
+                CommandHudFieldKind.Gap,
+                CommandHudFieldKind.X,
+                CommandHudFieldKind.Y
+            },
+            activeKind: null);
+
+        Assert.Equal(CommandHudFieldKind.X, result);
+    }
+
 }

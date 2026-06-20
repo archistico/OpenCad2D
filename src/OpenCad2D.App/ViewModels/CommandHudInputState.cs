@@ -25,6 +25,8 @@ public sealed class CommandHudInputState
 
     public double? Segments { get; set; }
 
+    public double? Gap { get; set; }
+
     public double? X { get; set; }
 
     public double? Y { get; set; }
@@ -38,11 +40,14 @@ public sealed class CommandHudInputState
     public bool HasNumberOverride =>
         Sides is not null || Segments is not null;
 
+    public bool HasToolParameterOverride =>
+        Gap is not null;
+
     public bool HasCoordinateOverride =>
         X is not null || Y is not null;
 
     public bool HasAnyOverride =>
-        HasPolarOverride || HasSizeOverride || HasNumberOverride || HasCoordinateOverride;
+        HasPolarOverride || HasSizeOverride || HasNumberOverride || HasToolParameterOverride || HasCoordinateOverride;
 
     public double? GetOverride(CommandHudFieldKind kind)
     {
@@ -56,6 +61,7 @@ public sealed class CommandHudInputState
             CommandHudFieldKind.Factor => Factor,
             CommandHudFieldKind.Sides => Sides,
             CommandHudFieldKind.Segments => Segments,
+            CommandHudFieldKind.Gap => Gap,
             CommandHudFieldKind.X => X,
             CommandHudFieldKind.Y => Y,
             _ => null
@@ -94,6 +100,9 @@ public sealed class CommandHudInputState
             case CommandHudFieldKind.Segments:
                 Segments = value;
                 break;
+            case CommandHudFieldKind.Gap:
+                Gap = value;
+                break;
             case CommandHudFieldKind.X:
                 X = value;
                 break;
@@ -113,6 +122,7 @@ public sealed class CommandHudInputState
         Factor = null;
         Sides = null;
         Segments = null;
+        Gap = null;
         X = null;
         Y = null;
         ActiveField = CommandHudFieldKind.Distance;

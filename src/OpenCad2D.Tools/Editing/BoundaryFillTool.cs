@@ -41,6 +41,8 @@ public sealed class BoundaryFillTool :
 
     public double GapTolerance => _gapTolerance;
 
+    public bool IsEditingGapTolerance => _isEditingGapTolerance;
+
     public SnapKind GetActiveSnapKind(ToolContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -254,6 +256,19 @@ public sealed class BoundaryFillTool :
         }
 
         return ToolResult.None("Unknown Boundary Fill option. Use Gap.");
+    }
+
+    public ToolResult SetGapToleranceFromHud(
+        ToolContext context,
+        double gapTolerance)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+
+        return HandleGapToleranceInput(
+            CommandInputSubmission.FromDistance(
+                FormatGapTolerance(gapTolerance),
+                gapTolerance),
+            context);
     }
 
     private ToolResult HandleGapToleranceInput(

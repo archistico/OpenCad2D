@@ -15,6 +15,7 @@ public enum CommandHudFieldKind
     Factor,
     Sides,
     Segments,
+    Gap,
     X,
     Y
 }
@@ -82,6 +83,7 @@ public sealed class CommandHudFieldViewModel
         CommandHudFieldKind.Factor => "factor",
         CommandHudFieldKind.Sides => "sides",
         CommandHudFieldKind.Segments => "segments",
+        CommandHudFieldKind.Gap => "gap",
         CommandHudFieldKind.X => "x",
         CommandHudFieldKind.Y => "y",
         _ => string.Empty
@@ -125,6 +127,13 @@ public sealed class CommandHudFieldViewModel
         if (ContainsInvariant(key, "segments") || ContainsInvariant(label, "segments"))
         {
             return CommandHudFieldKind.Segments;
+        }
+
+        if (ContainsInvariant(key, "gap") ||
+            ContainsInvariant(label, "gap") ||
+            ContainsInvariant(label, "tolerance"))
+        {
+            return CommandHudFieldKind.Gap;
         }
 
         if (string.Equals(key, "x", System.StringComparison.OrdinalIgnoreCase) ||

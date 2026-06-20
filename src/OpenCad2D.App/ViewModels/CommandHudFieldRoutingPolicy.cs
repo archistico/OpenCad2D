@@ -22,7 +22,8 @@ public static class CommandHudFieldRoutingPolicy
         CommandHudFieldKind.Sides,
         CommandHudFieldKind.Segments,
         CommandHudFieldKind.X,
-        CommandHudFieldKind.Y
+        CommandHudFieldKind.Y,
+        CommandHudFieldKind.Gap
     };
 
     public static CommandHudFieldKind? GetDefaultFieldKindForNumericText(
