@@ -23,6 +23,7 @@ public enum ToolId
     Divide,
     NorthSymbol,
     ScaleBar,
+    Stair,
     HorizontalDimension,
     VerticalDimension,
     AlignedDimension,

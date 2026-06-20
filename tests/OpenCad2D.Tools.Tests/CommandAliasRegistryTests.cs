@@ -44,6 +44,10 @@ public sealed class CommandAliasRegistryTests
     [InlineData("SCALEBAR", ToolId.ScaleBar)]
     [InlineData("sbar", ToolId.ScaleBar)]
     [InlineData("GRAPHICSCALE", ToolId.ScaleBar)]
+    [InlineData("STAIR", ToolId.Stair)]
+    [InlineData("stairs", ToolId.Stair)]
+    [InlineData("SCALA", ToolId.Stair)]
+    [InlineData("st", ToolId.Stair)]
     public void TryResolve_WithKnownAlias_ShouldReturnTool(
         string alias,
         ToolId expectedToolId)

@@ -110,6 +110,11 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("SBAR", ToolId.ScaleBar);
         yield return new CommandAlias("GRAPHICSCALE", ToolId.ScaleBar);
 
+        yield return new CommandAlias("STAIR", ToolId.Stair);
+        yield return new CommandAlias("STAIRS", ToolId.Stair);
+        yield return new CommandAlias("SCALA", ToolId.Stair);
+        yield return new CommandAlias("ST", ToolId.Stair);
+
         yield return new CommandAlias("RECTANGLE", ToolId.Rectangle);
         yield return new CommandAlias("REC", ToolId.Rectangle);
 

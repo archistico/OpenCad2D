@@ -165,6 +165,14 @@ public sealed class ToolRegistry
                 "Symbols"),
             () => new ScaleBarTool());
 
+        Register(
+            new ToolDescriptor(
+                ToolId.Stair,
+                "Stair",
+                "Stair",
+                "Symbols"),
+            () => new StairTool());
+
 
         Register(
             new ToolDescriptor(

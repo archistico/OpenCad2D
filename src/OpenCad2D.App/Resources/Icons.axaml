@@ -225,6 +225,9 @@
     <!-- Spline.svg -->
     <StreamGeometry x:Key="IconSpline">M4 19h1.341a7 7 0 0 0 6.845 -5.533l.628 -2.934a7 7 0 0 1 6.846 -5.533h1.34</StreamGeometry>
 
+    <!-- Stair.svg: simple straight stair plan icon. -->
+    <StreamGeometry x:Key="IconStair">M4 18h16 M4 14h16 M4 10h16 M4 6h16 M4 6v12 M20 6v12 M8 6v12 M12 6v12 M16 6v12</StreamGeometry>
+
     <!-- Text.svg -->
     <StreamGeometry x:Key="IconText">M4 20l3 0 M14 20l7 0 M6.9 15l6.9 0 M10.2 6.3l5.8 13.7 M5 20l6 -16l2 0l7 16</StreamGeometry>
 

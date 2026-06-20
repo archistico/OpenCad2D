@@ -920,6 +920,20 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="StairButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Insert a parametric straight stair"
+                                    Click="Stair_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconStair}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Stair" />
+                                </Grid>
+                            </Button>
+
                             <TextBlock Classes="panel-section-label"
                                        Text="DIMENSION" />
 

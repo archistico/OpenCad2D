@@ -1500,6 +1500,17 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Stair_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ActivateTool(ToolId.Stair);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
 
     private void HorizontalDimension_Click(
         object? sender,
@@ -3851,6 +3862,7 @@ public partial class MainWindow : Window
             "Polygon" => "IconPolygon",
             "North Symbol" => "IconPoint",
             "Metric Scale Bar" => "IconDistance",
+            "Stair" => "IconStair",
             "Horizontal Dim" => "IconHorizontalDim",
             "Vertical Dim" => "IconVerticalDim",
             "Aligned Dim" => "IconAlignedDim",
@@ -4091,6 +4103,10 @@ public partial class MainWindow : Window
             activeToolName.Equals("Metric Scale Bar", StringComparison.OrdinalIgnoreCase) ||
             activeToolName.Equals("Scale Bar", StringComparison.OrdinalIgnoreCase) ||
             activeToolName.Equals("ScaleBar", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            StairButton,
+            activeToolName.Equals("Stair", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             HorizontalDimensionButton,

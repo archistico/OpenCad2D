@@ -14,4 +14,6 @@ For users, the difference is simple. Use Symbols when OpenCad2D must ask for dim
 
 ## Current scope
 
-The current project decision is to keep only doors, windows and stairs as parametric objects. This chapter should be expanded when those tools are implemented or finalized.
+The current project decision is to keep only doors, windows and stairs as parametric objects. Stairs are the first implemented parametric object. The toolbar `Stair` button inserts a default straight plan stair at the picked point; after insertion, select the stair and use the Property Panel to change view, width, tread count, tread depth, riser height, insertion point and structure options.
+
+The command aliases are `STAIR`, `STAIRS`, `SCALA` and `ST`. The command expects a point, so the Dynamic HUD exposes X/Y fields when editing is activated with TAB.

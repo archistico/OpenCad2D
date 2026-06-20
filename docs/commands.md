@@ -88,6 +88,14 @@ Aliases are case-insensitive.
 | Polyline | `POLYLINE`, `PL` |
 | Spline | `SPLINE`, `SPL` |
 
+### Symbols
+
+| Tool | Aliases |
+|---|---|
+| North Symbol | `NORTH`, `NORTHSYMBOL`, `NS` |
+| Metric Scale Bar | `SCALEBAR`, `SBAR`, `GRAPHICSCALE` |
+| Stair | `STAIR`, `STAIRS`, `SCALA`, `ST` |
+
 ### Dimensions
 
 | Tool | Aliases |
