@@ -17,21 +17,51 @@ public sealed class BoundaryFillService
         LayerId layerId,
         GeometryTolerance? tolerance = null)
     {
+        return CreateFilledPolyline(
+            boundaryEntities,
+            seedPoint,
+            layerId,
+            BoundaryFillOptions.FromTolerance(tolerance));
+    }
+
+    public BoundaryFillResult CreateFilledPolyline(
+        IEnumerable<CadEntity> boundaryEntities,
+        Point2D seedPoint,
+        LayerId layerId,
+        BoundaryFillOptions options)
+    {
         ArgumentNullException.ThrowIfNull(boundaryEntities);
+        ArgumentNullException.ThrowIfNull(options);
 
-        GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
-        IReadOnlyList<BoundarySegment> sourceSegments = CollectLinearSegments(boundaryEntities, effectiveTolerance);
+        GeometryTolerance effectiveTolerance = options.GeometryTolerance;
+        BoundarySegmentCollection sourceSegments = CollectLinearSegments(boundaryEntities, effectiveTolerance);
 
-        if (sourceSegments.Count == 0)
+        if (sourceSegments.Segments.Count == 0)
         {
-            return BoundaryFillResult.Failure("Boundary fill needs visible line or straight polyline boundaries.");
+            return BoundaryFillResult.Failure(
+                BoundaryFillStatus.UnsupportedOnly,
+                "Boundary fill needs visible line or straight polyline boundaries.",
+                seedPoint,
+                CreateDiagnostics(
+                    sourceSegments,
+                    graphEdgeCount: 0,
+                    candidateFaceCount: 0,
+                    options));
         }
 
-        PlanarGraph graph = BuildPlanarGraph(sourceSegments, effectiveTolerance);
+        PlanarGraph graph = BuildPlanarGraph(sourceSegments.Segments, effectiveTolerance);
 
         if (graph.EdgeCount == 0)
         {
-            return BoundaryFillResult.Failure("No usable boundary segments were found.");
+            return BoundaryFillResult.Failure(
+                BoundaryFillStatus.NoUsableSegments,
+                "No usable boundary segments were found.",
+                seedPoint,
+                CreateDiagnostics(
+                    sourceSegments,
+                    graph.EdgeCount,
+                    candidateFaceCount: 0,
+                    options));
         }
 
         IReadOnlyList<IReadOnlyList<Point2D>> faces = FindInteriorFaces(graph, effectiveTolerance);
@@ -40,16 +70,30 @@ public sealed class BoundaryFillService
             .OrderBy(face => Math.Abs(SignedArea(face)))
             .FirstOrDefault();
 
+        BoundaryFillDiagnostics diagnostics = CreateDiagnostics(
+            sourceSegments,
+            graph.EdgeCount,
+            faces.Count,
+            options);
+
         if (containingFace is null)
         {
-            return BoundaryFillResult.Failure("No closed boundary was found around the picked point.");
+            return BoundaryFillResult.Failure(
+                BoundaryFillStatus.NoClosedBoundary,
+                "No closed boundary was found around the picked point.",
+                seedPoint,
+                diagnostics);
         }
 
         IReadOnlyList<Point2D> vertices = RemoveCollinearVertices(containingFace, effectiveTolerance);
 
         if (vertices.Count < 3)
         {
-            return BoundaryFillResult.Failure("The detected boundary is degenerate.");
+            return BoundaryFillResult.Failure(
+                BoundaryFillStatus.DegenerateBoundary,
+                "The detected boundary is degenerate.",
+                seedPoint,
+                diagnostics);
         }
 
         var polyline = new PolylineEntity(
@@ -58,14 +102,19 @@ public sealed class BoundaryFillService
             layerId: layerId,
             isFilled: true);
 
-        return BoundaryFillResult.Success(polyline);
+        return BoundaryFillResult.Success(
+            polyline,
+            seedPoint,
+            vertices,
+            diagnostics);
     }
 
-    private static IReadOnlyList<BoundarySegment> CollectLinearSegments(
+    private static BoundarySegmentCollection CollectLinearSegments(
         IEnumerable<CadEntity> entities,
         GeometryTolerance tolerance)
     {
         var segments = new List<BoundarySegment>();
+        int ignoredEntityCount = 0;
 
         foreach (CadEntity entity in entities)
         {
@@ -78,10 +127,14 @@ public sealed class BoundaryFillService
                 case PolylineEntity { HasArcSegments: false } polyline:
                     AddPolylineSegments(segments, polyline, tolerance);
                     break;
+
+                default:
+                    ignoredEntityCount++;
+                    break;
             }
         }
 
-        return segments;
+        return new BoundarySegmentCollection(segments, ignoredEntityCount);
     }
 
     private static void AddPolylineSegments(
@@ -110,6 +163,22 @@ public sealed class BoundaryFillService
                 segments.Add(new BoundarySegment(start, end));
             }
         }
+    }
+
+    private static BoundaryFillDiagnostics CreateDiagnostics(
+        BoundarySegmentCollection sourceSegments,
+        int graphEdgeCount,
+        int candidateFaceCount,
+        BoundaryFillOptions options)
+    {
+        return new BoundaryFillDiagnostics(
+            sourceSegments.Segments.Count,
+            graphEdgeCount,
+            candidateFaceCount,
+            sourceSegments.IgnoredEntityCount,
+            bridgedGapCount: 0,
+            sampledCurveSegmentCount: 0,
+            options.GapTolerance);
     }
 
     private static PlanarGraph BuildPlanarGraph(
@@ -475,6 +544,21 @@ public sealed class BoundaryFillService
         }
 
         return area / 2.0;
+    }
+
+    private sealed class BoundarySegmentCollection
+    {
+        public BoundarySegmentCollection(
+            IReadOnlyList<BoundarySegment> segments,
+            int ignoredEntityCount)
+        {
+            Segments = segments;
+            IgnoredEntityCount = ignoredEntityCount;
+        }
+
+        public IReadOnlyList<BoundarySegment> Segments { get; }
+
+        public int IgnoredEntityCount { get; }
     }
 
     private readonly record struct BoundarySegment(

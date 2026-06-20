@@ -293,12 +293,13 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.145-boundary-fill-v2.md`.
 
-Status: planned / audit and specification prepared.
+Status: in progress. Audit/specification and the result/options model are implemented; visible behavior still matches Boundary Fill v1.
 
 Goal: improve the existing click-inside BF workflow before introducing a true hatch entity.
 
 Scope:
 
+- Use `BoundaryFillOptions`, `BoundaryFillStatus` and `BoundaryFillDiagnostics` as the stable detection contract.
 - Separate detection/preview from document creation.
 - Sampled arc and circle boundary support while still emitting filled closed polylines.
 - Configurable gap tolerance for small endpoint gaps, with ambiguity checks.

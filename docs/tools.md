@@ -178,12 +178,13 @@ Current first-pass boundary support:
 
 Curved boundaries, blocks, hatch patterns, holes and associative boundary updates are deferred. Aliases: `BFILL`, `BF`, `BOUNDARYFILL`, `FILL`, `RIEMPIMENTO`.
 
-Planned v2 sequence is specified in `docs/specs/v0.8.145-boundary-fill-v2.md`:
+Boundary Fill v2 sequence is specified in `docs/specs/v0.8.145-boundary-fill-v2.md`. The audit/specification and result/options model are now in place; visible behavior still matches v1 until preview and curve support are added:
 
-1. Separate detection/preview from final creation, so the user can confirm or cancel the detected region.
+1. Centralize boundary segment extraction and metadata.
 2. Add sampled curve boundaries for arcs and circles, keeping the generated result as a filled `PolylineEntity`.
 3. Add configurable gap tolerance for small endpoint gaps, with clear diagnostics when the gap cannot be closed safely or is ambiguous.
-4. Keep holes/islands for a later real `HatchEntity`, because a single `PolylineEntity` cannot represent subtractive inner loops.
+4. Separate detection/preview from final creation, so the user can confirm or cancel the detected region.
+5. Keep holes/islands for a later real `HatchEntity`, because a single `PolylineEntity` cannot represent subtractive inner loops.
 
 ---
 
