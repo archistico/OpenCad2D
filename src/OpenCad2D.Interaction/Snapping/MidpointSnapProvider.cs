@@ -95,6 +95,14 @@ public sealed class MidpointSnapProvider : ISnapProvider
                 yield return Midpoint(imageReference.TopRight, imageReference.TopLeft);
                 yield return Midpoint(imageReference.TopLeft, imageReference.BottomLeft);
                 break;
+
+            case StairEntity stair:
+                foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+                {
+                    yield return segment.Midpoint;
+                }
+
+                break;
         }
     }
 

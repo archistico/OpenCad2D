@@ -280,3 +280,33 @@ public sealed class BlockReferenceHitTestServiceTests
         Assert.Equal(new Point2D(105, 50), result.ClosestPoint);
     }
 }
+
+public sealed class StairHitTestServiceTests
+{
+    [Fact]
+    public void HitTest_WhenPointIsNearGeneratedStairLinework_ShouldReturnStair()
+    {
+        var document = new CadDocument();
+        var stair = new StairEntity(
+            new Point2D(0, 0),
+            OpenCad2D.Core.Architecture.Stairs.StairViewKind.Plan,
+            width: 1,
+            treadCount: 3,
+            treadDepth: 1,
+            riserHeight: 0.2);
+
+        document.AddEntity(stair);
+
+        var service = new HitTestService();
+
+        HitTestResult? result = service.HitTest(
+            document,
+            new Point2D(2.5, 0.1),
+            tolerance: 0.2);
+
+        Assert.NotNull(result);
+        Assert.Equal(stair.Id, result.Entity.Id);
+        Assert.Equal(2.5, result.ClosestPoint.X, precision: 10);
+        Assert.Equal(0, result.ClosestPoint.Y, precision: 10);
+    }
+}

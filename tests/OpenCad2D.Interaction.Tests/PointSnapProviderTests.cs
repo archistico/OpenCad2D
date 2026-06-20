@@ -91,3 +91,102 @@ public sealed class BlockReferenceSnapProviderTests
         Assert.Equal(new Point2D(100, 50), candidate.Point);
     }
 }
+
+public sealed class StairSnapProviderTests
+{
+    [Fact]
+    public void EndpointSnapProvider_ShouldReturnGeneratedStairEndpoint()
+    {
+        var document = new CadDocument();
+        var stair = CreatePlanStair();
+        document.AddEntity(stair);
+
+        var provider = new EndpointSnapProvider();
+        var request = new SnapRequest(
+            document,
+            new Point2D(3.05, 1.05),
+            0.2,
+            SnapKind.Endpoint);
+
+        SnapCandidate candidate = Assert.Single(provider.GetCandidates(request));
+
+        Assert.Equal(SnapKind.Endpoint, candidate.Kind);
+        Assert.Equal(stair.Id, candidate.EntityId);
+        Assert.Equal(new Point2D(3, 1), candidate.Point);
+    }
+
+    [Fact]
+    public void MidpointSnapProvider_ShouldReturnGeneratedStairSegmentMidpoint()
+    {
+        var document = new CadDocument();
+        var stair = CreatePlanStair();
+        document.AddEntity(stair);
+
+        var provider = new MidpointSnapProvider();
+        var request = new SnapRequest(
+            document,
+            new Point2D(1.5, 0.05),
+            0.2,
+            SnapKind.Midpoint);
+
+        SnapCandidate candidate = Assert.Single(provider.GetCandidates(request));
+
+        Assert.Equal(SnapKind.Midpoint, candidate.Kind);
+        Assert.Equal(stair.Id, candidate.EntityId);
+        Assert.Equal(new Point2D(1.5, 0), candidate.Point);
+    }
+
+    [Fact]
+    public void CenterSnapProvider_ShouldReturnStairBoundingBoxCenter()
+    {
+        var document = new CadDocument();
+        var stair = CreatePlanStair();
+        document.AddEntity(stair);
+
+        var provider = new CenterSnapProvider();
+        var request = new SnapRequest(
+            document,
+            new Point2D(1.5, 0.5),
+            0.2,
+            SnapKind.Center);
+
+        SnapCandidate candidate = Assert.Single(provider.GetCandidates(request));
+
+        Assert.Equal(SnapKind.Center, candidate.Kind);
+        Assert.Equal(stair.Id, candidate.EntityId);
+        Assert.Equal(new Point2D(1.5, 0.5), candidate.Point);
+    }
+
+    [Fact]
+    public void NearestSnapProvider_ShouldReturnClosestPointOnGeneratedStairLinework()
+    {
+        var document = new CadDocument();
+        var stair = CreatePlanStair();
+        document.AddEntity(stair);
+
+        var provider = new NearestSnapProvider();
+        var request = new SnapRequest(
+            document,
+            new Point2D(2.4, 0.2),
+            0.3,
+            SnapKind.Nearest);
+
+        SnapCandidate candidate = Assert.Single(provider.GetCandidates(request));
+
+        Assert.Equal(SnapKind.Nearest, candidate.Kind);
+        Assert.Equal(stair.Id, candidate.EntityId);
+        Assert.Equal(2.4, candidate.Point.X, precision: 10);
+        Assert.Equal(0, candidate.Point.Y, precision: 10);
+    }
+
+    private static StairEntity CreatePlanStair()
+    {
+        return new StairEntity(
+            new Point2D(0, 0),
+            OpenCad2D.Core.Architecture.Stairs.StairViewKind.Plan,
+            width: 1,
+            treadCount: 3,
+            treadDepth: 1,
+            riserHeight: 0.2);
+    }
+}

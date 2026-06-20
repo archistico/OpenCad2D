@@ -766,3 +766,75 @@ public sealed class IntersectionSnapProviderTests
         Assert.Null(result);
     }
 }
+public sealed class StairIntersectionSnapProviderTests
+{
+    [Fact]
+    public void Snap_LineStairIntersection_ShouldReturnIntersectionOnGeneratedLinework()
+    {
+        var document = new CadDocument();
+        var stair = new StairEntity(
+            new Point2D(0, 0),
+            OpenCad2D.Core.Architecture.Stairs.StairViewKind.Plan,
+            width: 1,
+            treadCount: 3,
+            treadDepth: 1,
+            riserHeight: 0.2);
+        var line = new LineEntity(
+            new Point2D(1, -1),
+            new Point2D(1, 2));
+
+        document.AddEntity(stair);
+        document.AddEntity(line);
+
+        var service = new SnapService();
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(1, 1),
+            tolerance: 0.2,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(1, result.Point.X, precision: 10);
+        Assert.Equal(1, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_StairStairIntersection_ShouldReturnIntersectionBetweenGeneratedLinework()
+    {
+        var document = new CadDocument();
+        var first = new StairEntity(
+            new Point2D(0, 0),
+            OpenCad2D.Core.Architecture.Stairs.StairViewKind.Plan,
+            width: 1,
+            treadCount: 3,
+            treadDepth: 1,
+            riserHeight: 0.2);
+        var second = new StairEntity(
+            new Point2D(1, -0.5),
+            OpenCad2D.Core.Architecture.Stairs.StairViewKind.FrontElevation,
+            width: 2,
+            treadCount: 2,
+            treadDepth: 1,
+            riserHeight: 1);
+
+        document.AddEntity(first);
+        document.AddEntity(second);
+
+        var service = new SnapService();
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(2, 0.5),
+            tolerance: 0.2,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(2, result.Point.X, precision: 10);
+        Assert.Equal(0.5, result.Point.Y, precision: 10);
+    }
+}

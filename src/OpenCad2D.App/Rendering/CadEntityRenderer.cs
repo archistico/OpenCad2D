@@ -182,6 +182,13 @@ public sealed class CadEntityRenderer
                     pen);
                 break;
 
+            case StairEntity stair:
+                DrawStair(
+                    context,
+                    stair,
+                    pen);
+                break;
+
             case BlockReferenceEntity blockReference:
                 DrawBlockReference(
                     context,
@@ -274,6 +281,21 @@ public sealed class CadEntityRenderer
         context.DrawLine(pen, ToScreenPoint(bottomRight), ToScreenPoint(topRight));
         context.DrawLine(pen, ToScreenPoint(topRight), ToScreenPoint(topLeft));
         context.DrawLine(pen, ToScreenPoint(topLeft), ToScreenPoint(bottomLeft));
+    }
+
+
+    private void DrawStair(
+        DrawingContext context,
+        StairEntity stair,
+        Pen pen)
+    {
+        foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+        {
+            context.DrawLine(
+                pen,
+                ToScreenPoint(segment.Start),
+                ToScreenPoint(segment.End));
+        }
     }
 
     private void DrawImageReference(

@@ -69,6 +69,7 @@ public sealed class CenterSnapProvider : ISnapProvider
             EllipseEntity ellipse => ellipse.Center,
             ArcEntity arc => arc.Center,
             ImageReferenceEntity imageReference => imageReference.Center,
+            StairEntity stair => stair.GetBoundingBox().Center,
             _ => null
         };
     }

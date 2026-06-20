@@ -189,8 +189,94 @@ public sealed class IntersectionSnapProvider : ISnapProvider
                     arc.Geometry,
                     circle.Geometry),
 
+            (StairEntity stair, CadEntity other) =>
+                IntersectStairWithEntity(stair, other),
+
+            (CadEntity other, StairEntity stair) =>
+                IntersectStairWithEntity(stair, other),
+
             _ => IntersectWithCoreFallback(first, second)
         };
+    }
+
+    private static IReadOnlyList<Point2D> IntersectStairWithEntity(
+        StairEntity stair,
+        CadEntity other)
+    {
+        IReadOnlyList<LineSegment2D> stairSegments = stair.GetGeneratedGeometry().Segments;
+        IReadOnlyList<LineSegment2D> otherSegments = ToIntersectionSegments(other);
+
+        if (otherSegments.Count == 0)
+        {
+            return Array.Empty<Point2D>();
+        }
+
+        var intersections = new List<Point2D>();
+
+        foreach (LineSegment2D stairSegment in stairSegments)
+        {
+            foreach (LineSegment2D otherSegment in otherSegments)
+            {
+                IntersectionResult result = IntersectionService.IntersectSegments(
+                    stairSegment,
+                    otherSegment);
+
+                if (result.Kind == IntersectionKind.Point &&
+                    result.Point.HasValue)
+                {
+                    AddDistinct(intersections, result.Point.Value);
+                }
+            }
+        }
+
+        return intersections;
+    }
+
+    private static IReadOnlyList<LineSegment2D> ToIntersectionSegments(CadEntity entity)
+    {
+        return entity switch
+        {
+            LineEntity line => new[] { line.Geometry },
+            PolylineEntity polyline => ToIntersectionPolyline(polyline).GetSegments(),
+            StairEntity stair => stair.GetGeneratedGeometry().Segments,
+            CircleEntity circle => ToIntersectionPolyline(circle).GetSegments(),
+            EllipseEntity ellipse => ToIntersectionPolyline(ellipse).GetSegments(),
+            EllipticalArcEntity ellipticalArc =>
+                new Polyline2D(
+                    ellipticalArc.GetSamplePoints(CurveIntersectionSampleCount),
+                    isClosed: false).GetSegments(),
+            ArcEntity arc => ToIntersectionPolyline(arc).GetSegments(),
+            BezierSplineEntity spline => ToIntersectionPolyline(spline).GetSegments(),
+            _ => Array.Empty<LineSegment2D>()
+        };
+    }
+
+    private static Polyline2D ToIntersectionPolyline(ArcEntity arc)
+    {
+        var points = new List<Point2D>(CurveIntersectionSampleCount + 1);
+
+        double start = arc.StartAngle.NormalizePositive().Radians;
+        double end = arc.EndAngle.NormalizePositive().Radians;
+        double sweep = arc.IsCounterClockwise
+            ? end - start
+            : start - end;
+
+        if (sweep < 0.0)
+        {
+            sweep += Math.Tau;
+        }
+
+        for (int i = 0; i <= CurveIntersectionSampleCount; i++)
+        {
+            double t = i / (double)CurveIntersectionSampleCount;
+            double angle = arc.IsCounterClockwise
+                ? start + sweep * t
+                : start - sweep * t;
+
+            points.Add(arc.Geometry.PointAt(Angle.FromRadians(angle)));
+        }
+
+        return new Polyline2D(points, isClosed: false);
     }
 
 

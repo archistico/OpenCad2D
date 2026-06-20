@@ -1,6 +1,7 @@
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Interaction.BlockReferences;
+using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 
 namespace OpenCad2D.Interaction.Snapping;
@@ -111,6 +112,40 @@ public sealed class EndpointSnapProvider : ISnapProvider
                 }
 
                 break;
+
+            case StairEntity stair:
+                foreach (Point2D endpoint in GetStairEndpoints(stair))
+                {
+                    yield return endpoint;
+                }
+
+                break;
+        }
+    }
+
+    private static IEnumerable<Point2D> GetStairEndpoints(StairEntity stair)
+    {
+        var points = new List<Point2D>();
+
+        foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+        {
+            AddDistinct(points, segment.Start);
+            AddDistinct(points, segment.End);
+        }
+
+        return points;
+    }
+
+    private static void AddDistinct(
+        List<Point2D> points,
+        Point2D point)
+    {
+        bool alreadyExists = points.Any(existing =>
+            GeometryTolerance.Default.AreCoordinatesEqual(existing, point));
+
+        if (!alreadyExists)
+        {
+            points.Add(point);
         }
     }
 }
