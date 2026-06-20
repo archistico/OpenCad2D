@@ -113,7 +113,7 @@ public sealed class BoundaryFillService
             graphEdgeCount,
             candidateFaceCount,
             collection.IgnoredEntityCount,
-            BridgedGapCount: 0,
+            collection.BridgedGapCount,
             collection.SampledCurveSegmentCount,
             options.GapTolerance);
     }

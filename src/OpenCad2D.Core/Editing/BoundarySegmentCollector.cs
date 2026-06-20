@@ -80,10 +80,17 @@ public sealed class BoundarySegmentCollector
             }
         }
 
-        return new BoundarySegmentCollection(
+        IReadOnlyList<BoundarySegment> bridgedSegments = BridgeEndpointGaps(
             segments,
+            options,
+            tolerance,
+            out int bridgedGapCount);
+
+        return new BoundarySegmentCollection(
+            bridgedSegments,
             ignoredEntityCount,
-            sampledCurveSegmentCount);
+            sampledCurveSegmentCount,
+            bridgedGapCount);
     }
 
     private static void AddPolylineSegments(
@@ -239,4 +246,186 @@ public sealed class BoundarySegmentCollector
             sourceKind,
             isSampledCurve));
     }
+
+    private static IReadOnlyList<BoundarySegment> BridgeEndpointGaps(
+        IReadOnlyList<BoundarySegment> segments,
+        BoundaryFillOptions options,
+        GeometryTolerance tolerance,
+        out int bridgedGapCount)
+    {
+        bridgedGapCount = 0;
+
+        if (segments.Count == 0 ||
+            options.GapTolerance <= tolerance.Distance)
+        {
+            return segments;
+        }
+
+        var endpoints = new List<EndpointRef>(segments.Count * 2);
+
+        for (int segmentIndex = 0; segmentIndex < segments.Count; segmentIndex++)
+        {
+            endpoints.Add(new EndpointRef(segmentIndex, IsStart: true, segments[segmentIndex].Start));
+            endpoints.Add(new EndpointRef(segmentIndex, IsStart: false, segments[segmentIndex].End));
+        }
+
+        var parent = Enumerable.Range(0, endpoints.Count).ToArray();
+
+        for (int first = 0; first < endpoints.Count; first++)
+        {
+            for (int second = first + 1; second < endpoints.Count; second++)
+            {
+                if (endpoints[first].SegmentIndex == endpoints[second].SegmentIndex)
+                {
+                    continue;
+                }
+
+                if (endpoints[first].Point.DistanceTo(endpoints[second].Point) <= options.GapTolerance)
+                {
+                    Union(parent, first, second);
+                }
+            }
+        }
+
+        var clusters = new Dictionary<int, List<int>>();
+
+        for (int index = 0; index < endpoints.Count; index++)
+        {
+            int root = Find(parent, index);
+
+            if (!clusters.TryGetValue(root, out List<int>? cluster))
+            {
+                cluster = new List<int>();
+                clusters.Add(root, cluster);
+            }
+
+            cluster.Add(index);
+        }
+
+        var replacements = new Dictionary<(int SegmentIndex, bool IsStart), Point2D>();
+
+        foreach (List<int> cluster in clusters.Values)
+        {
+            if (cluster.Count < 2)
+            {
+                continue;
+            }
+
+            IReadOnlyList<Point2D> distinctPoints = DistinctEndpointPoints(
+                cluster.Select(index => endpoints[index].Point),
+                tolerance);
+
+            if (distinctPoints.Count <= 1)
+            {
+                continue;
+            }
+
+            if (distinctPoints.Count != 2)
+            {
+                continue;
+            }
+
+            Point2D representative = AveragePoints(distinctPoints);
+            bridgedGapCount++;
+
+            foreach (int endpointIndex in cluster)
+            {
+                EndpointRef endpoint = endpoints[endpointIndex];
+                replacements[(endpoint.SegmentIndex, endpoint.IsStart)] = representative;
+            }
+        }
+
+        if (replacements.Count == 0)
+        {
+            return segments;
+        }
+
+        var result = new List<BoundarySegment>(segments.Count);
+
+        for (int index = 0; index < segments.Count; index++)
+        {
+            BoundarySegment segment = segments[index];
+            Point2D start = replacements.TryGetValue((index, true), out Point2D replacedStart)
+                ? replacedStart
+                : segment.Start;
+            Point2D end = replacements.TryGetValue((index, false), out Point2D replacedEnd)
+                ? replacedEnd
+                : segment.End;
+
+            if (start.DistanceTo(end) <= tolerance.Distance)
+            {
+                continue;
+            }
+
+            result.Add(segment with
+            {
+                Start = start,
+                End = end
+            });
+        }
+
+        return result;
+    }
+
+    private static IReadOnlyList<Point2D> DistinctEndpointPoints(
+        IEnumerable<Point2D> points,
+        GeometryTolerance tolerance)
+    {
+        var result = new List<Point2D>();
+
+        foreach (Point2D point in points)
+        {
+            if (result.Any(existing => existing.DistanceTo(point) <= tolerance.Distance))
+            {
+                continue;
+            }
+
+            result.Add(point);
+        }
+
+        return result;
+    }
+
+    private static Point2D AveragePoints(IReadOnlyList<Point2D> points)
+    {
+        double x = 0.0;
+        double y = 0.0;
+
+        foreach (Point2D point in points)
+        {
+            x += point.X;
+            y += point.Y;
+        }
+
+        return new Point2D(x / points.Count, y / points.Count);
+    }
+
+    private static int Find(int[] parent, int index)
+    {
+        while (parent[index] != index)
+        {
+            parent[index] = parent[parent[index]];
+            index = parent[index];
+        }
+
+        return index;
+    }
+
+    private static void Union(int[] parent, int first, int second)
+    {
+        int firstRoot = Find(parent, first);
+        int secondRoot = Find(parent, second);
+
+        if (firstRoot == secondRoot)
+        {
+            return;
+        }
+
+        parent[secondRoot] = firstRoot;
+    }
+
+    private readonly record struct EndpointRef(
+        int SegmentIndex,
+        bool IsStart,
+        Point2D Point);
 }

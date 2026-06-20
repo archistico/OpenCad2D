@@ -205,6 +205,72 @@ public sealed class BoundaryFillServiceTests
         Assert.True(result.Diagnostics.SampledCurveSegmentCount > 0);
     }
 
+    [Fact]
+    public void CreateFilledPolyline_WithSmallEndpointGapWithinTolerance_ShouldBridgeGap()
+    {
+        var service = new BoundaryFillService();
+        var boundaries = new[]
+        {
+            new LineEntity(new Point2D(0, 0), new Point2D(10, 0)),
+            new LineEntity(new Point2D(10, 0), new Point2D(10, 5)),
+            new LineEntity(new Point2D(10, 5), new Point2D(0, 5)),
+            new LineEntity(new Point2D(0, 5), new Point2D(0, 0.2))
+        };
+        var options = new BoundaryFillOptions(gapTolerance: 0.25);
+
+        BoundaryFillResult result = service.CreateFilledPolyline(
+            boundaries,
+            new Point2D(5, 2),
+            LayerId.Default,
+            options);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Diagnostics.BridgedGapCount);
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(result.Polyline);
+        Assert.True(polyline.IsClosed);
+        Assert.True(polyline.IsFilled);
+    }
+
+    [Fact]
+    public void CreateFilledPolyline_WithEndpointGapAboveTolerance_ShouldFail()
+    {
+        var service = new BoundaryFillService();
+        var boundaries = new[]
+        {
+            new LineEntity(new Point2D(0, 0), new Point2D(10, 0)),
+            new LineEntity(new Point2D(10, 0), new Point2D(10, 5)),
+            new LineEntity(new Point2D(10, 5), new Point2D(0, 5)),
+            new LineEntity(new Point2D(0, 5), new Point2D(0, 0.5))
+        };
+        var options = new BoundaryFillOptions(gapTolerance: 0.25);
+
+        BoundaryFillResult result = service.CreateFilledPolyline(
+            boundaries,
+            new Point2D(5, 2),
+            LayerId.Default,
+            options);
+
+        Assert.False(result.Succeeded);
+        Assert.Equal(BoundaryFillStatus.NoClosedBoundary, result.Status);
+        Assert.Equal(0, result.Diagnostics.BridgedGapCount);
+    }
+
+    [Fact]
+    public void CreateFilledPolyline_FromClosedBoundary_ShouldNotReportBridgedGaps()
+    {
+        var service = new BoundaryFillService();
+        var options = new BoundaryFillOptions(gapTolerance: 0.25);
+
+        BoundaryFillResult result = service.CreateFilledPolyline(
+            CreateRectangleLines(),
+            new Point2D(5, 2),
+            LayerId.Default,
+            options);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(0, result.Diagnostics.BridgedGapCount);
+    }
+
     private static IReadOnlyList<LineEntity> CreateRectangleLines()
     {
         return new[]

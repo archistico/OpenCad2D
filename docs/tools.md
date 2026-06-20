@@ -182,7 +182,7 @@ Planned v2 sequence:
 
 1. Preview the detected boundary under the cursor before creation.
 2. Add sampled curve boundaries for arcs and circles, keeping the generated result as a filled `PolylineEntity`.
-3. Add configurable gap tolerance for small endpoint gaps, with clear diagnostics when the gap cannot be closed safely.
+3. Surface the implemented gap tolerance in the tool workflow, with clear diagnostics when the gap cannot be closed safely.
 4. Revisit holes/islands through a real `HatchEntity`, because a single `PolylineEntity` cannot represent subtractive inner loops.
 
 ---

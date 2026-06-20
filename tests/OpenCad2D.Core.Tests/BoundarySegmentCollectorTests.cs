@@ -178,4 +178,42 @@ public sealed class BoundarySegmentCollectorTests
         Assert.Equal(collection.Segments.Count, collection.SampledCurveSegmentCount);
         Assert.All(collection.Segments, segment => Assert.True(segment.IsSampledCurve));
     }
+    [Fact]
+    public void Collect_WithSmallEndpointGapWithinTolerance_ShouldBridgeEndpointGap()
+    {
+        var collector = new BoundarySegmentCollector();
+        var lines = new[]
+        {
+            new LineEntity(new Point2D(0, 0), new Point2D(10, 0)),
+            new LineEntity(new Point2D(0, 0.2), new Point2D(0, 5))
+        };
+
+        BoundarySegmentCollection collection = collector.Collect(
+            lines,
+            new BoundaryFillOptions(gapTolerance: 0.25));
+
+        Assert.Equal(2, collection.Segments.Count);
+        Assert.Equal(1, collection.BridgedGapCount);
+        Assert.Equal(collection.Segments[0].Start, collection.Segments[1].Start);
+    }
+
+    [Fact]
+    public void Collect_WithEndpointGapAboveTolerance_ShouldKeepEndpointsSeparate()
+    {
+        var collector = new BoundarySegmentCollector();
+        var lines = new[]
+        {
+            new LineEntity(new Point2D(0, 0), new Point2D(10, 0)),
+            new LineEntity(new Point2D(0, 0.5), new Point2D(0, 5))
+        };
+
+        BoundarySegmentCollection collection = collector.Collect(
+            lines,
+            new BoundaryFillOptions(gapTolerance: 0.25));
+
+        Assert.Equal(2, collection.Segments.Count);
+        Assert.Equal(0, collection.BridgedGapCount);
+        Assert.NotEqual(collection.Segments[0].Start, collection.Segments[1].Start);
+    }
+
 }
