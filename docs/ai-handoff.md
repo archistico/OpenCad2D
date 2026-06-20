@@ -1933,3 +1933,27 @@ This is important for tools that still create their own `SnapRequest` from `cont
 Regression/manual check:
 
 - Grid step 5: Move and Grip Edit should move by one cell as 5 units when the visible target is the adjacent grid node, not jump to a farther node because an unconverted tolerance was interpreted as model units.
+
+## 2026-06-20 - Clockwise arc tolerance and intersection regressions
+
+Fixed a geometric kernel regression affecting clockwise circular arcs that cross the zero-degree axis.
+
+Behavior contract:
+
+- `Arc2D.ContainsAngle(...)` must work symmetrically for counter-clockwise and clockwise arcs.
+- A clockwise arc from 10° to 350° must contain the 0°, 5° and 355° directions, and must not contain 180°.
+- `Arc2D.ContainsPoint(...)` must therefore accept points on that clockwise arc across the 0° boundary.
+- Arc/circle and line/arc intersection snapping must not lose valid tangent/intersection points on clockwise arcs that cross 0°.
+- `CircleIntersectionService.IntersectLineCircle(...)` now treats a zero-direction `Line2D` as a degenerate input and returns no intersections instead of allowing `NormalizedDirection` to throw.
+
+Implementation notes:
+
+- `Arc2D` now computes angular containment through normalized sweep/delta values for both directions.
+- The circular tolerance check explicitly accepts points near the start and end boundaries, including the wrap-around boundary at 0°/360°.
+- Regression coverage was added in `Arc2DTests`, `CircleIntersectionServiceTests`, and `IntersectionSnapProviderTests`.
+- Coincident circle/arc overlap semantics were intentionally left unchanged. They still require a separate design decision because the current circle intersection API returns only point intersections, not overlap intervals.
+
+Manual verification expectations:
+
+- Create or load a clockwise arc from about 10° to 350° and test intersection snap near the positive X-axis. The snap should find the point on the arc at 0°.
+- Existing counter-clockwise arc snapping, circle-circle tangency, and line-circle intersection behavior should remain unchanged.

@@ -12,6 +12,11 @@ public static class CircleIntersectionService
         Circle2D circle,
         double tolerance = Tolerance.Default)
     {
+        if (Tolerance.IsZero(line.Direction.Length, tolerance))
+        {
+            return Array.Empty<Point2D>();
+        }
+
         Point2D closestPoint = DistanceService.ClosestPointOnLine(
             circle.Center,
             line);

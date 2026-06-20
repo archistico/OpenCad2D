@@ -88,6 +88,37 @@ public sealed class Arc2DTests
     }
 
     [Fact]
+    public void ContainsAngle_ForClockwiseArcCrossingZero_ShouldReturnTrueForAnglesInside()
+    {
+        var arc = new Arc2D(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+
+        Assert.True(arc.ContainsAngle(Angle.FromDegrees(0)));
+        Assert.True(arc.ContainsAngle(Angle.FromDegrees(5)));
+        Assert.True(arc.ContainsAngle(Angle.FromDegrees(355)));
+        Assert.False(arc.ContainsAngle(Angle.FromDegrees(180)));
+    }
+
+    [Fact]
+    public void ContainsPoint_ForClockwiseArcCrossingZero_ShouldReturnTrueForPointOnArc()
+    {
+        var arc = new Arc2D(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+
+        bool result = arc.ContainsPoint(new Point2D(10, 0));
+
+        Assert.True(result);
+    }
+
+    [Fact]
     public void ContainsPoint_WithPointOnArc_ShouldReturnTrue()
     {
         var arc = new Arc2D(

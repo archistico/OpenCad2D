@@ -246,6 +246,41 @@ public sealed class IntersectionSnapProviderTests
     }
 
     [Fact]
+    public void Snap_LineArcIntersection_WithClockwiseArcCrossingZero_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var line = new LineEntity(
+            new Point2D(-20, 0),
+            new Point2D(20, 0));
+
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+
+        document.AddEntity(line);
+        document.AddEntity(arc);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(10, 0),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(10, result.Point.X, precision: 10);
+        Assert.Equal(0, result.Point.Y, precision: 10);
+    }
+
+    [Fact]
     public void Snap_CircleArcIntersection_ShouldReturnIntersectionOnArcOnly()
     {
         var document = new CadDocument();
@@ -277,6 +312,41 @@ public sealed class IntersectionSnapProviderTests
         Assert.Equal(SnapKind.Intersection, result.Kind);
         Assert.Equal(5, result.Point.X, precision: 10);
         Assert.Equal(Math.Sqrt(75), result.Point.Y, precision: 10);
+    }
+
+    [Fact]
+    public void Snap_CircleArcIntersection_WithClockwiseArcCrossingZero_ShouldReturnIntersection()
+    {
+        var document = new CadDocument();
+
+        var circle = new CircleEntity(
+            new Point2D(20, 0),
+            10);
+
+        var arc = new ArcEntity(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+
+        document.AddEntity(circle);
+        document.AddEntity(arc);
+
+        var service = new SnapService();
+
+        var request = new SnapRequest(
+            document,
+            cursorPoint: new Point2D(10, 0),
+            tolerance: 1,
+            enabledSnaps: SnapKind.Intersection);
+
+        SnapCandidate? result = service.Snap(request);
+
+        Assert.NotNull(result);
+        Assert.Equal(SnapKind.Intersection, result.Kind);
+        Assert.Equal(10, result.Point.X, precision: 10);
+        Assert.Equal(0, result.Point.Y, precision: 10);
     }
 
     [Fact]

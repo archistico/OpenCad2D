@@ -117,18 +117,10 @@ public readonly record struct Arc2D
         double value,
         double tolerance)
     {
-        if (end < start)
-        {
-            end += 2.0 * Math.PI;
-        }
+        double sweep = NormalizePositiveRadians(end - start);
+        double delta = NormalizePositiveRadians(value - start);
 
-        if (value < start)
-        {
-            value += 2.0 * Math.PI;
-        }
-
-        return value >= start - tolerance
-            && value <= end + tolerance;
+        return IsDeltaWithinSweep(delta, sweep, tolerance);
     }
 
     private static bool IsAngleBetweenClockwise(
@@ -137,17 +129,44 @@ public readonly record struct Arc2D
         double value,
         double tolerance)
     {
-        if (start < end)
+        double sweep = NormalizePositiveRadians(start - end);
+        double delta = NormalizePositiveRadians(start - value);
+
+        return IsDeltaWithinSweep(delta, sweep, tolerance);
+    }
+
+    private static bool IsDeltaWithinSweep(
+        double delta,
+        double sweep,
+        double tolerance)
+    {
+        return delta <= sweep
+            || AreAnglesClose(delta, 0.0, tolerance)
+            || AreAnglesClose(delta, sweep, tolerance);
+    }
+
+    private static bool AreAnglesClose(
+        double first,
+        double second,
+        double tolerance)
+    {
+        double difference = Math.Abs(first - second);
+        double twoPi = 2.0 * Math.PI;
+
+        return difference <= tolerance
+            || twoPi - difference <= tolerance;
+    }
+
+    private static double NormalizePositiveRadians(double radians)
+    {
+        double twoPi = 2.0 * Math.PI;
+        double value = radians % twoPi;
+
+        if (value < 0)
         {
-            start += 2.0 * Math.PI;
+            value += twoPi;
         }
 
-        if (value > start)
-        {
-            value -= 2.0 * Math.PI;
-        }
-
-        return value <= start + tolerance
-            && value >= end - tolerance;
+        return value;
     }
 }

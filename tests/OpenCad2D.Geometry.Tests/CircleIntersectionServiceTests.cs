@@ -67,6 +67,23 @@ public sealed class CircleIntersectionServiceTests
     }
 
     [Fact]
+    public void IntersectLineCircle_WhenLineDirectionIsZero_ShouldReturnNoPoints()
+    {
+        var line = new Line2D(
+            new Point2D(0, 0),
+            Vector2D.Zero);
+
+        var circle = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        IReadOnlyList<Point2D> points =
+            CircleIntersectionService.IntersectLineCircle(line, circle);
+
+        Assert.Empty(points);
+    }
+
+    [Fact]
     public void IntersectSegmentCircle_WhenSegmentCrossesCircle_ShouldReturnTwoPoints()
     {
         var segment = new LineSegment2D(
@@ -196,5 +213,29 @@ public sealed class CircleIntersectionServiceTests
             Math.Abs(point.Y + Math.Sqrt(75)) < 1e-9);
 
         Assert.All(points, point => Assert.True(arc.ContainsPoint(point)));
+    }
+
+    [Fact]
+    public void IntersectArcCircle_WithClockwiseArcCrossingZero_ShouldReturnTangentPoint()
+    {
+        var arc = new Arc2D(
+            new Point2D(0, 0),
+            10,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+
+        var circle = new Circle2D(
+            new Point2D(20, 0),
+            10);
+
+        IReadOnlyList<Point2D> points =
+            CircleIntersectionService.IntersectArcCircle(arc, circle);
+
+        Point2D point = Assert.Single(points);
+
+        Assert.Equal(10, point.X, precision: 10);
+        Assert.Equal(0, point.Y, precision: 10);
+        Assert.True(arc.ContainsPoint(point));
     }
 }
