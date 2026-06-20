@@ -231,6 +231,35 @@ public sealed class BoundaryFillServiceTests
         Assert.True(polyline.IsFilled);
     }
 
+
+    [Fact]
+    public void CreateFilledPolyline_WithSampleBoundaryGap_ShouldPreserveExistingHorizontalEndpoint()
+    {
+        var service = new BoundaryFillService();
+        var boundaries = new[]
+        {
+            new LineEntity(new Point2D(150, 100), new Point2D(300, 100)),
+            new LineEntity(new Point2D(150, 100), new Point2D(150, 200)),
+            new LineEntity(new Point2D(150, 200), new Point2D(300, 200)),
+            new LineEntity(new Point2D(300, 200), new Point2D(300, 100.30422638643512))
+        };
+        var options = new BoundaryFillOptions(gapTolerance: 0.5);
+
+        BoundaryFillResult result = service.CreateFilledPolyline(
+            boundaries,
+            new Point2D(220, 150),
+            LayerId.Default,
+            options);
+
+        Assert.True(result.Succeeded);
+        Assert.Equal(1, result.Diagnostics.BridgedGapCount);
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(result.Polyline);
+        Assert.Contains(polyline.Vertices, point =>
+            point.DistanceTo(new Point2D(300, 100)) <= 1e-9);
+        Assert.DoesNotContain(polyline.Vertices, point =>
+            point.DistanceTo(new Point2D(300, 100.15211319321756)) <= 1e-9);
+    }
+
     [Fact]
     public void CreateFilledPolyline_WithEndpointGapAboveTolerance_ShouldFail()
     {

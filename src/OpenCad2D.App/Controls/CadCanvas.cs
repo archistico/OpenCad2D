@@ -2092,6 +2092,10 @@ public sealed class CadCanvas : Control
                 toolKey = CadToolKey.U;
                 return true;
 
+            case Key.G:
+                toolKey = CadToolKey.G;
+                return true;
+
             default:
                 toolKey = default;
                 return false;

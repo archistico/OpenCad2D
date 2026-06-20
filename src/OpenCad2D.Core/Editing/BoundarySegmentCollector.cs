@@ -1,4 +1,5 @@
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
 
@@ -302,7 +303,7 @@ public sealed class BoundarySegmentCollector
             cluster.Add(index);
         }
 
-        var replacements = new Dictionary<(int SegmentIndex, bool IsStart), Point2D>();
+        var result = new List<BoundarySegment>(segments);
 
         foreach (List<int> cluster in clusters.Values)
         {
@@ -311,93 +312,79 @@ public sealed class BoundarySegmentCollector
                 continue;
             }
 
-            IReadOnlyList<Point2D> distinctPoints = DistinctEndpointPoints(
-                cluster.Select(index => endpoints[index].Point),
+            IReadOnlyList<EndpointPointGroup> pointGroups = GroupEndpointPoints(
+                cluster.Select(index => endpoints[index]),
                 tolerance);
 
-            if (distinctPoints.Count <= 1)
+            if (pointGroups.Count <= 1)
             {
                 continue;
             }
 
-            if (distinctPoints.Count != 2)
+            if (pointGroups.Count != 2 ||
+                ClusterTouchesSameSegmentTwice(cluster, endpoints))
             {
                 continue;
             }
 
-            Point2D representative = AveragePoints(distinctPoints);
-            bridgedGapCount++;
-
-            foreach (int endpointIndex in cluster)
-            {
-                EndpointRef endpoint = endpoints[endpointIndex];
-                replacements[(endpoint.SegmentIndex, endpoint.IsStart)] = representative;
-            }
-        }
-
-        if (replacements.Count == 0)
-        {
-            return segments;
-        }
-
-        var result = new List<BoundarySegment>(segments.Count);
-
-        for (int index = 0; index < segments.Count; index++)
-        {
-            BoundarySegment segment = segments[index];
-            Point2D start = replacements.TryGetValue((index, true), out Point2D replacedStart)
-                ? replacedStart
-                : segment.Start;
-            Point2D end = replacements.TryGetValue((index, false), out Point2D replacedEnd)
-                ? replacedEnd
-                : segment.End;
+            Point2D start = pointGroups[0].Point;
+            Point2D end = pointGroups[1].Point;
 
             if (start.DistanceTo(end) <= tolerance.Distance)
             {
                 continue;
             }
 
-            result.Add(segment with
-            {
-                Start = start,
-                End = end
-            });
+            result.Add(new BoundarySegment(
+                start,
+                end,
+                EntityId.Empty,
+                BoundarySegmentSourceKind.GapBridge));
+            bridgedGapCount++;
         }
 
         return result;
     }
 
-    private static IReadOnlyList<Point2D> DistinctEndpointPoints(
-        IEnumerable<Point2D> points,
+    private static bool ClusterTouchesSameSegmentTwice(
+        IReadOnlyList<int> cluster,
+        IReadOnlyList<EndpointRef> endpoints)
+    {
+        var touchedSegments = new HashSet<int>();
+
+        foreach (int endpointIndex in cluster)
+        {
+            if (!touchedSegments.Add(endpoints[endpointIndex].SegmentIndex))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static IReadOnlyList<EndpointPointGroup> GroupEndpointPoints(
+        IEnumerable<EndpointRef> endpoints,
         GeometryTolerance tolerance)
     {
-        var result = new List<Point2D>();
+        var groups = new List<EndpointPointGroup>();
 
-        foreach (Point2D point in points)
+        foreach (EndpointRef endpoint in endpoints)
         {
-            if (result.Any(existing => existing.DistanceTo(point) <= tolerance.Distance))
+            int groupIndex = groups.FindIndex(group =>
+                group.Point.DistanceTo(endpoint.Point) <= tolerance.Distance);
+
+            if (groupIndex < 0)
             {
+                groups.Add(new EndpointPointGroup(endpoint.Point, 1));
                 continue;
             }
 
-            result.Add(point);
+            EndpointPointGroup group = groups[groupIndex];
+            groups[groupIndex] = new EndpointPointGroup(group.Point, group.Count + 1);
         }
 
-        return result;
-    }
-
-    private static Point2D AveragePoints(IReadOnlyList<Point2D> points)
-    {
-        double x = 0.0;
-        double y = 0.0;
-
-        foreach (Point2D point in points)
-        {
-            x += point.X;
-            y += point.Y;
-        }
-
-        return new Point2D(x / points.Count, y / points.Count);
+        return groups;
     }
 
     private static int Find(int[] parent, int index)
@@ -423,6 +410,10 @@ public sealed class BoundarySegmentCollector
 
         parent[secondRoot] = firstRoot;
     }
+
+    private readonly record struct EndpointPointGroup(
+        Point2D Point,
+        int Count);
 
     private readonly record struct EndpointRef(
         int SegmentIndex,

@@ -8,5 +8,6 @@ public enum BoundarySegmentSourceKind
     Line,
     Polyline,
     Circle,
-    Arc
+    Arc,
+    GapBridge
 }

@@ -115,7 +115,7 @@ Implemented:
 | Extend | line/arc/open-polyline target support |
 | Trim | cutting edges including ellipses, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
-| Boundary Fill | click inside a closed linear boundary to create a filled closed polyline; v2 core support for sampled curve boundaries is in progress behind service options |
+| Boundary Fill | preview/confirm workflow that creates a filled closed polyline from visible line, polyline, sampled arc/circle and small-gap boundaries; `Gap` adjusts endpoint bridging tolerance |
 | Fillet | line-line plus adjacent linear-polyline segments, Radius and Trim/NoTrim options, radius 0 sharp join for lines |
 | Mirror | two-point mirror axis, keeps source by default, optional source deletion |
 | Explode | selected polylines become individual lines/arcs; block references become world-space entities |
@@ -165,25 +165,23 @@ The side preview must use the same geometry method as final creation.
 Workflow:
 
 ```text
-BFILL: Pick inside a closed linear boundary:
+BFILL: Pick inside a closed boundary or [Gap] <G>:
+BFILL: Boundary found — Enter/right-click to confirm or [Gap] <G>:
 ```
 
-`BoundaryFillTool` scans visible linear boundaries, splits them at intersections, builds planar faces and creates a new closed `PolylineEntity` for the face containing the picked point. The generated polyline is `IsFilled = true`, uses the current layer and is added through `AddEntityCommand`, so undo removes the fill boundary.
+`BoundaryFillTool` scans visible boundary candidates, builds planar faces and previews the smallest closed face containing the picked seed point. Confirmation with `Enter` or right-click creates a new closed `PolylineEntity` with `IsFilled = true` on the current layer through `AddEntityCommand`, so undo removes the fill boundary in one step.
 
-Current first-pass boundary support:
+Current v2 boundary support:
 
 - standalone `LineEntity` segments;
 - straight `PolylineEntity` segments, including rectangles and polygons;
-- intersecting linear segments, where the clicked face can be selected from the resulting planar subdivision.
+- bulged `PolylineEntity` segments sampled when curve boundaries are enabled;
+- `CircleEntity` and `ArcEntity` sampled into boundary segments;
+- small endpoint gaps bridged within the active gap tolerance.
 
-Curved boundaries, blocks, hatch patterns, holes and associative boundary updates are deferred. Aliases: `BFILL`, `BF`, `BOUNDARYFILL`, `FILL`, `RIEMPIMENTO`.
+The `Gap` / `G` option prompts for a positive tolerance value. It can be used before picking the seed point or while a preview is active; in the latter case the preview is recalculated from the same seed point. The preview message reports when sampled curves were used, how many small gaps were bridged and whether unsupported visible entities were ignored. Completion messages repeat those relevant diagnostics after the filled polyline is created.
 
-Planned v2 sequence:
-
-1. Preview the detected boundary under the cursor before creation.
-2. Add sampled curve boundaries for arcs and circles, keeping the generated result as a filled `PolylineEntity`.
-3. Surface the implemented gap tolerance in the tool workflow, with clear diagnostics when the gap cannot be closed safely.
-4. Revisit holes/islands through a real `HatchEntity`, because a single `PolylineEntity` cannot represent subtractive inner loops.
+Blocks, hatch patterns, holes/islands and associative boundary updates remain deferred. A real `HatchEntity` is planned separately because a single filled `PolylineEntity` cannot represent subtractive inner loops. Aliases: `BFILL`, `BF`, `BOUNDARYFILL`, `FILL`, `RIEMPIMENTO`.
 
 ---
 
@@ -441,3 +439,8 @@ For this phase, existing bulged/curved polyline segments are rejected with expli
 `CHAMFER` also supports terminal segments of separate open linear polylines, plus mixed line/polyline pairs. The selected polyline source is trimmed and remains a `PolylineEntity`; the chamfer edge is created as a `LineEntity`.
 
 Separate multi-segment polylines are still rejected conservatively. This avoids modifying only part of a larger polyline until segment-level replacement is implemented for separate entities.
+
+
+### Boundary Fill gap bridging note
+
+Boundary Fill v2 closes small endpoint gaps by adding short internal `GapBridge` segments to the boundary graph. It does not average or move existing line endpoints. This keeps the source boundaries visually faithful while still allowing the preview/fill loop to close gaps within the active `Gap` tolerance.

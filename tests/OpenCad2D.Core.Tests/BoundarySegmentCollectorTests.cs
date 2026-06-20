@@ -192,9 +192,14 @@ public sealed class BoundarySegmentCollectorTests
             lines,
             new BoundaryFillOptions(gapTolerance: 0.25));
 
-        Assert.Equal(2, collection.Segments.Count);
+        Assert.Equal(3, collection.Segments.Count);
         Assert.Equal(1, collection.BridgedGapCount);
-        Assert.Equal(collection.Segments[0].Start, collection.Segments[1].Start);
+        BoundarySegment bridge = Assert.Single(collection.Segments, segment =>
+            segment.SourceKind == BoundarySegmentSourceKind.GapBridge);
+        Assert.Equal(new Point2D(0, 0), bridge.Start);
+        Assert.Equal(new Point2D(0, 0.2), bridge.End);
+        Assert.Equal(new Point2D(0, 0), collection.Segments[0].Start);
+        Assert.Equal(new Point2D(0, 0.2), collection.Segments[1].Start);
     }
 
     [Fact]

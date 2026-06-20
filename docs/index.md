@@ -54,7 +54,7 @@ Root-level technical documents such as `architecture.md`, `geometry-intersection
 
 Release and roadmap documents are kept in `docs/` until the project decides on a more formal release documentation structure. Use [Release and Roadmap Map](developer/release-and-roadmap-map.md) as the entry point before preparing a release, updating a milestone, or checking which planning document is current.
 
-Manual verification notes are stored under `docs/testing/`. They are not a replacement for automated tests, but they are useful for validating workflows that depend on visual behavior, snapping, the Dynamic HUD, or user interaction. For technical reading order, use [Technical Documentation Map](developer/technical-documentation-map.md).
+Manual verification notes are stored under `docs/testing/`. They are not a replacement for automated tests, but they are useful for validating workflows that depend on visual behavior, snapping, the Dynamic HUD, or user interaction. Boundary Fill v2 has a dedicated [manual checklist](testing/boundary-fill-v2-manual-checklist.md) because its preview/confirm, gap-tolerance and curve-sampling behavior is partly visual. For technical reading order, use [Technical Documentation Map](developer/technical-documentation-map.md).
 
 ## Images and GIFs
 

@@ -2003,3 +2003,20 @@ Validated so far: the Boundary Fill v2 audit/specification, the result/options m
 ## 2026-06-20 — Boundary Fill v2 preview/confirm workflow
 
 Boundary Fill now uses the v2 service path in the interactive tool. A picked or typed seed point no longer creates the filled polyline immediately; it produces an addition preview. `Enter` or command confirmation creates the previewed filled `PolylineEntity` in one undoable step, while `Esc` clears the preview. The tool enables sampled curve boundaries and uses the current v2 default gap tolerance, so curve-based fills and small bridged gaps are visible in the real workflow. Remaining v2 work: editable gap tolerance HUD option, more detailed user-facing diagnostics for ignored entities, and final user guide/checklist.
+
+## 2026-06-20 — Boundary Fill v2 editable gap tolerance
+
+Boundary Fill now exposes a `Gap` / `G` command option. The option switches the prompt to a distance input for the small-gap tolerance used by the v2 boundary collector. The value must be positive. It can be set before choosing a seed point or while a preview is active; when a preview exists, changing the tolerance recalculates the preview from the same seed point. Pointer picks are ignored while the tool is waiting for a gap-tolerance value, so the command state remains explicit.
+
+The tool still creates the same output as v1/v2 preview: a filled closed `PolylineEntity` on confirmation. The option only changes boundary detection by controlling endpoint gap clustering. Remaining Boundary Fill v2 work is now focused on clearer diagnostics for ignored/unsupported entities and final user documentation/manual smoke checklist.
+
+## 2026-06-20 — Boundary Fill v2 final diagnostics and documentation
+
+Boundary Fill v2 now surfaces ignored unsupported entities in tool messages. Successful previews, completed fills and failures append a concise ignored-entity diagnostic when visible non-boundary entities participate in the search set but are ignored by the boundary collector. The message contract remains unchanged when no ignored entities are present, preserving existing command/HUD expectations.
+
+The v2 documentation now treats `v0.8.145` as complete for the current filled-polyline workflow: preview/confirm, sampled circle/arc/bulged polyline boundaries, endpoint gap-tolerance clustering, editable `Gap` option, result diagnostics and ignored-entity messages are covered. The next fill-related feature should be `v0.8.150 HatchEntity` rather than adding holes/islands to Boundary Fill's single-polyline output. A manual smoke checklist was added under `docs/testing/boundary-fill-v2-manual-checklist.md`.
+
+
+## 2026-06-20 — Boundary Fill v2 gap bridge correction
+
+A manual test using `boundary-gap.opencad2d.json` exposed two issues after the first editable-gap pass. First, changing the gap tolerance was not reachable enough from the canvas workflow, so `CadToolKey.G` is now mapped and `BoundaryFillTool.TryHandleKey(...)` opens the same `Gap` prompt as the command option. Second, endpoint-gap handling no longer normalizes source endpoints to an averaged point. The collector now preserves all original boundary segment endpoints and adds a short synthetic `BoundarySegmentSourceKind.GapBridge` segment between the two endpoint groups when the gap is within tolerance. This prevents the preview from distorting existing horizontal/vertical boundary edges and keeps the gap closure explicit in the planar graph.

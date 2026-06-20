@@ -18,7 +18,7 @@ If a change affects how users select points, enter values, or constrain movement
 
 ## When changing Boundary Fill or hatch behavior
 
-Start with `tools.md`, `known-limitations.md`, `docs/specs/v0.8.140-hatch.md`, and `docs/specs/v0.8.145-boundary-fill-v2.md`. Boundary Fill currently emits filled closed polylines, while HatchEntity remains a later milestone. Keep this distinction explicit when changing algorithms, preview behavior, export behavior, or user-facing messages.
+Start with `tools.md`, `known-limitations.md`, `docs/specs/v0.8.140-hatch.md`, `docs/specs/v0.8.145-boundary-fill-v2.md`, and `docs/testing/boundary-fill-v2-manual-checklist.md`. Boundary Fill currently emits filled closed polylines, while HatchEntity remains a later milestone. Keep this distinction explicit when changing algorithms, preview behavior, export behavior, or user-facing messages.
 
 ## When changing appearance and styles
 

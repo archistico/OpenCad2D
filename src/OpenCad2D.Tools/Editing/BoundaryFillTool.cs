@@ -5,6 +5,7 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
+using System.Globalization;
 
 namespace OpenCad2D.Tools.Editing;
 
@@ -21,8 +22,15 @@ public sealed class BoundaryFillTool :
 {
     public const double DefaultGapTolerance = 0.5;
 
+    private static readonly CommandOption GapOption = new(
+        "Gap",
+        "G",
+        "Set the small-gap tolerance used by Boundary Fill");
+
     private readonly BoundaryFillService _boundaryFillService = new();
     private BoundaryFillResult? _previewResult;
+    private bool _isEditingGapTolerance;
+    private double _gapTolerance = DefaultGapTolerance;
 
     public string Name => "Boundary Fill";
 
@@ -30,6 +38,8 @@ public sealed class BoundaryFillTool :
         _previewResult is { Succeeded: true, Polyline: not null };
 
     public BoundaryFillResult? PreviewResult => _previewResult;
+
+    public double GapTolerance => _gapTolerance;
 
     public SnapKind GetActiveSnapKind(ToolContext context)
     {
@@ -42,21 +52,32 @@ public sealed class BoundaryFillTool :
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        if (_isEditingGapTolerance)
+        {
+            return new CommandPromptState(
+                "BFILL",
+                $"Gap tolerance <{FormatGapTolerance(_gapTolerance)}>",
+                CommandInputKind.Distance,
+                placeholder: "enter small-gap tolerance");
+        }
+
         if (HasPreview)
         {
             return new CommandPromptState(
                 "BFILL",
                 BuildPreviewPrompt(_previewResult!),
-                CommandInputKind.Point,
+                CommandInputKind.PointOrOption,
+                new[] { GapOption },
                 acceptsEmptyEnter: true,
-                placeholder: "Enter/right-click to confirm or pick another point");
+                placeholder: "Enter/right-click to confirm, pick another point or choose Gap");
         }
 
         return new CommandPromptState(
             "BFILL",
             "Pick inside a closed boundary",
-            CommandInputKind.Point,
-            placeholder: "click inside boundary or 100,50");
+            CommandInputKind.PointOrOption,
+            new[] { GapOption },
+            placeholder: "click inside boundary, enter X/Y or choose Gap");
     }
 
     public ToolResult HandleCommandInput(
@@ -66,6 +87,16 @@ public sealed class BoundaryFillTool :
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
 
+        if (_isEditingGapTolerance)
+        {
+            return HandleGapToleranceInput(input, context);
+        }
+
+        if (input.Kind == CommandInputSubmissionKind.Option)
+        {
+            return HandleOption(input.OptionKeyword);
+        }
+
         if (input.Kind == CommandInputSubmissionKind.Confirm)
         {
             return ConfirmPreview(context);
@@ -73,7 +104,7 @@ public sealed class BoundaryFillTool :
 
         if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
         {
-            return ToolResult.None(input.ErrorMessage ?? "BFILL expects a point inside a closed boundary.");
+            return ToolResult.None(input.ErrorMessage ?? "BFILL expects a point inside a closed boundary or the Gap option.");
         }
 
         return UpdatePreview(
@@ -88,9 +119,15 @@ public sealed class BoundaryFillTool :
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (key == CadToolKey.Enter)
+        if (key == CadToolKey.Enter && !_isEditingGapTolerance)
         {
             result = ConfirmPreview(context);
+            return result.Changed;
+        }
+
+        if (key == CadToolKey.G && !_isEditingGapTolerance)
+        {
+            result = HandleOption(GapOption.Keyword);
             return result.Changed;
         }
 
@@ -104,6 +141,11 @@ public sealed class BoundaryFillTool :
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
+
+        if (_isEditingGapTolerance)
+        {
+            return ToolResult.None("Enter a gap tolerance before picking a boundary point.");
+        }
 
         return UpdatePreview(
             context,
@@ -172,7 +214,7 @@ public sealed class BoundaryFillTool :
 
         if (!result.Succeeded)
         {
-            return ToolResult.None(result.Message);
+            return ToolResult.None(BuildFailureMessage(result));
         }
 
         return ToolResult.Updated(BuildPreviewPrompt(result));
@@ -195,46 +237,129 @@ public sealed class BoundaryFillTool :
         return ToolResult.Completed(message);
     }
 
-    private static BoundaryFillOptions CreateOptions(ToolContext context)
+    private BoundaryFillOptions CreateOptions(ToolContext context)
     {
         return new BoundaryFillOptions(
             context.Coordinates.GeometryTolerance,
-            gapTolerance: DefaultGapTolerance,
+            gapTolerance: _gapTolerance,
             includeCurveBoundaries: true);
+    }
+
+    private ToolResult HandleOption(string? optionKeyword)
+    {
+        if (GapOption.Matches(optionKeyword ?? string.Empty))
+        {
+            _isEditingGapTolerance = true;
+            return ToolResult.Updated($"Boundary fill gap tolerance is {FormatGapTolerance(_gapTolerance)}. Enter a new tolerance.");
+        }
+
+        return ToolResult.None("Unknown Boundary Fill option. Use Gap.");
+    }
+
+    private ToolResult HandleGapToleranceInput(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
+        double? submittedValue = input.Kind switch
+        {
+            CommandInputSubmissionKind.Distance => input.Distance,
+            CommandInputSubmissionKind.Number => input.Number,
+            _ => null
+        };
+
+        if (submittedValue is not { } gapTolerance ||
+            !double.IsFinite(gapTolerance) ||
+            gapTolerance <= 0.0)
+        {
+            return ToolResult.None(input.ErrorMessage ?? "Gap tolerance must be greater than zero.");
+        }
+
+        _gapTolerance = gapTolerance;
+        _isEditingGapTolerance = false;
+
+        if (_previewResult is { } currentPreview)
+        {
+            ToolResult previewResult = UpdatePreview(context, currentPreview.SeedPoint);
+
+            return previewResult.Message is { Length: > 0 } message
+                ? ToolResult.Updated($"Boundary fill gap tolerance set to {FormatGapTolerance(_gapTolerance)}. {message}")
+                : ToolResult.Updated($"Boundary fill gap tolerance set to {FormatGapTolerance(_gapTolerance)}.");
+        }
+
+        return ToolResult.Updated($"Boundary fill gap tolerance set to {FormatGapTolerance(_gapTolerance)}.");
     }
 
     private static string BuildPreviewPrompt(BoundaryFillResult result)
     {
+        string message;
+
         if (result.Diagnostics.BridgedGapCount > 0)
         {
-            return $"Boundary found; {result.Diagnostics.BridgedGapCount} small gap(s) bridged — Enter/right-click to confirm";
+            message = $"Boundary found; {result.Diagnostics.BridgedGapCount} small gap(s) bridged — Enter/right-click to confirm";
         }
-
-        if (result.Diagnostics.SampledCurveSegmentCount > 0)
+        else if (result.Diagnostics.SampledCurveSegmentCount > 0)
         {
-            return "Boundary found from sampled curve(s) — Enter/right-click to confirm";
+            message = "Boundary found from sampled curve(s) — Enter/right-click to confirm";
+        }
+        else
+        {
+            message = "Boundary found — Enter/right-click to confirm";
         }
 
-        return "Boundary found — Enter/right-click to confirm";
+        return AppendIgnoredEntityDiagnostic(message, result.Diagnostics);
     }
 
     private static string BuildCompletedMessage(BoundaryFillResult result)
     {
+        string message;
+
         if (result.Diagnostics.BridgedGapCount > 0)
         {
-            return $"Boundary fill created. Bridged {result.Diagnostics.BridgedGapCount} small gap(s).";
+            message = $"Boundary fill created. Bridged {result.Diagnostics.BridgedGapCount} small gap(s).";
         }
-
-        if (result.Diagnostics.SampledCurveSegmentCount > 0)
+        else if (result.Diagnostics.SampledCurveSegmentCount > 0)
         {
-            return "Boundary fill created from sampled curve boundary.";
+            message = "Boundary fill created from sampled curve boundary.";
+        }
+        else
+        {
+            message = result.Message;
         }
 
-        return result.Message;
+        return AppendIgnoredEntityDiagnostic(message, result.Diagnostics);
+    }
+
+    private static string BuildFailureMessage(BoundaryFillResult result)
+    {
+        return AppendIgnoredEntityDiagnostic(result.Message, result.Diagnostics);
+    }
+
+    private static string AppendIgnoredEntityDiagnostic(
+        string message,
+        BoundaryFillDiagnostics diagnostics)
+    {
+        if (diagnostics.IgnoredEntityCount <= 0)
+        {
+            return message;
+        }
+
+        string suffix = diagnostics.IgnoredEntityCount == 1
+            ? "Ignored 1 unsupported entity."
+            : $"Ignored {diagnostics.IgnoredEntityCount} unsupported entities.";
+
+        return string.IsNullOrWhiteSpace(message)
+            ? suffix
+            : $"{message} {suffix}";
+    }
+
+    private static string FormatGapTolerance(double value)
+    {
+        return value.ToString("0.###", CultureInfo.InvariantCulture);
     }
 
     private void Reset()
     {
         _previewResult = null;
+        _isEditingGapTolerance = false;
     }
 }

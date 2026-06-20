@@ -104,7 +104,7 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.110-blocks.md`.
 
-Status: planned.
+Status: in progress.
 
 Goal: make blocks usable from the UI.
 
@@ -237,7 +237,7 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.140-hatch.md`.
 
-Status: partial. Boundary Fill v1 is implemented; HatchEntity remains planned.
+Status: partial. Boundary Fill v1 is implemented, and Boundary Fill v2 now has preview/confirm, sampled curve input and editable gap tolerance; HatchEntity remains planned.
 
 Goal: evolve the current solid-fill system into robust boundary fill and hatch workflows without trying to replicate all AutoCAD boundary detection immediately.
 
@@ -254,6 +254,7 @@ BF v2 scope:
 - Preview the detected boundary before creation.
 - Add sampled arc and circle boundaries while still generating a filled `PolylineEntity`.
 - Add configurable small-gap tolerance with conservative failure messages.
+- Expose the active gap tolerance through the `Gap` / `G` command option.
 - Keep holes/islands deferred until a true hatch entity exists.
 
 HatchEntity scope:
@@ -281,18 +282,19 @@ Exit criteria:
 
 ## Milestone v0.8.145 — Boundary Fill v2
 
-Specification: `docs/specs/v0.8.140-hatch.md`.
+Specification: `docs/specs/v0.8.145-boundary-fill-v2.md`.
 
-Status: planned.
+Status: completed for the filled-polyline workflow.
 
 Goal: improve the existing click-inside BF workflow before introducing a true hatch entity.
 
 Scope:
 
-- Hover/preview of the boundary that would be generated.
+- Preview/confirm of the boundary that will be generated.
 - Sampled arc and circle boundary support.
-- Configurable gap tolerance for small endpoint gaps.
+- Configurable gap tolerance for small endpoint gaps through `Gap` / `G`.
 - Better diagnostics for ambiguous, open or self-intersecting detected regions.
+- Ignored unsupported entity diagnostics in preview/completion/failure messages.
 
 Deferred beyond BF v2:
 
@@ -305,9 +307,9 @@ Deferred beyond BF v2:
 
 ## Milestone v0.8.150 — Hatch v2: islands and composite boundaries
 
-Specification: `docs/specs/v0.8.140-hatch.md`.
+Specification: `docs/specs/v0.8.145-boundary-fill-v2.md`.
 
-Status: planned.
+Status: completed for the filled-polyline workflow.
 
 Goal: support more realistic hatch regions through a real hatch entity.
 

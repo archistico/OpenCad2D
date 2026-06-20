@@ -203,9 +203,10 @@ public sealed class BoundaryFillToolTests
         CommandPromptState prompt = tool.GetPromptState(context);
 
         Assert.Equal("BFILL", prompt.CommandName);
-        Assert.Equal(CommandInputKind.Point, prompt.ExpectedInput);
+        Assert.Equal(CommandInputKind.PointOrOption, prompt.ExpectedInput);
         Assert.True(prompt.AcceptsEmptyEnter);
         Assert.Equal("Boundary found — Enter/right-click to confirm", prompt.Prompt);
+        Assert.Contains(prompt.Options, option => option.Keyword == "Gap");
     }
 
     [Fact]
@@ -246,6 +247,221 @@ public sealed class BoundaryFillToolTests
         Assert.Equal(1, tool.PreviewResult?.Diagnostics.BridgedGapCount);
     }
 
+
+
+    [Fact]
+    public void ClickInsideBoundary_WithIgnoredEntity_ShouldReportIgnoredEntityDiagnostic()
+    {
+        CadDocument document = CreateDocumentWithRectangleLines();
+        document.AddEntity(new PointEntity(new Point2D(2, 2)));
+        ToolContext context = CreateContext(document);
+        var tool = new BoundaryFillTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal("Boundary found — Enter/right-click to confirm Ignored 1 unsupported entity.", result.Message);
+        Assert.Equal(1, tool.PreviewResult?.Diagnostics.IgnoredEntityCount);
+    }
+
+    [Fact]
+    public void ConfirmPreview_WithIgnoredEntity_ShouldReportIgnoredEntityDiagnostic()
+    {
+        CadDocument document = CreateDocumentWithRectangleLines();
+        document.AddEntity(new PointEntity(new Point2D(2, 2)));
+        ToolContext context = CreateContext(document);
+        var tool = new BoundaryFillTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Confirm(string.Empty),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Equal("Boundary fill created. Ignored 1 unsupported entity.", result.Message);
+    }
+
+    [Fact]
+    public void ClickUnsupportedOnly_ShouldReportIgnoredEntitiesDiagnostic()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new PointEntity(new Point2D(2, 2)));
+        document.AddEntity(new PointEntity(new Point2D(3, 3)));
+        ToolContext context = CreateContext(document);
+        var tool = new BoundaryFillTool();
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(2, 2)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("Boundary fill needs visible line, polyline, arc or circle boundaries. Ignored 2 unsupported entities.", result.Message);
+        Assert.False(tool.HasPreview);
+    }
+
+    [Fact]
+    public void GapOption_ShouldPromptForGapToleranceDistance()
+    {
+        var tool = new BoundaryFillTool();
+        ToolContext context = CreateContext();
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.Option("G", "Gap"),
+            context);
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal("Boundary fill gap tolerance is 0.5. Enter a new tolerance.", result.Message);
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+
+        Assert.Equal("BFILL", prompt.CommandName);
+        Assert.Equal(CommandInputKind.Distance, prompt.ExpectedInput);
+        Assert.Equal("Gap tolerance <0.5>", prompt.Prompt);
+    }
+
+
+    [Fact]
+    public void GapShortcutKey_ShouldPromptForGapToleranceDistance()
+    {
+        var tool = new BoundaryFillTool();
+        ToolContext context = CreateContext();
+
+        bool handled = tool.TryHandleKey(
+            context,
+            CadToolKey.G,
+            out ToolResult result);
+
+        Assert.True(handled);
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal("Boundary fill gap tolerance is 0.5. Enter a new tolerance.", result.Message);
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+
+        Assert.Equal(CommandInputKind.Distance, prompt.ExpectedInput);
+        Assert.Equal("Gap tolerance <0.5>", prompt.Prompt);
+    }
+
+    [Fact]
+    public void GapToleranceInput_ShouldUpdateToolTolerance()
+    {
+        var tool = new BoundaryFillTool();
+        ToolContext context = CreateContext();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("G", "Gap"),
+            context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromDistance("0.1", 0.1),
+            context);
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal("Boundary fill gap tolerance set to 0.1.", result.Message);
+        Assert.Equal(0.1, tool.GapTolerance);
+        Assert.Equal(CommandInputKind.PointOrOption, tool.GetPromptState(context).ExpectedInput);
+    }
+
+    [Fact]
+    public void GapToleranceInput_ShouldRejectZeroOrNegativeValues()
+    {
+        var tool = new BoundaryFillTool();
+        ToolContext context = CreateContext();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("G", "Gap"),
+            context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromDistance("0", 0),
+            context);
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("Gap tolerance must be greater than zero.", result.Message);
+        Assert.Equal(CommandInputKind.Distance, tool.GetPromptState(context).ExpectedInput);
+    }
+
+    [Fact]
+    public void SmallerGapTolerance_ShouldPreventSmallGapPreview()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(new Point2D(0, 0), new Point2D(10, 0)));
+        document.AddEntity(new LineEntity(new Point2D(10, 0), new Point2D(10, 5)));
+        document.AddEntity(new LineEntity(new Point2D(10, 5), new Point2D(0, 5)));
+        document.AddEntity(new LineEntity(new Point2D(0, 5), new Point2D(0, 0.2)));
+        ToolContext context = CreateContext(document);
+        var tool = new BoundaryFillTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("G", "Gap"),
+            context);
+        tool.HandleCommandInput(
+            CommandInputSubmission.FromDistance("0.1", 0.1),
+            context);
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("No closed boundary was found around the picked point.", result.Message);
+        Assert.False(tool.HasPreview);
+    }
+
+    [Fact]
+    public void GapToleranceChange_WithExistingPreview_ShouldRecalculatePreview()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new LineEntity(new Point2D(0, 0), new Point2D(10, 0)));
+        document.AddEntity(new LineEntity(new Point2D(10, 0), new Point2D(10, 5)));
+        document.AddEntity(new LineEntity(new Point2D(10, 5), new Point2D(0, 5)));
+        document.AddEntity(new LineEntity(new Point2D(0, 5), new Point2D(0, 0.2)));
+        ToolContext context = CreateContext(document);
+        var tool = new BoundaryFillTool();
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        Assert.True(tool.HasPreview);
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("G", "Gap"),
+            context);
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromDistance("0.1", 0.1),
+            context);
+
+        Assert.Equal(ToolResultKind.Updated, result.Kind);
+        Assert.Equal("Boundary fill gap tolerance set to 0.1. No closed boundary was found around the picked point.", result.Message);
+        Assert.False(tool.HasPreview);
+    }
+
+
+    [Fact]
+    public void PointerPressed_WhileEditingGapTolerance_ShouldNotUpdatePreview()
+    {
+        CadDocument document = CreateDocumentWithRectangleLines();
+        ToolContext context = CreateContext(document);
+        var tool = new BoundaryFillTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("G", "Gap"),
+            context);
+
+        ToolResult result = tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(5, 2)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal("Enter a gap tolerance before picking a boundary point.", result.Message);
+        Assert.False(tool.HasPreview);
+    }
+
     [Fact]
     public void GetPromptState_ShouldExposeBoundaryFillCommand()
     {
@@ -254,8 +470,9 @@ public sealed class BoundaryFillToolTests
         CommandPromptState prompt = tool.GetPromptState(CreateContext());
 
         Assert.Equal("BFILL", prompt.CommandName);
-        Assert.Equal(CommandInputKind.Point, prompt.ExpectedInput);
+        Assert.Equal(CommandInputKind.PointOrOption, prompt.ExpectedInput);
         Assert.False(prompt.AcceptsEmptyEnter);
+        Assert.Contains(prompt.Options, option => option.Keyword == "Gap");
     }
 
     private static CadDocument CreateDocumentWithRectangleLines()

@@ -11,5 +11,6 @@ public enum CadToolKey
     S,
     A,
     L,
-    U
+    U,
+    G
 }
