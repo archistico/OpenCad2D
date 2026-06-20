@@ -45,8 +45,11 @@ public static class CadExtendService
         GeometryTolerance tolerance)
     {
         Line2D infiniteLine = Line2D.FromPoints(target.Start, target.End);
-        IReadOnlyList<Point2D> intersections = CadEntityIntersectionService
-            .IntersectInfiniteLineWithEntity(infiniteLine, boundary, tolerance);
+        var intersections = CadEntityIntersectionService
+            .IntersectInfiniteLineWithEntity(infiniteLine, boundary, tolerance)
+            .ToList();
+
+        AddSameLineBoundaryCandidates(intersections, infiniteLine, boundary, tolerance);
 
         if (intersections.Count == 0)
         {
@@ -83,8 +86,11 @@ public static class CadExtendService
         GeometryTolerance tolerance)
     {
         Circle2D fullCircle = new(target.Center, target.Radius);
-        IReadOnlyList<Point2D> intersections = CadEntityIntersectionService
-            .IntersectCircleWithEntity(fullCircle, boundary, tolerance);
+        var intersections = CadEntityIntersectionService
+            .IntersectCircleWithEntity(fullCircle, boundary, tolerance)
+            .ToList();
+
+        AddSameCircleBoundaryCandidates(intersections, fullCircle, boundary, tolerance);
 
         if (intersections.Count == 0)
         {
@@ -206,8 +212,11 @@ public static class CadExtendService
             ? new LineSegment2D(vertices[1], vertices[0])
             : new LineSegment2D(vertices[^2], vertices[^1]);
 
-        IReadOnlyList<Point2D> intersections = CadEntityIntersectionService
-            .IntersectInfiniteLineWithEntity(infiniteLine, boundary, tolerance);
+        var intersections = CadEntityIntersectionService
+            .IntersectInfiniteLineWithEntity(infiniteLine, boundary, tolerance)
+            .ToList();
+
+        AddSameLineBoundaryCandidates(intersections, infiniteLine, boundary, tolerance);
 
         if (intersections.Count == 0)
         {
@@ -246,6 +255,107 @@ public static class CadExtendService
             target.DrawOrder,
             isFilled: false,
             segmentBulges: target.SegmentBulges);
+    }
+
+    private static void AddSameLineBoundaryCandidates(
+        List<Point2D> candidates,
+        Line2D infiniteLine,
+        CadEntity boundary,
+        GeometryTolerance tolerance)
+    {
+        if (boundary is LineEntity line &&
+            IsSegmentOnInfiniteLine(infiniteLine, line.Geometry, tolerance))
+        {
+            AddDistinct(candidates, line.Start, tolerance.Distance);
+            AddDistinct(candidates, line.End, tolerance.Distance);
+            return;
+        }
+
+        if (boundary is not PolylineEntity polyline)
+        {
+            return;
+        }
+
+        for (int index = 0; index < polyline.SegmentCount; index++)
+        {
+            if (Math.Abs(polyline.SegmentBulges[index]) > tolerance.Distance)
+            {
+                continue;
+            }
+
+            Point2D start = polyline.Vertices[index];
+            Point2D end = polyline.Vertices[(index + 1) % polyline.Vertices.Count];
+            var segment = new LineSegment2D(start, end);
+
+            if (!IsSegmentOnInfiniteLine(infiniteLine, segment, tolerance))
+            {
+                continue;
+            }
+
+            AddDistinct(candidates, start, tolerance.Distance);
+            AddDistinct(candidates, end, tolerance.Distance);
+        }
+    }
+
+    private static void AddSameCircleBoundaryCandidates(
+        List<Point2D> candidates,
+        Circle2D circle,
+        CadEntity boundary,
+        GeometryTolerance tolerance)
+    {
+        if (boundary is ArcEntity arc &&
+            IsArcOnCircle(circle, arc.Geometry, tolerance))
+        {
+            AddDistinct(candidates, arc.Geometry.StartPoint, tolerance.Distance);
+            AddDistinct(candidates, arc.Geometry.EndPoint, tolerance.Distance);
+        }
+    }
+
+    private static bool IsSegmentOnInfiniteLine(
+        Line2D infiniteLine,
+        LineSegment2D segment,
+        GeometryTolerance tolerance)
+    {
+        return IsPointOnInfiniteLine(infiniteLine, segment.Start, tolerance) &&
+               IsPointOnInfiniteLine(infiniteLine, segment.End, tolerance);
+    }
+
+    private static bool IsPointOnInfiniteLine(
+        Line2D infiniteLine,
+        Point2D point,
+        GeometryTolerance tolerance)
+    {
+        double directionLength = infiniteLine.Direction.Length;
+        if (tolerance.IsVectorLengthZero(directionLength))
+        {
+            return false;
+        }
+
+        Vector2D lineToPoint = infiniteLine.Point.VectorTo(point);
+        double signedArea = infiniteLine.Direction.Cross(lineToPoint);
+        return Math.Abs(signedArea) <= tolerance.Distance * directionLength;
+    }
+
+    private static bool IsArcOnCircle(
+        Circle2D circle,
+        Arc2D arc,
+        GeometryTolerance tolerance)
+    {
+        return circle.Center.DistanceTo(arc.Center) <= tolerance.Distance &&
+               Math.Abs(circle.Radius - arc.Radius) <= tolerance.Distance;
+    }
+
+    private static void AddDistinct(
+        List<Point2D> points,
+        Point2D point,
+        double tolerance)
+    {
+        if (points.Any(existing => existing.DistanceTo(point) <= tolerance))
+        {
+            return;
+        }
+
+        points.Add(point);
     }
 
     private static Point2D? FindBestPointBeforeStart(

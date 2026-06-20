@@ -2045,3 +2045,37 @@ The Break clockwise-arc regression tests were adjusted after validation showed t
 This is geometrically correct because `Angle` stores raw radians and does not guarantee positive-normalized degree output. The test intent is to validate the split geometry and clockwise orientation, not to require a specific raw angle representation. The new assertions compare `Angle.NormalizePositive().Degrees` for the zero-crossing break cases.
 
 No production code was changed in this pass.
+
+## 2026-06-20 - Extend same-support boundary candidates
+
+Follow-up to the overlap-boundary and Break regression work. `CadExtendService` now handles finite boundary candidates when the target extension support is coincident with the boundary support, instead of depending only on ordinary point intersections.
+
+Behavior contract:
+
+- Ordinary EXTEND behavior through point intersections remains unchanged.
+- A line can now be extended to a separated collinear line boundary by using the nearest boundary endpoint in the picked extension direction.
+- An open polyline with a straight endpoint segment can now use the same collinear boundary endpoint logic when extending that endpoint.
+- A circular arc can now be extended to a separated cocircular arc boundary by using the nearest boundary arc endpoint in the picked angular extension direction.
+- Clockwise arcs crossing the 0°/360° axis are covered by regression tests and preserve clockwise orientation.
+- Full coincident circles still do not synthesize arbitrary extension targets because they have no finite boundary endpoint.
+
+Implementation notes:
+
+- `ExtendLine(...)` and straight-end `ExtendPolyline(...)` augment `IntersectInfiniteLineWithEntity(...)` results with endpoints from same-line `LineEntity` or straight `PolylineEntity` boundary segments.
+- `ExtendArc(...)` augments `IntersectCircleWithEntity(...)` results with start/end points from same-circle `ArcEntity` boundaries.
+- Candidate selection still goes through the existing direction-aware `FindBest...` methods, so only candidates beyond the picked endpoint are accepted.
+- The change is intentionally conservative: curved polyline endpoint extension and full-circle coincident extension remain unchanged.
+
+Regression coverage added:
+
+- Extend line to separated collinear line boundary.
+- Extend open polyline straight endpoint to separated collinear line boundary.
+- Extend CCW arc to separated cocircular arc boundary.
+- Extend clockwise zero-crossing arc to a cocircular boundary while preserving clockwise orientation.
+
+Manual verification expectations:
+
+- Draw a line from 0 to 5 and a collinear boundary line from 10 to 20. EXTEND the picked end of the first line: it should end at 10.
+- Draw an open two-point polyline from 0 to 5 and use the same boundary: the picked endpoint should move to 10 while remaining a polyline.
+- Draw an arc from 0° to 90° and a cocircular boundary arc from 180° to 270°. EXTEND the picked end: the arc should become 0° to 180°.
+- Draw a clockwise arc from 10° to 350° and a cocircular clockwise boundary arc from 300° to 280°. EXTEND the picked end at 350°: the arc should extend clockwise to 300°.

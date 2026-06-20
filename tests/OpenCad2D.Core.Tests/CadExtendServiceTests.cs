@@ -294,6 +294,97 @@ public sealed class CadExtendServiceTests
     }
 
 
+    [Fact]
+    public void ExtendLine_ToCollinearSeparatedLineBoundary_ShouldExtendPickedEndToNearestBoundaryEndpoint()
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(5, 0));
+        var boundary = new LineEntity(new Point2D(10, 0), new Point2D(20, 0));
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            target.End);
+
+        LineEntity line = Assert.IsType<LineEntity>(result);
+
+        Assert.Equal(target.Start, line.Start);
+        Assert.Equal(new Point2D(10, 0), line.End);
+    }
+
+    [Fact]
+    public void ExtendOpenPolyline_ToCollinearSeparatedLineBoundary_ShouldExtendPickedEndToNearestBoundaryEndpoint()
+    {
+        var target = new PolylineEntity(new[]
+        {
+            new Point2D(0, 0),
+            new Point2D(5, 0)
+        });
+        var boundary = new LineEntity(new Point2D(10, 0), new Point2D(20, 0));
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            target.Vertices[^1]);
+
+        PolylineEntity polyline = Assert.IsType<PolylineEntity>(result);
+
+        Assert.Equal(new Point2D(0, 0), polyline.Vertices[0]);
+        Assert.Equal(new Point2D(10, 0), polyline.Vertices[^1]);
+    }
+
+    [Fact]
+    public void ExtendArc_ToCocircularSeparatedArcBoundary_ShouldExtendPickedEndToNearestBoundaryEndpoint()
+    {
+        var target = new ArcEntity(
+            new Point2D(0, 0),
+            5,
+            Angle.FromDegrees(0),
+            Angle.FromDegrees(90));
+        var boundary = new ArcEntity(
+            new Point2D(0, 0),
+            5,
+            Angle.FromDegrees(180),
+            Angle.FromDegrees(270));
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            target.Geometry.EndPoint);
+
+        ArcEntity arc = Assert.IsType<ArcEntity>(result);
+
+        Assert.Equal(target.StartAngle, arc.StartAngle);
+        AssertNormalizedAngleDegrees(180.0, arc.EndAngle);
+    }
+
+    [Fact]
+    public void ExtendClockwiseArcCrossingZero_ToCocircularArcBoundary_ShouldExtendPickedEndClockwise()
+    {
+        var target = new ArcEntity(
+            new Point2D(0, 0),
+            5,
+            Angle.FromDegrees(10),
+            Angle.FromDegrees(350),
+            isCounterClockwise: false);
+        var boundary = new ArcEntity(
+            new Point2D(0, 0),
+            5,
+            Angle.FromDegrees(300),
+            Angle.FromDegrees(280),
+            isCounterClockwise: false);
+
+        CadEntity? result = CadExtendService.ExtendToBoundary(
+            target,
+            boundary,
+            target.Geometry.EndPoint);
+
+        ArcEntity arc = Assert.IsType<ArcEntity>(result);
+
+        Assert.Equal(target.StartAngle, arc.StartAngle);
+        Assert.False(arc.IsCounterClockwise);
+        AssertNormalizedAngleDegrees(300.0, arc.EndAngle);
+    }
+
     private static void AssertPointOnEllipse(
         EllipseEntity ellipse,
         Point2D point)
@@ -318,6 +409,16 @@ public sealed class CadExtendServiceTests
             arc.MinorAxis.Normalize(),
             arc.MinorRadius,
             point);
+    }
+
+    private static void AssertNormalizedAngleDegrees(
+        double expectedDegrees,
+        Angle actualAngle)
+    {
+        Assert.Equal(
+            expectedDegrees,
+            actualAngle.NormalizePositive().Degrees,
+            precision: 10);
     }
 
     private static void AssertPointOnEllipse(
