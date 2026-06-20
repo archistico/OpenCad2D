@@ -21,7 +21,7 @@ public sealed class StairEntity : CadEntity
         double treadDepth,
         double riserHeight,
         bool showStructure = false,
-        double slabThickness = 0.25,
+        double slabThickness = 3.0,
         Vector2D? xAxis = null,
         Vector2D? yAxis = null,
         EntityId? id = null,

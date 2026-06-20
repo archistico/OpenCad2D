@@ -14,12 +14,27 @@ namespace OpenCad2D.Tools.Architectural;
 /// </summary>
 public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider
 {
-    public const double DefaultWidth = 1.0;
-    public const int DefaultTreadCount = 12;
-    public const double DefaultTreadDepth = 0.28;
-    public const double DefaultRiserHeight = 0.17;
+    public const double DefaultWidth = 100.0;
+    public const int DefaultTreadCount = 18;
+    public const double DefaultTreadDepth = 28.0;
+    public const double DefaultRiserHeight = 17.0;
     public const bool DefaultShowStructure = false;
-    public const double DefaultSlabThickness = 0.25;
+    public const double DefaultSlabThickness = 3.0;
+
+    private static readonly CommandOption PlanOption = new(
+        "Plan",
+        "P",
+        "Insert a plan-view stair");
+
+    private static readonly CommandOption SideOption = new(
+        "Side",
+        "S",
+        "Insert a side-elevation stair");
+
+    private static readonly CommandOption FrontOption = new(
+        "Front",
+        "F",
+        "Insert a front-elevation stair");
 
     private Point2D? _previewInsertionPoint;
 
@@ -27,15 +42,18 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
 
     public Point2D? LastInsertionPoint { get; private set; }
 
+    public StairViewKind CurrentViewKind { get; private set; } = StairViewKind.Plan;
+
     public CommandPromptState GetPromptState(ToolContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
 
         return new CommandPromptState(
             "STAIR",
-            "Specify stair insertion point",
-            CommandInputKind.Point,
-            placeholder: "click insertion point or enter X/Y");
+            $"Specify {FormatViewName(CurrentViewKind)} stair insertion point",
+            CommandInputKind.PointOrOption,
+            new[] { PlanOption, SideOption, FrontOption },
+            placeholder: "click insertion point, enter X/Y or choose Plan/Side/Front");
     }
 
     public ToolResult HandleCommandInput(
@@ -45,10 +63,15 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
 
+        if (input.Kind == CommandInputSubmissionKind.Option)
+        {
+            return HandleViewOption(input.OptionKeyword);
+        }
+
         if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
         {
             return ToolResult.None(
-                input.ErrorMessage ?? $"{Name} expects a point input.");
+                input.ErrorMessage ?? $"{Name} expects a point input or Plan/Side/Front option.");
         }
 
         return OnPointerPressed(
@@ -69,7 +92,8 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
 
         StairEntity stair = CreateDefaultStair(
             insertionPoint,
-            context.Creation.CurrentLayerId);
+            context.Creation.CurrentLayerId,
+            CurrentViewKind);
 
         context.Commands.Execute(
             context.Document,
@@ -79,7 +103,7 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         _previewInsertionPoint = null;
         context.CurrentBasePoint = insertionPoint;
 
-        return ToolResult.Completed("Stair inserted.");
+        return ToolResult.Completed($"{FormatViewName(CurrentViewKind)} stair inserted.");
     }
 
     public ToolResult OnPointerMoved(
@@ -109,7 +133,8 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         {
             CreateDefaultStair(
                 insertionPoint,
-                context.Creation.CurrentLayerId)
+                context.Creation.CurrentLayerId,
+                CurrentViewKind)
         };
     }
 
@@ -139,9 +164,20 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
         Point2D insertionPoint,
         OpenCad2D.Core.Identifiers.LayerId layerId)
     {
+        return CreateDefaultStair(
+            insertionPoint,
+            layerId,
+            StairViewKind.Plan);
+    }
+
+    public static StairEntity CreateDefaultStair(
+        Point2D insertionPoint,
+        OpenCad2D.Core.Identifiers.LayerId layerId,
+        StairViewKind viewKind)
+    {
         return new StairEntity(
             insertionPoint,
-            StairViewKind.Plan,
+            viewKind,
             DefaultWidth,
             DefaultTreadCount,
             DefaultTreadDepth,
@@ -149,6 +185,39 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
             DefaultShowStructure,
             DefaultSlabThickness,
             layerId: layerId);
+    }
+
+    private ToolResult HandleViewOption(string? optionKeyword)
+    {
+        if (PlanOption.Matches(optionKeyword ?? string.Empty))
+        {
+            CurrentViewKind = StairViewKind.Plan;
+        }
+        else if (SideOption.Matches(optionKeyword ?? string.Empty))
+        {
+            CurrentViewKind = StairViewKind.SideElevation;
+        }
+        else if (FrontOption.Matches(optionKeyword ?? string.Empty))
+        {
+            CurrentViewKind = StairViewKind.FrontElevation;
+        }
+        else
+        {
+            return ToolResult.None("Unknown stair view option. Use Plan, Side or Front.");
+        }
+
+        return ToolResult.Updated($"Stair view set to {FormatViewName(CurrentViewKind)}.");
+    }
+
+    private static string FormatViewName(StairViewKind viewKind)
+    {
+        return viewKind switch
+        {
+            StairViewKind.Plan => "Plan",
+            StairViewKind.SideElevation => "Side elevation",
+            StairViewKind.FrontElevation => "Front elevation",
+            _ => viewKind.ToString()
+        };
     }
 
     private static Point2D ApplySnap(

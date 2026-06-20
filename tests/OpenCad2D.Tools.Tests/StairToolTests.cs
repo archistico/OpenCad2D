@@ -24,6 +24,17 @@ public sealed class StairToolTests
     }
 
     [Fact]
+    public void Defaults_ShouldUseArchitecturalCentimeterValues()
+    {
+        Assert.Equal(100.0, StairTool.DefaultWidth);
+        Assert.Equal(18, StairTool.DefaultTreadCount);
+        Assert.Equal(28.0, StairTool.DefaultTreadDepth);
+        Assert.Equal(17.0, StairTool.DefaultRiserHeight);
+        Assert.False(StairTool.DefaultShowStructure);
+        Assert.Equal(3.0, StairTool.DefaultSlabThickness);
+    }
+
+    [Fact]
     public void PointerPress_ShouldInsertStairOnCurrentLayer()
     {
         LayerId layerId = new("Architecture");
@@ -41,7 +52,7 @@ public sealed class StairToolTests
             new PointerInfo(new Point2D(10, 20)));
 
         Assert.Equal(ToolResultKind.Completed, result.Kind);
-        Assert.Equal("Stair inserted.", result.Message);
+        Assert.Equal("Plan stair inserted.", result.Message);
         Assert.Equal(new Point2D(10, 20), tool.LastInsertionPoint);
         Assert.Equal(new Point2D(10, 20), context.CurrentBasePoint);
 
@@ -53,6 +64,8 @@ public sealed class StairToolTests
         Assert.Equal(StairTool.DefaultTreadCount, stair.TreadCount);
         Assert.Equal(StairTool.DefaultTreadDepth, stair.TreadDepth);
         Assert.Equal(StairTool.DefaultRiserHeight, stair.RiserHeight);
+        Assert.False(stair.ShowStructure);
+        Assert.Equal(StairTool.DefaultSlabThickness, stair.SlabThickness);
     }
 
     [Fact]
@@ -101,6 +114,20 @@ public sealed class StairToolTests
     }
 
     [Fact]
+    public void PromptState_ShouldExposeViewOptions()
+    {
+        ToolContext context = CreateContext();
+        var tool = new StairTool();
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+
+        Assert.Equal(CommandInputKind.PointOrOption, prompt.ExpectedInput);
+        Assert.Contains(prompt.Options, option => option.Keyword == "Plan");
+        Assert.Contains(prompt.Options, option => option.Keyword == "Side");
+        Assert.Contains(prompt.Options, option => option.Keyword == "Front");
+    }
+
+    [Fact]
     public void HandleCommandInput_WithPoint_ShouldInsertStair()
     {
         ToolContext context = CreateContext();
@@ -116,6 +143,57 @@ public sealed class StairToolTests
 
         StairEntity stair = Assert.Single(context.Document.Entities.All.OfType<StairEntity>());
         Assert.Equal(new Point2D(30, 40), stair.InsertionPoint);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithSideOption_ShouldInsertSideElevationStair()
+    {
+        ToolContext context = CreateContext();
+        var tool = new StairTool();
+
+        ToolResult optionResult = tool.HandleCommandInput(
+            CommandInputSubmission.Option("S", "Side"),
+            context);
+
+        Assert.Equal(ToolResultKind.Updated, optionResult.Kind);
+        Assert.Equal(StairViewKind.SideElevation, tool.CurrentViewKind);
+
+        ToolResult insertResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint(
+                "30,40",
+                new Point2D(30, 40)),
+            context);
+
+        Assert.Equal(ToolResultKind.Completed, insertResult.Kind);
+
+        StairEntity stair = Assert.Single(context.Document.Entities.All.OfType<StairEntity>());
+        Assert.Equal(StairViewKind.SideElevation, stair.ViewKind);
+        Assert.Equal(new Point2D(30, 40), stair.InsertionPoint);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithFrontOption_ShouldUpdatePreviewAndInsertedStair()
+    {
+        ToolContext context = CreateContext();
+        var tool = new StairTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("F", "Front"),
+            context);
+
+        tool.OnPointerMoved(
+            context,
+            new PointerInfo(new Point2D(15, 25)));
+
+        StairEntity preview = Assert.Single(tool.GetPreviewEntities(context).OfType<StairEntity>());
+        Assert.Equal(StairViewKind.FrontElevation, preview.ViewKind);
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(15, 25)));
+
+        StairEntity stair = Assert.Single(context.Document.Entities.All.OfType<StairEntity>());
+        Assert.Equal(StairViewKind.FrontElevation, stair.ViewKind);
     }
 
     [Fact]

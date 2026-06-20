@@ -96,6 +96,8 @@ Aliases are case-insensitive.
 | Metric Scale Bar | `SCALEBAR`, `SBAR`, `GRAPHICSCALE` |
 | Stair | `STAIR`, `STAIRS`, `SCALA`, `ST` |
 
+`STAIR` accepts the `Plan`, `Side` and `Front` options before the insertion point.
+
 ### Dimensions
 
 | Tool | Aliases |

@@ -26,7 +26,7 @@ public sealed class StairEntityDto : EntityDto
 
     public bool ShowStructure { get; set; }
 
-    public double SlabThickness { get; set; } = 0.25;
+    public double SlabThickness { get; set; } = 3.0;
 
     public double XAxisX { get; set; } = 1.0;
 
