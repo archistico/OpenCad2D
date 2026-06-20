@@ -8,9 +8,9 @@ For now, release and roadmap files remain where they are. They contain useful hi
 
 `roadmap.md` is the main project roadmap. It should be treated as the broad direction of the project and should remain the first file to check when deciding what belongs in the next milestone.
 
-`stabilization-v0.9-plan.md` is the working stabilization plan for the v0.9 line. Use it when checking what still needs consolidation before moving toward a more stable public release.
+`stabilization-v0.9-plan.md` is the current stabilization-gate checklist for the v0.9 line. Use it when checking what still needs consolidation before moving toward a more stable public release. It should not be used to reopen feature families already completed in the v0.8.100+ expansion line.
 
-`roadmap-v0.8.100.md` is historical roadmap material for the v0.8.100 phase. Keep it as context, but do not treat it as the current roadmap unless a task explicitly refers to that version.
+`roadmap-v0.8.100.md` is historical/reconciled roadmap material for the v0.8.100 expansion phase. It now records that Import Drawing, Blocks, the Dynamic Command HUD and the first Library Browser pass are implemented, but `roadmap.md` remains the current decision source.
 
 ## Release notes
 

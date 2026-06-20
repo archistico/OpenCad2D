@@ -36,9 +36,11 @@ Use Collect Refs before sending a project to someone else or before preparing a 
 
 ## Manage Refs
 
-Manage Refs lists the image references used by the drawing and provides maintenance actions such as checking paths, replacing files, relinking missing images, or adjusting reference-related settings.
+Manage Refs lists the image references used by the drawing and provides maintenance actions such as checking paths, replacing files, relinking missing images, selecting a reference in the drawing, opening the source folder, and replacing the linked raster source.
 
-When image transparency is implemented, it should be documented here as a percentage-based display property managed from the image reference tools.
+The manager also exposes image transparency as a percentage. `0%` means fully opaque and `100%` means fully transparent. Transparency changes are applied to the selected image reference through the normal document command history, so they participate in undo/redo and are preserved when the drawing is saved.
+
+The same transparency percentage is available from the Property Panel when a single image reference is selected. Use this when tracing over scanned plans, logos, maps or site photos and the raster needs to remain visible without hiding the CAD geometry drawn above it.
 
 ## Snaps on images
 

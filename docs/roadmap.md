@@ -1,4 +1,4 @@
-﻿# OpenCad2D roadmap
+# OpenCad2D roadmap
 
 This roadmap tracks the active development path from the current extended v0.8 line toward the next stabilization gate and, later, the first stable v1.0 release.
 
@@ -57,7 +57,7 @@ The following foundations are considered complete for the active roadmap. Older 
 | Area | Status | Notes |
 |---|---:|---|
 | Core geometry/document model | [x] | Geometry primitives, entities, layers, line formats, text formats, dimension styles, command history and undo/redo are in place. |
-| Application shell | [x] | Avalonia canvas, file command bar, top CAD bar, left tool panel, property panel, command row, snap bar and status bar are established. |
+| Application shell | [x] | Avalonia canvas, file command bar, top CAD bar, left tool panel, property panel, Dynamic Command HUD, snap bar and status bar are established. |
 | Native persistence | [x] | `.opencad2d.json` save/load, dirty state, save-changes prompt, partial recovery, viewport/document settings persistence and layer/entity fill persistence are implemented. |
 | Export/import baseline | [x] | SVG, PDF and DXF export exist; SVG/PDF/DXF include solid fill output for supported closed entities; SVG export includes external raster image references; ASCII DXF import covers the practical 2D entity set currently supported, including LWPOLYLINE bulge preservation for mixed line/arc polylines. |
 | Command input | [x] | Aliases, prompt phases, coordinate input, relative/polar input, direct distances, history and first-pass autocomplete are implemented. |
@@ -127,9 +127,9 @@ Consolidation added after this checkpoint:
 
 ## Active v0.8.100+ specification plan
 
-Status: [~] planning/specification.
+Status: [~] reconciled roadmap. The expanded v0.8 line has completed Import Drawing, Blocks, Dynamic HUD and the first Library Browser pass. Remaining planned work starts after those foundations.
 
-The following milestones are planned before the future v0.9 stabilization gate:
+The following milestones define the path before the future v0.9 stabilization gate:
 
 | Milestone | Status | Specification | Goal |
 |---|---:|---|---|
@@ -142,14 +142,14 @@ The following milestones are planned before the future v0.9 stabilization gate:
 | v0.8.115 | [x] | `docs/specs/v0.8.110-blocks.md` | Add Explode Block and the first in-place Edit Block session workflow. |
 | v0.8.120 | [~] | `docs/specs/v0.8.120-architectural-symbols.md` | Keep first-pass North Symbol and Metric Scale Bar; reserve future direct tools for parametric helpers rather than many fixed-symbol toolbar buttons. |
 | v0.8.121 | [x] | `docs/specs/v0.8.121-dynamic-command-hud.md` | Fixed command row replaced by a dynamic cursor-adjacent command HUD with unified prompt state, editable numeric fields, block placement flows and regression coverage. |
-| v0.8.122 | [ ] | `docs/specs/v0.8.122-library-browser.md` | Add Library browser for reusable `.opencad2d.json` snippets grouped by category, with preview and insert workflow. |
+| v0.8.122 | [x] | `docs/specs/v0.8.122-library-browser.md` | First-pass Library Browser implemented: scans `library/**/*.opencad2d.json`, groups by category, previews items and inserts them as reusable block references. |
 | v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
 | v0.8.140 | [~] | `docs/specs/v0.8.140-hatch.md` | Boundary Fill v1 is implemented as click-inside linear face detection that creates filled closed polylines; HatchEntity remains planned. |
 | v0.8.145 | [ ] | `docs/specs/v0.8.140-hatch.md` | Boundary Fill v2: preview, sampled arc/circle boundaries and configurable small-gap tolerance. |
 | v0.8.150 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add real HatchEntity support for holes/islands and composite hatch boundaries. |
 | v0.8.160+ | [ ] | `docs/roadmap-v0.8.100.md` | Consolidate the expanded v0.8 line before the next release gate. |
 
-Implementation should follow the order above. Import Drawing and Blocks are foundations. Before adding more drafting UI weight, the next safety-oriented UI milestone is the dynamic command HUD: it must first unify command prompt state across all tools, then replace the fixed command row in small reversible steps. After that, the Library browser remains the next drafting workflow priority because fixed symbols, furniture and reusable drawing snippets should be loaded from `.opencad2d.json` files instead of becoming separate toolbar buttons. Parametric tools should remain for objects that need dimensions/options before generation. Boundary Fill v1 has started the click-inside workflow conservatively for linear boundaries. The next BF work should improve confidence and coverage before introducing a real hatch entity: preview first, then sampled curve boundaries, then gap tolerance, then HatchEntity for holes/islands.
+Implementation has now progressed through Import Drawing, Blocks, the Dynamic Command HUD and the first Library Browser pass. The remaining active roadmap should not reopen those completed foundations unless bugs are found. Fixed symbols, furniture and reusable drawing snippets should continue to live as `.opencad2d.json` Library items instead of becoming separate toolbar buttons. Parametric tools should remain for objects that need dimensions/options before generation, such as stairs and future doors/windows. Boundary Fill v1 has started the click-inside workflow conservatively for linear boundaries. The next BF work should improve confidence and coverage before introducing a real hatch entity: preview first, then sampled curve boundaries, then gap tolerance, then HatchEntity for holes/islands.
 
 ---
 
@@ -370,8 +370,9 @@ These are valid future tasks but should not block the current stabilization flow
 - [>] closed Bezier spline splitting/editing policy;
 - [>] Break Point convention for full circles/full ellipses as almost-full open arcs;
 - [>] true associative dimensions;
-- [>] blocks;
-- [>] general hatch/pattern tools beyond the current solid fill support;
+- [x] native blocks, block references, block creation/insertion/manager/explode/edit first workflow and Library insertion are implemented for OpenCad2D native drawings;
+- [>] DXF `BLOCK`/`INSERT` interoperability remains a separate import/export compatibility task;
+- [>] general hatch/pattern tools beyond the current solid fill and Boundary Fill v1 support;
 - [x] external raster references for PNG/JPG/JPEG as non-embedded image entities;
 - [x] raster-reference management, relinking, relative paths and Collect Refs packaging;
 - [>] DXF/PDF raster-image export parity;

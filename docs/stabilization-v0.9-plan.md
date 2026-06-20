@@ -39,13 +39,13 @@ v0.9 is a stabilization release. The goal is to make the existing CAD foundation
 | EXTEND native alignment | Done for supported targets | EXTEND uses the native model for supported lines/arcs/polylines/elliptical arcs and native elliptical boundaries. |
 | Preview UX | Done for TRIM/BREAK/EXTEND | Dashed removal previews and addition highlights are implemented. |
 | Save/export clarity | Done | Export messages clarify that the editable native project may still need saving. |
-| Modify-tool UX policy | In progress, nearly complete | Deselect, Delete multipick, right-click confirmations, entity-only snap phases, selected-boundary highlights and Offset workflow stabilization are implemented for the covered tools. |
+| Modify-tool UX policy | Done for current scope | Deselect, Delete multipick, right-click confirmations, entity-only snap phases, selected-boundary highlights, Offset workflow stabilization and Dynamic HUD modify-tool reconciliation are implemented for the covered tools. |
 
 ---
 
-## Active work: Modify Tools UX cleanup
+## Completed work: Modify Tools UX cleanup
 
-Completed in this block:
+This block is complete for the current stabilization scope. Completed:
 
 - Deselect command/button;
 - Point icon simplified to a small cross;
@@ -69,16 +69,7 @@ Completed in the Offset block:
 - side selection and preview;
 - explicit supported/deferred geometry policy.
 
-Remaining in this block:
-
-1. **Final UX consistency pass**
-   - right-click/Enter/Esc behavior across draw/modify tools;
-   - snap mode by phase;
-   - command messages;
-   - preview semantics.
-
-2. **Documentation sync**
-   - update `docs/commands.md` and `docs/modify-tools.md` after Offset is finalized.
+No remaining implementation work is tracked in this block. Future tool changes should still add focused regression tests and keep `docs/commands.md`, `docs/modify-tools.md` and the User Guide aligned.
 
 ---
 
@@ -170,9 +161,9 @@ Then manually verify:
 - closed Bezier spline editing;
 - full-circle/full-ellipse Break Point convention;
 - true associative dimensions;
-- blocks;
-- hatch;
-- raster references;
+- DXF `BLOCK`/`INSERT` interoperability and external block/XREF-style workflows;
+- hatch beyond current solid fill and Boundary Fill v1;
+- DXF/PDF raster-image export parity;
 - advanced NURBS fidelity;
 - autosave/recovery v2;
 - major renderer or spatial-index rewrite;
