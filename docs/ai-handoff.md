@@ -2080,28 +2080,19 @@ Manual verification expectations:
 - Draw an arc from 0° to 90° and a cocircular boundary arc from 180° to 270°. EXTEND the picked end: the arc should become 0° to 180°.
 - Draw a clockwise arc from 10° to 350° and a cocircular clockwise boundary arc from 300° to 280°. EXTEND the picked end at 350°: the arc should extend clockwise to 300°.
 
-## 2026-06-20 - Intersection and overlap policy consolidation
+## 2026-06-20 - HUD Step 30E/30F documentation reconciliation
 
-Consolidated the documentation around the current intersection model after the clockwise-arc, overlap-boundary, Trim, Break and Extend stabilization passes.
+After the geometry/intersection stabilization pass was validated manually, the Dynamic Command HUD documentation was reconciled with the current implementation state. No production code was changed in this pass.
 
-No production code was changed in this pass. The audit result is:
+Confirmed current HUD status from the existing code/tests:
 
-- `CadEntityIntersectionService.Intersect(...)` remains the point-only compatibility path and is still appropriate for intersection snapping.
-- `CadEntityIntersectionService.IntersectDetailed(...)` is the editing path and now documents finite overlap boundary behavior explicitly.
-- `CadTrimService` is the only current command consumer that augments ordinary intersections with `CadIntersectionKind.Overlap` boundary cuts.
-- `CadBreakService` does not need overlap-boundary injection because Break operates on explicit user-selected points projected onto the target curve.
-- `CadExtendService` should remain direction-aware; same-support extension is handled by adding finite boundary endpoints as candidates, not by blindly consuming `Overlap` entries.
-- `IntersectionSnapProvider` should remain point-only unless a future UX explicitly introduces overlap-boundary snap markers.
+- Step 30E is implemented for `Break Point`, `Break Segment` and `Boundary Fill`: Break Point exposes break-point `X/Y`, Break Segment exposes first-point `X/Y` and second-point `Distance/Angle/X/Y`, and Boundary Fill exposes seed-point `X/Y`.
+- Step 30F is implemented for the selection-only modify tools: `Trim`, `Extend`, `Delete`, `Explode` and `Join` remain prompt/options-only and do not expose editable numeric HUD fields.
+- Step 31 block pending-point flows are already represented as dedicated pending placement states: Create Block base point and Insert Block insertion point expose `X/Y`, while dialog-owned options remain outside the shared tool resolver.
 
-Documentation updates:
+Documentation changes:
 
-- Added `docs/geometry-intersections.md` as the focused reference for point intersections, detailed intersections, overlap boundaries and coincident-geometry policy.
-- Updated `docs/curve-editing.md` so the rich-intersection section reflects the implemented `CadIntersectionPoint` / `CadIntersectionKind` model rather than the older aspirational sketch.
-- Updated `docs/architecture.md`, `docs/index.md`, `docs/developer/technical-documentation-map.md`, `docs/known-limitations.md` and `docs/stabilization-v0.9-plan.md` to point maintainers toward the new intersection-policy document.
+- `docs/command-input.md` no longer describes Step 30E/30F/31 as future planned work; it now records the implemented behavior contract.
+- `docs/testing/dynamic-command-hud-modify-tools-checklist.md` keeps the real UI smoke checks, but marks them as future regression/smoke checks rather than implementation blockers for these completed steps.
 
-Important contracts to preserve:
-
-- Coincident full circles return no synthetic point intersections.
-- Finite overlap boundaries are valid editing cuts only when they have a native, finite meaning.
-- `CadIntersectionKind.Tangent` exists but should be treated as reserved for general detailed intersections until explicit tangent classification is implemented and covered by tests.
-- Small duplicated point-on-segment predicates remain acceptable for now because they are private and covered by focused intersection/overlap tests; a future cleanup may centralize them without changing command semantics.
+Next recommended work is no longer Step 30E. Continue with either a small real-UI smoke pass for selection-only tools after any input-routing change, or move to the next functional milestone from the current roadmap, such as Boundary Fill v2/library workflow depending on release priority.

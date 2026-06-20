@@ -619,23 +619,23 @@ The HUD scalar validation now mirrors the modify tool rules instead of applying 
 This step does not alter the stable Line/Polyline/Rectangle/Circle/Rectangle-by-sides paths.
 
 
-## Dynamic HUD remaining integration plan
+## Dynamic HUD modify-tool integration checkpoint
 
-The next dynamic HUD work should continue from the Step 30D stable state. The remaining commands are split deliberately so the stable draw/modify HUD routing is not destabilized.
+The Step 30D baseline has now been carried through the remaining modify-tool groups without changing the stable draw-tool routing. The command HUD keeps the same rule throughout this block: it is visible near the cursor, transparent to the mouse, and editable only through the logical keyboard path entered with `Tab`.
 
 ### Step 30E — Break / Boundary Fill
 
-Planned scope:
+Implemented scope:
 
-- `Break Point`: after selecting the target entity, support the break point through `X / Y`.
-- `Break Segment`: support the first break point through `X / Y`; support the second break point through `Distance / Angle / X / Y`.
-- `Boundary Fill`: support seed-point entry through `X / Y`.
+- `Break Point`: after selecting the target entity, the break-point phase exposes only `X / Y` coordinate fields.
+- `Break Segment`: the first break point exposes `X / Y`; the second break point exposes `Distance / Angle / X / Y`.
+- `Boundary Fill`: the seed point exposes `X / Y` and submits through the normal point-input resolver.
 
-These tools depend on hit testing and projection to existing geometry, so manual checks remain mandatory even when automated prompt/field tests are added.
+Regression coverage exists at ViewModel/tool level for field exposure and command completion. Manual checks should still be used for real canvas hover behavior, snap-assisted picks and projection/failure messages because those depend on the actual pointer workflow.
 
 ### Step 30F — selection-only cleanup
 
-The following tools should stay prompt/options-only and must not expose editable numeric HUD fields:
+The following tools are prompt/options-only and must not expose editable numeric HUD fields:
 
 - `Trim`
 - `Extend`
@@ -643,15 +643,13 @@ The following tools should stay prompt/options-only and must not expose editable
 - `Explode`
 - `Join`
 
-The goal is consistent command behavior: `Tab` must not enter grip edit while a command-driven tool is active, `Enter` and `Esc` must preserve the existing tool semantics, and command options should use the HUD option shortcut path.
+They keep entity-selection semantics through the canvas. `Esc` cancels back to Selection, and `Enter` / right click confirms when the tool has a valid current selection/default. `Tab` stays reserved by the HUD/window routing and must not enter grip editing while one of these command-driven tools is active.
 
 ### Step 31 — Block tools
 
-`Create Block` and `Insert Block` are deferred to a separate step because they are controlled by modal option windows and pending canvas placement state rather than a normal `ICommandDrivenTool` state machine.
+`Create Block` and `Insert Block` keep their dialog-owned options. The command HUD participates only in the pending canvas point phases:
 
-Possible future HUD integration:
+- `Create Block`: picked base point through `X / Y`;
+- `Insert Block`: insertion point through `X / Y`.
 
-- `Create Block`: selected-entity workflow plus base point through `X / Y`, if the current modal base-point workflow is moved or mirrored into HUD state.
-- `Insert Block`: insertion point through `X / Y`, with scale/rotation only if they can be represented without conflicting with the existing options dialog.
-
-Do not remove the dialog workflow until the block commands have dedicated regression coverage.
+Block name, selected definition, scale and rotation remain controlled by the existing dialogs. Do not move those options into the shared HUD resolver without dedicated dialog-to-HUD regression coverage.

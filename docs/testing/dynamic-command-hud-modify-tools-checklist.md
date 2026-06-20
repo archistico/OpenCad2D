@@ -157,9 +157,11 @@ Manual testing should still cover actual UI `Tab` interception and hover feedbac
 Manual testing should still cover the dialog-to-canvas transition, snap-assisted mouse picking and Escape cancellation from the real canvas.
 
 
-## Remaining manual checks to resume next session
+## Manual smoke checks to keep for future UI passes
 
-### Step 30E — Break / Boundary Fill smoke checks
+These checks are no longer listed as implementation blockers for Step 30E, Step 30F or Step 31 because the current code has automated ViewModel/tool coverage for those workflows. Keep them as smoke checks whenever the HUD focus routing, canvas pointer handling or tool-state confirmation behavior is touched again.
+
+### Break / Boundary Fill
 
 - `BREAK PT`
   - Select a supported curve/entity.
@@ -179,7 +181,7 @@ Manual testing should still cover the dialog-to-canvas transition, snap-assisted
   - Verify a fill entity is created.
   - Repeat with a point outside the boundary and verify a clear failure/no-op.
 
-### Step 30F — selection-only smoke checks
+### Selection-only modify tools
 
 For each of `TRIM`, `EXTEND`, `DELETE`, `EXPLODE`, and `JOIN`:
 
@@ -190,7 +192,7 @@ For each of `TRIM`, `EXTEND`, `DELETE`, `EXPLODE`, and `JOIN`:
 - Verify `Esc` cancels the command and preserves the expected selection behavior.
 - Verify mouse picking still works.
 
-### Step 31 - Block tools smoke checks
+### Block tools
 
 - `CREATE BLOCK`
   - Verify the dialog-driven workflow still works.
