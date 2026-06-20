@@ -1,3 +1,4 @@
+using OpenCad2D.Core.Architecture.Stairs;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -668,6 +669,27 @@ public sealed class SvgExporterTests
         Assert.Contains("</g>", result.Content);
     }
 
+
+    [Fact]
+    public void Export_WhenDocumentContainsStair_ShouldWriteGeneratedLineElements()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new StairEntity(
+            new Point2D(0, 0),
+            StairViewKind.Plan,
+            width: 2.0,
+            treadCount: 3,
+            treadDepth: 0.3,
+            riserHeight: 0.17));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.Equal(6, CountOccurrences(result.Content, "<line "));
+    }
+
     private static string GetSingleSvgElement(
         string content,
         string elementName)
@@ -676,6 +698,20 @@ public sealed class SvgExporterTests
             .Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
             .Single(line => line.Contains($"<{elementName} "))
             .Trim();
+    }
+
+    private static int CountOccurrences(string value, string pattern)
+    {
+        int count = 0;
+        int index = 0;
+
+        while ((index = value.IndexOf(pattern, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += pattern.Length;
+        }
+
+        return count;
     }
 
 }

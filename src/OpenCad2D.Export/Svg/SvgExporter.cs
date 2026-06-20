@@ -420,6 +420,13 @@ public sealed class SvgExporter : ISvgExporter
                 height,
                 margin),
 
+            StairEntity stair => ExportStair(
+                stair,
+                lineFormat,
+                contentBounds.Value,
+                height,
+                margin),
+
             ArcEntity arc => ExportArc(
                 arc,
                 lineFormat,
@@ -432,6 +439,34 @@ public sealed class SvgExporter : ISvgExporter
     }
 
 
+
+    private static string ExportStair(
+        StairEntity stair,
+        LineFormat lineFormat,
+        BoundingBox2D bounds,
+        double svgHeight,
+        double margin)
+    {
+        var builder = new StringBuilder();
+
+        foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+        {
+            Point2D start = ToSvgPoint(
+                segment.Start,
+                bounds,
+                svgHeight,
+                margin);
+            Point2D end = ToSvgPoint(
+                segment.End,
+                bounds,
+                svgHeight,
+                margin);
+
+            builder.AppendLine($"  <line x1=\"{Format(start.X)}\" y1=\"{Format(start.Y)}\" x2=\"{Format(end.X)}\" y2=\"{Format(end.Y)}\" {StrokeAttributes(lineFormat)} />");
+        }
+
+        return builder.ToString().TrimEnd();
+    }
 
     private static string ExportImageReference(
         ImageReferenceEntity imageReference,

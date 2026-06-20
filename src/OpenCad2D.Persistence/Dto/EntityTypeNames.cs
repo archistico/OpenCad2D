@@ -25,4 +25,6 @@ public static class EntityTypeNames
     public const string ImageReference = "ImageReference";
 
     public const string BlockReference = "BlockReference";
+
+    public const string Stair = "Stair";
 }

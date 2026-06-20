@@ -1,4 +1,5 @@
 using System.Text;
+using OpenCad2D.Core.Architecture.Stairs;
 using OpenCad2D.Core.Documents;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -381,8 +382,44 @@ public sealed class PdfExporterTests
         Assert.Contains("0 -1 1 0", content);
     }
 
+
+    [Fact]
+    public void Export_WhenDocumentContainsStair_ShouldWriteGeneratedLinePaths()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new StairEntity(
+            new Point2D(0, 0),
+            StairViewKind.Plan,
+            width: 2.0,
+            treadCount: 3,
+            treadDepth: 0.3,
+            riserHeight: 0.17));
+        var exporter = new PdfExporter();
+
+        PdfExportResult result = exporter.Export(document);
+        string content = ToAscii(result.Content);
+
+        Assert.Equal(1, result.ExportedEntityCount);
+        Assert.True(CountOccurrences(content, " l") >= 6);
+        Assert.Contains("S", content);
+    }
+
     private static string ToAscii(byte[] bytes)
     {
         return Encoding.ASCII.GetString(bytes);
+    }
+
+    private static int CountOccurrences(string value, string pattern)
+    {
+        int count = 0;
+        int index = 0;
+
+        while ((index = value.IndexOf(pattern, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += pattern.Length;
+        }
+
+        return count;
     }
 }

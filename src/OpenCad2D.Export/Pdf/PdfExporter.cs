@@ -292,6 +292,13 @@ public sealed class PdfExporter : IPdfExporter
                     context);
                 break;
 
+            case StairEntity stair:
+                WriteStair(
+                    builder,
+                    stair,
+                    context);
+                break;
+
             case TextEntity text:
                 WriteText(
                     builder,
@@ -629,6 +636,21 @@ public sealed class PdfExporter : IPdfExporter
         }
 
         builder.AppendLine("S");
+    }
+
+    private static void WriteStair(
+        StringBuilder builder,
+        StairEntity stair,
+        PdfExportContext context)
+    {
+        foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+        {
+            WriteLine(
+                builder,
+                segment.Start,
+                segment.End,
+                context);
+        }
     }
 
     private static void WriteDimension(

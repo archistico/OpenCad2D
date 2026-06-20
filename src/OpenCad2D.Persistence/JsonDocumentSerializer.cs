@@ -1,4 +1,5 @@
 using System.Globalization;
+using OpenCad2D.Core.Architecture.Stairs;
 using System.Text.Json;
 using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Dimensions;
@@ -776,6 +777,25 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 DefinitionMaxY = blockReference.DefinitionBounds.MaxY
             },
 
+            StairEntity stair => new StairEntityDto
+            {
+                Id = stair.Id.ToString(),
+                LayerId = stair.LayerId.Value,
+                InsertionX = stair.InsertionPoint.X,
+                InsertionY = stair.InsertionPoint.Y,
+                ViewKind = stair.ViewKind.ToString(),
+                Width = stair.Width,
+                TreadCount = stair.TreadCount,
+                TreadDepth = stair.TreadDepth,
+                RiserHeight = stair.RiserHeight,
+                ShowStructure = stair.ShowStructure,
+                SlabThickness = stair.SlabThickness,
+                XAxisX = stair.XAxis.X,
+                XAxisY = stair.XAxis.Y,
+                YAxisX = stair.YAxis.X,
+                YAxisY = stair.YAxis.Y
+            },
+
             _ => null
         };
     }
@@ -1271,8 +1291,40 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     id,
                     layerId),
 
+            StairEntityDto stair => stair.Width <= 0.0 ||
+                stair.TreadCount < 1 ||
+                stair.TreadDepth <= 0.0 ||
+                stair.RiserHeight <= 0.0 ||
+                stair.SlabThickness < 0.0 ||
+                new Vector2D(stair.XAxisX, stair.XAxisY).Length <= 0.0 ||
+                new Vector2D(stair.YAxisX, stair.YAxisY).Length <= 0.0
+                ? null
+                : new StairEntity(
+                    new Point2D(stair.InsertionX, stair.InsertionY),
+                    ParseStairViewKind(stair.ViewKind),
+                    stair.Width,
+                    stair.TreadCount,
+                    stair.TreadDepth,
+                    stair.RiserHeight,
+                    stair.ShowStructure,
+                    stair.SlabThickness,
+                    new Vector2D(stair.XAxisX, stair.XAxisY),
+                    new Vector2D(stair.YAxisX, stair.YAxisY),
+                    id,
+                    layerId),
+
             _ => null
         };
+    }
+
+    private static StairViewKind ParseStairViewKind(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out StairViewKind result)
+            ? result
+            : StairViewKind.Plan;
     }
 
     private static DimensionOrientation ParseDimensionOrientation(string? value)

@@ -390,12 +390,61 @@ public sealed class DxfExporter : IDxfExporter
                         spline,
                         contentBounds);
                     break;
+
+                case StairEntity stair:
+                    WriteStair(
+                        writer,
+                        layer.Name,
+                        stair,
+                        contentBounds);
+                    break;
             }
         }
 
         writer.EndSection();
     }
 
+
+    private static void WriteStair(
+        DxfDocumentWriter writer,
+        string layerName,
+        StairEntity stair,
+        BoundingBox2D? contentBounds)
+    {
+        foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+        {
+            WriteLineSegment(
+                writer,
+                layerName,
+                segment,
+                contentBounds);
+        }
+    }
+
+    private static void WriteLineSegment(
+        DxfDocumentWriter writer,
+        string layerName,
+        LineSegment2D segment,
+        BoundingBox2D? contentBounds)
+    {
+        Point2D start = ToDxfPoint(
+            segment.Start,
+            contentBounds);
+        Point2D end = ToDxfPoint(
+            segment.End,
+            contentBounds);
+
+        writer.WriteGroup(0, "LINE");
+        WriteEntityByLayerProperties(
+            writer,
+            layerName);
+        writer.WriteGroup(10, start.X);
+        writer.WriteGroup(20, start.Y);
+        writer.WriteGroup(30, 0.0);
+        writer.WriteGroup(11, end.X);
+        writer.WriteGroup(21, end.Y);
+        writer.WriteGroup(31, 0.0);
+    }
 
     private static void WriteDimension(
         DxfDocumentWriter writer,
