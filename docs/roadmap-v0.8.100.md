@@ -291,18 +291,19 @@ Exit criteria:
 
 ## Milestone v0.8.145 — Boundary Fill v2
 
-Specification: `docs/specs/v0.8.140-hatch.md`.
+Specification: `docs/specs/v0.8.145-boundary-fill-v2.md`.
 
-Status: planned.
+Status: planned / audit and specification prepared.
 
 Goal: improve the existing click-inside BF workflow before introducing a true hatch entity.
 
 Scope:
 
-- Hover/preview of the boundary that would be generated.
-- Sampled arc and circle boundary support.
-- Configurable gap tolerance for small endpoint gaps.
-- Better diagnostics for ambiguous, open or self-intersecting detected regions.
+- Separate detection/preview from document creation.
+- Sampled arc and circle boundary support while still emitting filled closed polylines.
+- Configurable gap tolerance for small endpoint gaps, with ambiguity checks.
+- Better diagnostics for ambiguous, open, unsupported, degenerate or self-intersecting detected regions.
+- Explicit statement that holes/islands remain deferred until `HatchEntity`.
 
 Deferred beyond BF v2:
 

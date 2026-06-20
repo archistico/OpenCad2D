@@ -16,6 +16,10 @@ Start with `snapping.md`, `polar-tracking.md`, `grip-editing.md`, `geometry-inte
 
 If a change affects how users select points, enter values, or constrain movement, also check `user-guide/11-dynamic-hud.md`, `user-guide/14-snaps.md`, and `user-guide/15-ortho-grid-polar.md`.
 
+## When changing Boundary Fill or hatch behavior
+
+Start with `tools.md`, `known-limitations.md`, `docs/specs/v0.8.140-hatch.md`, and `docs/specs/v0.8.145-boundary-fill-v2.md`. Boundary Fill currently emits filled closed polylines, while HatchEntity remains a later milestone. Keep this distinction explicit when changing algorithms, preview behavior, export behavior, or user-facing messages.
+
 ## When changing appearance and styles
 
 Start with `line-formats.md`, `text-formats.md`, `text-and-dimensions.md`, `layer-appearance.md`, and `draw-order.md`. These files describe how entities look and how appearance is inherited or overridden.

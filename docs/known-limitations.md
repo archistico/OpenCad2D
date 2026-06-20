@@ -73,7 +73,7 @@ Current intentional limits:
 - no fill for arcs, ellipses, elliptical arcs, splines, text or dimensions;
 - DXF fill export is limited to generated `SOLID` HATCH records for the supported closed entities.
 
-`Boundary Fill` can create a filled closed polyline by clicking inside a closed linear boundary, but its first pass only uses visible line and straight-polyline boundaries. Curved boundary detection, holes/islands and associative hatch behavior are not implemented yet.
+`Boundary Fill` can create a filled closed polyline by clicking inside a closed linear boundary, but its first pass only uses visible line and straight-polyline boundaries. Boundary Fill v2 is specified to add preview, sampled arc/circle boundaries and controlled small-gap tolerance. Holes/islands, hatch patterns and associative hatch behavior remain deferred until a real `HatchEntity`.
 
 ---
 
