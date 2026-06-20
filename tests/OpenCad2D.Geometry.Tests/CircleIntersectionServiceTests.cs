@@ -161,6 +161,38 @@ public sealed class CircleIntersectionServiceTests
         Assert.Equal(0, points[0].Y, precision: 10);
     }
 
+
+    [Fact]
+    public void AreCoincident_WhenCirclesHaveSameSupport_ShouldReturnTrue()
+    {
+        var first = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        var second = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        Assert.True(CircleIntersectionService.AreCoincident(first, second));
+    }
+
+    [Fact]
+    public void IntersectCircleCircle_WhenCirclesAreCoincident_ShouldReturnNoPointIntersections()
+    {
+        var first = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        var second = new Circle2D(
+            new Point2D(0, 0),
+            10);
+
+        IReadOnlyList<Point2D> points =
+            CircleIntersectionService.IntersectCircleCircle(first, second);
+
+        Assert.Empty(points);
+    }
+
     [Fact]
     public void IntersectArcCircle_WhenCircleIntersectsArc_ShouldReturnOnlyPointsOnArc()
     {

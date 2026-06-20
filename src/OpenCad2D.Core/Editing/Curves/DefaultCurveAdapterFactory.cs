@@ -1,4 +1,4 @@
-using OpenCad2D.Core.Entities;
+﻿using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Editing;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
@@ -233,6 +233,18 @@ public sealed class DefaultCurveAdapterFactory : ICurveAdapterFactory
             {
                 cut = default;
                 return false;
+            }
+
+            if (projectedPoint.DistanceTo(_arc.Geometry.StartPoint) <= tolerance.Distance)
+            {
+                cut = new CurveCut(0.0, _arc.Geometry.StartPoint);
+                return true;
+            }
+
+            if (projectedPoint.DistanceTo(_arc.Geometry.EndPoint) <= tolerance.Distance)
+            {
+                cut = new CurveCut(1.0, _arc.Geometry.EndPoint);
+                return true;
             }
 
             Angle angle = Angle.FromRadians(Math.Atan2(

@@ -1957,3 +1957,39 @@ Manual verification expectations:
 
 - Create or load a clockwise arc from about 10° to 350° and test intersection snap near the positive X-axis. The snap should find the point on the arc at 0°.
 - Existing counter-clockwise arc snapping, circle-circle tangency, and line-circle intersection behavior should remain unchanged.
+
+## 2026-06-20 - Explicit overlap boundary cuts in detailed intersections
+
+Implemented the next geometry-kernel follow-up after the clockwise arc fix: detailed CAD intersections now surface finite overlap boundaries instead of silently losing them.
+
+Behavior contract:
+
+- `CadEntityIntersectionService.IntersectDetailed(...)` still returns point-like cut locations, not arbitrary infinite intersection sets.
+- Line/line overlaps now produce the two finite boundary cut points marked with `CadIntersectionKind.Overlap`.
+- Circle/arc overlaps on the same circular support produce the arc start/end points marked as `Overlap`.
+- Arc/arc overlaps on the same circular support produce the boundary points of each finite overlapping angular interval, including cases that cross the 0°/360° boundary.
+- Coincident full circles remain deliberately point-empty because they have infinitely many shared points and no finite overlap boundary. No synthetic snap/cut point is created for that case.
+- Point-based snap behavior remains unchanged: coincident circles/arcs are not converted into fake intersection snap points.
+
+Implementation notes:
+
+- `CircleIntersectionService.AreCoincident(...)` centralizes same-support circle detection and documents why `IntersectCircleCircle(...)` still returns no point intersections for coincident full circles.
+- `IntersectDetailed(...)` now adds overlap boundary cuts before ordinary point intersections. If the same geometric point appears through both paths, the overlap classification wins because it is inserted first and `AddDistinct(...)` deduplicates by distance.
+- Current finite overlap handling is intentionally limited to native line/circle/arc entities. Ellipse/spline overlap semantics are not approximated from sample segments, avoiding false overlap cuts from rendering/sampling artifacts.
+
+Regression coverage:
+
+- `CadEntityIntersectionDetailedTests` now covers line/line overlap, circle/arc same-support overlap, arc/arc partial overlap, arc/arc overlap across 0°, and coincident full circles without finite boundary points.
+- `CircleIntersectionServiceTests` now documents coincident circle detection and point-empty circle-circle behavior.
+
+Manual verification expectations:
+
+- TRIM/BREAK-style commands that later consume `IntersectDetailed(...)` can distinguish overlap boundary cuts from ordinary crossings through `CadIntersectionKind.Overlap`.
+- Existing intersection snap should not start snapping to arbitrary locations on coincident circles or coincident arcs.
+
+
+## 2026-06-20 - Arc overlap endpoint projection regression fix
+
+After validating the overlap-boundary work, one regression test exposed a floating-point endpoint projection issue in `ArcCurveAdapter.TryProjectPointToCut`. A boundary point exactly at an arc start angle can be reconstructed through `atan2` as an angle infinitesimally before the start angle; the generic directed-angle parameter calculation can then wrap it to almost a full revolution and reject the point as outside `[0, 1]`.
+
+`ArcCurveAdapter.TryProjectPointToCut` now snaps projected points that are within distance tolerance of the circular arc start/end points directly to parameters `0.0` and `1.0` before computing the generic angular parameter. This keeps overlap boundary cuts stable for arcs crossing zero degrees and preserves exact endpoint cut semantics for Trim/Break/Extend workflows.

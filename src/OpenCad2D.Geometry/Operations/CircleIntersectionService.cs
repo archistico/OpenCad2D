@@ -7,6 +7,20 @@ namespace OpenCad2D.Geometry.Operations;
 /// </summary>
 public static class CircleIntersectionService
 {
+    /// <summary>
+    /// Returns true when two circles share the same center and radius within tolerance.
+    /// Coincident circles have infinitely many shared points, so point-intersection APIs
+    /// intentionally keep returning an empty point list for this case.
+    /// </summary>
+    public static bool AreCoincident(
+        Circle2D first,
+        Circle2D second,
+        double tolerance = Tolerance.Default)
+    {
+        return first.Center.DistanceTo(second.Center) <= tolerance &&
+               Tolerance.AreEqual(first.Radius, second.Radius, tolerance);
+    }
+
     public static IReadOnlyList<Point2D> IntersectLineCircle(
         Line2D line,
         Circle2D circle,
@@ -98,8 +112,7 @@ public static class CircleIntersectionService
     {
         double distance = first.Center.DistanceTo(second.Center);
 
-        if (Tolerance.IsZero(distance, tolerance) &&
-            Tolerance.AreEqual(first.Radius, second.Radius, tolerance))
+        if (AreCoincident(first, second, tolerance))
         {
             return Array.Empty<Point2D>();
         }

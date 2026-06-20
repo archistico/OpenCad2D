@@ -36,28 +36,54 @@ public static class CadEntityIntersectionService
             return Array.Empty<CadIntersectionPoint>();
         }
 
-        IReadOnlyList<Point2D> points = Intersect(first, second, effectiveTolerance);
         var result = new List<CadIntersectionPoint>();
 
-        foreach (Point2D point in points)
+        foreach (Point2D point in GetOverlapBoundaryPoints(first, second, effectiveTolerance))
         {
-            if (!firstAdapter.TryProjectPointToCut(point, effectiveTolerance, out CurveCut firstCut) ||
-                !secondAdapter.TryProjectPointToCut(point, effectiveTolerance, out CurveCut secondCut))
-            {
-                continue;
-            }
-
-            AddDistinct(
+            AddDetailedIntersectionIfProjectable(
                 result,
-                new CadIntersectionPoint(
-                    point,
-                    firstCut.Parameter,
-                    secondCut.Parameter,
-                    ClassifyIntersection(firstAdapter, secondAdapter, firstCut, secondCut, effectiveTolerance)),
-                effectiveTolerance.Distance);
+                firstAdapter,
+                secondAdapter,
+                point,
+                effectiveTolerance,
+                CadIntersectionKind.Overlap);
+        }
+
+        foreach (Point2D point in Intersect(first, second, effectiveTolerance))
+        {
+            AddDetailedIntersectionIfProjectable(
+                result,
+                firstAdapter,
+                secondAdapter,
+                point,
+                effectiveTolerance);
         }
 
         return result;
+    }
+
+    private static void AddDetailedIntersectionIfProjectable(
+        List<CadIntersectionPoint> result,
+        ICurveAdapter firstAdapter,
+        ICurveAdapter secondAdapter,
+        Point2D point,
+        GeometryTolerance tolerance,
+        CadIntersectionKind? forcedKind = null)
+    {
+        if (!firstAdapter.TryProjectPointToCut(point, tolerance, out CurveCut firstCut) ||
+            !secondAdapter.TryProjectPointToCut(point, tolerance, out CurveCut secondCut))
+        {
+            return;
+        }
+
+        AddDistinct(
+            result,
+            new CadIntersectionPoint(
+                point,
+                firstCut.Parameter,
+                secondCut.Parameter,
+                forcedKind ?? ClassifyIntersection(firstAdapter, secondAdapter, firstCut, secondCut, tolerance)),
+            tolerance.Distance);
     }
 
     public static IReadOnlyList<Point2D> Intersect(
@@ -362,6 +388,222 @@ public static class CadEntityIntersectionService
         GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
 
         return entity.DistanceTo(point) <= effectiveTolerance.Distance;
+    }
+
+    private static IReadOnlyList<Point2D> GetOverlapBoundaryPoints(
+        CadEntity first,
+        CadEntity second,
+        GeometryTolerance tolerance)
+    {
+        var points = new List<Point2D>();
+
+        if (first is LineEntity firstLine && second is LineEntity secondLine)
+        {
+            AddLineLineOverlapBoundaryPoints(
+                firstLine.Geometry,
+                secondLine.Geometry,
+                points,
+                tolerance);
+            return points;
+        }
+
+        if (first is CircleEntity && second is CircleEntity)
+        {
+            // Coincident full circles have infinitely many shared points but no finite
+            // overlap boundary. Point-based snap/intersection callers must therefore
+            // continue to receive no synthetic cut point.
+            return points;
+        }
+
+        if (first is CircleEntity circle && second is ArcEntity arc)
+        {
+            AddCircleArcOverlapBoundaryPoints(circle.Geometry, arc.Geometry, points, tolerance);
+            return points;
+        }
+
+        if (first is ArcEntity firstArc && second is CircleEntity circleForArc)
+        {
+            AddCircleArcOverlapBoundaryPoints(circleForArc.Geometry, firstArc.Geometry, points, tolerance);
+            return points;
+        }
+
+        if (first is ArcEntity firstCircularArc && second is ArcEntity secondCircularArc)
+        {
+            AddArcArcOverlapBoundaryPoints(
+                firstCircularArc.Geometry,
+                secondCircularArc.Geometry,
+                points,
+                tolerance);
+        }
+
+        return points;
+    }
+
+    private static void AddLineLineOverlapBoundaryPoints(
+        LineSegment2D first,
+        LineSegment2D second,
+        List<Point2D> points,
+        GeometryTolerance tolerance)
+    {
+        IntersectionResult intersection = IntersectionService.IntersectSegments(
+            first,
+            second,
+            tolerance);
+
+        if (intersection.Kind != IntersectionKind.Overlapping)
+        {
+            return;
+        }
+
+        var candidates = new List<Point2D>();
+        AddIfPointOnSegment(first.Start, second, candidates, tolerance);
+        AddIfPointOnSegment(first.End, second, candidates, tolerance);
+        AddIfPointOnSegment(second.Start, first, candidates, tolerance);
+        AddIfPointOnSegment(second.End, first, candidates, tolerance);
+
+        if (candidates.Count < 2)
+        {
+            return;
+        }
+
+        foreach (Point2D candidate in candidates)
+        {
+            AddDistinct(points, candidate, tolerance.Distance);
+        }
+    }
+
+    private static void AddCircleArcOverlapBoundaryPoints(
+        Circle2D circle,
+        Arc2D arc,
+        List<Point2D> points,
+        GeometryTolerance tolerance)
+    {
+        if (!AreSameCircularSupport(circle, arc, tolerance))
+        {
+            return;
+        }
+
+        AddDistinct(points, arc.StartPoint, tolerance.Distance);
+        AddDistinct(points, arc.EndPoint, tolerance.Distance);
+    }
+
+    private static void AddArcArcOverlapBoundaryPoints(
+        Arc2D first,
+        Arc2D second,
+        List<Point2D> points,
+        GeometryTolerance tolerance)
+    {
+        if (!AreSameCircularSupport(first, second, tolerance))
+        {
+            return;
+        }
+
+        foreach ((double start, double end) in GetAngularOverlapIntervals(first, second, tolerance))
+        {
+            if (end - start <= tolerance.Angle)
+            {
+                continue;
+            }
+
+            AddDistinct(points, first.PointAt(Angle.FromRadians(start)), tolerance.Distance);
+            AddDistinct(points, first.PointAt(Angle.FromRadians(end)), tolerance.Distance);
+        }
+    }
+
+    private static IReadOnlyList<(double Start, double End)> GetAngularOverlapIntervals(
+        Arc2D first,
+        Arc2D second,
+        GeometryTolerance tolerance)
+    {
+        var intervals = new List<(double Start, double End)>();
+
+        foreach ((double firstStart, double firstEnd) in GetCounterClockwiseAngularIntervals(first))
+        {
+            foreach ((double secondStart, double secondEnd) in GetCounterClockwiseAngularIntervals(second))
+            {
+                double start = Math.Max(firstStart, secondStart);
+                double end = Math.Min(firstEnd, secondEnd);
+
+                if (end - start > tolerance.Angle)
+                {
+                    intervals.Add((start, end));
+                }
+            }
+        }
+
+        return intervals;
+    }
+
+    private static IReadOnlyList<(double Start, double End)> GetCounterClockwiseAngularIntervals(
+        Arc2D arc)
+    {
+        double start = arc.IsCounterClockwise
+            ? NormalizePositiveRadians(arc.StartAngle.Radians)
+            : NormalizePositiveRadians(arc.EndAngle.Radians);
+
+        double end = arc.IsCounterClockwise
+            ? NormalizePositiveRadians(arc.EndAngle.Radians)
+            : NormalizePositiveRadians(arc.StartAngle.Radians);
+
+        if (end < start)
+        {
+            return new[]
+            {
+                (start, Math.Tau),
+                (0.0, end)
+            };
+        }
+
+        return new[] { (start, end) };
+    }
+
+    private static bool AreSameCircularSupport(
+        Circle2D circle,
+        Arc2D arc,
+        GeometryTolerance tolerance)
+    {
+        return circle.Center.DistanceTo(arc.Center) <= tolerance.Distance &&
+               Math.Abs(circle.Radius - arc.Radius) <= tolerance.Distance;
+    }
+
+    private static bool AreSameCircularSupport(
+        Arc2D first,
+        Arc2D second,
+        GeometryTolerance tolerance)
+    {
+        return first.Center.DistanceTo(second.Center) <= tolerance.Distance &&
+               Math.Abs(first.Radius - second.Radius) <= tolerance.Distance;
+    }
+
+    private static void AddIfPointOnSegment(
+        Point2D point,
+        LineSegment2D segment,
+        List<Point2D> points,
+        GeometryTolerance tolerance)
+    {
+        Vector2D segmentVector = segment.Start.VectorTo(segment.End);
+        Vector2D startToPoint = segment.Start.VectorTo(point);
+
+        if (!tolerance.IsDistanceZero(segmentVector.Cross(startToPoint)))
+        {
+            return;
+        }
+
+        double dot = startToPoint.Dot(segmentVector);
+
+        if (dot < -tolerance.Distance ||
+            dot > segmentVector.LengthSquared + tolerance.Distance)
+        {
+            return;
+        }
+
+        AddDistinct(points, point, tolerance.Distance);
+    }
+
+    private static double NormalizePositiveRadians(double radians)
+    {
+        double value = radians % Math.Tau;
+        return value < 0.0 ? value + Math.Tau : value;
     }
 
 
