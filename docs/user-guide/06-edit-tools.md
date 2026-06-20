@@ -87,7 +87,7 @@ Use Divide when you need construction markers, repeated placement references, or
 
 Boundary Fill creates a filled closed polyline from the area around a picked internal point. Start the command, click or type a point inside a closed boundary, check the preview, then press Enter or right-click to confirm. Esc cancels the preview without adding anything to the drawing.
 
-The v2 workflow can use visible line and polyline boundaries, sampled circles/arcs and bulged polyline segments. It can also bridge small endpoint gaps. Use the `Gap` option before picking the point, or while a preview is active, to set the gap tolerance. If you change `Gap` during preview, OpenCad2D recalculates the preview from the same seed point.
+The v2 workflow can use visible line and polyline boundaries, sampled circles/arcs and bulged polyline segments. It can also bridge small endpoint-to-endpoint gaps and endpoint-to-segment gaps. Use the `Gap` option before picking the point, or while a preview is active, to set the gap tolerance. If you change `Gap` during preview, OpenCad2D recalculates the preview from the same seed point.
 
 Boundary Fill still creates a single filled `PolylineEntity`, not a true hatch object. Holes, islands, hatch patterns and associative updates are intentionally left to the later HatchEntity milestone. Text, dimensions, images, blocks and annotation-only geometry are ignored as boundary sources; the command reports ignored unsupported entities when they are present.
 

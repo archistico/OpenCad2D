@@ -38,6 +38,16 @@ Repeat with a boundary composed of arcs and lines, such as a D-shaped profile.
 6. Click inside the same rectangle.
 7. Verify that no preview is created and the command reports that no closed boundary was found.
 
+
+## Endpoint-to-segment gap tolerance
+
+1. Draw a boundary where one line endpoint stops close to the interior of another boundary segment, with the shortest distance below the active `Gap` tolerance.
+2. Run `BFILL` and click inside.
+3. Verify that a preview is created and that the existing segment is not visually moved or averaged.
+4. Confirm that the preview closes by adding only the short missing connection.
+5. Repeat with a smaller `Gap` value below the endpoint-to-segment distance.
+6. Verify that no preview is created and the command reports that no closed boundary was found.
+
 ## Recalculate preview after Gap change
 
 1. Create a preview inside a boundary that requires a small bridged gap.

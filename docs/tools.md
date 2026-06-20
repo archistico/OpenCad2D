@@ -115,7 +115,7 @@ Implemented:
 | Extend | line/arc/open-polyline target support |
 | Trim | cutting edges including ellipses, `All`, in-command `Undo` |
 | Offset | line/circle/arc/polyline with preview |
-| Boundary Fill | preview/confirm workflow that creates a filled closed polyline from visible line, polyline, sampled arc/circle and small-gap boundaries; `Gap` adjusts endpoint bridging tolerance |
+| Boundary Fill | preview/confirm workflow that creates a filled closed polyline from visible line, polyline, sampled arc/circle and small-gap boundaries; `Gap` adjusts endpoint-to-endpoint and endpoint-to-segment bridge tolerance |
 | Fillet | line-line plus adjacent linear-polyline segments, Radius and Trim/NoTrim options, radius 0 sharp join for lines |
 | Mirror | two-point mirror axis, keeps source by default, optional source deletion |
 | Explode | selected polylines become individual lines/arcs; block references become world-space entities |
@@ -177,7 +177,7 @@ Current v2 boundary support:
 - straight `PolylineEntity` segments, including rectangles and polygons;
 - bulged `PolylineEntity` segments sampled when curve boundaries are enabled;
 - `CircleEntity` and `ArcEntity` sampled into boundary segments;
-- small endpoint gaps bridged within the active gap tolerance.
+- small endpoint-to-endpoint and endpoint-to-segment gaps bridged within the active gap tolerance.
 
 The `Gap` / `G` option prompts for a positive tolerance value. It can be used before picking the seed point or while a preview is active; in the latter case the preview is recalculated from the same seed point. The preview message reports when sampled curves were used, how many small gaps were bridged and whether unsupported visible entities were ignored. Completion messages repeat those relevant diagnostics after the filled polyline is created.
 
@@ -443,7 +443,7 @@ Separate multi-segment polylines are still rejected conservatively. This avoids 
 
 ### Boundary Fill gap bridging note
 
-Boundary Fill v2 closes small endpoint gaps by adding short internal `GapBridge` segments to the boundary graph. It does not average or move existing line endpoints. This keeps the source boundaries visually faithful while still allowing the preview/fill loop to close gaps within the active `Gap` tolerance.
+Boundary Fill v2 closes small endpoint-to-endpoint and endpoint-to-segment gaps by adding short internal `GapBridge` segments to the boundary graph. It does not average or move existing line endpoints or deform existing segments. This keeps the source boundaries visually faithful while still allowing the preview/fill loop to close gaps within the active `Gap` tolerance.
 
 ### Boundary Fill HUD gap field fix
 
