@@ -35,7 +35,7 @@ v0.9 is a stabilization release. The goal is to make the existing CAD foundation
 | EllipticalArcEntity | Done | Native partial ellipses are represented by `EllipticalArcEntity` with rendering, snapping, persistence and export support. |
 | Ellipse TRIM/BREAK | Done | Ellipse edits now produce native elliptical arcs rather than permanent polyline fragments. |
 | Open Bezier TRIM/BREAK | Done | Open Bezier spline edits preserve `BezierSplineEntity` fragments where supported. |
-| Rich intersections | Done, incremental | `CadIntersectionPoint` records shared points and native parameters; additional adoption remains optional/incremental. |
+| Rich intersections | Done, incremental | `CadIntersectionPoint` records shared points and native parameters; finite line/arc overlap boundaries are available through `IntersectDetailed(...)`; additional adoption remains optional/incremental. |
 | EXTEND native alignment | Done for supported targets | EXTEND uses the native model for supported lines/arcs/polylines/elliptical arcs and native elliptical boundaries. |
 | Preview UX | Done for TRIM/BREAK/EXTEND | Dashed removal previews and addition highlights are implemented. |
 | Save/export clarity | Done | Export messages clarify that the editable native project may still need saving. |

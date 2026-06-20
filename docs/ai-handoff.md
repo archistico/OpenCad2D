@@ -2079,3 +2079,29 @@ Manual verification expectations:
 - Draw an open two-point polyline from 0 to 5 and use the same boundary: the picked endpoint should move to 10 while remaining a polyline.
 - Draw an arc from 0° to 90° and a cocircular boundary arc from 180° to 270°. EXTEND the picked end: the arc should become 0° to 180°.
 - Draw a clockwise arc from 10° to 350° and a cocircular clockwise boundary arc from 300° to 280°. EXTEND the picked end at 350°: the arc should extend clockwise to 300°.
+
+## 2026-06-20 - Intersection and overlap policy consolidation
+
+Consolidated the documentation around the current intersection model after the clockwise-arc, overlap-boundary, Trim, Break and Extend stabilization passes.
+
+No production code was changed in this pass. The audit result is:
+
+- `CadEntityIntersectionService.Intersect(...)` remains the point-only compatibility path and is still appropriate for intersection snapping.
+- `CadEntityIntersectionService.IntersectDetailed(...)` is the editing path and now documents finite overlap boundary behavior explicitly.
+- `CadTrimService` is the only current command consumer that augments ordinary intersections with `CadIntersectionKind.Overlap` boundary cuts.
+- `CadBreakService` does not need overlap-boundary injection because Break operates on explicit user-selected points projected onto the target curve.
+- `CadExtendService` should remain direction-aware; same-support extension is handled by adding finite boundary endpoints as candidates, not by blindly consuming `Overlap` entries.
+- `IntersectionSnapProvider` should remain point-only unless a future UX explicitly introduces overlap-boundary snap markers.
+
+Documentation updates:
+
+- Added `docs/geometry-intersections.md` as the focused reference for point intersections, detailed intersections, overlap boundaries and coincident-geometry policy.
+- Updated `docs/curve-editing.md` so the rich-intersection section reflects the implemented `CadIntersectionPoint` / `CadIntersectionKind` model rather than the older aspirational sketch.
+- Updated `docs/architecture.md`, `docs/index.md`, `docs/developer/technical-documentation-map.md`, `docs/known-limitations.md` and `docs/stabilization-v0.9-plan.md` to point maintainers toward the new intersection-policy document.
+
+Important contracts to preserve:
+
+- Coincident full circles return no synthetic point intersections.
+- Finite overlap boundaries are valid editing cuts only when they have a native, finite meaning.
+- `CadIntersectionKind.Tangent` exists but should be treated as reserved for general detailed intersections until explicit tangent classification is implemented and covered by tests.
+- Small duplicated point-on-segment predicates remain acceptable for now because they are private and covered by focused intersection/overlap tests; a future cleanup may centralize them without changing command semantics.

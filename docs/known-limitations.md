@@ -107,7 +107,9 @@ Current intentional limitations:
 - Break Point on complete circles and complete ellipses is deferred until a full-sweep open-arc convention is defined;
 - rectangles and polygons are represented as closed polylines for editing; once trimmed/broken open, the result is a `PolylineEntity`;
 - curved-end `EXTEND` for bulged polyline endpoints is intentionally deferred; current behavior refuses the operation instead of flattening the arc segment;
-- additional command paths may adopt `CadIntersectionPoint` incrementally when useful.
+- additional command paths may adopt `CadIntersectionPoint` incrementally when useful;
+- `CadIntersectionKind.Tangent` exists but is not yet a general detailed-intersection classification contract; use tangent snap behavior separately until explicit classifier tests are added;
+- coincident full circles deliberately produce no synthetic intersection points because they have no finite boundary cut.
 
 ---
 

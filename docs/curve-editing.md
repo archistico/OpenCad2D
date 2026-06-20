@@ -64,29 +64,29 @@ Tolerance is used to classify and validate geometry. It must not be used as an e
 
 ## Shared intersection data
 
-Intersection code should move toward returning rich intersection records, not just raw points.
+Intersection code has two public consumption levels.
 
-Recommended model:
+`CadEntityIntersectionService.Intersect(...)` returns only finite `Point2D` intersections. It remains the compatibility path for point-based snapping and for callers that do not need native curve parameters.
+
+`CadEntityIntersectionService.IntersectDetailed(...)` returns richer editing records:
 
 ```csharp
 public readonly record struct CadIntersectionPoint(
     Point2D Point,
     double FirstParameter,
     double SecondParameter,
-    IntersectionKind Kind);
+    CadIntersectionKind Kind)
+{
+    public CurveCut FirstCut => new(FirstParameter, Point);
+    public CurveCut SecondCut => new(SecondParameter, Point);
+}
 ```
 
-`Point` is the shared geometric point. `FirstParameter` and `SecondParameter` are native curve parameters on the two intersecting entities. `Kind` should distinguish at least crossing, tangent, overlap and endpoint-style cases when the implementation needs that information.
+`Point` is the shared geometric coordinate. Explicit-vertex entities should reuse that point directly when building output endpoints or vertices. `FirstParameter` and `SecondParameter` are native curve parameters used by parametric entities. `Kind` currently distinguishes crossing, endpoint and finite overlap-boundary cases; `Tangent` exists in the enum but should be treated as reserved until full tangent classification is implemented and tested.
 
-For operations acting on a single target curve, use a target-local cut model:
+Finite overlap handling is intentionally boundary-based. `IntersectDetailed(...)` may expose the endpoints of a finite shared interval as `CadIntersectionKind.Overlap`, but it does not turn a full coincident curve into arbitrary synthetic points. This keeps Trim able to cut on line/arc overlap boundaries while preventing intersection snap from inventing misleading locations on coincident circles.
 
-```csharp
-public readonly record struct CurveCut(
-    double Parameter,
-    Point2D Point);
-```
-
-The parameter is the authoritative location on the target curve. The point is the shared coordinate to reuse for explicit-vertex output and to validate parametric output.
+The full intersection and overlap contract is maintained in `docs/geometry-intersections.md`.
 
 ---
 
@@ -652,39 +652,29 @@ The previous command-level fallback that converted supported open spline Trim/Br
 
 This keeps the project aligned with the curve-editing rule: sampling may assist discovery/projection, but it must not become the permanent edited geometry when a native representation is available.
 
-## Implemented foundation: rich intersection points
+## Implemented foundation: rich intersections and finite overlap boundaries
 
-The project now has an additive rich-intersection layer:
+The project has an additive rich-intersection layer through `CadEntityIntersectionService.IntersectDetailed(...)`.
 
-```csharp
-public readonly record struct CadIntersectionPoint(
-    Point2D Point,
-    double FirstParameter,
-    double SecondParameter,
-    CadIntersectionKind Kind)
-{
-    public CurveCut FirstCut => new(FirstParameter, Point);
-    public CurveCut SecondCut => new(SecondParameter, Point);
-}
+Current behavior:
+
+```text
+Intersect(...)         -> finite point intersections only
+IntersectDetailed(...) -> finite point intersections plus supported overlap boundary cuts
 ```
 
-The existing `CadEntityIntersectionService.Intersect(...)` remains available and returns only `Point2D` values. New code can use:
+The detailed path currently supports finite overlap boundaries for native line/line, circle/arc and arc/arc cases. Arc overlap handling covers clockwise arcs and intervals that cross 0°/360°. Full coincident circles intentionally remain point-empty because they have infinitely many shared points and no finite boundary.
 
-```csharp
-CadEntityIntersectionService.IntersectDetailed(first, second, tolerance)
+Command adoption status:
+
+```text
+Intersection snap -> point-only path
+Trim             -> point intersections plus Overlap boundary cuts
+Break            -> explicit user-selected points projected onto the target curve
+Extend           -> direction-filtered candidates, with same-support endpoint augmentation
 ```
 
-when it needs the shared point plus native parameters on both entities.
-
-Initial implementation policy:
-
-- `IntersectDetailed(...)` is additive and compatibility-preserving;
-- it uses the existing intersection calculation to get the shared geometric point;
-- it then projects that point through `ICurveAdapter` for both entities;
-- explicit-vertex entities can reuse `CadIntersectionPoint.Point` directly;
-- parametric entities should use the corresponding parameter and validate the rebuilt endpoint against `Point`.
-
-The next implementation step should progressively feed `CadIntersectionPoint.FirstCut` and `SecondCut` into TRIM/BREAK/EXTEND when those commands operate on two known entities. This will reduce repeated point projection and further protect against micro-gaps.
+This keeps the editing pipeline precise without changing snap behavior. Future command work should adopt `IntersectDetailed(...)` only when the command has a clear rule for consuming `CadIntersectionKind.Overlap` or other richer classifications.
 
 ## EXTEND native curve model phase
 

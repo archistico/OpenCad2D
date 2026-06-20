@@ -234,7 +234,7 @@ CadTrimService / CadBreakService
 
 When one intersection modifies multiple explicit-vertex entities, the intersection point must be computed once and reused as the same logical `Point2D` value for all resulting endpoints/vertices. This avoids micro-gaps after reciprocal Trim/Extend-style operations. `CadIntersectionPoint` carries the shared point plus native parameters for both participating entities.
 
-See `docs/curve-editing.md` for the detailed rules, current supported entity set and deferred work.
+See `docs/curve-editing.md` for the detailed rules, current supported entity set and deferred work. See `docs/geometry-intersections.md` for the point/intersection/overlap contract used by snapping, Trim, Break and Extend.
 
 ---
 

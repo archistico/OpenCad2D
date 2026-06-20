@@ -12,7 +12,7 @@ For interaction-heavy commands, also check the relevant User Guide chapter. For 
 
 ## When changing precision behavior
 
-Start with `snapping.md`, `polar-tracking.md`, `grip-editing.md`, and `curve-editing.md`. These files are important because precision behavior affects many tools at once. A small change to snap priority, hit testing, grip editing, or curve handling can affect drawing, editing, dimensions, blocks, and image references.
+Start with `snapping.md`, `polar-tracking.md`, `grip-editing.md`, `geometry-intersections.md`, and `curve-editing.md`. These files are important because precision behavior affects many tools at once. A small change to snap priority, hit testing, grip editing, or curve handling can affect drawing, editing, dimensions, blocks, and image references.
 
 If a change affects how users select points, enter values, or constrain movement, also check `user-guide/11-dynamic-hud.md`, `user-guide/14-snaps.md`, and `user-guide/15-ortho-grid-polar.md`.
 

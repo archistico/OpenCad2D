@@ -48,7 +48,7 @@ The main entry points are:
 - [Visual Documentation Plan](developer/visual-documentation-plan.md)
 - [Image Capture Guidelines](developer/image-capture-guidelines.md)
 
-Root-level technical documents such as `architecture.md`, `commands.md`, `snapping.md`, `export.md`, `dxf-import.md`, `dxf-export.md`, `pdf-export.md`, `svg-export.md`, `modify-tools.md`, `text-and-dimensions.md`, and `ai-handoff.md` are intentionally kept for now. They should be reorganized gradually, not deleted aggressively, because they contain useful implementation history and project decisions.
+Root-level technical documents such as `architecture.md`, `geometry-intersections.md`, `curve-editing.md`, `commands.md`, `snapping.md`, `export.md`, `dxf-import.md`, `dxf-export.md`, `pdf-export.md`, `svg-export.md`, `modify-tools.md`, `text-and-dimensions.md`, and `ai-handoff.md` are intentionally kept for now. They should be reorganized gradually, not deleted aggressively, because they contain useful implementation history and project decisions.
 
 ## Release, roadmap, and verification notes
 
