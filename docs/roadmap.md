@@ -145,7 +145,7 @@ The following milestones are planned before the future v0.9 stabilization gate:
 | v0.8.122 | [ ] | `docs/specs/v0.8.122-library-browser.md` | Add Library browser for reusable `.opencad2d.json` snippets grouped by category, with preview and insert workflow. |
 | v0.8.130 | [ ] | `docs/specs/v0.8.130-stairs.md` | Add stair plan, side elevation and front elevation generators. |
 | v0.8.140 | [~] | `docs/specs/v0.8.140-hatch.md` | Boundary Fill v1 is implemented as click-inside linear face detection that creates filled closed polylines; HatchEntity remains planned. |
-| v0.8.145 | [~] | `docs/specs/v0.8.145-boundary-fill-v2.md` | Boundary Fill v2 is in progress: result/options model, segment collector, sampled curve boundaries and endpoint gap-tolerance clustering are implemented at service level; preview and tool confirmation remain. |
+| v0.8.145 | [~] | `docs/specs/v0.8.145-boundary-fill-v2.md` | Boundary Fill v2 is in progress: result/options model, segment collector, sampled curve boundaries, endpoint gap-tolerance clustering and preview/confirm workflow are implemented; editable gap tolerance HUD and final docs remain. |
 | v0.8.150 | [ ] | `docs/specs/v0.8.140-hatch.md` | Add real HatchEntity support for holes/islands and composite hatch boundaries. |
 | v0.8.160+ | [ ] | `docs/roadmap-v0.8.100.md` | Consolidate the expanded v0.8 line before the next release gate. |
 

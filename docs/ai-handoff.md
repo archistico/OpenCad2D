@@ -1998,3 +1998,8 @@ After validating the overlap-boundary work, one regression test exposed a floati
 ## 2026-06-20 — Boundary Fill v2 core progress
 
 Validated so far: the Boundary Fill v2 audit/specification, the result/options model, and the dedicated boundary segment collector. This update adds sampled curve-boundary support at core/service level: `CircleEntity`, `ArcEntity` and bulged polylines can be converted to metadata-rich `BoundarySegment` instances when `BoundaryFillOptions.IncludeCurveBoundaries` is enabled. Endpoint gap-tolerance clustering is now implemented at collector level and reports `BridgedGapCount` in diagnostics. The interactive tool remains conservative until preview and confirmation diagnostics are exposed.
+
+
+## 2026-06-20 — Boundary Fill v2 preview/confirm workflow
+
+Boundary Fill now uses the v2 service path in the interactive tool. A picked or typed seed point no longer creates the filled polyline immediately; it produces an addition preview. `Enter` or command confirmation creates the previewed filled `PolylineEntity` in one undoable step, while `Esc` clears the preview. The tool enables sampled curve boundaries and uses the current v2 default gap tolerance, so curve-based fills and small bridged gaps are visible in the real workflow. Remaining v2 work: editable gap tolerance HUD option, more detailed user-facing diagnostics for ignored entities, and final user guide/checklist.

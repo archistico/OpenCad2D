@@ -2240,7 +2240,7 @@ public sealed class MainWindowViewModelCommandLineTests
     }
 
     [Fact]
-    public void CommandHudInput_BoundaryFillSeedPoint_ShouldCreateFillFromCoordinates()
+    public void CommandHudInput_BoundaryFillSeedPoint_ShouldPreviewThenCreateFillFromCoordinates()
     {
         var viewModel = new MainWindowViewModel();
         AddRectangleBoundary(viewModel);
@@ -2256,9 +2256,16 @@ public sealed class MainWindowViewModelCommandLineTests
             CommandHudFieldKind.Y,
             "2",
             confirm: true,
-            out var result));
+            out var previewResult));
 
-        Assert.NotNull(result);
+        Assert.NotNull(previewResult);
+        Assert.Equal("Boundary found — Enter/right-click to confirm", viewModel.LastMessage);
+        Assert.Equal(4, viewModel.Workspace.Document.Entities.Count);
+        Assert.Empty(viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+
+        ToolResult confirmResult = viewModel.SubmitCommandInput(string.Empty);
+
+        Assert.NotNull(confirmResult);
         Assert.Equal("Boundary fill created.", viewModel.LastMessage);
         Assert.Equal(5, viewModel.Workspace.Document.Entities.Count);
 
