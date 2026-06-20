@@ -20,6 +20,7 @@ public sealed class SelectionPropertyPanelBuilder
     private static readonly string[] YesNoOptions = ["Yes", "No"];
     private static readonly string[] FillOptions = ["None", "Solid"];
     private static readonly string[] StairViewOptions = ["Plan", "Side elevation", "Front elevation"];
+    private static readonly string[] StairPlanArrowOptions = ["None", "First to last", "Last to first"];
     public PropertyPanelViewModel Build(
         CadWorkspace workspace,
         Action<string>? setMessage = null,
@@ -650,6 +651,8 @@ public sealed class SelectionPropertyPanelBuilder
                 EditableRow("Riser height", PropertyValueFormatter.FormatLength(stair.RiserHeight), value => ReplaceStairRiserHeight(workspace, stair.Id, value, setMessage, refresh)),
                 Row("Total run", PropertyValueFormatter.FormatLength(stair.TotalRun)),
                 Row("Total rise", PropertyValueFormatter.FormatLength(stair.TotalRise)),
+                ComboRow("Plan arrow", FormatStairPlanArrow(stair.PlanArrowMode), StairPlanArrowOptions, value => ReplaceStairPlanArrow(workspace, stair.Id, value, setMessage, refresh)),
+                ComboRow("Plan section marker", FormatYesNo(stair.ShowPlanSectionMarker), YesNoOptions, value => ReplaceStairPlanSectionMarker(workspace, stair.Id, value, setMessage, refresh)),
                 ComboRow("Show structure", FormatYesNo(stair.ShowStructure), YesNoOptions, value => ReplaceStairShowStructure(workspace, stair.Id, value, setMessage, refresh)),
                 EditableRow("Slab thickness", PropertyValueFormatter.FormatLength(stair.SlabThickness), value => ReplaceStairSlabThickness(workspace, stair.Id, value, setMessage, refresh))
             });
@@ -1305,6 +1308,28 @@ public sealed class SelectionPropertyPanelBuilder
         ReplaceEntity(workspace, stair.WithParameters(slabThickness: slabThickness), "Stair updated.", setMessage, refresh);
     }
 
+    private static void ReplaceStairPlanArrow(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParseStairPlanArrow(value, setMessage, out StairPlanArrowMode planArrowMode))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(planArrowMode: planArrowMode), "Stair updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceStairPlanSectionMarker(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParseBoolean(value, setMessage, out bool showPlanSectionMarker))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(showPlanSectionMarker: showPlanSectionMarker), "Stair updated.", setMessage, refresh);
+    }
+
     private static StairEntity RecreateStair(StairEntity stair, Point2D? insertionPoint = null)
     {
         return new StairEntity(
@@ -1323,7 +1348,9 @@ public sealed class SelectionPropertyPanelBuilder
             stair.Style,
             stair.IsVisible,
             stair.IsLocked,
-            stair.DrawOrder);
+            stair.DrawOrder,
+            stair.PlanArrowMode,
+            stair.ShowPlanSectionMarker);
     }
 
     private static void ReplacePolylineVertex(
@@ -1732,6 +1759,44 @@ public sealed class SelectionPropertyPanelBuilder
             default:
                 viewKind = StairViewKind.Plan;
                 setMessage?.Invoke("Invalid stair view. Use Plan, Side elevation or Front elevation.");
+                return false;
+        }
+    }
+
+    private static string FormatStairPlanArrow(StairPlanArrowMode planArrowMode)
+    {
+        return planArrowMode switch
+        {
+            StairPlanArrowMode.None => "None",
+            StairPlanArrowMode.FirstToLast => "First to last",
+            StairPlanArrowMode.LastToFirst => "Last to first",
+            _ => planArrowMode.ToString()
+        };
+    }
+
+    private static bool TryParseStairPlanArrow(string value, Action<string>? setMessage, out StairPlanArrowMode planArrowMode)
+    {
+        string normalized = value.Trim().Replace(" ", string.Empty).Replace("-", string.Empty).ToLowerInvariant();
+
+        switch (normalized)
+        {
+            case "none":
+            case "no":
+                planArrowMode = StairPlanArrowMode.None;
+                return true;
+            case "firsttolast":
+            case "firstlast":
+            case "up":
+                planArrowMode = StairPlanArrowMode.FirstToLast;
+                return true;
+            case "lasttofirst":
+            case "lastfirst":
+            case "down":
+                planArrowMode = StairPlanArrowMode.LastToFirst;
+                return true;
+            default:
+                planArrowMode = StairPlanArrowMode.FirstToLast;
+                setMessage?.Invoke("Invalid stair plan arrow. Use None, First to last or Last to first.");
                 return false;
         }
     }

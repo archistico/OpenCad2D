@@ -687,7 +687,7 @@ public sealed class SvgExporterTests
         SvgExportResult result = exporter.Export(document);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(6, CountOccurrences(result.Content, "<line "));
+        Assert.Equal(9, CountOccurrences(result.Content, "<line "));
     }
 
     private static string GetSingleSvgElement(

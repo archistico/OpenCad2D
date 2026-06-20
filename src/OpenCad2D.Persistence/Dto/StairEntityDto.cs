@@ -28,6 +28,10 @@ public sealed class StairEntityDto : EntityDto
 
     public double SlabThickness { get; set; } = 3.0;
 
+    public string PlanArrowMode { get; set; } = "FirstToLast";
+
+    public bool ShowPlanSectionMarker { get; set; }
+
     public double XAxisX { get; set; } = 1.0;
 
     public double XAxisY { get; set; }

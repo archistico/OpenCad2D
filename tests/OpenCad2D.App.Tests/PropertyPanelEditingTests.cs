@@ -829,6 +829,16 @@ public sealed class PropertyPanelEditingTests
         Assert.Contains(section.Rows, row => row.Name == "Riser height" && row.IsEditable);
         Assert.Contains(section.Rows, row => row.Name == "Slab thickness" && row.IsEditable);
 
+        PropertyRowViewModel planArrowRow = FindRow(viewModel, "Plan arrow");
+        Assert.True(planArrowRow.IsComboBox);
+        Assert.Equal("First to last", planArrowRow.Value);
+        Assert.Equal(new[] { "None", "First to last", "Last to first" }, planArrowRow.Options);
+
+        PropertyRowViewModel sectionMarkerRow = FindRow(viewModel, "Plan section marker");
+        Assert.True(sectionMarkerRow.IsComboBox);
+        Assert.Equal("No", sectionMarkerRow.Value);
+        Assert.Equal(new[] { "Yes", "No" }, sectionMarkerRow.Options);
+
         PropertyRowViewModel viewRow = FindRow(viewModel, "View");
         Assert.True(viewRow.IsComboBox);
         Assert.Equal("Plan", viewRow.Value);
@@ -919,6 +929,63 @@ public sealed class PropertyPanelEditingTests
         var unchanged = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
         Assert.Equal(10, unchanged.TreadCount);
         Assert.Equal("Stair tread count must be at least 1.", viewModel.LastMessage);
+    }
+
+
+    [Fact]
+    public void ApplyCommand_ForStairPlanArrow_ShouldReplaceStairAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var stair = new StairEntity(
+            new Point2D(0, 0),
+            StairViewKind.Plan,
+            width: 1.2,
+            treadCount: 10,
+            treadDepth: 0.3,
+            riserHeight: 0.17);
+        viewModel.Workspace.Document.AddEntity(stair);
+        SelectEntity(viewModel, stair);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Plan arrow");
+        row.EditableValue = "Last to first";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.Equal(StairPlanArrowMode.LastToFirst, updated.PlanArrowMode);
+        Assert.Equal("Stair updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.Equal(StairPlanArrowMode.FirstToLast, restored.PlanArrowMode);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForStairPlanSectionMarker_ShouldReplaceStairAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var stair = new StairEntity(
+            new Point2D(0, 0),
+            StairViewKind.Plan,
+            width: 1.2,
+            treadCount: 10,
+            treadDepth: 0.3,
+            riserHeight: 0.17);
+        viewModel.Workspace.Document.AddEntity(stair);
+        SelectEntity(viewModel, stair);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Plan section marker");
+        row.EditableValue = "Yes";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.True(updated.ShowPlanSectionMarker);
+        Assert.Equal("Stair updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.False(restored.ShowPlanSectionMarker);
     }
 
     [Fact]

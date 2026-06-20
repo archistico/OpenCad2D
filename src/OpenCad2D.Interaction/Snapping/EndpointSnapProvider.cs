@@ -127,7 +127,7 @@ public sealed class EndpointSnapProvider : ISnapProvider
     {
         var points = new List<Point2D>();
 
-        foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+        foreach (LineSegment2D segment in stair.GetGeneratedGeometry().PrimarySegments)
         {
             AddDistinct(points, segment.Start);
             AddDistinct(points, segment.End);

@@ -219,9 +219,9 @@ Exit criteria:
 
 Specification: `docs/specs/v0.8.130-stairs.md`.
 
-Status: planned.
+Status: in progress / first pass implemented.
 
-Goal: generate stair drawings for plan and elevations.
+Goal: generate persistent parametric stair drawings for plan and elevations.
 
 Initial scope:
 
@@ -229,14 +229,17 @@ Initial scope:
 - Side elevation.
 - Front elevation.
 - Optional underlying slab/structure line.
-- Parameters for riser, tread, width, step count and slab thickness.
+- Plan direction arrow and optional 30-degree plan section marker.
+- Parameters for riser, tread, width, step count, slab thickness and plan annotations.
 
 Exit criteria:
 
-- The tool can generate a basic straight stair in plan.
+- The tool can insert a persistent parametric straight stair in plan, side elevation or front elevation.
 - The tool can generate a side elevation with risers/treads.
 - The tool can generate a front elevation useful for sections/elevations.
-- The slab/structure line can be offset from the inner tread/riser corner by a configurable thickness, defaulting to 25 cm.
+- The slab/structure line uses a configurable thickness, defaulting to 3 drawing units.
+- Plan view can show a direction arrow from first-to-last or last-to-first and an optional 30-degree section marker.
+- Native JSON persistence and SVG/PDF/DXF export preserve or emit the stair representation.
 
 ---
 

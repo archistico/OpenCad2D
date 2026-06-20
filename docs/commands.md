@@ -96,6 +96,8 @@ Aliases are case-insensitive.
 | Metric Scale Bar | `SCALEBAR`, `SBAR`, `GRAPHICSCALE` |
 | Stair | `STAIR`, `STAIRS`, `SCALA`, `ST` |
 
+`Stair` inserts a parametric straight stair. While the insertion point is pending, the HUD exposes `Plan`, `Side` and `Front` options. A plan stair includes a conventional direction arrow by default; after insertion the Property Panel can reverse or hide the arrow and can enable the optional 30-degree plan section marker.
+
 `STAIR` accepts the `Plan`, `Side` and `Front` options before the insertion point.
 
 ### Dimensions

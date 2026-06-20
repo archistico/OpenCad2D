@@ -203,7 +203,7 @@ public sealed class IntersectionSnapProvider : ISnapProvider
         StairEntity stair,
         CadEntity other)
     {
-        IReadOnlyList<LineSegment2D> stairSegments = stair.GetGeneratedGeometry().Segments;
+        IReadOnlyList<LineSegment2D> stairSegments = stair.GetGeneratedGeometry().PrimarySegments;
         IReadOnlyList<LineSegment2D> otherSegments = ToIntersectionSegments(other);
 
         if (otherSegments.Count == 0)
@@ -238,7 +238,7 @@ public sealed class IntersectionSnapProvider : ISnapProvider
         {
             LineEntity line => new[] { line.Geometry },
             PolylineEntity polyline => ToIntersectionPolyline(polyline).GetSegments(),
-            StairEntity stair => stair.GetGeneratedGeometry().Segments,
+            StairEntity stair => stair.GetGeneratedGeometry().PrimarySegments,
             CircleEntity circle => ToIntersectionPolyline(circle).GetSegments(),
             EllipseEntity ellipse => ToIntersectionPolyline(ellipse).GetSegments(),
             EllipticalArcEntity ellipticalArc =>

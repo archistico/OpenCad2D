@@ -676,7 +676,7 @@ public sealed class DxfExporterTests
         string content = Normalize(result.Content);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.Equal(6, CountOccurrences(content, "0\nLINE"));
+        Assert.Equal(9, CountOccurrences(content, "0\nLINE"));
         Assert.Contains("10\n0\n20\n0", content);
         Assert.Contains("11\n0.9\n21\n0", content);
     }

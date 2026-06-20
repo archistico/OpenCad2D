@@ -32,6 +32,8 @@ public sealed class StairToolTests
         Assert.Equal(17.0, StairTool.DefaultRiserHeight);
         Assert.False(StairTool.DefaultShowStructure);
         Assert.Equal(3.0, StairTool.DefaultSlabThickness);
+        Assert.Equal(StairPlanArrowMode.FirstToLast, StairTool.DefaultPlanArrowMode);
+        Assert.False(StairTool.DefaultShowPlanSectionMarker);
     }
 
     [Fact]
@@ -66,6 +68,8 @@ public sealed class StairToolTests
         Assert.Equal(StairTool.DefaultRiserHeight, stair.RiserHeight);
         Assert.False(stair.ShowStructure);
         Assert.Equal(StairTool.DefaultSlabThickness, stair.SlabThickness);
+        Assert.Equal(StairTool.DefaultPlanArrowMode, stair.PlanArrowMode);
+        Assert.Equal(StairTool.DefaultShowPlanSectionMarker, stair.ShowPlanSectionMarker);
     }
 
     [Fact]

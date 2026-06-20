@@ -185,7 +185,9 @@ public static class CadEntityDrawOrderExtensions
                 stair.Style,
                 stair.IsVisible,
                 stair.IsLocked,
-                drawOrder),
+                drawOrder,
+                stair.PlanArrowMode,
+                stair.ShowPlanSectionMarker),
 
             _ => throw new NotSupportedException(
                 $"Entity kind '{entity.Kind}' does not support draw order editing.")

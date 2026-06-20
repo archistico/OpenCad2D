@@ -26,6 +26,8 @@ public sealed class StairEntityTests
         Assert.False(stair.IsLocked);
         Assert.Equal(1.20, stair.TotalRun, precision: 10);
         Assert.Equal(0.68, stair.TotalRise, precision: 10);
+        Assert.Equal(StairPlanArrowMode.FirstToLast, stair.PlanArrowMode);
+        Assert.False(stair.ShowPlanSectionMarker);
     }
 
     [Fact]
@@ -71,13 +73,18 @@ public sealed class StairEntityTests
 
         StairGeometry geometry = stair.GetGeneratedGeometry();
 
-        Assert.Equal(7, geometry.Segments.Count);
-        Assert.Contains(geometry.Segments, segment =>
+        Assert.Equal(7, geometry.PrimarySegments.Count);
+        Assert.Equal(3, geometry.AnnotationSegments.Count);
+        Assert.Equal(10, geometry.Segments.Count);
+        Assert.Contains(geometry.PrimarySegments, segment =>
             segment.Start == new Point2D(10.25, 20)
             && segment.End == new Point2D(10.25, 21));
-        Assert.Contains(geometry.Segments, segment =>
+        Assert.Contains(geometry.PrimarySegments, segment =>
             segment.Start == new Point2D(10.75, 20)
             && segment.End == new Point2D(10.75, 21));
+        Assert.Contains(geometry.AnnotationSegments, segment =>
+            segment.Start == new Point2D(10, 20.5)
+            && segment.End == new Point2D(11, 20.5));
     }
 
     [Fact]
@@ -238,6 +245,63 @@ public sealed class StairEntityTests
         Assert.Equal(stair.TreadDepth, moved.TreadDepth);
         Assert.Equal(stair.RiserHeight, moved.RiserHeight);
         Assert.True(moved.ShowStructure);
+    }
+
+
+    [Fact]
+    public void PlanGeometry_WithLastToFirstArrow_ShouldReverseArrowLine()
+    {
+        var stair = new StairEntity(
+            Point2D.Origin,
+            StairViewKind.Plan,
+            width: 100,
+            treadCount: 18,
+            treadDepth: 28,
+            riserHeight: 17,
+            planArrowMode: StairPlanArrowMode.LastToFirst);
+
+        StairGeometry geometry = stair.GetGeneratedGeometry();
+
+        Assert.Contains(geometry.AnnotationSegments, segment =>
+            ArePointsEqual(segment.Start, new Point2D(504, 50))
+            && ArePointsEqual(segment.End, new Point2D(0, 50)));
+    }
+
+    [Fact]
+    public void PlanGeometry_WithSectionMarker_ShouldCreateTwoAnnotationLinesAtThirtyDegrees()
+    {
+        var stair = new StairEntity(
+            Point2D.Origin,
+            StairViewKind.Plan,
+            width: 100,
+            treadCount: 18,
+            treadDepth: 28,
+            riserHeight: 17,
+            slabThickness: 3,
+            showPlanSectionMarker: true);
+
+        StairGeometry geometry = stair.GetGeneratedGeometry();
+
+        Assert.Equal(5, geometry.AnnotationSegments.Count);
+        Assert.Contains(geometry.AnnotationSegments, segment =>
+            Math.Abs(segment.Start.DistanceTo(segment.End) - 200) <= 1e-10);
+    }
+
+    [Fact]
+    public void DistanceTo_ShouldIgnorePlanAnnotationLinework()
+    {
+        var stair = new StairEntity(
+            Point2D.Origin,
+            StairViewKind.Plan,
+            width: 100,
+            treadCount: 18,
+            treadDepth: 28,
+            riserHeight: 17,
+            planArrowMode: StairPlanArrowMode.FirstToLast);
+
+        double distance = stair.DistanceTo(new Point2D(238, 50));
+
+        Assert.Equal(14, distance, precision: 10);
     }
 
     private static bool ArePointsEqual(Point2D actual, Point2D expected)

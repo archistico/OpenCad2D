@@ -26,7 +26,9 @@ public sealed class StairEntityRoundTripTests
             slabThickness: 0.18,
             xAxis: new Vector2D(0, 1),
             yAxis: new Vector2D(-1, 0),
-            id: id);
+            id: id,
+            planArrowMode: StairPlanArrowMode.LastToFirst,
+            showPlanSectionMarker: true);
         document.AddEntity(stair);
 
         var serializer = new JsonDocumentSerializer();
@@ -51,6 +53,8 @@ public sealed class StairEntityRoundTripTests
         Assert.Equal(0.17, restoredStair.RiserHeight, precision: 6);
         Assert.True(restoredStair.ShowStructure);
         Assert.Equal(0.18, restoredStair.SlabThickness, precision: 6);
+        Assert.Equal(StairPlanArrowMode.LastToFirst, restoredStair.PlanArrowMode);
+        Assert.True(restoredStair.ShowPlanSectionMarker);
         Assert.Equal(stair.XAxis, restoredStair.XAxis);
         Assert.Equal(stair.YAxis, restoredStair.YAxis);
     }
@@ -91,5 +95,7 @@ public sealed class StairEntityRoundTripTests
             document.Entities.GetRequired(new EntityId(Guid.Parse("33333333-3333-3333-3333-333333333333"))));
 
         Assert.Equal(StairViewKind.Plan, stair.ViewKind);
+        Assert.Equal(StairPlanArrowMode.FirstToLast, stair.PlanArrowMode);
+        Assert.False(stair.ShowPlanSectionMarker);
     }
 }

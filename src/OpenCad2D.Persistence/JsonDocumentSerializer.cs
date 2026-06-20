@@ -790,6 +790,8 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 RiserHeight = stair.RiserHeight,
                 ShowStructure = stair.ShowStructure,
                 SlabThickness = stair.SlabThickness,
+                PlanArrowMode = stair.PlanArrowMode.ToString(),
+                ShowPlanSectionMarker = stair.ShowPlanSectionMarker,
                 XAxisX = stair.XAxis.X,
                 XAxisY = stair.XAxis.Y,
                 YAxisX = stair.YAxis.X,
@@ -1311,7 +1313,9 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     new Vector2D(stair.XAxisX, stair.XAxisY),
                     new Vector2D(stair.YAxisX, stair.YAxisY),
                     id,
-                    layerId),
+                    layerId,
+                    planArrowMode: ParseStairPlanArrowMode(stair.PlanArrowMode),
+                    showPlanSectionMarker: stair.ShowPlanSectionMarker),
 
             _ => null
         };
@@ -1325,6 +1329,16 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
             out StairViewKind result)
             ? result
             : StairViewKind.Plan;
+    }
+
+    private static StairPlanArrowMode ParseStairPlanArrowMode(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out StairPlanArrowMode result)
+            ? result
+            : StairPlanArrowMode.FirstToLast;
     }
 
     private static DimensionOrientation ParseDimensionOrientation(string? value)

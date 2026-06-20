@@ -400,7 +400,7 @@ public sealed class PdfExporterTests
         string content = ToAscii(result.Content);
 
         Assert.Equal(1, result.ExportedEntityCount);
-        Assert.True(CountOccurrences(content, " l") >= 6);
+        Assert.True(CountOccurrences(content, " l") >= 9);
         Assert.Contains("S", content);
     }
 

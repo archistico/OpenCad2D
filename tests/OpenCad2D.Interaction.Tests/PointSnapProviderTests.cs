@@ -115,6 +115,24 @@ public sealed class StairSnapProviderTests
         Assert.Equal(new Point2D(3, 1), candidate.Point);
     }
 
+
+    [Fact]
+    public void EndpointSnapProvider_ShouldIgnoreStairPlanAnnotationEndpoints()
+    {
+        var document = new CadDocument();
+        var stair = CreatePlanStair();
+        document.AddEntity(stair);
+
+        var provider = new EndpointSnapProvider();
+        var request = new SnapRequest(
+            document,
+            new Point2D(0, 0.5),
+            0.05,
+            SnapKind.Endpoint);
+
+        Assert.Empty(provider.GetCandidates(request));
+    }
+
     [Fact]
     public void MidpointSnapProvider_ShouldReturnGeneratedStairSegmentMidpoint()
     {

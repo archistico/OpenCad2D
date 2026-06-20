@@ -97,7 +97,7 @@ public sealed class MidpointSnapProvider : ISnapProvider
                 break;
 
             case StairEntity stair:
-                foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+                foreach (LineSegment2D segment in stair.GetGeneratedGeometry().PrimarySegments)
                 {
                     yield return segment.Midpoint;
                 }

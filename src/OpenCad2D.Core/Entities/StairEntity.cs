@@ -29,7 +29,9 @@ public sealed class StairEntity : CadEntity
         EntityStyle? style = null,
         bool isVisible = true,
         bool isLocked = false,
-        int drawOrder = 0)
+        int drawOrder = 0,
+        StairPlanArrowMode planArrowMode = StairPlanArrowMode.FirstToLast,
+        bool showPlanSectionMarker = false)
         : base(
             id ?? EntityId.New(),
             layerId ?? LayerId.Default,
@@ -72,6 +74,8 @@ public sealed class StairEntity : CadEntity
         RiserHeight = riserHeight;
         ShowStructure = showStructure;
         SlabThickness = slabThickness;
+        PlanArrowMode = planArrowMode;
+        ShowPlanSectionMarker = showPlanSectionMarker;
         XAxis = normalizedXAxis;
         YAxis = normalizedYAxis;
     }
@@ -91,6 +95,10 @@ public sealed class StairEntity : CadEntity
     public bool ShowStructure { get; }
 
     public double SlabThickness { get; }
+
+    public StairPlanArrowMode PlanArrowMode { get; }
+
+    public bool ShowPlanSectionMarker { get; }
 
     public Vector2D XAxis { get; }
 
@@ -141,7 +149,7 @@ public sealed class StairEntity : CadEntity
 
     public override Point2D GetClosestPoint(Point2D point)
     {
-        IReadOnlyList<LineSegment2D> segments = GetGeneratedGeometry().Segments;
+        IReadOnlyList<LineSegment2D> segments = GetGeneratedGeometry().PrimarySegments;
         Point2D closestPoint = DistanceService.ClosestPointOnSegment(point, segments[0]);
         double bestDistance = point.DistanceTo(closestPoint);
 
@@ -190,7 +198,9 @@ public sealed class StairEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            PlanArrowMode,
+            ShowPlanSectionMarker);
     }
 
     public override CadEntity WithId(EntityId id)
@@ -211,7 +221,9 @@ public sealed class StairEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            PlanArrowMode,
+            ShowPlanSectionMarker);
     }
 
     public override CadEntity WithLayer(LayerId layerId)
@@ -232,7 +244,9 @@ public sealed class StairEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            PlanArrowMode,
+            ShowPlanSectionMarker);
     }
 
     public StairEntity WithParameters(
@@ -242,7 +256,9 @@ public sealed class StairEntity : CadEntity
         double? treadDepth = null,
         double? riserHeight = null,
         bool? showStructure = null,
-        double? slabThickness = null)
+        double? slabThickness = null,
+        StairPlanArrowMode? planArrowMode = null,
+        bool? showPlanSectionMarker = null)
     {
         return new StairEntity(
             InsertionPoint,
@@ -260,7 +276,9 @@ public sealed class StairEntity : CadEntity
             Style,
             IsVisible,
             IsLocked,
-            DrawOrder);
+            DrawOrder,
+            planArrowMode ?? PlanArrowMode,
+            showPlanSectionMarker ?? ShowPlanSectionMarker);
     }
 
     private static void ValidatePositive(double value, string paramName)

@@ -20,6 +20,8 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
     public const double DefaultRiserHeight = 17.0;
     public const bool DefaultShowStructure = false;
     public const double DefaultSlabThickness = 3.0;
+    public const StairPlanArrowMode DefaultPlanArrowMode = StairPlanArrowMode.FirstToLast;
+    public const bool DefaultShowPlanSectionMarker = false;
 
     private static readonly CommandOption PlanOption = new(
         "Plan",
@@ -184,7 +186,9 @@ public sealed class StairTool : ICadTool, ICommandDrivenTool, IToolPreviewEntity
             DefaultRiserHeight,
             DefaultShowStructure,
             DefaultSlabThickness,
-            layerId: layerId);
+            layerId: layerId,
+            planArrowMode: DefaultPlanArrowMode,
+            showPlanSectionMarker: DefaultShowPlanSectionMarker);
     }
 
     private ToolResult HandleViewOption(string? optionKeyword)
