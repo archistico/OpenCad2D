@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using OpenCad2D.Core.Architecture.Stairs;
 using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
@@ -18,6 +19,7 @@ public sealed class SelectionPropertyPanelBuilder
     private const int MaxPolylineSegmentsInPropertyPanel = 8;
     private static readonly string[] YesNoOptions = ["Yes", "No"];
     private static readonly string[] FillOptions = ["None", "Solid"];
+    private static readonly string[] StairViewOptions = ["Plan", "Side elevation", "Front elevation"];
     public PropertyPanelViewModel Build(
         CadWorkspace workspace,
         Action<string>? setMessage = null,
@@ -177,6 +179,7 @@ public sealed class SelectionPropertyPanelBuilder
             PolylineEntity polyline => BuildPolylineGeometrySection(workspace, polyline, setMessage, refresh),
             BezierSplineEntity spline => BuildBezierSplineGeometrySection(spline),
             ImageReferenceEntity imageReference => BuildImageReferenceGeometrySection(workspace, imageReference, setMessage, refresh),
+            StairEntity stair => BuildStairGeometrySection(workspace, stair, setMessage, refresh),
             ArcEntity arc => BuildArcGeometrySection(workspace, arc, setMessage, refresh),
             _ => new PropertySectionViewModel(
                 "Geometry",
@@ -624,6 +627,31 @@ public sealed class SelectionPropertyPanelBuilder
                 Row("Natural aspect", imageReference.HasNaturalAspectRatio
                     ? imageReference.NaturalAspectRatio.ToString("0.######", CultureInfo.InvariantCulture)
                     : "Unknown")
+            });
+    }
+
+    private static PropertySectionViewModel BuildStairGeometrySection(
+        CadWorkspace workspace,
+        StairEntity stair,
+        Action<string>? setMessage,
+        Action? refresh)
+    {
+        return new PropertySectionViewModel(
+            "Stair",
+            new[]
+            {
+                ComboRow("View", FormatStairView(stair.ViewKind), StairViewOptions, value => ReplaceStairView(workspace, stair.Id, value, setMessage, refresh)),
+                Row("Insertion", PropertyValueFormatter.FormatPoint(stair.InsertionPoint)),
+                EditableRow("Insertion X", PropertyValueFormatter.FormatCoordinate(stair.InsertionPoint.X), value => ReplaceStairInsertionCoordinate(workspace, stair.Id, value, updateX: true, setMessage, refresh)),
+                EditableRow("Insertion Y", PropertyValueFormatter.FormatCoordinate(stair.InsertionPoint.Y), value => ReplaceStairInsertionCoordinate(workspace, stair.Id, value, updateX: false, setMessage, refresh)),
+                EditableRow("Width", PropertyValueFormatter.FormatLength(stair.Width), value => ReplaceStairWidth(workspace, stair.Id, value, setMessage, refresh)),
+                EditableRow("Tread count", stair.TreadCount.ToString(CultureInfo.InvariantCulture), value => ReplaceStairTreadCount(workspace, stair.Id, value, setMessage, refresh)),
+                EditableRow("Tread depth", PropertyValueFormatter.FormatLength(stair.TreadDepth), value => ReplaceStairTreadDepth(workspace, stair.Id, value, setMessage, refresh)),
+                EditableRow("Riser height", PropertyValueFormatter.FormatLength(stair.RiserHeight), value => ReplaceStairRiserHeight(workspace, stair.Id, value, setMessage, refresh)),
+                Row("Total run", PropertyValueFormatter.FormatLength(stair.TotalRun)),
+                Row("Total rise", PropertyValueFormatter.FormatLength(stair.TotalRise)),
+                ComboRow("Show structure", FormatYesNo(stair.ShowStructure), YesNoOptions, value => ReplaceStairShowStructure(workspace, stair.Id, value, setMessage, refresh)),
+                EditableRow("Slab thickness", PropertyValueFormatter.FormatLength(stair.SlabThickness), value => ReplaceStairSlabThickness(workspace, stair.Id, value, setMessage, refresh))
             });
     }
 
@@ -1168,6 +1196,136 @@ public sealed class SelectionPropertyPanelBuilder
             refresh);
     }
 
+    private static void ReplaceStairView(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParseStairView(value, setMessage, out StairViewKind viewKind))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(viewKind: viewKind), "Stair updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceStairInsertionCoordinate(CadWorkspace workspace, EntityId entityId, string value, bool updateX, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParseDouble(value, setMessage, out double coordinate))
+        {
+            return;
+        }
+
+        Point2D insertionPoint = updateX
+            ? new Point2D(coordinate, stair.InsertionPoint.Y)
+            : new Point2D(stair.InsertionPoint.X, coordinate);
+
+        ReplaceEntity(
+            workspace,
+            RecreateStair(stair, insertionPoint: insertionPoint),
+            "Stair updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceStairWidth(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParsePositiveDouble(value, "Stair width", setMessage, out double width))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(width: width), "Stair updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceStairTreadCount(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParseInt(value, setMessage, out int treadCount))
+        {
+            return;
+        }
+
+        if (treadCount < 1)
+        {
+            setMessage?.Invoke("Stair tread count must be at least 1.");
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(treadCount: treadCount), "Stair updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceStairTreadDepth(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParsePositiveDouble(value, "Stair tread depth", setMessage, out double treadDepth))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(treadDepth: treadDepth), "Stair updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceStairRiserHeight(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParsePositiveDouble(value, "Stair riser height", setMessage, out double riserHeight))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(riserHeight: riserHeight), "Stair updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceStairShowStructure(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParseBoolean(value, setMessage, out bool showStructure))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(showStructure: showStructure), "Stair updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceStairSlabThickness(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
+            !TryParseDouble(value, setMessage, out double slabThickness))
+        {
+            return;
+        }
+
+        if (slabThickness < 0.0)
+        {
+            setMessage?.Invoke("Stair slab thickness cannot be negative.");
+            return;
+        }
+
+        ReplaceEntity(workspace, stair.WithParameters(slabThickness: slabThickness), "Stair updated.", setMessage, refresh);
+    }
+
+    private static StairEntity RecreateStair(StairEntity stair, Point2D? insertionPoint = null)
+    {
+        return new StairEntity(
+            insertionPoint ?? stair.InsertionPoint,
+            stair.ViewKind,
+            stair.Width,
+            stair.TreadCount,
+            stair.TreadDepth,
+            stair.RiserHeight,
+            stair.ShowStructure,
+            stair.SlabThickness,
+            stair.XAxis,
+            stair.YAxis,
+            stair.Id,
+            stair.LayerId,
+            stair.Style,
+            stair.IsVisible,
+            stair.IsLocked,
+            stair.DrawOrder);
+    }
+
     private static void ReplacePolylineVertex(
         CadWorkspace workspace,
         EntityId entityId,
@@ -1515,6 +1673,69 @@ public sealed class SelectionPropertyPanelBuilder
         return false;
     }
 
+    private static bool TryParseInt(string value, Action<string>? setMessage, out int result)
+    {
+        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out result))
+        {
+            return true;
+        }
+
+        setMessage?.Invoke("Invalid whole-number value. Use an integer such as 12.");
+        return false;
+    }
+
+    private static bool TryParsePositiveDouble(string value, string label, Action<string>? setMessage, out double result)
+    {
+        if (!TryParseDouble(value, setMessage, out result))
+        {
+            return false;
+        }
+
+        if (result <= 0.0)
+        {
+            setMessage?.Invoke($"{label} must be greater than zero.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private static string FormatStairView(StairViewKind viewKind)
+    {
+        return viewKind switch
+        {
+            StairViewKind.Plan => "Plan",
+            StairViewKind.SideElevation => "Side elevation",
+            StairViewKind.FrontElevation => "Front elevation",
+            _ => viewKind.ToString()
+        };
+    }
+
+    private static bool TryParseStairView(string value, Action<string>? setMessage, out StairViewKind viewKind)
+    {
+        string normalized = value.Trim().Replace(" ", string.Empty).Replace("-", string.Empty).ToLowerInvariant();
+
+        switch (normalized)
+        {
+            case "plan":
+                viewKind = StairViewKind.Plan;
+                return true;
+            case "side":
+            case "sideelevation":
+            case "section":
+                viewKind = StairViewKind.SideElevation;
+                return true;
+            case "front":
+            case "frontelevation":
+                viewKind = StairViewKind.FrontElevation;
+                return true;
+            default:
+                viewKind = StairViewKind.Plan;
+                setMessage?.Invoke("Invalid stair view. Use Plan, Side elevation or Front elevation.");
+                return false;
+        }
+    }
+
     private static string FormatYesNo(bool value)
     {
         return value ? "Yes" : "No";
@@ -1594,6 +1815,7 @@ public sealed class SelectionPropertyPanelBuilder
             PolylineEntity => "Polyline",
             BezierSplineEntity => "Spline",
             ImageReferenceEntity => "Image Reference",
+            StairEntity => "Stair",
             ArcEntity => "Arc",
             _ => entity.Kind.ToString()
         };

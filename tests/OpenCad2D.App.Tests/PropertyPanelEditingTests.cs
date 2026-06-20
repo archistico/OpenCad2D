@@ -1,6 +1,7 @@
 using System.Linq;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Properties;
+using OpenCad2D.Core.Architecture.Stairs;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
@@ -799,6 +800,148 @@ public sealed class PropertyPanelEditingTests
 
         var restored = Assert.IsType<MultilineTextEntity>(viewModel.Workspace.Document.Entities.GetRequired(text.Id));
         Assert.Equal(TextFormatId.Standard, restored.TextFormatId);
+    }
+
+    [Fact]
+    public void PropertyPanel_ForStair_ShouldExposeEditableParameterRows()
+    {
+        var viewModel = new MainWindowViewModel();
+        var stair = new StairEntity(
+            new Point2D(10, 20),
+            StairViewKind.Plan,
+            width: 1.2,
+            treadCount: 12,
+            treadDepth: 0.3,
+            riserHeight: 0.17,
+            showStructure: true,
+            slabThickness: 0.25);
+        viewModel.Workspace.Document.AddEntity(stair);
+
+        SelectEntity(viewModel, stair);
+
+        PropertySectionViewModel section = FindSection(viewModel, "Stair");
+
+        Assert.Contains(section.Rows, row => row.Name == "Insertion X" && row.IsEditable);
+        Assert.Contains(section.Rows, row => row.Name == "Insertion Y" && row.IsEditable);
+        Assert.Contains(section.Rows, row => row.Name == "Width" && row.IsEditable);
+        Assert.Contains(section.Rows, row => row.Name == "Tread count" && row.IsEditable);
+        Assert.Contains(section.Rows, row => row.Name == "Tread depth" && row.IsEditable);
+        Assert.Contains(section.Rows, row => row.Name == "Riser height" && row.IsEditable);
+        Assert.Contains(section.Rows, row => row.Name == "Slab thickness" && row.IsEditable);
+
+        PropertyRowViewModel viewRow = FindRow(viewModel, "View");
+        Assert.True(viewRow.IsComboBox);
+        Assert.Equal("Plan", viewRow.Value);
+        Assert.Equal(new[] { "Plan", "Side elevation", "Front elevation" }, viewRow.Options);
+
+        PropertyRowViewModel structureRow = FindRow(viewModel, "Show structure");
+        Assert.True(structureRow.IsComboBox);
+        Assert.Equal("Yes", structureRow.Value);
+        Assert.Equal(new[] { "Yes", "No" }, structureRow.Options);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForStairWidth_ShouldReplaceStairAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var stair = new StairEntity(
+            new Point2D(0, 0),
+            StairViewKind.Plan,
+            width: 1.2,
+            treadCount: 10,
+            treadDepth: 0.3,
+            riserHeight: 0.17);
+        viewModel.Workspace.Document.AddEntity(stair);
+        SelectEntity(viewModel, stair);
+
+        PropertyRowViewModel row = FindSection(viewModel, "Stair")
+            .Rows.Single(row => row.Name == "Width");
+        row.EditableValue = "1.5";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.Equal(1.5, updated.Width);
+        Assert.Equal("Stair updated.", viewModel.LastMessage);
+        Assert.True(viewModel.Workspace.CommandHistory.CanUndo);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.Equal(1.2, restored.Width);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForStairView_ShouldReplaceStairAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var stair = new StairEntity(
+            new Point2D(0, 0),
+            StairViewKind.Plan,
+            width: 1.2,
+            treadCount: 10,
+            treadDepth: 0.3,
+            riserHeight: 0.17);
+        viewModel.Workspace.Document.AddEntity(stair);
+        SelectEntity(viewModel, stair);
+
+        PropertyRowViewModel row = FindRow(viewModel, "View");
+        row.EditableValue = "Side elevation";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.Equal(StairViewKind.SideElevation, updated.ViewKind);
+        Assert.Equal("Stair updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.Equal(StairViewKind.Plan, restored.ViewKind);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForStairTreadCount_ShouldRejectInvalidValue()
+    {
+        var viewModel = new MainWindowViewModel();
+        var stair = new StairEntity(
+            new Point2D(0, 0),
+            StairViewKind.Plan,
+            width: 1.2,
+            treadCount: 10,
+            treadDepth: 0.3,
+            riserHeight: 0.17);
+        viewModel.Workspace.Document.AddEntity(stair);
+        SelectEntity(viewModel, stair);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Tread count");
+        row.EditableValue = "0";
+        row.ApplyCommand.Execute(null);
+
+        var unchanged = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.Equal(10, unchanged.TreadCount);
+        Assert.Equal("Stair tread count must be at least 1.", viewModel.LastMessage);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForStairInsertionX_ShouldMoveInsertionPoint()
+    {
+        var viewModel = new MainWindowViewModel();
+        var stair = new StairEntity(
+            new Point2D(0, 0),
+            StairViewKind.Plan,
+            width: 1.2,
+            treadCount: 10,
+            treadDepth: 0.3,
+            riserHeight: 0.17);
+        viewModel.Workspace.Document.AddEntity(stair);
+        SelectEntity(viewModel, stair);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Insertion X");
+        row.EditableValue = "5";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<StairEntity>(viewModel.Workspace.Document.Entities.GetRequired(stair.Id));
+        Assert.Equal(new Point2D(5, 0), updated.InsertionPoint);
+        Assert.Equal("Stair updated.", viewModel.LastMessage);
     }
 
     private static void SelectEntity(
