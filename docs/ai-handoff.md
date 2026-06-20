@@ -41,7 +41,7 @@ Use this status before proposing new work:
 | Architectural symbols/helpers | Partial: North Symbol and Metric Scale Bar exist; doors/windows/stairs should be parametric, general fixed objects should remain Library items |
 | Boundary Fill | v1 done; v2 planned |
 | HatchEntity | Planned |
-| Stairs | Planned |
+| Stairs | In progress: core parametric model and generated linework started; UI/persistence/export still open |
 | DXF/PDF raster image export | Deferred |
 | DXF BLOCK/INSERT compatibility | Deferred/separate from native block support |
 | v0.8.160+ consolidation | Not started as a dedicated pass |
@@ -82,12 +82,25 @@ Parametric objects should be limited to cases where dimensions/options are essen
 
 Before adding more toolbar buttons, ask whether the item belongs in the Library instead.
 
+
+## Current stair milestone status
+
+v0.8.130 has started with a conservative parametric core model:
+
+- `StairEntity` represents straight stairs in plan, side elevation and front elevation.
+- `StairViewKind` defines the generated representation.
+- `StairGeometryBuilder` converts parameters into 2D line segments for future rendering, hit-testing, snapping and export integration.
+- Current parameters: insertion point, width, tread count, tread depth, riser height, optional structure/slab line and local X/Y placement axes.
+- Implemented core behavior: validation, generated linework, bounding box, closest point/distance, transform, `WithId`, `WithLayer`, draw-order helper support and focused core tests.
+
+Not done yet: JSON persistence, renderer integration, selection/snap extraction, Property Panel editing, insert-stair command/HUD workflow, SVG/PDF/DXF export support and manual UI verification.
+
 ## Known open work
 
 The next work should be selected from the current roadmap, not from stale old notes. Open items are:
 
 - reconcile/check actual `library/` content included in the repository/release package and expand the object pack if needed;
-- implement Stair tools v1 if parametric architectural generation is the priority;
+- continue Stair tools v1: next passes are rendering/selection, persistence, Property Panel, insert command/HUD and export integration;
 - implement Boundary Fill v2: preview, sampled arc/circle boundaries, small-gap tolerance and clearer diagnostics;
 - implement real `HatchEntity` after BF v2, with explicit loops and holes/islands;
 - run DXF compatibility pass in LibreCAD/QCAD and record exact versions/results in `docs/dxf-compatibility.md`;

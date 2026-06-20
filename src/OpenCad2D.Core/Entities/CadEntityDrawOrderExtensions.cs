@@ -169,6 +169,24 @@ public static class CadEntityDrawOrderExtensions
                 diameter.IsLocked,
                 drawOrder),
 
+            StairEntity stair => new StairEntity(
+                stair.InsertionPoint,
+                stair.ViewKind,
+                stair.Width,
+                stair.TreadCount,
+                stair.TreadDepth,
+                stair.RiserHeight,
+                stair.ShowStructure,
+                stair.SlabThickness,
+                stair.XAxis,
+                stair.YAxis,
+                stair.Id,
+                stair.LayerId,
+                stair.Style,
+                stair.IsVisible,
+                stair.IsLocked,
+                drawOrder),
+
             _ => throw new NotSupportedException(
                 $"Entity kind '{entity.Kind}' does not support draw order editing.")
         };
