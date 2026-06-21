@@ -4,17 +4,36 @@ This file records the current accepted limitations after the 2026-06-21 document
 
 ## Current planning context
 
-OpenCad2D is in the v0.8.160+ consolidation line. Dynamic HUD, Import Drawing, Blocks v1, the first Blocks v2 manager slices, Library Browser, straight parametric Stairs, image-reference transparency and Boundary Fill v2 are implemented for their current scopes, and a first small static Library pack is present under `library/`. The future v0.9 gate is a stabilization/release gate, not the current feature bucket.
+OpenCad2D is in the v0.8.160+ consolidation line. Dynamic HUD, Import Drawing, Blocks v1, the first Blocks v2 manager slices, Library Browser, straight parametric Stairs, image-reference transparency, Boundary Fill v2 and the first parametric door/window vertical slice are implemented for their current scopes, and a first small static Library pack is present under `library/`. The future v0.9 gate is a stabilization/release gate, not the current feature bucket.
 
 Important planned feature families now tracked by specifications:
 
 - Blocks v2: inventory/diagnostics, duplicate/delete/purge, edit-session hardening, Library conflict policy and rename closeout are implemented; preview thumbnails and deeper nested-block editing remain future polish.
-- Parametric doors/windows: the first `DoorEntity` and non-destructive door wall mask exist; `WindowEntity`, real wall cutting and richer HUD parameter editing remain planned.
+- Parametric doors/windows: first-phase `DoorEntity` and `WindowEntity` exist with shared anchors, non-destructive masks, Property Panel editing/defaults and HUD insertion status. Real wall cutting, automatic wall detection and richer variants remain planned.
 - Array tools: `ARRAYRECT`, `ARRAYPOLAR`, `ARRAYPATH`.
 - HatchEntity: holes/islands, pattern scale/angle and hatch-specific persistence/export.
 - Annotation markers: Arrow, Section Label, Coordinate Callout.
 - UI customization: icon-only mode, saved panels/workspace preferences.
 - Icon SVG workflow: export current icons to SVG, import validated user-modified SVG icons.
+
+## Parametric doors/windows
+
+The v0.8.180 first phase is closed for implementation scope, but it is intentionally minimal.
+
+Current accepted limitations:
+
+- door/window wall openings are non-destructive visual masks, not real trims of wall entities;
+- automatic wall detection and automatic wall-thickness detection are not implemented;
+- curved walls and associative wall openings are not supported;
+- door variants such as double, sliding, pocket, folding and fire-door symbols are deferred;
+- window variants beyond the first schematic plan representation are deferred;
+- door/window command defaults are per active tool/session and are not persistent application presets yet;
+- static Library items and block references do not use the 9-point anchor selector; they keep the creation/origin base-point insertion rule;
+- DXF mask behavior is a wipeout-style generated export representation and still needs external viewer compatibility validation.
+
+These limitations are acceptable for the first vertical slice. Promote only concrete validation failures into a small v0.8.181 cleanup before Array tools.
+
+---
 
 ---
 

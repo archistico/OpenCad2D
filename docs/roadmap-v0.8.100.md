@@ -19,7 +19,7 @@ Suggested numbering for the active line:
 | v0.8.140 - v0.8.149 | Boundary Fill v1/v2 | [x] for filled-polyline workflow |
 | v0.8.150 - v0.8.159 | HatchEntity foundation | [ ] |
 | v0.8.160 - v0.8.169 | Documentation reconciliation, Library content, shared planning contracts and compatibility pass | [~] — v0.8.160 and v0.8.164 done, v0.8.161 implemented pending manual validation |
-| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A-170E implemented; v0.8.180A shared anchor foundation, v0.8.180B HUD anchor selector foundation, v0.8.180C minimal DoorEntity and v0.8.180D door wall-mask foundation, v0.8.180E minimal WindowEntity, v0.8.180F door/window editing defaults and v0.8.180G HUD status closeout implemented; manual closeout validation still required |
+| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A-170E implemented; v0.8.180A-180G first door/window vertical slice implemented; v0.8.180H documents the phase closeout. Manual validation remains before Array tools. |
 
 Exact patch numbers can move, but each milestone should remain independently buildable, testable and documented.
 
@@ -35,8 +35,8 @@ The historical order was correct: Import Drawing, Blocks, Dynamic HUD, Library, 
 4. **Blocks v2 slices 170A-170E: manager inventory, duplicate/purge, edit-session hardening, Library conflict policy and rename closeout**.
 5. **Compatibility/manual smoke validation for Library and Blocks v2**, using the expanded v0.8.162 checklist and report template.
 6. **Shared anchor foundation**, implemented as v0.8.180A in core and v0.8.180B in the HUD layer before DoorEntity/WindowEntity geometry. This foundation is for parametric/annotation tools; blocks and static Library items continue to use their creation base point.
-7. **Parametric doors/windows with wall masking and anchor control**. Door foundation and non-destructive door masking are now implemented; first WindowEntity remains next in this family.
-8. **Array tools**.
+7. **Parametric doors/windows with wall masking and anchor control**. The first implementation phase is now closed: shared anchor foundation, HUD selector, DoorEntity, door mask, WindowEntity, Property Panel editing/defaults and HUD status are in place. The next action is validation, not more door/window expansion.
+8. **Array tools**, beginning with `ARRAYRECT`, if validation is clean.
 9. **HatchEntity and hatch patterns**.
 10. **Annotation marker tools: arrows, section labels and coordinate callouts**.
 11. **UI customization and icon SVG workflow**.
@@ -377,9 +377,16 @@ Specifications:
 - `docs/specs/v0.8.180D-door-wall-mask-foundation.md`;
 - `docs/specs/v0.8.180E-minimal-window-entity.md`;
 - `docs/specs/v0.8.180F-door-window-property-editing-defaults.md`;
-- `docs/specs/v0.8.180G-door-window-hud-status-closeout.md`.
+- `docs/specs/v0.8.180G-door-window-hud-status-closeout.md`;
+- `docs/specs/v0.8.180H-door-window-phase-closeout.md`.
 
-Goal: add persistent parametric door/window objects with 9-point anchor selection in the HUD and optional wall-line masking/opening behavior at insertion. The v0.8.180G closeout additionally makes the effective insertion state visible in the command prompt before commit, including anchor, wall-mask state and door swing direction.
+Status: [~] implementation-complete for the first vertical slice; manual closeout validation remains.
+
+Goal: add persistent parametric door/window objects with 9-point anchor selection in the HUD and optional non-destructive wall-line masking/opening behavior. The first phase now covers `DoorEntity`, `WindowEntity`, shared anchor infrastructure, wall masks, core Property Panel editing, per-command defaults and explicit HUD status for the effective insertion state.
+
+Accepted first-phase boundary: this is not a full architectural wall system. Automatic wall detection, real wall cutting, curved wall openings, advanced styles, sliding/double/pocket doors and persistent presets are deferred. Blocks and static Library items still use their creation/origin base point and do not use the 9-point anchor selector.
+
+Validation: run the v0.8.180H closeout checklist, then include doors/windows in the broader v0.8.162 compatibility pass. If validation is clean, proceed to `v0.8.190A ARRAYRECT foundation`. If it finds concrete defects, do a small `v0.8.181` cleanup before Array tools.
 
 ### v0.8.190 — Array tools
 

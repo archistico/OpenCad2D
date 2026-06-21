@@ -1,12 +1,14 @@
-# OpenCad2D AI handoff — 2026-06-21 v0.8.180G Door/window HUD status closeout
+# OpenCad2D AI handoff — 2026-06-21 v0.8.180H Door/window phase closeout
 
 This document is the current handoff for the next OpenCad2D development session. It replaces older v0.9-first wording: the active line is now the reconciled v0.8 consolidation line, and the next v0.9 gate is a future stabilization/release checkpoint.
 
 ## Current active line
 
-OpenCad2D remains in the v0.8 consolidation line. Documentation reconciliation is complete, a first real Library content pack has been added, and the planning specification pass defines the shared contracts for the next feature families. Blocks v2 now has five narrow implementation slices: v0.8.170A inventory/diagnostics, v0.8.170B duplicate/delete/purge, v0.8.170C edit-session hardening, v0.8.170D Library/block conflict policy and v0.8.170E rename closeout polish. The parametric doors/windows line has now started in code: v0.8.180A adds the shared 9-point anchor model and resolver, v0.8.180B adds the reusable Dynamic HUD 3x3 anchor selector foundation, v0.8.180C adds the first persistent `DoorEntity`, v0.8.180D adds non-destructive wall-opening masks for doors, and v0.8.180E adds the first persistent schematic `WindowEntity` using the same anchor and wall-mask contracts, v0.8.180F adds Property Panel editing plus per-command insertion defaults for the minimal door/window pair, and v0.8.180G makes the effective insertion state visible in the HUD prompt before commit.
+OpenCad2D remains in the v0.8 consolidation line. Documentation reconciliation is complete, a first real Library content pack exists, the planning specification pass defines the shared contracts for the next feature families, and Blocks v2 has five implemented slices: v0.8.170A inventory/diagnostics, v0.8.170B duplicate/delete/purge, v0.8.170C edit-session hardening, v0.8.170D Library/block conflict policy and v0.8.170E rename closeout polish.
 
-The block/base-point invariant remains explicit and must be preserved: normal block references and static Library items are inserted by the base point chosen when the block definition/item is created, not by a derived 9-point bounding-box anchor. The 9-point anchor selector is for parametric/annotation tools such as doors, windows and future callouts. The next practical validation step is local build/test plus the v0.8.180D, v0.8.180E and v0.8.180F checklists, followed by the expanded v0.8.162 compatibility pass. The next feature slice after validation should be decided deliberately: either door/window polish if smoke finds issues, or the next planned family such as Array tools.
+The first parametric doors/windows implementation phase is now closed for scope. v0.8.180A added the shared 9-point anchor model and resolver, v0.8.180B added the reusable Dynamic HUD 3x3 anchor selector foundation, v0.8.180C added the first persistent `DoorEntity`, v0.8.180D added non-destructive wall-opening masks for doors, v0.8.180E added the first persistent schematic `WindowEntity`, v0.8.180F added Property Panel editing plus per-command insertion defaults, and v0.8.180G made the effective insertion state visible in the HUD prompt before commit. v0.8.180H is this documentation-only closeout and validation gate.
+
+The block/base-point invariant remains explicit and must be preserved: normal block references and static Library items are inserted by the base point chosen when the block definition/item is created, not by a derived 9-point bounding-box anchor. The 9-point anchor selector is for parametric/annotation tools such as doors, windows and future callouts. The next practical step is not more door/window expansion: run local build/test, the dedicated v0.8.180H checklist and the expanded v0.8.162 compatibility pass. If validation is clean, the next feature slice should be `v0.8.190A ARRAYRECT foundation`; if not, create a small evidence-backed v0.8.181 cleanup.
 
 The source-of-truth planning documents are:
 
@@ -30,25 +32,37 @@ The following areas should not be reopened as if they were still planned foundat
 | Stairs | Implemented as persistent straight `StairEntity` with plan/side/front generated linework, Property Panel editing, save/reopen and export. |
 | External raster references | Implemented with linked PNG/JPG/JPEG files, relative paths, missing-reference workflow, transparency, Collect Refs and Image References Manager. |
 | Boundary Fill v2 | Implemented for filled closed polyline output with preview/confirm, sampled curves, editable Gap HUD prompt, endpoint-to-endpoint and endpoint-to-segment gap bridges, and ignored-entity diagnostics. |
+| Parametric doors/windows v0.8.180A-180H | First vertical slice is implementation-complete for current scope: shared anchors, HUD selector, `DoorEntity`, `WindowEntity`, non-destructive masks, Property Panel editing/defaults, HUD status and documentation closeout. Manual validation remains. |
 | Mixed polyline/curve editing | Stabilized for the current active scope, including bulge preservation where supported. |
 | SmartPoint Tracking | Implemented as the current advanced snapping foundation. |
 
 ## Immediate next work
 
-First, run the maintainer-side build and test suite after applying the v0.8.180G patch:
+First, run the maintainer-side build and test suite after applying the v0.8.180H documentation closeout package:
 
 ```bash
 dotnet build OpenCad2D.sln
 dotnet test OpenCad2D.sln --no-build
 ```
 
-Second, run `docs/testing/v0.8.180D-door-wall-mask-foundation-checklist.md` and `docs/testing/v0.8.180E-minimal-window-entity-checklist.md`. The most important manual checks are: wall linework is visually hidden only when the door mask is enabled; `M = Mask` toggles the inserted door default; the Property Panel `Wall mask` combo updates the selected door and supports undo; save/reopen preserves masked and unmasked doors; SVG/PDF/DXF output contains the expected wipeout-style mask for masked doors only.
+Second, run the dedicated first-phase door/window validation checklists:
 
-Third, keep the v0.8.180C checklist as a regression checklist for the base `DoorEntity` behavior: insertion, aliases, HUD anchor selector, persistence and exports must still work after the mask change.
+- `docs/testing/v0.8.180C-minimal-door-entity-checklist.md`;
+- `docs/testing/v0.8.180D-door-wall-mask-foundation-checklist.md`;
+- `docs/testing/v0.8.180E-minimal-window-entity-checklist.md`;
+- `docs/testing/v0.8.180F-door-window-property-editing-defaults-checklist.md`;
+- `docs/testing/v0.8.180G-door-window-hud-status-closeout-checklist.md`;
+- `docs/testing/v0.8.180H-door-window-phase-closeout-checklist.md`.
 
-Fourth, run `docs/testing/v0.8.162-compatibility-smoke-checklist.md` on the maintainer Windows environment before opening the next major feature slice. This is the gate for publish copy, Library insertion/explode, save/reopen, SVG/PDF/DXF/PNG, Stairs Property Panel, Boundary Fill v2 Gap cases, image transparency and block workflows.
+Third, run the expanded `docs/testing/v0.8.162-compatibility-smoke-checklist.md` on the maintainer Windows environment. The smoke drawing must now include at least one door and one window, in addition to Library items, ordinary blocks, a stair, image opacity, Boundary Fill v2 and exports.
 
-Fifth, if the above is clean, run the v0.8.180F and v0.8.180G checklists and decide whether the minimal door/window pair needs another polish slice. Do not start HatchEntity or UI customization until the minimal door/window pair and their shared anchor/wall-mask contracts are validated.
+Fourth, make one explicit decision:
+
+- proceed to `v0.8.190A ARRAYRECT foundation` if validation is clean;
+- create a small `v0.8.181 door/window cleanup` if validation finds concrete blocking issues;
+- record non-blocking limitations in `docs/known-limitations.md` and proceed.
+
+Do not start HatchEntity, UI customization or icon SVG workflow from this point. The next planned feature family is Array tools, beginning with rectangular arrays, unless validation finds a door/window blocker.
 
 ## v0.8.170A implementation notes
 
@@ -117,6 +131,14 @@ Implemented behavior:
 
 Out of scope for this slice: visible HUD 3x3 selector, Property Panel anchor editor, entity persistence changes, changed Library/block insertion behavior, DoorEntity, WindowEntity and wall masks.
 
+## v0.8.180H — Door/window phase closeout
+
+This documentation-only slice freezes the first door/window implementation scope. The current accepted vertical slice is: insert simple parametric doors and windows, choose a 9-point anchor, use non-destructive wall masks, edit the core properties from the Property Panel, preserve native JSON parameters and export generated linework/mask representations.
+
+The following are intentionally not part of this closeout: automatic wall detection, real wall trimming/splitting, curved-wall openings, associative opening updates, advanced door/window variants, persistent application presets and block insertion changes. Ordinary blocks and static Library items continue to use their creation/origin base point.
+
+The next step is validation, not more door/window feature work. Use `docs/testing/v0.8.180H-door-window-phase-closeout-checklist.md`, then the broader v0.8.162 compatibility smoke pass. If both are clean, proceed to `v0.8.190A ARRAYRECT foundation`.
+
 ## Shared contracts added by v0.8.164
 
 The planning specification pass added these implementation contracts:
@@ -136,7 +158,7 @@ The v0.8.162 checklist has been expanded after Blocks v2 170A-170E. Use `docs/te
 
 The pass should create one representative smoke drawing with ordinary entities, text/MTEXT, dimensions, a manually created block, inserted block references, Library items from multiple categories, a StairEntity, an image with non-default opacity and a Boundary Fill v2 result using a non-zero Gap. That drawing should then be saved/reopened and exported to SVG, PDF, DXF and PNG.
 
-Do not open v0.8.180 doors/windows until this pass is completed or explicitly waived. Any failure must be classified as immediate v0.8.163 cleanup, accepted limitation or environmental retest.
+Do not open v0.8.190 Array tools until this pass is completed or explicitly waived. Any failure must be classified as v0.8.163/v0.8.181 cleanup, accepted limitation or environmental retest.
 
 ## New planned feature sequence
 
@@ -267,7 +289,7 @@ Implemented behavior:
 
 Out of scope for this slice: `DoorEntity`, `WindowEntity`, wall masking, Property Panel anchor editing and JSON persistence. Anchor-aware block/Library insertion is not planned for normal blocks because their insertion reference remains the creation base point.
 
-Historical next step for this slice was v0.8.180C. That slice is now implemented, followed by v0.8.180D door masking; the remaining next feature slice is v0.8.180E minimal `WindowEntity`.
+Historical next step for this slice was v0.8.180C. The full first door/window phase now continues through v0.8.180H and is closed for implementation scope.
 
 
 
@@ -277,7 +299,7 @@ Implemented as the first code slice after the shared anchor foundations. The sli
 
 Important semantic decision: block and Library insertion still use their creation/origin base point. The HUD 3x3 anchor selector is now active for `DoorTool`, but it must not affect ordinary block references. Door anchors are resolved against the wall-opening footprint, not the full swing arc, so the default `MiddleLeft` anchor acts as the hinge/mid-wall point.
 
-Out of scope for this historical slice: wall masking, automatic wall detection, real wall trimming, width/thickness/angle HUD editing, property-panel editing and window entities. v0.8.180D implements the first non-destructive wall mask for doors; the remaining next slice is v0.8.180E minimal `WindowEntity`.
+Out of scope for this historical slice: wall masking, automatic wall detection, real wall trimming, width/thickness/angle HUD editing, property-panel editing and window entities. Those first-phase gaps were addressed by later v0.8.180D-v0.8.180G slices where intended; automatic wall detection and real wall trimming remain deferred beyond the closeout scope.
 
 ## v0.8.180D — Door wall-mask foundation
 
@@ -295,7 +317,7 @@ Implemented behavior:
 
 Known limitations: the mask is visual/export-only and does not trim or split wall entities. It only covers linework drawn before the door according to draw order. SVG/PDF/DXF use a white wipeout-style shape, which is suitable for paper-style output but can be visible in transparent-background SVG workflows.
 
-Recommended next slice: `v0.8.180E` minimal `WindowEntity`, reusing the same anchor and wall-mask contracts.
+Historical next slice was `v0.8.180E` minimal `WindowEntity`; the first door/window phase now continues through v0.8.180H and is closed for implementation scope.
 
 
 
