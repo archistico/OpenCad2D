@@ -1,4 +1,6 @@
 using System.Globalization;
+using OpenCad2D.Core.Anchors;
+using OpenCad2D.Core.Architecture.Doors;
 using OpenCad2D.Core.Architecture.Stairs;
 using System.Text.Json;
 using OpenCad2D.Core.Blocks;
@@ -798,6 +800,41 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                 YAxisY = stair.YAxis.Y
             },
 
+            DoorEntity door => new DoorEntityDto
+            {
+                Id = door.Id.ToString(),
+                LayerId = door.LayerId.Value,
+                InsertionX = door.InsertionPoint.X,
+                InsertionY = door.InsertionPoint.Y,
+                Width = door.Width,
+                WallThickness = door.WallThickness,
+                OpeningAngleDegrees = door.OpeningAngleDegrees,
+                SwingDirection = door.SwingDirection.ToString(),
+                Anchor = door.Anchor.ToString(),
+                MaskWallOpening = door.MaskWallOpening,
+                XAxisX = door.XAxis.X,
+                XAxisY = door.XAxis.Y,
+                YAxisX = door.YAxis.X,
+                YAxisY = door.YAxis.Y
+            },
+
+            WindowEntity window => new WindowEntityDto
+            {
+                Id = window.Id.ToString(),
+                LayerId = window.LayerId.Value,
+                InsertionX = window.InsertionPoint.X,
+                InsertionY = window.InsertionPoint.Y,
+                Width = window.Width,
+                WallThickness = window.WallThickness,
+                FrameOffset = window.FrameOffset,
+                Anchor = window.Anchor.ToString(),
+                MaskWallOpening = window.MaskWallOpening,
+                XAxisX = window.XAxis.X,
+                XAxisY = window.XAxis.Y,
+                YAxisX = window.YAxis.X,
+                YAxisY = window.YAxis.Y
+            },
+
             _ => null
         };
     }
@@ -1317,8 +1354,57 @@ public sealed class JsonDocumentSerializer : IDocumentSerializer
                     planArrowMode: ParseStairPlanArrowMode(stair.PlanArrowMode),
                     showPlanSectionMarker: stair.ShowPlanSectionMarker),
 
+            DoorEntityDto door => door.Width <= 0.0 ||
+                door.WallThickness <= 0.0 ||
+                door.OpeningAngleDegrees <= 0.0 ||
+                door.OpeningAngleDegrees > 180.0 ||
+                new Vector2D(door.XAxisX, door.XAxisY).Length <= 0.0 ||
+                new Vector2D(door.YAxisX, door.YAxisY).Length <= 0.0
+                ? null
+                : new DoorEntity(
+                    new Point2D(door.InsertionX, door.InsertionY),
+                    door.Width,
+                    door.WallThickness,
+                    door.OpeningAngleDegrees,
+                    ParseDoorSwingDirection(door.SwingDirection),
+                    AnchorPointService.ParseOrDefault(door.Anchor, AnchorPoint.MiddleLeft),
+                    door.MaskWallOpening,
+                    new Vector2D(door.XAxisX, door.XAxisY),
+                    new Vector2D(door.YAxisX, door.YAxisY),
+                    id,
+                    layerId),
+
+            WindowEntityDto window => window.Width <= 0.0 ||
+                window.WallThickness <= 0.0 ||
+                window.FrameOffset <= 0.0 ||
+                window.FrameOffset > window.WallThickness / 2.0 ||
+                new Vector2D(window.XAxisX, window.XAxisY).Length <= 0.0 ||
+                new Vector2D(window.YAxisX, window.YAxisY).Length <= 0.0
+                ? null
+                : new WindowEntity(
+                    new Point2D(window.InsertionX, window.InsertionY),
+                    window.Width,
+                    window.WallThickness,
+                    window.FrameOffset,
+                    AnchorPointService.ParseOrDefault(window.Anchor, AnchorPoint.MiddleLeft),
+                    window.MaskWallOpening,
+                    new Vector2D(window.XAxisX, window.XAxisY),
+                    new Vector2D(window.YAxisX, window.YAxisY),
+                    id,
+                    layerId),
+
             _ => null
         };
+    }
+
+    private static DoorSwingDirection ParseDoorSwingDirection(string? value)
+    {
+        return Enum.TryParse(
+            value,
+            ignoreCase: true,
+            out DoorSwingDirection result)
+            ? result
+            : DoorSwingDirection.Left;
     }
 
     private static StairViewKind ParseStairViewKind(string? value)

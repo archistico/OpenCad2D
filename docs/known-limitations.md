@@ -4,12 +4,12 @@ This file records the current accepted limitations after the 2026-06-21 document
 
 ## Current planning context
 
-OpenCad2D is in the v0.8.160+ consolidation line. Dynamic HUD, Import Drawing, Blocks v1, Library Browser, straight parametric Stairs, image-reference transparency and Boundary Fill v2 are implemented for their current scopes, and a first small static Library pack is present under `library/`. The future v0.9 gate is a stabilization/release gate, not the current feature bucket.
+OpenCad2D is in the v0.8.160+ consolidation line. Dynamic HUD, Import Drawing, Blocks v1, the first Blocks v2 manager slices, Library Browser, straight parametric Stairs, image-reference transparency and Boundary Fill v2 are implemented for their current scopes, and a first small static Library pack is present under `library/`. The future v0.9 gate is a stabilization/release gate, not the current feature bucket.
 
 Important planned feature families now tracked by specifications:
 
-- Blocks v2: richer management, edit workflow hardening, purge/preview/conflict diagnostics.
-- Parametric doors/windows: 9-point anchor selector and optional wall-line masking/opening behavior.
+- Blocks v2: inventory/diagnostics, duplicate/delete/purge, edit-session hardening, Library conflict policy and rename closeout are implemented; preview thumbnails and deeper nested-block editing remain future polish.
+- Parametric doors/windows: the first `DoorEntity` and non-destructive door wall mask exist; `WindowEntity`, real wall cutting and richer HUD parameter editing remain planned.
 - Array tools: `ARRAYRECT`, `ARRAYPOLAR`, `ARRAYPATH`.
 - HatchEntity: holes/islands, pattern scale/angle and hatch-specific persistence/export.
 - Annotation markers: Arrow, Section Label, Coordinate Callout.

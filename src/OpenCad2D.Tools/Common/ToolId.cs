@@ -24,6 +24,8 @@ public enum ToolId
     NorthSymbol,
     ScaleBar,
     Stair,
+    Door,
+    Window,
     HorizontalDimension,
     VerticalDimension,
     AlignedDimension,

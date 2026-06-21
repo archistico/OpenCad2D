@@ -115,6 +115,14 @@ public sealed class CommandAliasRegistry
         yield return new CommandAlias("SCALA", ToolId.Stair);
         yield return new CommandAlias("ST", ToolId.Stair);
 
+        yield return new CommandAlias("DOOR", ToolId.Door);
+        yield return new CommandAlias("PORTA", ToolId.Door);
+        yield return new CommandAlias("DR", ToolId.Door);
+
+        yield return new CommandAlias("WINDOW", ToolId.Window);
+        yield return new CommandAlias("FINESTRA", ToolId.Window);
+        yield return new CommandAlias("WN", ToolId.Window);
+
         yield return new CommandAlias("RECTANGLE", ToolId.Rectangle);
         yield return new CommandAlias("REC", ToolId.Rectangle);
 

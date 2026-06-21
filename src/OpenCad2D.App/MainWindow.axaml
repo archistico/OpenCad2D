@@ -934,6 +934,34 @@
                                 </Grid>
                             </Button>
 
+                            <Button x:Name="DoorButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Insert a parametric door"
+                                    Click="Door_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconDoor}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Door" />
+                                </Grid>
+                            </Button>
+
+                            <Button x:Name="WindowButton"
+                                    Classes="tool-button"
+                                    ToolTip.Tip="Insert a parametric window"
+                                    Click="Window_Click" >
+                                <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
+                                    <Path Grid.Column="0"
+                                          Classes="icon-button-path"
+                                          Data="{StaticResource IconWindow}" />
+                                    <TextBlock Grid.Column="1"
+                                               Classes="icon-button-text"
+                                               Text="Window" />
+                                </Grid>
+                            </Button>
+
                             <TextBlock Classes="panel-section-label"
                                        Text="DIMENSION" />
 
@@ -1698,6 +1726,56 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+
+                                <StackPanel Spacing="3"
+                                            IsVisible="{Binding CommandHudState.AnchorSelector.IsVisible}">
+                                    <TextBlock Text="{Binding CommandHudState.AnchorSelector.Label}"
+                                               Foreground="#AAAAAA"
+                                               FontFamily="Consolas"
+                                               FontSize="11" />
+
+                                    <ItemsControl ItemsSource="{Binding CommandHudState.AnchorSelector.Rows}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Spacing="2" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:CommandHudAnchorRowViewModel">
+                                                <ItemsControl ItemsSource="{Binding Options}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <StackPanel Orientation="Horizontal" Spacing="4" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                    <ItemsControl.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:CommandHudAnchorOptionViewModel">
+                                                            <Border Background="#111111"
+                                                                    BorderBrush="#444444"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="3"
+                                                                    Padding="5,2"
+                                                                    Width="56">
+                                                                <StackPanel Orientation="Horizontal"
+                                                                            HorizontalAlignment="Center"
+                                                                            Spacing="3">
+                                                                    <TextBlock Text="{Binding SelectionMarker}"
+                                                                               Foreground="#FFD700"
+                                                                               FontFamily="Consolas"
+                                                                               FontSize="11" />
+                                                                    <TextBlock Text="{Binding DisplayText}"
+                                                                               Foreground="#DDDDDD"
+                                                                               FontFamily="Consolas"
+                                                                               FontSize="11" />
+                                                                </StackPanel>
+                                                            </Border>
+                                                        </DataTemplate>
+                                                    </ItemsControl.ItemTemplate>
+                                                </ItemsControl>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
 
                                 <ItemsControl ItemsSource="{Binding CommandHudState.OptionViews}"
                                               IsVisible="{Binding CommandHudState.HasOptions}">

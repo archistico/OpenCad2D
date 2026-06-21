@@ -1,4 +1,5 @@
 using Avalonia;
+using OpenCad2D.Core.Anchors;
 using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Dimensions;
@@ -10,6 +11,7 @@ using OpenCad2D.Core.Styling;
 using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Geometry.Transformations;
 using OpenCad2D.Interaction.Snapping;
+using OpenCad2D.Tools.Architectural;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Editing;
@@ -56,6 +58,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
     private readonly CommandHudInputState _commandHudInputState = new();
+    private AnchorPoint _commandHudSelectedAnchor = AnchorPoint.Center;
     private readonly CommandInputParser _commandInputParser = new();
     private readonly CommandAliasRegistry _commandAliasRegistry = CommandAliasRegistry.CreateDefault();
     private readonly List<string> _commandLineHistory = new();
@@ -368,7 +371,68 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         IsCommandHudVisible,
         CommandHudToolName,
         GetCurrentPromptState(),
-        BuildCommandHudFields());
+        BuildCommandHudFields(),
+        BuildCommandHudAnchorSelector());
+
+    public AnchorPoint CommandHudSelectedAnchor => _commandHudSelectedAnchor;
+
+    private CommandHudAnchorSelectorViewModel BuildCommandHudAnchorSelector()
+    {
+        return IsCommandHudAnchorSelectorActive()
+            ? CommandHudAnchorSelectorViewModel.Create(_commandHudSelectedAnchor)
+            : CommandHudAnchorSelectorViewModel.Hidden;
+    }
+
+    private bool IsCommandHudAnchorSelectorActive()
+    {
+        // Block and Library insertion intentionally keep their base-point semantics.
+        // Parametric architectural entities opt into the shared 3x3 selector explicitly.
+        return Workspace.ToolController.ActiveTool is DoorTool or WindowTool;
+    }
+
+    public bool TrySelectCommandHudAnchor(
+        AnchorPoint anchor,
+        out ToolResult result)
+    {
+        _commandHudSelectedAnchor = anchor;
+
+        if (Workspace.ToolController.ActiveTool is DoorTool doorTool)
+        {
+            result = doorTool.SetAnchor(anchor);
+        }
+        else if (Workspace.ToolController.ActiveTool is WindowTool windowTool)
+        {
+            result = windowTool.SetAnchor(anchor);
+        }
+        else
+        {
+            AnchorPointDescriptor descriptor = AnchorPointService.GetDescriptor(anchor);
+            result = ToolResult.None($"HUD anchor set to {descriptor.DisplayName}.");
+        }
+
+        SetLastResult(result);
+        NotifyCommandInputStateChanged();
+        return true;
+    }
+
+    public bool TrySelectCommandHudAnchorByShortcut(
+        int numericShortcut,
+        out ToolResult result)
+    {
+        if (!AnchorPointService.TryFromNumericShortcut(
+                numericShortcut,
+                out AnchorPoint anchor))
+        {
+            result = ToolResult.None("Anchor shortcut must be one of 1, 2, 3, 4, 5, 6, 7, 8 or 9.");
+            SetLastResult(result);
+            NotifyCommandInputStateChanged();
+            return false;
+        }
+
+        return TrySelectCommandHudAnchor(
+            anchor,
+            out result);
+    }
 
     public int EntityCount =>
         Workspace.Document.Entities.Count;
@@ -4780,6 +4844,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         ToolResult result = Workspace.SetActiveTool(toolId);
 
+        if (Workspace.ToolController.ActiveTool is DoorTool doorTool)
+        {
+            _commandHudSelectedAnchor = doorTool.CurrentAnchor;
+        }
+        else if (Workspace.ToolController.ActiveTool is WindowTool windowTool)
+        {
+            _commandHudSelectedAnchor = windowTool.CurrentAnchor;
+        }
+
         if (rememberAsLastCommand)
         {
             _lastCommandToolId = toolId;
@@ -4795,6 +4868,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         OnPropertiesChanged(
             nameof(ActiveToolName),
+            nameof(CommandHudSelectedAnchor),
             nameof(CurrentPromptState),
             nameof(CommandHudState),
             nameof(IsCommandHudVisible),
@@ -5075,6 +5149,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             nameof(EntityCount),
             nameof(SelectedCount),
             nameof(ActiveToolName),
+            nameof(CommandHudSelectedAnchor),
             nameof(CurrentPromptState),
             nameof(CommandHudState),
             nameof(IsCommandHudVisible),

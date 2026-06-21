@@ -48,6 +48,13 @@ public partial class BlockManagerWindow : Window
         ViewModel?.PurgeUnusedBlocks();
     }
 
+    private void ResetNames_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ViewModel?.ResetBlockNames();
+    }
+
     private void Ok_Click(
         object? sender,
         RoutedEventArgs e)

@@ -2,7 +2,9 @@
 
 ## Purpose
 
-Many upcoming OpenCad2D tools need the same concept of an insertion or reference anchor: blocks, Library items, parametric doors and windows, coordinate callouts, annotation bubbles, imported symbols, and possibly future reusable objects. This document defines a shared 9-point anchor contract so every feature does not invent a different insertion convention.
+Many upcoming OpenCad2D tools need the same concept of an insertion or reference anchor: parametric doors and windows, coordinate callouts, annotation bubbles, future dynamic symbols and possibly other reusable parametric objects. This document defines a shared 9-point anchor contract so every feature does not invent a different insertion convention.
+
+Native blocks are the explicit exception to this contract. A block reference is always inserted by the base point chosen when the block definition is created. The 9-point anchor selector must not reinterpret existing block insertion, Library insertion or block reference placement unless a future specification deliberately introduces a separate, opt-in wrapper command.
 
 The visual model follows the common design-tool convention used by applications such as Illustrator: the object is considered inside a bounding rectangle and the user chooses one of the corners, edge centers, or center point as the reference anchor.
 
@@ -16,11 +18,13 @@ MiddleLeft    Center          MiddleRight
 BottomLeft    BottomCenter    BottomRight
 ```
 
-The default should be `Center` for generic blocks and Library items unless a specific tool has a better domain default. Doors and windows may default to `Center` or to another canonical wall-facing anchor only if the behavior is documented in their own specification. Do not introduce synonyms such as `UpperLeft`, `Middle`, `Origin`, or `InsertionCorner` unless they are UI labels mapped explicitly to the canonical values above.
+The default should be `Center` for generic parametric or annotation tools unless a specific tool has a better domain default. Doors and windows may default to `Center` or to another canonical wall-facing anchor only if the behavior is documented in their own specification. Do not introduce synonyms such as `UpperLeft`, `Middle`, `Origin`, or `InsertionCorner` unless they are UI labels mapped explicitly to the canonical values above.
+
+For blocks and Library items inserted as blocks, the effective insertion reference is not `Center` and not one of these 9 anchor values. It is the block definition base point/origin.
 
 ## Coordinate meaning
 
-The anchor is a transformation reference, not merely a visual hint. When the user picks an insertion point, OpenCad2D must place the selected anchor at that point and derive the entity transform from there.
+For tools that opt in, the anchor is a transformation reference, not merely a visual hint. When the user picks an insertion point, OpenCad2D must place the selected anchor at that point and derive the entity transform from there. Blocks do not opt in: their insertion point remains the block base point.
 
 For a rectangular unrotated local bounding box:
 
@@ -42,14 +46,14 @@ If the internal CAD Y-axis uses screen-inverted coordinates at any rendering lay
 
 The anchor reference rectangle should come from the entity's local extents before world transform when possible. The local extents must be stable and independent from current zoom, screen DPI, selection handles or transient preview adorners.
 
-Recommended sources:
+Recommended sources for tools that opt in:
 
-- block reference: block definition local extents;
-- Library item: imported snippet extents before insertion;
 - door/window: parametric object local extents including the mask footprint if the mask changes insertion semantics;
 - annotation bubble/callout: visible marker extents, excluding the leader unless the specific tool states otherwise;
 - image reference: image local rectangle;
 - generic selected entity set: union of selected entities in local or temporary group coordinates.
+
+Do not use block definition extents as a replacement for the block base point in normal Insert Block or Library insertion. The base point is part of the block definition contract and is intentionally more precise than a derived bounding-box anchor.
 
 If an entity cannot provide meaningful local extents, it should not expose the 9-point anchor selector until a stable bounding rule exists.
 
@@ -81,9 +85,10 @@ Entities that persist an anchor should expose it in the Property Panel using the
 
 Recommended rule:
 
-- for block/library objects: changing anchor should normally preserve the insertion point and move/recompute the visible geometry relative to it;
 - for parametric doors/windows: changing anchor should preserve the selected wall/insertion reference and update the opening footprint preview;
 - for annotation bubbles: changing anchor affects text/bubble attachment, not the measured target point.
+
+Block references should not expose this property as a normal block insertion setting. Their editable insertion reference is the base point defined at Create Block time. To change that reference, the user must edit/recreate the block definition base point or use a future explicit block-base-point operation, not a generic 9-point anchor property.
 
 If a tool chooses a different rule, its specification must explicitly state why.
 
@@ -116,4 +121,19 @@ Every entity or command that adopts anchors should have tests for:
 - Property Panel edit behavior;
 - export-visible geometry unchanged except for expected placement.
 
-Manual tests should verify that HUD focus does not get stolen by the anchor selector before `TAB` enters edit mode.
+Manual tests should verify that HUD focus does not get stolen by the anchor selector before `TAB` enters edit mode. Regression tests/checklists must also confirm that Insert Block and Library insertion continue to use the block base point and never shift to a derived bounding-box anchor accidentally.
+
+---
+
+## Implementation checkpoint — v0.8.180A
+
+The first code foundation is tracked in `docs/specs/v0.8.180A-shared-anchor-foundation.md`.
+
+This checkpoint introduces the core anchor model and resolver only:
+
+- `OpenCad2D.Core.Anchors.AnchorPoint`;
+- `OpenCad2D.Core.Anchors.AnchorPointDescriptor`;
+- `OpenCad2D.Core.Anchors.AnchorPlacement`;
+- `OpenCad2D.Core.Anchors.AnchorPointService`.
+
+It does not add a visible HUD selector, Property Panel editor, entity persistence change or door/window geometry. Future features must use this shared service rather than duplicating the 9-point mapping or recomputing CAD-oriented anchor points independently.

@@ -78,6 +78,11 @@
                     Click="PurgeUnused_Click"
                     IsEnabled="{Binding CanPurgeUnusedBlocks}" />
 
+            <Button Classes="dialog-button"
+                    Content="Reset Names"
+                    Click="ResetNames_Click"
+                    IsEnabled="{Binding CanResetBlockNames}" />
+
             <TextBlock Text="Rename blocks in the Name column. Duplicate creates a new definition; Purge removes definitions not reachable from drawing instances."
                        Foreground="#AAAAAA"
                        VerticalAlignment="Center"
@@ -179,6 +184,11 @@
                            Foreground="#CCCCCC"
                            FontSize="11"
                            TextWrapping="Wrap" />
+                <TextBlock Text="{Binding RenameSummaryText}"
+                           Foreground="#9CDCFE"
+                           FontSize="11"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding HasPendingRenames}" />
                 <TextBlock Text="{Binding DocumentDiagnosticsText}"
                            Foreground="#F48771"
                            FontSize="11"

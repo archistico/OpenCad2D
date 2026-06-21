@@ -27,4 +27,8 @@ public static class EntityTypeNames
     public const string BlockReference = "BlockReference";
 
     public const string Stair = "Stair";
+
+    public const string Door = "Door";
+
+    public const string Window = "Window";
 }

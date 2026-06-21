@@ -30,6 +30,8 @@ namespace OpenCad2D.App.Rendering;
 public sealed class CadEntityRenderer
 {
     private readonly ViewportTransform _viewport;
+    private static readonly IBrush WallMaskBrush = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+
     private readonly DimensionGeometryBuilder _dimensionGeometryBuilder = new();
     private readonly Dictionary<string, Bitmap?> _imageCache = new(StringComparer.OrdinalIgnoreCase);
 
@@ -189,6 +191,20 @@ public sealed class CadEntityRenderer
                     pen);
                 break;
 
+            case DoorEntity door:
+                DrawDoor(
+                    context,
+                    door,
+                    pen);
+                break;
+
+            case WindowEntity window:
+                DrawWindow(
+                    context,
+                    window,
+                    pen);
+                break;
+
             case BlockReferenceEntity blockReference:
                 DrawBlockReference(
                     context,
@@ -290,6 +306,56 @@ public sealed class CadEntityRenderer
         Pen pen)
     {
         foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+        {
+            context.DrawLine(
+                pen,
+                ToScreenPoint(segment.Start),
+                ToScreenPoint(segment.End));
+        }
+    }
+
+    private void DrawDoor(
+        DrawingContext context,
+        DoorEntity door,
+        Pen pen)
+    {
+        var geometry = door.GetGeneratedGeometry();
+
+        if (geometry.HasWallMask)
+        {
+            DrawClosedPolylineGeometry(
+                context,
+                geometry.WallMaskPolygon,
+                pen: null,
+                WallMaskBrush);
+        }
+
+        foreach (LineSegment2D segment in geometry.Segments)
+        {
+            context.DrawLine(
+                pen,
+                ToScreenPoint(segment.Start),
+                ToScreenPoint(segment.End));
+        }
+    }
+
+    private void DrawWindow(
+        DrawingContext context,
+        WindowEntity window,
+        Pen pen)
+    {
+        var geometry = window.GetGeneratedGeometry();
+
+        if (geometry.HasWallMask)
+        {
+            DrawClosedPolylineGeometry(
+                context,
+                geometry.WallMaskPolygon,
+                pen: null,
+                WallMaskBrush);
+        }
+
+        foreach (LineSegment2D segment in geometry.Segments)
         {
             context.DrawLine(
                 pen,
@@ -779,7 +845,7 @@ public sealed class CadEntityRenderer
     private void DrawClosedPolylineGeometry(
         DrawingContext context,
         IReadOnlyList<Point2D> vertices,
-        Pen pen,
+        Pen? pen,
         IBrush fillBrush)
     {
         var geometry = new StreamGeometry();

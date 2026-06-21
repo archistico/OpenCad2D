@@ -92,7 +92,7 @@ Workflow:
 Library -> category -> item -> preview -> Insert -> pick insertion point
 ```
 
-Insertion uses the active canvas snaps. The file origin `(0,0)` becomes the picked insertion point.
+Insertion uses the active canvas snaps. The file origin `(0,0)` becomes the picked insertion point. Because Library items are inserted as block references, this follows the same block base-point rule used by Insert Block. The 9-point anchor selector is not applied to static Library items.
 
 The item is inserted as a block reference:
 
@@ -107,7 +107,7 @@ The item is inserted as a block reference:
 
 The browser shows a vector preview of the selected item. The preview uses the same entity renderer as the main canvas and fits the drawing into the preview area.
 
-The light origin axes show where `(0,0)` is in the item. This is the point that will land on the insertion point when the item is inserted.
+The light origin axes show where `(0,0)` is in the item. This is the point that will land on the insertion point when the item is inserted, regardless of the item's bounding box center or corners.
 
 ---
 

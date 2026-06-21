@@ -34,6 +34,8 @@ public sealed class ToolRegistryTests
         Assert.True(registry.Contains(ToolId.NorthSymbol));
         Assert.True(registry.Contains(ToolId.ScaleBar));
         Assert.True(registry.Contains(ToolId.Stair));
+        Assert.True(registry.Contains(ToolId.Door));
+        Assert.True(registry.Contains(ToolId.Window));
         Assert.True(registry.Contains(ToolId.HorizontalDimension));
         Assert.True(registry.Contains(ToolId.VerticalDimension));
         Assert.True(registry.Contains(ToolId.AlignedDimension));
@@ -70,7 +72,7 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.Tools;
 
-        Assert.Equal(46, tools.Count);
+        Assert.Equal(48, tools.Count);
 
         Assert.Contains(
             tools,
@@ -218,6 +220,14 @@ public sealed class ToolRegistryTests
 
         Assert.Contains(
             tools,
+            descriptor => descriptor.Id == ToolId.Door);
+
+        Assert.Contains(
+            tools,
+            descriptor => descriptor.Id == ToolId.Window);
+
+        Assert.Contains(
+            tools,
             descriptor => descriptor.Id == ToolId.HorizontalDimension);
 
         Assert.Contains(
@@ -330,10 +340,12 @@ public sealed class ToolRegistryTests
 
         IReadOnlyList<ToolDescriptor> tools = registry.GetByCategory("Symbols");
 
-        Assert.Equal(3, tools.Count);
+        Assert.Equal(5, tools.Count);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.NorthSymbol);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.ScaleBar);
         Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Stair);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Door);
+        Assert.Contains(tools, descriptor => descriptor.Id == ToolId.Window);
     }
 
 
@@ -570,6 +582,29 @@ public sealed class ToolRegistryTests
 
         Assert.IsType<StairTool>(tool);
         Assert.Equal("Stair", tool.Name);
+    }
+
+
+    [Fact]
+    public void Create_Door_ShouldReturnDoorTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Door);
+
+        Assert.IsType<DoorTool>(tool);
+        Assert.Equal("Door", tool.Name);
+    }
+
+    [Fact]
+    public void Create_Window_ShouldReturnWindowTool()
+    {
+        var registry = new ToolRegistry();
+
+        ICadTool tool = registry.Create(ToolId.Window);
+
+        Assert.IsType<WindowTool>(tool);
+        Assert.Equal("Window", tool.Name);
     }
 
 

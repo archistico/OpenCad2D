@@ -36,7 +36,8 @@ OpenCad2D currently supports a complete early CAD workflow:
 - reusable line formats with color, lineweight, line style and custom dash pattern values;
 - reusable text formats;
 - reusable drawing library snippets loaded from `library/**/*.opencad2d.json`, grouped by category, previewed and inserted as block references, with a first static content pack under `library/`;
-- Blocks v2 manager slices: direct/nested/total reference counts, selected diagnostics, missing-reference diagnostics, recursive-reference blocking, safe duplicate/delete/purge and hardened Edit Block session scope;
+- Blocks v2 manager slices: direct/nested/total reference counts, selected diagnostics, missing-reference diagnostics, recursive-reference blocking, safe duplicate/delete/purge, hardened Edit Block session scope, deterministic Library/block conflict handling and rename closeout with pending rename/reset behavior;
+- shared 9-point anchor foundation in the core model, ready for upcoming parametric doors/windows, Library/block insertion refinements and annotation callouts;
 - external PNG/JPG/JPEG image references stored as linked files, not embedded raster bytes;
 - relative image paths, transparency percentages, missing-image warnings, relink/replace/reset-aspect workflows, Collect Refs packaging and Image References Manager;
 - Layer Manager, Line Format Manager, Text Format Manager and Image References Manager;
@@ -62,7 +63,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - tool-provided preview descriptor/entity protocols that keep active tool preview logic out of the app renderer;
 - minimal application logging for tool/UI exceptions.
 
-See `docs/roadmap.md`, `docs/roadmap-v0.8.100.md` and the milestone specifications in `docs/specs/` for the reconciled active v0.8 development plan. The planning specification pass now defines shared contracts for anchors, leaders/arrows, preview/commit/grouped undo and wall masks. The v0.9 stabilization gate is deferred until the v0.8.160+ Library, compatibility and manual validation pass is complete.
+See `docs/roadmap.md`, `docs/roadmap-v0.8.100.md` and the milestone specifications in `docs/specs/` for the reconciled active v0.8 development plan. The planning specification pass defines shared contracts for anchors, leaders/arrows, preview/commit/grouped undo and wall masks. v0.8.180A turned the 9-point anchor contract into a tested core service, v0.8.180B added the reusable HUD 3x3 selector foundation, v0.8.180C introduced the first persistent `DoorEntity`, v0.8.180D adds the first non-destructive wall-opening mask for doors, and v0.8.180E introduces the first persistent `WindowEntity` using the same anchor/mask contracts. Existing block and static Library insertion semantics remain unchanged: they use the creation/origin base point, not the 9-point anchor selector. The v0.9 stabilization gate is deferred until the v0.8.160+ Library, compatibility and manual validation pass is complete.
 
 ---
 
@@ -199,7 +200,7 @@ OpenCad2D is intentionally transparent about what is already solid and what stil
 - **Non-associative dimensions**: dimensions store their own measured points and dimension-line geometry. When the measured entity is later moved, scaled or edited, the dimension value does not update automatically. OpenCad2D can mark dimensions as potentially stale after geometry changes, but users must update or recreate them manually.
 - **Boundary Fill versus HatchEntity**: Boundary Fill v2 is implemented for previewed filled-polyline creation, including curve sampling and small-gap bridging. Holes, islands, hatch patterns and associative hatch behavior remain future `HatchEntity` work.
 - **External raster image export parity**: PNG/JPG/JPEG references are saved, rendered, snapped, transformed and exported to SVG as external links. DXF/PDF raster-image output is still deferred, so those exports currently omit raster content.
-- **Architectural parametric objects**: straight stairs exist as persistent parametric entities. Doors and windows are planned next as parametric objects with 9-point anchor control and optional wall-line masking/opening behavior.
+- **Architectural parametric objects**: straight stairs exist as persistent parametric entities. Doors and windows now have first persistent parametric entities with 9-point anchor control. Doors and windows both support the non-destructive wall-opening mask contract.
 - **Arrays and annotations**: AutoCAD-style `ARRAYRECT`, `ARRAYPOLAR`, `ARRAYPATH`, richer arrow tools, section labels and coordinate callouts are planned but not implemented yet.
 - **UI customization and icons**: the current UI is fixed. Future work will add icon-only mode, saved panel/workspace preferences and an SVG export/import workflow for replacing tool icons.
 
@@ -217,7 +218,7 @@ OpenCad2D is currently in the reconciled v0.8 consolidation line. Recent complet
 - mixed-polyline/bulge stabilization and curve-editing fixes;
 - SmartPoint Tracking foundation.
 
-The next validation step is to run the local build/test suite and the v0.8.170D Library/block conflict checklist, keeping the v0.8.170A inventory, v0.8.170B duplicate/purge and v0.8.170C edit-session checklists as regression passes, then finish the broader v0.8.162 manual compatibility pass. The next implementation milestone after validation is Blocks v2 slice 170E for final validation/user-guide closeout and any rename/preview polish still judged necessary, followed by doors/windows, arrays, HatchEntity, annotation markers, UI customization and SVG icon workflow.
+The next validation step is to run the local build/test suite and the v0.8.170E Block Manager rename closeout checklist, keeping the v0.8.170A inventory, v0.8.170B duplicate/purge, v0.8.170C edit-session and v0.8.170D Library/block conflict checklists as regression passes. After that, finish the broader v0.8.162 manual compatibility pass before opening doors/windows, arrays, HatchEntity, annotation markers, UI customization or SVG icon workflow.
 
 ## Info files
 
@@ -249,3 +250,8 @@ OpenCad2D is released under the GPL-3.0-or-later license. See `LICENSE`.
 ## Credits
 
 Created by Emilie Rollandin.
+
+
+## Current development checkpoint
+
+The current line includes v0.8.180E, the first minimal parametric window slice. Door and window entities now share the 9-point HUD anchor selector and non-destructive wall-mask behavior. Further editing of width, thickness and defaults remains planned as a follow-up slice.

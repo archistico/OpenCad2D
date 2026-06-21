@@ -6,7 +6,7 @@ Parametric doors and windows need to appear as openings in wall linework. The fi
 
 ## Design decision
 
-The first implementation uses non-destructive visual masking. It does not modify, trim, split, delete or rewrite wall entities automatically.
+The first implementation uses non-destructive visual masking. It does not modify, trim, split, delete or rewrite wall entities automatically. `DoorEntity` adopts this contract first in v0.8.180D through a persisted `MaskWallOpening` flag and a generated wall-mask polygon.
 
 ```text
 Door/window entity + mask footprint -> hides underlying wall linework visually

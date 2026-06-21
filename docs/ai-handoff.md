@@ -1,10 +1,12 @@
-# OpenCad2D AI handoff — 2026-06-21 Blocks v2 170C
+# OpenCad2D AI handoff — 2026-06-21 v0.8.180E Minimal WindowEntity
 
 This document is the current handoff for the next OpenCad2D development session. It replaces older v0.9-first wording: the active line is now the reconciled v0.8 consolidation line, and the next v0.9 gate is a future stabilization/release checkpoint.
 
 ## Current active line
 
-OpenCad2D remains in the v0.8 consolidation line. Documentation reconciliation is complete, a first real Library content pack has been added, and the planning specification pass defines the shared contracts for the next feature families. The first Blocks v2 code slice, v0.8.170A, was added and the maintainer confirmed the automated tests passed after the singular/plural test fix. The second slice, v0.8.170B, added safe duplicate, selected delete and purge operations in the Block Manager. The third slice, v0.8.170C, now hardens the in-place Edit Block session by making the active state explicit, saving only session-scoped entities, ignoring pre-existing external drawing entities and discarding session-created entities on cancel. The next practical validation step is maintainer-side build/test plus the v0.8.170C manual checklist, then the broader v0.8.162 compatibility pass.
+OpenCad2D remains in the v0.8 consolidation line. Documentation reconciliation is complete, a first real Library content pack has been added, and the planning specification pass defines the shared contracts for the next feature families. Blocks v2 now has five narrow implementation slices: v0.8.170A inventory/diagnostics, v0.8.170B duplicate/delete/purge, v0.8.170C edit-session hardening, v0.8.170D Library/block conflict policy and v0.8.170E rename closeout polish. The parametric doors/windows line has now started in code: v0.8.180A adds the shared 9-point anchor model and resolver, v0.8.180B adds the reusable Dynamic HUD 3x3 anchor selector foundation, v0.8.180C adds the first persistent `DoorEntity`, v0.8.180D adds non-destructive wall-opening masks for doors, and v0.8.180E adds the first persistent schematic `WindowEntity` using the same anchor and wall-mask contracts.
+
+The block/base-point invariant remains explicit and must be preserved: normal block references and static Library items are inserted by the base point chosen when the block definition/item is created, not by a derived 9-point bounding-box anchor. The 9-point anchor selector is for parametric/annotation tools such as doors, windows and future callouts. The next practical validation step is local build/test plus the v0.8.180D and v0.8.180E checklists, followed by the expanded v0.8.162 compatibility pass. The next feature slice after validation should be v0.8.180F door/window property editing and command defaults, unless manual smoke finds regressions that should become v0.8.163 cleanup.
 
 The source-of-truth planning documents are:
 
@@ -20,7 +22,9 @@ The following areas should not be reopened as if they were still planned foundat
 | Area | Current status |
 |---|---|
 | Import Drawing | Implemented with insertion point, scale/rotation and undoable merge. |
-| Blocks v1 / v2 170A-170C | Blocks v1 remains implemented. The Block Manager now has inventory/diagnostics plus duplicate selected definition, selected delete for fully unreferenced definitions, bulk purge of definitions not reachable from drawing block references and hardened Edit Block session scope. |
+| Blocks v1 / v2 170A-170E | Blocks v1 remains implemented. The Block Manager now has inventory/diagnostics, duplicate selected definition, selected delete for fully unreferenced definitions, bulk purge of definitions not reachable from drawing block references, hardened Edit Block session scope, Library/block conflict handling and rename closeout polish. |
+| Shared anchor foundation v0.8.180A | Implemented in core as `AnchorPoint`, `AnchorPointDescriptor`, `AnchorPlacement` and `AnchorPointService`, with tests for CAD-coordinate anchor resolution, 3x3 grid order, keypad shortcuts, placement translation and invalid persisted value recovery. The shared anchor system is for future parametric/annotation entities, not for changing block base-point insertion. |
+| HUD anchor selector foundation v0.8.180B | Implemented in the app layer as `CommandHudAnchorSelectorViewModel`, row/option view-models, hidden-by-default HUD XAML binding and keyboard shortcut helpers in `MainWindowViewModel`. It does not yet opt any existing command into anchor-based placement. |
 | Dynamic Command HUD | Implemented and replaces the old fixed command row. |
 | Library Browser | Implemented as a browser for `library/**/*.opencad2d.json` snippets, grouped by category, previewed and inserted as block references. |
 | Stairs | Implemented as persistent straight `StairEntity` with plan/side/front generated linework, Property Panel editing, save/reopen and export. |
@@ -31,22 +35,20 @@ The following areas should not be reopened as if they were still planned foundat
 
 ## Immediate next work
 
-The next work should stay focused and evidence-driven.
+First, run the maintainer-side build and test suite after applying the v0.8.180E patch:
 
-First, run the automated tests on the maintainer Windows environment. This sandbox did not have `dotnet`, so v0.8.170D still needs local build/test confirmation.
+```bash
+dotnet build OpenCad2D.sln
+dotnet test OpenCad2D.sln --no-build
+```
 
-Second, run `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md`: same item id reuse, changed same-id safe duplication, same-name equivalent reuse, same-name different-definition safe rename, undo and save/reopen. Also keep `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md`, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` and `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md` as regression checklists.
+Second, run `docs/testing/v0.8.180D-door-wall-mask-foundation-checklist.md` and `docs/testing/v0.8.180E-minimal-window-entity-checklist.md`. The most important manual checks are: wall linework is visually hidden only when the door mask is enabled; `M = Mask` toggles the inserted door default; the Property Panel `Wall mask` combo updates the selected door and supports undo; save/reopen preserves masked and unmasked doors; SVG/PDF/DXF output contains the expected wipeout-style mask for masked doors only.
 
-Third, run `docs/testing/v0.8.162-compatibility-smoke-checklist.md` on the maintainer Windows environment: publish copy, Library insertion/explode, save/reopen, SVG/PDF/DXF, Stairs Property Panel, Boundary Fill v2 Gap cases, image transparency and block workflows.
+Third, keep the v0.8.180C checklist as a regression checklist for the base `DoorEntity` behavior: insertion, aliases, HUD anchor selector, persistence and exports must still work after the mask change.
 
-Fourth, mark v0.8.161 complete only after the Library Browser shows the first pack correctly and publish output contains `library/**` beside the executable.
+Fourth, run `docs/testing/v0.8.162-compatibility-smoke-checklist.md` on the maintainer Windows environment before opening the next major feature slice. This is the gate for publish copy, Library insertion/explode, save/reopen, SVG/PDF/DXF/PNG, Stairs Property Panel, Boundary Fill v2 Gap cases, image transparency and block workflows.
 
-Fifth, keep v0.8.164 as the design-contract baseline for future code. Before implementing doors/windows, arrays, hatch, arrows/callouts, UI customization or icon SVG workflow, read the relevant feature spec and the shared contracts it references.
-
-Sixth, only promote bugfix work when it is tied to a real failing test, manual sample, confusing workflow or data-corruption risk. Avoid speculative refactors while the v0.8.160+ consolidation is still open.
-
-Seventh, the next recommended Blocks v2 step after validation is `v0.8.170E`: final Blocks v2 closeout, user-guide/manual validation updates and any rename/preview polish still judged necessary before starting the next feature family.
-
+Fifth, if the above is clean, continue with `v0.8.180F` as a focused door/window editing defaults slice. Do not start Arrays, HatchEntity or UI customization until the minimal door/window pair and their shared anchor/wall-mask contracts are validated.
 
 ## v0.8.170A implementation notes
 
@@ -93,12 +95,27 @@ Implemented behavior:
 
 Known limitation for this slice: nested `BlockReferenceEntity` instances created during an edit session are not committed into the rebuilt definition yet. Keep nested-block edit/import rules for a later Blocks v2 slice.
 
-Known remaining Blocks v2 work:
+Known remaining non-blocking Blocks v2 polish:
 
 - visual preview thumbnail/panel;
-- stronger rename UX beyond inline validation;
-- nested-block edit/import policy;
-- Library same-name conflict policy and structural-equivalence handling.
+- deeper nested-block edit/import policy if needed before doors/windows.
+
+## v0.8.180A — Shared anchor foundation
+
+This slice starts the parametric doors/windows line by turning the 9-point anchor planning contract into core code. The implementation lives under `src/OpenCad2D.Core/Anchors/`.
+
+Implemented behavior:
+
+- `AnchorPoint` defines the nine canonical values.
+- `AnchorPointDescriptor` exposes stable key, display name, 3x3 UI row/column and keypad shortcut metadata.
+- `AnchorPointService.Descriptors` returns anchors in visual grid order.
+- `AnchorPointService.GetPoint` resolves anchors against a CAD-oriented `BoundingBox2D`: top is `MaxY`, bottom is `MinY`.
+- `AnchorPointService.TryFromNumericShortcut` uses keypad mapping `7/8/9`, `4/5/6`, `1/2/3`.
+- `AnchorPointService.GetTranslationToPlaceAnchor` and `CreatePlacement` provide a reusable placement calculation for future insertable/parametric tools.
+- Invalid persisted values can recover to a caller-provided default through `ParseOrDefault`.
+- Automated tests were added in `AnchorPointServiceTests`.
+
+Out of scope for this slice: visible HUD 3x3 selector, Property Panel anchor editor, entity persistence changes, changed Library/block insertion behavior, DoorEntity, WindowEntity and wall masks.
 
 ## Shared contracts added by v0.8.164
 
@@ -113,6 +130,14 @@ The planning specification pass added these implementation contracts:
 
 Key decisions: first arrays are non-associative and emit real copies; first door/window wall openings are non-destructive masks; HatchEntity is separate from Boundary Fill v2; UI and icon preferences are local application settings, not drawing-file data.
 
+## v0.8.162 compatibility gate
+
+The v0.8.162 checklist has been expanded after Blocks v2 170A-170E. Use `docs/testing/v0.8.162-compatibility-smoke-checklist.md` as the runnable checklist and `docs/testing/v0.8.162-compatibility-smoke-report-template.md` as the report template.
+
+The pass should create one representative smoke drawing with ordinary entities, text/MTEXT, dimensions, a manually created block, inserted block references, Library items from multiple categories, a StairEntity, an image with non-default opacity and a Boundary Fill v2 result using a non-zero Gap. That drawing should then be saved/reopened and exported to SVG, PDF, DXF and PNG.
+
+Do not open v0.8.180 doors/windows until this pass is completed or explicitly waived. Any failure must be classified as immediate v0.8.163 cleanup, accepted limitation or environmental retest.
+
 ## New planned feature sequence
 
 The current recommended order after consolidation is:
@@ -120,6 +145,7 @@ The current recommended order after consolidation is:
 | Milestone | Specification | Summary |
 |---|---|---|
 | v0.8.170 | `docs/specs/v0.8.170-blocks-v2.md` | Blocks v2: richer manager, edit-session safety, purge/preview diagnostics, Library naming/conflict behavior. |
+| v0.8.180A | `docs/specs/v0.8.180A-shared-anchor-foundation.md` | Shared 9-point anchor model/resolver for future parametric insertion tools. |
 | v0.8.180 | `docs/specs/v0.8.180-parametric-doors-windows.md` | Parametric doors/windows with 9-point anchor selector and optional wall-line masking/opening behavior. |
 | v0.8.190 | `docs/specs/v0.8.190-array-tools.md` | `ARRAYRECT`, `ARRAYPOLAR`, `ARRAYPATH` with preview and grouped undo. |
 | v0.8.200 | `docs/specs/v0.8.200-hatch-patterns.md` | Real HatchEntity with solid/pattern modes, outer/inner loops, scale/angle and export strategy. |
@@ -135,6 +161,21 @@ The fourth Blocks v2 slice implemented deterministic Library insertion conflict 
 The policy is non-destructive. Same item id plus equivalent content reuses the existing definition. Same item id plus changed content creates a unique id/name pair. Same block name plus equivalent content reuses the existing definition even if the item id differs. Same block name plus different content creates a unique name. Library insertion still never replaces an existing definition silently; explicit replace remains deferred to a future Block Manager-only operation.
 
 Automated tests were added in `MainWindowViewModelLibraryTests` for changed same-id Library items and same-name equivalent definitions with different item ids. Maintainer-side build/test and manual checklist validation are required for this slice.
+
+## v0.8.170E — Block Manager rename closeout
+
+The fifth Blocks v2 slice closes the manager-side rename polish before moving on to the next feature family. Rename remains inline in the `Name` column, but it now has explicit pending state. The manager summary includes pending rename count, the selected-block details show the original name when a block has been renamed, and the new `Reset Names` button restores all edited block names before the manager result is committed.
+
+Implemented behavior:
+
+- `EditableBlockDefinitionViewModel` tracks `OriginalName`, `IsRenamed` and `RenameStatusText`.
+- `BlockManagerWindowViewModel` exposes `PendingRenameCount`, `RenameSummaryText`, `HasPendingRenames`, `CanResetBlockNames` and `ResetBlockNames()`.
+- Renaming clears stale validation messages and refreshes summary/detail state while typing.
+- `OK` still validates empty and duplicate names and returns trimmed names.
+- Block references remain id-based, so rename does not invalidate existing references.
+- Automated tests were added for pending rename reporting, reset names and trimmed committed rename output.
+
+Remaining non-blocking Blocks v2 polish: visual preview thumbnails and deeper nested-block editing/import policy.
 
 ## Key design decisions to preserve
 
@@ -160,6 +201,16 @@ Documentation and planning/code updates:
 - `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md`
 - `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md`
 - `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md`
+- `docs/testing/v0.8.170E-block-manager-rename-closeout-checklist.md`
+- `src/OpenCad2D.Core/Anchors/AnchorPoint.cs`
+- `src/OpenCad2D.Core/Anchors/AnchorPointDescriptor.cs`
+- `src/OpenCad2D.Core/Anchors/AnchorPlacement.cs`
+- `src/OpenCad2D.Core/Anchors/AnchorPointService.cs`
+- `tests/OpenCad2D.Core.Tests/AnchorPointServiceTests.cs`
+- `docs/specs/v0.8.180A-shared-anchor-foundation.md`
+- `docs/testing/v0.8.180A-shared-anchor-foundation-checklist.md`
+- `docs/testing/v0.8.162-compatibility-smoke-checklist.md`
+- `docs/testing/v0.8.162-compatibility-smoke-report-template.md`
 
 Previous documentation and planning updates retained in this package:
 
@@ -197,3 +248,57 @@ Library content added:
 - `library/sanitari/wc_sopra.opencad2d.json`
 - `library/simboli/nord_semplice.opencad2d.json`
 - `library/simboli/scala_grafica_100.opencad2d.json`
+
+## v0.8.180B — HUD anchor selector foundation
+
+This slice adds the first reusable Dynamic HUD surface for the 9-point anchor model without changing any existing tool placement behavior. It lives in the app view-model layer and is hidden by default until a future command explicitly opts into anchor-edit mode.
+
+Implemented behavior:
+
+- `CommandHudAnchorOptionViewModel` represents one selector cell and exposes anchor key, display name, row, column, keypad shortcut, compact label and selected marker.
+- `CommandHudAnchorRowViewModel` groups three options for XAML rendering.
+- `CommandHudAnchorSelectorViewModel.Hidden` keeps existing HUD states backward-compatible.
+- `CommandHudAnchorSelectorViewModel.Create(...)` builds the visual 3x3 selector using `AnchorPointService.Descriptors`, so the UI does not duplicate the anchor order or keypad mapping.
+- `CommandHudStateViewModel.AnchorSelector` exposes the selector to the HUD, defaulting to hidden.
+- `MainWindow.axaml` includes a hidden-by-default selector block inside the existing command HUD. The overlay remains mouse-inaccessible.
+- `MainWindowViewModel` stores the currently selected HUD anchor and exposes shortcut helpers, but `IsCommandHudAnchorSelectorActive()` intentionally returns false in this slice.
+- Existing block and Library insertion semantics are unchanged: both continue to use the block/item base point chosen at creation/origin time.
+- Automated tests were added in `CommandHudAnchorSelectorViewModelTests`.
+
+Out of scope for this slice: `DoorEntity`, `WindowEntity`, wall masking, Property Panel anchor editing and JSON persistence. Anchor-aware block/Library insertion is not planned for normal blocks because their insertion reference remains the creation base point.
+
+Historical next step for this slice was v0.8.180C. That slice is now implemented, followed by v0.8.180D door masking; the remaining next feature slice is v0.8.180E minimal `WindowEntity`.
+
+
+
+## v0.8.180C — Minimal DoorEntity
+
+Implemented as the first code slice after the shared anchor foundations. The slice adds `DoorEntity` in the core architectural model, generated single-swing plan geometry, `DoorTool`, command aliases `DOOR`, `PORTA` and `DR`, UI button/icon wiring, HUD anchor selector opt-in only while the door tool is active, JSON persistence, SVG/PDF/DXF linework export and automated tests across core, persistence, tools and app HUD integration.
+
+Important semantic decision: block and Library insertion still use their creation/origin base point. The HUD 3x3 anchor selector is now active for `DoorTool`, but it must not affect ordinary block references. Door anchors are resolved against the wall-opening footprint, not the full swing arc, so the default `MiddleLeft` anchor acts as the hinge/mid-wall point.
+
+Out of scope for this historical slice: wall masking, automatic wall detection, real wall trimming, width/thickness/angle HUD editing, property-panel editing and window entities. v0.8.180D implements the first non-destructive wall mask for doors; the remaining next slice is v0.8.180E minimal `WindowEntity`.
+
+## v0.8.180D — Door wall-mask foundation
+
+This slice adds the first non-destructive wall-opening behavior to `DoorEntity`. Doors now persist `MaskWallOpening`, defaulting to enabled for new and legacy-missing JSON data. Generated door geometry exposes a wall-mask polygon based on the opening width and wall thickness, transformed by the same local axes/anchor placement as the visible door linework.
+
+Implemented behavior:
+
+- `DoorEntity` includes `MaskWallOpening` and preserves it through transforms, `WithParameters`, native JSON round-trip and DTO default recovery.
+- `DoorGeometry` exposes `WallMaskPolygon` and `HasWallMask`.
+- `DoorTool` exposes `M = Mask`, toggling the default for subsequent insertion while keeping single-click insertion and preview behavior.
+- The Property Panel exposes `Wall mask: Yes/No` and replaces the selected door undoably.
+- Canvas rendering draws the mask before the visible door linework.
+- SVG/PDF/DXF export writes a white wipeout-style polygon/hatch before the generated door linework.
+- Automated tests cover geometry mask generation, disabled masks, persistence, tool toggle, Property Panel editing and SVG/DXF export behavior.
+
+Known limitations: the mask is visual/export-only and does not trim or split wall entities. It only covers linework drawn before the door according to draw order. SVG/PDF/DXF use a white wipeout-style shape, which is suitable for paper-style output but can be visible in transparent-background SVG workflows.
+
+Recommended next slice: `v0.8.180E` minimal `WindowEntity`, reusing the same anchor and wall-mask contracts.
+
+
+
+## v0.8.180E — Minimal WindowEntity
+
+Implemented as the first persistent parametric window slice. The new `WindowEntity` stores insertion point, width, wall thickness, frame offset, anchor, mask flag and local axes. `WindowTool` inserts it with `WINDOW`/`FINESTRA`/`WN`, uses the HUD anchor selector, supports `M = Mask`, exposes preview geometry, persists through JSON and exports as normal linework plus optional wipeout-style mask. Blocks and static Library items continue to use base-point insertion.

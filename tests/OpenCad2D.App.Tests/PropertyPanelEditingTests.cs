@@ -1011,6 +1011,54 @@ public sealed class PropertyPanelEditingTests
         Assert.Equal("Stair updated.", viewModel.LastMessage);
     }
 
+
+    [Fact]
+    public void PropertyPanel_ForDoor_ShouldExposeWallMaskComboBox()
+    {
+        var viewModel = new MainWindowViewModel();
+        var door = new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20,
+            maskWallOpening: true);
+        viewModel.Workspace.Document.AddEntity(door);
+        SelectEntity(viewModel, door);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Wall mask");
+
+        Assert.True(row.IsEditable);
+        Assert.True(row.IsComboBox);
+        Assert.False(row.IsTextBox);
+        Assert.Equal("Yes", row.Value);
+        Assert.Equal(new[] { "Yes", "No" }, row.Options);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForDoorWallMask_ShouldReplaceDoorAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var door = new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20,
+            maskWallOpening: true);
+        viewModel.Workspace.Document.AddEntity(door);
+        SelectEntity(viewModel, door);
+
+        PropertyRowViewModel row = FindRow(viewModel, "Wall mask");
+        row.EditableValue = "No";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<DoorEntity>(viewModel.Workspace.Document.Entities.GetRequired(door.Id));
+        Assert.False(updated.MaskWallOpening);
+        Assert.Equal("Door updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<DoorEntity>(viewModel.Workspace.Document.Entities.GetRequired(door.Id));
+        Assert.True(restored.MaskWallOpening);
+    }
+
     private static void SelectEntity(
         MainWindowViewModel viewModel,
         CadEntity entity)

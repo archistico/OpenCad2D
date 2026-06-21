@@ -23,5 +23,7 @@ public enum EntityKind
     BezierSpline,
     ImageReference,
     BlockReference,
-    Stair
+    Stair,
+    Door,
+    Window
 }

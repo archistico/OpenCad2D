@@ -216,6 +216,91 @@ public sealed class BlockManagerWindowViewModelTests
         Assert.True(viewModel.HasValidationMessage);
     }
 
+
+    [Fact]
+    public void RenamingBlock_ShouldExposePendingRenameSummary()
+    {
+        var document = new CadDocument();
+        var definition = CreateDefinition("door", "Door");
+        document.BlockDefinitions.Add(definition);
+        var viewModel = new BlockManagerWindowViewModel(document);
+        EditableBlockDefinitionViewModel block = viewModel.Blocks.Single();
+
+        block.Name = "Main Door";
+
+        Assert.True(block.IsRenamed);
+        Assert.Equal(1, viewModel.PendingRenameCount);
+        Assert.True(viewModel.HasPendingRenames);
+        Assert.True(viewModel.CanResetBlockNames);
+        Assert.Contains("1 pending block rename", viewModel.RenameSummaryText);
+        Assert.Contains("1 pending rename", viewModel.SummaryText);
+        Assert.Contains("Renamed from 'Door'", viewModel.SelectedBlockDetailsText);
+    }
+
+    [Fact]
+    public void ResetBlockNames_ShouldRestoreOriginalNamesAndClearRenameSummary()
+    {
+        var document = new CadDocument();
+        document.BlockDefinitions.Add(CreateDefinition("door", "Door"));
+        document.BlockDefinitions.Add(CreateDefinition("window", "Window"));
+        var viewModel = new BlockManagerWindowViewModel(document);
+
+        foreach (EditableBlockDefinitionViewModel block in viewModel.Blocks)
+        {
+            block.Name += " Changed";
+        }
+
+        Assert.Equal(2, viewModel.PendingRenameCount);
+
+        viewModel.ResetBlockNames();
+
+        Assert.Equal(0, viewModel.PendingRenameCount);
+        Assert.False(viewModel.HasPendingRenames);
+        Assert.False(viewModel.CanResetBlockNames);
+        Assert.Contains(viewModel.Blocks, block => block.Name == "Door");
+        Assert.Contains(viewModel.Blocks, block => block.Name == "Window");
+        Assert.DoesNotContain("pending rename", viewModel.SummaryText);
+    }
+
+
+    [Fact]
+    public void ResetBlockNames_AfterDuplicate_ShouldRestoreOriginalSourceName()
+    {
+        var document = new CadDocument();
+        var definition = CreateDefinition("door", "Door");
+        document.BlockDefinitions.Add(definition);
+        var viewModel = new BlockManagerWindowViewModel(document);
+        EditableBlockDefinitionViewModel block = viewModel.Blocks.Single();
+        block.Name = "Main Door";
+        viewModel.SelectedBlock = block;
+
+        viewModel.DuplicateSelectedBlock();
+        viewModel.ResetBlockNames();
+
+        EditableBlockDefinitionViewModel original = viewModel.Blocks.Single(item => item.Id == definition.Id);
+        EditableBlockDefinitionViewModel duplicate = viewModel.Blocks.Single(item => item.Id != definition.Id);
+        Assert.Equal("Door", original.Name);
+        Assert.Equal("Main Door Copy", duplicate.Name);
+        Assert.Equal(0, viewModel.PendingRenameCount);
+    }
+
+    [Fact]
+    public void TryBuildResult_ShouldReturnTrimmedRenamedDefinition()
+    {
+        var document = new CadDocument();
+        var definition = CreateDefinition("door", "Door");
+        document.BlockDefinitions.Add(definition);
+        var viewModel = new BlockManagerWindowViewModel(document);
+        viewModel.Blocks.Single().Name = "  Main Door  ";
+
+        bool valid = viewModel.TryBuildResult(
+            BlockManagerAction.Close,
+            out BlockManagerResult result);
+
+        Assert.True(valid);
+        Assert.Equal("Main Door", result.BlockDefinitions.Single().Name);
+    }
+
     [Fact]
     public void TryBuildResult_ShouldRejectRecursiveDefinition()
     {

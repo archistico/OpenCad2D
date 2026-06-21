@@ -39,6 +39,8 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
             EntityTypeNames.ImageReference => root.Deserialize<ImageReferenceEntityDto>(options),
             EntityTypeNames.BlockReference => root.Deserialize<BlockReferenceEntityDto>(options),
             EntityTypeNames.Stair => root.Deserialize<StairEntityDto>(options),
+            EntityTypeNames.Door => root.Deserialize<DoorEntityDto>(options),
+            EntityTypeNames.Window => root.Deserialize<WindowEntityDto>(options),
             _ => new UnknownEntityDto
             {
                 Type = type ?? string.Empty,
@@ -128,6 +130,14 @@ public sealed class EntityDtoJsonConverter : JsonConverter<EntityDto>
 
             case StairEntityDto stair:
                 JsonSerializer.Serialize(writer, stair, options);
+                break;
+
+            case DoorEntityDto door:
+                JsonSerializer.Serialize(writer, door, options);
+                break;
+
+            case WindowEntityDto window:
+                JsonSerializer.Serialize(writer, window, options);
                 break;
 
             case UnknownEntityDto unknown:

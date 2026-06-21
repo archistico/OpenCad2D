@@ -20,12 +20,14 @@ public sealed class EditableBlockDefinitionViewModel : INotifyPropertyChanged
         bool containsNestedBlockReferences = false,
         bool hasSelfReference = false,
         bool hasRecursiveReference = false,
-        bool isReachableFromDrawing = false)
+        bool isReachableFromDrawing = false,
+        string? originalName = null)
     {
         ArgumentNullException.ThrowIfNull(definition);
 
         Definition = definition;
         Id = definition.Id;
+        OriginalName = originalName ?? definition.Name;
         _name = definition.Name;
         EntityCount = definition.Entities.Count;
         InstanceCount = instanceCount;
@@ -43,6 +45,8 @@ public sealed class EditableBlockDefinitionViewModel : INotifyPropertyChanged
 
     public BlockDefinitionId Id { get; }
 
+    public string OriginalName { get; }
+
     public string Name
     {
         get => _name;
@@ -57,8 +61,20 @@ public sealed class EditableBlockDefinitionViewModel : INotifyPropertyChanged
 
             _name = nextValue;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsRenamed));
+            OnPropertyChanged(nameof(RenameStatusText));
+            OnPropertyChanged(nameof(DetailsText));
         }
     }
+
+    public bool IsRenamed => !string.Equals(
+        Name.Trim(),
+        OriginalName.Trim(),
+        StringComparison.Ordinal);
+
+    public string RenameStatusText => IsRenamed
+        ? $"Renamed from '{OriginalName.Trim()}'"
+        : "Original name";
 
     public int EntityCount { get; }
 
@@ -164,7 +180,12 @@ public sealed class EditableBlockDefinitionViewModel : INotifyPropertyChanged
         $"{Name.Trim()} · {EntityCountText} entities · {InstanceCountText} drawing refs · " +
         $"{NestedReferenceCountText} nested refs · {TotalReferenceCountText} total refs · " +
         $"{(IsReachableFromDrawing ? "reachable from drawing" : "not drawing-reachable")} · " +
-        $"bounds {BoundsText}. {DiagnosticText}";
+        $"bounds {BoundsText}. {RenameStatusText}. {DiagnosticText}";
+
+    public void ResetName()
+    {
+        Name = OriginalName;
+    }
 
     public string? Validate(bool allowBlockingDiagnostics = false)
     {

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using OpenCad2D.Core.Architecture.Doors;
 using OpenCad2D.Core.Architecture.Stairs;
 using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Dimensions;
@@ -181,6 +182,8 @@ public sealed class SelectionPropertyPanelBuilder
             BezierSplineEntity spline => BuildBezierSplineGeometrySection(spline),
             ImageReferenceEntity imageReference => BuildImageReferenceGeometrySection(workspace, imageReference, setMessage, refresh),
             StairEntity stair => BuildStairGeometrySection(workspace, stair, setMessage, refresh),
+            DoorEntity door => BuildDoorGeometrySection(workspace, door, setMessage, refresh),
+            WindowEntity window => BuildWindowGeometrySection(workspace, window, setMessage, refresh),
             ArcEntity arc => BuildArcGeometrySection(workspace, arc, setMessage, refresh),
             _ => new PropertySectionViewModel(
                 "Geometry",
@@ -655,6 +658,45 @@ public sealed class SelectionPropertyPanelBuilder
                 ComboRow("Plan section marker", FormatYesNo(stair.ShowPlanSectionMarker), YesNoOptions, value => ReplaceStairPlanSectionMarker(workspace, stair.Id, value, setMessage, refresh)),
                 ComboRow("Show structure", FormatYesNo(stair.ShowStructure), YesNoOptions, value => ReplaceStairShowStructure(workspace, stair.Id, value, setMessage, refresh)),
                 EditableRow("Slab thickness", PropertyValueFormatter.FormatLength(stair.SlabThickness), value => ReplaceStairSlabThickness(workspace, stair.Id, value, setMessage, refresh))
+            });
+    }
+
+    private static PropertySectionViewModel BuildDoorGeometrySection(
+        CadWorkspace workspace,
+        DoorEntity door,
+        Action<string>? setMessage,
+        Action? refresh)
+    {
+        return new PropertySectionViewModel(
+            "Door",
+            new[]
+            {
+                Row("Insertion", PropertyValueFormatter.FormatPoint(door.InsertionPoint)),
+                Row("Anchor", door.Anchor.ToString()),
+                Row("Width", PropertyValueFormatter.FormatLength(door.Width)),
+                Row("Wall thickness", PropertyValueFormatter.FormatLength(door.WallThickness)),
+                Row("Opening angle", PropertyValueFormatter.FormatCoordinate(door.OpeningAngleDegrees)),
+                Row("Swing", FormatDoorSwingDirection(door.SwingDirection)),
+                ComboRow("Wall mask", FormatYesNo(door.MaskWallOpening), YesNoOptions, value => ReplaceDoorWallMask(workspace, door.Id, value, setMessage, refresh))
+            });
+    }
+
+    private static PropertySectionViewModel BuildWindowGeometrySection(
+        CadWorkspace workspace,
+        WindowEntity window,
+        Action<string>? setMessage,
+        Action? refresh)
+    {
+        return new PropertySectionViewModel(
+            "Window",
+            new[]
+            {
+                Row("Insertion", PropertyValueFormatter.FormatPoint(window.InsertionPoint)),
+                Row("Anchor", window.Anchor.ToString()),
+                Row("Width", PropertyValueFormatter.FormatLength(window.Width)),
+                Row("Wall thickness", PropertyValueFormatter.FormatLength(window.WallThickness)),
+                Row("Frame offset", PropertyValueFormatter.FormatLength(window.FrameOffset)),
+                ComboRow("Wall mask", FormatYesNo(window.MaskWallOpening), YesNoOptions, value => ReplaceWindowWallMask(workspace, window.Id, value, setMessage, refresh))
             });
     }
 
@@ -1199,6 +1241,39 @@ public sealed class SelectionPropertyPanelBuilder
             refresh);
     }
 
+
+    private static void ReplaceDoorWallMask(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<DoorEntity>(workspace, entityId, setMessage, out DoorEntity door) ||
+            !TryParseBoolean(value, setMessage, out bool maskWallOpening))
+        {
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            door.WithParameters(maskWallOpening: maskWallOpening),
+            "Door updated.",
+            setMessage,
+            refresh);
+    }
+
+    private static void ReplaceWindowWallMask(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<WindowEntity>(workspace, entityId, setMessage, out WindowEntity window) ||
+            !TryParseBoolean(value, setMessage, out bool maskWallOpening))
+        {
+            return;
+        }
+
+        ReplaceEntity(
+            workspace,
+            window.WithParameters(maskWallOpening: maskWallOpening),
+            "Window updated.",
+            setMessage,
+            refresh);
+    }
+
     private static void ReplaceStairView(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
     {
         if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
@@ -1727,6 +1802,16 @@ public sealed class SelectionPropertyPanelBuilder
         return true;
     }
 
+    private static string FormatDoorSwingDirection(DoorSwingDirection swingDirection)
+    {
+        return swingDirection switch
+        {
+            DoorSwingDirection.Left => "Left",
+            DoorSwingDirection.Right => "Right",
+            _ => swingDirection.ToString()
+        };
+    }
+
     private static string FormatStairView(StairViewKind viewKind)
     {
         return viewKind switch
@@ -1881,6 +1966,8 @@ public sealed class SelectionPropertyPanelBuilder
             BezierSplineEntity => "Spline",
             ImageReferenceEntity => "Image Reference",
             StairEntity => "Stair",
+            DoorEntity => "Door",
+            WindowEntity => "Window",
             ArcEntity => "Arc",
             _ => entity.Kind.ToString()
         };

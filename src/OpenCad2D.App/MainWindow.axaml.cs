@@ -1511,6 +1511,28 @@ public partial class MainWindow : Window
         CadCanvas.ClearSnapMarker();
     }
 
+    private void Door_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ActivateTool(ToolId.Door);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
+    private void Window_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ActivateTool(ToolId.Window);
+
+        RefreshStatus();
+
+        CadCanvas.ClearSnapMarker();
+    }
+
 
     private void HorizontalDimension_Click(
         object? sender,
@@ -3863,6 +3885,8 @@ public partial class MainWindow : Window
             "North Symbol" => "IconPoint",
             "Metric Scale Bar" => "IconDistance",
             "Stair" => "IconStair",
+            "Door" => "IconDoor",
+            "Window" => "IconWindow",
             "Horizontal Dim" => "IconHorizontalDim",
             "Vertical Dim" => "IconVerticalDim",
             "Aligned Dim" => "IconAlignedDim",
@@ -4107,6 +4131,14 @@ public partial class MainWindow : Window
         SetActiveToolButton(
             StairButton,
             activeToolName.Equals("Stair", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            DoorButton,
+            activeToolName.Equals("Door", StringComparison.OrdinalIgnoreCase));
+
+        SetActiveToolButton(
+            WindowButton,
+            activeToolName.Equals("Window", StringComparison.OrdinalIgnoreCase));
 
         SetActiveToolButton(
             HorizontalDimensionButton,

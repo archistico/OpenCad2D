@@ -398,6 +398,22 @@ public sealed class DxfExporter : IDxfExporter
                         stair,
                         contentBounds);
                     break;
+
+                case DoorEntity door:
+                    WriteDoor(
+                        writer,
+                        layer.Name,
+                        door,
+                        contentBounds);
+                    break;
+
+                case WindowEntity window:
+                    WriteWindow(
+                        writer,
+                        layer.Name,
+                        window,
+                        contentBounds);
+                    break;
             }
         }
 
@@ -412,6 +428,62 @@ public sealed class DxfExporter : IDxfExporter
         BoundingBox2D? contentBounds)
     {
         foreach (LineSegment2D segment in stair.GetGeneratedGeometry().Segments)
+        {
+            WriteLineSegment(
+                writer,
+                layerName,
+                segment,
+                contentBounds);
+        }
+    }
+
+    private static void WriteDoor(
+        DxfDocumentWriter writer,
+        string layerName,
+        DoorEntity door,
+        BoundingBox2D? contentBounds)
+    {
+        var geometry = door.GetGeneratedGeometry();
+
+        if (geometry.HasWallMask)
+        {
+            WritePolygonHatch(
+                writer,
+                layerName,
+                CadColor.FromRgb(255, 255, 255),
+                geometry.WallMaskPolygon,
+                contentBounds);
+        }
+
+        foreach (LineSegment2D segment in geometry.Segments)
+        {
+            WriteLineSegment(
+                writer,
+                layerName,
+                segment,
+                contentBounds);
+        }
+    }
+
+    private static void WriteWindow(
+        DxfDocumentWriter writer,
+        string layerName,
+        WindowEntity window,
+        BoundingBox2D? contentBounds)
+    {
+        var geometry = window.GetGeneratedGeometry();
+
+        if (geometry.HasWallMask)
+        {
+            WritePolygonHatch(
+                writer,
+                layerName,
+                CadColor.FromRgb(255, 255, 255),
+                geometry.WallMaskPolygon,
+                contentBounds);
+        }
+
+        foreach (LineSegment2D segment in geometry.Segments)
         {
             WriteLineSegment(
                 writer,
@@ -878,6 +950,42 @@ public sealed class DxfExporter : IDxfExporter
                 writer.WriteGroup(42, polyline.SegmentBulges[index]);
             }
         }
+    }
+
+
+    private static void WritePolygonHatch(
+        DxfDocumentWriter writer,
+        string layerName,
+        CadColor fillColor,
+        IReadOnlyList<Point2D> vertices,
+        BoundingBox2D? contentBounds)
+    {
+        if (vertices.Count < 3)
+        {
+            return;
+        }
+
+        WriteHatchHeader(
+            writer,
+            layerName,
+            fillColor);
+        writer.WriteGroup(91, 1);
+        writer.WriteGroup(92, 7);
+        writer.WriteGroup(72, 0);
+        writer.WriteGroup(73, 1);
+        writer.WriteGroup(93, vertices.Count);
+
+        foreach (Point2D vertex in vertices)
+        {
+            Point2D dxfVertex = ToDxfPoint(
+                vertex,
+                contentBounds);
+
+            writer.WriteGroup(10, dxfVertex.X);
+            writer.WriteGroup(20, dxfVertex.Y);
+        }
+
+        WriteHatchFooter(writer);
     }
 
     private static void WritePolylineHatchIfFilled(

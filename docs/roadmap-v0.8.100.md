@@ -19,7 +19,7 @@ Suggested numbering for the active line:
 | v0.8.140 - v0.8.149 | Boundary Fill v1/v2 | [x] for filled-polyline workflow |
 | v0.8.150 - v0.8.159 | HatchEntity foundation | [ ] |
 | v0.8.160 - v0.8.169 | Documentation reconciliation, Library content, shared planning contracts and compatibility pass | [~] — v0.8.160 and v0.8.164 done, v0.8.161 implemented pending manual validation |
-| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A, 170B, 170C and 170D implemented, remaining closeout/polish planned |
+| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A-170E implemented; v0.8.180A shared anchor foundation, v0.8.180B HUD anchor selector foundation, v0.8.180C minimal DoorEntity and v0.8.180D door wall-mask foundation and v0.8.180E minimal WindowEntity implemented; manual closeout validation still required |
 
 Exact patch numbers can move, but each milestone should remain independently buildable, testable and documented.
 
@@ -32,19 +32,27 @@ The historical order was correct: Import Drawing, Blocks, Dynamic HUD, Library, 
 1. **Documentation reconciliation**.
 2. **Small real Library content pack**.
 3. **Planning specification pass with shared contracts**.
-4. **Blocks v2 slice 170A: Block Manager inventory and diagnostics**.
-5. **Compatibility/manual smoke validation**.
-6. **Blocks v2 remaining slices: final rename/preview polish, manual validation and user-guide closeout**.
-7. **Parametric doors/windows with wall masking and anchor control**.
+4. **Blocks v2 slices 170A-170E: manager inventory, duplicate/purge, edit-session hardening, Library conflict policy and rename closeout**.
+5. **Compatibility/manual smoke validation for Library and Blocks v2**, using the expanded v0.8.162 checklist and report template.
+6. **Shared anchor foundation**, implemented as v0.8.180A in core and v0.8.180B in the HUD layer before DoorEntity/WindowEntity geometry. This foundation is for parametric/annotation tools; blocks and static Library items continue to use their creation base point.
+7. **Parametric doors/windows with wall masking and anchor control**. Door foundation and non-destructive door masking are now implemented; first WindowEntity remains next in this family.
 8. **Array tools**.
 9. **HatchEntity and hatch patterns**.
 10. **Annotation marker tools: arrows, section labels and coordinate callouts**.
 11. **UI customization and icon SVG workflow**.
 12. **v0.9 stabilization gate**.
 
-This order keeps dependencies clean. Blocks v2 improves the infrastructure used by Library items and repeated content. Doors/windows depend on reliable parametric insertion, anchor points and layer/line behavior. Arrays should operate on ordinary entities and block references before the library grows too much. HatchEntity should remain separate from Boundary Fill's current filled-polyline model. Annotation marker tools can reuse arrowhead/style/HUD concepts. UI customization and SVG icon import/export should happen after the main tool inventory has stabilized enough to expose configurable workspaces.
+This order keeps dependencies clean. Blocks v2 improves the infrastructure used by Library items and repeated content. Doors/windows depend on reliable parametric insertion, anchor points and layer/line behavior. Blocks do not adopt the 9-point anchor selector because their insertion reference remains the base point chosen at creation. Arrays should operate on ordinary entities and block references before the library grows too much. HatchEntity should remain separate from Boundary Fill's current filled-polyline model. Annotation marker tools can reuse arrowhead/style/HUD concepts. UI customization and SVG icon import/export should happen after the main tool inventory has stabilized enough to expose configurable workspaces.
 
 ---
+
+## v0.8.162 — Compatibility smoke pass
+
+Specification/checklist: `docs/testing/v0.8.162-compatibility-smoke-checklist.md`. Report template: `docs/testing/v0.8.162-compatibility-smoke-report-template.md`.
+
+Status: [ ] until the maintainer records a successful manual run or lists concrete v0.8.163 cleanup tasks.
+
+This is now the post-Blocks-v2 validation gate. It must cover Library insertion/reuse/conflict behavior, Block Manager 170A-170E workflows, save/reopen, Dynamic HUD, Boundary Fill v2, Stairs, image references and SVG/PDF/DXF/PNG export. The pass is intentionally manual because several behaviors depend on previews, focus, mouse interaction, external viewers and publish-folder layout.
 
 ## Completed v0.8.100+ milestones
 
@@ -308,7 +316,7 @@ This is documentation-only. It does not replace the v0.8.162 manual validation o
 
 Specification: `docs/specs/v0.8.170-blocks-v2.md`.
 
-Status: [~] started. Slices `v0.8.170A`, `v0.8.170B`, `v0.8.170C` and `v0.8.170D` are implemented in code. 170A-170C have passed maintainer-side automated tests; 170D needs maintainer-side build/test plus manual checklist validation before being considered complete.
+Status: [~] started. Slices `v0.8.170A`, `v0.8.170B`, `v0.8.170C`, `v0.8.170D` and `v0.8.170E` are implemented in code. 170E needs maintainer-side build/test plus manual checklist validation before the Blocks v2 pass can be treated as closed for the current scope.
 
 Implemented in `v0.8.170A`:
 
@@ -337,18 +345,37 @@ Implemented in `v0.8.170C`:
 - Cancel removes temporary session entities and entities created during the session, then restores the original block reference.
 - Automated regression tests cover external selection safety, created-entity save behavior and created-entity cancel cleanup.
 
-Remaining Blocks v2 work:
+Implemented in `v0.8.170D`:
+
+- Library insertion compares prepared block definitions and reuses equivalent existing definitions.
+- Same Library item id with changed content creates a safe unique id/name instead of silently reusing the old definition.
+- Same block name with equivalent content reuses the existing definition even when the Library item id differs.
+- Same block name with different content creates a safe unique name and leaves the existing definition unchanged.
+
+Implemented in `v0.8.170E`:
+
+- Inline manager renames now expose pending rename state.
+- The manager summary reports pending rename count.
+- Selected block details show the original name when a block was renamed.
+- `Reset Names` restores all pending name edits before commit.
+- Typing in a name clears stale validation messages and refreshes summary/detail state.
+- Automated tests cover pending rename reporting, reset names and trimmed rename commit.
+
+Remaining non-blocking Blocks v2 polish:
 
 - visual preview panel/thumbnail;
-- stronger rename UX and validation messaging beyond inline name validation;
-- nested-block edit/import policy;
-- Library import conflict policy.
+- deeper nested-block edit/import policy if needed before doors/windows.
 
 Goal: make block management strong enough for architectural objects, Library workflows and repeated technical details.
 
 ### v0.8.180 — Parametric doors and windows
 
-Specification: `docs/specs/v0.8.180-parametric-doors-windows.md`.
+Specifications:
+
+- `docs/specs/v0.8.180-parametric-doors-windows.md`;
+- `docs/specs/v0.8.180C-minimal-door-entity.md`;
+- `docs/specs/v0.8.180D-door-wall-mask-foundation.md`;
+- `docs/specs/v0.8.180E-minimal-window-entity.md`.
 
 Goal: add persistent parametric door/window objects with 9-point anchor selection in the HUD and optional wall-line masking/opening behavior at insertion.
 

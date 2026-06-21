@@ -228,6 +228,10 @@
     <!-- Stair.svg: simple straight stair plan icon. -->
     <StreamGeometry x:Key="IconStair">M4 18h16 M4 14h16 M4 10h16 M4 6h16 M4 6v12 M20 6v12 M8 6v12 M12 6v12 M16 6v12</StreamGeometry>
 
+    <!-- Door.svg: schematic plan door with jamb, leaf and swing. -->
+    <StreamGeometry x:Key="IconDoor">M4 18h12 M4 6v12 M4 6h3 M7 6l9 9 M7 6c6 0 9 3 9 9</StreamGeometry>
+    <StreamGeometry x:Key="IconWindow">M3 7h14v10H3z M3 10h14 M3 14h14 M10 7v10</StreamGeometry>
+
     <!-- Text.svg -->
     <StreamGeometry x:Key="IconText">M4 20l3 0 M14 20l7 0 M6.9 15l6.9 0 M10.2 6.3l5.8 13.7 M5 20l6 -16l2 0l7 16</StreamGeometry>
 

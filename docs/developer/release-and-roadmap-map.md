@@ -40,7 +40,7 @@ The release documents should not become a second User Guide. They should answer 
 
 A future cleanup may move these files into a structure like this:
 
-```text
+``text
 docs/releases/
   v0.8/
   v0.9/
@@ -48,9 +48,16 @@ docs/releases/
 docs/project/
   roadmap.md
   stabilization-v0.9-plan.md
-```
+``
 
 That cleanup should happen only when the documentation links are stable and when the project is ready to spend time on file organization. Until then, the current root-level files should remain in place and be indexed from this page.
 
 
-The current manual validation entry points are `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md` for Blocks v2 inventory/diagnostics, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` for Blocks v2 duplicate/delete/purge behavior, `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md` for Edit Block session safety, `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md` for Library/block conflict handling and `docs/testing/v0.8.162-compatibility-smoke-checklist.md` for the broader consolidation pass. Use them before marking the first Library pack and Blocks v2 slices complete. The shared planning contracts added in `docs/specs/shared-*.md` should be read before implementing the remaining Blocks v2 slices, doors/windows, arrays, hatch, annotation markers, UI customization or icon SVG workflow.
+The current manual validation entry points are `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md` for Blocks v2 inventory/diagnostics, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` for Blocks v2 duplicate/delete/purge behavior, `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md` for Edit Block session safety, `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md` for Library/block conflict handling, `docs/testing/v0.8.170E-block-manager-rename-closeout-checklist.md` for rename closeout and `docs/testing/v0.8.162-compatibility-smoke-checklist.md`, `docs/testing/v0.8.180A-shared-anchor-foundation-checklist.md`, `docs/testing/v0.8.180B-hud-anchor-selector-foundation-checklist.md`, `docs/specs/v0.8.180C-minimal-door-entity.md`, `docs/testing/v0.8.180C-minimal-door-entity-checklist.md`, `docs/specs/v0.8.180D-door-wall-mask-foundation.md`, `docs/specs/v0.8.180E-minimal-window-entity.md` and `docs/testing/v0.8.180D-door-wall-mask-foundation-checklist.md`, `docs/testing/v0.8.180E-minimal-window-entity-checklist.md` plus `docs/testing/v0.8.162-compatibility-smoke-report-template.md` for the broader post-Blocks-v2 consolidation pass. Use them before marking the first Library pack, Blocks v2 slices and door foundation slices complete or moving to the next visible doors/windows feature. The shared planning contracts added in `docs/specs/shared-*.md` and the v0.8.180A-v0.8.180E door/window foundations should be read before implementing advanced door/window editing, arrays, hatch, annotation markers, UI customization or icon SVG workflow.
+
+- `docs/specs/v0.8.180C-minimal-door-entity.md` — Minimal persistent parametric door entity.
+- `docs/testing/v0.8.180C-minimal-door-entity-checklist.md` — Manual smoke checklist for the first door entity slice.
+- `docs/specs/v0.8.180D-door-wall-mask-foundation.md` — Non-destructive wall-opening mask for `DoorEntity`.
+- `docs/specs/v0.8.180E-minimal-window-entity.md` — First persistent parametric `WindowEntity` using the shared anchor and wall-mask contracts.
+- `docs/testing/v0.8.180D-door-wall-mask-foundation-checklist.md` — Manual smoke checklist for door masks and export behavior.
+- `docs/testing/v0.8.180E-minimal-window-entity-checklist.md` — Manual smoke checklist for minimal windows.

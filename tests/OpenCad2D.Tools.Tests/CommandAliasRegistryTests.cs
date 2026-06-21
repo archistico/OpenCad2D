@@ -48,6 +48,12 @@ public sealed class CommandAliasRegistryTests
     [InlineData("stairs", ToolId.Stair)]
     [InlineData("SCALA", ToolId.Stair)]
     [InlineData("st", ToolId.Stair)]
+    [InlineData("DOOR", ToolId.Door)]
+    [InlineData("porta", ToolId.Door)]
+    [InlineData("dr", ToolId.Door)]
+    [InlineData("WINDOW", ToolId.Window)]
+    [InlineData("finestra", ToolId.Window)]
+    [InlineData("wn", ToolId.Window)]
     public void TryResolve_WithKnownAlias_ShouldReturnTool(
         string alias,
         ToolId expectedToolId)

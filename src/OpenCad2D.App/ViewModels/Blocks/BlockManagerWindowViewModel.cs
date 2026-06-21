@@ -14,6 +14,7 @@ namespace OpenCad2D.App.ViewModels.Blocks;
 public sealed class BlockManagerWindowViewModel : INotifyPropertyChanged
 {
     private readonly CadDocument _document;
+    private readonly Dictionary<BlockDefinitionId, string> _originalNames = new();
     private EditableBlockDefinitionViewModel? _selectedBlock;
     private string _validationMessage = string.Empty;
 
@@ -64,6 +65,26 @@ public sealed class BlockManagerWindowViewModel : INotifyPropertyChanged
 
     public bool CanPurgeUnusedBlocks => PurgeCandidateCount > 0;
 
+    public int PendingRenameCount => Blocks.Count(block => block.IsRenamed);
+
+    public bool HasPendingRenames => PendingRenameCount > 0;
+
+    public bool CanResetBlockNames => HasPendingRenames;
+
+    public string RenameSummaryText
+    {
+        get
+        {
+            int pendingRenameCount = PendingRenameCount;
+
+            return pendingRenameCount == 0
+                ? "No pending block renames."
+                : pendingRenameCount == 1
+                    ? "1 pending block rename. It will be applied when you press OK."
+                    : $"{pendingRenameCount} pending block renames. They will be applied when you press OK.";
+        }
+    }
+
     public bool HasDocumentDiagnostics => MissingDrawingReferenceCount > 0 ||
                                           MissingNestedReferenceCount > 0;
 
@@ -112,9 +133,18 @@ public sealed class BlockManagerWindowViewModel : INotifyPropertyChanged
                 ? "1 purge candidate"
                 : $"{PurgeCandidateCount} purge candidates";
 
-            return issueCount == 0
+            int pendingRenameCount = PendingRenameCount;
+            string renameText = pendingRenameCount == 1
+                ? "1 pending rename"
+                : $"{pendingRenameCount} pending renames";
+
+            string summary = issueCount == 0
                 ? $"{blockText} · {usedCount} drawing-used · {purgeText}"
                 : $"{blockText} · {usedCount} drawing-used · {purgeText} · {issueCount} diagnostics";
+
+            return pendingRenameCount == 0
+                ? summary
+                : $"{summary} · {renameText}";
         }
     }
 
@@ -252,6 +282,22 @@ public sealed class BlockManagerWindowViewModel : INotifyPropertyChanged
         ClearValidation();
     }
 
+    public void ResetBlockNames()
+    {
+        if (!HasPendingRenames)
+        {
+            return;
+        }
+
+        foreach (EditableBlockDefinitionViewModel block in Blocks)
+        {
+            block.ResetName();
+        }
+
+        ClearValidation();
+        RefreshRenameState();
+    }
+
     public bool TryBuildResult(
         BlockManagerAction action,
         out BlockManagerResult result)
@@ -324,6 +370,22 @@ public sealed class BlockManagerWindowViewModel : INotifyPropertyChanged
 
         PurgeCandidateCount = definitions.Count(definition => !drawingReachableIds.Contains(definition.Id));
 
+        foreach (BlockDefinition definition in definitions)
+        {
+            _originalNames.TryAdd(
+                definition.Id,
+                definition.Name);
+        }
+
+        HashSet<BlockDefinitionId> retainedDefinitionIds = definitionIds;
+        foreach (BlockDefinitionId originalId in _originalNames.Keys.ToList())
+        {
+            if (!retainedDefinitionIds.Contains(originalId))
+            {
+                _originalNames.Remove(originalId);
+            }
+        }
+
         List<EditableBlockDefinitionViewModel> nextBlocks = definitions
             .OrderBy(definition => definition.Name, StringComparer.OrdinalIgnoreCase)
             .Select(definition => new EditableBlockDefinitionViewModel(
@@ -338,13 +400,20 @@ public sealed class BlockManagerWindowViewModel : INotifyPropertyChanged
                     .OfType<BlockReferenceEntity>()
                     .Any(reference => reference.BlockDefinitionId == definition.Id),
                 recursiveDefinitionIds.Contains(definition.Id),
-                drawingReachableIds.Contains(definition.Id)))
+                drawingReachableIds.Contains(definition.Id),
+                _originalNames[definition.Id]))
             .ToList();
+
+        foreach (EditableBlockDefinitionViewModel block in Blocks)
+        {
+            block.PropertyChanged -= Block_PropertyChanged;
+        }
 
         Blocks.Clear();
 
         foreach (EditableBlockDefinitionViewModel block in nextBlocks)
         {
+            block.PropertyChanged += Block_PropertyChanged;
             Blocks.Add(block);
         }
 
@@ -362,10 +431,34 @@ public sealed class BlockManagerWindowViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(MissingNestedReferenceCount));
         OnPropertyChanged(nameof(PurgeCandidateCount));
         OnPropertyChanged(nameof(CanPurgeUnusedBlocks));
+        RefreshRenameState();
         OnPropertyChanged(nameof(HasDocumentDiagnostics));
         OnPropertyChanged(nameof(DocumentDiagnosticsText));
         OnPropertyChanged(nameof(SummaryText));
         OnSelectedBlockStateChanged();
+    }
+
+    private void RefreshRenameState()
+    {
+        OnPropertyChanged(nameof(PendingRenameCount));
+        OnPropertyChanged(nameof(HasPendingRenames));
+        OnPropertyChanged(nameof(CanResetBlockNames));
+        OnPropertyChanged(nameof(RenameSummaryText));
+        OnPropertyChanged(nameof(SummaryText));
+        OnPropertyChanged(nameof(SelectedBlockDetailsText));
+    }
+
+    private void Block_PropertyChanged(
+        object? sender,
+        PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(EditableBlockDefinitionViewModel.Name) or
+            nameof(EditableBlockDefinitionViewModel.IsRenamed) or
+            nameof(EditableBlockDefinitionViewModel.RenameStatusText))
+        {
+            ClearValidation();
+            RefreshRenameState();
+        }
     }
 
     private void OnSelectedBlockStateChanged()

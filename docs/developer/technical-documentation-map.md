@@ -38,7 +38,7 @@ For user-facing changes, update `user-guide/03-file-management.md`, `user-guide/
 
 Start with `library-browser.md`, `docs/specs/v0.8.161-library-content-pack.md` and the relevant versioned specifications in `docs/specs/`. The project decision is that doors, windows, and stairs are parametric objects, while general reusable items remain static `.opencad2d.json` objects loaded from the Library.
 
-For blocks and library infrastructure, also read `docs/specs/v0.8.170-blocks-v2.md`, `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md`, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md`, `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md` and `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md`. For parametric doors/windows, read `docs/specs/v0.8.180-parametric-doors-windows.md`, `docs/specs/shared-anchor-system.md` and `docs/specs/shared-wall-mask-openings.md`. For repeated objects, read `docs/specs/v0.8.190-array-tools.md`.
+For blocks and library infrastructure, also read `docs/specs/v0.8.170-blocks-v2.md`, `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md`, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md`, `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md`, `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md`, `docs/testing/v0.8.170E-block-manager-rename-closeout-checklist.md`, the expanded `docs/testing/v0.8.162-compatibility-smoke-checklist.md` and the report template `docs/testing/v0.8.162-compatibility-smoke-report-template.md`. For parametric doors/windows, read `docs/specs/v0.8.180A-shared-anchor-foundation.md`, `docs/specs/v0.8.180B-hud-anchor-selector-foundation.md`, `docs/specs/v0.8.180-parametric-doors-windows.md`, `docs/specs/shared-anchor-system.md`, `docs/specs/shared-wall-mask-openings.md` and `docs/testing/v0.8.180B-hud-anchor-selector-foundation-checklist.md`, `docs/specs/v0.8.180C-minimal-door-entity.md`, `docs/testing/v0.8.180C-minimal-door-entity-checklist.md`, `docs/specs/v0.8.180D-door-wall-mask-foundation.md`, `docs/specs/v0.8.180E-minimal-window-entity.md` and `docs/testing/v0.8.180D-door-wall-mask-foundation-checklist.md`. For repeated objects, read `docs/specs/v0.8.190-array-tools.md`.
 
 The user-facing explanation belongs in `user-guide/20-library.md` and `user-guide/08-symbols.md`.
 
@@ -61,3 +61,10 @@ Before publishing, confirm that the User Guide reflects the visible behavior of 
 Use the files under `docs/testing/`. They are especially useful for workflows that depend on mouse movement, visual feedback, snap behavior, HUD focus, or other interaction details that are difficult to validate with unit tests alone.
 
 Manual verification notes should not replace automated tests, but they are valuable evidence that a visual workflow was checked in a specific version or development phase.
+
+- `docs/specs/v0.8.180C-minimal-door-entity.md` — Minimal persistent parametric door entity.
+- `docs/testing/v0.8.180C-minimal-door-entity-checklist.md` — Manual smoke checklist for the first door entity slice.
+- `docs/specs/v0.8.180D-door-wall-mask-foundation.md` — Non-destructive wall-opening mask for `DoorEntity`.
+- `docs/specs/v0.8.180E-minimal-window-entity.md` — First persistent parametric `WindowEntity` using the shared anchor and wall-mask contracts.
+- `docs/testing/v0.8.180D-door-wall-mask-foundation-checklist.md` — Manual smoke checklist for door masks and export behavior.
+- `docs/testing/v0.8.180E-minimal-window-entity-checklist.md` — Manual smoke checklist for minimal windows.

@@ -690,6 +690,46 @@ public sealed class SvgExporterTests
         Assert.Equal(9, CountOccurrences(result.Content, "<line "));
     }
 
+
+    [Fact]
+    public void Export_WhenDoorMaskIsEnabled_ShouldWriteWhiteMaskPolygonBeforeDoorLines()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20,
+            maskWallOpening: true));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        int polygonIndex = result.Content.IndexOf("<polygon ", StringComparison.Ordinal);
+        int lineIndex = result.Content.IndexOf("<line ", StringComparison.Ordinal);
+
+        Assert.True(polygonIndex >= 0);
+        Assert.True(lineIndex > polygonIndex);
+        Assert.Contains("fill=\"#FFFFFF\" stroke=\"none\"", result.Content);
+    }
+
+    [Fact]
+    public void Export_WhenDoorMaskIsDisabled_ShouldNotWriteMaskPolygon()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20,
+            maskWallOpening: false));
+
+        var exporter = new SvgExporter();
+
+        SvgExportResult result = exporter.Export(document);
+
+        Assert.DoesNotContain("fill=\"#FFFFFF\" stroke=\"none\"", result.Content);
+    }
+
     private static string GetSingleSvgElement(
         string content,
         string elementName)

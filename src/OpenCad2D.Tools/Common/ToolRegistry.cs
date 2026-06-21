@@ -173,6 +173,22 @@ public sealed class ToolRegistry
                 "Symbols"),
             () => new StairTool());
 
+        Register(
+            new ToolDescriptor(
+                ToolId.Door,
+                "Door",
+                "Door",
+                "Symbols"),
+            () => new DoorTool());
+
+        Register(
+            new ToolDescriptor(
+                ToolId.Window,
+                "Window",
+                "Window",
+                "Symbols"),
+            () => new WindowTool());
+
 
         Register(
             new ToolDescriptor(

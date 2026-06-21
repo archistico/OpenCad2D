@@ -299,6 +299,20 @@ public sealed class PdfExporter : IPdfExporter
                     context);
                 break;
 
+            case DoorEntity door:
+                WriteDoor(
+                    builder,
+                    door,
+                    context);
+                break;
+
+            case WindowEntity window:
+                WriteWindow(
+                    builder,
+                    window,
+                    context);
+                break;
+
             case TextEntity text:
                 WriteText(
                     builder,
@@ -651,6 +665,87 @@ public sealed class PdfExporter : IPdfExporter
                 segment.End,
                 context);
         }
+    }
+
+    private static void WriteDoor(
+        StringBuilder builder,
+        DoorEntity door,
+        PdfExportContext context)
+    {
+        var geometry = door.GetGeneratedGeometry();
+
+        if (geometry.HasWallMask)
+        {
+            WriteWhiteFilledPolygon(
+                builder,
+                geometry.WallMaskPolygon,
+                context);
+        }
+
+        foreach (LineSegment2D segment in geometry.Segments)
+        {
+            WriteLine(
+                builder,
+                segment.Start,
+                segment.End,
+                context);
+        }
+    }
+
+
+    private static void WriteWindow(
+        StringBuilder builder,
+        WindowEntity window,
+        PdfExportContext context)
+    {
+        var geometry = window.GetGeneratedGeometry();
+
+        if (geometry.HasWallMask)
+        {
+            WriteWhiteFilledPolygon(
+                builder,
+                geometry.WallMaskPolygon,
+                context);
+        }
+
+        foreach (LineSegment2D segment in geometry.Segments)
+        {
+            WriteLine(
+                builder,
+                segment.Start,
+                segment.End,
+                context);
+        }
+    }
+
+
+    private static void WriteWhiteFilledPolygon(
+        StringBuilder builder,
+        IReadOnlyList<Point2D> vertices,
+        PdfExportContext context)
+    {
+        if (vertices.Count < 3)
+        {
+            return;
+        }
+
+        Point2D first = ToPdfPoint(
+            vertices[0],
+            context);
+
+        builder.AppendLine("1 1 1 rg");
+        builder.AppendLine($"{Format(first.X)} {Format(first.Y)} m");
+
+        foreach (Point2D vertex in vertices.Skip(1))
+        {
+            Point2D point = ToPdfPoint(
+                vertex,
+                context);
+            builder.AppendLine($"{Format(point.X)} {Format(point.Y)} l");
+        }
+
+        builder.AppendLine("h");
+        builder.AppendLine("f");
     }
 
     private static void WriteDimension(

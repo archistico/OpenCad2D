@@ -15,13 +15,15 @@ public sealed class CommandHudStateViewModel
         bool isVisible,
         string? toolName,
         CommandPromptState promptState,
-        IReadOnlyList<CommandHudFieldViewModel>? fields = null)
+        IReadOnlyList<CommandHudFieldViewModel>? fields = null,
+        CommandHudAnchorSelectorViewModel? anchorSelector = null)
     {
         IsVisible = isVisible;
         ToolName = toolName;
         PromptState = promptState;
         Fields = fields ?? Array.Empty<CommandHudFieldViewModel>();
         FieldRows = BuildFieldRows(Fields);
+        AnchorSelector = anchorSelector ?? CommandHudAnchorSelectorViewModel.Hidden;
         OptionViews = promptState.Options
             .Select(CommandHudOptionViewModel.FromOption)
             .ToList();
@@ -48,6 +50,8 @@ public sealed class CommandHudStateViewModel
     public IReadOnlyList<CommandHudFieldViewModel> Fields { get; }
 
     public IReadOnlyList<CommandHudFieldRowViewModel> FieldRows { get; }
+
+    public CommandHudAnchorSelectorViewModel AnchorSelector { get; }
 
     private static IReadOnlyList<CommandHudFieldRowViewModel> BuildFieldRows(
         IReadOnlyList<CommandHudFieldViewModel> fields)

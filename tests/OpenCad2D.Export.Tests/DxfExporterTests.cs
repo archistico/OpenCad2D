@@ -681,6 +681,48 @@ public sealed class DxfExporterTests
         Assert.Contains("11\n0.9\n21\n0", content);
     }
 
+
+    [Fact]
+    public void Export_WhenDoorMaskIsEnabled_ShouldWriteSolidHatchBeforeDoorLinework()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20,
+            maskWallOpening: true));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(document);
+        string content = Normalize(result.Content);
+
+        int hatchIndex = content.IndexOf("0\nHATCH", StringComparison.Ordinal);
+        int lineIndex = content.IndexOf("0\nLINE", StringComparison.Ordinal);
+
+        Assert.True(hatchIndex >= 0);
+        Assert.True(lineIndex > hatchIndex);
+        Assert.Contains("2\nSOLID", content);
+    }
+
+    [Fact]
+    public void Export_WhenDoorMaskIsDisabled_ShouldNotWriteDoorHatch()
+    {
+        var document = new CadDocument();
+        document.AddEntity(new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20,
+            maskWallOpening: false));
+
+        var exporter = new DxfExporter();
+
+        DxfExportResult result = exporter.Export(document);
+        string content = Normalize(result.Content);
+
+        Assert.DoesNotContain("0\nHATCH", content);
+    }
+
     private static string Normalize(string value)
     {
         return value.Replace("\r\n", "\n");
