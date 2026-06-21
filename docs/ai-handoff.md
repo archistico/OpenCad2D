@@ -1,10 +1,10 @@
-# OpenCad2D AI handoff — 2026-06-21 Blocks v2 170B
+# OpenCad2D AI handoff — 2026-06-21 Blocks v2 170C
 
 This document is the current handoff for the next OpenCad2D development session. It replaces older v0.9-first wording: the active line is now the reconciled v0.8 consolidation line, and the next v0.9 gate is a future stabilization/release checkpoint.
 
 ## Current active line
 
-OpenCad2D remains in the v0.8 consolidation line. Documentation reconciliation is complete, a first real Library content pack has been added, and the planning specification pass defines the shared contracts for the next feature families. The first Blocks v2 code slice, v0.8.170A, was added and the maintainer confirmed the automated tests passed after the singular/plural test fix. The second slice, v0.8.170B, now adds safe duplicate, selected delete and purge operations in the Block Manager. The next practical validation step is maintainer-side build/test plus the v0.8.170B manual checklist, then the broader v0.8.162 compatibility pass.
+OpenCad2D remains in the v0.8 consolidation line. Documentation reconciliation is complete, a first real Library content pack has been added, and the planning specification pass defines the shared contracts for the next feature families. The first Blocks v2 code slice, v0.8.170A, was added and the maintainer confirmed the automated tests passed after the singular/plural test fix. The second slice, v0.8.170B, added safe duplicate, selected delete and purge operations in the Block Manager. The third slice, v0.8.170C, now hardens the in-place Edit Block session by making the active state explicit, saving only session-scoped entities, ignoring pre-existing external drawing entities and discarding session-created entities on cancel. The next practical validation step is maintainer-side build/test plus the v0.8.170C manual checklist, then the broader v0.8.162 compatibility pass.
 
 The source-of-truth planning documents are:
 
@@ -20,7 +20,7 @@ The following areas should not be reopened as if they were still planned foundat
 | Area | Current status |
 |---|---|
 | Import Drawing | Implemented with insertion point, scale/rotation and undoable merge. |
-| Blocks v1 / v2 170A-170B | Blocks v1 remains implemented. The Block Manager now has inventory/diagnostics plus duplicate selected definition, selected delete for fully unreferenced definitions, and bulk purge of definitions not reachable from drawing block references. |
+| Blocks v1 / v2 170A-170C | Blocks v1 remains implemented. The Block Manager now has inventory/diagnostics plus duplicate selected definition, selected delete for fully unreferenced definitions, bulk purge of definitions not reachable from drawing block references and hardened Edit Block session scope. |
 | Dynamic Command HUD | Implemented and replaces the old fixed command row. |
 | Library Browser | Implemented as a browser for `library/**/*.opencad2d.json` snippets, grouped by category, previewed and inserted as block references. |
 | Stairs | Implemented as persistent straight `StairEntity` with plan/side/front generated linework, Property Panel editing, save/reopen and export. |
@@ -33,9 +33,9 @@ The following areas should not be reopened as if they were still planned foundat
 
 The next work should stay focused and evidence-driven.
 
-First, run the automated tests on the maintainer Windows environment. This sandbox did not have `dotnet`, so v0.8.170B still needs local build/test confirmation.
+First, run the automated tests on the maintainer Windows environment. This sandbox did not have `dotnet`, so v0.8.170C still needs local build/test confirmation.
 
-Second, run `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md`: duplicate, selected delete, purge unused block trees, purge preservation for drawing-reachable nested blocks and undo after OK. Also keep `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md` as the inventory regression checklist.
+Second, run `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md`: active-state buttons, save scope, cancel cleanup, external geometry safety and undo after save. Also keep `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md` and `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` as regression checklists.
 
 Third, run `docs/testing/v0.8.162-compatibility-smoke-checklist.md` on the maintainer Windows environment: publish copy, Library insertion/explode, save/reopen, SVG/PDF/DXF, Stairs Property Panel, Boundary Fill v2 Gap cases, image transparency and block workflows.
 
@@ -45,7 +45,7 @@ Fifth, keep v0.8.164 as the design-contract baseline for future code. Before imp
 
 Sixth, only promote bugfix work when it is tied to a real failing test, manual sample, confusing workflow or data-corruption risk. Avoid speculative refactors while the v0.8.160+ consolidation is still open.
 
-Seventh, the next recommended Blocks v2 implementation slice after validation is `v0.8.170C`: Edit Block workflow hardening.
+Seventh, the next recommended Blocks v2 implementation slice after validation is `v0.8.170D`: Library import conflict policy and safe unique-name handling.
 
 
 ## v0.8.170A implementation notes
@@ -76,11 +76,28 @@ Implemented behavior:
 - The final accepted manager result still flows through `UpdateBlockDefinitionsCommand`, so OK after duplicate/purge is one undoable block-definition update.
 - Automated tests were added for duplicate, duplicate rejection on blocking diagnostics, purge of drawing-unreachable block trees, preservation of drawing-reachable nested definitions and result composition.
 
+
+## v0.8.170C implementation notes
+
+The third Blocks v2 implementation slice hardens the in-place Edit Block workflow. The previous behavior relied too much on the current selection at save time, which made it possible to accidentally absorb unrelated model-space entities into the block definition. The accepted semantic is now session-scoped: entities that existed before the edit session started remain external drawing geometry, while temporary block contents and entities created during the session belong to the edit session.
+
+Implemented behavior:
+
+- `BlockEditSession` now records the model-space entity ids that existed at session start.
+- `SaveActiveBlockEdit` rebuilds the definition from session-scoped non-block entities only.
+- Pre-existing external drawing entities are ignored even if selected when Save is invoked.
+- Entities created during the session are included in Save, so new geometry can be added to a block by drawing it while the session is active.
+- `CancelActiveBlockEdit` removes both the temporary editable block contents and session-created entities, then restores the original block reference.
+- Main UI buttons now expose explicit state: Edit is disabled during an active session; Save and Cancel are disabled outside one.
+- Automated tests were added for external selection safety, created-entity save behavior and created-entity cancel cleanup.
+
+Known limitation for this slice: nested `BlockReferenceEntity` instances created during an edit session are not committed into the rebuilt definition yet. Keep nested-block edit/import rules for a later Blocks v2 slice.
+
 Known remaining Blocks v2 work:
 
 - visual preview thumbnail/panel;
 - stronger rename UX beyond inline validation;
-- edit block mode hardening;
+- nested-block edit/import policy;
 - Library same-name conflict policy and structural-equivalence handling.
 
 ## Shared contracts added by v0.8.164

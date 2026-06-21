@@ -1359,6 +1359,7 @@
                             <Button x:Name="EditBlockButton"
                                     Classes="tool-button"
                                     ToolTip.Tip="Open the selected block reference for in-place editing"
+                                    IsEnabled="{Binding CanBeginBlockEdit}"
                                     Click="EditBlock_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
@@ -1372,7 +1373,8 @@
 
                             <Button x:Name="SaveBlockEditButton"
                                     Classes="tool-button"
-                                    ToolTip.Tip="Save the active block edit using the selected entities"
+                                    ToolTip.Tip="Save the active block edit using all session entities and ignoring external drawing entities"
+                                    IsEnabled="{Binding CanSaveActiveBlockEdit}"
                                     Click="SaveBlockEdit_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
@@ -1386,7 +1388,8 @@
 
                             <Button x:Name="CancelBlockEditButton"
                                     Classes="tool-button"
-                                    ToolTip.Tip="Cancel the active block edit and restore the original block reference"
+                                    ToolTip.Tip="Cancel the active block edit, discard session-created entities and restore the original block reference"
+                                    IsEnabled="{Binding CanCancelActiveBlockEdit}"
                                     Click="CancelBlockEdit_Click" >
                                 <Grid Classes="icon-button-content" ColumnDefinitions="16,*" ColumnSpacing="7">
                                     <Path Grid.Column="0"
@@ -1397,6 +1400,13 @@
                                                Text="Cancel Block Edit" />
                                 </Grid>
                             </Button>
+
+                            <TextBlock Text="{Binding ActiveBlockEditText}"
+                                       Foreground="#DCDCAA"
+                                       FontSize="11"
+                                       TextWrapping="Wrap"
+                                       Width="130"
+                                       IsVisible="{Binding IsBlockEditSessionActive}" />
 
                             <Button x:Name="ExplodeButton"
                                     Classes="tool-button"

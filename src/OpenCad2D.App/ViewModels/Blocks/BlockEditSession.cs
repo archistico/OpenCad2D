@@ -8,4 +8,5 @@ public sealed record BlockEditSession(
     BlockDefinitionId BlockDefinitionId,
     string BlockName,
     BlockReferenceEntity OriginalReference,
-    IReadOnlyList<EntityId> EditEntityIds);
+    IReadOnlyList<EntityId> EditEntityIds,
+    IReadOnlySet<EntityId> EntityIdsAtSessionStart);

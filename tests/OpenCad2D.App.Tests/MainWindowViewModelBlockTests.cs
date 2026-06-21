@@ -534,6 +534,7 @@ public sealed class MainWindowViewModelInsertBlockTests
         Assert.Equal(originalReference.Id, viewModel.Workspace.Document.Entities.All.Single().Id);
     }
 
+
     private static MainWindowViewModel CreateViewModelWithDoorBlock(
         out BlockReferenceEntity originalReference)
     {
@@ -664,6 +665,79 @@ public sealed class MainWindowViewModelBlockEditTests
             viewModel.Workspace.Document.BlockDefinitions.GetRequired(definitionId).Entities.Single());
         Assert.Equal(Point2D.Origin, localLine.Start);
         Assert.Equal(new Point2D(5, 0), localLine.End);
+    }
+
+
+    [Fact]
+    public void SaveActiveBlockEdit_ShouldIgnorePreExistingExternalSelection()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        BlockDefinitionId definitionId = originalReference.BlockDefinitionId;
+        var externalLine = new LineEntity(
+            new Point2D(100, 100),
+            new Point2D(110, 100));
+        viewModel.Workspace.Document.AddEntity(externalLine);
+        viewModel.Workspace.SelectionSet.ReplaceWith(originalReference.Id);
+        viewModel.BeginEditSelectedBlock();
+        viewModel.Workspace.SelectionSet.ReplaceWith(externalLine.Id);
+
+        var result = viewModel.SaveActiveBlockEdit();
+
+        Assert.True(result.Changed);
+        Assert.False(viewModel.IsBlockEditSessionActive);
+        Assert.Contains(viewModel.Workspace.Document.Entities.All, entity => entity.Id == externalLine.Id);
+        Assert.Contains(viewModel.Workspace.Document.Entities.All, entity => entity.Id == originalReference.Id);
+        Assert.Equal(2, viewModel.Workspace.Document.Entities.Count);
+
+        LineEntity localLine = Assert.IsType<LineEntity>(
+            viewModel.Workspace.Document.BlockDefinitions.GetRequired(definitionId).Entities.Single());
+        Assert.Equal(Point2D.Origin, localLine.Start);
+        Assert.Equal(new Point2D(5, 0), localLine.End);
+    }
+
+    [Fact]
+    public void SaveActiveBlockEdit_ShouldIncludeEntitiesCreatedDuringSession()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        BlockDefinitionId definitionId = originalReference.BlockDefinitionId;
+        viewModel.BeginEditSelectedBlock();
+        var addedLine = new LineEntity(
+            new Point2D(10, 21),
+            new Point2D(15, 21));
+        viewModel.Workspace.Document.AddEntity(addedLine);
+
+        var result = viewModel.SaveActiveBlockEdit();
+
+        Assert.True(result.Changed);
+        Assert.False(viewModel.IsBlockEditSessionActive);
+        Assert.Single(viewModel.Workspace.Document.Entities.All);
+
+        IReadOnlyList<CadEntity> localEntities = viewModel.Workspace.Document.BlockDefinitions
+            .GetRequired(definitionId)
+            .Entities;
+        Assert.Equal(2, localEntities.Count);
+        Assert.Contains(localEntities.OfType<LineEntity>(), line => line.Start == Point2D.Origin && line.End == new Point2D(5, 0));
+        Assert.Contains(localEntities.OfType<LineEntity>(), line => line.Start == new Point2D(0, 1) && line.End == new Point2D(5, 1));
+    }
+
+    [Fact]
+    public void CancelActiveBlockEdit_ShouldRemoveEntitiesCreatedDuringSession()
+    {
+        var viewModel = CreateViewModelWithDoorBlock(out BlockReferenceEntity originalReference);
+        viewModel.BeginEditSelectedBlock();
+        var addedLine = new LineEntity(
+            new Point2D(10, 21),
+            new Point2D(15, 21));
+        viewModel.Workspace.Document.AddEntity(addedLine);
+
+        var result = viewModel.CancelActiveBlockEdit();
+
+        Assert.True(result.Changed);
+        Assert.False(viewModel.IsBlockEditSessionActive);
+        BlockReferenceEntity restoredReference = Assert.IsType<BlockReferenceEntity>(
+            viewModel.Workspace.Document.Entities.All.Single());
+        Assert.Equal(originalReference.Id, restoredReference.Id);
+        Assert.DoesNotContain(viewModel.Workspace.Document.Entities.All, entity => entity.Id == addedLine.Id);
     }
 
     private static MainWindowViewModel CreateViewModelWithDoorBlock(

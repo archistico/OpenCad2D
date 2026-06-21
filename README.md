@@ -36,7 +36,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - reusable line formats with color, lineweight, line style and custom dash pattern values;
 - reusable text formats;
 - reusable drawing library snippets loaded from `library/**/*.opencad2d.json`, grouped by category, previewed and inserted as block references, with a first static content pack under `library/`;
-- Blocks v2 first manager slice: direct drawing reference counts, nested reference counts, total references, selected block diagnostics, missing-reference diagnostics and recursive-reference blocking;
+- Blocks v2 manager slices: direct/nested/total reference counts, selected diagnostics, missing-reference diagnostics, recursive-reference blocking, safe duplicate/delete/purge and hardened Edit Block session scope;
 - external PNG/JPG/JPEG image references stored as linked files, not embedded raster bytes;
 - relative image paths, transparency percentages, missing-image warnings, relink/replace/reset-aspect workflows, Collect Refs packaging and Image References Manager;
 - Layer Manager, Line Format Manager, Text Format Manager and Image References Manager;
@@ -217,7 +217,7 @@ OpenCad2D is currently in the reconciled v0.8 consolidation line. Recent complet
 - mixed-polyline/bulge stabilization and curve-editing fixes;
 - SmartPoint Tracking foundation.
 
-The next validation step is to run the local build/test suite and the v0.8.170B Block Manager duplicate/purge checklist, keeping the v0.8.170A inventory checklist as a regression pass, then finish the broader v0.8.162 manual compatibility pass. The next implementation milestone after validation is Blocks v2 slice 170C for Edit Block workflow hardening, followed by doors/windows, arrays, HatchEntity, annotation markers, UI customization and SVG icon workflow.
+The next validation step is to run the local build/test suite and the v0.8.170C Edit Block session checklist, keeping the v0.8.170A inventory and v0.8.170B duplicate/purge checklists as regression passes, then finish the broader v0.8.162 manual compatibility pass. The next implementation milestone after validation is Blocks v2 slice 170D for Library import conflict policy, followed by doors/windows, arrays, HatchEntity, annotation markers, UI customization and SVG icon workflow.
 
 ## Info files
 

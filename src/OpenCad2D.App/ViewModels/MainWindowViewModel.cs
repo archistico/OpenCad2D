@@ -2214,9 +2214,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public bool IsBlockEditSessionActive => _activeBlockEditSession is not null;
 
+    public bool CanBeginBlockEdit => _activeBlockEditSession is null;
+
+    public bool CanSaveActiveBlockEdit => _activeBlockEditSession is not null;
+
+    public bool CanCancelActiveBlockEdit => _activeBlockEditSession is not null;
+
     public string ActiveBlockEditText => _activeBlockEditSession is null
         ? "No active block edit"
-        : $"Editing block '{_activeBlockEditSession.BlockName}'";
+        : $"Editing block '{_activeBlockEditSession.BlockName}'. Save commits session entities; Cancel discards them.";
 
     public ToolResult BeginEditSelectedBlock()
     {
@@ -2269,6 +2275,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return rejected;
         }
 
+        HashSet<EntityId> entityIdsAtSessionStart = Workspace.Document.Entities.All
+            .Select(entity => entity.Id)
+            .ToHashSet();
+
         IReadOnlyList<CadEntity> editEntities = definition.Entities
             .Select(entity => blockReference.TransformContainedEntity(entity).WithId(EntityId.New()))
             .ToList();
@@ -2284,7 +2294,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             definition.Id,
             definition.Name,
             blockReference,
-            editEntities.Select(entity => entity.Id).ToList());
+            editEntities.Select(entity => entity.Id).ToList(),
+            entityIdsAtSessionStart);
 
         Workspace.SelectionSet.ReplaceWith(editEntities.Select(entity => entity.Id));
 
@@ -2294,7 +2305,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         SetLastResult(result);
         NotifyDocumentStateChanged();
         NotifyFileStateChanged();
-        OnPropertiesChanged(nameof(IsBlockEditSessionActive), nameof(ActiveBlockEditText));
+        NotifyBlockEditSessionStateChanged();
 
         return result;
     }
@@ -2323,12 +2334,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         IReadOnlyList<CadEntity> editedEntities = GetBlockEditSourceEntities(session);
-        IReadOnlyList<CadEntity> entitiesToRemove = GetBlockEditEntitiesToRemove(session, editedEntities);
+        IReadOnlyList<CadEntity> entitiesToRemove = GetBlockEditEntitiesToRemove(session);
 
         if (editedEntities.Count == 0)
         {
             ToolResult rejected = ToolResult.None(
-                "Select at least one editable non-block entity or keep at least one original edit entity before saving the block edit.");
+                "Keep or create at least one editable non-block entity before saving the block edit. External drawing entities are ignored.");
 
             SetLastResult(rejected);
             NotifyDocumentStateChanged();
@@ -2385,12 +2396,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         Workspace.SelectionSet.ReplaceWith(restoredReference.Id);
 
         ToolResult result = ToolResult.Completed(
-            $"Block '{session.BlockName}' updated from {editedEntities.Count} entity/entities.");
+            $"Block '{session.BlockName}' updated from {editedEntities.Count} session entity/entities. External drawing entities were ignored.");
 
         SetLastResult(result);
         NotifyDocumentStateChanged();
         NotifyFileStateChanged();
-        OnPropertiesChanged(nameof(IsBlockEditSessionActive), nameof(ActiveBlockEditText));
+        NotifyBlockEditSessionStateChanged();
 
         return result;
     }
@@ -2406,7 +2417,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         BlockEditSession session = _activeBlockEditSession;
-        IReadOnlyList<CadEntity> editEntities = GetExistingEntities(session.EditEntityIds);
+        IReadOnlyList<CadEntity> editEntities = GetBlockEditEntitiesToRemove(session);
 
         Workspace.CommandHistory.Execute(
             Workspace.Document,
@@ -2424,38 +2435,32 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         SetLastResult(result);
         NotifyDocumentStateChanged();
         NotifyFileStateChanged();
-        OnPropertiesChanged(nameof(IsBlockEditSessionActive), nameof(ActiveBlockEditText));
+        NotifyBlockEditSessionStateChanged();
 
         return result;
     }
 
     private IReadOnlyList<CadEntity> GetBlockEditSourceEntities(BlockEditSession session)
     {
-        IReadOnlyList<CadEntity> selectedEditableEntities = Workspace.SelectionSet.SelectedIds
-            .Select(id => Workspace.Document.Entities.TryGet(id, out CadEntity? entity) ? entity : null)
-            .OfType<CadEntity>()
+        return GetBlockEditSessionEntities(session)
             .Where(entity => entity is not BlockReferenceEntity)
-            .Where(Workspace.Document.IsEntitySelectable)
             .ToList();
-
-        if (selectedEditableEntities.Count > 0)
-        {
-            return selectedEditableEntities;
-        }
-
-        return GetExistingEntities(session.EditEntityIds);
     }
 
-    private IReadOnlyList<CadEntity> GetBlockEditEntitiesToRemove(
-        BlockEditSession session,
-        IReadOnlyList<CadEntity> sourceEntities)
+    private IReadOnlyList<CadEntity> GetBlockEditEntitiesToRemove(BlockEditSession session)
     {
-        Dictionary<EntityId, CadEntity> entities = GetExistingEntities(session.EditEntityIds)
-            .Concat(sourceEntities)
-            .GroupBy(entity => entity.Id)
-            .ToDictionary(group => group.Key, group => group.First());
+        return GetBlockEditSessionEntities(session);
+    }
 
-        return entities.Values.ToList();
+    private IReadOnlyList<CadEntity> GetBlockEditSessionEntities(BlockEditSession session)
+    {
+        var editEntityIds = new HashSet<EntityId>(session.EditEntityIds);
+
+        return Workspace.Document.Entities.All
+            .Where(entity => editEntityIds.Contains(entity.Id) ||
+                             !session.EntityIdsAtSessionStart.Contains(entity.Id))
+            .Where(entity => entity.Id != session.OriginalReference.Id)
+            .ToList();
     }
 
     private static BlockReferenceEntity WithDefinitionBounds(
@@ -4827,6 +4832,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         return result;
     }
 
+    private void NotifyBlockEditSessionStateChanged()
+    {
+        OnPropertiesChanged(
+            nameof(IsBlockEditSessionActive),
+            nameof(CanBeginBlockEdit),
+            nameof(CanSaveActiveBlockEdit),
+            nameof(CanCancelActiveBlockEdit),
+            nameof(ActiveBlockEditText));
+    }
+
     private void ClearBlockEditSessionAfterHistoryNavigation()
     {
         if (_activeBlockEditSession is null)
@@ -4835,7 +4850,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         _activeBlockEditSession = null;
-        OnPropertiesChanged(nameof(IsBlockEditSessionActive), nameof(ActiveBlockEditText));
+        NotifyBlockEditSessionStateChanged();
     }
 
     public ToolResult DeleteSelection()

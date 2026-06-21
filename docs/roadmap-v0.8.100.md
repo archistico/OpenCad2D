@@ -308,7 +308,7 @@ This is documentation-only. It does not replace the v0.8.162 manual validation o
 
 Specification: `docs/specs/v0.8.170-blocks-v2.md`.
 
-Status: [~] started. Slices `v0.8.170A` and `v0.8.170B` are implemented in code. They need maintainer-side build/test plus manual checklist validation before being considered complete.
+Status: [~] started. Slices `v0.8.170A`, `v0.8.170B` and `v0.8.170C` are implemented in code. They need maintainer-side build/test plus manual checklist validation before being considered complete.
 
 Implemented in `v0.8.170A`:
 
@@ -328,11 +328,20 @@ Implemented in `v0.8.170B`:
 - Blocking diagnostics can be purged only when the offending definition is not reachable from the drawing.
 - Result application still flows through the existing block-definition update command, so the final manager commit remains one undoable block-definition update.
 
+
+Implemented in `v0.8.170C`:
+
+- Edit Block exposes explicit active-state UI: Edit is disabled while a session is active; Save and Cancel are enabled only during a session.
+- Save rebuilds the definition from session-scoped entities: original temporary block contents plus entities created after the edit session started.
+- Pre-existing external drawing entities are ignored by Save even if selected, preventing accidental absorption into the block definition.
+- Cancel removes temporary session entities and entities created during the session, then restores the original block reference.
+- Automated regression tests cover external selection safety, created-entity save behavior and created-entity cancel cleanup.
+
 Remaining Blocks v2 work:
 
 - visual preview panel/thumbnail;
 - stronger rename UX and validation messaging beyond inline name validation;
-- edit-session hardening;
+- nested-block edit/import policy;
 - Library import conflict policy.
 
 Goal: make block management strong enough for architectural objects, Library workflows and repeated technical details.
