@@ -33,9 +33,9 @@ The following areas should not be reopened as if they were still planned foundat
 
 The next work should stay focused and evidence-driven.
 
-First, run the automated tests on the maintainer Windows environment. This sandbox did not have `dotnet`, so v0.8.170C still needs local build/test confirmation.
+First, run the automated tests on the maintainer Windows environment. This sandbox did not have `dotnet`, so v0.8.170D still needs local build/test confirmation.
 
-Second, run `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md`: active-state buttons, save scope, cancel cleanup, external geometry safety and undo after save. Also keep `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md` and `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` as regression checklists.
+Second, run `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md`: same item id reuse, changed same-id safe duplication, same-name equivalent reuse, same-name different-definition safe rename, undo and save/reopen. Also keep `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md`, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` and `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md` as regression checklists.
 
 Third, run `docs/testing/v0.8.162-compatibility-smoke-checklist.md` on the maintainer Windows environment: publish copy, Library insertion/explode, save/reopen, SVG/PDF/DXF, Stairs Property Panel, Boundary Fill v2 Gap cases, image transparency and block workflows.
 
@@ -45,7 +45,7 @@ Fifth, keep v0.8.164 as the design-contract baseline for future code. Before imp
 
 Sixth, only promote bugfix work when it is tied to a real failing test, manual sample, confusing workflow or data-corruption risk. Avoid speculative refactors while the v0.8.160+ consolidation is still open.
 
-Seventh, the next recommended Blocks v2 implementation slice after validation is `v0.8.170D`: Library import conflict policy and safe unique-name handling.
+Seventh, the next recommended Blocks v2 step after validation is `v0.8.170E`: final Blocks v2 closeout, user-guide/manual validation updates and any rename/preview polish still judged necessary before starting the next feature family.
 
 
 ## v0.8.170A implementation notes
@@ -127,6 +127,15 @@ The current recommended order after consolidation is:
 | v0.8.220 | `docs/specs/v0.8.220-ui-customization.md` | Icon-only mode, panel/workspace preferences and reset layout. |
 | v0.8.230 | `docs/specs/v0.8.230-icon-svg-workflow.md` | Export current icons to SVG and import validated custom SVG replacements. |
 
+
+## v0.8.170D — Library/block conflict policy
+
+The fourth Blocks v2 slice implemented deterministic Library insertion conflict handling. `LibraryBlockDefinitionBuilder` now prepares the incoming Library item in the target document context, compares the prepared block entities against existing definitions while ignoring regenerated entity ids, and chooses between reuse or safe duplication.
+
+The policy is non-destructive. Same item id plus equivalent content reuses the existing definition. Same item id plus changed content creates a unique id/name pair. Same block name plus equivalent content reuses the existing definition even if the item id differs. Same block name plus different content creates a unique name. Library insertion still never replaces an existing definition silently; explicit replace remains deferred to a future Block Manager-only operation.
+
+Automated tests were added in `MainWindowViewModelLibraryTests` for changed same-id Library items and same-name equivalent definitions with different item ids. Maintainer-side build/test and manual checklist validation are required for this slice.
+
 ## Key design decisions to preserve
 
 OpenCad2D is 2D only. Export targets remain DXF, SVG, PDF and PNG. Fixed reusable objects belong in the Library as `.opencad2d.json` snippets. Only doors, windows and stairs are approved as persistent parametric architectural objects for now.
@@ -145,8 +154,12 @@ Documentation and planning/code updates:
 - `src/OpenCad2D.App/ViewModels/Blocks/BlockManagerWindowViewModel.cs`
 - `src/OpenCad2D.App/ViewModels/Blocks/EditableBlockDefinitionViewModel.cs`
 - `tests/OpenCad2D.App.Tests/BlockManagerWindowViewModelTests.cs`
+- `src/OpenCad2D.App/ViewModels/Library/LibraryBlockDefinitionBuilder.cs`
+- `tests/OpenCad2D.App.Tests/MainWindowViewModelLibraryTests.cs`
 - `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md`
 - `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md`
+- `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md`
+- `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md`
 
 Previous documentation and planning updates retained in this package:
 

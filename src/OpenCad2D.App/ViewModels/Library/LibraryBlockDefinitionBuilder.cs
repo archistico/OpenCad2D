@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using OpenCad2D.Core.Blocks;
 using OpenCad2D.Core.Commands;
 using OpenCad2D.Core.Dimensions;
@@ -23,18 +24,8 @@ public sealed class LibraryBlockDefinitionBuilder
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(item);
 
-        BlockDefinitionId blockDefinitionId = new($"Library.{item.Id}");
-        string blockName = BuildBlockName(item);
-
-        if (target.BlockDefinitions.TryGet(blockDefinitionId, out BlockDefinition? existingDefinition) &&
-            existingDefinition is not null)
-        {
-            return new LibraryBlockDefinitionPreparation(
-                existingDefinition.Id,
-                existingDefinition.Name,
-                existingDefinition,
-                Array.Empty<ICadCommand>());
-        }
+        BlockDefinitionId preferredBlockDefinitionId = new($"Library.{item.Id}");
+        string preferredBlockName = BuildBlockName(item);
 
         if (source.Entities.All.Count == 0)
         {
@@ -88,12 +79,31 @@ public sealed class LibraryBlockDefinitionBuilder
             .Select(entity => entity.WithId(EntityId.New()))
             .ToList();
 
-        if (target.BlockDefinitions.ContainsName(blockName))
+        if (TryFindReusableDefinition(
+            target,
+            preferredBlockDefinitionId,
+            preferredBlockName,
+            blockEntities,
+            out BlockDefinition? reusableDefinition) &&
+            reusableDefinition is not null)
         {
-            blockName = CreateUniqueName(
-                blockName,
-                target.BlockDefinitions.All.Select(definition => definition.Name));
+            return new LibraryBlockDefinitionPreparation(
+                reusableDefinition.Id,
+                reusableDefinition.Name,
+                reusableDefinition,
+                Array.Empty<ICadCommand>());
         }
+
+        BlockDefinitionId blockDefinitionId = target.BlockDefinitions.Contains(preferredBlockDefinitionId)
+            ? new BlockDefinitionId(CreateUniqueId(
+                preferredBlockDefinitionId.Value,
+                target.BlockDefinitions.All.Select(definition => definition.Id.Value)))
+            : preferredBlockDefinitionId;
+        string blockName = target.BlockDefinitions.ContainsName(preferredBlockName)
+            ? CreateUniqueName(
+                preferredBlockName,
+                target.BlockDefinitions.All.Select(definition => definition.Name))
+            : preferredBlockName;
 
         var blockDefinition = new BlockDefinition(
             blockDefinitionId,
@@ -145,6 +155,67 @@ public sealed class LibraryBlockDefinitionBuilder
     {
         return $"Library/{item.Category}/{item.Title}";
     }
+
+    private static bool TryFindReusableDefinition(
+        CadDocument target,
+        BlockDefinitionId preferredBlockDefinitionId,
+        string preferredBlockName,
+        IReadOnlyList<CadEntity> preparedEntities,
+        out BlockDefinition? reusableDefinition)
+    {
+        if (target.BlockDefinitions.TryGet(preferredBlockDefinitionId, out BlockDefinition? existingById) &&
+            existingById is not null &&
+            AreEquivalent(existingById.Entities, preparedEntities))
+        {
+            reusableDefinition = existingById;
+            return true;
+        }
+
+        reusableDefinition = target.BlockDefinitions.All.FirstOrDefault(definition =>
+            string.Equals(definition.Name, preferredBlockName, StringComparison.OrdinalIgnoreCase) &&
+            AreEquivalent(definition.Entities, preparedEntities));
+
+        return reusableDefinition is not null;
+    }
+
+    private static bool AreEquivalent(
+        IReadOnlyList<CadEntity> first,
+        IReadOnlyList<CadEntity> second)
+    {
+        if (first.Count != second.Count)
+        {
+            return false;
+        }
+
+        for (int index = 0; index < first.Count; index++)
+        {
+            if (!AreEquivalent(first[index], second[index]))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool AreEquivalent(
+        CadEntity first,
+        CadEntity second)
+    {
+        if (first.GetType() != second.GetType())
+        {
+            return false;
+        }
+
+        CadEntity normalizedFirst = first.WithId(EntityId.Empty);
+        CadEntity normalizedSecond = second.WithId(EntityId.Empty);
+
+        string firstJson = JsonSerializer.Serialize(normalizedFirst, first.GetType());
+        string secondJson = JsonSerializer.Serialize(normalizedSecond, second.GetType());
+
+        return string.Equals(firstJson, secondJson, StringComparison.Ordinal);
+    }
+
 
     private static IReadOnlyList<LineFormat> MergeLineFormats(
         CadDocument target,

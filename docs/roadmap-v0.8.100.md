@@ -19,7 +19,7 @@ Suggested numbering for the active line:
 | v0.8.140 - v0.8.149 | Boundary Fill v1/v2 | [x] for filled-polyline workflow |
 | v0.8.150 - v0.8.159 | HatchEntity foundation | [ ] |
 | v0.8.160 - v0.8.169 | Documentation reconciliation, Library content, shared planning contracts and compatibility pass | [~] — v0.8.160 and v0.8.164 done, v0.8.161 implemented pending manual validation |
-| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A and 170B implemented, remaining slices planned |
+| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A, 170B, 170C and 170D implemented, remaining closeout/polish planned |
 
 Exact patch numbers can move, but each milestone should remain independently buildable, testable and documented.
 
@@ -34,7 +34,7 @@ The historical order was correct: Import Drawing, Blocks, Dynamic HUD, Library, 
 3. **Planning specification pass with shared contracts**.
 4. **Blocks v2 slice 170A: Block Manager inventory and diagnostics**.
 5. **Compatibility/manual smoke validation**.
-6. **Blocks v2 remaining slices: rename/duplicate/purge, edit workflow and Library conflict policy**.
+6. **Blocks v2 remaining slices: final rename/preview polish, manual validation and user-guide closeout**.
 7. **Parametric doors/windows with wall masking and anchor control**.
 8. **Array tools**.
 9. **HatchEntity and hatch patterns**.
@@ -308,7 +308,7 @@ This is documentation-only. It does not replace the v0.8.162 manual validation o
 
 Specification: `docs/specs/v0.8.170-blocks-v2.md`.
 
-Status: [~] started. Slices `v0.8.170A`, `v0.8.170B` and `v0.8.170C` are implemented in code. They need maintainer-side build/test plus manual checklist validation before being considered complete.
+Status: [~] started. Slices `v0.8.170A`, `v0.8.170B`, `v0.8.170C` and `v0.8.170D` are implemented in code. 170A-170C have passed maintainer-side automated tests; 170D needs maintainer-side build/test plus manual checklist validation before being considered complete.
 
 Implemented in `v0.8.170A`:
 

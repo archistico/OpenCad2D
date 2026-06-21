@@ -217,7 +217,7 @@ OpenCad2D is currently in the reconciled v0.8 consolidation line. Recent complet
 - mixed-polyline/bulge stabilization and curve-editing fixes;
 - SmartPoint Tracking foundation.
 
-The next validation step is to run the local build/test suite and the v0.8.170C Edit Block session checklist, keeping the v0.8.170A inventory and v0.8.170B duplicate/purge checklists as regression passes, then finish the broader v0.8.162 manual compatibility pass. The next implementation milestone after validation is Blocks v2 slice 170D for Library import conflict policy, followed by doors/windows, arrays, HatchEntity, annotation markers, UI customization and SVG icon workflow.
+The next validation step is to run the local build/test suite and the v0.8.170D Library/block conflict checklist, keeping the v0.8.170A inventory, v0.8.170B duplicate/purge and v0.8.170C edit-session checklists as regression passes, then finish the broader v0.8.162 manual compatibility pass. The next implementation milestone after validation is Blocks v2 slice 170E for final validation/user-guide closeout and any rename/preview polish still judged necessary, followed by doors/windows, arrays, HatchEntity, annotation markers, UI customization and SVG icon workflow.
 
 ## Info files
 

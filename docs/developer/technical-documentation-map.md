@@ -38,7 +38,7 @@ For user-facing changes, update `user-guide/03-file-management.md`, `user-guide/
 
 Start with `library-browser.md`, `docs/specs/v0.8.161-library-content-pack.md` and the relevant versioned specifications in `docs/specs/`. The project decision is that doors, windows, and stairs are parametric objects, while general reusable items remain static `.opencad2d.json` objects loaded from the Library.
 
-For blocks and library infrastructure, also read `docs/specs/v0.8.170-blocks-v2.md`, `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md`, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` and `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md`. For parametric doors/windows, read `docs/specs/v0.8.180-parametric-doors-windows.md`, `docs/specs/shared-anchor-system.md` and `docs/specs/shared-wall-mask-openings.md`. For repeated objects, read `docs/specs/v0.8.190-array-tools.md`.
+For blocks and library infrastructure, also read `docs/specs/v0.8.170-blocks-v2.md`, `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md`, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md`, `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md` and `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md`. For parametric doors/windows, read `docs/specs/v0.8.180-parametric-doors-windows.md`, `docs/specs/shared-anchor-system.md` and `docs/specs/shared-wall-mask-openings.md`. For repeated objects, read `docs/specs/v0.8.190-array-tools.md`.
 
 The user-facing explanation belongs in `user-guide/20-library.md` and `user-guide/08-symbols.md`.
 

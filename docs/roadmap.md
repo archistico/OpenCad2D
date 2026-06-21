@@ -26,9 +26,10 @@ Current priority order:
 3. **v0.8.170A Block Manager inventory and diagnostics** — implemented and locally test-confirmed by the maintainer. It still needs the manual UI checklist.
 4. **v0.8.170B Block Manager safe duplicate/purge** — implemented as the second narrow Blocks v2 code slice: duplicate selected definition, delete selected unused definition, bulk purge of definitions not reachable from drawing instances, and safer validation.
 5. **v0.8.170C Edit Block session hardening** — implemented as the third narrow Blocks v2 code slice: explicit active state, safe session-scoped save, external-entity guardrail and cancel cleanup for session-created entities.
-6. **v0.8.162 compatibility and manual smoke pass** — record save/reopen, SVG/PDF/DXF, Library, Stairs, Boundary Fill v2, image references and block workflows.
-7. **v0.8.163 complex/error-prone behavior cleanup** — fix only evidence-backed fragile cases before opening the next large feature family.
-8. **v0.8.170D+ feature development** — continue Blocks v2 only in small slices, then resume larger drafting features from a clear baseline.
+6. **v0.8.170D Library/block conflict policy** — implemented as the fourth narrow Blocks v2 code slice: Library insertion now reuses equivalent block definitions and creates deterministic safe ids/names when same-id or same-name definitions differ.
+7. **v0.8.162 compatibility and manual smoke pass** — record save/reopen, SVG/PDF/DXF, Library, Stairs, Boundary Fill v2, image references and block workflows.
+8. **v0.8.163 complex/error-prone behavior cleanup** — fix only evidence-backed fragile cases before opening the next large feature family.
+9. **v0.8.170E feature closeout** — finish Blocks v2 with manual validation, user-guide updates and any rename/preview polish still judged necessary.
 
 The next stabilization gate can still be called v0.9, but only after the v0.8.160+ consolidation items are finished and the accepted limitations are explicit.
 
@@ -72,7 +73,8 @@ The following foundations are considered complete for the active roadmap. Older 
 | v0.8.164 | [x] | `docs/specs/v0.8.164-planning-specification-pass.md` | Add shared contracts and expand future specs before writing the next feature code. |
 | v0.8.170A | [~] | `docs/specs/v0.8.170-blocks-v2.md` / `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md` | First Blocks v2 code slice: richer manager inventory with direct/nested reference counts, selected diagnostics, missing-reference reporting and recursive-reference blocking. Automated tests pass on the maintainer environment; manual UI validation remains. |
 | v0.8.170B | [~] | `docs/specs/v0.8.170-blocks-v2.md` / `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` | Second Blocks v2 code slice: duplicate selected block definitions, delete selected unused definitions, bulk purge drawing-unreachable block definition trees, safe validation and grouped undo through the existing block-definition update result. Automated tests were added; maintainer-side build/test and manual UI validation are required. |
-| v0.8.170C | [~] | `docs/specs/v0.8.170-blocks-v2.md` / `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md` | Third Blocks v2 code slice: Edit Block now has explicit active UI state, Save commits session-scoped entities while ignoring pre-existing external drawing entities, and Cancel removes session-created entities before restoring the original reference. Automated tests were added; maintainer-side build/test and manual UI validation are required. |
+| v0.8.170C | [~] | `docs/specs/v0.8.170-blocks-v2.md` / `docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md` | Third Blocks v2 code slice: Edit Block now has explicit active UI state, Save commits session-scoped entities while ignoring pre-existing external drawing entities, and Cancel removes session-created entities before restoring the original reference. Automated tests pass on the maintainer environment; manual UI validation remains. |
+| v0.8.170D | [~] | `docs/specs/v0.8.170-blocks-v2.md` / `docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md` | Fourth Blocks v2 code slice: Library insertion conflict policy now reuses existing definitions when the incoming definition is equivalent, and creates deterministic safe id/name variants when the same Library item id or block name points to different geometry. Maintainer-side build/test and manual UI validation are required. |
 
 This block should be finished before starting another large entity family. It prevents roadmap drift and gives a clean baseline for future work.
 
@@ -91,7 +93,7 @@ Before implementing these milestones, use the shared contracts added by v0.8.164
 
 | Milestone | Status | Specification | Goal |
 |---|---:|---|---|
-| v0.8.170 | [~] | `docs/specs/v0.8.170-blocks-v2.md` | Blocks v2 is now started. Slices 170A, 170B and 170C implement inventory/diagnostics, safe duplicate/delete/purge and hardened in-place edit-session scope. Preview thumbnails, stronger rename UX and Library conflict policy remain planned. |
+| v0.8.170 | [~] | `docs/specs/v0.8.170-blocks-v2.md` | Blocks v2 is now started. Slices 170A, 170B, 170C and 170D implement inventory/diagnostics, safe duplicate/delete/purge, hardened in-place edit-session scope and Library/block conflict policy. Preview thumbnails, stronger rename UX and final user-guide closeout remain planned. |
 | v0.8.180 | [ ] | `docs/specs/v0.8.180-parametric-doors-windows.md` | Add parametric doors and windows with 9-point anchor selection in the HUD and optional wall-line masking/opening behavior at insertion. |
 | v0.8.190 | [ ] | `docs/specs/v0.8.190-array-tools.md` | Add AutoCAD-style array tools: `ARRAYRECT`, `ARRAYPOLAR` and `ARRAYPATH`, with preview, grouped undo and clear explode/edit policy. |
 | v0.8.200 | [ ] | `docs/specs/v0.8.200-hatch-patterns.md` | Add real `HatchEntity` behavior with outer/inner loops, solid and patterned fills, scale/angle, preview and export strategy. |

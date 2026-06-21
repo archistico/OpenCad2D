@@ -91,6 +91,55 @@ public sealed class MainWindowViewModelLibraryTests
         Assert.Equal(2, viewModel.Workspace.Document.Entities.All.OfType<BlockReferenceEntity>().Count());
     }
 
+
+    [Fact]
+    public void CommitPendingLibraryInsertion_WhenSameItemIdHasDifferentDefinition_ShouldCreateSafeRenamedDefinition()
+    {
+        var viewModel = new MainWindowViewModel();
+        LibraryCatalogItem firstItem = CreateLibraryItem("arredo", "chair", new Point2D(5, 0));
+        LibraryCatalogItem changedItem = CreateLibraryItem("arredo", "chair", new Point2D(7, 0));
+
+        viewModel.BeginInsertLibraryItem(firstItem);
+        viewModel.CommitPendingLibraryInsertion(new Point2D(0, 0));
+        viewModel.BeginInsertLibraryItem(changedItem);
+        viewModel.CommitPendingLibraryInsertion(new Point2D(10, 0));
+
+        Assert.Equal(2, viewModel.Workspace.Document.BlockDefinitions.Count);
+
+        BlockReferenceEntity[] references = viewModel.Workspace.Document.Entities.All
+            .OfType<BlockReferenceEntity>()
+            .OrderBy(reference => reference.InsertionPoint.X)
+            .ToArray();
+        Assert.Equal(new BlockDefinitionId("Library.arredo.chair"), references[0].BlockDefinitionId);
+        Assert.Equal(new BlockDefinitionId("Library.arredo.chair_2"), references[1].BlockDefinitionId);
+
+        var changedDefinition = viewModel.Workspace.Document.BlockDefinitions.GetRequired(references[1].BlockDefinitionId);
+        Assert.Equal("Library/arredo/chair (2)", changedDefinition.Name);
+        LineEntity line = Assert.IsType<LineEntity>(changedDefinition.Entities.Single());
+        Assert.Equal(new Point2D(7, 0), line.End);
+    }
+
+    [Fact]
+    public void CommitPendingLibraryInsertion_WhenSameNameAndSameDefinitionHasDifferentItemId_ShouldReuseExistingDefinition()
+    {
+        var viewModel = new MainWindowViewModel();
+        LibraryCatalogItem firstItem = CreateLibraryItem("arredo", "chair", new Point2D(5, 0));
+        LibraryCatalogItem sameNamedItem = CreateLibraryItem("arredo.alt-chair", "arredo", "chair", new Point2D(5, 0));
+
+        viewModel.BeginInsertLibraryItem(firstItem);
+        viewModel.CommitPendingLibraryInsertion(new Point2D(0, 0));
+        viewModel.BeginInsertLibraryItem(sameNamedItem);
+        viewModel.CommitPendingLibraryInsertion(new Point2D(10, 0));
+
+        Assert.Single(viewModel.Workspace.Document.BlockDefinitions.All);
+        BlockReferenceEntity[] references = viewModel.Workspace.Document.Entities.All
+            .OfType<BlockReferenceEntity>()
+            .OrderBy(reference => reference.InsertionPoint.X)
+            .ToArray();
+        Assert.Equal(references[0].BlockDefinitionId, references[1].BlockDefinitionId);
+        Assert.Equal(new BlockDefinitionId("Library.arredo.chair"), references[1].BlockDefinitionId);
+    }
+
     [Fact]
     public void BeginInsertLibraryItem_WhenItemContainsBlockReference_ShouldReject()
     {
@@ -149,18 +198,35 @@ public sealed class MainWindowViewModelLibraryTests
         string category,
         string title)
     {
+        return CreateLibraryItem(category, title, new Point2D(5, 0));
+    }
+
+    private static LibraryCatalogItem CreateLibraryItem(
+        string category,
+        string title,
+        Point2D lineEnd)
+    {
+        return CreateLibraryItem($"{category}.{title}", category, title, lineEnd);
+    }
+
+    private static LibraryCatalogItem CreateLibraryItem(
+        string id,
+        string category,
+        string title,
+        Point2D lineEnd)
+    {
         var serializer = new JsonDocumentSerializer();
         var document = new CadDocument();
         document.AddEntity(new LineEntity(
             Point2D.Origin,
-            new Point2D(5, 0)));
+            lineEnd));
 
         DocumentDto dto = serializer.Serialize(
             document,
             LayerId.Default.Value,
             new ViewportStateDto());
 
-        return CreateItem(category, title, dto);
+        return CreateItem(id, category, title, dto);
     }
 
     private static LibraryCatalogItem CreateLibraryItemWithBlockReference()
@@ -192,8 +258,17 @@ public sealed class MainWindowViewModelLibraryTests
         string title,
         DocumentDto dto)
     {
+        return CreateItem($"{category}.{title}", category, title, dto);
+    }
+
+    private static LibraryCatalogItem CreateItem(
+        string id,
+        string category,
+        string title,
+        DocumentDto dto)
+    {
         return new LibraryCatalogItem(
-            $"{category}.{title}",
+            id,
             title,
             category,
             Path.Combine("library", category, $"{title}.opencad2d.json"),
