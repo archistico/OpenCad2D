@@ -32,6 +32,21 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
         "R",
         "Draw the door swing on the right side of the closed leaf");
 
+    private static readonly CommandOption WidthOption = new(
+        "Width",
+        "W",
+        "Set the default width for the next door insertion");
+
+    private static readonly CommandOption ThicknessOption = new(
+        "Thickness",
+        "T",
+        "Set the default wall thickness for the next door insertion");
+
+    private static readonly CommandOption OpeningOption = new(
+        "Opening",
+        "O",
+        "Set the default opening angle for the next door insertion");
+
     private static readonly CommandOption AnchorOption = new(
         "Anchor",
         "A",
@@ -46,7 +61,15 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
 
     public string Name => "Door";
 
+    public DoorToolState State { get; private set; } = DoorToolState.WaitingForInsertionPoint;
+
     public Point2D? LastInsertionPoint { get; private set; }
+
+    public double CurrentWidth { get; private set; } = DefaultWidth;
+
+    public double CurrentWallThickness { get; private set; } = DefaultWallThickness;
+
+    public double CurrentOpeningAngleDegrees { get; private set; } = DefaultOpeningAngleDegrees;
 
     public DoorSwingDirection CurrentSwingDirection { get; private set; } = DefaultSwingDirection;
 
@@ -58,12 +81,36 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        return new CommandPromptState(
-            "DOOR",
-            "Specify door insertion point",
-            CommandInputKind.PointOrOption,
-            new[] { LeftOption, RightOption, AnchorOption, MaskOption },
-            placeholder: "click insertion point, enter X/Y or choose Left/Right/Anchor/Mask");
+        return State switch
+        {
+            DoorToolState.WaitingForWidth => new CommandPromptState(
+                "DOOR",
+                $"Specify door width <{CurrentWidth:0.###}>",
+                CommandInputKind.Number,
+                acceptsEmptyEnter: true,
+                placeholder: "Width, for example 90"),
+
+            DoorToolState.WaitingForWallThickness => new CommandPromptState(
+                "DOOR",
+                $"Specify door wall thickness <{CurrentWallThickness:0.###}>",
+                CommandInputKind.Number,
+                acceptsEmptyEnter: true,
+                placeholder: "Wall thickness, for example 20"),
+
+            DoorToolState.WaitingForOpeningAngle => new CommandPromptState(
+                "DOOR",
+                $"Specify door opening angle <{CurrentOpeningAngleDegrees:0.###}>",
+                CommandInputKind.Number,
+                acceptsEmptyEnter: true,
+                placeholder: "Opening angle, for example 90"),
+
+            _ => new CommandPromptState(
+                "DOOR",
+                $"Specify door insertion point [Width/Thickness/Opening/Left/Right/Anchor/Mask] <W={CurrentWidth:0.###}, T={CurrentWallThickness:0.###}, O={CurrentOpeningAngleDegrees:0.###}, S={CurrentSwingDirection}, A={FormatAnchor(CurrentAnchor)}, M={FormatMaskState(CurrentMaskWallOpening)}>",
+                CommandInputKind.PointOrOption,
+                new[] { WidthOption, ThicknessOption, OpeningOption, LeftOption, RightOption, AnchorOption, MaskOption },
+                placeholder: "click insertion point, enter X/Y or choose W/T/O/L/R/A/M")
+        };
     }
 
     public ToolResult HandleCommandInput(
@@ -73,15 +120,30 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
 
+        if (State == DoorToolState.WaitingForWidth)
+        {
+            return HandleWidthInput(input, context);
+        }
+
+        if (State == DoorToolState.WaitingForWallThickness)
+        {
+            return HandleWallThicknessInput(input, context);
+        }
+
+        if (State == DoorToolState.WaitingForOpeningAngle)
+        {
+            return HandleOpeningAngleInput(input, context);
+        }
+
         if (input.Kind == CommandInputSubmissionKind.Option)
         {
-            return HandleOption(input.OptionKeyword);
+            return HandleOption(input.OptionKeyword, context);
         }
 
         if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
         {
             return ToolResult.None(
-                input.ErrorMessage ?? "Door expects a point input or Left/Right/Anchor/Mask option.");
+                input.ErrorMessage ?? "Door expects a point input or Width/Thickness/Opening/Left/Right/Anchor/Mask option.");
         }
 
         return OnPointerPressed(
@@ -96,13 +158,21 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
+        if (State != DoorToolState.WaitingForInsertionPoint)
+        {
+            return ToolResult.None("Finish the current door option before inserting the door.");
+        }
+
         Point2D insertionPoint = ApplySnap(
             context,
             pointer.ModelPoint);
 
-        DoorEntity door = CreateDefaultDoor(
+        DoorEntity door = CreateDoor(
             insertionPoint,
             context.Creation.CurrentLayerId,
+            CurrentWidth,
+            CurrentWallThickness,
+            CurrentOpeningAngleDegrees,
             CurrentSwingDirection,
             CurrentAnchor,
             CurrentMaskWallOpening);
@@ -125,6 +195,12 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
+        if (State != DoorToolState.WaitingForInsertionPoint)
+        {
+            _previewInsertionPoint = null;
+            return ToolResult.None();
+        }
+
         _previewInsertionPoint = ApplySnap(
             context,
             pointer.ModelPoint);
@@ -136,16 +212,20 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        if (_previewInsertionPoint is not { } insertionPoint)
+        if (_previewInsertionPoint is not { } insertionPoint ||
+            State != DoorToolState.WaitingForInsertionPoint)
         {
             return Array.Empty<CadEntity>();
         }
 
         return new CadEntity[]
         {
-            CreateDefaultDoor(
+            CreateDoor(
                 insertionPoint,
                 context.Creation.CurrentLayerId,
+                CurrentWidth,
+                CurrentWallThickness,
+                CurrentOpeningAngleDegrees,
                 CurrentSwingDirection,
                 CurrentAnchor,
                 CurrentMaskWallOpening)
@@ -156,6 +236,7 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        State = DoorToolState.WaitingForInsertionPoint;
         LastInsertionPoint = null;
         _previewInsertionPoint = null;
         context.CurrentBasePoint = null;
@@ -167,6 +248,7 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        State = DoorToolState.WaitingForInsertionPoint;
         LastInsertionPoint = null;
         _previewInsertionPoint = null;
         context.CurrentBasePoint = null;
@@ -201,37 +283,95 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
         AnchorPoint anchor,
         bool maskWallOpening)
     {
-        return new DoorEntity(
+        return CreateDoor(
             insertionPoint,
+            layerId,
             DefaultWidth,
             DefaultWallThickness,
             DefaultOpeningAngleDegrees,
+            swingDirection,
+            anchor,
+            maskWallOpening);
+    }
+
+    public static DoorEntity CreateDoor(
+        Point2D insertionPoint,
+        OpenCad2D.Core.Identifiers.LayerId layerId,
+        double width,
+        double wallThickness,
+        double openingAngleDegrees,
+        DoorSwingDirection swingDirection,
+        AnchorPoint anchor,
+        bool maskWallOpening)
+    {
+        return new DoorEntity(
+            insertionPoint,
+            width,
+            wallThickness,
+            openingAngleDegrees,
             swingDirection,
             anchor,
             maskWallOpening,
             layerId: layerId);
     }
 
-    private ToolResult HandleOption(string? optionKeyword)
+
+    private static string FormatAnchor(AnchorPoint anchor)
     {
-        if (LeftOption.Matches(optionKeyword ?? string.Empty))
+        return AnchorPointService.GetDescriptor(anchor).DisplayName;
+    }
+
+    private static string FormatMaskState(bool maskWallOpening)
+    {
+        return maskWallOpening ? "On" : "Off";
+    }
+
+    private ToolResult HandleOption(string? optionKeyword, ToolContext context)
+    {
+        string option = optionKeyword ?? string.Empty;
+
+        if (WidthOption.Matches(option))
+        {
+            State = DoorToolState.WaitingForWidth;
+            context.CurrentBasePoint = null;
+            _previewInsertionPoint = null;
+            return ToolResult.Started($"Specify door width <{CurrentWidth:0.###}>.");
+        }
+
+        if (ThicknessOption.Matches(option))
+        {
+            State = DoorToolState.WaitingForWallThickness;
+            context.CurrentBasePoint = null;
+            _previewInsertionPoint = null;
+            return ToolResult.Started($"Specify door wall thickness <{CurrentWallThickness:0.###}>.");
+        }
+
+        if (OpeningOption.Matches(option))
+        {
+            State = DoorToolState.WaitingForOpeningAngle;
+            context.CurrentBasePoint = null;
+            _previewInsertionPoint = null;
+            return ToolResult.Started($"Specify door opening angle <{CurrentOpeningAngleDegrees:0.###}>.");
+        }
+
+        if (LeftOption.Matches(option))
         {
             CurrentSwingDirection = DoorSwingDirection.Left;
             return ToolResult.Updated("Door swing set to Left.");
         }
 
-        if (RightOption.Matches(optionKeyword ?? string.Empty))
+        if (RightOption.Matches(option))
         {
             CurrentSwingDirection = DoorSwingDirection.Right;
             return ToolResult.Updated("Door swing set to Right.");
         }
 
-        if (AnchorOption.Matches(optionKeyword ?? string.Empty))
+        if (AnchorOption.Matches(option))
         {
             return ToolResult.Updated("Use the HUD 3x3 anchor selector or numeric shortcuts 1-9 to choose the door anchor.");
         }
 
-        if (MaskOption.Matches(optionKeyword ?? string.Empty))
+        if (MaskOption.Matches(option))
         {
             CurrentMaskWallOpening = !CurrentMaskWallOpening;
             return ToolResult.Updated(CurrentMaskWallOpening
@@ -239,7 +379,77 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
                 : "Door wall mask disabled.");
         }
 
-        return ToolResult.None("Unknown door option. Use Left, Right, Anchor or Mask.");
+        return ToolResult.None("Unknown door option. Use Width, Thickness, Opening, Left, Right, Anchor or Mask.");
+    }
+
+    private ToolResult HandleWidthInput(CommandInputSubmission input, ToolContext context)
+    {
+        if (input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            State = DoorToolState.WaitingForInsertionPoint;
+            return ToolResult.Started($"Door width remains {CurrentWidth:0.###}. Specify insertion point.");
+        }
+
+        if (input.Kind == CommandInputSubmissionKind.Number && input.Number is not null)
+        {
+            if (input.Number.Value <= 0.0)
+            {
+                return ToolResult.None("Door width must be greater than zero.");
+            }
+
+            CurrentWidth = input.Number.Value;
+            State = DoorToolState.WaitingForInsertionPoint;
+            return ToolResult.Started($"Door width set to {CurrentWidth:0.###}. Specify insertion point.");
+        }
+
+        return ToolResult.None("Specify a positive door width.");
+    }
+
+    private ToolResult HandleWallThicknessInput(CommandInputSubmission input, ToolContext context)
+    {
+        if (input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            State = DoorToolState.WaitingForInsertionPoint;
+            return ToolResult.Started($"Door wall thickness remains {CurrentWallThickness:0.###}. Specify insertion point.");
+        }
+
+        if (input.Kind == CommandInputSubmissionKind.Number && input.Number is not null)
+        {
+            if (input.Number.Value <= 0.0)
+            {
+                return ToolResult.None("Door wall thickness must be greater than zero.");
+            }
+
+            CurrentWallThickness = input.Number.Value;
+            State = DoorToolState.WaitingForInsertionPoint;
+            return ToolResult.Started($"Door wall thickness set to {CurrentWallThickness:0.###}. Specify insertion point.");
+        }
+
+        return ToolResult.None("Specify a positive door wall thickness.");
+    }
+
+    private ToolResult HandleOpeningAngleInput(CommandInputSubmission input, ToolContext context)
+    {
+        if (input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            State = DoorToolState.WaitingForInsertionPoint;
+            return ToolResult.Started($"Door opening angle remains {CurrentOpeningAngleDegrees:0.###}. Specify insertion point.");
+        }
+
+        if (input.Kind == CommandInputSubmissionKind.Number && input.Number is not null)
+        {
+            double angle = input.Number.Value;
+            if (angle <= 0.0 || angle > 180.0)
+            {
+                return ToolResult.None("Door opening angle must be greater than zero and no more than 180 degrees.");
+            }
+
+            CurrentOpeningAngleDegrees = angle;
+            State = DoorToolState.WaitingForInsertionPoint;
+            return ToolResult.Started($"Door opening angle set to {CurrentOpeningAngleDegrees:0.###}. Specify insertion point.");
+        }
+
+        return ToolResult.None("Specify a door opening angle greater than zero and no more than 180 degrees.");
     }
 
     private static Point2D ApplySnap(
@@ -264,4 +474,12 @@ public sealed class DoorTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityP
 
         return candidate?.Point ?? cursorPoint;
     }
+}
+
+public enum DoorToolState
+{
+    WaitingForInsertionPoint,
+    WaitingForWidth,
+    WaitingForWallThickness,
+    WaitingForOpeningAngle
 }

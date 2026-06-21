@@ -36,6 +36,26 @@ public sealed class WindowToolTests
     }
 
     [Fact]
+    public void GetPromptState_ShouldExposeCurrentWindowDefaultsInInsertionPrompt()
+    {
+        ToolContext context = CreateContext();
+        var tool = new WindowTool();
+
+        tool.SetAnchor(AnchorPoint.BottomRight);
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("M", "Mask"),
+            context);
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+
+        Assert.Contains("W=120", prompt.Prompt);
+        Assert.Contains("T=20", prompt.Prompt);
+        Assert.Contains("O=4", prompt.Prompt);
+        Assert.Contains("A=Bottom right", prompt.Prompt);
+        Assert.Contains("M=Off", prompt.Prompt);
+    }
+
+    [Fact]
     public void PointerPress_ShouldInsertWindowOnCurrentLayer()
     {
         LayerId layerId = new("Architecture");
@@ -120,6 +140,54 @@ public sealed class WindowToolTests
         WindowEntity preview = Assert.Single(tool.GetPreviewEntities(context).OfType<WindowEntity>());
         Assert.Equal(new Point2D(15, 25), preview.InsertionPoint);
         Assert.True(preview.MaskWallOpening);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithOffsetOption_ShouldUseCustomFrameOffsetForNextWindow()
+    {
+        ToolContext context = CreateContext();
+        var tool = new WindowTool();
+
+        ToolResult optionResult = tool.HandleCommandInput(
+            CommandInputSubmission.Option("O", "Offset"),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, optionResult.Kind);
+        Assert.Equal(WindowToolState.WaitingForFrameOffset, tool.State);
+
+        ToolResult offsetResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromNumber("6", 6),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, offsetResult.Kind);
+        Assert.Equal(WindowToolState.WaitingForInsertionPoint, tool.State);
+        Assert.Equal(6, tool.CurrentFrameOffset);
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        WindowEntity window = Assert.Single(context.Document.Entities.All.OfType<WindowEntity>());
+        Assert.Equal(6, window.FrameOffset);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithTooLargeFrameOffset_ShouldRejectValue()
+    {
+        ToolContext context = CreateContext();
+        var tool = new WindowTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("O", "Offset"),
+            context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromNumber("11", 11),
+            context);
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(WindowToolState.WaitingForFrameOffset, tool.State);
+        Assert.Equal(WindowTool.DefaultFrameOffset, tool.CurrentFrameOffset);
     }
 
     private static ToolContext CreateContext(

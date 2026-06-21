@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using OpenCad2D.Core.Anchors;
 using OpenCad2D.Core.Architecture.Doors;
 using OpenCad2D.Core.Architecture.Stairs;
 using OpenCad2D.Core.Commands;
@@ -22,6 +23,10 @@ public sealed class SelectionPropertyPanelBuilder
     private static readonly string[] FillOptions = ["None", "Solid"];
     private static readonly string[] StairViewOptions = ["Plan", "Side elevation", "Front elevation"];
     private static readonly string[] StairPlanArrowOptions = ["None", "First to last", "Last to first"];
+    private static readonly string[] DoorSwingOptions = ["Left", "Right"];
+    private static readonly string[] AnchorOptions = AnchorPointService.Descriptors
+        .Select(descriptor => descriptor.DisplayName)
+        .ToArray();
     public PropertyPanelViewModel Build(
         CadWorkspace workspace,
         Action<string>? setMessage = null,
@@ -672,11 +677,13 @@ public sealed class SelectionPropertyPanelBuilder
             new[]
             {
                 Row("Insertion", PropertyValueFormatter.FormatPoint(door.InsertionPoint)),
-                Row("Anchor", door.Anchor.ToString()),
-                Row("Width", PropertyValueFormatter.FormatLength(door.Width)),
-                Row("Wall thickness", PropertyValueFormatter.FormatLength(door.WallThickness)),
-                Row("Opening angle", PropertyValueFormatter.FormatCoordinate(door.OpeningAngleDegrees)),
-                Row("Swing", FormatDoorSwingDirection(door.SwingDirection)),
+                EditableRow("Insertion X", PropertyValueFormatter.FormatCoordinate(door.InsertionPoint.X), value => ReplaceDoorInsertionCoordinate(workspace, door.Id, value, updateX: true, setMessage, refresh)),
+                EditableRow("Insertion Y", PropertyValueFormatter.FormatCoordinate(door.InsertionPoint.Y), value => ReplaceDoorInsertionCoordinate(workspace, door.Id, value, updateX: false, setMessage, refresh)),
+                ComboRow("Anchor", FormatAnchor(door.Anchor), AnchorOptions, value => ReplaceDoorAnchor(workspace, door.Id, value, setMessage, refresh)),
+                EditableRow("Width", PropertyValueFormatter.FormatLength(door.Width), value => ReplaceDoorWidth(workspace, door.Id, value, setMessage, refresh)),
+                EditableRow("Wall thickness", PropertyValueFormatter.FormatLength(door.WallThickness), value => ReplaceDoorWallThickness(workspace, door.Id, value, setMessage, refresh)),
+                EditableRow("Opening angle", PropertyValueFormatter.FormatCoordinate(door.OpeningAngleDegrees), value => ReplaceDoorOpeningAngle(workspace, door.Id, value, setMessage, refresh)),
+                ComboRow("Swing", FormatDoorSwingDirection(door.SwingDirection), DoorSwingOptions, value => ReplaceDoorSwingDirection(workspace, door.Id, value, setMessage, refresh)),
                 ComboRow("Wall mask", FormatYesNo(door.MaskWallOpening), YesNoOptions, value => ReplaceDoorWallMask(workspace, door.Id, value, setMessage, refresh))
             });
     }
@@ -692,10 +699,12 @@ public sealed class SelectionPropertyPanelBuilder
             new[]
             {
                 Row("Insertion", PropertyValueFormatter.FormatPoint(window.InsertionPoint)),
-                Row("Anchor", window.Anchor.ToString()),
-                Row("Width", PropertyValueFormatter.FormatLength(window.Width)),
-                Row("Wall thickness", PropertyValueFormatter.FormatLength(window.WallThickness)),
-                Row("Frame offset", PropertyValueFormatter.FormatLength(window.FrameOffset)),
+                EditableRow("Insertion X", PropertyValueFormatter.FormatCoordinate(window.InsertionPoint.X), value => ReplaceWindowInsertionCoordinate(workspace, window.Id, value, updateX: true, setMessage, refresh)),
+                EditableRow("Insertion Y", PropertyValueFormatter.FormatCoordinate(window.InsertionPoint.Y), value => ReplaceWindowInsertionCoordinate(workspace, window.Id, value, updateX: false, setMessage, refresh)),
+                ComboRow("Anchor", FormatAnchor(window.Anchor), AnchorOptions, value => ReplaceWindowAnchor(workspace, window.Id, value, setMessage, refresh)),
+                EditableRow("Width", PropertyValueFormatter.FormatLength(window.Width), value => ReplaceWindowWidth(workspace, window.Id, value, setMessage, refresh)),
+                EditableRow("Wall thickness", PropertyValueFormatter.FormatLength(window.WallThickness), value => ReplaceWindowWallThickness(workspace, window.Id, value, setMessage, refresh)),
+                EditableRow("Frame offset", PropertyValueFormatter.FormatLength(window.FrameOffset), value => ReplaceWindowFrameOffset(workspace, window.Id, value, setMessage, refresh)),
                 ComboRow("Wall mask", FormatYesNo(window.MaskWallOpening), YesNoOptions, value => ReplaceWindowWallMask(workspace, window.Id, value, setMessage, refresh))
             });
     }
@@ -1274,6 +1283,153 @@ public sealed class SelectionPropertyPanelBuilder
             refresh);
     }
 
+    private static void ReplaceDoorInsertionCoordinate(CadWorkspace workspace, EntityId entityId, string value, bool updateX, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<DoorEntity>(workspace, entityId, setMessage, out DoorEntity door) ||
+            !TryParseDouble(value, setMessage, out double coordinate))
+        {
+            return;
+        }
+
+        Point2D insertionPoint = updateX
+            ? new Point2D(coordinate, door.InsertionPoint.Y)
+            : new Point2D(door.InsertionPoint.X, coordinate);
+
+        ReplaceEntity(workspace, door.WithParameters(insertionPoint: insertionPoint), "Door updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceDoorWidth(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<DoorEntity>(workspace, entityId, setMessage, out DoorEntity door) ||
+            !TryParsePositiveDouble(value, "Door width", setMessage, out double width))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, door.WithParameters(width: width), "Door updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceDoorWallThickness(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<DoorEntity>(workspace, entityId, setMessage, out DoorEntity door) ||
+            !TryParsePositiveDouble(value, "Door wall thickness", setMessage, out double wallThickness))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, door.WithParameters(wallThickness: wallThickness), "Door updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceDoorOpeningAngle(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<DoorEntity>(workspace, entityId, setMessage, out DoorEntity door) ||
+            !TryParseDouble(value, setMessage, out double openingAngleDegrees))
+        {
+            return;
+        }
+
+        if (openingAngleDegrees <= 0.0 || openingAngleDegrees > 180.0)
+        {
+            setMessage?.Invoke("Door opening angle must be greater than zero and no more than 180 degrees.");
+            return;
+        }
+
+        ReplaceEntity(workspace, door.WithParameters(openingAngleDegrees: openingAngleDegrees), "Door updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceDoorSwingDirection(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<DoorEntity>(workspace, entityId, setMessage, out DoorEntity door) ||
+            !TryParseDoorSwingDirection(value, setMessage, out DoorSwingDirection swingDirection))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, door.WithParameters(swingDirection: swingDirection), "Door updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceDoorAnchor(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<DoorEntity>(workspace, entityId, setMessage, out DoorEntity door) ||
+            !TryParseAnchor(value, setMessage, out AnchorPoint anchor))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, door.WithParameters(anchor: anchor), "Door updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceWindowInsertionCoordinate(CadWorkspace workspace, EntityId entityId, string value, bool updateX, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<WindowEntity>(workspace, entityId, setMessage, out WindowEntity window) ||
+            !TryParseDouble(value, setMessage, out double coordinate))
+        {
+            return;
+        }
+
+        Point2D insertionPoint = updateX
+            ? new Point2D(coordinate, window.InsertionPoint.Y)
+            : new Point2D(window.InsertionPoint.X, coordinate);
+
+        ReplaceEntity(workspace, window.WithParameters(insertionPoint: insertionPoint), "Window updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceWindowWidth(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<WindowEntity>(workspace, entityId, setMessage, out WindowEntity window) ||
+            !TryParsePositiveDouble(value, "Window width", setMessage, out double width))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, window.WithParameters(width: width), "Window updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceWindowWallThickness(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<WindowEntity>(workspace, entityId, setMessage, out WindowEntity window) ||
+            !TryParsePositiveDouble(value, "Window wall thickness", setMessage, out double wallThickness))
+        {
+            return;
+        }
+
+        if (window.FrameOffset > wallThickness / 2.0)
+        {
+            setMessage?.Invoke("Window wall thickness must be at least twice the current frame offset.");
+            return;
+        }
+
+        ReplaceEntity(workspace, window.WithParameters(wallThickness: wallThickness), "Window updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceWindowFrameOffset(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<WindowEntity>(workspace, entityId, setMessage, out WindowEntity window) ||
+            !TryParsePositiveDouble(value, "Window frame offset", setMessage, out double frameOffset))
+        {
+            return;
+        }
+
+        if (frameOffset > window.WallThickness / 2.0)
+        {
+            setMessage?.Invoke("Window frame offset cannot be greater than half the wall thickness.");
+            return;
+        }
+
+        ReplaceEntity(workspace, window.WithParameters(frameOffset: frameOffset), "Window updated.", setMessage, refresh);
+    }
+
+    private static void ReplaceWindowAnchor(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
+    {
+        if (!TryGetEditableEntity<WindowEntity>(workspace, entityId, setMessage, out WindowEntity window) ||
+            !TryParseAnchor(value, setMessage, out AnchorPoint anchor))
+        {
+            return;
+        }
+
+        ReplaceEntity(workspace, window.WithParameters(anchor: anchor), "Window updated.", setMessage, refresh);
+    }
+
     private static void ReplaceStairView(CadWorkspace workspace, EntityId entityId, string value, Action<string>? setMessage, Action? refresh)
     {
         if (!TryGetEditableEntity<StairEntity>(workspace, entityId, setMessage, out StairEntity stair) ||
@@ -1810,6 +1966,57 @@ public sealed class SelectionPropertyPanelBuilder
             DoorSwingDirection.Right => "Right",
             _ => swingDirection.ToString()
         };
+    }
+
+    private static string FormatAnchor(AnchorPoint anchor)
+    {
+        return AnchorPointService.GetDescriptor(anchor).DisplayName;
+    }
+
+    private static bool TryParseDoorSwingDirection(string value, Action<string>? setMessage, out DoorSwingDirection swingDirection)
+    {
+        string normalized = value.Trim().Replace(" ", string.Empty).Replace("-", string.Empty).ToLowerInvariant();
+
+        switch (normalized)
+        {
+            case "left":
+            case "l":
+                swingDirection = DoorSwingDirection.Left;
+                return true;
+            case "right":
+            case "r":
+                swingDirection = DoorSwingDirection.Right;
+                return true;
+            default:
+                swingDirection = DoorSwingDirection.Left;
+                setMessage?.Invoke("Invalid door swing. Use Left or Right.");
+                return false;
+        }
+    }
+
+    private static bool TryParseAnchor(string value, Action<string>? setMessage, out AnchorPoint anchor)
+    {
+        string normalized = value.Trim().Replace(" ", string.Empty).Replace("-", string.Empty);
+
+        if (int.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out int shortcut) &&
+            AnchorPointService.TryFromNumericShortcut(shortcut, out anchor))
+        {
+            return true;
+        }
+
+        foreach (AnchorPointDescriptor descriptor in AnchorPointService.Descriptors)
+        {
+            if (string.Equals(descriptor.DisplayName.Replace(" ", string.Empty), normalized, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(descriptor.Key, normalized, StringComparison.OrdinalIgnoreCase))
+            {
+                anchor = descriptor.Anchor;
+                return true;
+            }
+        }
+
+        anchor = AnchorPoint.Center;
+        setMessage?.Invoke("Invalid anchor. Use one of the 9 anchor names or numeric shortcuts 1-9.");
+        return false;
     }
 
     private static string FormatStairView(StairViewKind viewKind)

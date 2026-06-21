@@ -1,12 +1,12 @@
-# OpenCad2D AI handoff — 2026-06-21 v0.8.180E Minimal WindowEntity
+# OpenCad2D AI handoff — 2026-06-21 v0.8.180G Door/window HUD status closeout
 
 This document is the current handoff for the next OpenCad2D development session. It replaces older v0.9-first wording: the active line is now the reconciled v0.8 consolidation line, and the next v0.9 gate is a future stabilization/release checkpoint.
 
 ## Current active line
 
-OpenCad2D remains in the v0.8 consolidation line. Documentation reconciliation is complete, a first real Library content pack has been added, and the planning specification pass defines the shared contracts for the next feature families. Blocks v2 now has five narrow implementation slices: v0.8.170A inventory/diagnostics, v0.8.170B duplicate/delete/purge, v0.8.170C edit-session hardening, v0.8.170D Library/block conflict policy and v0.8.170E rename closeout polish. The parametric doors/windows line has now started in code: v0.8.180A adds the shared 9-point anchor model and resolver, v0.8.180B adds the reusable Dynamic HUD 3x3 anchor selector foundation, v0.8.180C adds the first persistent `DoorEntity`, v0.8.180D adds non-destructive wall-opening masks for doors, and v0.8.180E adds the first persistent schematic `WindowEntity` using the same anchor and wall-mask contracts.
+OpenCad2D remains in the v0.8 consolidation line. Documentation reconciliation is complete, a first real Library content pack has been added, and the planning specification pass defines the shared contracts for the next feature families. Blocks v2 now has five narrow implementation slices: v0.8.170A inventory/diagnostics, v0.8.170B duplicate/delete/purge, v0.8.170C edit-session hardening, v0.8.170D Library/block conflict policy and v0.8.170E rename closeout polish. The parametric doors/windows line has now started in code: v0.8.180A adds the shared 9-point anchor model and resolver, v0.8.180B adds the reusable Dynamic HUD 3x3 anchor selector foundation, v0.8.180C adds the first persistent `DoorEntity`, v0.8.180D adds non-destructive wall-opening masks for doors, and v0.8.180E adds the first persistent schematic `WindowEntity` using the same anchor and wall-mask contracts, v0.8.180F adds Property Panel editing plus per-command insertion defaults for the minimal door/window pair, and v0.8.180G makes the effective insertion state visible in the HUD prompt before commit.
 
-The block/base-point invariant remains explicit and must be preserved: normal block references and static Library items are inserted by the base point chosen when the block definition/item is created, not by a derived 9-point bounding-box anchor. The 9-point anchor selector is for parametric/annotation tools such as doors, windows and future callouts. The next practical validation step is local build/test plus the v0.8.180D and v0.8.180E checklists, followed by the expanded v0.8.162 compatibility pass. The next feature slice after validation should be v0.8.180F door/window property editing and command defaults, unless manual smoke finds regressions that should become v0.8.163 cleanup.
+The block/base-point invariant remains explicit and must be preserved: normal block references and static Library items are inserted by the base point chosen when the block definition/item is created, not by a derived 9-point bounding-box anchor. The 9-point anchor selector is for parametric/annotation tools such as doors, windows and future callouts. The next practical validation step is local build/test plus the v0.8.180D, v0.8.180E and v0.8.180F checklists, followed by the expanded v0.8.162 compatibility pass. The next feature slice after validation should be decided deliberately: either door/window polish if smoke finds issues, or the next planned family such as Array tools.
 
 The source-of-truth planning documents are:
 
@@ -35,7 +35,7 @@ The following areas should not be reopened as if they were still planned foundat
 
 ## Immediate next work
 
-First, run the maintainer-side build and test suite after applying the v0.8.180E patch:
+First, run the maintainer-side build and test suite after applying the v0.8.180G patch:
 
 ```bash
 dotnet build OpenCad2D.sln
@@ -48,7 +48,7 @@ Third, keep the v0.8.180C checklist as a regression checklist for the base `Door
 
 Fourth, run `docs/testing/v0.8.162-compatibility-smoke-checklist.md` on the maintainer Windows environment before opening the next major feature slice. This is the gate for publish copy, Library insertion/explode, save/reopen, SVG/PDF/DXF/PNG, Stairs Property Panel, Boundary Fill v2 Gap cases, image transparency and block workflows.
 
-Fifth, if the above is clean, continue with `v0.8.180F` as a focused door/window editing defaults slice. Do not start Arrays, HatchEntity or UI customization until the minimal door/window pair and their shared anchor/wall-mask contracts are validated.
+Fifth, if the above is clean, run the v0.8.180F and v0.8.180G checklists and decide whether the minimal door/window pair needs another polish slice. Do not start HatchEntity or UI customization until the minimal door/window pair and their shared anchor/wall-mask contracts are validated.
 
 ## v0.8.170A implementation notes
 
@@ -302,3 +302,12 @@ Recommended next slice: `v0.8.180E` minimal `WindowEntity`, reusing the same anc
 ## v0.8.180E — Minimal WindowEntity
 
 Implemented as the first persistent parametric window slice. The new `WindowEntity` stores insertion point, width, wall thickness, frame offset, anchor, mask flag and local axes. `WindowTool` inserts it with `WINDOW`/`FINESTRA`/`WN`, uses the HUD anchor selector, supports `M = Mask`, exposes preview geometry, persists through JSON and exports as normal linework plus optional wipeout-style mask. Blocks and static Library items continue to use base-point insertion.
+
+
+## v0.8.180F — Door/window property editing and command defaults
+
+This slice adds Property Panel editing for the core `DoorEntity` and `WindowEntity` parameters and per-tool command defaults. Doors can edit insertion, anchor, width, wall thickness, opening angle, swing and wall mask. Windows can edit insertion, anchor, width, wall thickness, frame offset and wall mask. The `DOOR` command now supports Width, Thickness and Opening numeric sub-prompts; the `WINDOW` command now supports Width, Thickness and Offset numeric sub-prompts. These defaults are per active tool instance and are not yet saved as application presets.
+
+## v0.8.180G — Door/window HUD status closeout
+
+This small slice makes the current insertion state visible in the `DOOR` and `WINDOW` prompts. `DOOR` now reports width, wall thickness, opening angle, swing, anchor and wall-mask state. `WINDOW` now reports width, wall thickness, frame offset, anchor and wall-mask state. The change is deliberately HUD-only: it does not alter geometry, persistence, block insertion, Library insertion or wall-mask semantics.

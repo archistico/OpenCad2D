@@ -39,6 +39,30 @@ public sealed class DoorToolTests
     }
 
     [Fact]
+    public void GetPromptState_ShouldExposeCurrentDoorDefaultsInInsertionPrompt()
+    {
+        ToolContext context = CreateContext();
+        var tool = new DoorTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("R", "Right"),
+            context);
+        tool.SetAnchor(AnchorPoint.BottomCenter);
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("M", "Mask"),
+            context);
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+
+        Assert.Contains("W=90", prompt.Prompt);
+        Assert.Contains("T=20", prompt.Prompt);
+        Assert.Contains("O=90", prompt.Prompt);
+        Assert.Contains("S=Right", prompt.Prompt);
+        Assert.Contains("A=Bottom center", prompt.Prompt);
+        Assert.Contains("M=Off", prompt.Prompt);
+    }
+
+    [Fact]
     public void PointerPress_ShouldInsertDoorOnCurrentLayer()
     {
         LayerId layerId = new("Architecture");
@@ -218,6 +242,54 @@ public sealed class DoorToolTests
         Assert.Null(tool.LastInsertionPoint);
         Assert.Null(context.CurrentBasePoint);
         Assert.Empty(tool.GetPreviewEntities(context));
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithWidthOption_ShouldUseCustomWidthForNextDoor()
+    {
+        ToolContext context = CreateContext();
+        var tool = new DoorTool();
+
+        ToolResult optionResult = tool.HandleCommandInput(
+            CommandInputSubmission.Option("W", "Width"),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, optionResult.Kind);
+        Assert.Equal(DoorToolState.WaitingForWidth, tool.State);
+
+        ToolResult widthResult = tool.HandleCommandInput(
+            CommandInputSubmission.FromNumber("105", 105),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, widthResult.Kind);
+        Assert.Equal(DoorToolState.WaitingForInsertionPoint, tool.State);
+        Assert.Equal(105, tool.CurrentWidth);
+
+        tool.OnPointerPressed(
+            context,
+            new PointerInfo(new Point2D(0, 0)));
+
+        DoorEntity door = Assert.Single(context.Document.Entities.All.OfType<DoorEntity>());
+        Assert.Equal(105, door.Width);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithOpeningOption_ShouldRejectInvalidAngle()
+    {
+        ToolContext context = CreateContext();
+        var tool = new DoorTool();
+
+        tool.HandleCommandInput(
+            CommandInputSubmission.Option("O", "Opening"),
+            context);
+
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromNumber("200", 200),
+            context);
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(DoorToolState.WaitingForOpeningAngle, tool.State);
+        Assert.Equal(DoorTool.DefaultOpeningAngleDegrees, tool.CurrentOpeningAngleDegrees);
     }
 
     private static ToolContext CreateContext(

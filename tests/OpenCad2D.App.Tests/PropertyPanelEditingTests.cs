@@ -1,6 +1,8 @@
 using System.Linq;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.App.ViewModels.Properties;
+using OpenCad2D.Core.Anchors;
+using OpenCad2D.Core.Architecture.Doors;
 using OpenCad2D.Core.Architecture.Stairs;
 using OpenCad2D.Core.Dimensions;
 using OpenCad2D.Core.Entities;
@@ -1059,6 +1061,152 @@ public sealed class PropertyPanelEditingTests
         Assert.True(restored.MaskWallOpening);
     }
 
+    [Fact]
+    public void PropertyPanel_ForDoor_ShouldExposeEditableArchitecturalParameters()
+    {
+        var viewModel = new MainWindowViewModel();
+        var door = new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20,
+            maskWallOpening: true);
+        viewModel.Workspace.Document.AddEntity(door);
+        SelectEntity(viewModel, door);
+
+        Assert.True(FindRowInSection(viewModel, "Door", "Insertion X").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Door", "Insertion Y").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Door", "Width").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Door", "Wall thickness").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Door", "Opening angle").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Door", "Swing").IsComboBox);
+        Assert.True(FindRowInSection(viewModel, "Door", "Anchor").IsComboBox);
+        Assert.True(FindRow(viewModel, "Wall mask").IsComboBox);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForDoorWidthSwingAndAnchor_ShouldReplaceDoorAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var door = new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20,
+            maskWallOpening: true);
+        viewModel.Workspace.Document.AddEntity(door);
+        SelectEntity(viewModel, door);
+
+        PropertyRowViewModel widthRow = FindRowInSection(viewModel, "Door", "Width");
+        widthRow.EditableValue = "110";
+        widthRow.ApplyCommand.Execute(null);
+
+        PropertyRowViewModel swingRow = FindRowInSection(viewModel, "Door", "Swing");
+        swingRow.EditableValue = "Right";
+        swingRow.ApplyCommand.Execute(null);
+
+        PropertyRowViewModel anchorRow = FindRowInSection(viewModel, "Door", "Anchor");
+        anchorRow.EditableValue = "Center";
+        anchorRow.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<DoorEntity>(viewModel.Workspace.Document.Entities.GetRequired(door.Id));
+        Assert.Equal(110, updated.Width);
+        Assert.Equal(DoorSwingDirection.Right, updated.SwingDirection);
+        Assert.Equal(AnchorPoint.Center, updated.Anchor);
+        Assert.Equal("Door updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restoredAfterAnchorUndo = Assert.IsType<DoorEntity>(viewModel.Workspace.Document.Entities.GetRequired(door.Id));
+        Assert.Equal(AnchorPoint.MiddleLeft, restoredAfterAnchorUndo.Anchor);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForDoorInsertionX_ShouldMoveDoor()
+    {
+        var viewModel = new MainWindowViewModel();
+        var door = new DoorEntity(
+            new Point2D(0, 0),
+            width: 90,
+            wallThickness: 20);
+        viewModel.Workspace.Document.AddEntity(door);
+        SelectEntity(viewModel, door);
+
+        PropertyRowViewModel row = FindRowInSection(viewModel, "Door", "Insertion X");
+        row.EditableValue = "25";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<DoorEntity>(viewModel.Workspace.Document.Entities.GetRequired(door.Id));
+        Assert.Equal(new Point2D(25, 0), updated.InsertionPoint);
+    }
+
+    [Fact]
+    public void PropertyPanel_ForWindow_ShouldExposeEditableArchitecturalParameters()
+    {
+        var viewModel = new MainWindowViewModel();
+        var window = new WindowEntity(
+            new Point2D(0, 0),
+            width: 120,
+            wallThickness: 20,
+            frameOffset: 4,
+            maskWallOpening: true);
+        viewModel.Workspace.Document.AddEntity(window);
+        SelectEntity(viewModel, window);
+
+        Assert.True(FindRowInSection(viewModel, "Window", "Insertion X").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Window", "Insertion Y").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Window", "Width").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Window", "Wall thickness").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Window", "Frame offset").IsTextBox);
+        Assert.True(FindRowInSection(viewModel, "Window", "Anchor").IsComboBox);
+        Assert.True(FindRow(viewModel, "Wall mask").IsComboBox);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForWindowFrameOffset_ShouldReplaceWindowAndSupportUndo()
+    {
+        var viewModel = new MainWindowViewModel();
+        var window = new WindowEntity(
+            new Point2D(0, 0),
+            width: 120,
+            wallThickness: 20,
+            frameOffset: 4);
+        viewModel.Workspace.Document.AddEntity(window);
+        SelectEntity(viewModel, window);
+
+        PropertyRowViewModel row = FindRowInSection(viewModel, "Window", "Frame offset");
+        row.EditableValue = "5";
+        row.ApplyCommand.Execute(null);
+
+        var updated = Assert.IsType<WindowEntity>(viewModel.Workspace.Document.Entities.GetRequired(window.Id));
+        Assert.Equal(5, updated.FrameOffset);
+        Assert.Equal("Window updated.", viewModel.LastMessage);
+
+        viewModel.Undo();
+
+        var restored = Assert.IsType<WindowEntity>(viewModel.Workspace.Document.Entities.GetRequired(window.Id));
+        Assert.Equal(4, restored.FrameOffset);
+    }
+
+    [Fact]
+    public void ApplyCommand_ForWindowFrameOffsetGreaterThanHalfThickness_ShouldRejectValue()
+    {
+        var viewModel = new MainWindowViewModel();
+        var window = new WindowEntity(
+            new Point2D(0, 0),
+            width: 120,
+            wallThickness: 20,
+            frameOffset: 4);
+        viewModel.Workspace.Document.AddEntity(window);
+        SelectEntity(viewModel, window);
+
+        PropertyRowViewModel row = FindRowInSection(viewModel, "Window", "Frame offset");
+        row.EditableValue = "12";
+        row.ApplyCommand.Execute(null);
+
+        var unchanged = Assert.IsType<WindowEntity>(viewModel.Workspace.Document.Entities.GetRequired(window.Id));
+        Assert.Equal(4, unchanged.FrameOffset);
+        Assert.Equal("Window frame offset cannot be greater than half the wall thickness.", viewModel.LastMessage);
+    }
+
     private static void SelectEntity(
         MainWindowViewModel viewModel,
         CadEntity entity)
@@ -1073,6 +1221,16 @@ public sealed class PropertyPanelEditingTests
     {
         return viewModel.PropertyPanel.Sections
             .Single(section => section.Title == title);
+    }
+
+    private static PropertyRowViewModel FindRowInSection(
+        MainWindowViewModel viewModel,
+        string sectionTitle,
+        string rowName)
+    {
+        return FindSection(viewModel, sectionTitle)
+            .Rows
+            .Single(row => row.Name == rowName);
     }
 
     private static PropertyRowViewModel FindRow(

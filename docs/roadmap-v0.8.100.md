@@ -19,7 +19,7 @@ Suggested numbering for the active line:
 | v0.8.140 - v0.8.149 | Boundary Fill v1/v2 | [x] for filled-polyline workflow |
 | v0.8.150 - v0.8.159 | HatchEntity foundation | [ ] |
 | v0.8.160 - v0.8.169 | Documentation reconciliation, Library content, shared planning contracts and compatibility pass | [~] — v0.8.160 and v0.8.164 done, v0.8.161 implemented pending manual validation |
-| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A-170E implemented; v0.8.180A shared anchor foundation, v0.8.180B HUD anchor selector foundation, v0.8.180C minimal DoorEntity and v0.8.180D door wall-mask foundation and v0.8.180E minimal WindowEntity implemented; manual closeout validation still required |
+| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A-170E implemented; v0.8.180A shared anchor foundation, v0.8.180B HUD anchor selector foundation, v0.8.180C minimal DoorEntity and v0.8.180D door wall-mask foundation, v0.8.180E minimal WindowEntity, v0.8.180F door/window editing defaults and v0.8.180G HUD status closeout implemented; manual closeout validation still required |
 
 Exact patch numbers can move, but each milestone should remain independently buildable, testable and documented.
 
@@ -375,9 +375,11 @@ Specifications:
 - `docs/specs/v0.8.180-parametric-doors-windows.md`;
 - `docs/specs/v0.8.180C-minimal-door-entity.md`;
 - `docs/specs/v0.8.180D-door-wall-mask-foundation.md`;
-- `docs/specs/v0.8.180E-minimal-window-entity.md`.
+- `docs/specs/v0.8.180E-minimal-window-entity.md`;
+- `docs/specs/v0.8.180F-door-window-property-editing-defaults.md`;
+- `docs/specs/v0.8.180G-door-window-hud-status-closeout.md`.
 
-Goal: add persistent parametric door/window objects with 9-point anchor selection in the HUD and optional wall-line masking/opening behavior at insertion.
+Goal: add persistent parametric door/window objects with 9-point anchor selection in the HUD and optional wall-line masking/opening behavior at insertion. The v0.8.180G closeout additionally makes the effective insertion state visible in the command prompt before commit, including anchor, wall-mask state and door swing direction.
 
 ### v0.8.190 — Array tools
 
