@@ -27,11 +27,25 @@ public partial class BlockManagerWindow : Window
         CloseWithAction(BlockManagerAction.InsertSelected);
     }
 
+    private void Duplicate_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ViewModel?.DuplicateSelectedBlock();
+    }
+
     private void Delete_Click(
         object? sender,
         RoutedEventArgs e)
     {
         ViewModel?.DeleteSelectedBlock();
+    }
+
+    private void PurgeUnused_Click(
+        object? sender,
+        RoutedEventArgs e)
+    {
+        ViewModel?.PurgeUnusedBlocks();
     }
 
     private void Ok_Click(

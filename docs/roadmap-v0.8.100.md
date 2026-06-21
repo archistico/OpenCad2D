@@ -1,411 +1,389 @@
 # OpenCad2D v0.8.100+ roadmap
 
-This document defines the extended v0.8 development line before the next general stabilization release.
+This document records the extended v0.8 development line after the 2026-06-21 documentation reconciliation. The main roadmap remains `docs/roadmap.md`; this file gives the more detailed v0.8.100+ breakdown.
 
-The goal of v0.8.100+ is to add the next major drafting foundations while keeping the project in small, testable increments. The v0.9 release gate is intentionally deferred until these foundations have reached a usable and documented baseline.
+The v0.8.100+ line has already delivered several foundations that were originally planned as future work. The next step is therefore not another uncontrolled expansion, but a cleanup of planning documents and a focused continuation from a stable baseline.
+
+---
 
 ## Versioning policy
 
-The v0.8 line remains active.
+Suggested numbering for the active line:
 
-Suggested numbering:
+| Version range | Theme | Current status |
+|---|---|---:|
+| v0.8.100 - v0.8.109 | Import another OpenCad2D drawing into the current document | [x] |
+| v0.8.110 - v0.8.119 | Block model, block references and first block UI | [x] |
+| v0.8.120 - v0.8.129 | Dynamic HUD, Library Browser and symbol direction | [x] for HUD/Library foundation, [~] for symbol expansion |
+| v0.8.130 - v0.8.139 | Parametric stair tools | [x] for straight-stair v1 |
+| v0.8.140 - v0.8.149 | Boundary Fill v1/v2 | [x] for filled-polyline workflow |
+| v0.8.150 - v0.8.159 | HatchEntity foundation | [ ] |
+| v0.8.160 - v0.8.169 | Documentation reconciliation, Library content, shared planning contracts and compatibility pass | [~] — v0.8.160 and v0.8.164 done, v0.8.161 implemented pending manual validation |
+| v0.8.170 - v0.8.239 | Next feature foundations: Blocks v2, doors/windows, arrays, hatch patterns, annotations, UI customization and icon SVG workflow | [~] — Blocks v2 slices 170A and 170B implemented, remaining slices planned |
 
-| Version range | Theme |
-|---|---|
-| v0.8.100 - v0.8.109 | Import another OpenCad2D drawing into the current document |
-| v0.8.110 - v0.8.119 | Block model, block references and block editing |
-| v0.8.120 - v0.8.129 | Command HUD refactor, library browser, reusable drawing snippets and parametric drafting helpers |
-| v0.8.130 - v0.8.139 | Stair tools for plan/elevation/front elevation drafting |
-| v0.8.140 - v0.8.159 | Boundary Fill v1/v2 and hatch system |
-| v0.8.160+ | Consolidation, compatibility, documentation and release gate preparation |
-
-The exact patch numbers can move, but each milestone should remain independently buildable, testable and documented.
-
-## Strategic order
-
-The recommended order is:
-
-1. Import Drawing
-2. Blocks
-3. Dynamic Command HUD and command UX unification
-4. Drawing Library and parametric helpers
-5. Stairs
-6. Boundary Fill / Hatch
-7. Consolidation
-
-This order is intentional.
-
-Import Drawing is a low-risk foundation for reusing existing work. Blocks should follow because many future symbols should be generated as reusable block definitions. Before adding more UI-heavy drafting workflows, the command input should be consolidated into a dynamic cursor HUD so every command exposes coherent prompt state, options and confirmation behavior. Reusable library items and parametric helpers can then use the block infrastructure instead of becoming isolated one-off tools. Fixed symbols should mostly live as `.opencad2d.json` library snippets, while the Symbols/tools area should be reserved for parametric generators such as doors, windows, stairs or markers that need user-provided dimensions. Boundary Fill should progress conservatively: first create filled polylines from detected linear faces, then add preview/curve/gap support, and only then introduce a true hatch entity for holes and richer hatch behavior.
+Exact patch numbers can move, but each milestone should remain independently buildable, testable and documented.
 
 ---
 
-## Milestone v0.8.100 — Import Drawing
+## Strategic order after reconciliation
+
+The historical order was correct: Import Drawing, Blocks, Dynamic HUD, Library, Stairs and Boundary Fill had to come before larger CAD workflows. The real state now requires a new continuation order:
+
+1. **Documentation reconciliation**.
+2. **Small real Library content pack**.
+3. **Planning specification pass with shared contracts**.
+4. **Blocks v2 slice 170A: Block Manager inventory and diagnostics**.
+5. **Compatibility/manual smoke validation**.
+6. **Blocks v2 remaining slices: rename/duplicate/purge, edit workflow and Library conflict policy**.
+7. **Parametric doors/windows with wall masking and anchor control**.
+8. **Array tools**.
+9. **HatchEntity and hatch patterns**.
+10. **Annotation marker tools: arrows, section labels and coordinate callouts**.
+11. **UI customization and icon SVG workflow**.
+12. **v0.9 stabilization gate**.
+
+This order keeps dependencies clean. Blocks v2 improves the infrastructure used by Library items and repeated content. Doors/windows depend on reliable parametric insertion, anchor points and layer/line behavior. Arrays should operate on ordinary entities and block references before the library grows too much. HatchEntity should remain separate from Boundary Fill's current filled-polyline model. Annotation marker tools can reuse arrowhead/style/HUD concepts. UI customization and SVG icon import/export should happen after the main tool inventory has stabilized enough to expose configurable workspaces.
+
+---
+
+## Completed v0.8.100+ milestones
+
+### v0.8.100 - v0.8.102 — Import Drawing
 
 Specification: `docs/specs/v0.8.100-import-drawing.md`.
 
-Status: v0.8.102 implemented.
+Status: [x].
 
-Goal: allow a `.opencad2d.json` file to be imported into the current drawing.
+Implemented behavior:
 
-Initial scope:
+- import another `.opencad2d.json` drawing into the current document;
+- pending insertion point workflow;
+- uniform scale and rotation options;
+- snap-aware placement;
+- undoable merge;
+- layer/style/block-safe merge behavior where implemented.
 
-- Import entities from another native OpenCad2D file.
-- Clone imported entities with fresh IDs.
-- Merge layers, line formats, text formats and dimension styles safely.
-- Resolve external image paths relative to the imported document before inserting them.
-- Preserve visual appearance as much as possible.
-- v0.8.100: import at origin and undoable merge.
-- v0.8.101: insertion point workflow with pending import and Escape cancellation.
-- v0.8.102: import options dialog with uniform scale and rotation in degrees.
-- Defer live preview and command-line aliases to later refinement passes.
-
-Exit criteria:
-
-- Importing a valid drawing does not replace the current document.
-- Existing entities remain unchanged.
-- Imported entity IDs do not collide with current entity IDs.
-- Imported image references remain valid when possible.
-- Undo removes the imported batch as one operation.
-- Insertion point can be selected in the canvas, including snap points.
-- Scale and rotation options transform the imported entities around source origin before placement.
-- Tests cover merge behavior, ID regeneration, pending placement, cancellation, scale and rotation.
-
----
-
-## Milestone v0.8.110 — Block model
+### v0.8.110 - v0.8.115 — Blocks v1
 
 Specification: `docs/specs/v0.8.110-blocks.md`.
 
-Status: v0.8.111 in progress/implemented.
+Status: [x] for first usable block system.
 
-Goal: introduce reusable block definitions and block references.
+Implemented behavior:
 
-Initial scope:
+- `BlockDefinition` and `BlockReferenceEntity` model;
+- JSON persistence for definitions and references;
+- rendering, hit testing and selection of block references;
+- snapping to transformed internal block geometry;
+- Create Block from selected entities;
+- Insert Block from an existing definition;
+- minimal Block Manager for rename, unused delete and insert selected;
+- Explode Block;
+- first Edit Block session workflow.
 
-- Add `BlockDefinition` to the document model.
-- Add `BlockReferenceEntity` as a drawing entity.
-- Persist block definitions and block references in `.opencad2d.json`.
-- Render block references by transforming definition geometry into world space.
-- Support selection, hit testing and basic transforms of block references.
-- v0.8.110: add block definitions, block references, persistence and rendering foundation.
-- v0.8.111: create block from selection with numeric base point and undo as a single operation.
-- Support snapping to transformed geometry inside block references.
+Remaining block work is now tracked as Blocks v2, not as unfinished v0.8.110 work.
 
-Exit criteria:
-
-- Multiple references can point to the same definition.
-- Editing a definition updates all references after reload/render.
-- Block references can be moved, copied, rotated, scaled and mirrored as references.
-- Persistence round-trip preserves definitions and references.
-
----
-
-## Milestone v0.8.115 — Block tools and editing workflow
-
-Specification: `docs/specs/v0.8.110-blocks.md`.
-
-Status: in progress.
-
-Goal: make blocks usable from the UI.
-
-Initial scope:
-
-- Create Block from selection.
-- Insert Block.
-- Edit Block definition in a simple isolated editing workflow.
-- Explode Block into regular entities.
-- Minimal Block Manager.
-
-Recommended first implementation:
-
-- Use a separate block-editing mode or window instead of in-place editing.
-- Avoid nested blocks initially unless the document model naturally permits them safely.
-- Defer attributes, dynamic blocks and per-reference layer overrides.
-
-Exit criteria:
-
-- Creating a block removes or optionally keeps the original selection according to a clear prompt.
-- Inserting a block creates a reference, not duplicated geometry.
-- Editing a definition updates all instances.
-- Exploding a block produces regular entities with correct world-space geometry.
-
-
----
-
-## Milestone v0.8.120 — Symbols and library direction
+### v0.8.120 — Symbols and Library direction
 
 Specifications:
 
 - `docs/specs/v0.8.120-architectural-symbols.md`
 - `docs/specs/v0.8.122-library-browser.md`
 
-Status: direction updated. North Symbol and Metric Scale Bar first passes are implemented, but future fixed symbols should move toward the Library workflow instead of adding many toolbar buttons.
+Status: [x] for direction and Library Browser foundation; [~] for actual content breadth.
 
-Goal: separate two concepts that should not grow into one overloaded toolbar:
+Implemented behavior:
 
-1. **Library items** — reusable fixed drawings stored as `.opencad2d.json` files under a `library/` folder and inserted through a modal Library Browser with preview and categories.
-2. **Parametric symbol tools** — true generators that ask for dimensions/options before creating geometry, such as doors, windows, stairs, section markers with configurable labels, or title blocks.
+- first-pass North Symbol;
+- first-pass Metric Scale Bar;
+- modal Library Browser;
+- scan of `library/**/*.opencad2d.json`;
+- category grouping;
+- preview;
+- insertion as block reference;
+- snap-aware placement and undo.
 
-Updated scope:
+Current decision:
 
-- Keep existing North Symbol and Metric Scale Bar as useful first-pass tools, but do not keep adding one toolbar button for every fixed symbol.
-- Add a `Library` button that opens a modal browser.
-- Load `.opencad2d.json` items from `library/<category>/...`.
-- Group items by folder/category, for example `arredo`, `simboli`, `sanitari`, `porte-finestre`, `scale`, `annotazioni`.
-- Show a preview for each item.
-- Insert selected items using the existing import/block infrastructure.
-- Reserve the `Symbols`/parametric tools area for objects that need parameters before generation.
+- fixed furniture, sanitary fixtures, kitchen objects and reusable drafting snippets should be static Library items;
+- direct toolbar tools should be reserved for parametric objects and annotation helpers that need dimensions/options before insertion.
 
-Recommended insertion policy:
-
-- Insert library items as a `BlockReferenceEntity` by default, creating or reusing a `BlockDefinition` derived from the source file.
-- Preserve layers/formats from the source file where possible.
-- Provide an explicit later option to insert exploded geometry when useful.
-- Use the item file origin `(0,0)` as the insertion base point.
-
-Exit criteria:
-
-- A Library button opens a modal browser.
-- Browser scans the `library/` folder and groups items by category.
-- Each valid `.opencad2d.json` item can show a preview.
-- User can select an item and insert it by picking a point on the canvas.
-- Object snaps work for the insertion point.
-- Insertion is undoable as one operation.
-- Inserted library items are selectable, movable, rotatable, scalable, copyable and exportable through existing mechanisms.
-
----
-
-## Milestone v0.8.121 — Dynamic Command HUD
+### v0.8.121 — Dynamic Command HUD
 
 Specification: `docs/specs/v0.8.121-dynamic-command-hud.md`.
 
-Status: planned.
+Status: [x].
 
-Goal: replace the fixed bottom command row with a cursor-adjacent dynamic HUD while using one coherent command-state contract across all interactive tools.
+Implemented behavior:
 
-This milestone is intentionally placed before the Library Browser because it touches the global command UX. It should be stabilized before adding more modal insertion workflows and parametric tools.
+- fixed bottom command row removed;
+- cursor-adjacent HUD with prompt, tool name, options and editable fields;
+- coordinate fields for point phases;
+- command-specific scalar fields where appropriate;
+- `TAB` enters/cycles edit fields;
+- `Enter`/right-click confirms only in valid phases;
+- mouse hover over the HUD does not steal canvas input before edit mode;
+- Break, Boundary Fill, Trim, Extend, Delete, Explode, Join, Create Block and Insert Block workflows have dedicated HUD handling where needed.
 
-Implementation sequence:
-
-- HUD-0: command tool prompt inventory.
-- HUD-1: shared `CommandPromptState` cleanup.
-- HUD-2: pointer screen position and live measurement data.
-- HUD-3: read-only `CommandHudState`.
-- HUD-4: read-only visual HUD overlay while the old command row remains active.
-- HUD-5: move the real command input into the HUD.
-- HUD-6: remove the old bottom command row.
-- HUD-7: later editable numeric HUD fields.
-
-Exit criteria:
-
-- Every primary command-driven tool has a coherent prompt state.
-- The HUD follows the cursor and remains clamped inside the drawing area.
-- The HUD does not block canvas input.
-- There is only one operational command input.
-- Existing command aliases, typed coordinates, relative input, polar input, direct distances, history, autocomplete, Enter, right click and Escape behavior still work.
-- Manual regression covers draw, dimension, transform, modify, measure, navigation and selection/order tools.
-- The fixed command row is removed only after the HUD passes regression.
-
----
-
-## Milestone v0.8.130 — Stair tools v1
+### v0.8.130 — Stair tools v1
 
 Specification: `docs/specs/v0.8.130-stairs.md`.
 
-Status: planned.
+Status: [x] for straight-stair v1.
 
-Goal: generate stair drawings for plan and elevations.
+Implemented behavior:
 
-Initial scope:
+- persistent `StairEntity`;
+- plan, side and front view generation;
+- plan direction arrow and optional section marker;
+- Property Panel editing;
+- save/reopen;
+- SVG/PDF/DXF export as generated linework;
+- snap/hit-test behavior through generated stair geometry.
 
-- Stair plan.
-- Side elevation.
-- Front elevation.
-- Optional underlying slab/structure line.
-- Parameters for riser, tread, width, step count and slab thickness.
+Accepted first-version limitations:
 
-Exit criteria:
+- straight stairs only;
+- no L/U stair, landing or winder support yet;
+- no building-code validation;
+- text labels such as `UP`/`DN` remain deferred.
 
-- The tool can generate a basic straight stair in plan.
-- The tool can generate a side elevation with risers/treads.
-- The tool can generate a front elevation useful for sections/elevations.
-- The slab/structure line can be offset from the inner tread/riser corner by a configurable thickness, defaulting to 25 cm.
+### v0.8.140 - v0.8.145 — Boundary Fill v1/v2
 
----
+Specifications:
 
-## Milestone v0.8.140 — Hatch v1
+- `docs/specs/v0.8.140-hatch.md`
+- `docs/specs/v0.8.145-boundary-fill-v2.md`
 
-Specification: `docs/specs/v0.8.140-hatch.md`.
+Status: [x] for the filled-polyline Boundary Fill workflow.
 
-Status: partial. Boundary Fill v1 is implemented, and Boundary Fill v2 now has preview/confirm, sampled curve input and editable gap tolerance; HatchEntity remains planned.
+Implemented behavior:
 
-Goal: evolve the current solid-fill system into robust boundary fill and hatch workflows without trying to replicate all AutoCAD boundary detection immediately.
+- `BFILL` / `FILL` / `RIEMPIMENTO` command aliases;
+- click/typed seed point inside a detectable boundary;
+- preview before commit;
+- `Enter`/right-click confirmation;
+- sampled circle, arc and bulged-polyline boundaries;
+- editable `Gap` / `G` HUD sub-prompt;
+- endpoint-to-endpoint and endpoint-to-segment gap bridging through explicit synthetic segments;
+- ignored unsupported-entity diagnostics;
+- result created as one filled closed `PolylineEntity`.
 
-Implemented BF v1 scope:
+Important boundary:
 
-- `BFILL` / `FILL` / `RIEMPIMENTO` command aliases.
-- Click inside a closed visible linear boundary.
-- Split linear boundaries at intersections and build planar faces.
-- Create a new closed `PolylineEntity` for the picked face.
-- Set `IsFilled = true`, use the current layer and support undo through `AddEntityCommand`.
-
-BF v2 scope:
-
-- Preview the detected boundary before creation.
-- Add sampled arc and circle boundaries while still generating a filled `PolylineEntity`.
-- Add configurable small-gap tolerance with conservative failure messages.
-- Expose the active gap tolerance through the `Gap` / `G` command option.
-- Keep holes/islands deferred until a true hatch entity exists.
-
-HatchEntity scope:
-
-- `HatchEntity` with explicit loops.
-- Solid fill.
-- Boundary from selected closed polyline.
-- Boundary from selected connected entities where a single loop can be assembled.
-- Support lines, polylines, arcs and circles/ellipses through curve sampling where necessary.
-- Persistence and SVG/PDF export.
-
-Exit criteria:
-
-- BF v1: clicking inside a rectangle made of lines creates a filled closed polyline.
-- BF v2: moving the cursor previews the detected boundary before committing.
-- BF v2: arc/circle boundaries can participate through documented sampling.
-- BF v2: small endpoint gaps can be closed within a configured tolerance, and larger gaps fail clearly.
-- HatchEntity: a selected closed polyline can become a hatch boundary.
-- A selected set of connected line/arc entities can become a hatch boundary if it forms a valid loop.
-- Hatch can contain inner loops for holes in a controlled explicit workflow.
-- Hatch rendering honors holes.
-- Open or ambiguous boundaries fail with clear messages.
+Boundary Fill v2 is complete for the current output model. Holes, islands, associative behavior and hatch patterns must not be forced into this filled-polyline result. They belong to a real `HatchEntity` milestone.
 
 ---
 
-## Milestone v0.8.145 — Boundary Fill v2
+## Active consolidation: v0.8.160 - v0.8.169
 
-Specification: `docs/specs/v0.8.145-boundary-fill-v2.md`.
+### v0.8.160 — Documentation reconciliation
 
-Status: completed for the filled-polyline workflow.
+Specification: `docs/specs/v0.8.160-documentation-reconciliation.md`.
 
-Goal: improve the existing click-inside BF workflow before introducing a true hatch entity.
+Status: [x].
 
-Scope:
-
-- Preview/confirm of the boundary that will be generated.
-- Sampled arc and circle boundary support.
-- Configurable gap tolerance for small endpoint gaps through `Gap` / `G`.
-- Better diagnostics for ambiguous, open or self-intersecting detected regions.
-- Ignored unsupported entity diagnostics in preview/completion/failure messages.
-
-Deferred beyond BF v2:
-
-- Holes/islands.
-- Hatch patterns.
-- Associativity.
-- Full AutoCAD-style boundary detection across arbitrary curves and blocks.
-
----
-
-## Milestone v0.8.150 — Hatch v2: islands and composite boundaries
-
-Specification: `docs/specs/v0.8.145-boundary-fill-v2.md`.
-
-Status: completed for the filled-polyline workflow.
-
-Goal: support more realistic hatch regions through a real hatch entity.
-
-Scope:
-
-- Outer loop plus multiple inner loops.
-- Holes made from circles, ellipses, polylines and composed line/arc loops.
-- Loop orientation normalization.
-- Point-in-polygon/curve containment tests for island classification.
-- Conservative tolerance handling.
-
-Deferred beyond v0.8.150:
-
-- Fully general click-inside automatic boundary detection beyond the BF v2 supported boundary set.
-- Pattern libraries equivalent to AutoCAD `.pat`.
-- Associative hatch that automatically updates after boundary edits.
-
----
-
-## Milestone v0.8.160+ — Consolidation and release gate
-
-Status: planned.
-
-Goal: stabilize the expanded v0.8 line before a future v0.9 release.
+Goal: make documentation match the real code state and the new roadmap.
 
 Tasks:
 
-- Update README.
-- Update architecture, commands, tools, persistence and export docs.
-- Update known limitations.
-- Add manual regression checklists.
-- Verify native save/reopen.
-- Verify SVG/PDF/DXF behavior for new entities where supported.
-- Decide which limitations remain accepted for the v0.9 release gate.
+- update `README.md` current status and stabilization checkpoint;
+- update `docs/roadmap.md` as source of truth;
+- update this v0.8.100+ roadmap;
+- update `docs/ai-handoff.md` with the current continuation plan;
+- update `docs/known-limitations.md` where old “planned” wording conflicts with completed features;
+- add compact specs for the next feature families;
+- make clear that v0.9 is a future stabilization gate, not the current active feature bucket.
 
-## Non-goals for v0.8.100+
+### v0.8.161 — First Library content pack
 
-The following are intentionally deferred unless explicitly promoted later:
+Specification: `docs/specs/v0.8.161-library-content-pack.md`.
 
-- DWG support.
-- Full AutoCAD-compatible hatch pattern libraries.
-- Fully automatic click-inside boundary detection in the first hatch milestone.
-- Dynamic block parameters.
-- Block attributes.
-- In-place block editing.
-- Associative hatch updates after boundary edits.
-- Raster image embedding in native files.
+Status: [~] implemented, pending maintainer-side manual validation.
 
-## v0.8.110 — Blocks foundation
+Goal: make the implemented Library Browser useful with a small curated set of static objects.
 
-Implemented as the first structural block milestone:
+Implemented first set:
 
-- `BlockDefinitionId`
-- `BlockDefinition`
-- `BlockDefinitionCollection`
-- `BlockReferenceEntity`
-- `CadDocument.BlockDefinitions`
-- JSON persistence for block definitions and block references
-- canvas rendering of block references by transforming contained entities
-- selection/hit testing through the transformed definition bounding box
+```text
+library/
+  arredo/
+    tavolo_4_sopra.opencad2d.json
+    sedia_sopra.opencad2d.json
+    divano_3_sopra.opencad2d.json
+  sanitari/
+    wc_sopra.opencad2d.json
+    bidet_sopra.opencad2d.json
+    lavello_sopra.opencad2d.json
+  cucina/
+    frigo_sopra.opencad2d.json
+    lavandino_sopra.opencad2d.json
+    fornello_sopra.opencad2d.json
+  simboli/
+    nord_semplice.opencad2d.json
+    scala_grafica_100.opencad2d.json
+```
 
-This milestone intentionally does not yet include the full block UI. The next blocks-focused milestones should add:
+Rules applied:
 
-- create block from selection — implemented in v0.8.111
-- insert block from existing definition
-- block manager
-- edit block definition workflow
-- explode block
-- snaps against transformed block contents
+- the pack is intentionally small and coherent;
+- furniture, kitchen and sanitary items use the object center as `(0,0)`;
+- symbols use their natural reference as `(0,0)`;
+- geometry is simple and first-pass safe;
+- no item contains nested block references;
+- parametric doors/windows are intentionally excluded from the static Library;
+- publish copy still needs to be verified on the maintainer Windows environment.
 
+### v0.8.162 — Compatibility and manual smoke pass
 
-## v0.8.111 — Create Block from selection
+Checklist: `docs/testing/v0.8.162-compatibility-smoke-checklist.md`.
 
-Implemented as the first usable block workflow:
+Status: [ ].
 
-- `Create Block` button in the modify tools area
-- options dialog with block name and numeric base point
-- creation of a `BlockDefinition` from selected entities in local coordinates
-- replacement of the selected entities with a single `BlockReferenceEntity`
-- selection of the created reference
-- undo as one operation: restore original entities and remove the new definition/reference
-- duplicate block names are rejected
-- nested block creation is deferred and currently rejected
+Goal: record a practical verification pass before expanding again.
 
-`v0.8.112 — Insert Block from existing definition` is implemented. It adds a toolbar command, options dialog, pending insertion-point workflow, snap support, Escape cancellation and single-step undo for newly inserted block references.
+Minimum checks:
 
-Next recommended blocks-focused milestone: `v0.8.113 — Block Manager`.
+- build/test on the maintainer Windows environment;
+- save/reopen of drawings using blocks, Library items, stairs, image references and Boundary Fill v2 results;
+- SVG/PDF/DXF export smoke pass;
+- Library insertion/explode workflow;
+- Stairs Property Panel edit/save/export;
+- Boundary Fill v2 seed, preview, `Gap`, endpoint-to-endpoint and endpoint-to-segment cases;
+- image transparency from Property Panel and Manage Refs;
+- block rename/delete/insert/explode/edit workflows;
+- DXF compatibility notes with exact viewer versions when checked.
 
+### v0.8.163 — Complex error and edge-case cleanup
 
-## Dynamic Command HUD remaining steps
+Status: [ ].
 
-The dynamic command HUD milestone is active and mostly implemented. Before treating v0.8.121 as complete, finish these focused steps:
+Goal: identify remaining behaviors that still feel fragile or too complex for users.
 
-- Step 30E: Break Point, Break Segment and Boundary Fill HUD input.
-- Step 30F: Trim, Extend, Delete, Explode and Join as selection-only cleanup tools.
-- Step 31: Create Block and Insert Block as a separate modal/pending-placement HUD integration.
-- Final pass: documentation, `ai-handoff`, regression checklist updates and removal of residual legacy command-line code.
+Possible areas:
 
-Do not generalize the shared HUD resolver while finishing these tasks; continue using tool/phase-specific behavior with regression tests.
+- ambiguous command phases;
+- inconsistent confirmation messages;
+- invalid geometry recovery;
+- import duplicate layer/style/block names;
+- block edit conflicts;
+- hatch/fill failure diagnostics;
+- DXF import/export warnings;
+- HUD focus regressions.
+
+This milestone should be evidence-driven: only promote a fix if a real manual case, test failure or confusing workflow has been identified.
+
+### v0.8.164 — Planning specification pass
+
+Specification: `docs/specs/v0.8.164-planning-specification-pass.md`.
+
+Status: [x].
+
+Goal: define shared implementation contracts before the next code milestone.
+
+Documents added:
+
+- `docs/specs/shared-anchor-system.md`;
+- `docs/specs/shared-leader-arrow-system.md`;
+- `docs/specs/shared-preview-and-commit-workflow.md`;
+- `docs/specs/shared-wall-mask-openings.md`.
+
+Documents expanded:
+
+- `docs/specs/v0.8.170-blocks-v2.md`;
+- `docs/specs/v0.8.180-parametric-doors-windows.md`;
+- `docs/specs/v0.8.190-array-tools.md`;
+- `docs/specs/v0.8.200-hatch-patterns.md`;
+- `docs/specs/v0.8.210-annotation-markers.md`;
+- `docs/specs/v0.8.220-ui-customization.md`;
+- `docs/specs/v0.8.230-icon-svg-workflow.md`.
+
+This is documentation-only. It does not replace the v0.8.162 manual validation or v0.8.163 evidence-driven cleanup. It provides the contracts to use when code work resumes.
+
+---
+
+## Next feature milestones
+
+### v0.8.170 — Blocks v2
+
+Specification: `docs/specs/v0.8.170-blocks-v2.md`.
+
+Status: [~] started. Slices `v0.8.170A` and `v0.8.170B` are implemented in code. They need maintainer-side build/test plus manual checklist validation before being considered complete.
+
+Implemented in `v0.8.170A`:
+
+- Block Manager now reports drawing references, nested references and total references.
+- Blocks used only inside another block are protected from Delete Unused.
+- Selected-block details show entity count, reference counts, bounds and diagnostics.
+- Missing drawing/nested block references are reported as diagnostics.
+- Empty block definitions are flagged.
+- Recursive/self-referencing block definitions are blocking diagnostics and cannot be inserted or accepted from the manager.
+
+Implemented in `v0.8.170B`:
+
+- Duplicate creates a new block definition with a new id, unique `Copy` name and copied internal entity ids.
+- Delete Selected still removes only definitions with no drawing or nested references.
+- Purge Unused removes every definition not reachable from model-space block references, including unused nested block trees.
+- Drawing-reachable nested definitions are preserved.
+- Blocking diagnostics can be purged only when the offending definition is not reachable from the drawing.
+- Result application still flows through the existing block-definition update command, so the final manager commit remains one undoable block-definition update.
+
+Remaining Blocks v2 work:
+
+- visual preview panel/thumbnail;
+- stronger rename UX and validation messaging beyond inline name validation;
+- edit-session hardening;
+- Library import conflict policy.
+
+Goal: make block management strong enough for architectural objects, Library workflows and repeated technical details.
+
+### v0.8.180 — Parametric doors and windows
+
+Specification: `docs/specs/v0.8.180-parametric-doors-windows.md`.
+
+Goal: add persistent parametric door/window objects with 9-point anchor selection in the HUD and optional wall-line masking/opening behavior at insertion.
+
+### v0.8.190 — Array tools
+
+Specification: `docs/specs/v0.8.190-array-tools.md`.
+
+Goal: add AutoCAD-style rectangular, polar and path arrays: `ARRAYRECT`, `ARRAYPOLAR` and `ARRAYPATH`.
+
+### v0.8.200 — HatchEntity and hatch patterns
+
+Specification: `docs/specs/v0.8.200-hatch-patterns.md`.
+
+Goal: add real hatch entities with solid/pattern modes, outer/inner loops, scale/angle and export behavior.
+
+### v0.8.210 — Annotation markers and arrow tools
+
+Specification: `docs/specs/v0.8.210-annotation-markers.md`.
+
+Goal: add Arrow, Section Label and Coordinate Callout helpers as dynamic annotation tools.
+
+### v0.8.220 — UI customization
+
+Specification: `docs/specs/v0.8.220-ui-customization.md`.
+
+Goal: begin Blender-inspired UI customization without destabilizing the main command workflow.
+
+### v0.8.230 — Icon SVG workflow
+
+Specification: `docs/specs/v0.8.230-icon-svg-workflow.md`.
+
+Goal: export the current icon set as editable SVG, allow user-provided SVG replacement, validate imports and reload icons safely.
+
+---
+
+## Non-goals for the current v0.8 line
+
+The following remain deferred unless explicitly promoted:
+
+- DWG support;
+- full AutoCAD compatibility for every hatch pattern and boundary-detection edge case;
+- associative hatch updates after boundary edits;
+- dynamic block parameters equivalent to AutoCAD dynamic blocks;
+- block attributes as a full data system;
+- raster image embedding in native files;
+- broad 3D features;
+- major renderer/spatial-index rewrites without a measured blocker.

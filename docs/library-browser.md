@@ -39,6 +39,33 @@ Files outside the `.opencad2d.json` extension are ignored. Invalid native files 
 
 ---
 
+## Included first content pack
+
+The repository now includes a first small static Library pack under `library/`. It is not meant to be exhaustive; it is a validation baseline for the browser, preview, publish-copy and insertion workflow.
+
+```text
+library/
+  arredo/
+    divano_3_sopra.opencad2d.json
+    sedia_sopra.opencad2d.json
+    tavolo_4_sopra.opencad2d.json
+  cucina/
+    fornello_sopra.opencad2d.json
+    frigo_sopra.opencad2d.json
+    lavandino_sopra.opencad2d.json
+  sanitari/
+    bidet_sopra.opencad2d.json
+    lavello_sopra.opencad2d.json
+    wc_sopra.opencad2d.json
+  simboli/
+    nord_semplice.opencad2d.json
+    scala_grafica_100.opencad2d.json
+```
+
+Furniture, kitchen and sanitary items use the object center as their insertion origin. Symbol files use their natural reference point. Doors and windows are deliberately not provided as static files because they are planned as parametric objects.
+
+---
+
 ## Creating an item
 
 1. Open OpenCad2D.

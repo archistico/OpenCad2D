@@ -10,6 +10,8 @@ Start with `commands.md`, `tools.md`, `command-input.md`, `modify-tools.md`, and
 
 For interaction-heavy commands, also check the relevant User Guide chapter. For example, a change to Move, Copy, Rotate, Scale, Mirror, Trim, Extend, Fillet, Chamfer, Break, Divide, Explode, or Join should normally be reflected in `user-guide/06-edit-tools.md`.
 
+For complex commands with preview, confirmation and multi-entity output, also read `docs/specs/shared-preview-and-commit-workflow.md`. This contract is especially important for Blocks v2, Array tools, HatchEntity, doors/windows and annotation markers.
+
 ## When changing precision behavior
 
 Start with `snapping.md`, `polar-tracking.md`, `grip-editing.md`, `geometry-intersections.md`, and `curve-editing.md`. These files are important because precision behavior affects many tools at once. A small change to snap priority, hit testing, grip editing, or curve handling can affect drawing, editing, dimensions, blocks, and image references.
@@ -18,7 +20,7 @@ If a change affects how users select points, enter values, or constrain movement
 
 ## When changing Boundary Fill or hatch behavior
 
-Start with `tools.md`, `known-limitations.md`, `docs/specs/v0.8.140-hatch.md`, `docs/specs/v0.8.145-boundary-fill-v2.md`, and `docs/testing/boundary-fill-v2-manual-checklist.md`. Boundary Fill currently emits filled closed polylines, while HatchEntity remains a later milestone. Keep this distinction explicit when changing algorithms, preview behavior, export behavior, or user-facing messages.
+Start with `tools.md`, `known-limitations.md`, `docs/specs/v0.8.140-hatch.md`, `docs/specs/v0.8.145-boundary-fill-v2.md`, `docs/specs/v0.8.200-hatch-patterns.md`, and `docs/testing/boundary-fill-v2-manual-checklist.md`. Boundary Fill currently emits filled closed polylines, while HatchEntity remains a separate later milestone for holes, islands and patterns. Keep this distinction explicit when changing algorithms, preview behavior, export behavior, or user-facing messages.
 
 ## When changing appearance and styles
 
@@ -34,9 +36,19 @@ For user-facing changes, update `user-guide/03-file-management.md`, `user-guide/
 
 ## When changing the Library or reusable objects
 
-Start with `library-browser.md` and the relevant versioned specifications in `docs/specs/`. The project decision is that doors, windows, and stairs are parametric objects, while general reusable items remain static `.opencad2d.json` objects loaded from the Library.
+Start with `library-browser.md`, `docs/specs/v0.8.161-library-content-pack.md` and the relevant versioned specifications in `docs/specs/`. The project decision is that doors, windows, and stairs are parametric objects, while general reusable items remain static `.opencad2d.json` objects loaded from the Library.
+
+For blocks and library infrastructure, also read `docs/specs/v0.8.170-blocks-v2.md`, `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md` and `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md`. For parametric doors/windows, read `docs/specs/v0.8.180-parametric-doors-windows.md`, `docs/specs/shared-anchor-system.md` and `docs/specs/shared-wall-mask-openings.md`. For repeated objects, read `docs/specs/v0.8.190-array-tools.md`.
 
 The user-facing explanation belongs in `user-guide/20-library.md` and `user-guide/08-symbols.md`.
+
+## When changing annotation leaders, arrows or callouts
+
+Start with `docs/specs/shared-leader-arrow-system.md` and `docs/specs/v0.8.210-annotation-markers.md`, then check `text-and-dimensions.md`, `text-formats.md`, `line-formats.md` and the export documents. The shared leader/arrowhead model should be reused by Arrow, Section Label, Coordinate Callout and later annotation tools.
+
+## When changing UI customization or icons
+
+Start with `application-settings.md`, `commands.md`, `docs/specs/v0.8.220-ui-customization.md`, and `docs/specs/v0.8.230-icon-svg-workflow.md`. UI preferences should be local application settings, not drawing-file data. Icon SVG import must validate user-provided SVGs and keep a safe built-in fallback.
 
 ## When preparing a release
 

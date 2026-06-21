@@ -6,11 +6,11 @@ For now, release and roadmap files remain where they are. They contain useful hi
 
 ## Current planning documents
 
-`roadmap.md` is the main project roadmap. It should be treated as the broad direction of the project and should remain the first file to check when deciding what belongs in the next milestone.
+`roadmap.md` is the main project roadmap and the current source of truth after the 2026-06-21 documentation reconciliation. It should be the first file to check when deciding what belongs in the next milestone.
 
-`stabilization-v0.9-plan.md` is the current stabilization-gate checklist for the v0.9 line. Use it when checking what still needs consolidation before moving toward a more stable public release. It should not be used to reopen feature families already completed in the v0.8.100+ expansion line.
+`roadmap-v0.8.100.md` is the detailed continuation document for the active v0.8.100+ line. It records that Import Drawing, Blocks v1, the Dynamic Command HUD, Library Browser, parametric Stairs and Boundary Fill v2 are implemented for their current scopes, then defines the v0.8.160+ consolidation, the first Library content pack, the planning specification pass and the next feature sequence.
 
-`roadmap-v0.8.100.md` is historical/reconciled roadmap material for the v0.8.100 expansion phase. It now records that Import Drawing, Blocks, the Dynamic Command HUD and the first Library Browser pass are implemented, but `roadmap.md` remains the current decision source.
+`stabilization-v0.9-plan.md` is now a future stabilization-gate checklist. Use it only after the v0.8.160+ reconciliation, Library content and compatibility pass has decided what is allowed into the next public stabilization release. It should not be used as the active feature roadmap.
 
 ## Release notes
 
@@ -51,3 +51,6 @@ docs/project/
 ```
 
 That cleanup should happen only when the documentation links are stable and when the project is ready to spend time on file organization. Until then, the current root-level files should remain in place and be indexed from this page.
+
+
+The current manual validation entry points are `docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md` for Blocks v2 inventory/diagnostics, `docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md` for Blocks v2 duplicate/delete/purge behavior and `docs/testing/v0.8.162-compatibility-smoke-checklist.md` for the broader consolidation pass. Use them before marking the first Library pack and Blocks v2 slices complete. The shared planning contracts added in `docs/specs/shared-*.md` should be read before implementing the remaining Blocks v2 slices, doors/windows, arrays, hatch, annotation markers, UI customization or icon SVG workflow.

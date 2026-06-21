@@ -35,7 +35,8 @@ OpenCad2D currently supports a complete early CAD workflow:
 - layers with visibility and locking;
 - reusable line formats with color, lineweight, line style and custom dash pattern values;
 - reusable text formats;
-- reusable drawing library snippets loaded from `library/**/*.opencad2d.json`, grouped by category, previewed and inserted as block references;
+- reusable drawing library snippets loaded from `library/**/*.opencad2d.json`, grouped by category, previewed and inserted as block references, with a first static content pack under `library/`;
+- Blocks v2 first manager slice: direct drawing reference counts, nested reference counts, total references, selected block diagnostics, missing-reference diagnostics and recursive-reference blocking;
 - external PNG/JPG/JPEG image references stored as linked files, not embedded raster bytes;
 - relative image paths, transparency percentages, missing-image warnings, relink/replace/reset-aspect workflows, Collect Refs packaging and Image References Manager;
 - Layer Manager, Line Format Manager, Text Format Manager and Image References Manager;
@@ -61,7 +62,7 @@ OpenCad2D currently supports a complete early CAD workflow:
 - tool-provided preview descriptor/entity protocols that keep active tool preview logic out of the app renderer;
 - minimal application logging for tool/UI exceptions.
 
-See `docs/roadmap.md`, `docs/roadmap-v0.8.100.md` and the milestone specifications in `docs/specs/` for the active v0.8.100+ development plan. The v0.9 stabilization gate is deferred until the expanded v0.8 line is consolidated.
+See `docs/roadmap.md`, `docs/roadmap-v0.8.100.md` and the milestone specifications in `docs/specs/` for the reconciled active v0.8 development plan. The planning specification pass now defines shared contracts for anchors, leaders/arrows, preview/commit/grouped undo and wall masks. The v0.9 stabilization gate is deferred until the v0.8.160+ Library, compatibility and manual validation pass is complete.
 
 ---
 
@@ -169,7 +170,7 @@ Important documents:
 | `docs/architecture.md` | project structure and dependency rules |
 | `docs/roadmap.md` | current roadmap, completed stabilization work and next milestones |
 | `docs/roadmap-v0.8.100.md` | extended v0.8.100+ roadmap before the next stabilization gate |
-| `docs/specs/` | detailed specifications for import drawing, blocks, dynamic command HUD, symbols, stairs and hatch milestones |
+| `docs/specs/` | detailed specifications and shared contracts for import drawing, blocks, dynamic command HUD, symbols, stairs, hatch, arrays, doors/windows, annotation markers, UI customization and icon SVG workflow milestones |
 | `docs/testing/dynamic-command-hud-manual-verification-2026-05-31.md` | manual verification notes for the stabilized HUD and block workflows |
 | `docs/commands.md` | commands, aliases and undoable command rules |
 | `docs/curve-editing.md` | Trim/Break curve-editing architecture, native precision and shared cut-point rules |
@@ -181,10 +182,10 @@ Important documents:
 | `docs/draw-order.md` | Z-order behavior |
 | `docs/persistence.md` | native file format, recovery rules and external image reference path rules |
 | `docs/known-limitations.md` | current limitations, including raster image export parity |
-| `docs/release-v0.9.md` | release notes draft for the current v0.9 feature set |
-| `docs/release-checklist-v0.9.md` | manual release checklist for the v0.9 gate |
-| `docs/release-publish-v0.9.md` | commands and packaging notes for publishing v0.9 |
-| `docs/stabilization-v0.9-plan.md` | v0.9 release-candidate stabilization plan |
+| `docs/release-v0.9.md` | historical/future release notes draft for the next stabilization gate |
+| `docs/release-checklist-v0.9.md` | manual release checklist for the future v0.9 stabilization gate |
+| `docs/release-publish-v0.9.md` | commands and packaging notes for the future v0.9 publish workflow |
+| `docs/stabilization-v0.9-plan.md` | future v0.9 release-candidate stabilization plan, deferred until v0.8.160+ consolidation is complete |
 | `docs/ai-handoff.md` | current handoff for future development |
 
 Historical milestone details are intentionally kept out of the active roadmap; use Git history and release notes for old implementation logs.
@@ -194,27 +195,29 @@ Historical milestone details are intentionally kept out of the active roadmap; u
 
 OpenCad2D is intentionally transparent about what is already solid and what still needs refinement.
 
-- **Polyline numeric editing**: polylines can be edited visually through canvas grips, but the Property Panel does not yet provide a tabular editor for individual vertices. A future vertex table will allow precise X/Y correction for each point.
+- **Polyline numeric editing**: polylines can be edited visually through canvas grips and segment bulge rows, but a dedicated vertex/segment editor would still be clearer for complex corrections.
 - **Non-associative dimensions**: dimensions store their own measured points and dimension-line geometry. When the measured entity is later moved, scaled or edited, the dimension value does not update automatically. OpenCad2D can mark dimensions as potentially stale after geometry changes, but users must update or recreate them manually.
+- **Boundary Fill versus HatchEntity**: Boundary Fill v2 is implemented for previewed filled-polyline creation, including curve sampling and small-gap bridging. Holes, islands, hatch patterns and associative hatch behavior remain future `HatchEntity` work.
 - **External raster image export parity**: PNG/JPG/JPEG references are saved, rendered, snapped, transformed and exported to SVG as external links. DXF/PDF raster-image output is still deferred, so those exports currently omit raster content.
-- **Local user settings**: basic local settings exist, but the next step is a more complete startup configuration flow for default grid/snap preferences, recent paths and last-file behavior.
+- **Architectural parametric objects**: straight stairs exist as persistent parametric entities. Doors and windows are planned next as parametric objects with 9-point anchor control and optional wall-line masking/opening behavior.
+- **Arrays and annotations**: AutoCAD-style `ARRAYRECT`, `ARRAYPOLAR`, `ARRAYPATH`, richer arrow tools, section labels and coordinate callouts are planned but not implemented yet.
+- **UI customization and icons**: the current UI is fixed. Future work will add icon-only mode, saved panel/workspace preferences and an SVG export/import workflow for replacing tool icons.
 
 
 ## Current stabilization checkpoint
 
-OpenCad2D is currently in the v0.9 stabilization cycle. Recent completed work includes:
+OpenCad2D is currently in the reconciled v0.8 consolidation line. Recent completed work includes:
 
-- Dimension Styles with built-in `Standard`, `Architectural` and `Mechanical` presets;
-- a Dimension Style Manager with live preview based on the same `DimensionGeometryBuilder` used by real dimensions;
-- property-panel dimension style selection through a combo box;
-- configurable dimension text and terminator fit rules for short dimensions;
-- classic dimension terminators including arrows, triangles, dots, architectural ticks and slash symbols;
-- left-readable vertical dimension text according to the current OpenCad2D convention;
-- bugfixes for Break Point on full ellipses, TRIM open-polyline endpoint filtering and Offset polyline side detection;
-- cleanup of obsolete TRIM highlight helper code and clearer Fillet branch-parameter documentation;
-- external raster image references with relative paths, missing-reference workflow, Collect Refs and Image References Manager.
+- Dynamic Command HUD replacing the old fixed command row;
+- Import Drawing and Blocks v1;
+- Library Browser for `.opencad2d.json` snippets inserted as block references, now backed by a first small static Library pack;
+- parametric straight `StairEntity` with plan/side/front generated linework;
+- Boundary Fill v2 with preview/confirm, curve sampling, editable Gap HUD prompt and endpoint-to-endpoint/endpoint-to-segment gap bridges;
+- external raster image references with relative paths, missing-reference workflow, transparency, Collect Refs and Image References Manager;
+- mixed-polyline/bulge stabilization and curve-editing fixes;
+- SmartPoint Tracking foundation.
 
-The next planning step is v0.9 scope consolidation: decide which remaining polish items are required before the next public release and which are deferred to v1.0.
+The next validation step is to run the local build/test suite and the v0.8.170B Block Manager duplicate/purge checklist, keeping the v0.8.170A inventory checklist as a regression pass, then finish the broader v0.8.162 manual compatibility pass. The next implementation milestone after validation is Blocks v2 slice 170C for Edit Block workflow hardening, followed by doors/windows, arrays, HatchEntity, annotation markers, UI customization and SVG icon workflow.
 
 ## Info files
 

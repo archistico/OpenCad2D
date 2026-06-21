@@ -1,0 +1,192 @@
+{
+  "version": 1,
+  "savedAt": "2026-06-21T00:00:00.0000000+00:00",
+  "settings": {
+    "currentLayerId": "0",
+    "currentTextFormatId": "Standard",
+    "currentDimensionStyleId": "Standard",
+    "grid": {
+      "kind": "Rectangular",
+      "isVisible": true,
+      "minorStep": 10,
+      "majorStep": 50,
+      "originX": 0,
+      "originY": 0,
+      "minimumScreenSpacing": 8,
+      "maximumScreenSpacing": 220,
+      "isometricAngleDegrees": 30
+    },
+    "snapping": {
+      "isEnabled": true,
+      "enabledModes": [
+        "Endpoint",
+        "Midpoint",
+        "Center",
+        "Quadrant",
+        "Intersection",
+        "Perpendicular",
+        "Tangent",
+        "Grid"
+      ],
+      "tolerance": 8
+    },
+    "drafting": {
+      "isOrthoEnabled": false,
+      "polarTracking": {
+        "isEnabled": false,
+        "stepDegrees": 90
+      }
+    }
+  },
+  "viewport": {
+    "panX": 0,
+    "panY": 0,
+    "zoom": 1
+  },
+  "lineFormats": [
+    {
+      "id": "Continuous",
+      "name": "Continua",
+      "color": "#FFFFFF",
+      "lineWeight": 1,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    }
+  ],
+  "textFormats": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "fontFamily": "Arial",
+      "height": 100,
+      "color": "#FFFFFF",
+      "isBold": false,
+      "isItalic": false
+    }
+  ],
+  "dimensionStyles": [],
+  "layers": [
+    {
+      "id": "0",
+      "name": "0",
+      "lineFormatId": "Continuous",
+      "fillColor": "#FFFFFF",
+      "isVisible": true,
+      "isLocked": false
+    }
+  ],
+  "blockDefinitions": [],
+  "entities": [
+    {
+      "type": "Line",
+      "id": "68fe7277-4796-4159-890b-e9432864c64f",
+      "layerId": "0",
+      "startX": 0,
+      "startY": 0,
+      "endX": 1000,
+      "endY": 0
+    },
+    {
+      "type": "Line",
+      "id": "178c7267-f5c9-4618-9d59-ad126938f355",
+      "layerId": "0",
+      "startX": 0,
+      "startY": -80,
+      "endX": 0,
+      "endY": 80
+    },
+    {
+      "type": "Line",
+      "id": "87d6dd8e-2897-4dcd-ab9d-fcacae8e5d78",
+      "layerId": "0",
+      "startX": 500,
+      "startY": -60,
+      "endX": 500,
+      "endY": 60
+    },
+    {
+      "type": "Line",
+      "id": "b04c22bb-21d4-4e2e-b61e-eba8a74e9582",
+      "layerId": "0",
+      "startX": 1000,
+      "startY": -80,
+      "endX": 1000,
+      "endY": 80
+    },
+    {
+      "type": "Polyline",
+      "id": "c76fb89d-1965-474e-8440-f760da6ceff8",
+      "layerId": "0",
+      "isClosed": true,
+      "isFilled": false,
+      "vertices": [
+        {
+          "x": 0.0,
+          "y": 0.0
+        },
+        {
+          "x": 500.0,
+          "y": 0.0
+        },
+        {
+          "x": 500.0,
+          "y": 50.0
+        },
+        {
+          "x": 0.0,
+          "y": 50.0
+        }
+      ],
+      "segmentBulges": null
+    },
+    {
+      "type": "Line",
+      "id": "069acea7-f824-411f-87f3-8b10068b93b4",
+      "layerId": "0",
+      "startX": 0,
+      "startY": -140,
+      "endX": 1000,
+      "endY": -140
+    },
+    {
+      "type": "Text",
+      "id": "96233996-7d0a-45d0-8fc0-12339c90422c",
+      "layerId": "0",
+      "text": "0",
+      "insertionX": -30,
+      "insertionY": -300,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard"
+    },
+    {
+      "type": "Text",
+      "id": "3305d652-7c11-4d9c-9e93-170bc4e84966",
+      "layerId": "0",
+      "text": "0.5 m",
+      "insertionX": 410,
+      "insertionY": -300,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard"
+    },
+    {
+      "type": "Text",
+      "id": "9678e22a-85b9-4fca-add1-0696a3750476",
+      "layerId": "0",
+      "text": "1 m",
+      "insertionX": 930,
+      "insertionY": -300,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard"
+    },
+    {
+      "type": "Text",
+      "id": "1ab80384-f814-414d-b1f8-9b075815821e",
+      "layerId": "0",
+      "text": "Scala grafica 1:100",
+      "insertionX": 0,
+      "insertionY": 180,
+      "rotationDegrees": 0,
+      "textFormatId": "Standard"
+    }
+  ]
+}

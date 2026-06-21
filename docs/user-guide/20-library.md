@@ -18,6 +18,13 @@ A practical structure is to keep major groups such as Furniture, Bathroom, Kitch
 
 For example, a table may have separate files for top view, front view, and side view. This makes the object easy to insert in plans, elevations, and sections without adding more application commands.
 
+
+## Included objects
+
+The current repository includes a first small Library pack. It contains top-view furniture, kitchen fixtures, sanitary fixtures and two symbols. This pack is intentionally limited so that the insertion and publish workflow can be tested before the Library grows.
+
+The first categories are `arredo`, `cucina`, `sanitari` and `simboli`. Furniture, kitchen and sanitary objects insert from their center point. The north symbol and graphic scale use their natural reference point.
+
 ## Creating a library item
 
 A Library item is just an OpenCad2D drawing prepared for reuse. Draw the object with normal CAD entities, place the intended insertion point at model origin `(0,0)`, then save the file as `.opencad2d.json` inside the appropriate Library category.

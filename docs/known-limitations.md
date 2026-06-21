@@ -1,8 +1,23 @@
-# Known Limitations
+# Known limitations
 
-OpenCad2D is in the v0.9 stabilization track before the first stable v1.0 release. The following limitations should remain visible until they are resolved.
+This file records the current accepted limitations after the 2026-06-21 documentation reconciliation. It should distinguish first-version implemented behavior from future richer CAD behavior.
+
+## Current planning context
+
+OpenCad2D is in the v0.8.160+ consolidation line. Dynamic HUD, Import Drawing, Blocks v1, Library Browser, straight parametric Stairs, image-reference transparency and Boundary Fill v2 are implemented for their current scopes, and a first small static Library pack is present under `library/`. The future v0.9 gate is a stabilization/release gate, not the current feature bucket.
+
+Important planned feature families now tracked by specifications:
+
+- Blocks v2: richer management, edit workflow hardening, purge/preview/conflict diagnostics.
+- Parametric doors/windows: 9-point anchor selector and optional wall-line masking/opening behavior.
+- Array tools: `ARRAYRECT`, `ARRAYPOLAR`, `ARRAYPATH`.
+- HatchEntity: holes/islands, pattern scale/angle and hatch-specific persistence/export.
+- Annotation markers: Arrow, Section Label, Coordinate Callout.
+- UI customization: icon-only mode, saved panels/workspace preferences.
+- Icon SVG workflow: export current icons to SVG, import validated user-modified SVG icons.
 
 ---
+
 
 ## Native save vs export
 
@@ -35,14 +50,14 @@ Known limits:
 
 - binary DXF is not supported;
 - DWG is intentionally not supported;
-- `BLOCK` / `INSERT` are not supported yet;
+- native DXF `BLOCK` / `INSERT` import/export is not supported yet; OpenCad2D native blocks work in `.opencad2d.json` but are exported as ordinary geometry where applicable;
 - general editable `HATCH`, `IMAGE` and `LEADER` workflows are not supported yet; export has a limited `SOLID` HATCH path for filled circles and closed polylines;
 - native DXF `DIMENSION` import/export remains future work; current OpenCad2D dimensions export as graphical primitives;
 - custom DXF `LTYPE` generation for arbitrary line format dash patterns is future work;
 - `LWPOLYLINE` bulge import/export now preserves compound mixed polyline topology through `PolylineEntity.SegmentBulges`; automated regression covers group-code `42` output and OpenCad2D round-trip, while broader viewer compatibility still needs a recorded LibreCAD/QCAD/Autodesk pass;
 - full DXF `ELLIPSE` entities import as native `EllipseEntity`; edited partial ellipses are represented internally as `EllipticalArcEntity`, while DXF partial-ellipse import still needs a dedicated native importer pass if required for v0.9;
 - readable DXF `SPLINE` control points import as `BezierSplineEntity`; fit-point-only splines import as approximations; full external NURBS knot/weight evaluation is not implemented yet;
-- broad compatibility should be checked and recorded with exact LibreCAD/QCAD/Autodesk viewer versions before v0.9 release.
+- broad compatibility should be checked and recorded with exact LibreCAD/QCAD/Autodesk viewer versions before the next stabilization release.
 
 ---
 
@@ -58,14 +73,14 @@ Current limitations:
 
 ---
 
-## Solid fill
+## Solid fill, Boundary Fill and HatchEntity
 
 Solid fill currently supports only:
 
 - Circle;
 - closed Polyline, including rectangles and polygons represented as closed polylines.
 
-Current intentional limits:
+Current intentional limits for the existing filled-entity model:
 
 - no transparency;
 - no hatch/pattern selection;
@@ -73,7 +88,9 @@ Current intentional limits:
 - no fill for arcs, ellipses, elliptical arcs, splines, text or dimensions;
 - DXF fill export is limited to generated `SOLID` HATCH records for the supported closed entities.
 
-`Boundary Fill` creates a filled closed polyline from a picked seed point and uses the v2 preview/confirm workflow with sampled curve boundaries, editable small-gap tolerance for endpoint-to-endpoint and endpoint-to-segment closures, and ignored-entity diagnostics. It still generates a single filled `PolylineEntity`, so holes/islands, hatch patterns, associative hatch behavior, block-reference boundary expansion and advanced self-intersection repair remain deferred until a real `HatchEntity` or a dedicated later boundary engine milestone.
+`Boundary Fill` creates a filled closed polyline from a picked seed point and uses the v2 preview/confirm workflow with sampled curve boundaries, editable small-gap tolerance for endpoint-to-endpoint and endpoint-to-segment closures, explicit synthetic gap bridges, and ignored-entity diagnostics. It still generates a single filled `PolylineEntity`, so holes/islands, hatch patterns, associative hatch behavior, block-reference boundary expansion and advanced self-intersection repair remain deferred until a real `HatchEntity` or a dedicated later boundary engine milestone.
+
+Future HatchEntity work is tracked separately in `docs/specs/v0.8.200-hatch-patterns.md`. It should not be implemented by overloading the existing Boundary Fill output model.
 
 ---
 
@@ -187,3 +204,8 @@ Current limitations:
 ## DXF mixed-polyline consolidation
 
 Automated tests now cover mixed-polyline DXF group-code `42` export and OpenCad2D export/import round-trip. Manual external validation is still required before a release claim: use current LibreCAD and QCAD builds at minimum, and record exact versions in `docs/dxf-compatibility.md`.
+
+
+## Library content breadth
+
+The first Library content pack is intentionally small. It exists to validate the browser, preview, insertion, block-reference reuse, explode and publish-copy workflows. Broader furniture, people, vehicle, electrical, plumbing, outdoor and elevation/section variants should be added in later small batches after the v0.8.162 compatibility pass.

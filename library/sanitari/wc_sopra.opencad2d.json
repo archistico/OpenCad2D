@@ -1,0 +1,145 @@
+{
+  "version": 1,
+  "savedAt": "2026-06-21T00:00:00.0000000+00:00",
+  "settings": {
+    "currentLayerId": "0",
+    "currentTextFormatId": "Standard",
+    "currentDimensionStyleId": "Standard",
+    "grid": {
+      "kind": "Rectangular",
+      "isVisible": true,
+      "minorStep": 10,
+      "majorStep": 50,
+      "originX": 0,
+      "originY": 0,
+      "minimumScreenSpacing": 8,
+      "maximumScreenSpacing": 220,
+      "isometricAngleDegrees": 30
+    },
+    "snapping": {
+      "isEnabled": true,
+      "enabledModes": [
+        "Endpoint",
+        "Midpoint",
+        "Center",
+        "Quadrant",
+        "Intersection",
+        "Perpendicular",
+        "Tangent",
+        "Grid"
+      ],
+      "tolerance": 8
+    },
+    "drafting": {
+      "isOrthoEnabled": false,
+      "polarTracking": {
+        "isEnabled": false,
+        "stepDegrees": 90
+      }
+    }
+  },
+  "viewport": {
+    "panX": 0,
+    "panY": 0,
+    "zoom": 1
+  },
+  "lineFormats": [
+    {
+      "id": "Continuous",
+      "name": "Continua",
+      "color": "#FFFFFF",
+      "lineWeight": 1,
+      "lineStyle": "Continuous",
+      "dashPattern": []
+    }
+  ],
+  "textFormats": [
+    {
+      "id": "Standard",
+      "name": "Standard",
+      "fontFamily": "Arial",
+      "height": 100,
+      "color": "#FFFFFF",
+      "isBold": false,
+      "isItalic": false
+    }
+  ],
+  "dimensionStyles": [],
+  "layers": [
+    {
+      "id": "0",
+      "name": "0",
+      "lineFormatId": "Continuous",
+      "fillColor": "#FFFFFF",
+      "isVisible": true,
+      "isLocked": false
+    }
+  ],
+  "blockDefinitions": [],
+  "entities": [
+    {
+      "type": "Polyline",
+      "id": "462ebb6b-a526-4963-ab79-32c5ecabe0c0",
+      "layerId": "0",
+      "isClosed": true,
+      "isFilled": false,
+      "vertices": [
+        {
+          "x": -260.0,
+          "y": 160.0
+        },
+        {
+          "x": 260.0,
+          "y": 160.0
+        },
+        {
+          "x": 260.0,
+          "y": 340.0
+        },
+        {
+          "x": -260.0,
+          "y": 340.0
+        }
+      ],
+      "segmentBulges": null
+    },
+    {
+      "type": "Ellipse",
+      "id": "f07ddfd4-6947-4ee7-abbb-51507f76c091",
+      "layerId": "0",
+      "centerX": 0,
+      "centerY": -80,
+      "majorAxisX": 0,
+      "majorAxisY": 260,
+      "minorRadius": 210
+    },
+    {
+      "type": "Ellipse",
+      "id": "bc848348-96bf-488c-957f-0511b9e969fc",
+      "layerId": "0",
+      "centerX": 0,
+      "centerY": -80,
+      "majorAxisX": 0,
+      "majorAxisY": 170,
+      "minorRadius": 125
+    },
+    {
+      "type": "Line",
+      "id": "dd3cefa9-d8df-44c4-a257-2cd21583d752",
+      "layerId": "0",
+      "startX": -170,
+      "startY": 120,
+      "endX": -110,
+      "endY": 80
+    },
+    {
+      "type": "Line",
+      "id": "cc5d692c-a546-4461-88c1-e8a340e931f1",
+      "layerId": "0",
+      "startX": 170,
+      "startY": 120,
+      "endX": 110,
+      "endY": 80
+    }
+  ]
+}
