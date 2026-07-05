@@ -1,0 +1,4722 @@
+{
+  "OpenCad2D.sln": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7d07c898f087531b7fa038f0943ae55d",
+    "semantic_hash": ""
+  },
+  "docs/testing/samples/curve-editing-regression-v0.9.opencad2d.json": {
+    "mtime": 1780400916.0,
+    "ast_hash": "1906d58d2ce0cbbb9a1b6eba5a44df6e",
+    "semantic_hash": ""
+  },
+  "global.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9c557c78b4d2f73d2fc8ef87bff54664",
+    "semantic_hash": ""
+  },
+  "library/Beds/Bed_160x200.opencad2d.json": {
+    "mtime": 1779995290.460077,
+    "ast_hash": "cadf8315e11bea95632698f4c7912e78",
+    "semantic_hash": ""
+  },
+  "library/Chairs/chair_80x50.opencad2d.json": {
+    "mtime": 1779994517.0947235,
+    "ast_hash": "d7309d17f3948490ff4e537edc016e7c",
+    "semantic_hash": ""
+  },
+  "library/arredo/divano_3_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "3f46c14f4d8c33660b7c6ae2f8a2c8cb",
+    "semantic_hash": ""
+  },
+  "library/arredo/sedia_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "ccde78c88c10502ff18bcde7a3dcb0d3",
+    "semantic_hash": ""
+  },
+  "library/arredo/tavolo_4_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "0accf63ea54d5e6af7985bd21c92169f",
+    "semantic_hash": ""
+  },
+  "library/cucina/fornello_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "c457d7f40950878b697e85ebd05c5b00",
+    "semantic_hash": ""
+  },
+  "library/cucina/frigo_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "e23c73b9a16d3ec9782ae83fa279f124",
+    "semantic_hash": ""
+  },
+  "library/cucina/lavandino_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "95e6d44ecebab3d67d1431de28d49c6f",
+    "semantic_hash": ""
+  },
+  "library/sanitari/bidet_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "598e9fefb3f653a62aa9d7cf0b415123",
+    "semantic_hash": ""
+  },
+  "library/sanitari/lavello_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "704e349f1bb67983b0bb464a9285464e",
+    "semantic_hash": ""
+  },
+  "library/sanitari/wc_sopra.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "c679c12a5adfc61fc108444b3e2d2346",
+    "semantic_hash": ""
+  },
+  "library/simboli/nord_semplice.opencad2d.json": {
+    "mtime": 1782037632.0,
+    "ast_hash": "af73da4aa4735a07cf5aedada5bd7b6e",
+    "semantic_hash": ""
+  },
+  "library/simboli/scala_grafica_100.opencad2d.json": {
+    "mtime": 1782037634.0,
+    "ast_hash": "83ca9044bf55b4ce34ecd4434e3b3a98",
+    "semantic_hash": ""
+  },
+  "samples/dotnet.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "52c4ec7a3c5d0f99d6fa8fc7ca6a2a3e",
+    "semantic_hash": ""
+  },
+  "samples/floor.opencad2d.json": {
+    "mtime": 1779999367.4822514,
+    "ast_hash": "d0021118e09d4bd31a4da045d5157cb6",
+    "semantic_hash": ""
+  },
+  "samples/house_plan.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e5b2fd9f927da4dad1060ec3fcf8c4d4",
+    "semantic_hash": ""
+  },
+  "samples/metricscale.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "72269be14cd429497fd60bdfe9d9a390",
+    "semantic_hash": ""
+  },
+  "samples/ortho.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1c52d4df872db7c30a38de4f1819dc85",
+    "semantic_hash": ""
+  },
+  "samples/piantina.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fa6d0e546f29189cdd960bc062cfb5f2",
+    "semantic_hash": ""
+  },
+  "samples/sample01.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "49eb60b3079b5ef73418084f64dfb411",
+    "semantic_hash": ""
+  },
+  "samples/sample02.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fb2e7d306c50b602914f981439791ee7",
+    "semantic_hash": ""
+  },
+  "samples/sample03_10k.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "64da35fc3b22d339690d815a94702640",
+    "semantic_hash": ""
+  },
+  "samples/testsaveUI.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f0082869ef528d91958b6a0e43d148e6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/AboutWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1c9ce38ba35e68edac9c9d84a7f06106",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/App.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "42e1e3fcc8f5c995bd065b2a63672bcc",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/AvaloniaTextInputProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "75df62f84294d94b57f5c330c32ce4c6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/BlockManagerWindow.axaml.cs": {
+    "mtime": 1782050310.0,
+    "ast_hash": "2af36628314c7ca9163cc965c17fd62f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Controls/AsyncReentrancyGuard.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f98d93f57314c1fbc4f981d73381f561",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Controls/CadCanvas.cs": {
+    "mtime": 1781988652.0,
+    "ast_hash": "44f803214cbfccdd251bf9ebea1ecd53",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Controls/CadCanvasWorkspaceChangedEventArgs.cs": {
+    "mtime": 1780219867.0,
+    "ast_hash": "33e5789d3e18d31bfabd8ce29d6dab1e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Controls/CadTextTransform.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "09b61ec5a82dec0957a8a0fcb0721892",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Controls/DimensionStylePreviewControl.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2583d37cde6280361c93cff948891cd3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Controls/LibraryItemPreviewControl.cs": {
+    "mtime": 1779995390.820143,
+    "ast_hash": "aab320f12e99289cf3fa0a17758a5f55",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/CreateBlockOptionsWindow.axaml.cs": {
+    "mtime": 1780219203.0,
+    "ast_hash": "1e8aaa74d75cec8c22d2d6604d6a49d3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Diagnostics/ApplicationLogEntry.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d651180491652e6eab184a4467aefbfa",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Diagnostics/ApplicationLogLevel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "28c7da28110f53b6ffc58608ee3342f9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Diagnostics/IApplicationLogger.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "41d5ac0b46e937ff047681e8f164a101",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Diagnostics/InMemoryApplicationLogger.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "dedef6936406e0468cfa54eeefa34617",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Diagnostics/TraceApplicationLogger.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4a89dd36e94279246964d646efc9869f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/DimensionStyleManagerWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6a997c2afb817e1c6035582ebf83a117",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/DxfImportReportWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9b7d37aaee5ee143768eec544b04b68d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/GridSettingsWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "97a56d3c83b6b955e2cd4423609fab10",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ImageReferenceManagerWindow.axaml.cs": {
+    "mtime": 1779998781.0,
+    "ast_hash": "382329ac7b7fad34d2998a6cd46add73",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ImportDrawingOptionsWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5a2649a1139dbc4ca6661cd559fc8e49",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/InsertBlockOptionsWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5524174cd8d5d575417bf5957ec5497d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/LayerManagerWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d0b2945c9e64d1db99e42b353157ebe0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/LibraryWindow.axaml.cs": {
+    "mtime": 1779993852.661664,
+    "ast_hash": "b9dc70e70dc71fa7628e861dad71b95f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/LineFormatManagerWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a3d574d3dd55c8b1371a79c8f73fb279",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/MainWindow.axaml.cs": {
+    "mtime": 1782050986.0,
+    "ast_hash": "1117d6cfa961f8f481cbe1a883fe03b9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/OpenCad2D.App.csproj": {
+    "mtime": 1780471844.0,
+    "ast_hash": "e615dcea3b18537b4b170f7bc110b299",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/PdfExportSettingsWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "79dcad8692e5dc626e6201d56437069a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Program.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b9aa0a85720780f08153c80a504c8eab",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Rendering/CadEntityRenderer.cs": {
+    "mtime": 1782050916.0,
+    "ast_hash": "a23c5d9ff58dd5d23706a7a5ca6b8cab",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Rendering/CadToolPreviewRenderer.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fb5c3a2ed9f283ae61328651bd7136a3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Rendering/EntityScreenStyle.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e11d4810770b23da4655ef3179818431",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Rendering/EntityScreenStyleResolver.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0d091987b820f01332e7f2a6358f3140",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/SaveChangesChoice.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "61efd1b81a834c2495cc720f200b78fa",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/SaveChangesWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1e5dca3167f79ee85eea27d96d2f92f5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Settings/ApplicationGridSettings.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "08174a033767095ce28a6d7c98cb7363",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Settings/ApplicationSettings.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a09d4aae6ec788facb95df89639a3dea",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Settings/ApplicationSnapSettings.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b2e882493fc62f98d266b71372c4cb98",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Settings/IApplicationSettingsStore.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1e4c98f6a06b402262d17540c6ea576c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Settings/JsonApplicationSettingsStore.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "28ed4a29e732e61f5de6aa28e4c5445e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/SvgExportSettingsWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b098b1110891dd5d235d954a3d2514e1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Templates/default.opencad2d.json": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ab26d40f81138f18b9cb13719eaf6c68",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/TextFormatManagerWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fe0a7aa5c1d6627cc23e468fc8de8f80",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/TextInputWindow.axaml.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "75c4c6e2b8f00ae901f9f0c210b6aad1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Blocks/BlockEditSession.cs": {
+    "mtime": 1782041580.0,
+    "ast_hash": "5dbc1c0c8c1c11df8c675bb9f085dcac",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Blocks/BlockManagerAction.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3acb21979ced7ee8903f92aa75c5bb5a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Blocks/BlockManagerResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5f3944fdb03548339ae617f60c953023",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Blocks/BlockManagerWindowViewModel.cs": {
+    "mtime": 1782050542.0,
+    "ast_hash": "2527a4f083e59fe4f0ec7e1e3ad56d83",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Blocks/CreateBlockOptions.cs": {
+    "mtime": 1780218640.0,
+    "ast_hash": "627f5692aa4584d4522a264f94882b42",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Blocks/EditableBlockDefinitionViewModel.cs": {
+    "mtime": 1782050542.0,
+    "ast_hash": "4dc10352ddcb222c079fbf759578d1bb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Blocks/InsertBlockOptions.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "add1bfacd765cbeb94aa1065bd35d48d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/CommandHudAnchorOptionViewModel.cs": {
+    "mtime": 1782051812.0,
+    "ast_hash": "806929fe21871206355c319120036b49",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/CommandHudAnchorRowViewModel.cs": {
+    "mtime": 1782051812.0,
+    "ast_hash": "92079c76c62baeb2fa2cef9189ea700d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/CommandHudAnchorSelectorViewModel.cs": {
+    "mtime": 1782051812.0,
+    "ast_hash": "113595549e4c1605fa5041372a037731",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/CommandHudFieldRoutingPolicy.cs": {
+    "mtime": 1781989127.0,
+    "ast_hash": "a7c3354a3d3383632a86423e6ce59ed7",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/CommandHudFieldViewModel.cs": {
+    "mtime": 1781989127.0,
+    "ast_hash": "061a30a07e661a1875a04f95fb6a5750",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/CommandHudInputState.cs": {
+    "mtime": 1781989127.0,
+    "ast_hash": "b7d743be90bc56b8c3603cacb5915eac",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/CommandHudStateViewModel.cs": {
+    "mtime": 1782051814.0,
+    "ast_hash": "a01fda2b022bdf3ee8eb1f45425cce45",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/DimensionStyles/DimensionStyleManagerResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "44eafcb1174367c34546075966ba7c34",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/DimensionStyles/DimensionStyleManagerWindowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5f419145760bdf52f845e02a8a5e8552",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/DimensionStyles/EditableDimensionStyleViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0eee86a29e8a43dc686558665dddd216",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/DimensionStyles/TextFormatOptionViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "66ac8867435af7f6827c25f47602b344",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/DxfImport/DxfImportReportWindowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "14441f913f22362b1b079783721caaaf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Grid/GridSettingsResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "61df5e93cdf8bf37c743afc6c39825e3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Grid/GridSettingsWindowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "28f3e9c3e53650a1e02d099f4a60ea9a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/ImageReferences/ImageReferenceItemViewModel.cs": {
+    "mtime": 1779998757.0,
+    "ast_hash": "7417d2f0ceb07c3ac600cb2894050d98",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/ImageReferences/ImageReferenceManagerAction.cs": {
+    "mtime": 1779998757.0,
+    "ast_hash": "793e7429c2f1192cfc617af24371da9a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/ImageReferences/ImageReferenceManagerResult.cs": {
+    "mtime": 1779998757.0,
+    "ast_hash": "21059dcc3eabb9c9ea474e501c4ec179",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/ImageReferences/ImageReferenceManagerWindowViewModel.cs": {
+    "mtime": 1779998757.0,
+    "ast_hash": "9eefd29ae2500f03c0a799e99514a032",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/ImportDrawing/OpenCad2DImportMergeResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c6ef37e288f5de8502e8586d05d60961",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/ImportDrawing/OpenCad2DImportMerger.cs": {
+    "mtime": 1780243752.0,
+    "ast_hash": "6bf9e6e88aaa2f0c35105aa52ab86d5f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/ImportDrawing/OpenCad2DImportPlacementOptions.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "05a698b1f934922afda8f3ffbd44c264",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Layers/EditableLayerViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "672fd3acfc24fb1bd6c35c57aaf21d78",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Layers/LayerManagerResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "80059a1233632b421ee4131eb37c9a2f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Layers/LayerManagerWindowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0d464e74ade814f6ae2d5c0602300039",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Layers/LineFormatOptionViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6c5d3445efafab117c21715e5513d208",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryBlockDefinitionBuilder.cs": {
+    "mtime": 1782049682.0,
+    "ast_hash": "70715ed0acbe15098677e648af3ecc66",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryBlockDefinitionPreparation.cs": {
+    "mtime": 1779994185.3442783,
+    "ast_hash": "cb39eb91b358ad8d47981ad9fd530147",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryCatalogCategory.cs": {
+    "mtime": 1779992341.442103,
+    "ast_hash": "def77afc1461272d9260d217d640f37b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryCatalogItem.cs": {
+    "mtime": 1779992341.3698993,
+    "ast_hash": "15ac2c3d2501078b878fc8456fedf5c9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryCatalogScanResult.cs": {
+    "mtime": 1779992341.5887585,
+    "ast_hash": "009609d8d77bfca592504f5cfaf2675c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryCatalogWarning.cs": {
+    "mtime": 1779992341.5151575,
+    "ast_hash": "5b8fcaf6233e658527830b0d8c939c8b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryItemCatalog.cs": {
+    "mtime": 1779992341.6638036,
+    "ast_hash": "b5c9afed55713804b56a34f17923e146",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryWindowResult.cs": {
+    "mtime": 1779993852.4532168,
+    "ast_hash": "ccda91e704b8828766bafadc1da6c558",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Library/LibraryWindowViewModel.cs": {
+    "mtime": 1779993905.0882702,
+    "ast_hash": "3c650c9bd91fbc023d8e4aed3f20db70",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/LineFormats/EditableLineFormatViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2c173210b07653b5696f2881fa6193be",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/LineFormats/LineFormatManagerResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3a29d4d532a7a4a56138c8fcfbc3b19d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/LineFormats/LineFormatManagerWindowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5dc66453e31c07d1e071193443f31055",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/MainWindowViewModel.cs": {
+    "mtime": 1782050840.0,
+    "ast_hash": "eaa44acf8c6b5594b8a92dce9f0a4478",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Pdf/PdfExportSettingsWindowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f18d8c438ce72eca5a9ef2558cbbfc2a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/PolarTracking/PolarTrackingOptionViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9f49f21181b194cd3751b34c12e5566f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Properties/PropertyPanelViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7f4f4ca74f21db720198d1b704b20cbb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Properties/PropertyRowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a8d242af902462077c81eba26a6bbfb4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Properties/PropertySectionViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "dbde53963e371f682c34a0948730d3bc",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Properties/PropertyValueFormatter.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "72d52bb346d256e92174174146a4b3cf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Properties/SelectionPropertyPanelBuilder.cs": {
+    "mtime": 1782059500.0,
+    "ast_hash": "d0860beb671c5550e1f3932ef27b40b2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/Svg/SvgExportSettingsWindowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a49974dce1274bceea9cf246ea9bbfb8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/TextFormats/EditableTextFormatViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3757fb6b98822bd2686a00540db7f196",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/TextFormats/TextFormatManagerResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ced7f990433e36a27b799d09d77e04f3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/ViewModels/TextFormats/TextFormatManagerWindowViewModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bcbf4a2d24802a376b388d7fa6adbe0d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Viewport/ViewportTransform.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6601ef247189c94e0e1a6c6c7eecc296",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Anchors/AnchorPlacement.cs": {
+    "mtime": 1782044046.0,
+    "ast_hash": "ba6a543b13766fec210b96e129f3c28b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Anchors/AnchorPoint.cs": {
+    "mtime": 1782044046.0,
+    "ast_hash": "da68426b3547b5c8d47e6c5e0eb5b888",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Anchors/AnchorPointDescriptor.cs": {
+    "mtime": 1782044046.0,
+    "ast_hash": "adc6fc73a39357aab1f26edd8b77edbe",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Anchors/AnchorPointService.cs": {
+    "mtime": 1782044046.0,
+    "ast_hash": "5faed44971376135651c8688bdea8f0b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Doors/DoorGeometry.cs": {
+    "mtime": 1782057327.0,
+    "ast_hash": "7017a7ee6075baad9ea8bf4f21d5ca90",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Doors/DoorGeometryBuilder.cs": {
+    "mtime": 1782057327.0,
+    "ast_hash": "f6e19cbbb83334130c4fd8d703b91a05",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Doors/DoorSwingDirection.cs": {
+    "mtime": 1782053146.0,
+    "ast_hash": "c29e176d2e36f024c8b00521ab641491",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Stairs/StairGeometry.cs": {
+    "mtime": 1781960872.0,
+    "ast_hash": "1e8a71847d0bfcf79981f47e3a6848eb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Stairs/StairGeometryBuilder.cs": {
+    "mtime": 1781960892.0,
+    "ast_hash": "14338ae4b65b169e6971c3c5cafe9335",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Stairs/StairPlanArrowMode.cs": {
+    "mtime": 1781960872.0,
+    "ast_hash": "436fc9c1deaf2de065eed46012ad073c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Stairs/StairViewKind.cs": {
+    "mtime": 1781963768.0,
+    "ast_hash": "051232e9a67c0ec39db98545f167b239",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Windows/WindowGeometry.cs": {
+    "mtime": 1782050780.0,
+    "ast_hash": "56364dd098f6d3d8064fe08dda0f18d3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Architecture/Windows/WindowGeometryBuilder.cs": {
+    "mtime": 1782050780.0,
+    "ast_hash": "de0ecd4ddd677e891909e47bc9dcbf67",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Blocks/BlockDefinition.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f222ab7ec2e9d1f3fa916d0bb6f620c8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Blocks/BlockDefinitionCollection.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2070123c5f399b273114dcaf56f1e05e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Collections/EntityCollection.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "63cfe3c2292b2580f6a0b13a96af7146",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/AddBlockDefinitionCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9efdab7d0b90ab500b6fe23450a8cdc0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/AddEntityCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1df12d0e0a663dabffa0b3ead5995530",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/CommandHistory.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "78b492979c7a33efd4b8316bbf05f80f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/CompositeCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7911efbaea731f21b98b596bd82d7bd5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/CopyEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "51857d7ae5c6980b937dc2dd8e418e20",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/DeleteEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2fe65680e22b4fdb2419bae8027bec8a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/DimensionStaleStateHelper.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b87cd8721891644a0efe3ed2b55823cf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/ICadCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bb6a1fdf53cd82f36aedb29bd6e630e3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/MirrorEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f5bc0e6a6fcc49da8a87249b64854f92",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/ModifyEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e75e5d428561c25678134098b85191e9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/MoveEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f096365a135271ed2aee8331c6bc268d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/ReplaceEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e8dff371f7471877e0d4317ec7b02fb4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/RotateEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "211cd0a4b329d607b7f884bc493e01b5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/ScaleEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a62f9d642e156711a07ffce874b2ee20",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/TransformEntitiesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c43395f694b0c08eab65f7a19ce4fc0e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/UpdateBlockDefinitionsCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "cef6b364e7e56b5b032fc426d288dd1b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/UpdateDimensionStylesCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6a7d4719192138e4dfcd16b11d84b3ef",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/UpdateLayersCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "85558e7190d9d97db279248445a75f7c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/UpdateLineFormatsCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a5551a945f631fbb52cf14cb28ebea12",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Commands/UpdateTextFormatsCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "eb9182b3f659f1afb3f6d2bc1bb9b83e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/DimensionArrowSymbol.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "17acbdb3057ed3d20ade165a4c0f974f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/DimensionOrientation.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f5b579ed0b5fb64cb45d6256c1004cbf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/DimensionStyle.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a0de37b4bc8144f5db3a397a64e5e9b4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/DimensionStyleCollection.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "003e2b6682fcd81fc9c149601720170f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/DimensionTerminatorFitMode.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a881946d377c0f6f0a1fa947d9cfbd15",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/DimensionTextFitMode.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "60ad6b135946ab794ac7d67a747410c1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/DimensionTextRotationMode.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "afadfdb76e865ee016612d3a56293e82",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/Rendering/DimensionArcPrimitive.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3ea9ed4be38765b72946ecc8aca95915",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/Rendering/DimensionGeometryBuilder.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "30640e19b93dd15a0a1ad0f817b064be",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/Rendering/DimensionLinePrimitive.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8fc4070a7d852e2393b09029c7c3942a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/Rendering/DimensionRenderModel.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5a4330b536316b24b4f0bfcff42a12d3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Dimensions/Rendering/DimensionTextPrimitive.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fac4d9402800d6b53ca47ea84ce42c79",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Documents/CadDocument.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8e2d3648c00ac712a0cfb2ad89491e75",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundaryFillDiagnostics.cs": {
+    "mtime": 1781984892.0,
+    "ast_hash": "105cea310aed3e89a3f670a587d71142",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundaryFillOptions.cs": {
+    "mtime": 1781984892.0,
+    "ast_hash": "1561f67916388534748fd980acfa5170",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundaryFillResult.cs": {
+    "mtime": 1781984892.0,
+    "ast_hash": "8190a8f71f1d41d30d76cf0a44fe83ac",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundaryFillService.cs": {
+    "mtime": 1781985256.0,
+    "ast_hash": "81990aadc7998cd8d203fdf081493c32",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundaryFillStatus.cs": {
+    "mtime": 1781984892.0,
+    "ast_hash": "d78db55020edb78bd3b91b805137286c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundarySegment.cs": {
+    "mtime": 1781984892.0,
+    "ast_hash": "6462ca50d654df681fb33ed7c1b31178",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundarySegmentCollection.cs": {
+    "mtime": 1781985256.0,
+    "ast_hash": "7cdcc92d76a1b367de2a92817934a38b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundarySegmentCollector.cs": {
+    "mtime": 1781990939.0,
+    "ast_hash": "59d5d545f3fa111a7eff08f21f42cab1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/BoundarySegmentSourceKind.cs": {
+    "mtime": 1781988652.0,
+    "ast_hash": "7737ee56e9ec30e4070c09d2a4d3a1fc",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/CadBreakService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fdd198a39919ba538680d73a7939bac3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/CadEntityIntersectionService.cs": {
+    "mtime": 1781949770.0,
+    "ast_hash": "67a927a51130897ab7ba27a2426bc3c4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/CadExtendService.cs": {
+    "mtime": 1781960116.0,
+    "ast_hash": "ba8ec8f009f4c00100d9de7ba33a9dee",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/CadIntersectionKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2f4c93e332000ff9781fc85536833bb2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/CadIntersectionPoint.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fef84caa7e11885c187bd70fcc799ac9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/CadTrimService.cs": {
+    "mtime": 1781958053.0,
+    "ast_hash": "85021b4c03c41a0249391733a6dca5c8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/Curves/BezierSplineSplitService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "916505a978195d624400e3a044acd66e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/Curves/CadCurveSplitService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "29559391c3e4f4998abd1362382aff4d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/Curves/CurveCut.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c6de6a1ad9cd93510bd7afc2d1de904b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/Curves/CurveInterval.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4fd7764313b09d65d0b66b2a7f6c6523",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/Curves/DefaultCurveAdapterFactory.cs": {
+    "mtime": 1781957544.0,
+    "ast_hash": "783d0b03dd0f148f3a77dac377a8d79f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/Curves/ICurveAdapter.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3ec0164bb7be9f12d235b95ed09d6994",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/Curves/ICurveAdapterFactory.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bb365412e41a07f5937922bcdfc11df2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/DivideEntityResult.cs": {
+    "mtime": 1780235147.0,
+    "ast_hash": "521f0cf92becc016790021398566fb0f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/DivideEntityService.cs": {
+    "mtime": 1780235147.0,
+    "ast_hash": "fea63ae60b272468f3a16005e66572bf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/LineBreakService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "02fccf85128986660b4145837ddae26c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/LineExtendService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d5038878dfc73f9088bde2eca1e6db05",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/LineIntersectionInfo.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9bc361f620dee0a1f37fe29e0aa17862",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/LineIntersectionService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a19e76337d9b7ed4c1e770a288d6e56d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/LineParameterService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1d25390937364f8a030d9e7cfd08eafb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Editing/LineTrimService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ba2fc72e20236b8ee1059041ffb5a6fe",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/AlignedDimensionEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9b6e90987a5e21f43b054367bf18d81a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/AngularDimensionEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1cc5ed6bc8564b31abde2ef0483184df",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/ArcEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fba5ac90f80c7d2350decfc6640221e3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/BezierSplineEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bc21e6aeaafa3efdd1c8936cec614951",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/BlockReferenceEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ed79fe7fd23309e2f28d4151f99391d5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/CadEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "87fc044460363a15eb217ab8de218951",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/CadEntityDrawOrderExtensions.cs": {
+    "mtime": 1781961118.0,
+    "ast_hash": "04db71346e0e6be985a3a21666302f5e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/CircleEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ca4f100545e1de18d60bfd28c055b11f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/DiameterDimensionEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a70c03aa9a46b3c90abd56909424877f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/DimensionEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e9dc10956539ae699ee295cbe407cb57",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/DoorEntity.cs": {
+    "mtime": 1782057327.0,
+    "ast_hash": "2d667979fb93f205dd4e480849eb539e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/EllipseEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "335d5d4145068024610886e7d1c48791",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/EllipticalArcEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "42cd00e0674cc3421c1eb2e0c242dfb4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/EntityKind.cs": {
+    "mtime": 1782050792.0,
+    "ast_hash": "7ffc6a7659b3ac29927d817492f9925d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/IFillableEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "86748ae6d790232b534d2e108f68ce50",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/ImageReferenceEntity.cs": {
+    "mtime": 1779999084.0,
+    "ast_hash": "2a7994bdcc79580e2a566b27b02221f3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/LineEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e67ee31ea9991da98366f233f999675c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/LinearDimensionEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e04f28e1374012770b285b6300e51a79",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/MultilineTextEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c9ed7328289108dc56058e8f32563ff0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/PointEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8aff638b69f255987799d6c0734919ab",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/PolylineEntity.cs": {
+    "mtime": 1779958209.0,
+    "ast_hash": "7ae5d357bb62058673ab3069ad371446",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/RadiusDimensionEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "052786ad5250aadc90d18cc64a784139",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/StairEntity.cs": {
+    "mtime": 1781960912.0,
+    "ast_hash": "3452d571ed31293eeb4682680e236c56",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/TextEntity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9f23361d5a46ee4964c0da7fb416bc15",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Entities/WindowEntity.cs": {
+    "mtime": 1782050782.0,
+    "ast_hash": "86756e199ff24829d836bc5db665d5a6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Identifiers/BlockDefinitionId.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4dbdfac28820cb25e6be0f4cff0a9f96",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Identifiers/DimensionStyleId.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c0aa78b4f49441ca61ea1e66a4564fce",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Identifiers/EntityId.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d092453c3d3c5abc0f1e19c89989fe47",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Identifiers/LayerId.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ae4c1060ae1acb77c276bb48977aca02",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Identifiers/LineFormatId.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "dacc5237bb35fefea88c4da06cfa5678",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Identifiers/TextFormatId.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a4f0f443f54b8c887df9a59bea082387",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Layers/Layer.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "68937faea126d01a82c5aebdc3e227d1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Layers/LayerCollection.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "06eef89c21d454c151f2954b9661ea5a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Measurements/AngleMeasurement.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "09a44e2a6a227899506b374a3c7f369e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Measurements/DistanceMeasurement.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "cb8e24857a4ea9b8b45cf1d2f07f4589",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Measurements/EntityMeasurement.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "509fea33962ec5e5854f00df51518cae",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Measurements/MeasurementFormatter.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "721270777d640bb9db7c00f623f010ce",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Measurements/MeasurementService.cs": {
+    "mtime": 1779957837.0,
+    "ast_hash": "f0b84e01a06c0ed12eabaee6e16306e8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/OpenCad2D.Core.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "df0db3d67c9d95258eb59e9ee4c43fcd",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Spatial/ISpatialIndex.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "445f0ae53a0d2b816c400684c337d389",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Spatial/LinearSpatialIndex.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2b5c6ee3b558729513c9e32d8c2eb75c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/CadColor.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f7a525ec8e7db6d3d7a6233c86266ee8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/EntityStyle.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c08a7bd2d3e506cc8cba36dd8d9c658f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/LineFormat.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a161d9a46f3160a0828fe2e2b150e141",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/LineFormatCollection.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5027c475c7b6dbf9d71d3090c687fd88",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/LineStyle.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "efb7886e434c81b7dcd64b241597f26c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/LineStyleDashPattern.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c1f3f8ca7e7f7395ec8ec8588cdd83e1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/LineTypeId.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "de63316e349bf2bd85dd2be38a98c173",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/LineWeight.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9402bcff2e84c27146c81c6eb125ef4f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/TextFormat.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5640a9d908eb3b710a271fc989632a3b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Styling/TextFormatCollection.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "22bd8179551f0a68776c3f363fc2118e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Transformations/AlignTransformResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1ee8acbee6703156899526f8024f7683",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Core/Transformations/AlignTransformService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "09969db57be3c04c04c8b305937f427c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/DxfColorMapper.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bde92bafc186c4881c2ca6ffb23297ed",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/DxfDocumentWriter.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "edbd3f1dcadc2020b698c350a11716f0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/DxfExportOptions.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "20ca3c3ba1693caa518026ffe7b1bb30",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/DxfExportResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "55699092e78f36deba8d99fbb210bce3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/DxfExporter.cs": {
+    "mtime": 1782050944.0,
+    "ast_hash": "80429ecd7302adff955a8ae8366a775a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/DxfLineTypeMapper.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ac5d0dd0b573794a0a4fb5644b7113d3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/DxfLineWeightMapper.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "81ccfa24aed441a76fc81058819c05ce",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/IDxfExporter.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5a02711186525e8c5e1bcc1c599f1f1a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfCodePair.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a1e80ab7693af1c3716301b611f46e0e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfDocumentImporter.cs": {
+    "mtime": 1779954917.0,
+    "ast_hash": "179a3462ad9a26c26aa0ef9175714270",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfImportLogEntry.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d95183b16a4ffffc4a8caf7dacef4610",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfImportLogSeverity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "53dfd8d566c41ac0a84f88409c836401",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfImportResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "88653b0c8490a72de1f61a0ebf36319b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfImportStatistics.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d7f8c13501940319895dc8dffca4f743",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfReadException.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6c5fa4861078811bb5564d9e268fde7a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfReader.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6a0895dcbc6aa15bee2f90861eee2e0c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfSection.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9afa8c86e4c21cd2da4465fa04f74df0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/DxfSectionReader.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "01555a9bbdb2ab8dcf9a83e0bf20aab8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Dxf/Import/IDxfImporter.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2e2ecd0384c0ffd6af25f85a82293f6b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/OpenCad2D.Export.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "38bf846113489093ab62b8d7917ac817",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Pdf/IPdfExporter.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bbdd3d1e8b5e2e5ace075ca1b3fa60c9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Pdf/PdfExportOptions.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d061b9544959b1baa71187cffdf29566",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Pdf/PdfExportResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d540c30f260a54f9f0cd414826a9cce3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Pdf/PdfExporter.cs": {
+    "mtime": 1782050944.0,
+    "ast_hash": "b6bf1247058617915e4cf0e0953bb54e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Pdf/PdfPageOrientation.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8ff4d38695c109b9e74d506bacb272dd",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Pdf/PdfPageSize.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "096effdd5f2656b8a9885eb432f3a28c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Svg/ISvgExporter.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f38f5c730b1c389beb3d6f445fb66208",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Svg/SvgBackgroundMode.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "452f5ecef5b438141b1198ff10db9b0a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Svg/SvgExportOptions.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "be4264004b5e081d25f1d2e8b4b4cb06",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Svg/SvgExportResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6d235827caadd8029db3a6592fbf4447",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Export/Svg/SvgExporter.cs": {
+    "mtime": 1782051312.0,
+    "ast_hash": "5b566b0861ba751ee292cbffbcc92f4b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Coordinates/CoordinateSystem2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "09c51557dfd195e20868db991fccff36",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/GeometryTolerance.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a63293500ef5fd67ed49f89acee25acc",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/OpenCad2D.Geometry.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a3a8a299e57a66448f91c0818811f467",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Operations/ArcCreationService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c74fb5082153433d23834afebe6e0410",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Operations/CircleIntersectionService.cs": {
+    "mtime": 1781949812.0,
+    "ast_hash": "ef1ca39ffef2de253d9e9e5dcd70ecbc",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Operations/DistanceService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "88d11df7f39474771fbc85624e1d13c2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Operations/IntersectionResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "32a3ec91f499a357e099cbbef0d24539",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Operations/IntersectionService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "aa9ab6f8f4d148987a6a1a5ab4a75deb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Operations/PolylineIntersectionService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0a6f8e41679435a9f9961eaf398f73c5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Operations/RectangleIntersectionService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0bb33c25c73cfda07d9813d04cf9f9fa",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/Angle.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "da152cb829f2d210509469c7a0548abb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/Arc2D.cs": {
+    "mtime": 1781956228.0,
+    "ast_hash": "2d15f0a9fd75ef69839c7ed9e790273f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/BoundingBox2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d3f2831088e450503a81ced8960f3d11",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/Circle2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "399312828f449dea8727a2a49a819986",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/Line2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f597dc12ae10a0a4e0fb6cc3e7992388",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/LineSegment2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1975b273d4dbfc7dd42ae54a88555d8e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/Point2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d36d81cd3b9f95a4d91d08ac638c88a5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/Polyline2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f073d24be31a2fc0d6368d3772da613b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Primitives/Vector2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8b7df6a9da9ddaead18867283b3cba46",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Tolerance.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "230468e87a6bccba84f83fee40f7297a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Geometry/Transformations/Matrix2D.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0254c1547b57f476a554c1f6258149ca",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/BlockReferences/BlockReferenceGeometryResolver.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "82a1f649f7808f28d2d8d5eaa72e54fe",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/HitTesting/HitTestResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f1c468e2d95e49048ebaeac4eb605d7d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/HitTesting/HitTestService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d6fbd2acaf4230b894585f58b5b47f2a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/OpenCad2D.Interaction.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2ec208360aadc53d50770bc86c034ffb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Selection/SelectionService.cs": {
+    "mtime": 1779957733.0,
+    "ast_hash": "7dcd5222bb07fc880e89a4e3cf4f3da3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Selection/SelectionSet.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ce73b0ffb1a8acef0759e51e5003e5e2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Selection/WindowSelectionMode.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fd61a1e767ea61e948da54337e274395",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/CenterSnapProvider.cs": {
+    "mtime": 1781964482.0,
+    "ast_hash": "1933f8650b7f7c916f487695fb4b9e4e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/EndpointSnapProvider.cs": {
+    "mtime": 1781960922.0,
+    "ast_hash": "c2d72968cb84713f253f529ce412a745",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/EntitySnapProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "71e7d3e622036c6799c772c8a0eaca2f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/GridKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f6dcb7b22ed3bb1b10e21819e6dcc92e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/GridSettings.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "04d8a9b767b52eb0501b35788b0e9cb3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/GridSnapProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c05b2eb0a7f8c7e600173fbd1ad2b4eb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/ISnapProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7323e789b403c0154dc69a5203056c2e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/IntersectionSnapProvider.cs": {
+    "mtime": 1781960922.0,
+    "ast_hash": "989e14f3674effebd2a4323ed9b9d358",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/MidpointSnapProvider.cs": {
+    "mtime": 1781960922.0,
+    "ast_hash": "21fc36f476828c15b2b622874178ad45",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/NearestSnapProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "761b74c2b6afc464c2891598f3f304a2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/PerpendicularSnapProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "75a8dc9f45214701c9153fb8dbb3199c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/QuadrantSnapProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d0556f2d244950167e178c53e22f1217",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/SmartPoint.cs": {
+    "mtime": 1780228595.0,
+    "ast_hash": "66f58f6ef2814d79243d7930798afe8a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/SmartPointStore.cs": {
+    "mtime": 1780228595.0,
+    "ast_hash": "5f606c9461169722dba62cb492a4ad64",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/SnapCandidate.cs": {
+    "mtime": 1780231192.0,
+    "ast_hash": "8dc9870cb34ee5c2d78d5fba89a89b93",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/SnapKind.cs": {
+    "mtime": 1780233610.0,
+    "ast_hash": "4dea9bc4b06d0d2ca3a7366669e9f2b2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/SnapRequest.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6c95f83f0ffbfd7aa96e6daf013175c8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/SnapService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "02a9631b3bdde20f5780cc8f6b76bed9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/TangentSnapProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "24a585ac932e00743a6bfb9c13cde801",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/TrackingEngine.cs": {
+    "mtime": 1780232253.0,
+    "ast_hash": "f80adcfa4d2768acdd67d6cc0b20826e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/TrackingLine.cs": {
+    "mtime": 1780228984.0,
+    "ast_hash": "2cc7645ead08ed6928ed77e55776b3cb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Interaction/Snapping/TrackingLineKind.cs": {
+    "mtime": 1780231482.0,
+    "ast_hash": "1fc38e62563c02b523a59e2fd9d5bffe",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/DocumentLoadException.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "74495da5b9194a378056b88122238a19",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/DocumentRecoveryIssue.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "14593067abd39128ec65822d8d8fb68d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/DocumentRecoveryResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7dcbbfb7a3fbda68d74414f03736af69",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/DocumentRecoverySeverity.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b31cf61297868751013c21ab8d16d894",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/DocumentSaveException.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "cad1eb2f384d9bf41aecc65e2a0260e0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/AlignedDimensionEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ea49e3ab06f63739c6f6118bf6b0bdf1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/AngularDimensionEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ced6729934e48e64d88b2e870bbbe6b3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/ArcEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0f1e352528132521c1caa8532f0606db",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/BezierSplineEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "623547003834db3599b8b9c40dacebdc",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/BlockDefinitionDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f911a00856301c72199963be32ba21b1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/BlockReferenceEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "add822c6942f26bc390bd1a83a16a86c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/CircleEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "20c62c1612f863433c65429cf017fc07",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/DiameterDimensionEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "880748c517f583e7d0d2597ddd10ac77",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/DimensionStyleDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a3ec8c65287a2347f7a5cd94710d9266",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/DocumentDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d876e50453c9a4a40b9b42f0e07b2568",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/DocumentSettingsDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0a3e09b5c1f33a0f8863c7edce59bc22",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/DoorEntityDto.cs": {
+    "mtime": 1782057328.0,
+    "ast_hash": "7fbc5fce0c3530f6a60e746f6343a377",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/EllipseEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a4d3717c63a0dbadf470684213bee00b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/EllipticalArcEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8b8a012679127ab48a3d7a988dd690f9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/EntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c2402a1128aa1bdece27a9704f0c0f45",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/EntityTypeNames.cs": {
+    "mtime": 1782050870.0,
+    "ast_hash": "8c2aecd10ff3da59e43e3fa9925b99dc",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/ImageReferenceEntityDto.cs": {
+    "mtime": 1779998826.0,
+    "ast_hash": "f4ca6e87376b15829de299ca833a3afd",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/LayerDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "13d5f279ba50786b1fabf93b01e0bf79",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/LineEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "05ee7dceb74d2a36be6cc88e8e06e683",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/LineFormatDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "894d51348a3d327f4fd6c5dea49c8426",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/LinearDimensionEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d4c345a7731b08e22cc7baf47f039bc3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/MultilineTextEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4b87e4f7c34607579ec98e71c601c579",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/PointDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b13b61b0828528d93499097dbb16c2c6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/PointEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f3841d3b17f16b4ab48625ddd1cfb613",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/PolylineEntityDto.cs": {
+    "mtime": 1779954874.0,
+    "ast_hash": "06531aab5c6137d7aa21df918a7c19e9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/RadiusDimensionEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4a9aadd300a975f0a433bcddc150c278",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/StairEntityDto.cs": {
+    "mtime": 1781960984.0,
+    "ast_hash": "77d938291c9e14146cf85e76ffc2e757",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/TextEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "34bdf66e38af807c5074fa113b65d7a5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/TextFormatDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c75135baba43838a32190aacc12e760b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/UnknownEntityDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "02ab39bad9f5092db0c245b8bd0e0fda",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/ViewportStateDto.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "812c04d34d39481f2dc31ee14bc632d1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/Dto/WindowEntityDto.cs": {
+    "mtime": 1782050866.0,
+    "ast_hash": "d27485b634fa3350adee70ec419c3f7f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/EntityDtoJsonConverter.cs": {
+    "mtime": 1782050870.0,
+    "ast_hash": "e24833858d9c2f873fbf79ffa5e21994",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/ExternalReferencePathHelper.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "63608630b12d6d436e81cb4a25bcde75",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/IDocumentSerializer.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1b173de7fb64955885c4272c8a96cbc2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/JsonDocumentSerializer.cs": {
+    "mtime": 1782050896.0,
+    "ast_hash": "0a28c350660cbc75958f11f634e5f480",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/OpenCad2D.Persistence.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "38bf846113489093ab62b8d7917ac817",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Persistence/UnsupportedDocumentVersionException.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "eee0a0933e31b5ee1daadbad67281106",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Architectural/DoorTool.cs": {
+    "mtime": 1782061241.0,
+    "ast_hash": "bb329f8fbee6b80338b264a48431ecce",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Architectural/NorthSymbolTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "f46731ea64dd07c8e030eb8fbc4422d2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Architectural/ScaleBarTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "b92a8a44f34c5b94e4f11f3770386c6d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Architectural/StairTool.cs": {
+    "mtime": 1781961002.0,
+    "ast_hash": "c19f25bf7ccd1ffa5f935cb98ef86302",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Architectural/WindowTool.cs": {
+    "mtime": 1782061241.0,
+    "ast_hash": "f465e1828823b625c6c3d3806ac71584",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/AngleConstraintService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "464dc0b0f76f001d3c81b5edd9be07f0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/AngleConstraintSettings.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f7677d66fcbfee10c5b6a7ce263b8c18",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/CadActionController.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "417c238ae066e2bbaa4e8dbee88a232e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/CadToolKey.cs": {
+    "mtime": 1781988652.0,
+    "ast_hash": "15edf8aae94f7d49390ecad08d7cff6a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/CadWorkspace.cs": {
+    "mtime": 1780176138.438261,
+    "ast_hash": "6b60813f1937c28867a5e85f9b2725de",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/IAsyncCadTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fd3e3cd6e147e7d97ee6ebe2a3197f6b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ICadTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "cb32cb60a3f3f5bfdb9f57db691a7039",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/IKeyboardAwareTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "47d597f2380529a9d1f29c9febf4776a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ISnapModeProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "86567186f21e2c31c94dfb772dcbc80d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/IToolPreviewDescriptorProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1982b2f3471091a0dc3347ac8c39c87a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/IToolPreviewEntityProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d4ea35462719c1396153242ec789c801",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/PointerInfo.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b3691e81c188304154eb93f89b29034f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/PointerModifiers.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f9e1c5b5c75d1c8235467dd89d635da6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolCommandContext.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f6a8ad93e1d639fef9cdd6b908d730b1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolContext.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3d7790dc02ad67ca5df468ceddd63c45",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolController.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9027238b6bfb098ea61bea1c44dc1834",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolCoordinateContext.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2384f31da2bcc2d8e160891378963787",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolCreationContext.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b1ea344cc6979d8c610525da4e8bb599",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolDescriptor.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4e646cc104774a779baa51ee1bd84acc",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolId.cs": {
+    "mtime": 1782050826.0,
+    "ast_hash": "42c5b5f2e8e218aa080c907927830cd0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolInputConstraintService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7f6e2e1e1f4d1db9e9b38c868eb47e4d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewDescriptor.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d67fec4e74a7be529a7e9e003df2dce4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewEntityOverlay.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "076116ccc8b446323d9e70cfbe82af50",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewHighlightKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4146a54bf2a78aa14e72bc1bab735e23",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewLine.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d06e158e5bd4f5f9ac5e736bebd70c64",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewLineKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bb4fe4cc52ac4ef6caeccd63d704da53",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewMarker.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "be856a4881561a98d9c1050a35e2c8d6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewMarkerKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9a0a538725b45cad8c38001148ae735d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewMarkerShape.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a93ef27c3db4fea0d4f2be10ac66c993",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewWindow.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bf5784da5d8d2db7294cdea6ce281b26",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolPreviewWindowKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "459cec9aa0ee43e367943ba14e7504c6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolRegistry.cs": {
+    "mtime": 1782050826.0,
+    "ast_hash": "d8784241cc4bc9f2de622bf389cf8be4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9a6df2a65680f110d9f569b2da539de8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolResultKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2f702c418bec2d3a7969ef69966b9e21",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolSelectionContext.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "15d67e51ca9f29f7b48449d3bfaf2361",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/ToolSnapContext.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "cb5262a8f1f102093dce94c745048936",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/TwoPointToolBase.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "94ab28192f7b1121a031a3fc8377089c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/TwoPointToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "110cad41471d4abdde4d08cd1c2c52e2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Common/UpdateLayersAndCurrentLayerCommand.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "84a43315a5e74107d2b1688e378608e5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Dimensions/AlignedDimensionTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fcfd7a232b0cb9f95c90bf1a4d131830",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Dimensions/AngularDimensionTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "bb5058301c4d29482eeb82e5d3881991",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Dimensions/DiameterDimensionTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "34486adb723fdcd02d102c6bf1a5a460",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Dimensions/HorizontalDimensionTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "dc3557a6f9d4af2ba591643a8979e9e3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Dimensions/RadialDimensionToolBase.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "36f30a83f3ad76ce5d22345e551be704",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Dimensions/RadiusDimensionTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c2eb47f174db75d59b49ea7a55d6eb8a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Dimensions/ThreePointDimensionToolBase.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "a6f719a779d6962cdfaac1d7b08d43bf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Dimensions/VerticalDimensionTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4db68a714a21ee69dbc4b636cae41810",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/ArcThreePointsTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "79612ffbbb632ecddf8c2dc99366aa10",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/ArcThreePointsToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5028aa36c922869e7e48f407a509744f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/ArcTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "9a1c345cc09655e11bc0f73778e40766",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/ArcToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c6be35ae8491becfe3f882c9def46fd4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/CircleTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "90a4ac49ba54ed970eeec1d442941f82",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/DefaultTextInputProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "136fe95b73c34442db06c49f83782160",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/EllipseTool.cs": {
+    "mtime": 1780390817.8717077,
+    "ast_hash": "1bd7df2193cae68f72d34d736f3aa61c",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/EllipseToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e5b015de8d3647ac3c120df7f27318dd",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/ITextInputProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e537424c10f2e6dbc0370cb1199e138d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/LineTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1c7561036f2c13a6f83af78f8460fe6f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/MultilineTextTool.cs": {
+    "mtime": 1780175108.812986,
+    "ast_hash": "6ca0aef8df6f9472b8c8047ed7d298b7",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/PointTool.cs": {
+    "mtime": 1780150917.0,
+    "ast_hash": "7c7b6b81cfa45ebd6e04ad4c6dea36cb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/PolygonTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a5b10a6d8b8c6f2d79d9bde2a4fe96cf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/PolygonToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "01617165c9f2271d77e54e1c65c93fa9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/PolylineTool.cs": {
+    "mtime": 1779954986.0,
+    "ast_hash": "2f2f43fac24f71915c40ec56d522f584",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/PolylineToolState.cs": {
+    "mtime": 1779959528.0,
+    "ast_hash": "27975b88b8a640e1659321634619185b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/RectangleBySidesTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "13b46bd0aceb56731c83fd1b6195b717",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/RectangleBySidesToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7745f4511a8ebb04ebf6a7dcc20473ce",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/RectangleTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e8ec99b6657f7d77e3bf7c92cb657c16",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/SplineTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "06f53f7d28b76b8a7931f90fadaa29ba",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/SplineToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "943f2b45339f4d467e618dedff9c9581",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/TextInputRequest.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e6670b4b681a82dab125965f70ff1c43",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/TextInputResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d2344c7eaae191fd2f0a4ae21eb9ff65",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Drawing/TextTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "24187b0082cf8f767b2de540d8b4d27b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/AlignTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "530f57592918ab308fd02ed87d933733",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/AlignToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "86c54c6088562f889c65ab8aa70c4bad",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/AlignmentOperation.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f07ad71154f8b7222ef4ae66ee180772",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/AlignmentService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3d8199167d73a04804722fd9371e37d4",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/BoundaryFillTool.cs": {
+    "mtime": 1781990323.0,
+    "ast_hash": "d3900951791ad93af362b2f78e716778",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/BreakAtPointTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e5a5cacbeadc303107267dc66a91c16f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/BreakAtPointToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "63f2fd0ac78182e7f5df754c628aaff2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/BreakBetweenPointsTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b1ecec1e9dc887841ca18e03caebe2e6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/BreakBetweenPointsToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "319ddcb593aef980f7ff15d82542d390",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/ChamferTool.cs": {
+    "mtime": 1779974720.0,
+    "ast_hash": "ac039b4d1e5374b5ae3777c8d142231e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/ChamferToolState.cs": {
+    "mtime": 1779966464.0,
+    "ast_hash": "347305c57d7c8895d15d2b8f142d30bf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/CopyTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6450d214b5e26f3dfbb77d71234d9aac",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/DeleteTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "59f3cc85f71212b2c63a4ec42bf92317",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/DistributionOperation.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f5ac93664460fd8b7aacac4d4ae00ff8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/DistributionService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9b4940c7790afc047ebb532f924926b6",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/DivideTool.cs": {
+    "mtime": 1780235676.0,
+    "ast_hash": "419b9ca0506392cc52b9d7fb9e3a6249",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/DrawOrderService.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "616b0cd499585dce4bc6629e283665c0",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/EditingStatusMessageBuilder.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "011873a584f3410c3c1620de6b610466",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/ExplodeTool.cs": {
+    "mtime": 1779961495.0,
+    "ast_hash": "0a843bee7b1a88f1e083a700a10e47a9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/ExtendTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2ff8f9f7d154b76fc6af65c714f5ea66",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/ExtendToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7734cc7bbc0862bf47b461e35a1b2a70",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/FilletTool.cs": {
+    "mtime": 1779974720.0,
+    "ast_hash": "6e50f5ae07fbefb6b2b1dd3aed3b089f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/FilletToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "10eb3e2f1be62299c9b123edc6da41f8",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/JoinTool.cs": {
+    "mtime": 1779960848.0,
+    "ast_hash": "5f03bf08be0e35c917577fa3ac5ed0b2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/MirrorTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "11ef666b53afaf1cc87ca0b06f06e8a5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/MirrorToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ca8d0e0be77e4c9def9362d4a1460353",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/MoveTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "57faff9371ff808a8b62a3fbcadce950",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/MoveToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "efffc5b56b1f1c9e0d677f7c39d04959",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/OffsetTool.cs": {
+    "mtime": 1779968768.0,
+    "ast_hash": "f4f5a7ab7b1ed95bd36a879abb311067",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/OffsetToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "138e1efa292670e05b2a06ad016732d5",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/RotateTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "795eb85a0c244f207eda5a351bf8aaf3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/RotateToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7ab5813699f5360d144af3ddc7fd8e2b",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/ScaleTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0546fb27604ec01fd99d43c7094ef8d1",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/ScaleToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a33239d56659f3570fbe7b1e78c63727",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/TrimTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d9a1f6e6bd8ac30121fce3dda8bbd4b9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Editing/TrimToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "404d82eddefc0e9e48149beb31c4005a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/ArcGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d9f66add345ccf46e02498a937561610",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/BezierSplineGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "89b8bf9aff0451af8b9b41094b8e26cf",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/CircleGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ef6c862fe757d70844edad8ae389d467",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/EllipseGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "86246960844f8325975d0b424a9334db",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/GripEditTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "31cc36476b683e1fd9a0c43f0a4d8d74",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/GripKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "26955e0eeeb86cd597ad57f17879ce8a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/GripPoint.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a7b21fbe3ff66b85ce530866b0d39ca9",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/GripProviderRegistry.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "dbca7e370ef0039f7f43756e35529980",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/IGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0609f61f5b17a9cef572b7701cb8a18e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/ImageReferenceGripProvider.cs": {
+    "mtime": 1779998864.0,
+    "ast_hash": "b2c3607a298a70fe5b958c3a625c33fb",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/LineGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "42fb3b929c47635e334709da2a8f6dad",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/MultilineTextGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "50c8e14a73ad8e0a2e7e70d2616a543f",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/PointGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0559458a89b7625cbf6da75816258750",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/PolylineGripProvider.cs": {
+    "mtime": 1779955040.0,
+    "ast_hash": "7499081661708d641e4e9052f85ba068",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Grips/TextGripProvider.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "64a59503dd94ce3ac794108a2b3d8ab3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandAlias.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "98a9b2e81b5edd15a23d97e73f7c6bd2",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandAliasRegistry.cs": {
+    "mtime": 1782050826.0,
+    "ast_hash": "337bfbbae877d9394e0d5e72259baf56",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandInputKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ba2b0c2f97f21f3bd1aa7540145abc87",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandInputParseKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "64985aac8d7a045d9b93816d7ccb2f94",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandInputParseResult.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0df0b3bc4db0f01206cc694ba3e6394d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandInputParser.cs": {
+    "mtime": 1780178809.0,
+    "ast_hash": "5ae38dbc095618adb428fa2269173a78",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandInputSubmission.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8cb0875a07ef603ca2055091d44d9981",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandInputSubmissionKind.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "559681c3c409b5fe09f9b1f3e495ca21",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandOption.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5cabd65278fa046dc43188e1e7f8abb3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/CommandPromptState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4b616042f469f861a6b5e9fd2359521e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/ICommandDrivenTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "cae9891eafeeca4883cf95e5e32e9359",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Input/ToolPickedEntityInput.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "006b431d02da91f6fa7194db23d1ac5a",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Measurements/MeasureAngleTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "3722a6250c5d2032ba32f53b81c70b97",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Measurements/MeasureAngleToolState.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a2f0858084620b8a7821aff3909cfef7",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Measurements/MeasureAreaTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "2374c942aac4ec89e8a9eb573f33dbbe",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Measurements/MeasureDistanceTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "3db6fc61e3e7eb2c57cb3d45838e2ea3",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Measurements/MeasureEntityTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "23ed832a7f9efa1c659eb5f11645df4d",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Navigation/ZoomWindowTool.cs": {
+    "mtime": 1780150758.0,
+    "ast_hash": "b2810ceb4c2ae6eb0f737cafd5f4a88e",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/OpenCad2D.Tools.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ffbf8a053a088eb41883d8baf5b51919",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.Tools/Selection/SelectionTool.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5163ea18e7f9dd7e9947d100fc740dde",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/ApplicationLoggerTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0016061a7d21888452368fd30a066a86",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/ApplicationSettingsTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "dbdcd74a344dcac744c9a9132a070cbc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/BlockManagerWindowViewModelTests.cs": {
+    "mtime": 1782050556.0,
+    "ast_hash": "3af285c7ed6e67c4edcb750f664cc0df",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/CadCanvasWorkspaceChangedEventArgsTests.cs": {
+    "mtime": 1780219867.0,
+    "ast_hash": "3325cd5f5e66532cb51c8dd7a6151837",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/CadTextTransformTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3373f99f1069a91e5ef85ac9f40378ed",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/CommandHudAnchorSelectorViewModelTests.cs": {
+    "mtime": 1782051080.0,
+    "ast_hash": "79e644773da6b6f33b882fa39a6c1294",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/CommandHudFieldRoutingPolicyTests.cs": {
+    "mtime": 1781989127.0,
+    "ast_hash": "8ae0357333cec513fb187b61313c5468",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/DimensionStyleManagerWindowViewModelTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9266587201bcd480bc9c67c8ad02f89d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/DxfImportReportWindowViewModelTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ca14e2e0ad243ab9adbd7ac8db1445fc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/EntityScreenStyleResolverTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "71208075404b7d78184046e3b76fb3b2",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/JsonApplicationSettingsStoreTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4fc64af493003ae08fbd693ffd5c207d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/LayerManagerWindowViewModelTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "79fd546299a981b282fd3879b6a7f05a",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/LibraryItemCatalogTests.cs": {
+    "mtime": 1779992304.4160342,
+    "ast_hash": "634cabe7a270f2d222b59fb10b5de079",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/LibraryWindowViewModelTests.cs": {
+    "mtime": 1779993890.03241,
+    "ast_hash": "ba737517f2f6643cb6142bd405c3870c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/LineFormatManagerWindowViewModelTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c89ed3b6f3d6be1289707f58860b2344",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelApplicationSettingsTests.cs": {
+    "mtime": 1780222010.0,
+    "ast_hash": "85a4dbdd03ad25db4ae09c288500ef82",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelBlockTests.cs": {
+    "mtime": 1782049256.0,
+    "ast_hash": "30f65024e45ce8f0d21fd28154cedfc0",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelCommandHudStabilityTests.cs": {
+    "mtime": 1780217901.0,
+    "ast_hash": "0dd25e8bc96c18ac7efc3090b73c5771",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelCommandLineTests.cs": {
+    "mtime": 1781990371.0,
+    "ast_hash": "198c60ea5a727bb47a93de1fbe234a23",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelDefaultDrawingTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ebd61f7a2c6fa8ff6fe354896f692a6a",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelDeleteTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7f3b0dc1435e61b6a9080575af3246fe",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelDxfExportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f5a24b5aa1fc39f6c797038652052789",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelDxfImportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "60c87e8c9613d14780431828e9d8b829",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelExportSaveSemanticsTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "592213595a2471cbbfb278ddc1ffa96d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelImageReferenceTests.cs": {
+    "mtime": 1779999041.0,
+    "ast_hash": "74709355073636779f062ccfb5a471a9",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelLibraryTests.cs": {
+    "mtime": 1782049718.0,
+    "ast_hash": "325c05e1b81971704559c9b33372d39b",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelOpenCad2DImportTests.cs": {
+    "mtime": 1780243752.0,
+    "ast_hash": "11fc77ff73e8c1d1fd4fba4e690c5e83",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelPdfExportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c17ec5c4829da12cd4a8016361afba99",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/MainWindowViewModelPolarTrackingTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "79de9b6aeb957082890dbec9f10812ee",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/OpenCad2D.App.Tests.csproj": {
+    "mtime": 1779992304.4911923,
+    "ast_hash": "56fab49104bd302cfac00b38532dd365",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/Pdf/PdfExportSettingsWindowViewModelTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b942c0c7f74f971972d82ba89e53148a",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/PropertyPanelEditingTests.cs": {
+    "mtime": 1782059628.0,
+    "ast_hash": "e04dc5e012f6a0801547636a23642fca",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/Svg/SvgExportSettingsWindowViewModelTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "72aaf0d21f8234fd17f05ffa9fbdc780",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.App.Tests/TextFormatManagerWindowViewModelTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "66eb69d9597acd1adb5d6680b7abf246",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/AddBlockDefinitionCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "67c89afd2e8ab388c96c288d71ecf3e2",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/AddEntityCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "55b5cb4aef2f5db1e76cf9fe5d832222",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/AlignTransformServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "64e35b26679d89f8c7c04d10998ecdfc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/AlignedDimensionEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e358291a0ed624f02c3de3e9995caf73",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/AnchorPointServiceTests.cs": {
+    "mtime": 1782044046.0,
+    "ast_hash": "5e570ab823003970e6ef10ad64e14916",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/AngularDimensionEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d106fb853a4a1208410d7c56c3254c55",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/ArcEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "765aeab95491787ec464b60d94f8b0d5",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/BezierSplineEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1ec0aa2595af09ec73807c19fb3c355e",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/BezierSplineSplitServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9e62e14c6ad0e7ff4e151f2e45813fab",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/BlockDefinitionTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b2f7967b193e7f1434c2b3b159b151b4",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/BoundaryFillServiceTests.cs": {
+    "mtime": 1781991001.0,
+    "ast_hash": "e12882b5f32c47f14ccccb17760a7dfc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/BoundarySegmentCollectorTests.cs": {
+    "mtime": 1781990975.0,
+    "ast_hash": "1f8b3e807711151afeec93cc788e9c3c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadBreakServiceTests.cs": {
+    "mtime": 1781958799.0,
+    "ast_hash": "ace669ed1e583ec59300d9f3d2ad4607",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadCurveSplitServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "894cf3dc1c1a8ad73f5069ecb14c4ba4",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadDocumentBlockTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "84b6f61f984e32e1ab75627b7b4a64dc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadDocumentDimensionStyleTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "57f124d31f421b1ae7359c431ad88054",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadDocumentLineFormatTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6d9151ef9a05b0973fe8dc7f31c26650",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadDocumentLockedLayerTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1a28e84a4e5c66e29d007d5203e7eb96",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadDocumentSpatialQueryTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5a2c205fb814b748b027c3c0bb41584f",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadDocumentTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "00d5efcd44101ad03f6ce6c081ecd67d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadEntityIntersectionDetailedTests.cs": {
+    "mtime": 1781949750.0,
+    "ast_hash": "821048f1e29b5419bf00bcc77989f07c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadExtendServiceTests.cs": {
+    "mtime": 1781960116.0,
+    "ast_hash": "24ea8a2e9ee5ebd4b632ddffcb68d2ec",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CadTrimServiceTests.cs": {
+    "mtime": 1781958070.0,
+    "ast_hash": "eb9872a5e57006ba1c9d63d57af2c369",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CircleEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9f71689b64048e88d1f333cfca19635a",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CommandHistoryTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f063ebd0d8a513a0ab95103a95921cb8",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CompositeCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e9c905b6965e4b794c40fbf521a218d5",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/CopyEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c62db9554aeeed5ec20731b91df7a177",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/DeleteEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bb1951845c47a402ad73cdd7519b2423",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/DiameterDimensionEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3ccd54b53ba10cdec3e5cc9ad8f908a0",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/DimensionEdgeCaseTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "67bdcb486e2b3aa9b052e9659ff9924b",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/DimensionGeometryBuilderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3a643526323041131690a308cd297467",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/DimensionStyleCollectionTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b6a44e750c3ba32b8db2d08e61f5acff",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/DimensionStyleTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "be96e42968976b469a5b4a797dd71396",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/DivideEntityServiceTests.cs": {
+    "mtime": 1780235148.0,
+    "ast_hash": "0f1e19254323db9a2ac78845147ea9fe",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/DoorEntityTests.cs": {
+    "mtime": 1782049098.0,
+    "ast_hash": "267950d02148f5645949b21cf9e86139",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/EllipseEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "47549a21f55dd53374861a3c946133ae",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/EllipticalArcEditingPrecisionTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e0b29b76195f66dd4393bab731b5130f",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/EllipticalArcEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ed0003d9ede9bbad233596a07a462d61",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/EntityCollectionTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1e3a6b2e5ebc4597036a0e8c4d5d690c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/ImageReferenceEntityTests.cs": {
+    "mtime": 1779998918.0,
+    "ast_hash": "89cff88c1d63e06f581ab7efe426d2a8",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/LayerCollectionTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "eea8ac5b2fd722042f5cba4e9303ffe7",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/LayerLineFormatTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d1c92853595447ea2685e68df53450dc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/LineEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3adfee3a7b890967ca5e52ff06facc2f",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/LineFormatCollectionTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "095cdabf885c76f5ede24f8fac402c7c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/LineFormatTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8e48008d2a10ad6275fba4e1f0ff76ac",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/LineModifyServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4f339f11abc7b7d9281f40283d8b04ac",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/LineStyleDashPatternTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0921e6f247755246a2cff47903c075fe",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/LinearDimensionEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0d06e6f7577831cee4ae89d1282969b1",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/MeasurementServiceTests.cs": {
+    "mtime": 1779957837.0,
+    "ast_hash": "b6f947efaf75b9f87547ca5169e74487",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/MirrorEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d738a40cd09861589ca19ca5dea7d3d6",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/ModifyEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0e9a42d497158e7b388d5a48a7cdd796",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/MoveEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d9957313fff6e77d61efcc7abe6a9e47",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/MultilineTextEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9fd45c00eaccd50d6c1bdc95fac7bcff",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/OpenCad2D.Core.Tests.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "76e4a4b3df9224238f16df40a75a87a5",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/PointEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3e8d43221020c9fdae52c92adc184e0c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/PolylineEntityTests.cs": {
+    "mtime": 1779957771.0,
+    "ast_hash": "7f42ac3efd425fcf1225ff60fdb69884",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/RadiusDimensionEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3b761f54e01423e7ae4981b56242e961",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/ReplaceEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a2b3d8c3aff5dad1c9a80e9e1907370d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/RotateEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3cd455987ee17485e280d5a250fdb5a7",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/ScaleEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "393ee4331c0306c95641fa9d18d501e5",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/SpatialIndexTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "87b2cb5b9592f730745ed39b6ad36c31",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/StairEntityTests.cs": {
+    "mtime": 1781961246.0,
+    "ast_hash": "562fbc77d6ea5f3574d60ba4c485a0ca",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/TextEntityTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e1e4bf011c57fb0a0bc60ea0877b57e3",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/TextFormatCollectionTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c050f4bc69e91ac0a4c6128b8992b1d9",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/TextFormatTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f293de670ca340a9214720da4f4551ba",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/TransformEntitiesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f0c8d87c768d7a6fcd4ad50096bb5bf4",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/UpdateBlockDefinitionsCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "11eca15fa39659dd2811e72e9ebe84a7",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/UpdateDimensionStylesCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1010a927d5c5406e5a115bfcf49429e0",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/UpdateLineFormatsCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "12431801e9929bf2bb247a1b6d7d6c18",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/UpdateTextFormatsCommandTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d80888c88b0bd4a4b51e1978de688dd1",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Core.Tests/WindowEntityTests.cs": {
+    "mtime": 1782051140.0,
+    "ast_hash": "7a0b43012ccc633ae531d3cb652ec0ec",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/AngularDimensionExportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5f412d803edcaa11d12f5cea1ba1e26a",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/BezierSplineExportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ee0f6771c6f54014c3ef788aa5221af0",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DimensionExportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "285f8d5020df079318da4a36f751868c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfDocumentWriterTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "13b6dfa89a11973d4afb1195bfdee7cd",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfExportCompatibilityTests.cs": {
+    "mtime": 1779975547.0,
+    "ast_hash": "f961294b3d342111e523d9ebfd09a533",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfExporterTests.cs": {
+    "mtime": 1782049232.0,
+    "ast_hash": "0befbd19ea0750ba92bbbfd92895cd56",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfDocumentImporterArcTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5ce8cc7e0ee715c92a6f3232f43daf0b",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfDocumentImporterCirclePointTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bf6eed69eae23251cd99bd7ae0013b51",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfDocumentImporterEllipseTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "44e31e0c0674d6fa38ea8875100ae918",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfDocumentImporterLayerTableTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2d63c522cd5d6c154b5ea86e8ed84d9f",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfDocumentImporterLineTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "94709f52a1804051a5e47ca874b0b588",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfDocumentImporterPolylineTests.cs": {
+    "mtime": 1779956235.0,
+    "ast_hash": "d324378366bead049241c6bc88f22efe",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfDocumentImporterSplineTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3f2e4eae1ae52489c174b65f710ec11b",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfDocumentImporterTextTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ee177b26a6ba7fcaa9020138820df390",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfImportResultTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "42939988600d559124e2b5a1a409bd93",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfImportStatisticsTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "147bf56203cd9d27e00a730152341f58",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfReaderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a9e761fa1ae453c886287da2a1b88bdc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfRoundTripTests.cs": {
+    "mtime": 1779975547.0,
+    "ast_hash": "ca7a2afc8e86ee72d4df1f98285a128e",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/DxfImport/DxfSectionReaderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2ca3c81f4ba47a65bdc65ef7bdb62087",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/EndToEndExportWorkflowTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a7d013f8c995b5cf8e61560afd54b130",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/MultilineTextExportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1dbc9bd55baa4407476e5ea8e0c2e9b7",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/OpenCad2D.Export.Tests.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e4332ce996418ed28daf18d792f4333d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/Pdf/DimensionPdfExporterTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "08d9f0b15ba21c3b1b7d4f95b7916f3c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/Pdf/PdfExporterTests.cs": {
+    "mtime": 1781961086.0,
+    "ast_hash": "c3c6b8e5ce4aa262ea42d62b1a615939",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/RadialDimensionExportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "aa74830813d52c8dddb5f17913cdd9d7",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/SvgExporterTests.cs": {
+    "mtime": 1782049232.0,
+    "ast_hash": "5bad9f906e8e9dc2a6edca640411f17a",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Export.Tests/TextExportTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6d5112e21908e5b5ffb1c110eba1cc0b",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/Arc2DTests.cs": {
+    "mtime": 1781956228.0,
+    "ast_hash": "27101a206a11b0dc6a96723f39e2ad40",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/ArcCreationServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6a3b516ca722761a3aa0091603e7d7bd",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/Assertions/GeometryAssert.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "88e0dfa8181661b26649d01fd29ebf11",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/BoundingBox2DTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "cc48ce1cfe2b27f14cd25a9e5de74aac",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/Circle2DTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c31dd45e99c6f80068ed21f196a9ce41",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/CircleIntersectionServiceTests.cs": {
+    "mtime": 1781949762.0,
+    "ast_hash": "4067e70f6e9bd01b18b60e5303964389",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/CoordinateSystem2DTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f2f91674634a4b420614a756ec0f72f5",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/DistanceServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "74ca91a4189fefa7d0ad28c3471d1a9e",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/GeometricEdgeCaseTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bee6bd286dd99b1ee225d3ae2f635f8d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/GeometryToleranceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ed38ad3949ed5d9541cca48fc8aaff9c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/IntersectionServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ad9c1bd4093d361619f186e65b77d3a9",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/LineSegment2DTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f83018a9649d15c8af51169a50a5a956",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/Matrix2DMirrorTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f31a9e8353be56725c1e64262b73324e",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/Matrix2DTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7825366b9af0102abf1355167b5f0c95",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/OpenCad2D.Geometry.Tests.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b393fae4ed19cd8afb412f398923dd20",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/Point2DTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c0b7c3b4db7857912c672739e0e34860",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/Polyline2DTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4631b6059f91fba417c8cb61f817ff21",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/PolylineIntersectionServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5d50d2faccfb8199a6e38dfeb964b850",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/RectangleIntersectionServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "63712bf7d9a7ce5baf2e8c4a4634d657",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Geometry.Tests/Vector2DTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f52a70c8c7ece23f94277ebb0862a189",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/EntitySnapProviderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "154d009adecb6a84ae6eda24f357cfa0",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/GridSettingsTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5c2673dba16c163a4a616206ae4cde5e",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/GridSnapProviderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "541bc6d57a96b29fc2501cf828a7ef64",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/HitTestServiceTests.cs": {
+    "mtime": 1781964482.0,
+    "ast_hash": "0616e6f3e5194ded391700d222d2f472",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/ImageReferenceSnapTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "928af82dbe3294fd34a8c019bd5d47ff",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/IntersectionSnapProviderTests.cs": {
+    "mtime": 1781964482.0,
+    "ast_hash": "0cd7e75ac019cc4346d0f763c779dac4",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/OpenCad2D.Interaction.Tests.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e7448e55f5241653cc188620d449f078",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/PointSnapProviderTests.cs": {
+    "mtime": 1781961258.0,
+    "ast_hash": "ab0fb47aef02d4993249fdcf4e24c68f",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/SelectionLockedLayerTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "47a6541875126ddbd421f8698a5b55e4",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/SelectionServiceTests.cs": {
+    "mtime": 1779957771.0,
+    "ast_hash": "f58468cabe4d266010cd38395e5b4547",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/SelectionSetOrderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3b406bdff8bedcc2290b58cdae5ac04b",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/SelectionSetTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "64dbd03faeb70407c204a58f8105373d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/SmartPointStoreTests.cs": {
+    "mtime": 1780228595.0,
+    "ast_hash": "1270f9ef3d1d84f6b6ae1a234bfe8507",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/SnapLockedLayerTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "cd6493951c3a773ca012281501e0df07",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/SnapServiceTests.cs": {
+    "mtime": 1779957771.0,
+    "ast_hash": "57179dcc5a7641453bc9f19fc4b4f314",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/TangentSnapProviderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "422209c628df778ff8ffb6d3353fa314",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Interaction.Tests/TrackingEngineTests.cs": {
+    "mtime": 1780232253.0,
+    "ast_hash": "7b22fade75ff732ae7fb295b453d4096",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/BezierSplineRoundTripTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "400743f196d131fd3b1231b0a6166cce",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/BlockRoundTripTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5a28aab1e8add98cbf6394f262dc2ccb",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/DimensionRoundTripTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "77639a5178ce0ad862b679e38d5683dc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/DoorEntityRoundTripTests.cs": {
+    "mtime": 1782049112.0,
+    "ast_hash": "1346e79a5a38c79cd37ea30952038cde",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/EllipticalArcRoundTripTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a070bea2e83af88e7b76531c57e7e11c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/EndToEndWorkflowTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3ff1f3baa8015eaea0f5a6335d8358d1",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/ImageReferenceRoundTripTests.cs": {
+    "mtime": 1779998918.0,
+    "ast_hash": "8fc6bdede4b5ef4ba3ece97863e45b42",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/JsonDocumentSerializerTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b23efe461be6cf7eda468aed443e2db6",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/MultilineTextRoundTripTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7ed28108a6903719f2573d615e77113c",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/OpenCad2D.Persistence.Tests.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "d6d985ef80916b5c61da550878bb60f7",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/RoundTripTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "29c2b5aa5127e05008e5abc3621f11e1",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/StairEntityRoundTripTests.cs": {
+    "mtime": 1781961076.0,
+    "ast_hash": "b5cc66299a390afd479ed489158b7fb2",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/TextRoundTripTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0e182bfcafb6b3e636445f63305df4e4",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Persistence.Tests/WindowEntityRoundTripTests.cs": {
+    "mtime": 1782059051.0,
+    "ast_hash": "3fd86bfdce1c75b3c3ef9d4f37095396",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/AlignToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3e2342ea81edfad1d12d0cc0c7e43159",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/AngleConstraintServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "367f8766c9084eed24537cf5be9a016a",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ArcThreePointsToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a9326935810d24aef64f7c33fa80e921",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ArcToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f2aa9b61f3f40fc2cb065fa6c50aa768",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/BoundaryFillToolTests.cs": {
+    "mtime": 1781988652.0,
+    "ast_hash": "2e91c6106bfa711ad8d45e8fd2db12c2",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/BreakAtPointToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4ef89b2ee5e5a86659911eaed9a25c3e",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/BreakBetweenPointsToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "74e83b3f08d47fd4a1a64f860e2d6356",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/CadActionControllerTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b1929fbe6c96a00ceaa7fdcb99eadf9b",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/CadWorkspaceEscapeTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "78a7ca9748a243b30143520fa4b82d22",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/CadWorkspaceLockedLayerTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0e36884c347027480d7f2eca85a0efee",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/CadWorkspaceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "96b9a276035d5a558d9c2d7168cc22b6",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ChamferToolTests.cs": {
+    "mtime": 1779974720.0,
+    "ast_hash": "f1db530237ab639ef87329547e893bc6",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/CircleToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "45e8e4d3c2d66c6fdb0e35cdcc329442",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/CommandAliasRegistryTests.cs": {
+    "mtime": 1782051024.0,
+    "ast_hash": "8016864f977f94ad901b10a426e52379",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/CommandInputParserTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8e4d34885e5fed971dfb4afe70e0aa32",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/CopyToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "80cdb628405dfd5631bd218da8e7e093",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/DeleteToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8791e87913ef8e2ab386f0a36502156f",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/DimensionToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "984cba4db1f9d638f5bbbcaa2f0db4ff",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/DivideToolTests.cs": {
+    "mtime": 1780235148.0,
+    "ast_hash": "28be1e00dcb4465f2c6ad3c15b0593d2",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/DoorToolTests.cs": {
+    "mtime": 1782061261.0,
+    "ast_hash": "9016aa92023d2be51e4909b25511fa3a",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/EllipseToolTests.cs": {
+    "mtime": 1780390861.623524,
+    "ast_hash": "aaaa9f35892397c1a89aa6269d5c2217",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ExplodeJoinToolTests.cs": {
+    "mtime": 1779961522.0,
+    "ast_hash": "dca372f9a59a308d33f0ac369d27aec9",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ExtendToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0bca898dfde81dd37445784681055708",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/FilletToolTests.cs": {
+    "mtime": 1779974720.0,
+    "ast_hash": "80071776c69eeffe4ae43fdfa993ff86",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/GripEditToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "3c68c88fe7c9c3571a18817c7b3875e0",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/GripProviderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "921a023c09a09fe5b3bd1175af162999",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/LineToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fbf0052a0c34c5513bd9d8212eeb824f",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/MeasureAngleToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "733b4c201a15066d4c7f77a13d8f32e9",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/MeasureAreaToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "fec9cd5c80f3895f4555b42c5aa327aa",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/MeasureDistanceToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c7d0ac932fc64858acf6dc57d5465a62",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/MeasureEntityToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1a318b40f3a9a41d79a0176e18a605d3",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/MirrorToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ffcf20d830ab62e1424aa2a77b821beb",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ModifyToolLayerRuleTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1c86e3749ae49611aa6fea7328f49d72",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ModifyToolUxConsistencyTests.cs": {
+    "mtime": 1780217268.0,
+    "ast_hash": "b981c5ad68b4199968e2815e1efcd443",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/MoveToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6cb2d602ff0e6f541b30c61db94786bc",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/MultilineTextToolTests.cs": {
+    "mtime": 1780175173.0109477,
+    "ast_hash": "52d7367ddf9290a273f5c9517c313788",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/NorthSymbolToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5ced56bcf52e3025359cf754053f1f83",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/OffsetToolTests.cs": {
+    "mtime": 1779968768.0,
+    "ast_hash": "8e1c15eed5bc561260400b6110621b69",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/OpenCad2D.Tools.Tests.csproj": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a00e77eafc017be8d471d259a189e278",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/PointGripProviderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "5642d44ba2d7eeda415d56ccf10b4cb7",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/PointToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "c6b35d16a23b491d605dfa42dc8ebad6",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/PolarTrackingToolIntegrationTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ef7024463c13689d55d2633e31f8f872",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/PolygonToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b31d47e1533003afde53eae7bf5763f3",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/PolylineGripProviderVertexEditingTests.cs": {
+    "mtime": 1779955076.0,
+    "ast_hash": "e1bb213f946aa9b0978762016f09eafa",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/PolylineToolTests.cs": {
+    "mtime": 1779955076.0,
+    "ast_hash": "4eafe9a2e5f02c40fb23b90b33c41634",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/RectangleBySidesToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b4956031f996954781acd6f2bafabbbf",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/RectangleToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "1553014a9751ffcd3f8b384c186b5be1",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/RotateToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "863e0cdfb48327d63e5f4d27874e51c2",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ScaleBarToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7778dc89a91b0cfcfa17b16b26b7cc81",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ScaleToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2a36bf12867c29f83295e7b3428f753d",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/SelectionToolSnapModeTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "de998459fddc64565ef5afea6bc46e1e",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/SelectionToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b1daed5a7171850afcfe2f9421af50ba",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/SplineToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "9294eddb5bd24a461da8ba42d024d070",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/StairToolTests.cs": {
+    "mtime": 1781961096.0,
+    "ast_hash": "89b05373e9a5cb01e1dc521d2a228dbe",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/TextGripProviderTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "ffb7851a3c0588ce6ad440d780ca0975",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/TextToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "7ad5dd5d94b9dac67fa8f32cc4a1d2f3",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ToolControllerIntegrationTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "f45e1145ece7818d60e8fb1c4fc5e424",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ToolControllerTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "30efeb91aa348ff62a3e205435479e22",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ToolInputConstraintServiceTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "8266f4393c064f6bf37c5b4348389492",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ToolPreviewEntityProviderTests.cs": {
+    "mtime": 1779966465.0,
+    "ast_hash": "0eedf185d7ae535ee748dcd798771cbd",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ToolRegistryTests.cs": {
+    "mtime": 1782051024.0,
+    "ast_hash": "bdee6c48f2afca3d042e18a8f66d0989",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/TrimToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "0bdbe16b8b1257e451070b282eb95805",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/TwoPointToolBaseTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "76a84af866cfec6b4cda841f87853e27",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/WindowToolTests.cs": {
+    "mtime": 1782061261.0,
+    "ast_hash": "a99438cd7682d6882c1c51fae4d6e529",
+    "semantic_hash": ""
+  },
+  "tests/OpenCad2D.Tools.Tests/ZoomWindowToolTests.cs": {
+    "mtime": 1779923604.0,
+    "ast_hash": "422ffcbe2d4b244b881a137393ed3a7f",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1782062876.0,
+    "ast_hash": "e2af6a3ec22ee9ec904ef2616677c183",
+    "semantic_hash": ""
+  },
+  "docs/Checklist_collaudo_completo.md": {
+    "mtime": 1779923604.0,
+    "ast_hash": "aee60ee852725dd933c72b9522ce7134",
+    "semantic_hash": ""
+  },
+  "docs/LICENSES/Tabler-Icons-MIT.txt": {
+    "mtime": 1780400916.0,
+    "ast_hash": "773c12d38d1fb8e4b902b248c05ec06f",
+    "semantic_hash": ""
+  },
+  "docs/README_DOCS_UPDATE.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "d35beb0592537a44c238b6a288d378ef",
+    "semantic_hash": ""
+  },
+  "docs/THIRD-PARTY-NOTICES.md": {
+    "mtime": 1779923604.0,
+    "ast_hash": "6c25194cdb328a63fb80e981419408c4",
+    "semantic_hash": ""
+  },
+  "docs/ai-handoff.md": {
+    "mtime": 1782063090.0,
+    "ast_hash": "6e376673de46203dd33375a1586258f3",
+    "semantic_hash": ""
+  },
+  "docs/application-settings.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "6298763a5fbe30b1134d230254c5c51e",
+    "semantic_hash": ""
+  },
+  "docs/architecture.md": {
+    "mtime": 1781960924.0,
+    "ast_hash": "f59d4929c64725ad3dc0ff2ea85d4cb7",
+    "semantic_hash": ""
+  },
+  "docs/assets/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "c6e18300a3a521fdf7aca2c878d119f9",
+    "semantic_hash": ""
+  },
+  "docs/assets/gifs/draw-tools/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "28eacb6c22e9af0ca265fc33f5cdd4d5",
+    "semantic_hash": ""
+  },
+  "docs/assets/gifs/edit-tools/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "c207518a5b2bd277c5b952e24c83f900",
+    "semantic_hash": ""
+  },
+  "docs/assets/gifs/hud/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "fab111baff5f35e30feb7c41823f06b0",
+    "semantic_hash": ""
+  },
+  "docs/assets/gifs/images/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "f7cb22fb173e5a0b08bdba8b76fe5ae2",
+    "semantic_hash": ""
+  },
+  "docs/assets/gifs/library/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "f120e33a9704be125e5dc633997ef605",
+    "semantic_hash": ""
+  },
+  "docs/assets/gifs/navigation/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "3b30dd3db0c20fc399ab1849ea329e2d",
+    "semantic_hash": ""
+  },
+  "docs/assets/gifs/snaps/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "6585c4bf4774cdf4bc5320764bae8e9a",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/dimensions/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "2bafc86b767fd97e8b23f4a2ae8d046a",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/export/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "2fd37c1f5f455b73620bb74593a8c709",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/hud/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "fab111baff5f35e30feb7c41823f06b0",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/images/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "f7cb22fb173e5a0b08bdba8b76fe5ae2",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/interface/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "217603bbc3fae5ed642389a3dcffdf3c",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/layers/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "99b1f8c1747ed414c3e0aaeeea92daf3",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/library/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "f120e33a9704be125e5dc633997ef605",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/snaps/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "6585c4bf4774cdf4bc5320764bae8e9a",
+    "semantic_hash": ""
+  },
+  "docs/assets/images/tools/README.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "0c53ff61a1be474a5a662d6961c56ee2",
+    "semantic_hash": ""
+  },
+  "docs/branding.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "47df89059914129aaf9f349b1a81e2ae",
+    "semantic_hash": ""
+  },
+  "docs/command-input.md": {
+    "mtime": 1781961528.0,
+    "ast_hash": "bc59bb459b7fe46d9a7f3d463027347e",
+    "semantic_hash": ""
+  },
+  "docs/commands.md": {
+    "mtime": 1781961224.0,
+    "ast_hash": "f5c6275a7c6fe1c997c76133c2421c12",
+    "semantic_hash": ""
+  },
+  "docs/curve-editing.md": {
+    "mtime": 1781960924.0,
+    "ast_hash": "98a7d5fe5344c4b6b78c7c60b4d24df5",
+    "semantic_hash": ""
+  },
+  "docs/developer/documentation-cleanup-plan.md": {
+    "mtime": 1780496064.0,
+    "ast_hash": "c8ce9ccc4df5ec18e203a5e84289437c",
+    "semantic_hash": ""
+  },
+  "docs/developer/documentation-guidelines.md": {
+    "mtime": 1780496064.0,
+    "ast_hash": "06453d9b6e2920a2853a920d0b1f0933",
+    "semantic_hash": ""
+  },
+  "docs/developer/documentation-review.md": {
+    "mtime": 1780496064.0,
+    "ast_hash": "86e7ced657e7696b0f7349888eeed983",
+    "semantic_hash": ""
+  },
+  "docs/developer/existing-technical-docs.md": {
+    "mtime": 1780498128.0,
+    "ast_hash": "5c1f79ece45e49597b757f77e1f9a9b8",
+    "semantic_hash": ""
+  },
+  "docs/developer/image-capture-guidelines.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "321fdc8ce9c850ed3f1fcc448e8b4544",
+    "semantic_hash": ""
+  },
+  "docs/developer/release-and-roadmap-map.md": {
+    "mtime": 1782063017.0,
+    "ast_hash": "760c26ca27c2daed667dc3e7505cb59e",
+    "semantic_hash": ""
+  },
+  "docs/developer/technical-documentation-map.md": {
+    "mtime": 1782062985.0,
+    "ast_hash": "e6def902470cb985c9fa32e59ef62809",
+    "semantic_hash": ""
+  },
+  "docs/developer/visual-documentation-plan.md": {
+    "mtime": 1780496204.0,
+    "ast_hash": "f1205b682b22e579974b46d8ade6b08c",
+    "semantic_hash": ""
+  },
+  "docs/development-options.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "1580a45002f371c1253312663279a33d",
+    "semantic_hash": ""
+  },
+  "docs/draw-order.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "d9225479fbbf1fc4be32be250ad2c608",
+    "semantic_hash": ""
+  },
+  "docs/dxf-compatibility.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "0e5a446ed0976447458b05918bc94277",
+    "semantic_hash": ""
+  },
+  "docs/dxf-export.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "2aee487bf404a571c09baeaaed290f4f",
+    "semantic_hash": ""
+  },
+  "docs/dxf-import.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "26af5d095fd518db79284e6bea6672d4",
+    "semantic_hash": ""
+  },
+  "docs/export.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "0d1f6d4ac5fb3a79688ab767edfc25cf",
+    "semantic_hash": ""
+  },
+  "docs/geometry-intersections.md": {
+    "mtime": 1781960924.0,
+    "ast_hash": "235ebe176bd203e4f4bd0ee494791e56",
+    "semantic_hash": ""
+  },
+  "docs/grip-editing.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "07055d99b7e54d5527e2158b728b3047",
+    "semantic_hash": ""
+  },
+  "docs/index.md": {
+    "mtime": 1782062985.0,
+    "ast_hash": "adbe04e54e4fe15ea0a35156767e9e2b",
+    "semantic_hash": ""
+  },
+  "docs/known-limitations.md": {
+    "mtime": 1782062895.0,
+    "ast_hash": "60b6ea7688b8dd4441ae26e5a25af440",
+    "semantic_hash": ""
+  },
+  "docs/layer-appearance.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "695aa7ba18558dbabba0da4773782c65",
+    "semantic_hash": ""
+  },
+  "docs/legal.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "63c8da1938489a8bd953b2d54977b3a1",
+    "semantic_hash": ""
+  },
+  "docs/library-browser.md": {
+    "mtime": 1782052738.0,
+    "ast_hash": "48e2b0bb11f2fc9f63732b51851df940",
+    "semantic_hash": ""
+  },
+  "docs/line-formats.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "58f8a10a670c775f00d992ec65825235",
+    "semantic_hash": ""
+  },
+  "docs/measure-tools.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "8287f886320291418f745141739b899a",
+    "semantic_hash": ""
+  },
+  "docs/modify-tools.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "2dfd1877d13bf164c98683ef0a82d0f9",
+    "semantic_hash": ""
+  },
+  "docs/obsolete-documents.md": {
+    "mtime": 1779923604.0,
+    "ast_hash": "862d2c5137cbd3e8d5123246c4a87faa",
+    "semantic_hash": ""
+  },
+  "docs/pdf-export.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "bbdeca779f495467261067898bac6ad8",
+    "semantic_hash": ""
+  },
+  "docs/persistence.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "1aa49f5ab5e04ec149b311af26da4e7d",
+    "semantic_hash": ""
+  },
+  "docs/polar-tracking.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "bc80a06f53089c55ec3bc4d9dc68ff90",
+    "semantic_hash": ""
+  },
+  "docs/release-checklist-v0.8.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "3c074f6f26f8bdd39900af127c7ad442",
+    "semantic_hash": ""
+  },
+  "docs/release-checklist-v0.9.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "315d3ab0a009e6a5dbae03d1ac4ec386",
+    "semantic_hash": ""
+  },
+  "docs/release-publish-v0.8.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "594fdd343ae694ec90d9bfb287a29f0e",
+    "semantic_hash": ""
+  },
+  "docs/release-publish-v0.9.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "2768fe6d975e1634a8d5ebff315d3674",
+    "semantic_hash": ""
+  },
+  "docs/release-v0.8-final.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "43c465a66bb2f50858c6cf2d4b0560ec",
+    "semantic_hash": ""
+  },
+  "docs/release-v0.8.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "a4fd0e793b4506b17ed833def9b7ecba",
+    "semantic_hash": ""
+  },
+  "docs/release-v0.9.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "77d0a5ec7c203b1e791f057a7514a1cb",
+    "semantic_hash": ""
+  },
+  "docs/roadmap-v0.8.100.md": {
+    "mtime": 1782062831.0,
+    "ast_hash": "82c2e58444324abf92cb579ad43fe8f1",
+    "semantic_hash": ""
+  },
+  "docs/roadmap.md": {
+    "mtime": 1782062809.0,
+    "ast_hash": "a8f7b25c3778d58f62e8df56e5957c6e",
+    "semantic_hash": ""
+  },
+  "docs/snapping.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "a82d618b71908407418e9d919d3b2ec6",
+    "semantic_hash": ""
+  },
+  "docs/specs/shared-anchor-system.md": {
+    "mtime": 1782052738.0,
+    "ast_hash": "9df47038e9e20c81e918bb2a85c8ed6d",
+    "semantic_hash": ""
+  },
+  "docs/specs/shared-leader-arrow-system.md": {
+    "mtime": 1782046038.0,
+    "ast_hash": "fb494dd322e887ed67f8f60f29cd45ba",
+    "semantic_hash": ""
+  },
+  "docs/specs/shared-preview-and-commit-workflow.md": {
+    "mtime": 1782046038.0,
+    "ast_hash": "0385b8feadfcd401a0db4ff390516400",
+    "semantic_hash": ""
+  },
+  "docs/specs/shared-wall-mask-openings.md": {
+    "mtime": 1782049572.0,
+    "ast_hash": "7d82c8f71ac49a53fb6e1441f7b1941d",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.100-import-drawing.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "8dde54d0a905d61dfeb93f1c4a75a3f1",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.110-blocks.md": {
+    "mtime": 1782052738.0,
+    "ast_hash": "980ebcb393ac244658469c6a41eb6470",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.120-architectural-symbols.md": {
+    "mtime": 1782044182.0,
+    "ast_hash": "b9239745a0266a0ab433ecd19ea44f58",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.121-dynamic-command-hud.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "970fb4e0f30ae1e34c493753fcebd4be",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.122-library-browser.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "ff0fd37ba7647a2ba8f6572d76682ef4",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.130-stairs.md": {
+    "mtime": 1781961224.0,
+    "ast_hash": "4a3937a4e83906ee2063e6aa1214e5f2",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.140-hatch.md": {
+    "mtime": 1782044182.0,
+    "ast_hash": "30e5fd803e957e5640bbcefa5b8e06a1",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.145-boundary-fill-v2.md": {
+    "mtime": 1781991305.0,
+    "ast_hash": "af0f6a3ee5616a3f5b1f392a1e1ede7f",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.160-documentation-reconciliation.md": {
+    "mtime": 1782044090.0,
+    "ast_hash": "a348f03aead4802d1d940ab55bf01522",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.161-library-content-pack.md": {
+    "mtime": 1782044832.0,
+    "ast_hash": "b5809b110473e3c79f12d302d32e05c2",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.164-planning-specification-pass.md": {
+    "mtime": 1782046038.0,
+    "ast_hash": "08f0a45fb3d1eda3ae3aeca46a6579de",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.170-blocks-v2.md": {
+    "mtime": 1782052738.0,
+    "ast_hash": "00da54784b51be684e5aad9a0010de1e",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180-parametric-doors-windows.md": {
+    "mtime": 1782062917.0,
+    "ast_hash": "9316f5c8b1a8af9ef5e7d1ada10924fb",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180A-shared-anchor-foundation.md": {
+    "mtime": 1782049572.0,
+    "ast_hash": "2ac729b39ce16e5694acbb963c76eabe",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180B-hud-anchor-selector-foundation.md": {
+    "mtime": 1782049572.0,
+    "ast_hash": "164ecb284f7b99fe4c4485ca1148a31f",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180C-minimal-door-entity.md": {
+    "mtime": 1782049572.0,
+    "ast_hash": "632871f4a3e472a1a21c8d4be2741110",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180D-door-wall-mask-foundation.md": {
+    "mtime": 1782049318.0,
+    "ast_hash": "b783c2ae6bc27707091f8c3c649e1f48",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180E-minimal-window-entity.md": {
+    "mtime": 1782051206.0,
+    "ast_hash": "95ff8bdd0d9a67ce1d91a8a16738f8df",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180F-door-window-property-editing-defaults.md": {
+    "mtime": 1782059736.0,
+    "ast_hash": "10c1c6b4d6accf87c312b7fdc18ab092",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180G-door-window-hud-status-closeout.md": {
+    "mtime": 1782061298.0,
+    "ast_hash": "a18d74549873dc0a11c0bb11264cbabb",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.180H-door-window-phase-closeout.md": {
+    "mtime": 1782062781.0,
+    "ast_hash": "d6e758603611d42569e2d48cbf314ce9",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.190-array-tools.md": {
+    "mtime": 1782046038.0,
+    "ast_hash": "e896fe3c147d1105fd7e7e22e9fe683e",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.200-hatch-patterns.md": {
+    "mtime": 1782046038.0,
+    "ast_hash": "be26725155a281c90a995050b3caec29",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.210-annotation-markers.md": {
+    "mtime": 1782046038.0,
+    "ast_hash": "3332b76d42231af5b2d4b603578c3fea",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.220-ui-customization.md": {
+    "mtime": 1782046038.0,
+    "ast_hash": "8d935195c440994ab80f68c097d3a067",
+    "semantic_hash": ""
+  },
+  "docs/specs/v0.8.230-icon-svg-workflow.md": {
+    "mtime": 1782046038.0,
+    "ast_hash": "e3f48d70bed2a256eeba5c2434aeab3e",
+    "semantic_hash": ""
+  },
+  "docs/stabilization-v0.9-plan.md": {
+    "mtime": 1781962939.0,
+    "ast_hash": "1c70c95e7ed29551f4ba6fcc93557fb9",
+    "semantic_hash": ""
+  },
+  "docs/svg-export.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "a479a646c19840854f6e3e50da991f66",
+    "semantic_hash": ""
+  },
+  "docs/testing/advanced-snapping-tracking-manual-verification-2026-05-31.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "23d9822a0339bf914a0f77dad4f6aca0",
+    "semantic_hash": ""
+  },
+  "docs/testing/boundary-fill-v2-manual-checklist.md": {
+    "mtime": 1781991305.0,
+    "ast_hash": "b46934e481feeb147d1f7c963a5e1135",
+    "semantic_hash": ""
+  },
+  "docs/testing/curve-editing-evening-run-2026-05-21.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "9fc1062bc205b0d1610b4085fba386e3",
+    "semantic_hash": ""
+  },
+  "docs/testing/curve-editing-regression-v0.9.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "fa3bf9152a32a220aa78a6a7b0e8b0a0",
+    "semantic_hash": ""
+  },
+  "docs/testing/divide-command-manual-verification-2026-05-31.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "ca2870c3b0497a2052a3a30b88be77b1",
+    "semantic_hash": ""
+  },
+  "docs/testing/dynamic-command-hud-manual-verification-2026-05-31.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "b45ba029d15d24298e853a0f89fb8566",
+    "semantic_hash": ""
+  },
+  "docs/testing/dynamic-command-hud-modify-tools-checklist.md": {
+    "mtime": 1781961528.0,
+    "ast_hash": "cf512de778bcf9d583d323ee0e346920",
+    "semantic_hash": ""
+  },
+  "docs/testing/dynamic-command-hud-stabilization-checklist.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "89b500d34b810272431f61d5299e7764",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.162-compatibility-smoke-checklist.md": {
+    "mtime": 1782062938.0,
+    "ast_hash": "ae553d8bed4eb73fd39566fc1c8fee7f",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.162-compatibility-smoke-report-template.md": {
+    "mtime": 1782062938.0,
+    "ast_hash": "e9cd61c68140f66082ef46436ec74fea",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.170A-block-manager-inventory-diagnostics-checklist.md": {
+    "mtime": 1782039482.0,
+    "ast_hash": "65c0795fd94cf5bbcc10ed7f21f7567b",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.170B-block-manager-duplicate-purge-checklist.md": {
+    "mtime": 1782048112.0,
+    "ast_hash": "ab2141f2d8a0729f0c13d631bbacb11d",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.170C-block-edit-session-hardening-checklist.md": {
+    "mtime": 1782041718.0,
+    "ast_hash": "6d8c09040281947d9c26d12adb6a7f98",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.170D-library-block-conflict-policy-checklist.md": {
+    "mtime": 1782049814.0,
+    "ast_hash": "1a462a6525a9befdde66015cec9cf15d",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.170E-block-manager-rename-closeout-checklist.md": {
+    "mtime": 1782050362.0,
+    "ast_hash": "c327b88bf1acf08e0fc8e96c46ec1f15",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.180A-shared-anchor-foundation-checklist.md": {
+    "mtime": 1782052738.0,
+    "ast_hash": "03af1042b5afa95afd417ccaf1411cc2",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.180B-hud-anchor-selector-foundation-checklist.md": {
+    "mtime": 1782052738.0,
+    "ast_hash": "8b9adfb22c94882a39c74449fe1c75d0",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.180C-minimal-door-entity-checklist.md": {
+    "mtime": 1782049596.0,
+    "ast_hash": "f6139de6abc93e9e4a1543d8906bff0e",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.180D-door-wall-mask-foundation-checklist.md": {
+    "mtime": 1782049318.0,
+    "ast_hash": "26fa4d4ed14535e1a269dd2cea9866b0",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.180E-minimal-window-entity-checklist.md": {
+    "mtime": 1782051206.0,
+    "ast_hash": "c447d92e6dd02007eb7496043cf8312e",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.180F-door-window-property-editing-defaults-checklist.md": {
+    "mtime": 1782059736.0,
+    "ast_hash": "ce425bada58f23f2ad57be7c5aa0b807",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.180G-door-window-hud-status-closeout-checklist.md": {
+    "mtime": 1782061298.0,
+    "ast_hash": "aaa6861ea5f761de70aac4562e4b93d9",
+    "semantic_hash": ""
+  },
+  "docs/testing/v0.8.180H-door-window-phase-closeout-checklist.md": {
+    "mtime": 1782062781.0,
+    "ast_hash": "19c0ea65411c842550ccc00f67b9ec5b",
+    "semantic_hash": ""
+  },
+  "docs/text-and-dimensions.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "5a5445bf7dddde51b48b237e8f8b6e5b",
+    "semantic_hash": ""
+  },
+  "docs/text-formats.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "6fad942a9dfac1466cceef5ff6e633e7",
+    "semantic_hash": ""
+  },
+  "docs/tools.md": {
+    "mtime": 1781991305.0,
+    "ast_hash": "58e7aa5685618ae3b563ca3f0f998355",
+    "semantic_hash": ""
+  },
+  "docs/transform-tools.md": {
+    "mtime": 1780400916.0,
+    "ast_hash": "1ed7cc7c5b5d36c3e319fa7db7b44e38",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/00-introduction.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "a57183402ba38b412adddeb3a3167e47",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/01-interface.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "f03e13ad453ce7eb31da5153eb818792",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/02-canvas-navigation.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "b70ec4e2b6f1655b11aa477763bdf92d",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/03-file-management.md": {
+    "mtime": 1780491104.0,
+    "ast_hash": "d720b7be233c1afa31fbfeee97472f85",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/04-draw-tools.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "eea6845f376c778f92e5c8bdaf49b1b3",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/05-select-tools.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "6e6e1f1d0c68704af773a2e2e4e72143",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/06-edit-tools.md": {
+    "mtime": 1781991305.0,
+    "ast_hash": "3b7d7ce15e309f33edd21fadde4e971e",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/07-align-objects.md": {
+    "mtime": 1780492262.0,
+    "ast_hash": "cef80848af9bf90e9b31806f769a1358",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/08-symbols.md": {
+    "mtime": 1781961224.0,
+    "ast_hash": "779a06e4d5265ff45391f01c04ebc69b",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/09-dimensions.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "18c40a8ef958ed36bfe27e566974992c",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/10-measure-tools.md": {
+    "mtime": 1780491682.0,
+    "ast_hash": "ac33f71367ef3513f2c37ddbd46a0091",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/11-dynamic-hud.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "1f17890660bf299086403d91e8b290fc",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/12-properties-panel.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "9d697b4af98f39355cc327ab6a7d6f86",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/13-images.md": {
+    "mtime": 1781961834.0,
+    "ast_hash": "70c2517cd8d91b03b221de16e75bc3d6",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/14-snaps.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "07319d57ff8eafa28798aa460bbcf501",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/15-ortho-grid-polar.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "7640230bea8e3ed497dd3a8fe0ef22d1",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/16-layers.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "d9b203502202a0b734cab07747e7834c",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/17-line-formats.md": {
+    "mtime": 1780492262.0,
+    "ast_hash": "9f94054795aeca7cb8eafdc7d23dca4c",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/18-text-formats.md": {
+    "mtime": 1780492262.0,
+    "ast_hash": "0f17ba2ed00a6eb6ccce9dbfdb88df6d",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/19-dimension-styles.md": {
+    "mtime": 1780492262.0,
+    "ast_hash": "93ed0497a4661941f667a583e955e1cb",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/20-library.md": {
+    "mtime": 1782044832.0,
+    "ast_hash": "faaedc9aa6a33514bcf82747018dc8be",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/21-export.md": {
+    "mtime": 1780490492.0,
+    "ast_hash": "511f7a7505d830c627abe5eddcd5bf96",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/22-shortcuts-and-commands.md": {
+    "mtime": 1780492262.0,
+    "ast_hash": "00ff75c86a67eab1cfcbe73d8b768699",
+    "semantic_hash": ""
+  },
+  "docs/user-guide/23-troubleshooting.md": {
+    "mtime": 1780492262.0,
+    "ast_hash": "89785998c6b1d6bdc76fca3d6336e09a",
+    "semantic_hash": ""
+  },
+  "library/README.md": {
+    "mtime": 1782037632.0,
+    "ast_hash": "7fc2abed81abcfb3b7ed62a69341a69e",
+    "semantic_hash": ""
+  },
+  "samples/dxf/compatibility/README.md": {
+    "mtime": 1779923604.0,
+    "ast_hash": "e0cc72cd7afcd20ff873b23ef3113b42",
+    "semantic_hash": ""
+  },
+  "samples/dotnet.opencad2d.svg": {
+    "mtime": 1780348105.351202,
+    "ast_hash": "ac70166fa3756158a5497f8ea31c62ab",
+    "semantic_hash": ""
+  },
+  "samples/img/mainfloor.jpg": {
+    "mtime": 1779956813.0,
+    "ast_hash": "860b3aa42ab25f555b16d71f781e8d24",
+    "semantic_hash": ""
+  },
+  "samples/img/upperfloor.jpg": {
+    "mtime": 1779956813.0,
+    "ast_hash": "32be8d9df9625e047fdcb50e53942acf",
+    "semantic_hash": ""
+  },
+  "screenshot/logo_opencad2d.svg": {
+    "mtime": 1779923604.0,
+    "ast_hash": "12638349a45f46d94a0a4b4f1eb1c43e",
+    "semantic_hash": ""
+  },
+  "screenshot/logo_opencad2d_128.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "59c8618dfcf36ffbfedfec458303e98f",
+    "semantic_hash": ""
+  },
+  "screenshot/logo_opencad2d_16.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bc843bd751df9640975fc127e9c72fe9",
+    "semantic_hash": ""
+  },
+  "screenshot/logo_opencad2d_256.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "2ef1b2325b9d678bb20e29ba18eb3e57",
+    "semantic_hash": ""
+  },
+  "screenshot/logo_opencad2d_32.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "b29ee498534fb00b29982aa26c0ebdf2",
+    "semantic_hash": ""
+  },
+  "screenshot/logo_opencad2d_512.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "060c8d5ecd83ee74a283e8457858be48",
+    "semantic_hash": ""
+  },
+  "screenshot/logo_opencad2d_64.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a7cca4af18ca18e3734320cee6f18fa8",
+    "semantic_hash": ""
+  },
+  "screenshot/screenshot_UI_1.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "a0449279e1fcedc03e4311f41d8d9ca5",
+    "semantic_hash": ""
+  },
+  "screenshot/screenshot_UI_2.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "4592dfb04a50f8287773ac030f4bbaab",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Assets/logo_opencad2d_128.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "83816a0690eb6c07d76ae521d0731001",
+    "semantic_hash": ""
+  },
+  "src/OpenCad2D.App/Assets/logo_opencad2d_256.png": {
+    "mtime": 1779923604.0,
+    "ast_hash": "bda2c9fcaf661becf371e54882b01ceb",
+    "semantic_hash": ""
+  }
+}
