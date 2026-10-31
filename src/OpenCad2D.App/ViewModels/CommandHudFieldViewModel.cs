@@ -67,7 +67,9 @@ public sealed class CommandHudFieldViewModel
         ? string.Empty
         : Kind == CommandHudFieldKind.Angle
             ? $"{LiveValue.Value:0.##}"
-            : $"{LiveValue.Value:0.###}";
+            : Kind == CommandHudFieldKind.Radius
+                ? $"{LiveValue.Value:G}"
+                : $"{LiveValue.Value:0.###}";
 
     public string DisplayValue => string.IsNullOrWhiteSpace(NumericValueText)
         ? string.Empty

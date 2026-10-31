@@ -413,7 +413,8 @@ public sealed class FilletToolTests
         Assert.Equal(ToolResultKind.Started, result.Kind);
         Assert.Equal(FilletToolState.WaitingForFirstEntityOrRadius, tool.State);
         Assert.Equal(0, tool.Radius);
-        Assert.Equal("Fillet radius remains 0. Select first line.", result.Message);
+        Assert.Contains("Fillet radius remains 0.", result.Message);
+        Assert.Contains("first object", result.Message);
     }
 
     [Fact]

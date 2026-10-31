@@ -35,6 +35,150 @@ public sealed class CommandHudKeyboardTests : IClassFixture<CommandHudTestSessio
     public CommandHudKeyboardTests(CommandHudTestSession fixture) => _fixture = fixture;
 
     [Fact]
+    public Task Fillet_ExcessiveRadius_ShouldShowFailureAndAllowRadiusRecovery() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareFilletDrawing(window, out LineEntity first, out _);
+        StartCommand(window, "FILLET");
+        Press(window, Key.R);
+        window.KeyTextInput("200");
+        Press(window, Key.Enter);
+        TrimPointer(window, new Point(150, 200), MouseButton.Left);
+        TrimPointer(window, new Point(250, 250), MouseButton.Left);
+
+        FilletTool tool = Assert.IsType<FilletTool>(viewModel.Workspace.ToolController.ActiveTool);
+        Assert.Contains("too large", window.FindControl<TextBlock>("HudCommandFeedback")!.Text);
+        Assert.False(viewModel.IsDirty);
+        Press(window, Key.R);
+        window.KeyTextInput("20");
+        Press(window, Key.Enter);
+        Assert.Equal(first.Id, tool.FirstEntityId);
+        Assert.Equal(FilletToolState.WaitingForSecondEntity, tool.State);
+        Assert.Contains("2/2", viewModel.CommandHudState.Prompt);
+        TrimPointer(window, new Point(250, 250), MouseButton.Left);
+
+        Assert.Equal(20, Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>()).Radius);
+        Assert.True(viewModel.IsDirty);
+        viewModel.Undo();
+        Assert.False(viewModel.IsDirty);
+        Assert.Equal(2, viewModel.Workspace.Document.Entities.Count);
+        viewModel.Redo();
+        Assert.Equal(3, viewModel.Workspace.Document.Entities.Count);
+        Press(window, Key.Enter);
+        Assert.IsType<SelectionTool>(viewModel.Workspace.ToolController.ActiveTool);
+    });
+
+    [Fact]
+    public Task Fillet_NoTrimAfterFirstPick_ShouldKeepOriginalsAndFinishOnRightClick() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareFilletDrawing(window, out LineEntity first, out LineEntity second);
+        StartFilletWithRadius(window, "20");
+        TrimPointer(window, new Point(150, 200), MouseButton.Left);
+        Press(window, Key.T);
+        Press(window, Key.N);
+        Assert.Equal(first.Id, Assert.IsType<FilletTool>(viewModel.Workspace.ToolController.ActiveTool).FirstEntityId);
+        TrimPointer(window, new Point(250, 250), MouseButton.Left);
+
+        Assert.Same(first, viewModel.Workspace.Document.Entities.GetRequired(first.Id));
+        Assert.Same(second, viewModel.Workspace.Document.Entities.GetRequired(second.Id));
+        Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>());
+        TrimPointer(window, new Point(300, 300), MouseButton.Right);
+        Assert.IsType<SelectionTool>(viewModel.Workspace.ToolController.ActiveTool);
+    });
+
+    [Fact]
+    public Task Fillet_FirstOption_ShouldReplaceWrongFirstSelectionAndKeepSettings() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareFilletDrawing(window, out _, out LineEntity second);
+        StartFilletWithRadius(window, "20");
+        TrimPointer(window, new Point(150, 200), MouseButton.Left);
+        Press(window, Key.F);
+        FilletTool tool = Assert.IsType<FilletTool>(viewModel.Workspace.ToolController.ActiveTool);
+        Assert.Null(tool.FirstEntityId);
+        Assert.Equal(20, tool.Radius);
+        Assert.Contains("1/2", viewModel.CommandHudState.Prompt);
+        TrimPointer(window, new Point(250, 250), MouseButton.Left);
+        Assert.Equal(second.Id, tool.FirstEntityId);
+        TrimPointer(window, new Point(150, 200), MouseButton.Left);
+        Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>());
+    });
+
+    [Fact]
+    public Task Fillet_UntouchedRadiusConfirm_ShouldResumeSecondSelection() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareFilletDrawing(window, out LineEntity first, out _);
+        StartFilletWithRadius(window, "20");
+        TrimPointer(window, new Point(150, 200), MouseButton.Left);
+        Press(window, Key.R);
+        Press(window, Key.Tab);
+        Press(window, Key.Enter);
+
+        FilletTool tool = Assert.IsType<FilletTool>(viewModel.Workspace.ToolController.ActiveTool);
+        Assert.Equal(20, tool.Radius);
+        Assert.Equal(first.Id, tool.FirstEntityId);
+        Assert.Equal(FilletToolState.WaitingForSecondEntity, tool.State);
+        Assert.False(viewModel.IsDirty);
+        Press(window, Key.Enter);
+        Assert.IsType<SelectionTool>(viewModel.Workspace.ToolController.ActiveTool);
+    });
+
+    [Fact]
+    public Task Fillet_SmallRadius_ShouldRemainVisibleAndPreservePrecision() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareFilletDrawing(window, out _, out _);
+        StartFilletWithRadius(window, "0.00001");
+        Press(window, Key.R);
+        Press(window, Key.Tab);
+        TextBox radius = AssertFocusedField(window, CommandHudFieldKind.Radius);
+        Assert.Equal(0.00001, double.Parse(radius.Text!, System.Globalization.CultureInfo.CurrentCulture));
+        Press(window, Key.Enter);
+        Assert.Equal(0.00001, Assert.IsType<FilletTool>(viewModel.Workspace.ToolController.ActiveTool).Radius);
+        Assert.False(viewModel.IsDirty);
+    });
+
+    [Fact]
+    public Task Fillet_InvalidRadiusAfterFirstPick_ShouldKeepDraftAndSelectedObject() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareFilletDrawing(window, out LineEntity first, out _);
+        StartFilletWithRadius(window, "20");
+        TrimPointer(window, new Point(150, 200), MouseButton.Left);
+        Press(window, Key.R);
+        Press(window, Key.Tab);
+        window.KeyTextInput("-5");
+        Press(window, Key.Enter);
+
+        Assert.True(viewModel.HasCommandHudValidationMessage);
+        TextBox field = AssertFocusedField(window, CommandHudFieldKind.Radius);
+        Assert.Equal("-5", field.Text);
+        Assert.Equal(first.Id, Assert.IsType<FilletTool>(viewModel.Workspace.ToolController.ActiveTool).FirstEntityId);
+        field.SelectAll();
+        window.KeyTextInput("10");
+        Press(window, Key.Enter);
+        Assert.Equal(FilletToolState.WaitingForSecondEntity, Assert.IsType<FilletTool>(viewModel.Workspace.ToolController.ActiveTool).State);
+        Assert.False(viewModel.IsDirty);
+    });
+
+    private static MainWindowViewModel PrepareFilletDrawing(MainWindow window, out LineEntity first, out LineEntity second)
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        window.FindControl<CadCanvas>("CadCanvas")!.ApplyViewportState(
+            new OpenCad2D.Persistence.Dto.ViewportStateDto { Zoom = 1, PanX = 0, PanY = 0 });
+        first = new LineEntity(new Point2D(100, 200), new Point2D(250, 200));
+        second = new LineEntity(new Point2D(250, 200), new Point2D(250, 350));
+        viewModel.Workspace.Document.AddEntity(first);
+        viewModel.Workspace.Document.AddEntity(second);
+        viewModel.Workspace.MarkSaved();
+        return viewModel;
+    }
+
+    private static void StartFilletWithRadius(MainWindow window, string radius)
+    {
+        StartCommand(window, "FILLET");
+        Press(window, Key.R);
+        window.KeyTextInput(radius);
+        Press(window, Key.Enter);
+    }
+
+    [Fact]
     public Task Trim_EnterForAllCutUndoAndFinish_ShouldPreserveWorkflowAndDirtyState() => Run(window =>
     {
         MainWindowViewModel viewModel = PrepareTrimDrawing(window, out LineEntity target);

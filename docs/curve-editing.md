@@ -854,3 +854,17 @@ When a segment is reversed during chain construction, the bulge sign is inverted
 `FilletTool` now supports two adjacent straight segments of the same `PolylineEntity`. The command keeps the source as a single polyline, replacing the picked corner with two tangent vertices and one DXF-compatible bulge segment. This makes the result compatible with the mixed-polyline pipeline used by draw, join, explode, trim, break and DXF export.
 
 Current limits are intentional: the selected segments must be adjacent, must belong to the same visible/unlocked polyline, must be straight, and the command must be in `Trim` mode. Existing curved/bulged polyline segments are rejected instead of being flattened or silently approximated.
+
+Separate-object fillets also support lines and terminal segments of separate open linear polylines. Rebuilding a terminal segment must not move an internal polyline vertex. NoTrim adds only the native arc and preserves both source objects.
+
+### Fillet regression and interaction contract — 2026-10-31
+
+- The selected segment must be within the current selection tolerance, including after excluding the first segment from a second polyline pick. Clicking the same segment must not silently select a distant adjacent segment.
+- At an interior line intersection the retained ray is ambiguous; the command rejects that pick. At a terminal intersection it infers the ray containing the finite source, independent of line orientation.
+- A positive radius must fit the retained rays. Trim cannot consume a retained line within distance tolerance or reverse its endpoints. NoTrim cannot place tangency beyond the far endpoint; tangency exactly at that endpoint is allowed because the source remains unchanged. Invalid or non-finite radii produce no document mutation.
+- A closed polyline's closing corner inserts one bulge arc. The native bulge sign convention and requested radius are preserved for all corners and either line orientation. Filled closed polylines remain closed and filled.
+- A cached first pick is revalidated by id, current entity reference, visibility and editability before preview or commit. A changed, removed, hidden or locked first source clears transient geometry and requests reselection while retaining command settings.
+- Radius/Trim parameter editing preserves a valid first pick, clears the stale fillet preview, and returns to the pending selection on confirmation. First/F resets the selection only. Entity-prompt Enter/right click sets `IsCommandFinished` and uses the shared ToolController transition to Selection; completing an individual fillet keeps the repeatable command active.
+- Prompt feedback explains invalid hover/commit geometry near the cursor. A selected polyline segment is emphasized independently of the rest of its polyline. Radius fields and prompt settings retain meaningful precision for small radii.
+
+Automated regressions live in `FilletToolRegressionTests` and `CommandHudKeyboardTests`. The desktop smoke checklist is `docs/testing/fillet-regression-and-workflow-checklist.md`.

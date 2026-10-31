@@ -4,6 +4,7 @@ using OpenCad2D.Core.Entities;
 using OpenCad2D.Core.Identifiers;
 using OpenCad2D.Geometry;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Geometry.Operations;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Input;
@@ -11,8 +12,7 @@ using OpenCad2D.Tools.Input;
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
-/// Creates a tangent fillet between two lines.
-/// v0.8 supports Line-Line with Radius and Radius=0 corner joining.
+/// Creates native tangent fillets between lines and supported straight polyline segments.
 /// </summary>
 public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, ISnapModeProvider, IToolPreviewDescriptorProvider
 {
@@ -21,9 +21,12 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
     private double _radius;
     private bool _trimEnabled = true;
     private FilletPick? _firstPick;
+    private string? _feedback;
     private IReadOnlyList<CadEntity> _previewEntities = Array.Empty<CadEntity>();
 
     public string Name => "Fillet";
+
+    public bool IsCommandFinished { get; private set; }
 
     public FilletToolState State { get; private set; } = FilletToolState.WaitingForFirstEntityOrRadius;
 
@@ -46,6 +49,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        EnsureFirstPickIsCurrent(context);
         return new ToolPreviewDescriptor(
             entities: GetPreviewEntities(),
             entityOverlays: GetSelectedEntityOverlays());
@@ -58,10 +62,13 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             return Array.Empty<ToolPreviewEntityOverlay>();
         }
 
+        CadEntity selectedGeometry = _firstPick.Entity is PolylineEntity polyline && _firstPick.PolylineSegmentIndex is { } segmentIndex
+            ? CreateLineFromPolylineSegment(polyline, segmentIndex)
+            : _firstPick.Entity;
         return new[]
         {
             new ToolPreviewEntityOverlay(
-                new[] { _firstPick.Entity },
+                new[] { selectedGeometry },
                 ToolPreviewHighlightKind.Emphasis)
         };
     }
@@ -70,6 +77,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        EnsureFirstPickIsCurrent(context);
         return GetPreviewEntities();
     }
 
@@ -82,43 +90,53 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        EnsureFirstPickIsCurrent(context);
+        var selectionOptions = new List<CommandOption>
+        {
+            new("Radius", "R", "Set fillet radius without losing the first selection"),
+            new("Trim", "T", "Choose Trim or NoTrim")
+        };
+        if (_firstPick is not null)
+        {
+            selectionOptions.Add(new CommandOption("First", "F", "Choose the first object again"));
+        }
+
+        string settings = $"R={_radius:G}, {FormatTrimMode()}";
         return State switch
         {
             FilletToolState.WaitingForFirstEntityOrRadius => new CommandPromptState(
                 "FILLET",
-                $"Select first line or [Radius/Trim] <{_radius:0.###}> ({FormatTrimMode()})",
+                $"1/2: Pick first line or straight polyline segment on the side to KEEP ({settings}). R sets radius; T sets mode; Enter finishes. Radius 0 joins line endpoints.",
                 CommandInputKind.SelectionOrOption,
-                new[]
-                {
-                    new CommandOption("Radius", "R", "Set fillet radius"),
-                    new CommandOption("Trim", "T", "Set whether source lines are trimmed")
-                },
-                placeholder: "Click first line or type R/T"),
+                selectionOptions,
+                acceptsEmptyEnter: true,
+                placeholder: "Click first object or choose R/T; Enter finishes",
+                feedback: _feedback),
 
             FilletToolState.WaitingForRadius => new CommandPromptState(
-                "FILLET",
-                $"Specify fillet radius <{_radius:0.###}>",
-                CommandInputKind.Number,
-                acceptsEmptyEnter: true,
-                placeholder: "Radius, for example 10 or 0"),
+                "FILLET", $"Specify fillet radius <{_radius:G}> (0 = sharp corner)",
+                CommandInputKind.Number, acceptsEmptyEnter: true,
+                placeholder: "Non-negative radius; Enter keeps current value",
+                feedback: _feedback),
 
             FilletToolState.WaitingForTrimMode => new CommandPromptState(
-                "FILLET",
-                $"Specify trim mode <{FormatTrimMode()}>",
+                "FILLET", $"Choose mode <{FormatTrimMode()}>: Trim changes source objects; NoTrim adds only the arc.",
                 CommandInputKind.Option,
                 new[]
                 {
-                    new CommandOption("Trim", "T", "Trim source lines"),
-                    new CommandOption("NoTrim", "N", "Keep source lines and add only the fillet arc")
+                    new CommandOption("Trim", "T", "Trim or extend source objects"),
+                    new CommandOption("NoTrim", "N", "Keep source objects and add only the fillet arc")
                 },
-                acceptsEmptyEnter: true,
-                placeholder: "Trim or NoTrim"),
+                acceptsEmptyEnter: true, placeholder: "T = Trim, N = NoTrim; Enter keeps current mode",
+                feedback: _feedback),
 
             FilletToolState.WaitingForSecondEntity => new CommandPromptState(
                 "FILLET",
-                "Select second line",
-                CommandInputKind.Selection,
-                placeholder: "Click second line"),
+                $"2/2: Select second object on the sides to KEEP ({settings}). Check the preview; R/T changes settings; F changes first object; Enter finishes.",
+                CommandInputKind.SelectionOrOption, selectionOptions,
+                acceptsEmptyEnter: true,
+                placeholder: "Click second line or adjacent straight segment; R/T/F recovers selection",
+                feedback: _feedback),
 
             _ => CommandPromptState.Idle
         };
@@ -128,23 +146,53 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         CommandInputSubmission input,
         ToolContext context)
     {
+        ToolResult result = HandleCommandInputCore(input, context);
+        _feedback = result.Message;
+        if (result.Kind == ToolResultKind.None)
+        {
+            _previewEntities = Array.Empty<CadEntity>();
+        }
+        return result;
+    }
+
+    private ToolResult HandleCommandInputCore(
+        CommandInputSubmission input,
+        ToolContext context)
+    {
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
 
-        if (State == FilletToolState.WaitingForFirstEntityOrRadius &&
+        EnsureFirstPickIsCurrent(context);
+        if ((State is FilletToolState.WaitingForFirstEntityOrRadius or FilletToolState.WaitingForSecondEntity) &&
+            input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            Reset(context);
+            IsCommandFinished = true;
+            return ToolResult.Completed("Fillet command finished.");
+        }
+        if (input.Kind == CommandInputSubmissionKind.Option &&
+            string.Equals(input.OptionKeyword, "First", StringComparison.OrdinalIgnoreCase))
+        {
+            Reset(context);
+            return ToolResult.Started("Choose the first fillet object again. Radius and Trim/NoTrim mode are kept.");
+        }
+
+        if ((State is FilletToolState.WaitingForFirstEntityOrRadius or FilletToolState.WaitingForSecondEntity) &&
             input.Kind == CommandInputSubmissionKind.Option &&
             string.Equals(input.OptionKeyword, "Radius", StringComparison.OrdinalIgnoreCase))
         {
             State = FilletToolState.WaitingForRadius;
+            _previewEntities = Array.Empty<CadEntity>();
             context.CurrentBasePoint = null;
             return ToolResult.Started("Specify fillet radius.");
         }
 
-        if (State == FilletToolState.WaitingForFirstEntityOrRadius &&
+        if ((State is FilletToolState.WaitingForFirstEntityOrRadius or FilletToolState.WaitingForSecondEntity) &&
             input.Kind == CommandInputSubmissionKind.Option &&
             string.Equals(input.OptionKeyword, "Trim", StringComparison.OrdinalIgnoreCase))
         {
             State = FilletToolState.WaitingForTrimMode;
+            _previewEntities = Array.Empty<CadEntity>();
             context.CurrentBasePoint = null;
             return ToolResult.Started($"Specify trim mode <{FormatTrimMode()}>.");
         }
@@ -153,9 +201,8 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         {
             if (input.Kind == CommandInputSubmissionKind.Confirm)
             {
-                State = FilletToolState.WaitingForFirstEntityOrRadius;
-                context.CurrentBasePoint = null;
-                return ToolResult.Started($"Fillet radius remains {_radius:0.###}. Select first line.");
+                RestoreSelectionPhase(context);
+                return ToolResult.Started($"Fillet radius remains {_radius:G}. {GetSelectionInstruction()}");
             }
 
             if (input.Kind == CommandInputSubmissionKind.Number &&
@@ -169,8 +216,8 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         {
             if (input.Kind == CommandInputSubmissionKind.Confirm)
             {
-                State = FilletToolState.WaitingForFirstEntityOrRadius;
-                return ToolResult.Started($"Fillet trim mode remains {FormatTrimMode()}. Select first line.");
+                RestoreSelectionPhase(context);
+                return ToolResult.Started($"Fillet trim mode remains {FormatTrimMode()}. {GetSelectionInstruction()}");
             }
 
             if (input.Kind == CommandInputSubmissionKind.Option && input.OptionKeyword is not null)
@@ -193,8 +240,26 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         ToolContext context,
         PointerInfo pointer)
     {
+        ToolResult result = OnPointerPressedCore(context, pointer);
+        _feedback = result.Message;
+        if (result.Kind == ToolResultKind.None)
+        {
+            _previewEntities = Array.Empty<CadEntity>();
+        }
+        return result;
+    }
+
+    private ToolResult OnPointerPressedCore(
+        ToolContext context,
+        PointerInfo pointer)
+    {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
+
+        if (!EnsureFirstPickIsCurrent(context))
+        {
+            return ToolResult.None(_feedback);
+        }
 
         return State switch
         {
@@ -213,6 +278,10 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
+        if (!EnsureFirstPickIsCurrent(context))
+        {
+            return ToolResult.None(_feedback);
+        }
         if (State != FilletToolState.WaitingForSecondEntity || _firstPick is null)
         {
             _previewEntities = Array.Empty<CadEntity>();
@@ -220,31 +289,24 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         }
 
         FilletPick? secondPick = PickSelectableFilletObject(context, pointer.ModelPoint, _firstPick);
-
         if (secondPick is null)
         {
             _previewEntities = Array.Empty<CadEntity>();
-            return ToolResult.None();
+            _feedback = "Pick a different line or an adjacent straight polyline segment near the cursor. F chooses the first object again.";
+            return ToolResult.None(_feedback);
         }
 
-        if (!TryCreateFilletResult(
-                _firstPick,
-                secondPick,
-                _radius,
-                _trimEnabled,
-                context.GeometryTolerance,
-                out IReadOnlyList<CadEntity>? resultEntities,
-                out _))
+        if (!TryCreateFilletResult(_firstPick, secondPick, _radius, _trimEnabled, context.GeometryTolerance,
+                out IReadOnlyList<CadEntity>? resultEntities, out string? errorMessage))
         {
             _previewEntities = Array.Empty<CadEntity>();
-            return ToolResult.None();
+            _feedback = errorMessage;
+            return ToolResult.None(errorMessage);
         }
 
         _previewEntities = resultEntities ?? Array.Empty<CadEntity>();
-
-        return _previewEntities.Count > 0
-            ? ToolResult.Updated("Fillet preview updated.")
-            : ToolResult.None();
+        _feedback = "Click to apply this fillet. R changes radius; T changes Trim/NoTrim; F changes the first object.";
+        return ToolResult.Updated(_feedback);
     }
 
     public ToolResult Cancel(ToolContext context)
@@ -265,16 +327,15 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         ToolContext context,
         double radius)
     {
-        if (radius < 0)
+        if (!double.IsFinite(radius) || radius < 0)
         {
-            return ToolResult.None("Fillet radius cannot be negative.");
+            return ToolResult.None("Fillet radius must be finite and non-negative.");
         }
 
         _radius = radius;
-        State = FilletToolState.WaitingForFirstEntityOrRadius;
-        context.CurrentBasePoint = null;
+        RestoreSelectionPhase(context);
 
-        return ToolResult.Started($"Fillet radius set to {_radius:0.###}. Select first line.");
+        return ToolResult.Started($"Fillet radius set to {_radius:G}. {GetSelectionInstruction()}");
     }
 
     private ToolResult AcceptTrimMode(
@@ -294,10 +355,9 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             return ToolResult.None("Specify Trim or NoTrim.");
         }
 
-        State = FilletToolState.WaitingForFirstEntityOrRadius;
-        context.CurrentBasePoint = null;
+        RestoreSelectionPhase(context);
 
-        return ToolResult.Started($"Fillet trim mode set to {FormatTrimMode()}. Select first line.");
+        return ToolResult.Started($"Fillet trim mode set to {FormatTrimMode()}. {GetSelectionInstruction()}");
     }
 
     private ToolResult AcceptFirstLine(
@@ -309,6 +369,11 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         if (pick is null)
         {
             return ToolResult.None("Fillet currently supports visible, unlocked lines and linear polyline segments only. Select the first object.");
+        }
+
+        if (pick.Entity is PolylineEntity { HasArcSegments: true })
+        {
+            return ToolResult.None("Polyline segment fillet currently supports linear polylines only.");
         }
 
         _firstPick = pick;
@@ -898,7 +963,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             {
                 AddPolylinePieceIfLongEnough(pieces, start, previousTangent, 0.0, tolerance);
 
-                if (afterSegmentIndex == (beforeSegmentIndex + 1) % polyline.SegmentCount)
+                if (afterSegmentIndex == beforeSegmentIndex + 1)
                 {
                     AddPolylinePieceIfLongEnough(pieces, previousTangent, nextTangent, arcBulge, tolerance);
                 }
@@ -993,6 +1058,12 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         resultEntities = null;
         errorMessage = null;
 
+        if (!double.IsFinite(radius) || radius < 0)
+        {
+            errorMessage = "Fillet radius must be finite and non-negative.";
+            return false;
+        }
+
         if (!LineIntersectionService.TryIntersectInfiniteLines(
                 first.Geometry,
                 second.Geometry,
@@ -1017,15 +1088,12 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         Vector2D secondUnit = secondDirection.Normalize();
         Point2D intersectionPoint = intersection.Point;
 
-        double firstPickParameter = GetLineParameter(first, firstPickPoint);
-        double secondPickParameter = GetLineParameter(second, secondPickPoint);
-
-        Vector2D firstBranch = firstPickParameter < intersection.FirstParameter
-            ? firstUnit * -1.0
-            : firstUnit;
-        Vector2D secondBranch = secondPickParameter < intersection.SecondParameter
-            ? secondUnit * -1.0
-            : secondUnit;
+        if (!TryGetKeptBranch(first, firstPickPoint, intersectionPoint, firstUnit, tolerance, out Vector2D firstBranch) ||
+            !TryGetKeptBranch(second, secondPickPoint, intersectionPoint, secondUnit, tolerance, out Vector2D secondBranch))
+        {
+            errorMessage = "The pick is on an interior intersection. Pick each object on the side to KEEP, away from the crossing.";
+            return false;
+        }
 
         double branchDot = Math.Clamp(firstBranch.Dot(secondBranch), -1.0, 1.0);
         double angle = Math.Acos(branchDot);
@@ -1062,6 +1130,16 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             return false;
         }
 
+        double firstAvailable = Math.Max(intersectionPoint.VectorTo(first.Start).Dot(firstBranch), intersectionPoint.VectorTo(first.End).Dot(firstBranch));
+        double secondAvailable = Math.Max(intersectionPoint.VectorTo(second.Start).Dot(secondBranch), intersectionPoint.VectorTo(second.End).Dot(secondBranch));
+        if (trimSourceLines
+                ? tangentDistance >= firstAvailable - tolerance.Distance || tangentDistance >= secondAvailable - tolerance.Distance
+                : tangentDistance > firstAvailable + tolerance.Distance || tangentDistance > secondAvailable + tolerance.Distance)
+        {
+            errorMessage = "Fillet radius is too large for the selected sides. Use R to reduce the radius or F to choose the first object again.";
+            return false;
+        }
+
         Point2D firstTangent = intersectionPoint + firstBranch * tangentDistance;
         Point2D secondTangent = intersectionPoint + secondBranch * tangentDistance;
         Vector2D bisectorVector = firstBranch + secondBranch;
@@ -1074,6 +1152,14 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         Vector2D bisector = bisectorVector.Normalize();
         Point2D center = intersectionPoint + bisector * (radius / Math.Sin(angle / 2.0));
+
+        if (!double.IsFinite(center.X) || !double.IsFinite(center.Y) ||
+            !double.IsFinite(firstTangent.X) || !double.IsFinite(firstTangent.Y) ||
+            !double.IsFinite(secondTangent.X) || !double.IsFinite(secondTangent.Y))
+        {
+            errorMessage = "Fillet geometry exceeds the supported numeric range. Reduce the radius.";
+            return false;
+        }
 
         Angle startAngle = Angle.FromRadians(
             Math.Atan2(
@@ -1152,21 +1238,31 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
                 drawOrder: source.DrawOrder);
     }
 
-    private static double GetLineParameter(
+    private static bool TryGetKeptBranch(
         LineEntity line,
-        Point2D point)
+        Point2D pickPoint,
+        Point2D intersection,
+        Vector2D unit,
+        GeometryTolerance tolerance,
+        out Vector2D branch)
     {
-        // Intentionally not clamped to [0, 1]: fillet uses the infinite-line
-        // parameter to decide which branch from the intersection point is being picked.
-        Vector2D direction = line.Start.VectorTo(line.End);
-        double lengthSquared = direction.LengthSquared;
-
-        if (lengthSquared <= 0)
+        double pickDistance = intersection.VectorTo(pickPoint).Dot(unit);
+        if (Math.Abs(pickDistance) <= tolerance.Distance)
         {
-            return 0;
+            double startDistance = intersection.VectorTo(line.Start).Dot(unit);
+            double endDistance = intersection.VectorTo(line.End).Dot(unit);
+            if (startDistance < -tolerance.Distance && endDistance > tolerance.Distance)
+            {
+                branch = default;
+                return false;
+            }
+
+            // At a terminal intersection only the ray containing the source is available.
+            pickDistance = Math.Abs(startDistance) > Math.Abs(endDistance) ? startDistance : endDistance;
         }
 
-        return line.Start.VectorTo(point).Dot(direction) / lengthSquared;
+        branch = pickDistance < 0 ? unit * -1.0 : unit;
+        return true;
     }
 
     private static FilletPick? PickSelectableFilletObject(
@@ -1220,13 +1316,18 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
                     continue;
                 }
 
+                Point2D closestPoint = GetClosestPointOnSegment(
+                    polyline.Vertices[segmentIndex.Value],
+                    polyline.Vertices[(segmentIndex.Value + 1) % polyline.Vertices.Count], pickPoint);
+                if (closestPoint.DistanceTo(pickPoint) > context.Selection.Tolerance)
+                {
+                    continue;
+                }
+
                 return new FilletPick(
                     selectedId,
                     pickPoint,
-                    GetClosestPointOnSegment(
-                        polyline.Vertices[segmentIndex.Value],
-                        polyline.Vertices[(segmentIndex.Value + 1) % polyline.Vertices.Count],
-                        pickPoint),
+                    closestPoint,
                     entity,
                     segmentIndex.Value);
             }
@@ -1277,16 +1378,7 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         Point2D end,
         Point2D point)
     {
-        Vector2D direction = start.VectorTo(end);
-        double lengthSquared = direction.LengthSquared;
-
-        if (Tolerance.IsZero(lengthSquared))
-        {
-            return start;
-        }
-
-        double parameter = Math.Clamp(start.VectorTo(point).Dot(direction) / lengthSquared, 0.0, 1.0);
-        return start + direction * parameter;
+        return DistanceService.ClosestPointOnSegment(point, new LineSegment2D(start, end));
     }
 
     private sealed record FilletPick(
@@ -1307,13 +1399,53 @@ public sealed class FilletTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         PolylineSegment
     }
 
+    private bool EnsureFirstPickIsCurrent(ToolContext context)
+    {
+        if (_firstPick is null)
+        {
+            return true;
+        }
+        if (context.Document.Entities.TryGet(_firstPick.EntityId, out CadEntity? current) &&
+            ReferenceEquals(current, _firstPick.Entity) && context.Document.IsEntitySelectable(current))
+        {
+            return true;
+        }
+
+        _firstPick = null;
+        _previewEntities = Array.Empty<CadEntity>();
+        context.CurrentBasePoint = null;
+        if (State == FilletToolState.WaitingForSecondEntity)
+        {
+            State = FilletToolState.WaitingForFirstEntityOrRadius;
+        }
+        _feedback = "The first object changed, was removed, hidden or locked. Select the first object again; radius and mode are kept.";
+        return false;
+    }
+
+    private void RestoreSelectionPhase(ToolContext context)
+    {
+        EnsureFirstPickIsCurrent(context);
+        State = _firstPick is null ? FilletToolState.WaitingForFirstEntityOrRadius : FilletToolState.WaitingForSecondEntity;
+        context.CurrentBasePoint = _firstPick?.ClosestPoint;
+        _previewEntities = Array.Empty<CadEntity>();
+    }
+
     private string FormatTrimMode()
     {
         return _trimEnabled ? "Trim" : "NoTrim";
     }
 
+    private string GetSelectionInstruction()
+    {
+        return _firstPick is null
+            ? "Select the first object on the side to KEEP."
+            : "Select the second object on the side to KEEP; F changes the first object.";
+    }
+
     private void Reset(ToolContext context)
     {
+        IsCommandFinished = false;
+        _feedback = null;
         _firstPick = null;
         _previewEntities = Array.Empty<CadEntity>();
         State = FilletToolState.WaitingForFirstEntityOrRadius;

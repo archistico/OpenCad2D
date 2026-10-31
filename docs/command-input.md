@@ -184,6 +184,8 @@ pick second line
 
 Radius `0` creates a sharp-corner join in Trim mode. With a positive radius, the canvas shows a live preview while the second line is being selected. Use `T` / `Trim` and then `N` / `NoTrim` to keep the original lines and add only the tangent fillet arc.
 
+The HUD distinguishes first-object and second-object selection as steps 1/2 and 2/2. Pick each source on the side to keep. Radius and Trim options remain available after the first pick; confirming either parameter returns to the second pick without losing the first selection. `F` / `First` selects the first source again. Enter/right click at an entity-selection prompt finishes Fillet; at a parameter prompt it keeps the current setting. Hover failures and recovery instructions appear in the HUD through tool-provided feedback.
+
 ---
 
 

@@ -46,6 +46,20 @@ Fillet rounds a corner with an arc of a given radius. It can be used on compatib
 
 A correct fillet must be tangent to both participating segments. If the radius is too large for the available geometry, the command should not create an incorrect result.
 
+Use this sequence:
+
+1. Start `FILLET` / `F`. The HUD shows **1/2**, the current radius and Trim/NoTrim mode. The initial radius is zero, which joins line endpoints as a sharp corner. Use `R`, enter a positive radius, and press Enter for a rounded corner.
+2. Click the first line or straight polyline segment on the side you want to **keep**. For a polyline, only the picked segment is emphasized.
+3. In **2/2**, move over the second object or adjacent segment and check the preview. Click to apply it. You can continue with another pair, or press Enter/right click to finish and return to Selection.
+
+The picks determine the retained sides. A pick at an interior crossing does not identify a side, so Fillet asks you to move away from the crossing. At a shared endpoint, the existing line direction is sufficient. A radius that would consume a retained line or reverse it is rejected without changing the drawing.
+
+You can correct settings while waiting for the second object: `R` changes the radius and `T` opens Trim/NoTrim, preserving the first selection. Inside the mode prompt, choose `T` for Trim (modify the sources) or `N` for NoTrim (keep the sources and add only the arc). Enter in a parameter prompt keeps the current setting and resumes the pending selection. `F` / `First` chooses the first object again while keeping the radius and mode. During Fillet, this contextual `F` option takes precedence over the command alias.
+
+Errors appear inside the HUD. An invalid radius stays editable; invalid geometry keeps the selected first object so you can change settings or pick another second object. If the first source is removed, changed, hidden or locked, Fillet requests a new first selection. Parameter editing clears the old geometric preview. Undo/Redo restores completed fillets; Esc exits without undoing completed work.
+
+Supported combinations are two lines, adjacent segments of one wholly straight polyline in Trim mode, and lines or terminal segments of separate open straight polylines. Existing curved polylines remain unsupported. NoTrim requires a positive radius; rounding a corner within one polyline also requires a positive radius and Trim mode. Small radius values remain readable without rounding to zero in the Radius field.
+
 ## Chamfer
 
 Chamfer cuts a corner with a straight bevel. It uses one or more distances depending on the command mode. Like Fillet, it should work on compatible lines and polyline segments.
