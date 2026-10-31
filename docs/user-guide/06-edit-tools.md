@@ -75,7 +75,7 @@ During target selection, the command should focus on selecting entities or segme
 The HUD labels the two steps explicitly:
 
 1. **Choose cutting edges (1/2).** Click the boundary that will stop the cut. Alternatively, press Enter/right click or choose `A` / `All` to use all visible supported curves. This step changes no geometry.
-2. **Choose the part to remove (2/2).** After the first cutting edge is chosen, move over the unwanted part. The dashed portion will be removed; the solid preview will remain. Click inside the dashed portion to cut it. You can continue cutting other parts with the same edges.
+2. **Choose the part to remove (2/2).** After the first cutting edge is chosen, move over the unwanted part. Cutting edges stay red. The green dashed portion will be removed; the green solid portions will remain. Click inside the dashed portion to cut it. Moving away restores the object's normal appearance without changing the drawing. You can continue cutting other parts with the same edges.
 
 Do not click exactly on a crossing: that does not identify a side, so Trim keeps the drawing unchanged and explains where to click. A closed curve needs at least two distinct cutting intersections; a tangent alone is insufficient.
 

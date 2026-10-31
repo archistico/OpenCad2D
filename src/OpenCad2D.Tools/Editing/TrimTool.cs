@@ -251,9 +251,13 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         return new ToolPreviewDescriptor(
             entities: GetPreviewEntities(),
             highlightedEntities: GetHighlightedPreviewEntities(),
-            highlightedEntityKind: ToolPreviewHighlightKind.Removal,
+            highlightedEntityKind: ToolPreviewHighlightKind.TrimRemoval,
             markers: GetPreviewMarkers(),
-            entityOverlays: GetPreviewEntityOverlays());
+            entityOverlays: GetPreviewEntityOverlays(),
+            entityHighlightKind: ToolPreviewHighlightKind.TrimRemainder,
+            replacedEntityIds: HasPreview && _previewTargetEntity is not null
+                ? new[] { _previewTargetEntity.Id }
+                : Array.Empty<EntityId>());
     }
 
     private IReadOnlyList<ToolPreviewMarker> GetPreviewMarkers()
@@ -279,14 +283,7 @@ public sealed class TrimTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         if (_boundaryEntities.Count > 0)
         {
             overlays.Add(new ToolPreviewEntityOverlay(
-                _boundaryEntities,
-                ToolPreviewHighlightKind.Emphasis));
-        }
-
-        if (_previewTargetEntity is not null && _highlightPreviewEntities.Count > 0)
-        {
-            overlays.Add(new ToolPreviewEntityOverlay(
-                new[] { _previewTargetEntity },
+                _boundaryEntities.Where(entity => !HasPreview || entity.Id != _previewTargetEntity?.Id),
                 ToolPreviewHighlightKind.Emphasis));
         }
 

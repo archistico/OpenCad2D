@@ -2,12 +2,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using OpenCad2D.App.Controls;
 using OpenCad2D.App.ViewModels;
 using OpenCad2D.Core.Entities;
 using OpenCad2D.Geometry.Primitives;
+using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Drawing;
 using OpenCad2D.Tools.Architectural;
 using OpenCad2D.Tools.Editing;
@@ -33,6 +35,64 @@ public sealed class CommandHudKeyboardTests : IClassFixture<CommandHudTestSessio
     private readonly CommandHudTestSession _fixture;
 
     public CommandHudKeyboardTests(CommandHudTestSession fixture) => _fixture = fixture;
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public Task Trim_HoverPreview_ShouldDrawGreenResultAndDashedRemovalWithRedEdges(bool all) => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareTrimDrawing(window, out LineEntity target);
+        StartCommand(window, "TRIM");
+        if (all)
+            Press(window, Key.A);
+        else
+            TrimPointer(window, new Point(250, 120), MouseButton.Left);
+        TrimPointer(window, new Point(350, 200));
+        CadCanvas canvas = window.FindControl<CadCanvas>("CadCanvas")!;
+        var drawing = new DrawingGroup();
+        using (DrawingContext context = drawing.Open())
+        {
+            canvas.Render(context);
+        }
+
+        GeometryDrawing[] strokes = GetDrawingLeaves(drawing).OfType<GeometryDrawing>().ToArray();
+        Assert.Contains(strokes, stroke => IsLine(stroke, new Point(100, 200), new Point(250, 200)) &&
+            HasStrokeColor(stroke, Color.FromRgb(100, 220, 120)) && stroke.Pen?.DashStyle is null);
+        Assert.Contains(strokes, stroke => IsLine(stroke, new Point(250, 200), new Point(400, 200)) &&
+            HasStrokeColor(stroke, Color.FromRgb(100, 220, 120)) && stroke.Pen?.DashStyle?.Dashes?.Count > 0);
+        Assert.Contains(strokes, stroke => IsLine(stroke, new Point(250, 100), new Point(250, 300)) &&
+            HasStrokeColor(stroke, Color.FromRgb(255, 90, 90)) && stroke.Pen?.DashStyle is null);
+        Assert.DoesNotContain(strokes, stroke => IsLine(stroke, new Point(100, 200), new Point(400, 200)));
+        Assert.Same(target, viewModel.Workspace.Document.Entities.GetRequired(target.Id));
+        Assert.False(viewModel.IsDirty);
+
+        TrimPointer(window, new Point(450, 250));
+        ToolPreviewDescriptor cleared = Assert.IsType<TrimTool>(viewModel.Workspace.ToolController.ActiveTool)
+            .GetPreviewDescriptor(viewModel.Workspace.Context);
+        Assert.Empty(cleared.ReplacedEntityIds);
+        Assert.Empty(cleared.Entities);
+        Assert.Empty(cleared.HighlightedEntities);
+    });
+
+    private static IEnumerable<Drawing> GetDrawingLeaves(Drawing drawing)
+    {
+        if (drawing is DrawingGroup group)
+        {
+            return group.Children.SelectMany(GetDrawingLeaves);
+        }
+        return new[] { drawing };
+    }
+
+    private static bool IsLine(GeometryDrawing drawing, Point start, Point end)
+    {
+        // DrawingGroup records DrawLine as platform geometry rather than LineGeometry.
+        return drawing.Geometry?.Bounds == new Rect(start, end);
+    }
+
+    private static bool HasStrokeColor(GeometryDrawing drawing, Color color)
+    {
+        return drawing.Pen?.Brush is ISolidColorBrush brush && brush.Color == color;
+    }
 
     [Fact]
     public Task Fillet_ExcessiveRadius_ShouldShowFailureAndAllowRadiusRecovery() => Run(window =>

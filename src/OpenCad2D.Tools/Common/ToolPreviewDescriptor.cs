@@ -1,4 +1,5 @@
 using OpenCad2D.Core.Entities;
+using OpenCad2D.Core.Identifiers;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -21,7 +22,9 @@ public sealed class ToolPreviewDescriptor
         IEnumerable<ToolPreviewLine>? lines = null,
         IEnumerable<ToolPreviewMarker>? markers = null,
         IEnumerable<ToolPreviewWindow>? windows = null,
-        IEnumerable<ToolPreviewEntityOverlay>? entityOverlays = null)
+        IEnumerable<ToolPreviewEntityOverlay>? entityOverlays = null,
+        ToolPreviewHighlightKind? entityHighlightKind = null,
+        IEnumerable<EntityId>? replacedEntityIds = null)
     {
         Entities = entities?.ToArray() ?? Array.Empty<CadEntity>();
         HighlightedEntities = highlightedEntities?.ToArray() ?? Array.Empty<CadEntity>();
@@ -30,9 +33,18 @@ public sealed class ToolPreviewDescriptor
         Markers = markers?.ToArray() ?? Array.Empty<ToolPreviewMarker>();
         Windows = windows?.ToArray() ?? Array.Empty<ToolPreviewWindow>();
         EntityOverlays = entityOverlays?.ToArray() ?? Array.Empty<ToolPreviewEntityOverlay>();
+        EntityHighlightKind = entityHighlightKind;
+        ReplacedEntityIds = replacedEntityIds?.ToArray() ?? Array.Empty<EntityId>();
     }
 
     public IReadOnlyList<CadEntity> Entities { get; }
+
+    public ToolPreviewHighlightKind? EntityHighlightKind { get; }
+
+    /// <summary>
+    /// Document entities visually replaced by this transient preview, without changing the document.
+    /// </summary>
+    public IReadOnlyList<EntityId> ReplacedEntityIds { get; }
 
     public IReadOnlyList<CadEntity> HighlightedEntities { get; }
 
@@ -52,7 +64,8 @@ public sealed class ToolPreviewDescriptor
         Lines.Count == 0 &&
         Markers.Count == 0 &&
         Windows.Count == 0 &&
-        EntityOverlays.Count == 0;
+        EntityOverlays.Count == 0 &&
+        ReplacedEntityIds.Count == 0;
 
     public static ToolPreviewDescriptor FromEntities(
         IEnumerable<CadEntity> entities)

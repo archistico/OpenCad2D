@@ -472,6 +472,8 @@ The active-tool preview renderer supports two UI-agnostic protocols from the too
 
 `IToolPreviewDescriptorProvider` is the richer protocol for previews that also need semantic overlays, such as guide lines, axis lines, point markers, highlighted fragments or selection/zoom windows. The descriptor is still defined in the tools layer and uses only model-space geometry plus semantic preview items; the app layer decides how those items are rendered.
 
+Descriptors can assign an `EntityHighlightKind` to transient entities and list `ReplacedEntityIds` whose normal canvas strokes are omitted during that preview. This is a rendering-only substitution: document geometry, visibility, selection and export remain unchanged. TRIM uses this to show solid green retained fragments and a dashed green removed interval without the original stroke filling the dash gaps; colors and dash styles remain owned by App.
+
 Currently migrated examples include:
 
 - `LineTool` for a simple two-point drawing preview;

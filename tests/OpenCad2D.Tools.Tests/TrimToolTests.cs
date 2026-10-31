@@ -388,7 +388,7 @@ public sealed class TrimToolTests
     }
 
     [Fact]
-    public void GetPreviewDescriptor_WithValidPreview_ShouldHighlightTargetAndMarkPickedSide()
+    public void GetPreviewDescriptor_WithValidPreview_ShouldReplaceTargetAndKeepBoundaryEmphasis()
     {
         var context = CreateContextWithBoundaryAndTarget(
             out LineEntity boundary,
@@ -405,15 +405,14 @@ public sealed class TrimToolTests
 
         ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
 
-        Assert.Equal(2, descriptor.EntityOverlays.Count);
+        Assert.Single(descriptor.EntityOverlays);
         Assert.Contains(descriptor.EntityOverlays, overlay =>
             overlay.Kind == ToolPreviewHighlightKind.Emphasis &&
             overlay.Entities.Count == 1 &&
             ReferenceEquals(boundary, overlay.Entities[0]));
-        Assert.Contains(descriptor.EntityOverlays, overlay =>
-            overlay.Kind == ToolPreviewHighlightKind.Emphasis &&
-            overlay.Entities.Count == 1 &&
-            ReferenceEquals(target, overlay.Entities[0]));
+        Assert.Equal(target.Id, Assert.Single(descriptor.ReplacedEntityIds));
+        Assert.Equal(ToolPreviewHighlightKind.TrimRemainder, descriptor.EntityHighlightKind);
+        Assert.Equal(ToolPreviewHighlightKind.TrimRemoval, descriptor.HighlightedEntityKind);
 
         ToolPreviewMarker marker = Assert.Single(descriptor.Markers);
         Assert.Equal(new Point2D(3, 0), marker.Position);

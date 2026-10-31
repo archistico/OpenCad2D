@@ -18,5 +18,15 @@ public enum ToolPreviewHighlightKind
     /// <summary>
     /// Geometry that will be removed if the current command is confirmed.
     /// </summary>
-    Removal
+    Removal,
+
+    /// <summary>
+    /// Native fragments that will remain after trimming the hovered target.
+    /// </summary>
+    TrimRemainder,
+
+    /// <summary>
+    /// Native interval that will be removed from the hovered trim target.
+    /// </summary>
+    TrimRemoval
 }

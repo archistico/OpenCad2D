@@ -39,6 +39,13 @@ public sealed class CadToolPreviewRenderer
         new SolidColorBrush(Color.FromRgb(255, 90, 90)),
         2.5,
         new DashStyle(new double[] { 6, 4 }, 0));
+    private readonly Pen _trimRemainderPen = new(
+        new SolidColorBrush(Color.FromRgb(100, 220, 120)),
+        2.5);
+    private readonly Pen _trimRemovalPen = new(
+        new SolidColorBrush(Color.FromRgb(100, 220, 120)),
+        2.5,
+        new DashStyle(new double[] { 6, 4 }, 0));
     private readonly Pen _measurementVectorPen = new(
         new SolidColorBrush(Color.FromRgb(255, 190, 70)),
         1.5);
@@ -81,7 +88,8 @@ public sealed class CadToolPreviewRenderer
 
     public void DrawActiveToolPreview(
         DrawingContext context,
-        CadWorkspace? workspace)
+        CadWorkspace? workspace,
+        ToolPreviewDescriptor? descriptor = null)
     {
         ArgumentNullException.ThrowIfNull(context);
 
@@ -93,12 +101,15 @@ public sealed class CadToolPreviewRenderer
         }
 
         ICadTool activeTool = _workspace.ToolController.ActiveTool;
-        _ = TryDrawToolProvidedDescriptorPreview(
-            context,
-            activeTool) ||
-            TryDrawToolProvidedEntityPreview(
-                context,
-                activeTool);
+        if (descriptor is not null)
+        {
+            DrawPreviewDescriptor(context, descriptor);
+        }
+        else
+        {
+            _ = TryDrawToolProvidedDescriptorPreview(context, activeTool) ||
+                TryDrawToolProvidedEntityPreview(context, activeTool);
+        }
 
         if (activeTool is TwoPointToolBase twoPointTool)
         {
@@ -185,7 +196,8 @@ public sealed class CadToolPreviewRenderer
     {
         DrawEntitiesPreview(
             context,
-            descriptor.Entities);
+            descriptor.Entities,
+            descriptor.EntityHighlightKind is { } kind ? GetHighlightedEntityPen(kind) : _previewPen);
         DrawEntitiesPreview(
             context,
             descriptor.HighlightedEntities,
@@ -228,6 +240,8 @@ public sealed class CadToolPreviewRenderer
         {
             ToolPreviewHighlightKind.Addition => _additionPreviewHighlightPen,
             ToolPreviewHighlightKind.Removal => _removalPreviewHighlightPen,
+            ToolPreviewHighlightKind.TrimRemainder => _trimRemainderPen,
+            ToolPreviewHighlightKind.TrimRemoval => _trimRemovalPen,
             _ => _modifyPreviewHighlightPen
         };
     }

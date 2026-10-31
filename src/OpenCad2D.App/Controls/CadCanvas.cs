@@ -225,9 +225,19 @@ public sealed class CadCanvas : Control
 
         IReadOnlyList<CadEntity> renderableEntities = GetRenderableEntities();
         RenderedEntityCount = renderableEntities.Count;
+        ToolPreviewDescriptor? preview = Workspace.ToolController.ActiveTool is IToolPreviewDescriptorProvider provider
+            ? provider.GetPreviewDescriptor(Workspace.Context)
+            : null;
+        HashSet<EntityId>? replacedEntityIds = preview is { ReplacedEntityIds.Count: > 0 }
+            ? new HashSet<EntityId>(preview.ReplacedEntityIds)
+            : null;
 
         foreach (CadEntity entity in renderableEntities)
         {
+            if (replacedEntityIds?.Contains(entity.Id) == true)
+            {
+                continue;
+            }
             bool isSelected = Workspace.SelectionSet.Contains(entity.Id);
             Pen pen = GetOrCreateEntityPen(
                 entity,
@@ -243,7 +253,7 @@ public sealed class CadCanvas : Control
                 fillBrush);
         }
 
-        DrawActiveToolPreview(context);
+        DrawActiveToolPreview(context, preview);
         DrawTrackingLines(context);
         DrawSmartPointMarkers(context);
         DrawCrosshair(context);
@@ -1723,11 +1733,12 @@ public sealed class CadCanvas : Control
                 keyModifiers));
     }
 
-    private void DrawActiveToolPreview(DrawingContext context)
+    private void DrawActiveToolPreview(DrawingContext context, ToolPreviewDescriptor? descriptor)
     {
         _toolPreviewRenderer.DrawActiveToolPreview(
             context,
-            Workspace);
+            Workspace,
+            descriptor);
     }
 
     private async void OnPointerPressed(

@@ -24,7 +24,7 @@ Headless window coverage in `CommandHudKeyboardTests` exercises Enter/All, point
 The following checks supplement automation; they are not a record of a completed desktop run.
 
 - Start TRIM. Verify the HUD says **1/2** and explains choosing an edge or Enter/All. Pick a boundary and verify it immediately says **2/2**, including what Enter will do.
-- Move over the unwanted portion, verify the dashed removal preview, then click inside it. Repeat on several sides without restarting the command.
+- Move over the unwanted portion: cutting edges stay red, retained fragments are solid green and the removed interval is dashed green with clear gaps. Repeat with All cutting edges: the hovered target must not have a red overlay or its original solid stroke underneath the dashed portion. Move away and verify its normal appearance returns without marking the document dirty. Then click inside the unwanted portion. Repeat on several sides without restarting the command.
 - Try a pick directly on an intersection. Verify that nothing is removed and the local feedback explains moving inside a side.
 - Near an intersection, verify that an explicit boundary does not prevent selecting the target underneath it.
 - Hold Ctrl, move over another edge and Ctrl-click. Verify the candidate guidance, absence of a removal preview, and updated edge count. Release Ctrl and verify normal trimming resumes.

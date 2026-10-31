@@ -29,7 +29,7 @@ Select entity side to trim
 
 Therefore the active snap set for `TrimTool` is `SnapKind.EntityOnly` in every phase. Endpoint, midpoint, center, quadrant, intersection, nearest, perpendicular, tangent and grid snaps are intentionally disabled while Trim is active. This avoids misleading markers and prevents vertex snaps from suggesting that the command is asking for a geometric point when it is actually asking for an entity portion.
 
-Trim preview must use the same native interval-selection pipeline as the final operation. The kept replacement geometry is exposed as normal preview geometry, while the interval that will be removed is exposed as a removal highlight and rendered dashed. This avoids a mismatch where the UI shows an approximate or line-only removal preview but the command commits a different native curve fragment.
+Trim preview must use the same native interval-selection pipeline as the final operation. Kept replacement geometry uses the `TrimRemainder` semantic role (solid green), while the removed interval uses `TrimRemoval` (dashed green). Cutting edges remain red. The descriptor visually replaces the hovered source through `ReplacedEntityIds`, so its original solid stroke cannot fill the dash gaps. This does not mutate document geometry or visibility. This avoids a mismatch where the UI shows an approximate or line-only removal preview but the command commits a different native curve fragment.
 
 Trim rejects a pick whose projection lies on a cutting intersection within `GeometryTolerance.Distance`: it does not guess which adjacent interval should be removed. This rule applies to both committed fragments and the removed-interval preview; a pick inside either adjacent interval remains valid.
 
@@ -759,10 +759,10 @@ The removed preview interval must be produced by the shared curve-splitting pipe
 
 Preview geometry for Trim, Break and Extend must be generated from the same native curve-editing pipeline used by the final command.
 
-- Removed intervals are represented with `ToolPreviewHighlightKind.Removal`.
+- Removed intervals are represented with `ToolPreviewHighlightKind.Removal`, or `TrimRemoval` for TRIM's green dashed preview.
 - Added extension intervals are represented with `ToolPreviewHighlightKind.Addition`.
 - Selected cutting edges, boundaries or break targets remain visible as `ToolPreviewHighlightKind.Emphasis` overlays while the command waits for the next point/entity.
-- TRIM and EXTEND previews keep the hovered target visible as an emphasis overlay when a valid preview exists.
+- EXTEND previews keep the hovered target visible as an emphasis overlay when a valid preview exists. TRIM instead replaces its normal drawing with solid green retained fragments and a dashed green removed fragment, excluding the hovered target from red cutting-edge overlays even in All mode.
 - TRIM and EXTEND previews show a hot point marker on the picked side/endpoint so the next commit point is explicit.
 - When TRIM or EXTEND cannot build a preview over a hovered target, the status message uses the same granular failure wording as the commit click: missing intersections, wrong picked side, unsupported target, or non-editable target.
 - BREAK POINT and BREAK SEGMENT follow the same rule during hover: invalid preview positions report the same endpoint, vertex, off-entity or coincident-point reason that the commit click would report.

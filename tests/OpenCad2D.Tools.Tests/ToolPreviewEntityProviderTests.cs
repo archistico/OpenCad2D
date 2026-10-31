@@ -525,7 +525,7 @@ public sealed class ToolPreviewEntityProviderTests
         ToolPreviewDescriptor descriptor = provider.GetPreviewDescriptor(context);
 
         Assert.NotEmpty(descriptor.Entities);
-        Assert.Equal(ToolPreviewHighlightKind.Removal, descriptor.HighlightedEntityKind);
+        Assert.Equal(ToolPreviewHighlightKind.TrimRemoval, descriptor.HighlightedEntityKind);
         var highlighted = Assert.Single(descriptor.HighlightedEntities.OfType<LineEntity>());
         Assert.Equal(new Point2D(5, 0), highlighted.Start);
         Assert.Equal(new Point2D(10, 0), highlighted.End);
@@ -558,7 +558,7 @@ public sealed class ToolPreviewEntityProviderTests
         var provider = Assert.IsAssignableFrom<IToolPreviewDescriptorProvider>(tool);
         ToolPreviewDescriptor descriptor = provider.GetPreviewDescriptor(context);
 
-        Assert.Equal(ToolPreviewHighlightKind.Removal, descriptor.HighlightedEntityKind);
+        Assert.Equal(ToolPreviewHighlightKind.TrimRemoval, descriptor.HighlightedEntityKind);
         Assert.NotEmpty(descriptor.Entities.OfType<ArcEntity>());
         Assert.Single(descriptor.HighlightedEntities.OfType<ArcEntity>());
     }
