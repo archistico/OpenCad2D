@@ -242,6 +242,7 @@ public sealed class CadToolPreviewRenderer
             ToolPreviewHighlightKind.Removal => _removalPreviewHighlightPen,
             ToolPreviewHighlightKind.TrimRemainder => _trimRemainderPen,
             ToolPreviewHighlightKind.TrimRemoval => _trimRemovalPen,
+            ToolPreviewHighlightKind.ExtendAddition => _trimRemovalPen,
             _ => _modifyPreviewHighlightPen
         };
     }

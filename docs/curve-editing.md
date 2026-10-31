@@ -760,16 +760,16 @@ The removed preview interval must be produced by the shared curve-splitting pipe
 Preview geometry for Trim, Break and Extend must be generated from the same native curve-editing pipeline used by the final command.
 
 - Removed intervals are represented with `ToolPreviewHighlightKind.Removal`, or `TrimRemoval` for TRIM's green dashed preview.
-- Added extension intervals are represented with `ToolPreviewHighlightKind.Addition`.
+- EXTEND's added intervals use `ToolPreviewHighlightKind.ExtendAddition` (dashed green); its existing geometry uses `Addition` (solid green).
 - Selected cutting edges, boundaries or break targets remain visible as `ToolPreviewHighlightKind.Emphasis` overlays while the command waits for the next point/entity.
-- EXTEND previews keep the hovered target visible as an emphasis overlay when a valid preview exists. TRIM instead replaces its normal drawing with solid green retained fragments and a dashed green removed fragment, excluding the hovered target from red cutting-edge overlays even in All mode.
+- EXTEND and TRIM visually replace the hovered target through `ReplacedEntityIds`. EXTEND shows existing geometry solid green and its native added interval dashed green; TRIM shows retained fragments solid green and its removed interval dashed green. Both exclude the hovered target from red boundary overlays even in All mode, preventing full-source strokes from masking the simulation.
 - TRIM and EXTEND previews show a hot point marker on the picked side/endpoint so the next commit point is explicit.
 - When TRIM or EXTEND cannot build a preview over a hovered target, the status message uses the same granular failure wording as the commit click: missing intersections, wrong picked side, unsupported target, or non-editable target.
 - BREAK POINT and BREAK SEGMENT follow the same rule during hover: invalid preview positions report the same endpoint, vertex, off-entity or coincident-point reason that the commit click would report.
 - Break-point commands show point markers so the user can see the projected native point that will be used by the operation.
 - The full replacement entity may be previewed normally, but the operation-specific interval must be highlighted separately.
 
-This prevents misleading previews where a sampled or visually approximate interval differs from the entity that will be committed to the document. It also prevents the selected target/boundary from visually disappearing while hovering dense geometry.
+This prevents misleading previews where a sampled or visually approximate interval differs from the entity that will be committed to the document. Boundaries stay emphasized and target geometry remains represented by the transient simulation while hovering dense geometry.
 
 
 ## Command-line UX for native curve editing

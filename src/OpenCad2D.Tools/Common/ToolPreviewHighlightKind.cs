@@ -28,5 +28,10 @@ public enum ToolPreviewHighlightKind
     /// <summary>
     /// Native interval that will be removed from the hovered trim target.
     /// </summary>
-    TrimRemoval
+    TrimRemoval,
+
+    /// <summary>
+    /// Native interval that will be added beyond the picked endpoint by Extend.
+    /// </summary>
+    ExtendAddition
 }

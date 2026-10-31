@@ -39,6 +39,97 @@ public sealed class CommandHudKeyboardTests : IClassFixture<CommandHudTestSessio
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public Task Extend_HoverPreview_ShouldDrawSolidExistingPartDashedAdditionAndRedBoundary(bool all) => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareExtendDrawing(window, out LineEntity target);
+        StartCommand(window, "EXTEND");
+        if (all)
+            Press(window, Key.Enter);
+        else
+            TrimPointer(window, new Point(350, 120), MouseButton.Left);
+        TrimPointer(window, new Point(240, 200));
+        var drawing = new DrawingGroup();
+        using (DrawingContext context = drawing.Open())
+            window.FindControl<CadCanvas>("CadCanvas")!.Render(context);
+        GeometryDrawing[] strokes = GetDrawingLeaves(drawing).OfType<GeometryDrawing>().ToArray();
+        Assert.Contains(strokes, stroke => IsLine(stroke, new Point(100, 200), new Point(250, 200)) &&
+            HasStrokeColor(stroke, Color.FromRgb(100, 220, 120)) && stroke.Pen?.DashStyle is null);
+        Assert.Contains(strokes, stroke => IsLine(stroke, new Point(250, 200), new Point(350, 200)) &&
+            HasStrokeColor(stroke, Color.FromRgb(100, 220, 120)) && stroke.Pen?.DashStyle?.Dashes?.Count > 0);
+        Assert.Contains(strokes, stroke => IsLine(stroke, new Point(350, 100), new Point(350, 300)) &&
+            HasStrokeColor(stroke, Color.FromRgb(255, 90, 90)));
+        Assert.DoesNotContain(strokes, stroke => IsLine(stroke, new Point(100, 200), new Point(350, 200)));
+        Assert.Same(target, viewModel.Workspace.Document.Entities.GetRequired(target.Id));
+        Assert.False(viewModel.IsDirty);
+        TrimPointer(window, new Point(450, 250));
+        Assert.Empty(Assert.IsType<ExtendTool>(viewModel.Workspace.ToolController.ActiveTool)
+            .GetPreviewDescriptor(viewModel.Workspace.Context).ReplacedEntityIds);
+    });
+
+    [Fact]
+    public Task Extend_AllExtendEdgesUndoAndFinish_ShouldPreserveDirtyStateAndKeyboardWorkflow() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareExtendDrawing(window, out LineEntity target);
+        StartCommand(window, "EXTEND");
+        Assert.Contains("1/2", viewModel.CommandHudState.Prompt);
+        Press(window, Key.A);
+        Assert.Contains("2/2", viewModel.CommandHudState.Prompt);
+        TrimPointer(window, new Point(240, 200), MouseButton.Left);
+        Assert.Equal(new Point2D(350, 200), Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.GetRequired(target.Id)).End);
+        Assert.True(viewModel.IsDirty);
+        Assert.IsType<ExtendTool>(viewModel.Workspace.ToolController.ActiveTool);
+        Press(window, Key.E);
+        Assert.Contains("1/2", viewModel.CommandHudState.Prompt);
+        Press(window, Key.U);
+        Assert.Same(target, viewModel.Workspace.Document.Entities.GetRequired(target.Id));
+        Assert.False(viewModel.IsDirty);
+        TrimPointer(window, new Point(350, 120), MouseButton.Left);
+        Press(window, Key.Enter);
+        Assert.IsType<SelectionTool>(viewModel.Workspace.ToolController.ActiveTool);
+    });
+
+    [Fact]
+    public Task Extend_RightClick_ShouldStartAllThenFinishToSelection() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareExtendDrawing(window, out _);
+        StartCommand(window, "EXTEND");
+        TrimPointer(window, new Point(200, 150), MouseButton.Right);
+        Assert.Equal(ExtendToolState.WaitingForTargetEntity, Assert.IsType<ExtendTool>(viewModel.Workspace.ToolController.ActiveTool).State);
+        TrimPointer(window, new Point(200, 150), MouseButton.Right);
+        Assert.IsType<SelectionTool>(viewModel.Workspace.ToolController.ActiveTool);
+        Assert.False(viewModel.IsDirty);
+    });
+
+    [Fact]
+    public Task Extend_MiddleHover_ShouldShowActionableHudFeedbackThenRecover() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareExtendDrawing(window, out _);
+        StartCommand(window, "EXTEND");
+        TrimPointer(window, new Point(350, 120), MouseButton.Left);
+        TrimPointer(window, new Point(175, 200));
+        TextBlock feedback = window.FindControl<TextBlock>("HudCommandFeedback")!;
+        Assert.True(feedback.IsVisible);
+        Assert.Contains("ambiguous", feedback.Text);
+        Assert.False(Assert.IsType<ExtendTool>(viewModel.Workspace.ToolController.ActiveTool).HasPreview);
+        TrimPointer(window, new Point(240, 200));
+        Assert.Contains("add the dashed green", feedback.Text);
+    });
+
+    private static MainWindowViewModel PrepareExtendDrawing(MainWindow window, out LineEntity target)
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        window.FindControl<CadCanvas>("CadCanvas")!.ApplyViewportState(
+            new OpenCad2D.Persistence.Dto.ViewportStateDto { Zoom = 1, PanX = 0, PanY = 0 });
+        target = new LineEntity(new Point2D(100, 200), new Point2D(250, 200));
+        viewModel.Workspace.Document.AddEntity(new LineEntity(new Point2D(350, 100), new Point2D(350, 300)));
+        viewModel.Workspace.Document.AddEntity(target);
+        viewModel.Workspace.MarkSaved();
+        return viewModel;
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public Task Trim_HoverPreview_ShouldDrawGreenResultAndDashedRemovalWithRedEdges(bool all) => Run(window =>
     {
         MainWindowViewModel viewModel = PrepareTrimDrawing(window, out LineEntity target);

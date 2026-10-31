@@ -51,7 +51,7 @@ public sealed class ExtendToolTests
         Assert.Equal(ToolResultKind.Started, result.Kind);
         Assert.Equal(ExtendToolState.WaitingForTargetEntity, tool.State);
         Assert.Equal(boundary.Id, tool.BoundaryEntityId);
-        Assert.NotNull(context.CurrentBasePoint);
+        Assert.Null(context.CurrentBasePoint);
     }
 
     [Fact]
@@ -123,14 +123,14 @@ public sealed class ExtendToolTests
 
         ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
 
-        Assert.Equal(ToolPreviewHighlightKind.Addition, descriptor.HighlightedEntityKind);
+        Assert.Equal(ToolPreviewHighlightKind.ExtendAddition, descriptor.HighlightedEntityKind);
         LineEntity extension = Assert.IsType<LineEntity>(Assert.Single(descriptor.HighlightedEntities));
         Assert.Equal(new Point2D(5, 0), extension.Start);
         Assert.Equal(new Point2D(10, 0), extension.End);
     }
 
     [Fact]
-    public void GetPreviewDescriptor_WithValidPreview_ShouldHighlightTargetAndMarkPickedEndpoint()
+    public void GetPreviewDescriptor_WithValidPreview_ShouldReplaceTargetAndMarkPickedEndpoint()
     {
         var context = CreateContextWithBoundaryAndTarget(
             out LineEntity boundary,
@@ -147,15 +147,14 @@ public sealed class ExtendToolTests
 
         ToolPreviewDescriptor descriptor = tool.GetPreviewDescriptor(context);
 
-        Assert.Equal(2, descriptor.EntityOverlays.Count);
+        Assert.Single(descriptor.EntityOverlays);
         Assert.Contains(descriptor.EntityOverlays, overlay =>
             overlay.Kind == ToolPreviewHighlightKind.Emphasis &&
             overlay.Entities.Count == 1 &&
             ReferenceEquals(boundary, overlay.Entities[0]));
-        Assert.Contains(descriptor.EntityOverlays, overlay =>
-            overlay.Kind == ToolPreviewHighlightKind.Emphasis &&
-            overlay.Entities.Count == 1 &&
-            ReferenceEquals(target, overlay.Entities[0]));
+        Assert.Equal(target.Id, Assert.Single(descriptor.ReplacedEntityIds));
+        Assert.Same(target, Assert.Single(descriptor.Entities));
+        Assert.Equal(ToolPreviewHighlightKind.Addition, descriptor.EntityHighlightKind);
 
         ToolPreviewMarker marker = Assert.Single(descriptor.Markers);
         Assert.Equal(new Point2D(5, 0), marker.Position);
@@ -391,9 +390,7 @@ public sealed class ExtendToolTests
         Assert.Equal(ToolResultKind.Started, result.Kind);
         Assert.Equal(ExtendToolState.WaitingForTargetEntity, tool.State);
         Assert.Equal(boundary.Id, tool.BoundaryEntityId);
-        Assert.Equal(
-            "Select the endpoint side to extend. Highlighted preview shows the portion that will be added.",
-            result.Message);
+        Assert.Contains("dashed green", result.Message);
     }
 
     [Fact]
@@ -422,9 +419,7 @@ public sealed class ExtendToolTests
             new PointerInfo(new Point2D(5, 0)));
 
         Assert.Equal(ToolResultKind.Updated, result.Kind);
-        Assert.Equal(
-            "Extend preview updated. Highlighted portion will be added.",
-            result.Message);
+        Assert.Contains("add the dashed green", result.Message);
     }
 
     [Fact]

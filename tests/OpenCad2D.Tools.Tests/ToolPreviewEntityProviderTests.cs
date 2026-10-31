@@ -493,7 +493,7 @@ public sealed class ToolPreviewEntityProviderTests
         var preview = Assert.Single(descriptor.Entities.OfType<LineEntity>());
         var highlighted = Assert.Single(descriptor.HighlightedEntities.OfType<LineEntity>());
         Assert.Equal(new Point2D(0, 0), preview.Start);
-        Assert.Equal(new Point2D(10, 0), preview.End);
+        Assert.Equal(new Point2D(5, 0), preview.End);
         Assert.Equal(new Point2D(5, 0), highlighted.Start);
         Assert.Equal(new Point2D(10, 0), highlighted.End);
     }

@@ -9,6 +9,77 @@ namespace OpenCad2D.Core.Editing;
 /// </summary>
 public static class CadExtendService
 {
+    /// <summary>Selects the nearest reachable boundary on the picked endpoint side.</summary>
+    public static CadEntity? ExtendToBoundaries(
+        CadEntity target,
+        IReadOnlyList<CadEntity> boundaries,
+        Point2D targetPickPoint,
+        GeometryTolerance? tolerance = null)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(boundaries);
+        GeometryTolerance effective = tolerance ?? GeometryTolerance.Default;
+        if (!TryGetPickedEndpoint(target, targetPickPoint, out Point2D endpoint, effective))
+        {
+            return null;
+        }
+
+        CadEntity[] edges = boundaries.Where(edge => edge.Id != target.Id).ToArray();
+        if (edges.Any(edge => edge.DistanceTo(endpoint) <= effective.Distance))
+        {
+            return null;
+        }
+
+        return edges.Select(edge => ExtendToBoundary(target, edge, targetPickPoint, effective))
+            .OfType<CadEntity>()
+            .OrderBy(entity => GetExtensionSize(target, entity))
+            .FirstOrDefault();
+    }
+
+    /// <summary>Resolves the picked side without arbitrarily choosing an equidistant endpoint.</summary>
+    public static bool TryGetPickedEndpoint(
+        CadEntity target,
+        Point2D pickPoint,
+        out Point2D endpoint,
+        GeometryTolerance? tolerance = null)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        GeometryTolerance effective = tolerance ?? GeometryTolerance.Default;
+        (Point2D start, Point2D end) = target switch
+        {
+            LineEntity line => (line.Start, line.End),
+            ArcEntity arc => (arc.Geometry.StartPoint, arc.Geometry.EndPoint),
+            EllipticalArcEntity arc => (arc.StartPoint, arc.EndPoint),
+            PolylineEntity { IsClosed: false, Vertices.Count: >= 2 } polyline => (polyline.Vertices[0], polyline.Vertices[^1]),
+            _ => (default, default)
+        };
+        endpoint = default;
+        Point2D projected = target.GetClosestPoint(pickPoint);
+        double startDistance = projected.DistanceTo(start);
+        double endDistance = projected.DistanceTo(end);
+        if (start.DistanceTo(end) <= effective.Distance ||
+            Math.Abs(startDistance - endDistance) <= effective.Distance)
+        {
+            return false;
+        }
+        endpoint = startDistance < endDistance ? start : end;
+        return true;
+    }
+
+    private static double GetExtensionSize(CadEntity source, CadEntity extended)
+    {
+        return (source, extended) switch
+        {
+            (LineEntity a, LineEntity b) => b.Start.DistanceTo(b.End) - a.Start.DistanceTo(a.End),
+            (ArcEntity a, ArcEntity b) =>
+                GetDirectedParameterDistance(b.StartAngle.Radians, b.EndAngle.Radians, b.IsCounterClockwise) -
+                GetDirectedParameterDistance(a.StartAngle.Radians, a.EndAngle.Radians, a.IsCounterClockwise),
+            (EllipticalArcEntity a, EllipticalArcEntity b) => b.SweepRadians - a.SweepRadians,
+            (PolylineEntity a, PolylineEntity b) => a.Vertices[0].DistanceTo(b.Vertices[0]) + a.Vertices[^1].DistanceTo(b.Vertices[^1]),
+            _ => double.PositiveInfinity
+        };
+    }
+
     public static CadEntity? ExtendToBoundary(
         CadEntity target,
         CadEntity boundary,
@@ -19,6 +90,16 @@ public static class CadExtendService
         ArgumentNullException.ThrowIfNull(boundary);
 
         GeometryTolerance effectiveTolerance = tolerance ?? GeometryTolerance.Default;
+
+        if (target.Id == boundary.Id ||
+            !TryGetPickedEndpoint(target, targetPickPoint, out Point2D endpoint, effectiveTolerance) ||
+            boundary.DistanceTo(endpoint) <= effectiveTolerance.Distance)
+        {
+            return null;
+        }
+
+        // Use the resolved native endpoint for every curve-specific direction decision.
+        targetPickPoint = endpoint;
 
         return target switch
         {
@@ -207,6 +288,11 @@ public static class CadExtendService
         Point2D fixedPoint = pickedStart ? vertices[1] : vertices[^2];
         Point2D endpoint = pickedStart ? vertices[0] : vertices[^1];
 
+        if (fixedPoint.DistanceTo(endpoint) <= tolerance.Distance)
+        {
+            return null;
+        }
+
         Line2D infiniteLine = Line2D.FromPoints(fixedPoint, endpoint);
         LineSegment2D endpointSegment = pickedStart
             ? new LineSegment2D(vertices[1], vertices[0])
@@ -369,7 +455,7 @@ public static class CadExtendService
                 Point = point,
                 Parameter = LineParameterService.GetParameter(target, point, tolerance)
             })
-            .Where(item => item.Parameter < -tolerance.Parameter)
+            .Where(item => item.Parameter < 0 && item.Point.DistanceTo(target.Start) > tolerance.Distance)
             .OrderByDescending(item => item.Parameter)
             .Select(item => (Point2D?)item.Point)
             .FirstOrDefault();
@@ -386,7 +472,7 @@ public static class CadExtendService
                 Point = point,
                 Parameter = LineParameterService.GetParameter(target, point, tolerance)
             })
-            .Where(item => item.Parameter > 1.0 + tolerance.Parameter)
+            .Where(item => item.Parameter > 1.0 && item.Point.DistanceTo(target.End) > tolerance.Distance)
             .OrderBy(item => item.Parameter)
             .Select(item => (Point2D?)item.Point)
             .FirstOrDefault();

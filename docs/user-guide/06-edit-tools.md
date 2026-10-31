@@ -87,7 +87,16 @@ If you selected the wrong boundary, use `E` / `Edges` to choose the boundaries a
 
 Extend lengthens entities until they meet selected boundaries. It is the counterpart of Trim and is useful when lines or curves need to reach an existing edge.
 
-As with Trim, the selection phase should feel entity-oriented. The command should make it clear which entity will be extended and which boundary is being used.
+The HUD labels two steps:
+
+1. **Choose boundaries (1/2).** Click a visible boundary, or press Enter/right click or `A` / `All` to use all visible supported curves. Selected boundaries appear red. Ctrl-click adds boundaries during step 2.
+2. **Choose the endpoint (2/2).** Hover near the end of the object you want to lengthen. Solid green shows the existing geometry; dashed green shows the portion that will be added. Click near that endpoint to apply the extension to the nearest reachable boundary. You can extend other objects without restarting. Moving away clears the simulation without changing the drawing.
+
+Click closer to an endpoint rather than at the middle: an equidistant pick does not choose a side and leaves the drawing unchanged. An endpoint already touching a boundary does not jump through it to another intersection. Failure details and recovery instructions appear in the HUD.
+
+Use `E` / `Edges` to choose different boundaries while keeping completed extensions. `U` / `Undo` undoes an extension made during the current command only when it is the next undoable action; it never undoes unrelated work. Enter/right click in step 2 finishes and returns to Selection. Esc exits while keeping completed extensions.
+
+Targets can be lines, circular arcs, elliptical arcs and open polylines with a straight segment at the chosen end. Curved polyline ends, closed curves and splines cannot be extended. Boundaries can be lines, circles, arcs, ellipses, elliptical arcs and polylines. Visible locked layers can supply reference boundaries; targets on locked layers cannot be changed. Hidden boundaries are ignored. Changed or removed geometry invalidates the old preview and is refreshed before the next operation.
 
 ## Break Pt
 
