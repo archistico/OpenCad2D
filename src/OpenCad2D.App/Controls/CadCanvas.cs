@@ -40,6 +40,7 @@ public sealed class CadCanvas : Control
     private readonly CadToolPreviewRenderer _toolPreviewRenderer;
     private IApplicationLogger _logger = TraceApplicationLogger.Instance;
     private Point? _pointerScreenPoint;
+    private Point2D _lastMousePosition;
     private bool _isPointerInside;
     private readonly Dictionary<PenCacheKey, Pen> _penCache = new();
     private readonly Dictionary<BrushCacheKey, IBrush> _brushCache = new();
@@ -1718,15 +1719,17 @@ public sealed class CadCanvas : Control
 
     private void NotifyWorkspaceChanged(
         ToolResult result,
-        Point2D mousePosition,
+        Point2D? mousePosition = null,
         bool isPointerPressed = false,
         KeyModifiers keyModifiers = KeyModifiers.None)
     {
+        // Keyboard actions and marker cleanup do not move the drawing cursor.
+        _lastMousePosition = mousePosition ?? _lastMousePosition;
         WorkspaceChanged?.Invoke(
             this,
             new CadCanvasWorkspaceChangedEventArgs(
                 result,
-                mousePosition,
+                _lastMousePosition,
                 _currentSnapCandidate,
                 isPointerPressed,
                 _pointerScreenPoint,
@@ -2030,8 +2033,7 @@ public sealed class CadCanvas : Control
             ApplySmartPointLifecycle(result);
 
             NotifyWorkspaceChanged(
-                result,
-                Point2D.Origin);
+                result);
 
             InvalidateVisual();
         }
@@ -2359,8 +2361,7 @@ public sealed class CadCanvas : Control
         ClearSmartPoints();
 
         NotifyWorkspaceChanged(
-            ToolResult.None(),
-            Point2D.Origin);
+            ToolResult.None());
 
         InvalidateVisual();
     }

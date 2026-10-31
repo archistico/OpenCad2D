@@ -16,6 +16,8 @@ The following desktop checks supplement automation for native keyboard layout, c
 | Clear one edited field using Backspace/Delete; navigate away | Only that field's override is cleared; other measurements remain. Enter on a deliberately empty edited field reports an error. |
 | POINT, enter only X, Tab, Enter | No point is created. Enter Y and confirm to create the exact UCS point. |
 | RECTANGLE, choose first corner, enter Width, Tab, Height, Enter | Navigation works even before a nonzero height is previewed; exact dimensions are committed. |
+| RECTANGLE, first corner away from drawing origin, move toward each of the four quadrants, type Width, Tab, Height, Enter; repeat after zoom/pan | Typed sizes preserve the mouse preview direction through typing and field navigation. Preview and final rectangle agree; Undo/Redo preserves the result. |
+| RECTANGLE, type dimensions immediately after the first click; repeat while moving the mouse to another quadrant between typing and Enter | With no indicated direction, sizes use positive UCS axes. Real mouse motion can change quadrant without changing typed sizes; marker cleanup never moves the drawing cursor to the origin. |
 | POLYGON, type `12`, Tab, move mouse, Enter | Twelve sides remain staged; the tool advances to center selection. `257`, fractions and overflow values are rejected. |
 | DIVIDE with a selected line, type `12`, Tab, move mouse, Enter | Eleven division points; the original line remains unchanged. |
 | POLYLINE with a start point, type distance, Tab, press A/L/U/C where offered | The requested option runs; previous numeric overrides do not leak into the new mode. |

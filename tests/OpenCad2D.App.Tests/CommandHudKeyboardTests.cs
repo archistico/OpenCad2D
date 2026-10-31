@@ -37,6 +37,84 @@ public sealed class CommandHudKeyboardTests : IClassFixture<CommandHudTestSessio
     public CommandHudKeyboardTests(CommandHudTestSession fixture) => _fixture = fixture;
 
     [Theory]
+    [InlineData(1, 1, false)]
+    [InlineData(1, -1, false)]
+    [InlineData(-1, 1, false)]
+    [InlineData(-1, -1, false)]
+    [InlineData(1, 1, true)]
+    [InlineData(1, -1, true)]
+    [InlineData(-1, 1, true)]
+    [InlineData(-1, -1, true)]
+    public Task Rectangle_HudDimensionsAwayFromOrigin_ShouldKeepMouseQuadrantThroughTypingAndTab(int xSign, int ySign, bool transformedViewport) => Run(window =>
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        CadCanvas canvas = window.FindControl<CadCanvas>("CadCanvas")!;
+        canvas.ApplyViewportState(transformedViewport
+            ? new OpenCad2D.Persistence.Dto.ViewportStateDto { Zoom = 2, PanX = 600, PanY = 500 }
+            : new OpenCad2D.Persistence.Dto.ViewportStateDto { Zoom = 1, PanX = 0, PanY = 0 });
+        Point2D first = canvas.Viewport.ScreenToModel(new Point(300, 250));
+        StartCommand(window, "RECTANGLE");
+        TrimPointer(window, new Point(300, 250), MouseButton.Left);
+        TrimPointer(window, new Point(300 + 60 * xSign, 250 + 40 * ySign));
+        var tool = Assert.IsType<RectangleTool>(viewModel.Workspace.ToolController.ActiveTool);
+        Assert.Equal(canvas.Viewport.ScreenToModel(new Point(300 + 60 * xSign, 250 + 40 * ySign)), tool.GetPreviewEntity()!.Vertices[2]);
+
+        window.KeyTextInput("20");
+        Press(window, Key.Tab);
+        AssertFocusedField(window, CommandHudFieldKind.Height);
+        Assert.Equal(new Point2D(first.X + 20 * xSign, first.Y + 40 / canvas.Viewport.Scale * ySign), tool.GetPreviewEntity()!.Vertices[2]);
+        window.KeyTextInput("10");
+        Refresh(window);
+        Point2D opposite = new(first.X + 20 * xSign, first.Y + 10 * ySign);
+        Assert.Equal(opposite, tool.GetPreviewEntity()!.Vertices[2]);
+        Press(window, Key.Enter);
+
+        var rectangle = Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>());
+        Assert.Equal(first, rectangle.Vertices[0]);
+        Assert.Equal(opposite, rectangle.Vertices[2]);
+        Assert.True(viewModel.IsDirty);
+        viewModel.Undo();
+        Assert.Empty(viewModel.Workspace.Document.Entities.All);
+        Assert.False(viewModel.IsDirty);
+        viewModel.Redo();
+        Assert.Equal(opposite, Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>()).Vertices[2]);
+    });
+
+    [Fact]
+    public Task Rectangle_HudImmediatelyAfterFirstClick_ShouldUsePositiveDefaultDirection() => Run(window =>
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        window.FindControl<CadCanvas>("CadCanvas")!.ApplyViewportState(
+            new OpenCad2D.Persistence.Dto.ViewportStateDto { Zoom = 1, PanX = 0, PanY = 0 });
+        StartCommand(window, "RECTANGLE");
+        TrimPointer(window, new Point(300, 250), MouseButton.Left);
+        window.KeyTextInput("20");
+        Press(window, Key.Tab);
+        window.KeyTextInput("10");
+        Press(window, Key.Enter);
+        Assert.Equal(new Point2D(320, 260), Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>()).Vertices[2]);
+    });
+
+    [Fact]
+    public Task Rectangle_MouseMoveAfterTypedDimensions_ShouldKeepSizeAndAllowChangingQuadrant() => Run(window =>
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        window.FindControl<CadCanvas>("CadCanvas")!.ApplyViewportState(
+            new OpenCad2D.Persistence.Dto.ViewportStateDto { Zoom = 1, PanX = 0, PanY = 0 });
+        StartCommand(window, "RECTANGLE");
+        TrimPointer(window, new Point(300, 250), MouseButton.Left);
+        TrimPointer(window, new Point(360, 290));
+        window.KeyTextInput("20");
+        Press(window, Key.Tab);
+        window.KeyTextInput("10");
+        TrimPointer(window, new Point(240, 210));
+        Assert.Equal("10", AssertFocusedField(window, CommandHudFieldKind.Height).Text);
+        Assert.Equal(new Point2D(280, 240), Assert.IsType<RectangleTool>(viewModel.Workspace.ToolController.ActiveTool).GetPreviewEntity()!.Vertices[2]);
+        Press(window, Key.Enter);
+        Assert.Equal(new Point2D(280, 240), Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<PolylineEntity>()).Vertices[2]);
+    });
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public Task Extend_HoverPreview_ShouldDrawSolidExistingPartDashedAdditionAndRedBoundary(bool all) => Run(window =>
@@ -680,7 +758,8 @@ public sealed class CommandHudKeyboardTests : IClassFixture<CommandHudTestSessio
         Press(window, Key.Tab);
         Press(window, Key.Enter);
 
-        Assert.Equal(25, Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<LineEntity>()).End.X, 8);
+        LineEntity line = Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<LineEntity>());
+        Assert.Equal(25, line.Start.DistanceTo(line.End), 8);
     });
 
     [Theory]

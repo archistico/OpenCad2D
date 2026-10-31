@@ -26,6 +26,8 @@ Use this mode when a boundary contains both straight and curved portions. It is 
 
 Rectangle creates a rectangular shape from two opposite corners. Pick the first corner, then pick the opposite corner. Snaps can be used for both corners, and the HUD can be used when one or both coordinates must be precise.
 
+For exact dimensions, pick the first corner, move the mouse toward the desired opposite corner, type a positive Width, press Tab, type a positive Height and press Enter. Both sizes follow the direction shown by the preview; typing and moving between fields do not reverse it. You can still move the mouse to another quadrant while keeping the entered dimensions. If you type immediately after the first click without indicating a direction, the rectangle follows the positive UCS axes.
+
 This command is useful for rooms, openings, simple furniture outlines, title blocks, frames, and construction geometry.
 
 ## Rectangle by Sides
