@@ -34,7 +34,7 @@ public sealed class AlignToolTests
             new PointerInfo(new Point2D(0, 0)));
 
         Assert.Equal(ToolResultKind.None, result.Kind);
-        Assert.Equal(AlignToolState.WaitingForSourcePoint1, tool.State);
+        Assert.Equal(AlignToolState.WaitingForEntitySelection, tool.State);
         Assert.Null(context.CurrentBasePoint);
     }
 
@@ -68,7 +68,7 @@ public sealed class AlignToolTests
         Assert.Equal(ToolResultKind.Started, result.Kind);
         Assert.Equal(AlignToolState.WaitingForSourcePoint2, tool.State);
         Assert.Equal(new Point2D(5, 5), tool.DestinationPoint1);
-        Assert.Equal(new Point2D(5, 5), context.CurrentBasePoint);
+        Assert.Equal(new Point2D(0, 0), context.CurrentBasePoint);
     }
 
     [Fact]

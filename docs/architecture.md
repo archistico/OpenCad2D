@@ -492,6 +492,8 @@ Currently migrated examples include:
 
 `CadToolPreviewRenderer` now tries the descriptor provider first and then the entity provider. The previous active-tool concrete fallback dispatch has been removed, so tool-specific preview knowledge stays in the tools layer rather than in the app renderer.
 
+ALIGN also implements the descriptor protocol for its selection window, source/destination markers, guide lines and green transformed entities. It composes SelectionTool during in-command object selection and captures editable native sources before collecting references. It revalidates that set before previews and commit; geometry or selection changes require reselection instead of transforming a different or stale set.
+
 ---
 
 ## Application diagnostics

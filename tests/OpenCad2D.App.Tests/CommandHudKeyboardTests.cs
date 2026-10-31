@@ -37,6 +37,140 @@ public sealed class CommandHudKeyboardTests : IClassFixture<CommandHudTestSessio
     public CommandHudKeyboardTests(CommandHudTestSession fixture) => _fixture = fixture;
 
     [Theory]
+    [InlineData("Y", 400)]
+    [InlineData("N", 300)]
+    [InlineData("Enter", 300)]
+    [InlineData("Right", 300)]
+    public Task Align_SelectInsideCommandAndConfirm_ShouldFinishWithExactGeometryAndUndoRedo(string confirm, double endY) => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareAlignDrawing(window, out LineEntity line);
+        StartCommand(window, "ALIGN");
+        Assert.Contains("Select objects", viewModel.CommandHudState.Prompt);
+        Assert.Empty(viewModel.CommandHudState.Fields);
+        TrimPointer(window, new Point(150, 200), MouseButton.Left);
+        Assert.Equal(line.Id, Assert.Single(viewModel.Workspace.SelectionSet.SelectedIds));
+        Press(window, Key.Enter);
+        Assert.Contains("1/5", viewModel.CommandHudState.Prompt);
+        Assert.Equal(2, viewModel.CommandHudState.Fields.Count);
+        PickAlignPairs(window);
+        Assert.Contains("5/5", viewModel.CommandHudState.Prompt);
+        Assert.Empty(viewModel.CommandHudState.Fields);
+        Assert.Same(line, viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+        Assert.False(viewModel.IsDirty);
+        if (confirm == "Right")
+            TrimPointer(window, new Point(450, 350), MouseButton.Right);
+        else
+            Press(window, Enum.Parse<Key>(confirm));
+        Assert.IsType<SelectionTool>(viewModel.Workspace.ToolController.ActiveTool);
+        var actual = Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+        Assert.Equal(350, actual.Start.X, 8);
+        Assert.Equal(200, actual.Start.Y, 8);
+        Assert.Equal(350, actual.End.X, 8);
+        Assert.Equal(endY, actual.End.Y, 8);
+        Assert.True(viewModel.IsDirty);
+        viewModel.Undo();
+        Assert.Same(line, viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+        Assert.False(viewModel.IsDirty);
+        viewModel.Redo();
+        Assert.Equal(endY, Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.GetRequired(line.Id)).End.Y, 8);
+    });
+
+    [Fact]
+    public Task Align_WindowSelection_ShouldSelectMultipleObjectsBeforePointInput() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareAlignDrawing(window, out _);
+        viewModel.Workspace.Document.AddEntity(new LineEntity(new Point2D(100, 230), new Point2D(200, 230)));
+        StartCommand(window, "ALIGN");
+        CadCanvas canvas = window.FindControl<CadCanvas>("CadCanvas")!;
+        Point start = canvas.TranslatePoint(new Point(80, 180), window)!.Value;
+        Point end = canvas.TranslatePoint(new Point(220, 250), window)!.Value;
+        window.MouseDown(start, MouseButton.Left);
+        window.MouseMove(end);
+        Refresh(window);
+        Assert.Single(Assert.IsType<AlignTool>(viewModel.Workspace.ToolController.ActiveTool).GetPreviewDescriptor(viewModel.Workspace.Context).Windows);
+        window.MouseUp(end, MouseButton.Left);
+        Refresh(window);
+        Assert.Equal(2, viewModel.Workspace.SelectionSet.Count);
+        TrimPointer(window, new Point(230, 260), MouseButton.Right);
+        Assert.Contains("1/5", viewModel.CommandHudState.Prompt);
+        Assert.False(viewModel.IsDirty);
+    });
+
+    [Fact]
+    public Task Align_BackAndObjectsOptions_ShouldCorrectReferencesWithoutChangingDrawing() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareAlignDrawing(window, out LineEntity line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
+        StartCommand(window, "ALIGN");
+        PickAlignPairs(window);
+        Press(window, Key.B);
+        Assert.Contains("4/5", viewModel.CommandHudState.Prompt);
+        Assert.False(Assert.IsType<AlignTool>(viewModel.Workspace.ToolController.ActiveTool).HasPreview);
+        TrimPointer(window, new Point(450, 200), MouseButton.Left);
+        Press(window, Key.O);
+        Assert.Contains("Select objects", viewModel.CommandHudState.Prompt);
+        Assert.Empty(viewModel.CommandHudState.Fields);
+        Assert.False(viewModel.IsDirty);
+        Press(window, Key.Escape);
+        Assert.Same(line, viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+    });
+
+    [Fact]
+    public Task Align_ControlYDuringScaleConfirmation_ShouldNotBeTreatedAsYes() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareAlignDrawing(window, out LineEntity line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
+        StartCommand(window, "ALIGN");
+        PickAlignPairs(window);
+        Press(window, Key.Y, RawInputModifiers.Control);
+        Assert.Equal(AlignToolState.WaitingForScaleConfirmation, Assert.IsType<AlignTool>(viewModel.Workspace.ToolController.ActiveTool).State);
+        Assert.Same(line, viewModel.Workspace.Document.Entities.GetRequired(line.Id));
+        Assert.False(viewModel.IsDirty);
+    });
+
+    [Fact]
+    public Task Align_RelativeSecondSource_ShouldUseFirstSourceAsBaseAndShowInvalidPointFeedback() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareAlignDrawing(window, out LineEntity line);
+        viewModel.Workspace.SelectionSet.Select(line.Id);
+        StartCommand(window, "ALIGN");
+        viewModel.SubmitCommandInput("100,200");
+        viewModel.SubmitCommandInput("350,200");
+        viewModel.SubmitCommandInput("@100,0");
+        var tool = Assert.IsType<AlignTool>(viewModel.Workspace.ToolController.ActiveTool);
+        Assert.Equal(new Point2D(200, 200), tool.SourcePoint2);
+        TrimPointer(window, new Point(350, 400));
+        Assert.True(tool.HasPreview);
+        TrimPointer(window, new Point(350, 200), MouseButton.Left);
+        TextBlock feedback = window.FindControl<TextBlock>("HudCommandFeedback")!;
+        Assert.True(feedback.IsVisible);
+        Assert.Contains("different", feedback.Text);
+        Assert.False(tool.HasPreview);
+        viewModel.SubmitCommandInput("@0,200");
+        Press(window, Key.N);
+        Assert.Equal(300, Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.GetRequired(line.Id)).End.Y, 8);
+    });
+
+    private static void PickAlignPairs(MainWindow window)
+    {
+        TrimPointer(window, new Point(100, 200), MouseButton.Left);
+        TrimPointer(window, new Point(350, 200), MouseButton.Left);
+        TrimPointer(window, new Point(200, 200), MouseButton.Left);
+        TrimPointer(window, new Point(350, 400), MouseButton.Left);
+    }
+
+    private static MainWindowViewModel PrepareAlignDrawing(MainWindow window, out LineEntity line)
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        window.FindControl<CadCanvas>("CadCanvas")!.ApplyViewportState(
+            new OpenCad2D.Persistence.Dto.ViewportStateDto { Zoom = 1, PanX = 0, PanY = 0 });
+        line = new LineEntity(new Point2D(100, 200), new Point2D(200, 200));
+        viewModel.Workspace.Document.AddEntity(line);
+        viewModel.Workspace.MarkSaved();
+        return viewModel;
+    }
+
+    [Theory]
     [InlineData(1, 1, false)]
     [InlineData(1, -1, false)]
     [InlineData(-1, 1, false)]

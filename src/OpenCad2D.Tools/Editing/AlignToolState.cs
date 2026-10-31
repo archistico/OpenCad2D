@@ -9,5 +9,6 @@ public enum AlignToolState
     WaitingForDestinationPoint1,
     WaitingForSourcePoint2,
     WaitingForDestinationPoint2,
-    WaitingForScaleConfirmation
+    WaitingForScaleConfirmation,
+    WaitingForEntitySelection
 }

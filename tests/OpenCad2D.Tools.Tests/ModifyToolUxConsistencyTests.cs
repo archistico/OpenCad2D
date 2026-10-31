@@ -65,6 +65,7 @@ public sealed class ModifyToolUxConsistencyTests
 
         context.Selection.Set.Select(line.Id);
 
+        tool.HandleCommandInput(CommandInputSubmission.Confirm(""), context);
         Assert.Equal(SnapKind.Endpoint | SnapKind.Midpoint, tool.GetActiveSnapKind(context));
 
         tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));

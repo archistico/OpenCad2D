@@ -3394,7 +3394,7 @@ public partial class MainWindow : Window
 
     private bool TryHandleAlignScaleConfirmationKey(KeyEventArgs e)
     {
-        if (HasNonWhiteSpaceCommandInputText() ||
+        if (e.KeyModifiers != KeyModifiers.None || HasNonWhiteSpaceCommandInputText() ||
             _viewModel.Workspace.ToolController.ActiveTool is not AlignTool alignTool ||
             alignTool.State != AlignToolState.WaitingForScaleConfirmation)
         {
