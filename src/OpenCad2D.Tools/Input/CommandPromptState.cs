@@ -11,7 +11,8 @@ public sealed class CommandPromptState
         CommandInputKind expectedInput,
         IEnumerable<CommandOption>? options = null,
         bool acceptsEmptyEnter = false,
-        string? placeholder = null)
+        string? placeholder = null,
+        string? feedback = null)
     {
         CommandName = string.IsNullOrWhiteSpace(commandName)
             ? null
@@ -27,6 +28,7 @@ public sealed class CommandPromptState
         Placeholder = string.IsNullOrWhiteSpace(placeholder)
             ? null
             : placeholder.Trim();
+        Feedback = feedback;
     }
 
     public string? CommandName { get; }
@@ -40,6 +42,8 @@ public sealed class CommandPromptState
     public bool AcceptsEmptyEnter { get; }
 
     public string? Placeholder { get; }
+
+    public string? Feedback { get; }
 
     public static CommandPromptState Idle { get; } = new(
         null,

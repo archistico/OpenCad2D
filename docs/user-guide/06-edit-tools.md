@@ -58,6 +58,17 @@ Trim removes parts of entities using one or more cutting boundaries. It is used 
 
 During target selection, the command should focus on selecting entities or segments, not on ordinary point snaps. The user is choosing what to trim, not placing a new point.
 
+The HUD labels the two steps explicitly:
+
+1. **Choose cutting edges (1/2).** Click the boundary that will stop the cut. Alternatively, press Enter/right click or choose `A` / `All` to use all visible supported curves. This step changes no geometry.
+2. **Choose the part to remove (2/2).** After the first cutting edge is chosen, move over the unwanted part. The dashed portion will be removed; the solid preview will remain. Click inside the dashed portion to cut it. You can continue cutting other parts with the same edges.
+
+Do not click exactly on a crossing: that does not identify a side, so Trim keeps the drawing unchanged and explains where to click. A closed curve needs at least two distinct cutting intersections; a tangent alone is insufficient.
+
+While trimming, hold Ctrl and click to add cutting edges. Ctrl-hover highlights an edge candidate without suggesting a cut. The HUD reports the active edge count or All mode, and shows failure details next to the command instructions. Locked visible layers can provide reference edges; targets on locked layers cannot be trimmed. Hidden edges are ignored.
+
+If you selected the wrong boundary, use `E` / `Edges` to choose the boundaries again. Completed cuts are kept. `U` / `Undo` undoes a cut from the current Trim session only when it is the next undoable action; it never undoes an unrelated drawing action. Enter or right click during step 2 finishes Trim and returns to Selection. Esc also leaves the command while keeping completed cuts; use Undo to restore a cut.
+
 ## Extend
 
 Extend lengthens entities until they meet selected boundaries. It is the counterpart of Trim and is useful when lines or curves need to reach an existing edge.

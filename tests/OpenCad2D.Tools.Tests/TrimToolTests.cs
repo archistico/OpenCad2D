@@ -321,7 +321,7 @@ public sealed class TrimToolTests
 
         Assert.Equal(ToolResultKind.Updated, result.Kind);
         Assert.Equal(
-            "Trim preview updated. Dashed portion will be removed.",
+            "Click the dashed portion to remove it. The solid preview will remain.",
             result.Message);
     }
 

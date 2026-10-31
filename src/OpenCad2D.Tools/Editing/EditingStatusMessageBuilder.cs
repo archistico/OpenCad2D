@@ -21,13 +21,26 @@ internal static class EditingStatusMessageBuilder
             return "Closed splines cannot be trimmed yet. Use an open spline or explode/convert the curve before trimming.";
         }
 
-        int intersectionCount = CountIntersections(target, boundaries, tolerance);
+        IReadOnlyList<Point2D> intersections = CollectDistinctIntersections(target, boundaries, tolerance);
+        int intersectionCount = intersections.Count;
 
         if (intersectionCount == 0)
         {
             return boundaries.Count == 1
                 ? $"No trim intersection found between the selected {GetEntityName(target)} and the cutting edge. Pick an entity that crosses the cutting edge."
                 : $"No trim intersection found between the selected {GetEntityName(target)} and the active cutting edges. Add a crossing cutting edge or use All with visible crossing geometry.";
+        }
+
+        Point2D projectedPick = target.GetClosestPoint(pickPoint);
+        if (intersections.Any(point => tolerance.ArePointsEqual(point, projectedPick)))
+        {
+            return "The pick is on a cutting intersection. Click inside the part to REMOVE, away from the crossing.";
+        }
+
+        if ((target is CircleEntity or EllipseEntity || target is PolylineEntity { IsClosed: true }) &&
+            intersectionCount < 2)
+        {
+            return "A closed curve needs two distinct cutting intersections. Choose a crossing edge or Ctrl-click another cutting edge.";
         }
 
         return boundaries.Count == 1
@@ -197,23 +210,25 @@ internal static class EditingStatusMessageBuilder
         return a.DistanceTo(b) <= tolerance.Distance;
     }
 
-    private static int CountIntersections(
+    private static IReadOnlyList<Point2D> CollectDistinctIntersections(
         CadEntity target,
         IReadOnlyList<CadEntity> boundaries,
         GeometryTolerance tolerance)
     {
-        int count = 0;
+        var intersections = new List<Point2D>();
 
         foreach (CadEntity boundary in boundaries)
         {
-            count += CadEntityIntersectionService.Intersect(
-                    target,
-                    boundary,
-                    tolerance)
-                .Count;
+            foreach (CadIntersectionPoint intersection in CadEntityIntersectionService.IntersectDetailed(target, boundary, tolerance))
+            {
+                if (!intersections.Any(point => tolerance.ArePointsEqual(point, intersection.Point)))
+                {
+                    intersections.Add(intersection.Point);
+                }
+            }
         }
 
-        return count;
+        return intersections;
     }
 
     private static int CountExtendCandidateIntersections(

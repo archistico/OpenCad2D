@@ -7,6 +7,11 @@ namespace OpenCad2D.Tools.Input;
 /// </summary>
 public interface ICommandDrivenTool
 {
+    /// <summary>
+    /// True after terminal confirmation; completing an individual edit need not finish the command.
+    /// </summary>
+    bool IsCommandFinished => false;
+
     CommandPromptState GetPromptState(ToolContext context);
 
     ToolResult HandleCommandInput(

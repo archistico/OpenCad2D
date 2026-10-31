@@ -74,7 +74,7 @@ Empty Enter while a command is active is routed to that command. It confirms the
 Examples:
 
 - Polyline next-point phase: Enter finishes the open polyline.
-- Trim cutting-edge phase: Enter confirms selected cutting edges.
+- Trim initial cutting-edge phase: Enter chooses All visible cutting edges without modifying geometry. After choosing an edge, the tool is already waiting for a part to remove; Enter/right click in that phase finishes Trim and returns to Selection.
 - Circle center-point phase: Enter is invalid because a point is required.
 
 Escape cancels the active command. A following Escape can clear selection according to the current selection workflow.

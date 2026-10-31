@@ -3488,9 +3488,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 distance: submission.Distance);
         }
 
-        result = commandDrivenTool.HandleCommandInput(
-            toolSubmission,
-            Workspace.Context);
+        result = Workspace.ToolController.SubmitCommandInput(toolSubmission);
 
         if (result.Changed)
         {

@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using OpenCad2D.Tools.Input;
+using OpenCad2D.Tools.Selection;
 
 namespace OpenCad2D.Tools.Common;
 
@@ -84,16 +85,26 @@ public sealed class ToolController
 
     public ToolResult ConfirmActiveToolCommand()
     {
+        return SubmitCommandInput(CommandInputSubmission.Confirm(string.Empty));
+    }
+
+    public ToolResult SubmitCommandInput(CommandInputSubmission input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+
         if (ActiveTool is not ICommandDrivenTool commandDrivenTool)
         {
             LastResult = ToolResult.None();
             return LastResult;
         }
 
-        LastResult = commandDrivenTool.HandleCommandInput(
-            CommandInputSubmission.Confirm(string.Empty),
-            _context);
+        ToolResult result = commandDrivenTool.HandleCommandInput(input, _context);
+        if (commandDrivenTool.IsCommandFinished)
+        {
+            SetActiveTool(new SelectionTool());
+        }
 
+        LastResult = result;
         return LastResult;
     }
 

@@ -6,6 +6,30 @@ namespace OpenCad2D.Core.Tests;
 
 public sealed class CadTrimServiceTests
 {
+    [Theory]
+    [InlineData(0.0)]
+    [InlineData(0.0000000005)]
+    public void TrimLine_PickAtCutWithinTolerance_ShouldNotChooseAnArbitrarySide(double offset)
+    {
+        var target = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        var boundary = new LineEntity(new Point2D(5, -5), new Point2D(5, 5));
+        var pick = new Point2D(5 + offset, 0);
+
+        Assert.Empty(CadTrimService.TrimByBoundary(target, boundary, pick));
+        Assert.Empty(CadTrimService.GetRemovedIntervalByBoundaries(target, new[] { boundary }, pick));
+    }
+
+    [Fact]
+    public void TrimCircle_PickAtCut_ShouldNotChooseAnArbitraryArc()
+    {
+        var target = new CircleEntity(Point2D.Origin, 5);
+        var boundary = new LineEntity(new Point2D(0, -10), new Point2D(0, 10));
+        var pick = new Point2D(0, 5);
+
+        Assert.Empty(CadTrimService.TrimByBoundary(target, boundary, pick));
+        Assert.Empty(CadTrimService.GetRemovedIntervalByBoundaries(target, new[] { boundary }, pick));
+    }
+
     [Fact]
     public void TrimLine_ByCircleBoundary_ShouldKeepSideAwayFromPickedPoint()
     {

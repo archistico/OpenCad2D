@@ -35,6 +35,96 @@ public sealed class CommandHudKeyboardTests : IClassFixture<CommandHudTestSessio
     public CommandHudKeyboardTests(CommandHudTestSession fixture) => _fixture = fixture;
 
     [Fact]
+    public Task Trim_EnterForAllCutUndoAndFinish_ShouldPreserveWorkflowAndDirtyState() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareTrimDrawing(window, out LineEntity target);
+        StartCommand(window, "TRIM");
+        Assert.Contains("1/2", viewModel.CommandHudState.Prompt);
+        Press(window, Key.Enter);
+        Assert.Contains("2/2", viewModel.CommandHudState.Prompt);
+        TrimPointer(window, new Point(350, 200), MouseButton.Left);
+        Assert.False(viewModel.Workspace.Document.Entities.Contains(target.Id));
+        Assert.True(viewModel.IsDirty);
+
+        Press(window, Key.U);
+        Assert.True(viewModel.Workspace.Document.Entities.Contains(target.Id));
+        Assert.False(viewModel.IsDirty);
+        Press(window, Key.Enter);
+        Assert.IsType<SelectionTool>(viewModel.Workspace.ToolController.ActiveTool);
+    });
+
+    [Fact]
+    public Task Trim_EdgesOption_ShouldRecoverWrongBoundaryWithoutLosingUndo() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareTrimDrawing(window, out LineEntity target);
+        StartCommand(window, "TRIM");
+        TrimPointer(window, new Point(250, 120), MouseButton.Left);
+        TrimPointer(window, new Point(350, 200), MouseButton.Left);
+        Assert.False(viewModel.Workspace.Document.Entities.Contains(target.Id));
+
+        Press(window, Key.E);
+        Assert.Contains("1/2", viewModel.CommandHudState.Prompt);
+        Assert.Contains(viewModel.CommandHudState.Options, option => option.Keyword == "Undo");
+        Press(window, Key.U);
+        Assert.True(viewModel.Workspace.Document.Entities.Contains(target.Id));
+        Assert.False(viewModel.IsDirty);
+    });
+
+    [Fact]
+    public Task Trim_RightClick_ShouldStartAllThenFinishToSelection() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareTrimDrawing(window, out _);
+        StartCommand(window, "TRIM");
+        TrimPointer(window, new Point(200, 150), MouseButton.Right);
+        Assert.Equal(TrimToolState.WaitingForTargetEntity, Assert.IsType<TrimTool>(viewModel.Workspace.ToolController.ActiveTool).State);
+        TrimPointer(window, new Point(200, 150), MouseButton.Right);
+        Assert.IsType<SelectionTool>(viewModel.Workspace.ToolController.ActiveTool);
+        Assert.False(viewModel.IsDirty);
+    });
+
+    [Fact]
+    public Task Trim_InvalidHover_ShouldShowActionableFeedbackInsideHud() => Run(window =>
+    {
+        MainWindowViewModel viewModel = PrepareTrimDrawing(window, out _);
+        viewModel.Workspace.Document.AddEntity(new LineEntity(new Point2D(100, 350), new Point2D(400, 350)));
+        StartCommand(window, "TRIM");
+        TrimPointer(window, new Point(250, 120), MouseButton.Left);
+        TrimPointer(window, new Point(350, 350));
+
+        TextBlock feedback = window.FindControl<TextBlock>("HudCommandFeedback")!;
+        Assert.True(feedback.IsVisible);
+        Assert.Contains("No trim intersection", feedback.Text);
+        Assert.False(Assert.IsType<TrimTool>(viewModel.Workspace.ToolController.ActiveTool).HasPreview);
+        TrimPointer(window, new Point(350, 200));
+        Assert.Contains("Click the dashed", feedback.Text);
+    });
+
+    private static MainWindowViewModel PrepareTrimDrawing(MainWindow window, out LineEntity target)
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        window.FindControl<CadCanvas>("CadCanvas")!.ApplyViewportState(
+            new OpenCad2D.Persistence.Dto.ViewportStateDto { Zoom = 1, PanX = 0, PanY = 0 });
+        target = new LineEntity(new Point2D(100, 200), new Point2D(400, 200));
+        viewModel.Workspace.Document.AddEntity(new LineEntity(new Point2D(250, 100), new Point2D(250, 300)));
+        viewModel.Workspace.Document.AddEntity(target);
+        viewModel.Workspace.MarkSaved();
+        return viewModel;
+    }
+
+    private static void TrimPointer(MainWindow window, Point local, MouseButton? button = null)
+    {
+        CadCanvas canvas = window.FindControl<CadCanvas>("CadCanvas")!;
+        Point position = canvas.TranslatePoint(local, window)!.Value;
+        window.MouseMove(position);
+        if (button is not null)
+        {
+            window.MouseDown(position, button.Value);
+            window.MouseUp(position, button.Value);
+        }
+        Refresh(window);
+    }
+
+    [Fact]
     public Task Line_DistanceTabAngleEnter_ShouldCreateExactSegment() => Run(window =>
     {
         MainWindowViewModel viewModel = PrepareLine(window);

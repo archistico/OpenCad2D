@@ -8,6 +8,26 @@ namespace OpenCad2D.Core.Tests;
 public sealed class CommandHistoryTests
 {
     [Fact]
+    public void NextUndoCommand_AfterExecuteUndoAndRedo_ShouldIdentifyCurrentAction()
+    {
+        var history = new CommandHistory();
+        var document = new CadDocument();
+        var first = new AddEntityCommand(new PointEntity(new Point2D(0, 0)));
+        var second = new AddEntityCommand(new PointEntity(new Point2D(1, 0)));
+
+        Assert.Null(history.NextUndoCommand);
+        history.Execute(document, first);
+        history.Execute(document, second);
+        Assert.Same(second, history.NextUndoCommand);
+        history.Undo(document);
+        Assert.Same(first, history.NextUndoCommand);
+        history.Redo(document);
+        Assert.Same(second, history.NextUndoCommand);
+        history.Clear();
+        Assert.Null(history.NextUndoCommand);
+    }
+
+    [Fact]
     public void Constructor_ShouldStartEmpty()
     {
         var history = new CommandHistory();

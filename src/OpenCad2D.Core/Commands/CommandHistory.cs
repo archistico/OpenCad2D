@@ -19,6 +19,11 @@ public sealed class CommandHistory
     public bool CanRedo => _redoStack.Count > 0;
 
     /// <summary>
+    /// Identifies the next undoable action so a tool can avoid undoing another command's work.
+    /// </summary>
+    public ICadCommand? NextUndoCommand => _undoStack.TryPeek(out ICadCommand? command) ? command : null;
+
+    /// <summary>
     /// Represents the current command position of the document.
     /// It increases when commands are executed or redone and decreases when commands are undone.
     /// CadWorkspace uses this value to determine whether the current document state differs from

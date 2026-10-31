@@ -1674,6 +1674,14 @@
                                            FontSize="11"
                                            TextWrapping="Wrap" />
 
+                                <TextBlock x:Name="HudCommandFeedback"
+                                           Text="{Binding CommandHudState.Feedback}"
+                                           IsVisible="{Binding CommandHudState.HasFeedback}"
+                                           Foreground="#FFCA80"
+                                           FontFamily="Consolas"
+                                           FontSize="11"
+                                           TextWrapping="Wrap" />
+
                                 <ItemsControl x:Name="HudFieldsItemsControl"
                                               ItemsSource="{Binding CommandHudState.FieldRows}">
                                     <ItemsControl.ItemsPanel>

@@ -257,6 +257,10 @@ Implemented command families include:
 
 `CommandHistory` tracks undo/redo and command generation used by dirty-state tracking.
 
+Contextual textual submissions and empty Enter/right-click confirmations go through `ToolController.SubmitCommandInput`. Command-driven tools may expose `IsCommandFinished` after terminal confirmation; the controller then returns to Selection. A `Completed` result for an individual edit does not itself end a repeatable command such as Trim. The default completion flag is false, preserving existing tool lifecycles.
+
+`CommandPromptState.Feedback` carries optional UI-independent guidance or failure details from the tool to the HUD. The App renders that feedback without inferring the tool's phase. `CommandHistory.NextUndoCommand` lets a tool verify ownership of the next undo action before offering command-local undo.
+
 ---
 
 ## Dirty state

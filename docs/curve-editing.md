@@ -31,6 +31,10 @@ Therefore the active snap set for `TrimTool` is `SnapKind.EntityOnly` in every p
 
 Trim preview must use the same native interval-selection pipeline as the final operation. The kept replacement geometry is exposed as normal preview geometry, while the interval that will be removed is exposed as a removal highlight and rendered dashed. This avoids a mismatch where the UI shows an approximate or line-only removal preview but the command commits a different native curve fragment.
 
+Trim rejects a pick whose projection lies on a cutting intersection within `GeometryTolerance.Distance`: it does not guess which adjacent interval should be removed. This rule applies to both committed fragments and the removed-interval preview; a pick inside either adjacent interval remains valid.
+
+Cutting edges are resolved from current document geometry and visibility. Explicit mode retains selected ids and refreshes their entity values; All mode uses currently visible supported curves and excludes the target itself. Removed fragments must not remain as ghost cutting edges or emphasis overlays. Target hit testing skips explicit cutting edges when another supported target is under the cursor. Ctrl-hover describes adding an edge and does not show a removal preview.
+
 Tools that explicitly ask for construction points, such as drawing tools or Break point selection, may continue to use the normal geometric snap modes.
 
 

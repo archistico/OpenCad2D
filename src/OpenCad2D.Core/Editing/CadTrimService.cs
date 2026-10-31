@@ -119,7 +119,8 @@ public static class CadTrimService
         IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            effectiveTolerance);
+            effectiveTolerance,
+            targetPickPoint);
 
         return CurveSplitService.GetPickedInterval(
             target,
@@ -137,7 +138,8 @@ public static class CadTrimService
         IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance);
+            tolerance,
+            pickPoint);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -152,10 +154,11 @@ public static class CadTrimService
         Point2D pickPoint,
         GeometryTolerance tolerance)
     {
-        IReadOnlyList<Point2D> intersections = CollectIntersections(
+        IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance);
+            tolerance,
+            pickPoint);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -173,7 +176,8 @@ public static class CadTrimService
         IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance);
+            tolerance,
+            pickPoint);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -188,10 +192,11 @@ public static class CadTrimService
         Point2D pickPoint,
         GeometryTolerance tolerance)
     {
-        IReadOnlyList<Point2D> intersections = CollectIntersections(
+        IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance);
+            tolerance,
+            pickPoint);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -209,7 +214,8 @@ public static class CadTrimService
         IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance);
+            tolerance,
+            pickPoint);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -232,7 +238,8 @@ public static class CadTrimService
         IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance);
+            tolerance,
+            pickPoint);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -250,7 +257,8 @@ public static class CadTrimService
         IReadOnlyList<Point2D> intersections = CollectTrimIntersections(
             target,
             boundaries,
-            tolerance);
+            tolerance,
+            pickPoint);
 
         return CurveSplitService.RemovePickedInterval(
             target,
@@ -263,12 +271,20 @@ public static class CadTrimService
     private static IReadOnlyList<Point2D> CollectTrimIntersections(
         CadEntity target,
         IReadOnlyList<CadEntity> boundaries,
-        GeometryTolerance tolerance)
+        GeometryTolerance tolerance,
+        Point2D pickPoint)
     {
         IReadOnlyList<Point2D> intersections = CollectIntersections(
             target,
             boundaries,
             tolerance);
+
+        Point2D projectedPick = target.GetClosestPoint(pickPoint);
+        if (intersections.Any(point => tolerance.ArePointsEqual(point, projectedPick)))
+        {
+            // At a cut, the pointer does not identify which adjacent interval to remove.
+            return Array.Empty<Point2D>();
+        }
 
         return target switch
         {

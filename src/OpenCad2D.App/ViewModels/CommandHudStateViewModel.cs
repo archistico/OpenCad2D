@@ -53,6 +53,10 @@ public sealed class CommandHudStateViewModel
 
     public string Prompt => PromptState.Prompt;
 
+    public string? Feedback => PromptState.Feedback;
+
+    public bool HasFeedback => !string.IsNullOrWhiteSpace(Feedback);
+
     public IReadOnlyList<CommandOption> Options => PromptState.Options;
 
     public IReadOnlyList<CommandHudOptionViewModel> OptionViews { get; }
