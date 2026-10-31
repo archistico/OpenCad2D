@@ -31,6 +31,8 @@ public sealed class CommandHudInputState
 
     public double? Y { get; set; }
 
+    public double? Number { get; set; }
+
     public bool HasPolarOverride =>
         Distance is not null || AngleDegrees is not null;
 
@@ -38,7 +40,7 @@ public sealed class CommandHudInputState
         Width is not null || Height is not null || Radius is not null || Factor is not null;
 
     public bool HasNumberOverride =>
-        Sides is not null || Segments is not null;
+        Sides is not null || Segments is not null || Number is not null;
 
     public bool HasToolParameterOverride =>
         Gap is not null;
@@ -64,6 +66,7 @@ public sealed class CommandHudInputState
             CommandHudFieldKind.Gap => Gap,
             CommandHudFieldKind.X => X,
             CommandHudFieldKind.Y => Y,
+            CommandHudFieldKind.Number => Number,
             _ => null
         };
     }
@@ -109,6 +112,9 @@ public sealed class CommandHudInputState
             case CommandHudFieldKind.Y:
                 Y = value;
                 break;
+            case CommandHudFieldKind.Number:
+                Number = value;
+                break;
         }
     }
 
@@ -125,6 +131,50 @@ public sealed class CommandHudInputState
         Gap = null;
         X = null;
         Y = null;
+        Number = null;
         ActiveField = CommandHudFieldKind.Distance;
+    }
+
+    public void ClearOverride(CommandHudFieldKind kind)
+    {
+        switch (kind)
+        {
+            case CommandHudFieldKind.Distance:
+                Distance = null;
+                break;
+            case CommandHudFieldKind.Angle:
+                AngleDegrees = null;
+                break;
+            case CommandHudFieldKind.Width:
+                Width = null;
+                break;
+            case CommandHudFieldKind.Height:
+                Height = null;
+                break;
+            case CommandHudFieldKind.Radius:
+                Radius = null;
+                break;
+            case CommandHudFieldKind.Factor:
+                Factor = null;
+                break;
+            case CommandHudFieldKind.Sides:
+                Sides = null;
+                break;
+            case CommandHudFieldKind.Segments:
+                Segments = null;
+                break;
+            case CommandHudFieldKind.Gap:
+                Gap = null;
+                break;
+            case CommandHudFieldKind.X:
+                X = null;
+                break;
+            case CommandHudFieldKind.Y:
+                Y = null;
+                break;
+            case CommandHudFieldKind.Number:
+                Number = null;
+                break;
+        }
     }
 }

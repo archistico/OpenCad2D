@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.App.ViewModels;
 
@@ -21,6 +22,7 @@ public static class CommandHudFieldRoutingPolicy
         CommandHudFieldKind.Angle,
         CommandHudFieldKind.Sides,
         CommandHudFieldKind.Segments,
+        CommandHudFieldKind.Number,
         CommandHudFieldKind.X,
         CommandHudFieldKind.Y,
         CommandHudFieldKind.Gap
@@ -73,5 +75,45 @@ public static class CommandHudFieldRoutingPolicy
         }
 
         return true;
+    }
+
+    public static bool IsPointExpression(string text, CommandInputKind expectedInput)
+    {
+        if (text.StartsWith('@') || text.Contains('<'))
+        {
+            return true;
+        }
+
+        return text.Contains(',') && expectedInput is
+            CommandInputKind.Point or CommandInputKind.PointOrOption or
+            CommandInputKind.PointOrDistance or CommandInputKind.PointOrDistanceOrOption or
+            CommandInputKind.PointOrAngle or CommandInputKind.PointOrAngleOrOption or
+            CommandInputKind.PointOrNumber or CommandInputKind.PointOrNumberOrOption;
+    }
+
+    public static CommandHudFieldKind? GetAdjacentFieldKind(
+        IEnumerable<CommandHudFieldKind> availableKinds,
+        CommandHudFieldKind? activeKind,
+        bool backwards = false)
+    {
+        ArgumentNullException.ThrowIfNull(availableKinds);
+
+        CommandHudFieldKind[] kinds = availableKinds
+            .Where(kind => kind != CommandHudFieldKind.Generic)
+            .Distinct()
+            .ToArray();
+
+        if (kinds.Length == 0)
+        {
+            return null;
+        }
+
+        int currentIndex = activeKind is null ? -1 : Array.IndexOf(kinds, activeKind.Value);
+        if (currentIndex < 0)
+        {
+            return backwards ? kinds[^1] : kinds[0];
+        }
+
+        return kinds[(currentIndex + (backwards ? kinds.Length - 1 : 1)) % kinds.Length];
     }
 }

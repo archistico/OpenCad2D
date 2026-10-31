@@ -16,13 +16,29 @@ public sealed class CommandHudStateViewModel
         string? toolName,
         CommandPromptState promptState,
         IReadOnlyList<CommandHudFieldViewModel>? fields = null,
-        CommandHudAnchorSelectorViewModel? anchorSelector = null)
+        CommandHudAnchorSelectorViewModel? anchorSelector = null,
+        CommandHudStateViewModel? previousState = null)
     {
         IsVisible = isVisible;
         ToolName = toolName;
         PromptState = promptState;
         Fields = fields ?? Array.Empty<CommandHudFieldViewModel>();
-        FieldRows = BuildFieldRows(Fields);
+        if (previousState is not null &&
+            previousState.ToolName == toolName &&
+            HaveSameFieldLayout(previousState.Fields, Fields))
+        {
+            for (int index = 0; index < Fields.Count; index++)
+            {
+                previousState.Fields[index].UpdateLiveValue(Fields[index].LiveValue);
+            }
+
+            Fields = previousState.Fields;
+            FieldRows = previousState.FieldRows;
+        }
+        else
+        {
+            FieldRows = BuildFieldRows(Fields);
+        }
         AnchorSelector = anchorSelector ?? CommandHudAnchorSelectorViewModel.Hidden;
         OptionViews = promptState.Options
             .Select(CommandHudOptionViewModel.FromOption)
@@ -52,6 +68,18 @@ public sealed class CommandHudStateViewModel
     public IReadOnlyList<CommandHudFieldRowViewModel> FieldRows { get; }
 
     public CommandHudAnchorSelectorViewModel AnchorSelector { get; }
+
+    private static bool HaveSameFieldLayout(
+        IReadOnlyList<CommandHudFieldViewModel> previous,
+        IReadOnlyList<CommandHudFieldViewModel> current)
+    {
+        return previous.Count == current.Count && previous.Zip(current).All(pair =>
+            pair.First.Key == pair.Second.Key &&
+            pair.First.Kind == pair.Second.Kind &&
+            pair.First.Label == pair.Second.Label &&
+            pair.First.Unit == pair.Second.Unit &&
+            pair.First.IsEditable == pair.Second.IsEditable);
+    }
 
     private static IReadOnlyList<CommandHudFieldRowViewModel> BuildFieldRows(
         IReadOnlyList<CommandHudFieldViewModel> fields)

@@ -1522,6 +1522,24 @@ public sealed class MainWindowViewModelCommandLineTests
     }
 
     [Fact]
+    public async Task CommandHudInput_StoredTextCoordinates_ShouldConfirmThroughAsyncProvider()
+    {
+        var viewModel = new MainWindowViewModel(
+            new AsyncOnlyTextInputProvider(new TextInputResult("Stored Label", TextFormatId.Annotation, 0)));
+        viewModel.SubmitCommandInput("TEXT");
+        viewModel.TryCommitCommandHudFieldInput(CommandHudFieldKind.X, "12.3456789", false, out _);
+        viewModel.TryCommitCommandHudFieldInput(CommandHudFieldKind.Y, "34", false, out _);
+
+        var commit = await viewModel.ConfirmCommandHudInputOverridesAsync();
+
+        Assert.True(commit.Accepted);
+        TextEntity text = Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<TextEntity>());
+        Assert.Equal(new Point2D(12.3456789, 34), text.InsertionPoint);
+        Assert.Equal("Stored Label", text.Text);
+        Assert.False(viewModel.HasCommandHudInputOverrides);
+    }
+
+    [Fact]
     public void CommandHudInput_MultilineTextInsertionPoint_ShouldAcceptAbsoluteXAndY()
     {
         var viewModel = new MainWindowViewModel(

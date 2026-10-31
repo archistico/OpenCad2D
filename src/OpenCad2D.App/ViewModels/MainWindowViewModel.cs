@@ -58,6 +58,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     private string _lastMessage = "Ready.";
     private SnapCandidate? _currentSnapCandidate;
     private readonly CommandHudInputState _commandHudInputState = new();
+    private CommandHudStateViewModel? _commandHudState;
+    private string? _commandHudValidationMessage;
     private AnchorPoint _commandHudSelectedAnchor = AnchorPoint.Center;
     private readonly CommandInputParser _commandInputParser = new();
     private readonly CommandAliasRegistry _commandAliasRegistry = CommandAliasRegistry.CreateDefault();
@@ -367,12 +369,19 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
     public CommandPromptState CurrentPromptState => GetCurrentPromptState();
 
-    public CommandHudStateViewModel CommandHudState => new(
+    public bool HasCommandHudInputOverrides => _commandHudInputState.HasAnyOverride;
+
+    public string? CommandHudValidationMessage => _commandHudValidationMessage;
+
+    public bool HasCommandHudValidationMessage => !string.IsNullOrEmpty(_commandHudValidationMessage);
+
+    public CommandHudStateViewModel CommandHudState => _commandHudState = new(
         IsCommandHudVisible,
         CommandHudToolName,
         GetCurrentPromptState(),
         BuildCommandHudFields(),
-        BuildCommandHudAnchorSelector());
+        BuildCommandHudAnchorSelector(),
+        _commandHudState);
 
     public AnchorPoint CommandHudSelectedAnchor => _commandHudSelectedAnchor;
 
@@ -633,6 +642,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (activeTool is BoundaryFillTool boundaryFillTool)
         {
             return BuildBoundaryFillFields(boundaryFillTool);
+        }
+
+        if (GetCurrentPromptState().ExpectedInput == CommandInputKind.Number)
+        {
+            return BuildSingleNumberField("number", "Value", _commandHudInputState.Number, CommandHudFieldKind.Number);
         }
 
         if (!measurement.HasValue)
@@ -3062,6 +3076,16 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         bool confirm,
         out ToolResult result)
     {
+        return TryCommitCommandHudFieldInput(fieldKind, input, confirm, out result, out _);
+    }
+
+    public bool TryCommitCommandHudFieldInput(
+        CommandHudFieldKind fieldKind,
+        string? input,
+        bool confirm,
+        out ToolResult result,
+        out bool accepted)
+    {
         result = ToolResult.None();
 
         string normalizedInput = input?.Trim() ?? string.Empty;
@@ -3071,10 +3095,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 normalizedInput,
                 confirm,
                 out result,
-                out bool handled))
+                out bool handled,
+                out accepted))
         {
             return false;
         }
+
+        SetCommandHudValidationMessage(handled && !accepted ? result.Message : null);
 
         if (!handled)
         {
@@ -3096,7 +3123,29 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             out result);
     }
 
-    public async Task<(bool Handled, ToolResult Result)> TryCommitCommandHudFieldInputAsync(
+    public bool TryPreviewCommandHudFieldInput(CommandHudFieldKind kind, string input)
+    {
+        if (kind is CommandHudFieldKind.Sides or CommandHudFieldKind.Segments ||
+            !TryParseHudDouble(input, out double value) ||
+            !ValidateCommandHudScalarField(kind, value, out _))
+        {
+            return false;
+        }
+
+        return TryCommitCommandHudFieldInput(kind, input, false, out _, out bool accepted) && accepted;
+    }
+
+    public async Task<(bool Handled, bool Accepted, ToolResult Result)> TryCommitCommandHudFieldInputAsync(
+        CommandHudFieldKind fieldKind,
+        string? input,
+        bool confirm)
+    {
+        var commit = await TryCommitCommandHudFieldInputCoreAsync(fieldKind, input, confirm).ConfigureAwait(true);
+        SetCommandHudValidationMessage(commit.Handled && !commit.Accepted ? commit.Result.Message : null);
+        return commit;
+    }
+
+    private async Task<(bool Handled, bool Accepted, ToolResult Result)> TryCommitCommandHudFieldInputCoreAsync(
         CommandHudFieldKind fieldKind,
         string? input,
         bool confirm)
@@ -3108,9 +3157,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 fieldKind,
                 input,
                 confirm,
-                out ToolResult syncResult);
+                out ToolResult syncResult,
+                out bool accepted);
 
-            return (handled, syncResult);
+            return (handled, accepted, syncResult);
         }
 
         ToolResult result = ToolResult.None();
@@ -3127,9 +3177,10 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Segments or
             CommandHudFieldKind.Gap or
             CommandHudFieldKind.X or
-            CommandHudFieldKind.Y))
+            CommandHudFieldKind.Y or
+            CommandHudFieldKind.Number))
         {
-            return (false, result);
+            return (false, false, result);
         }
 
         if (!TryParseHudDouble(normalizedInput, out double value))
@@ -3138,7 +3189,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
             NotifyCommandInputStateChanged();
-            return (true, result);
+            return (true, false, result);
         }
 
         if (!ValidateCommandHudScalarField(
@@ -3150,7 +3201,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
             NotifyCommandInputStateChanged();
-            return (true, result);
+            return (true, false, result);
         }
 
         FreezeComplementaryPolarHudValueIfNeeded(fieldKind);
@@ -3166,7 +3217,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 confirm,
                 out result))
         {
-            return (true, result);
+            return (true, result.Changed, result);
         }
 
         AppendVisibleCommandHistoryLine($"> {normalizedInput}");
@@ -3174,7 +3225,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         if (!IsCommandHudPointInputTargetActive())
         {
             NotifyPointerDrivenStateChanged();
-            return (true, result);
+            return (true, false, result);
         }
 
         if (!TryResolveCommandHudOverridePoint(
@@ -3186,7 +3237,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
             NotifyCommandInputStateChanged();
-            return (true, result);
+            return (true, false, result);
         }
 
         result = TrySubmitPendingPlacementHudPoint(
@@ -3195,12 +3246,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             ? pendingResult
             : await Workspace.SubmitPointFromCommandLineAsync(worldPoint).ConfigureAwait(true);
 
-        ClearCommandHudInputOverrides();
+        if (result.Changed)
+        {
+            ClearCommandHudInputOverrides();
+        }
         SetLastResult(result);
         AppendToolResultToVisibleHistory(result);
         NotifyDocumentStateChanged();
         NotifyCommandInputStateChanged();
-        return (true, result);
+        return (true, result.Changed, result);
     }
 
     public bool TryConfirmCommandHudInputOverrides(out ToolResult result)
@@ -3212,29 +3266,38 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return false;
         }
 
-        if (!TryResolveCommandHudOverridePoint(
-                requireCompleteCoordinates: true,
-                out Point2D worldPoint,
-                out string? errorMessage))
+        if (!TryGetPendingCommandHudField(out CommandHudFieldKind kind, out double value))
         {
-            result = ToolResult.None(errorMessage);
-            SetLastResult(result);
-            AppendToolResultToVisibleHistory(result);
-            NotifyCommandInputStateChanged();
-            return true;
+            return false;
         }
 
-        result = TrySubmitPendingPlacementHudPoint(
-            worldPoint,
-            out ToolResult pendingResult)
-            ? pendingResult
-            : Workspace.SubmitPointFromCommandLine(worldPoint);
-        ClearCommandHudInputOverrides();
-        SetLastResult(result);
-        AppendToolResultToVisibleHistory(result);
-        NotifyDocumentStateChanged();
-        NotifyCommandInputStateChanged();
-        return true;
+        return TryCommitCommandHudFieldInput(kind, value.ToString("R", CultureInfo.InvariantCulture), true, out result);
+    }
+
+    public Task<(bool Handled, bool Accepted, ToolResult Result)> ConfirmCommandHudInputOverridesAsync()
+    {
+        return TryGetPendingCommandHudField(out CommandHudFieldKind kind, out double value)
+            ? TryCommitCommandHudFieldInputAsync(kind, value.ToString("R", CultureInfo.InvariantCulture), true)
+            : Task.FromResult((false, false, ToolResult.None()));
+    }
+
+    private bool TryGetPendingCommandHudField(out CommandHudFieldKind kind, out double value)
+    {
+        kind = _commandHudInputState.ActiveField;
+        double? pendingValue = _commandHudInputState.GetOverride(kind);
+        if (pendingValue is null)
+        {
+            CommandHudFieldViewModel? field = BuildCommandHudFields()
+                .FirstOrDefault(candidate => _commandHudInputState.GetOverride(candidate.Kind) is not null);
+            if (field is not null)
+            {
+                kind = field.Kind;
+                pendingValue = _commandHudInputState.GetOverride(kind);
+            }
+        }
+
+        value = pendingValue ?? 0;
+        return pendingValue is not null;
     }
 
     public void ClearCommandHudInputOverridesForNextInput()
@@ -3328,6 +3391,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         ToolResult pointResult = Workspace.SubmitPointFromCommandLine(worldPoint);
+
+        if (pointResult.Changed)
+        {
+            ClearCommandHudInputOverrides();
+        }
 
         SetLastResult(pointResult);
         AppendToolResultToVisibleHistory(pointResult);
@@ -3424,6 +3492,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             toolSubmission,
             Workspace.Context);
 
+        if (result.Changed)
+        {
+            ClearCommandHudInputOverrides();
+        }
+
         SetLastResult(result);
         AppendToolResultToVisibleHistory(result);
         NotifyDocumentStateChanged();
@@ -3497,10 +3570,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         string input,
         bool confirm,
         out ToolResult result,
-        out bool handled)
+        out bool handled,
+        out bool accepted)
     {
         result = ToolResult.None();
         handled = false;
+        accepted = false;
 
         if (fieldKind is not (
             CommandHudFieldKind.Distance or
@@ -3513,7 +3588,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             CommandHudFieldKind.Segments or
             CommandHudFieldKind.Gap or
             CommandHudFieldKind.X or
-            CommandHudFieldKind.Y))
+            CommandHudFieldKind.Y or
+            CommandHudFieldKind.Number))
         {
             return true;
         }
@@ -3554,6 +3630,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 confirm,
                 out result))
         {
+            accepted = !confirm || result.Changed;
             return true;
         }
 
@@ -3573,6 +3650,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 out Point2D worldPoint,
                 out string? errorMessage))
         {
+            if (!confirm)
+            {
+                accepted = true;
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
             result = ToolResult.None(errorMessage);
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
@@ -3587,7 +3671,11 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
                 out ToolResult pendingResult)
                 ? pendingResult
                 : Workspace.SubmitPointFromCommandLine(worldPoint);
-            ClearCommandHudInputOverrides();
+            accepted = result.Changed;
+            if (accepted)
+            {
+                ClearCommandHudInputOverrides();
+            }
             SetLastResult(result);
             AppendToolResultToVisibleHistory(result);
             NotifyDocumentStateChanged();
@@ -3602,6 +3690,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         NotifyPointerDrivenStateChanged();
+        accepted = true;
         return true;
     }
 
@@ -3646,9 +3735,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (fieldKind == CommandHudFieldKind.Sides)
         {
-            if (value < 3 || Math.Abs(value - Math.Round(value)) > 0.000001)
+            if (value < PolygonTool.MinimumSideCount || value > PolygonTool.MaximumSideCount || value != Math.Truncate(value))
             {
-                message = "Sides must be a whole number greater than or equal to 3.";
+                message = $"Sides must be a whole number between {PolygonTool.MinimumSideCount} and {PolygonTool.MaximumSideCount}.";
                 return false;
             }
 
@@ -3659,7 +3748,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         {
             if (value < DivideTool.MinimumSegmentCount ||
                 value > DivideTool.MaximumSegmentCount ||
-                Math.Abs(value - Math.Round(value)) > 0.000001)
+                value != Math.Truncate(value))
             {
                 message = $"Segments must be a whole number between {DivideTool.MinimumSegmentCount} and {DivideTool.MaximumSegmentCount}.";
                 return false;
@@ -3839,12 +3928,29 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
+        if (GetCurrentPromptState().ExpectedInput is CommandInputKind.Number or
+            CommandInputKind.Distance or CommandInputKind.DistanceOrOption or CommandInputKind.Angle)
+        {
+            if (!confirm)
+            {
+                NotifyPointerDrivenStateChanged();
+                return true;
+            }
+
+            result = SubmitCommandInput(value.ToString("R", CultureInfo.InvariantCulture));
+            if (result.Changed)
+            {
+                ClearCommandHudInputOverrides();
+            }
+            return true;
+        }
+
         return false;
     }
 
     private static string FormatHudNumber(double value)
     {
-        return value.ToString("0.############", CultureInfo.InvariantCulture);
+        return value.ToString("R", CultureInfo.InvariantCulture);
     }
 
 
@@ -4018,12 +4124,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         }
 
         if (_commandHudInputState.HasSizeOverride &&
-            TryResolveCommandHudSizeOverridePoint(
+            Workspace.ToolController.ActiveTool is RectangleTool)
+        {
+            return TryResolveCommandHudSizeOverridePoint(
                 requireCompleteCoordinates,
                 out worldPoint,
-                out errorMessage))
-        {
-            return true;
+                out errorMessage);
         }
 
         if (_commandHudInputState.HasCoordinateOverride)
@@ -4158,7 +4264,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
 
         if (!IsCommandHudPointInputTargetActive())
         {
-            ClearCommandHudInputOverrides();
             return;
         }
 
@@ -4177,10 +4282,28 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
         NotifyPointerDrivenStateChanged();
     }
 
+    public void ClearCommandHudFieldOverride(CommandHudFieldKind kind)
+    {
+        _commandHudInputState.ClearOverride(kind);
+        NotifyPointerDrivenStateChanged();
+    }
+
     private void ClearCommandHudInputOverrides()
     {
         _commandHudInputState.Clear();
+        SetCommandHudValidationMessage(null);
         CommandHudInputOverridesCleared?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void SetCommandHudValidationMessage(string? message)
+    {
+        if (_commandHudValidationMessage == message)
+        {
+            return;
+        }
+
+        _commandHudValidationMessage = message;
+        OnPropertiesChanged(nameof(CommandHudValidationMessage), nameof(HasCommandHudValidationMessage));
     }
 
     private static bool TryParseHudDouble(
@@ -4193,7 +4316,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             normalized,
             NumberStyles.Float,
             CultureInfo.InvariantCulture,
-            out value);
+            out value) && double.IsFinite(value);
     }
 
     private void FreezeComplementaryPolarHudValueIfNeeded(CommandHudFieldKind fieldKind)

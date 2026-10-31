@@ -437,6 +437,6 @@ public sealed class CommandInputParser
             input,
             NumberStyles.Float,
             ParsingCulture,
-            out value);
+            out value) && double.IsFinite(value);
     }
 }

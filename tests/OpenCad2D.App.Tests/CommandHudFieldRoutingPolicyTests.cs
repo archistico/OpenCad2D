@@ -4,6 +4,28 @@ namespace OpenCad2D.App.Tests;
 
 public sealed class CommandHudFieldRoutingPolicyTests
 {
+    [Theory]
+    [InlineData(null, false, CommandHudFieldKind.Distance)]
+    [InlineData(null, true, CommandHudFieldKind.Y)]
+    [InlineData(CommandHudFieldKind.Distance, false, CommandHudFieldKind.Angle)]
+    [InlineData(CommandHudFieldKind.Angle, true, CommandHudFieldKind.Distance)]
+    [InlineData(CommandHudFieldKind.Distance, true, CommandHudFieldKind.Y)]
+    [InlineData(CommandHudFieldKind.Y, false, CommandHudFieldKind.Distance)]
+    public void GetAdjacentFieldKind_WithEditableFields_ShouldNavigateAndWrap(
+        CommandHudFieldKind? active, bool backwards, CommandHudFieldKind expected)
+    {
+        Assert.Equal(expected, CommandHudFieldRoutingPolicy.GetAdjacentFieldKind(
+            new[] { CommandHudFieldKind.Distance, CommandHudFieldKind.Angle, CommandHudFieldKind.X, CommandHudFieldKind.Y },
+            active, backwards));
+    }
+
+    [Fact]
+    public void GetAdjacentFieldKind_WithoutEditableFields_ShouldReturnNull()
+    {
+        Assert.Null(CommandHudFieldRoutingPolicy.GetAdjacentFieldKind(
+            new[] { CommandHudFieldKind.Generic }, null));
+    }
+
     [Fact]
     public void GetDefaultFieldKindForNumericText_ShouldKeepActiveFieldWhenStillAvailable()
     {

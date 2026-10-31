@@ -4,6 +4,8 @@ OpenCad2D now uses a dynamic cursor-adjacent command HUD as the primary command-
 
 The command input is not only a visual widget: it is the shared interaction contract between the UI and every command-driven tool. The active prompt tells the user what the current command expects, and both mouse input and typed input feed the same tool state machine.
 
+The current navigation, validation and decimal/coordinate rules are defined in the **Keyboard and validation contract** in `docs/specs/v0.8.121-dynamic-command-hud.md` and explained in `docs/user-guide/11-dynamic-hud.md`. In particular, Tab and Shift+Tab store fields without advancing the command, errors preserve editable drafts, and Enter/right click share confirmation behavior for pending HUD input.
+
 ---
 
 ## Core rule

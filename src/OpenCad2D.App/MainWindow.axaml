@@ -1718,7 +1718,7 @@
                                                                      IsHitTestVisible="False"
                                                                      KeyDown="HudFieldTextBox_KeyDown"
                                                                      GotFocus="HudFieldTextBox_GotFocus"
-                                                                     LostFocus="HudFieldTextBox_LostFocus" />
+                                                                     TextChanged="HudFieldTextBox_TextChanged" />
                                                         </Grid>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>
@@ -1726,6 +1726,14 @@
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
+
+                                <TextBlock x:Name="HudValidationMessage"
+                                           Text="{Binding CommandHudValidationMessage}"
+                                           IsVisible="{Binding HasCommandHudValidationMessage}"
+                                           Foreground="#FFB070"
+                                           FontFamily="Consolas"
+                                           FontSize="11"
+                                           TextWrapping="Wrap" />
 
                                 <StackPanel Spacing="3"
                                             IsVisible="{Binding CommandHudState.AnchorSelector.IsVisible}">

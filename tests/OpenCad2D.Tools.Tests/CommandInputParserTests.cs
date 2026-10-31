@@ -7,6 +7,30 @@ public sealed class CommandInputParserTests
 {
     private readonly CommandInputParser _parser = new();
 
+    [Theory]
+    [InlineData("NaN")]
+    [InlineData("Infinity")]
+    [InlineData("1e999")]
+    [InlineData("NaN,0")]
+    [InlineData("0,Infinity")]
+    [InlineData("@Infinity,0")]
+    [InlineData("@10<NaN")]
+    public void Parse_NonFiniteValues_ShouldRejectInput(string input)
+    {
+        Assert.False(_parser.Parse(input).IsValid);
+    }
+
+    [Theory]
+    [InlineData(CommandInputKind.Number)]
+    [InlineData(CommandInputKind.Angle)]
+    [InlineData(CommandInputKind.Distance)]
+    public void Parse_NonFiniteScalarInPrompt_ShouldRejectInput(CommandInputKind kind)
+    {
+        var prompt = new CommandPromptState("TEST", "Enter value", kind);
+        Assert.False(_parser.Parse("NaN", prompt).IsValid);
+        Assert.False(_parser.Parse("1e999", prompt).IsValid);
+    }
+
     [Fact]
     public void Parse_WhenInputIsIntegerDistance_ShouldReturnDistance()
     {

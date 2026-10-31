@@ -17,13 +17,14 @@ public enum CommandHudFieldKind
     Segments,
     Gap,
     X,
-    Y
+    Y,
+    Number
 }
 
 /// <summary>
 /// Numeric field displayed by the dynamic command HUD.
-/// Fields are still rendered as read-only in the current UI, but the metadata below
-/// prepares the future typed-override step without changing tool behavior yet.
+/// Field instances remain stable while live measurements change so keyboard focus
+/// and unconfirmed text survive pointer-driven HUD refreshes.
 /// </summary>
 public sealed class CommandHudFieldViewModel
 {
@@ -47,13 +48,14 @@ public sealed class CommandHudFieldViewModel
 
     public string Label { get; }
 
-    public double? LiveValue { get; }
+    public double? LiveValue { get; private set; }
+
+    internal void UpdateLiveValue(double? value) => LiveValue = value;
 
     public string? Unit { get; }
 
     /// <summary>
-    /// Indicates whether the field may become editable once the HUD override model is enabled.
-    /// The current XAML still renders the value as read-only.
+    /// Indicates whether the field accepts keyboard overrides.
     /// </summary>
     public bool IsEditable { get; }
 
@@ -84,6 +86,7 @@ public sealed class CommandHudFieldViewModel
         CommandHudFieldKind.Sides => "sides",
         CommandHudFieldKind.Segments => "segments",
         CommandHudFieldKind.Gap => "gap",
+        CommandHudFieldKind.Number => "value",
         CommandHudFieldKind.X => "x",
         CommandHudFieldKind.Y => "y",
         _ => string.Empty
