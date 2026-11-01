@@ -216,17 +216,19 @@ Distance input rules:
 
 - a typed positive distance immediately becomes the current offset distance;
 - two graphical clicks can be used to measure the distance;
+- the first distance point can also be typed (`x,y`); in the second-point phase a typed point (`x,y`, `@dx,dy`, `@d<a`) measures the distance and a plain number is used directly as the distance, without needing a cursor direction;
 - after a distance has been provided, Enter or right-click can reuse the last offset distance shown in `<...>`;
 - on first use, Enter/right-click without a previous distance shows a clear message and does not advance;
 - object selection uses `SnapKind.EntityOnly`;
-- side selection uses geometric snaps and excludes entity-only snap.
+- side selection uses geometric snaps and excludes entity-only snap;
+- Enter or right-click while selecting the object or choosing the side ends the command (AutoCAD `<Exit>` behaviour).
 
 Targets supported in v0.9:
 
 - Line;
 - Circle;
 - Arc;
-- straight-segment open/closed Polyline.
+- open/closed Polyline (straight segments; bulged segments through the conservative linear approximation described in `known-limitations.md`).
 
 Deferred targets:
 
@@ -237,8 +239,13 @@ Rules:
 
 - line offset creates a parallel line;
 - circle/arc offset changes radius based on picked side;
-- polyline offset uses miter joins with a conservative miter limit;
-- very sharp joins fall back to a bevel-style corner instead of creating long spikes;
+- polyline offset uses miter joins with a conservative miter limit on outer corners;
+- very sharp outer joins fall back to a bevel-style corner instead of creating long spikes;
+- inner corners are always trimmed at the exact intersection of the offset segments, so sharp inner corners do not create self-crossing loops;
+- segments fully consumed by the offset (short segments on the inner side, arc approximations whose radius is smaller than the distance) are removed and their neighbours joined again; if the whole polyline collapses the offset is rejected with a "distance is too large" message;
+- repeated consecutive vertices, including a closing vertex repeated at the end of a closed polyline, are ignored;
+- when the side point is equally close to two segments (for example on the extension of an edge beyond a vertex), the segment that clearly sees the point on one side decides the offset side;
+- the target is re-read from the document when the side is chosen, so an undo or delete in the meantime does not create an offset of a stale entity;
 - unsupported advanced curves return a clear deferred-support message and create no geometry;
 - invalid or degenerate results are rejected;
 - live preview is shown while choosing the side.

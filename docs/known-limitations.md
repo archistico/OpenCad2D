@@ -88,7 +88,7 @@ Current limitations:
 
 - mixed-polyline offset does not yet preserve arc/bulge segments in the offset result;
 - analytic arc-aware offset for bulged polylines is deferred;
-- complex self-intersections or very tight offsets may still require user cleanup, especially on dense approximated curves.
+- local collapses (tight inner corners, consumed short segments, arc approximations smaller than the distance) are cleaned up automatically, but global overlaps are not trimmed: when the offset of one part of the polyline comes closer than the distance to a distant part of the same polyline, the result may still need manual cleanup.
 
 ---
 

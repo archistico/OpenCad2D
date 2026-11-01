@@ -30,6 +30,8 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
     public OffsetToolState State { get; private set; } = OffsetToolState.WaitingForDistance;
 
+    public bool IsCommandFinished { get; private set; }
+
     public double? Distance => _distance;
 
     public double? LastDistance => s_lastDistance;
@@ -106,7 +108,12 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
                 s_lastDistance is null
                     ? "Specify offset distance or first distance point"
                     : $"Specify offset distance or first distance point <{FormatDistance(s_lastDistance.Value)}>",
-                CommandInputKind.Distance,
+                // The prompt offers both a scalar distance and a first measuring point.
+                // PointOrNumber keeps typed scalars as plain numbers: PointOrDistance would
+                // make the command line convert them into direct-distance points, which
+                // needs a base point that does not exist in this phase.
+                CommandInputKind.PointOrNumber,
+                acceptsEmptyEnter: true,
                 placeholder: s_lastDistance is null
                     ? "Distance, for example 100, or click first point"
                     : "Distance, first point, Enter or right-click for default"),
@@ -114,20 +121,22 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             OffsetToolState.WaitingForDistanceSecondPoint => new CommandPromptState(
                 "OFFSET",
                 "Specify second distance point or type distance",
-                CommandInputKind.Point,
+                CommandInputKind.PointOrNumber,
                 placeholder: "Click second point or type a distance"),
 
             OffsetToolState.WaitingForEntity => new CommandPromptState(
                 "OFFSET",
-                "Select object to offset",
+                "Select object to offset or press Enter to finish",
                 CommandInputKind.Selection,
-                placeholder: "Click line, circle, arc or polyline"),
+                acceptsEmptyEnter: true,
+                placeholder: "Click line, circle, arc or polyline; Enter finishes"),
 
             OffsetToolState.WaitingForSidePoint => new CommandPromptState(
                 "OFFSET",
-                "Specify side to offset",
+                "Specify side to offset or press Enter to finish",
                 CommandInputKind.Point,
-                placeholder: "Click side or type a point"),
+                acceptsEmptyEnter: true,
+                placeholder: "Click side or type a point; Enter finishes"),
 
             _ => CommandPromptState.Idle
         };
@@ -142,9 +151,14 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         if (State == OffsetToolState.WaitingForDistance)
         {
-            if (input.Kind == CommandInputSubmissionKind.Distance && input.Distance is not null)
+            if (TryGetTypedDistance(input, out double typedDistance))
             {
-                return AcceptDistance(context, input.Distance.Value, "Select object to offset.");
+                return AcceptDistance(context, typedDistance, "Select object to offset.");
+            }
+
+            if (input.Kind == CommandInputSubmissionKind.Point && input.Point is not null)
+            {
+                return AcceptFirstDistancePoint(context, input.Point.Value);
             }
 
             if (input.Kind == CommandInputSubmissionKind.Confirm)
@@ -155,9 +169,9 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         if (State == OffsetToolState.WaitingForDistanceSecondPoint)
         {
-            if (input.Kind == CommandInputSubmissionKind.Distance && input.Distance is not null)
+            if (TryGetTypedDistance(input, out double typedDistance))
             {
-                return AcceptDistance(context, input.Distance.Value, "Select object to offset.");
+                return AcceptDistance(context, typedDistance, "Select object to offset.");
             }
 
             if (input.Kind == CommandInputSubmissionKind.Point && input.Point is not null)
@@ -171,6 +185,14 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             input.Point is not null)
         {
             return CreateOffset(context, input.Point.Value);
+        }
+
+        if ((State is OffsetToolState.WaitingForEntity or OffsetToolState.WaitingForSidePoint) &&
+            input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            Reset(context);
+            IsCommandFinished = true;
+            return ToolResult.Completed("Offset command finished.");
         }
 
         return State switch
@@ -233,6 +255,26 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         ArgumentNullException.ThrowIfNull(context);
         Reset(context);
         return ToolResult.None("Offset tool deactivated.");
+    }
+
+    private static bool TryGetTypedDistance(
+        CommandInputSubmission input,
+        out double distance)
+    {
+        if (input.Kind == CommandInputSubmissionKind.Distance && input.Distance is not null)
+        {
+            distance = input.Distance.Value;
+            return true;
+        }
+
+        if (input.Kind == CommandInputSubmissionKind.Number && input.Number is not null)
+        {
+            distance = input.Number.Value;
+            return true;
+        }
+
+        distance = 0;
+        return false;
     }
 
     private ToolResult AcceptFirstDistancePoint(
@@ -329,8 +371,19 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
             return ToolResult.None("Select object to offset first.");
         }
 
+        CadEntity? sourceEntity = ResolvePickedEntity(context);
+        if (sourceEntity is null)
+        {
+            _pickedEntity = null;
+            _previewEntity = null;
+            _currentSidePoint = null;
+            State = OffsetToolState.WaitingForEntity;
+            context.CurrentBasePoint = null;
+            return ToolResult.None("The selected object is no longer available. Select object to offset.");
+        }
+
         if (!TryCreateOffsetEntity(
-                _pickedEntity.Entity,
+                sourceEntity,
                 sidePoint,
                 _distance.Value,
                 context.GeometryTolerance,
@@ -473,58 +526,105 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         offsetPolyline = null;
         errorMessage = null;
 
-        PolylineEntity sourcePolyline = polyline.HasArcSegments
-            ? NormalizeClosedApproximation(polyline.ToPolylineApproximation(), tolerance)
-            : polyline;
-
-        IReadOnlyList<Point2D> vertices = sourcePolyline.Vertices;
-        if (vertices.Count < 2)
+        if (polyline.Vertices.Count < 2)
         {
             errorMessage = "Cannot offset a polyline with fewer than two vertices.";
             return false;
         }
 
-        IReadOnlyList<LineSegment2D> originalSegments = sourcePolyline.Geometry.GetSegments();
-        if (originalSegments.Count == 0)
+        bool isClosed = polyline.IsClosed;
+        PolylineEntity sourcePolyline = polyline.HasArcSegments
+            ? polyline.ToPolylineApproximation()
+            : polyline;
+
+        // Repeated consecutive vertices only produce zero-length segments without a direction.
+        // They are common in imported closed polylines (closing vertex repeated at the end)
+        // and in closed arc approximations, so they are skipped instead of rejected.
+        List<Point2D> sourceVertices = RemoveDuplicateConsecutiveVertices(
+            sourcePolyline.Vertices,
+            isClosed,
+            tolerance);
+
+        if (sourceVertices.Count < 2)
         {
-            errorMessage = "Cannot offset a polyline without segments.";
+            errorMessage = "Cannot offset a polyline containing only zero-length segments.";
             return false;
         }
 
-        int sideSign = DeterminePolylineOffsetSide(originalSegments, sidePoint, tolerance);
+        if (isClosed && sourceVertices.Count < 3)
+        {
+            errorMessage = "Cannot offset a closed polyline with fewer than three distinct vertices.";
+            return false;
+        }
+
+        List<LineSegment2D> sourceSegments = BuildSegments(sourceVertices, isClosed);
+
+        int sideSign = DeterminePolylineOffsetSide(sourceSegments, sidePoint, tolerance);
         if (sideSign == 0)
         {
             sideSign = 1;
         }
 
-        var offsetSegments = new List<LineSegment2D>(originalSegments.Count);
-        foreach (LineSegment2D segment in originalSegments)
+        var directions = new List<Vector2D>(sourceSegments.Count);
+        var offsetSegments = new List<LineSegment2D>(sourceSegments.Count);
+        foreach (LineSegment2D segment in sourceSegments)
         {
-            Vector2D direction = segment.Start.VectorTo(segment.End);
-            if (tolerance.IsVectorLengthZero(direction.Length))
-            {
-                errorMessage = "Cannot offset a polyline containing zero-length segments.";
-                return false;
-            }
-
-            Vector2D normal = direction.Normalize().PerpendicularLeft() * sideSign;
-            Vector2D offset = normal * distance;
+            Vector2D direction = segment.Start.VectorTo(segment.End).Normalize();
+            Vector2D offset = direction.PerpendicularLeft() * (sideSign * distance);
+            directions.Add(direction);
             offsetSegments.Add(new LineSegment2D(
                 segment.Start + offset,
                 segment.End + offset));
         }
 
-        var offsetVertices = polyline.IsClosed
-            ? BuildClosedOffsetVertices(originalSegments, offsetSegments, distance, tolerance)
-            : BuildOpenOffsetVertices(originalSegments, offsetSegments, distance, tolerance);
+        // On the inner side of a corner the neighbouring offset segments trim each other.
+        // When the distance is larger than a short segment allows, that segment is fully
+        // consumed (its trimmed direction flips). Such segments are removed one at a time
+        // and their neighbours are joined again, so tight corners and arc approximations
+        // whose radius is smaller than the distance do not leave self-crossing loops.
+        var activeSegments = Enumerable.Range(0, sourceSegments.Count).ToList();
+        int minimumSegmentCount = isClosed ? 3 : 1;
+        List<Point2D> offsetVertices;
 
-        if (offsetVertices.Count < 2)
+        while (true)
+        {
+            offsetVertices = BuildOffsetVertices(
+                activeSegments,
+                sourceSegments,
+                offsetSegments,
+                directions,
+                isClosed,
+                distance,
+                tolerance,
+                out int collapsedPosition);
+
+            if (collapsedPosition < 0)
+            {
+                break;
+            }
+
+            activeSegments.RemoveAt(collapsedPosition);
+            if (activeSegments.Count < minimumSegmentCount)
+            {
+                errorMessage = "Offset distance is too large for the selected polyline on this side.";
+                return false;
+            }
+        }
+
+        if (isClosed &&
+            offsetVertices.Count > 1 &&
+            tolerance.ArePointsEqual(offsetVertices[0], offsetVertices[^1]))
+        {
+            offsetVertices.RemoveAt(offsetVertices.Count - 1);
+        }
+
+        if (offsetVertices.Count < (isClosed ? 3 : 2))
         {
             errorMessage = "Cannot offset the selected polyline.";
             return false;
         }
 
-        if (HasDuplicateConsecutiveVertices(offsetVertices, polyline.IsClosed, tolerance))
+        if (HasDuplicateConsecutiveVertices(offsetVertices, isClosed, tolerance))
         {
             errorMessage = "Polyline offset failed because the resulting geometry contains degenerate segments.";
             return false;
@@ -532,7 +632,7 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
 
         offsetPolyline = new PolylineEntity(
             offsetVertices,
-            polyline.IsClosed,
+            isClosed,
             layerId: polyline.LayerId,
             style: polyline.Style,
             isVisible: polyline.IsVisible,
@@ -541,29 +641,41 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         return true;
     }
 
-    private static PolylineEntity NormalizeClosedApproximation(
-        PolylineEntity polyline,
+    private static List<Point2D> RemoveDuplicateConsecutiveVertices(
+        IReadOnlyList<Point2D> vertices,
+        bool isClosed,
         GeometryTolerance tolerance)
     {
-        if (!polyline.IsClosed || polyline.Vertices.Count < 2)
+        var result = new List<Point2D>(vertices.Count);
+        foreach (Point2D vertex in vertices)
         {
-            return polyline;
+            AddVertexIfDistinct(result, vertex, tolerance);
         }
 
-        if (!tolerance.ArePointsEqual(polyline.Vertices[0], polyline.Vertices[^1]))
+        while (isClosed &&
+               result.Count > 1 &&
+               tolerance.ArePointsEqual(result[0], result[^1]))
         {
-            return polyline;
+            result.RemoveAt(result.Count - 1);
         }
 
-        return new PolylineEntity(
-            polyline.Vertices.Take(polyline.Vertices.Count - 1),
-            isClosed: true,
-            layerId: polyline.LayerId,
-            style: polyline.Style,
-            isVisible: polyline.IsVisible,
-            isLocked: polyline.IsLocked,
-            drawOrder: polyline.DrawOrder,
-            isFilled: polyline.IsFilled);
+        return result;
+    }
+
+    private static List<LineSegment2D> BuildSegments(
+        IReadOnlyList<Point2D> vertices,
+        bool isClosed)
+    {
+        int segmentCount = isClosed ? vertices.Count : vertices.Count - 1;
+        var segments = new List<LineSegment2D>(segmentCount);
+        for (int index = 0; index < segmentCount; index++)
+        {
+            segments.Add(new LineSegment2D(
+                vertices[index],
+                vertices[(index + 1) % vertices.Count]));
+        }
+
+        return segments;
     }
 
     private static int DeterminePolylineOffsetSide(
@@ -571,153 +683,205 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         Point2D sidePoint,
         GeometryTolerance tolerance)
     {
-        LineSegment2D closestSegment = segments[0];
         double bestDistance = double.MaxValue;
-
         foreach (LineSegment2D segment in segments)
         {
-            Point2D closest = ClosestPointOnSegment(segment, sidePoint, tolerance);
-            double distance = closest.DistanceTo(sidePoint);
-            if (distance < bestDistance)
+            double distance = ClosestPointOnSegment(segment, sidePoint, tolerance).DistanceTo(sidePoint);
+            bestDistance = Math.Min(bestDistance, distance);
+        }
+
+        // Several segments can be equally close: typically the side point lies on the
+        // extension of one segment beyond a shared vertex (for example with grid or ortho
+        // input). That segment cannot tell the side, while its neighbour can, so among the
+        // closest segments the one that sees the point farthest from its own line wins.
+        double bestSignedDistance = 0.0;
+        foreach (LineSegment2D segment in segments)
+        {
+            Vector2D direction = segment.Start.VectorTo(segment.End);
+            double length = direction.Length;
+            if (tolerance.IsVectorLengthZero(length))
             {
-                bestDistance = distance;
-                closestSegment = segment;
+                continue;
+            }
+
+            double distance = ClosestPointOnSegment(segment, sidePoint, tolerance).DistanceTo(sidePoint);
+            if (distance > bestDistance + tolerance.Distance)
+            {
+                continue;
+            }
+
+            double signedDistance = direction.Cross(segment.Start.VectorTo(sidePoint)) / length;
+            if (Math.Abs(signedDistance) > Math.Abs(bestSignedDistance))
+            {
+                bestSignedDistance = signedDistance;
             }
         }
 
-        Vector2D direction = closestSegment.Start.VectorTo(closestSegment.End);
-        double length = direction.Length;
-        if (tolerance.IsVectorLengthZero(length))
+        if (tolerance.IsDistanceZero(bestSignedDistance))
         {
             return 1;
         }
 
-        double signedDistance = direction.Cross(closestSegment.Start.VectorTo(sidePoint)) / length;
-        if (tolerance.IsDistanceZero(signedDistance))
-        {
-            return 1;
-        }
-
-        return signedDistance > 0 ? 1 : -1;
+        return bestSignedDistance > 0 ? 1 : -1;
     }
 
-    private static List<Point2D> BuildOpenOffsetVertices(
-        IReadOnlyList<LineSegment2D> originalSegments,
+    /// <summary>
+    /// Builds the offset vertex chain for the active segments and reports the position of the
+    /// most consumed segment, or -1 when every trimmed segment keeps its original direction.
+    /// </summary>
+    private static List<Point2D> BuildOffsetVertices(
+        IReadOnlyList<int> activeSegments,
+        IReadOnlyList<LineSegment2D> sourceSegments,
         IReadOnlyList<LineSegment2D> offsetSegments,
+        IReadOnlyList<Vector2D> directions,
+        bool isClosed,
         double distance,
-        GeometryTolerance tolerance)
+        GeometryTolerance tolerance,
+        out int collapsedPosition)
     {
-        var vertices = new List<Point2D>
+        int count = activeSegments.Count;
+        int firstJoin = isClosed ? 0 : 1;
+
+        // Join at position k connects active segment k - 1 (its end) with active segment k (its start).
+        var previousEnds = new Point2D[count];
+        var currentStarts = new Point2D[count];
+
+        for (int position = firstJoin; position < count; position++)
         {
-            offsetSegments[0].Start
-        };
+            int previousIndex = activeSegments[(position - 1 + count) % count];
+            int currentIndex = activeSegments[position];
 
-        for (int index = 1; index < offsetSegments.Count; index++)
-        {
-            AddOffsetJoinVertices(
-                vertices,
-                originalSegments[index - 1].End,
-                offsetSegments[index - 1],
-                offsetSegments[index],
-                distance,
-                tolerance);
-        }
-
-        vertices.Add(offsetSegments[^1].End);
-        return vertices;
-    }
-
-    private static List<Point2D> BuildClosedOffsetVertices(
-        IReadOnlyList<LineSegment2D> originalSegments,
-        IReadOnlyList<LineSegment2D> offsetSegments,
-        double distance,
-        GeometryTolerance tolerance)
-    {
-        var vertices = new List<Point2D>(offsetSegments.Count);
-
-        for (int index = 0; index < offsetSegments.Count; index++)
-        {
-            int previousIndex = (index - 1 + offsetSegments.Count) % offsetSegments.Count;
-            LineSegment2D previous = offsetSegments[previousIndex];
-            LineSegment2D current = offsetSegments[index];
-            AddOffsetJoinVertices(
-                vertices,
-                originalSegments[index].Start,
-                previous,
-                current,
-                distance,
-                tolerance);
-        }
-
-        return vertices;
-    }
-
-    private static void AddOffsetJoinVertices(
-        List<Point2D> vertices,
-        Point2D originalJoint,
-        LineSegment2D previous,
-        LineSegment2D current,
-        double distance,
-        GeometryTolerance tolerance)
-    {
-        if (TryCreateMiterJoin(
-                originalJoint,
-                previous,
-                current,
+            ComputeOffsetJoin(
+                sourceSegments[previousIndex].End,
+                offsetSegments[previousIndex],
+                offsetSegments[currentIndex],
                 distance,
                 tolerance,
-                out Point2D miterVertex))
-        {
-            AddVertexIfDistinct(vertices, miterVertex, tolerance);
-            return;
+                out previousEnds[position],
+                out currentStarts[position]);
         }
 
-        AddVertexIfDistinct(vertices, previous.End, tolerance);
-        AddVertexIfDistinct(vertices, current.Start, tolerance);
+        // A trimmed segment is invalid when it is consumed (zero or reversed length) or when
+        // it lies completely outside the extent of its own source segment: such a piece is
+        // farther than the offset distance from every source point it could come from, which
+        // happens to the leftover chords of an arc approximation whose radius is smaller than
+        // the distance. Consumed segments are removed first, then the farthest stray piece.
+        int consumedPosition = -1;
+        double mostConsumedLength = double.MaxValue;
+        int strayPosition = -1;
+        double largestStrayGap = 0.0;
+
+        for (int position = 0; position < count; position++)
+        {
+            int segmentIndex = activeSegments[position];
+            LineSegment2D offsetSegment = offsetSegments[segmentIndex];
+            Vector2D direction = directions[segmentIndex];
+
+            Point2D start = !isClosed && position == 0
+                ? offsetSegment.Start
+                : currentStarts[position];
+
+            Point2D end = !isClosed && position == count - 1
+                ? offsetSegment.End
+                : previousEnds[(position + 1) % count];
+
+            double startParameter = offsetSegment.Start.VectorTo(start).Dot(direction);
+            double endParameter = offsetSegment.Start.VectorTo(end).Dot(direction);
+            double trimmedLength = endParameter - startParameter;
+
+            if (trimmedLength <= tolerance.Distance)
+            {
+                if (trimmedLength < mostConsumedLength)
+                {
+                    mostConsumedLength = trimmedLength;
+                    consumedPosition = position;
+                }
+
+                continue;
+            }
+
+            double segmentLength = offsetSegment.Start.DistanceTo(offsetSegment.End);
+            double strayGap = Math.Max(
+                -endParameter,
+                startParameter - segmentLength);
+
+            if (strayGap > tolerance.Distance &&
+                strayGap > largestStrayGap)
+            {
+                largestStrayGap = strayGap;
+                strayPosition = position;
+            }
+        }
+
+        collapsedPosition = consumedPosition >= 0
+            ? consumedPosition
+            : strayPosition;
+
+        var vertices = new List<Point2D>(count + 1);
+
+        if (!isClosed)
+        {
+            AddVertexIfDistinct(vertices, offsetSegments[activeSegments[0]].Start, tolerance);
+        }
+
+        for (int position = firstJoin; position < count; position++)
+        {
+            AddVertexIfDistinct(vertices, previousEnds[position], tolerance);
+            AddVertexIfDistinct(vertices, currentStarts[position], tolerance);
+        }
+
+        if (!isClosed)
+        {
+            AddVertexIfDistinct(vertices, offsetSegments[activeSegments[count - 1]].End, tolerance);
+        }
+
+        return vertices;
     }
 
-    private static bool TryCreateMiterJoin(
+    /// <summary>
+    /// Joins two consecutive offset segments. Inner corners always use the exact
+    /// intersection, because there the segments trim each other and a bevel would
+    /// create a self-crossing loop. Outer corners use a miter up to the miter limit
+    /// and a bevel beyond it. Parallel segments that do not meet are bevelled.
+    /// </summary>
+    private static void ComputeOffsetJoin(
         Point2D originalJoint,
         LineSegment2D previous,
         LineSegment2D current,
         double distance,
         GeometryTolerance tolerance,
-        out Point2D miterVertex)
+        out Point2D previousEnd,
+        out Point2D currentStart)
     {
-        miterVertex = Point2D.Origin;
-
-        if (TryIntersectInfiniteLines(previous, current, tolerance, out Point2D intersection))
-        {
-            double miterLength = originalJoint.DistanceTo(intersection);
-            double maxMiterLength = Math.Max(distance * MiterLimitRatio, tolerance.Distance);
-            if (miterLength <= maxMiterLength)
-            {
-                miterVertex = intersection;
-                return true;
-            }
-
-            return false;
-        }
-
         if (tolerance.ArePointsEqual(previous.End, current.Start))
         {
-            miterVertex = previous.End;
-            return true;
+            previousEnd = previous.End;
+            currentStart = previous.End;
+            return;
         }
 
-        Point2D midpoint = new(
-            (previous.End.X + current.Start.X) / 2.0,
-            (previous.End.Y + current.Start.Y) / 2.0);
-
-        double midpointMiterLength = originalJoint.DistanceTo(midpoint);
-        double midpointMaxMiterLength = Math.Max(distance * MiterLimitRatio, tolerance.Distance);
-        if (midpointMiterLength <= midpointMaxMiterLength)
+        if (TryIntersectInfiniteLines(
+                previous,
+                current,
+                tolerance,
+                out Point2D intersection,
+                out double previousParameter,
+                out double currentParameter))
         {
-            miterVertex = midpoint;
-            return true;
+            bool isOuterJoin = previousParameter > 1.0 && currentParameter < 0.0;
+            double maxMiterLength = Math.Max(distance * MiterLimitRatio, tolerance.Distance);
+
+            if (!isOuterJoin ||
+                originalJoint.DistanceTo(intersection) <= maxMiterLength)
+            {
+                previousEnd = intersection;
+                currentStart = intersection;
+                return;
+            }
         }
 
-        return false;
+        previousEnd = previous.End;
+        currentStart = current.Start;
     }
 
     private static void AddVertexIfDistinct(
@@ -735,28 +899,41 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         LineSegment2D first,
         LineSegment2D second,
         GeometryTolerance tolerance,
-        out Point2D intersection)
+        out Point2D intersection,
+        out double firstParameter,
+        out double secondParameter)
     {
         intersection = Point2D.Origin;
+        firstParameter = 0.0;
+        secondParameter = 0.0;
 
         Point2D p = first.Start;
         Point2D q = second.Start;
         Vector2D r = first.Start.VectorTo(first.End);
         Vector2D s = second.Start.VectorTo(second.End);
-        double cross = r.Cross(s);
+        double rLength = r.Length;
+        double sLength = s.Length;
 
-        if (tolerance.IsVectorLengthZero(r.Length) ||
-            tolerance.IsVectorLengthZero(s.Length) ||
-            tolerance.IsDistanceZero(cross))
+        if (tolerance.IsVectorLengthZero(rLength) ||
+            tolerance.IsVectorLengthZero(sLength))
+        {
+            return false;
+        }
+
+        // Parallelism is tested on the normalized cross product (the sine of the angle),
+        // so short segments such as arc approximation chords are not mistaken for parallel.
+        double cross = r.Cross(s);
+        if (Math.Abs(cross / (rLength * sLength)) <= tolerance.Angle)
         {
             return false;
         }
 
         Vector2D qMinusP = p.VectorTo(q);
-        double t = qMinusP.Cross(s) / cross;
+        firstParameter = qMinusP.Cross(s) / cross;
+        secondParameter = qMinusP.Cross(r) / cross;
         intersection = new Point2D(
-            p.X + (t * r.X),
-            p.Y + (t * r.Y));
+            p.X + (firstParameter * r.X),
+            p.Y + (firstParameter * r.Y));
         return true;
     }
 
@@ -848,14 +1025,15 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
     {
         _currentSidePoint = sidePoint;
 
-        if (_distance is null || _pickedEntity is null)
+        CadEntity? sourceEntity = ResolvePickedEntity(context);
+        if (_distance is null || sourceEntity is null)
         {
             _previewEntity = null;
             return;
         }
 
         if (TryCreateOffsetEntity(
-                _pickedEntity.Entity,
+                sourceEntity,
                 sidePoint,
                 _distance.Value,
                 context.GeometryTolerance,
@@ -874,8 +1052,27 @@ public sealed class OffsetTool : ICadTool, ICommandDrivenTool, IToolPreviewEntit
         return value.ToString("0.###", System.Globalization.CultureInfo.InvariantCulture);
     }
 
+    /// <summary>
+    /// Re-reads the picked target from the document so that an undo, delete or
+    /// layer lock performed while choosing the side never offsets a stale copy.
+    /// </summary>
+    private CadEntity? ResolvePickedEntity(ToolContext context)
+    {
+        if (_pickedEntity is null ||
+            !context.Document.Entities.TryGet(_pickedEntity.EntityId, out CadEntity? entity) ||
+            entity is null ||
+            !context.Document.IsEntitySelectable(entity) ||
+            !IsSupportedEntity(entity))
+        {
+            return null;
+        }
+
+        return entity;
+    }
+
     private void Reset(ToolContext context)
     {
+        IsCommandFinished = false;
         _distance = null;
         _distanceFirstPoint = null;
         _pickedEntity = null;

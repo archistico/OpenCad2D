@@ -631,6 +631,290 @@ public sealed class OffsetToolTests
         Assert.Equal(2, tool.Distance);
     }
 
+    [Fact]
+    public void HandleCommandInput_WithTypedPointWhileWaitingForDistance_ShouldStartDistanceMeasurement()
+    {
+        OffsetTool.ResetLastDistanceForTests();
+        var context = CreateContext();
+        var tool = new OffsetTool();
+
+        ToolResult first = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("1,2", new Point2D(1, 2)),
+            context);
+        ToolResult second = tool.HandleCommandInput(
+            CommandInputSubmission.FromPoint("4,6", new Point2D(4, 6)),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, first.Kind);
+        Assert.Equal(ToolResultKind.Started, second.Kind);
+        Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
+        Assert.Equal(5, tool.Distance);
+    }
+
+    [Fact]
+    public void HandleCommandInput_WithNumberWhileWaitingForSecondPoint_ShouldUseTypedDistance()
+    {
+        var context = CreateContext();
+        var tool = new OffsetTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(1, 2)));
+        ToolResult result = tool.HandleCommandInput(
+            CommandInputSubmission.FromNumber("12.5", 12.5),
+            context);
+
+        Assert.Equal(ToolResultKind.Started, result.Kind);
+        Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
+        Assert.Equal(12.5, tool.Distance);
+        Assert.Null(context.CurrentBasePoint);
+    }
+
+    [Fact]
+    public void GetPromptState_DistancePhases_ShouldAcceptPointsNumbersAndEmptyEnter()
+    {
+        var context = CreateContext();
+        var tool = new OffsetTool();
+
+        CommandPromptState distancePrompt = tool.GetPromptState(context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        CommandPromptState secondPointPrompt = tool.GetPromptState(context);
+
+        Assert.Equal(CommandInputKind.PointOrNumber, distancePrompt.ExpectedInput);
+        Assert.True(distancePrompt.AcceptsEmptyEnter);
+        Assert.Equal(CommandInputKind.PointOrNumber, secondPointPrompt.ExpectedInput);
+    }
+
+    [Fact]
+    public void ConfirmWhileSelectingEntity_ShouldFinishCommand()
+    {
+        CadDocument document = new();
+        document.AddEntity(new LineEntity(new Point2D(0, 0), new Point2D(10, 0)));
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+        var controller = new ToolController(context, tool);
+
+        controller.SubmitCommandInput(CommandInputSubmission.FromDistance("2", 2));
+        Assert.True(tool.GetPromptState(context).AcceptsEmptyEnter);
+
+        ToolResult result = controller.ConfirmActiveToolCommand();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.IsNotType<OffsetTool>(controller.ActiveTool);
+        Assert.Single(document.Entities.All);
+    }
+
+    [Fact]
+    public void ConfirmWhileChoosingSide_ShouldFinishCommandWithoutCreatingEntity()
+    {
+        CadDocument document = new();
+        document.AddEntity(new LineEntity(new Point2D(0, 0), new Point2D(10, 0)));
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+        var controller = new ToolController(context, tool);
+
+        controller.SubmitCommandInput(CommandInputSubmission.FromDistance("2", 2));
+        controller.OnPointerPressed(new PointerInfo(new Point2D(5, 0)));
+        ToolResult result = controller.ConfirmActiveToolCommand();
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.IsNotType<OffsetTool>(controller.ActiveTool);
+        Assert.Single(document.Entities.All);
+        Assert.Null(context.CurrentBasePoint);
+    }
+
+    [Fact]
+    public void OffsetPolyline_ClosedRectangle_SidePointOnEdgeExtension_ShouldOffsetOutside()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5),
+                new Point2D(0, 5)
+            },
+            isClosed: true);
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("1", 1), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        // (12, 0) lies on the extension of the bottom edge, outside the rectangle.
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(12, 0)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity offset = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All.Where(entity => !entity.Id.Equals(polyline.Id))));
+        AssertPointNear(new Point2D(-1, -1), offset.Vertices[0]);
+        AssertPointNear(new Point2D(11, -1), offset.Vertices[1]);
+        AssertPointNear(new Point2D(11, 6), offset.Vertices[2]);
+        AssertPointNear(new Point2D(-1, 6), offset.Vertices[3]);
+    }
+
+    [Fact]
+    public void OffsetPolyline_OpenSharpInnerCorner_ShouldTrimAtIntersectionWithoutLoop()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 10),
+                new Point2D(0, 0),
+                new Point2D(1.5, 10)
+            });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("0.1", 0.1), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 5)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(0.3, 5)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity offset = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All.Where(entity => !entity.Id.Equals(polyline.Id))));
+        Assert.Equal(3, offset.Vertices.Count);
+        AssertPointNear(new Point2D(0.1, 10), offset.Vertices[0]);
+        Assert.True(offset.Vertices[1].Y > 1.0, $"Inner tip {offset.Vertices[1]} should be the trimmed V tip, not a loop near the source vertex.");
+        AssertAllVerticesAtLeastDistanceFromSource(polyline, offset, 0.1);
+    }
+
+    [Fact]
+    public void OffsetPolyline_ClosedRectangleInwardTooFar_ShouldRejectWithoutCreatingInvertedGeometry()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5),
+                new Point2D(0, 5)
+            },
+            isClosed: true);
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("3", 3), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 1)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Contains("too large", result.Message);
+        Assert.Single(document.Entities.All);
+        Assert.Equal(OffsetToolState.WaitingForSidePoint, tool.State);
+    }
+
+    [Fact]
+    public void OffsetPolyline_RoundedRectangleInwardBeyondCornerRadius_ShouldDropConsumedArcSegments()
+    {
+        CadDocument document = new();
+        // Quarter-circle corners of radius 1. In PolylineEntity a negative bulge turns
+        // counter-clockwise, so these corners are convex for this CCW outline.
+        double bulge = -Math.Tan(Math.PI / 8.0);
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(1, 0),
+                new Point2D(19, 0),
+                new Point2D(20, 1),
+                new Point2D(20, 9),
+                new Point2D(19, 10),
+                new Point2D(1, 10),
+                new Point2D(0, 9),
+                new Point2D(0, 1)
+            },
+            isClosed: true,
+            segmentBulges: new[] { 0.0, bulge, 0.0, bulge, 0.0, bulge, 0.0, bulge });
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 5)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity offset = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All.Where(entity => !entity.Id.Equals(polyline.Id))));
+        Assert.True(offset.IsClosed);
+        Assert.Equal(4, offset.Vertices.Count);
+        AssertPointNear(new Point2D(2, 2), offset.Vertices[0]);
+        AssertPointNear(new Point2D(18, 2), offset.Vertices[1]);
+        AssertPointNear(new Point2D(18, 8), offset.Vertices[2]);
+        AssertPointNear(new Point2D(2, 8), offset.Vertices[3]);
+    }
+
+    [Fact]
+    public void OffsetPolyline_ClosedWithRepeatedClosingVertex_ShouldIgnoreZeroLengthClosingSegment()
+    {
+        CadDocument document = new();
+        var polyline = new PolylineEntity(
+            new[]
+            {
+                new Point2D(0, 0),
+                new Point2D(10, 0),
+                new Point2D(10, 5),
+                new Point2D(0, 5),
+                new Point2D(0, 0)
+            },
+            isClosed: true);
+        document.AddEntity(polyline);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, -2)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        PolylineEntity offset = Assert.IsType<PolylineEntity>(Assert.Single(document.Entities.All.Where(entity => !entity.Id.Equals(polyline.Id))));
+        Assert.True(offset.IsClosed);
+        Assert.Equal(4, offset.Vertices.Count);
+        AssertPointNear(new Point2D(-2, -2), offset.Vertices[0]);
+        AssertPointNear(new Point2D(12, -2), offset.Vertices[1]);
+        AssertPointNear(new Point2D(12, 7), offset.Vertices[2]);
+        AssertPointNear(new Point2D(-2, 7), offset.Vertices[3]);
+    }
+
+    [Fact]
+    public void CreateOffset_WhenTargetWasRemovedWhileChoosingSide_ShouldNotCreateEntity()
+    {
+        CadDocument document = new();
+        var line = new LineEntity(new Point2D(0, 0), new Point2D(10, 0));
+        document.AddEntity(line);
+        ToolContext context = CreateContext(document);
+        var tool = new OffsetTool();
+
+        tool.HandleCommandInput(CommandInputSubmission.FromDistance("2", 2), context);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 0)));
+        document.RemoveEntity(line.Id);
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(5, 2)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Empty(document.Entities.All);
+        Assert.Equal(OffsetToolState.WaitingForEntity, tool.State);
+    }
+
+    private static void AssertAllVerticesAtLeastDistanceFromSource(
+        PolylineEntity source,
+        PolylineEntity offset,
+        double distance)
+    {
+        Assert.All(offset.Vertices, vertex =>
+        {
+            double actual = source.DistanceTo(vertex);
+            Assert.True(
+                actual >= distance - 1e-6,
+                $"Offset vertex {vertex} is {actual} from the source, closer than the offset distance {distance}.");
+        });
+    }
+
     private static int InvokeDeterminePolylineOffsetSide(
         IReadOnlyList<LineSegment2D> segments,
         Point2D sidePoint,
