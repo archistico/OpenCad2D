@@ -19,6 +19,8 @@ public sealed class ArcThreePointsTool : ICadTool, ICommandDrivenTool, IToolPrev
 
     public string Name => "Arc 3P";
 
+    public bool IsCommandFinished { get; private set; }
+
     public CommandPromptState GetPromptState(ToolContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -29,7 +31,8 @@ public sealed class ArcThreePointsTool : ICadTool, ICommandDrivenTool, IToolPrev
                 "ARC3P",
                 "Specify start point",
                 CommandInputKind.Point,
-                placeholder: "100,50"),
+                acceptsEmptyEnter: true,
+                placeholder: "100,50   |   Enter finishes"),
 
             ArcThreePointsToolState.WaitingForPointOnArc => new CommandPromptState(
                 "ARC3P",
@@ -57,6 +60,14 @@ public sealed class ArcThreePointsTool : ICadTool, ICommandDrivenTool, IToolPrev
     {
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
+
+        if (input.Kind == CommandInputSubmissionKind.Confirm &&
+            State == ArcThreePointsToolState.WaitingForStartPoint)
+        {
+            Reset(context);
+            IsCommandFinished = true;
+            return ToolResult.Completed("Arc 3P command finished.");
+        }
 
         if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
         {
@@ -377,6 +388,7 @@ public sealed class ArcThreePointsTool : ICadTool, ICommandDrivenTool, IToolPrev
         _startPoint = null;
         _pointOnArc = null;
         _currentPoint = null;
+        IsCommandFinished = false;
         State = ArcThreePointsToolState.WaitingForStartPoint;
 
         if (context is not null)

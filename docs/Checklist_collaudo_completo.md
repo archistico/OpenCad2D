@@ -659,6 +659,11 @@ Per ogni entità sotto, verificare almeno: creazione, rendering, hit test, selez
 - [ ] Workflow crea arco corretto.
 - [ ] Preview arco è coerente.
 - [ ] Angoli e verso sono corretti.
+- [ ] `D` nell'HUD (anche con un campo attivo) inverte il verso orario/antiorario e il prompt lo mostra.
+- [ ] Il verso scelto resta per gli archi successivi dello stesso comando.
+- [ ] Angolo finale digitato o nel campo HUD `Angle` crea l'arco atteso.
+- [ ] Coordinate digitate restano esatte con Ortho/snap attivi.
+- [ ] Invio sul centro termina il comando.
 - [ ] ESC annulla correttamente.
 
 ### 6.12 Arc 3P

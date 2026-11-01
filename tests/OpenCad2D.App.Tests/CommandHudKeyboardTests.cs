@@ -151,6 +151,53 @@ public sealed class CommandHudKeyboardTests : IClassFixture<CommandHudTestSessio
         Assert.Equal(300, Assert.IsType<LineEntity>(viewModel.Workspace.Document.Entities.GetRequired(line.Id)).End.Y, 8);
     });
 
+    [Fact]
+    public Task Arc_DirectionShortcutInHud_ShouldSwitchToClockwiseBeforeTypingAngle() => Run(window =>
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        StartCommand(window, "ARC");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("10,0");
+        Refresh(window);
+
+        Assert.Contains(viewModel.CommandHudState.OptionViews, option => option.Shortcut == "D");
+        Assert.Contains("(counter-clockwise)", viewModel.CommandHudState.Prompt);
+
+        Press(window, Key.D);
+
+        Assert.Contains("(clockwise)", viewModel.CommandHudState.Prompt);
+        Assert.IsType<ArcTool>(viewModel.Workspace.ToolController.ActiveTool);
+
+        window.KeyTextInput("90");
+        Press(window, Key.Enter);
+
+        ArcEntity arc = Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>());
+        Assert.False(arc.IsCounterClockwise);
+        Assert.Equal(0, arc.Geometry.EndPoint.X, 8);
+        Assert.Equal(10, arc.Geometry.EndPoint.Y, 8);
+    });
+
+    [Fact]
+    public Task Arc_DirectionShortcutPressedTwice_ShouldReturnToCounterClockwise() => Run(window =>
+    {
+        MainWindowViewModel viewModel = GetViewModel(window);
+        StartCommand(window, "ARC");
+        viewModel.SubmitCommandInput("0,0");
+        viewModel.SubmitCommandInput("10,0");
+        Refresh(window);
+
+        Press(window, Key.D);
+        Press(window, Key.D);
+
+        Assert.Contains("(counter-clockwise)", viewModel.CommandHudState.Prompt);
+
+        window.KeyTextInput("90");
+        Press(window, Key.Enter);
+
+        ArcEntity arc = Assert.Single(viewModel.Workspace.Document.Entities.All.OfType<ArcEntity>());
+        Assert.True(arc.IsCounterClockwise);
+    });
+
     private static void PickAlignPairs(MainWindow window)
     {
         TrimPointer(window, new Point(100, 200), MouseButton.Left);

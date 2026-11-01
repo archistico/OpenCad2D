@@ -123,6 +123,28 @@ Implemented:
 
 ---
 
+## Arc and Arc 3P
+
+Workflow:
+
+```text
+ARC:   Specify center point (counter-clockwise) or press Enter to finish:
+ARC:   Specify start point or radius (counter-clockwise):
+ARC:   Specify end point or end angle (counter-clockwise):
+ARC3P: Specify start point:
+ARC3P: Specify point on arc:
+ARC3P: Specify end point:
+```
+
+Rules:
+
+- `ARC` runs counter-clockwise from the start point by default; the `Direction` option (`D`, shown in the HUD and accepted in every phase, also while a HUD field is focused) switches between counter-clockwise and clockwise; the prompt shows the current direction and the choice is kept for the following arcs of the same command;
+- the end phase accepts an end point or an end angle: a typed number, or the HUD `Angle` field, is the direction of the end point from the center in the current UCS;
+- the start phase accepts a start point or a radius (HUD `Radius`/`Angle`, or a typed distance along the cursor direction);
+- typed coordinates are exact for both tools: snap, ortho and polar tracking apply only to pointer input;
+- `ARC3P` derives the direction from its three points;
+- Enter/right-click at the first prompt (`ARC` center point, `ARC3P` start point) ends the command, so a new command can be typed.
+
 ## Explode and Join
 
 Workflow:
