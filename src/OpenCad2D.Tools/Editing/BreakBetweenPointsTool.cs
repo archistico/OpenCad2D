@@ -12,6 +12,8 @@ namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
 /// Breaks a supported entity by removing the segment between two picked break points.
+/// Break points are projected onto the target. A single editable supported entity selected before
+/// the command starts is used as the target; Enter/right-click at the target prompt ends the command.
 /// </summary>
 public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, IToolPreviewEntityProvider, IToolPreviewDescriptorProvider, ISnapModeProvider
 {
@@ -21,8 +23,11 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
     private Point2D? _currentSecondBreakPoint;
     private IReadOnlyList<CadEntity> _previewSegments = Array.Empty<CadEntity>();
     private IReadOnlyList<CadEntity> _removedPreviewSegments = Array.Empty<CadEntity>();
+    private bool _isInitialized;
 
     public string Name => "Break Segment";
+
+    public bool IsCommandFinished { get; private set; }
 
     public BreakBetweenPointsToolState State { get; private set; } =
         BreakBetweenPointsToolState.WaitingForTargetEntity;
@@ -41,6 +46,8 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        EnsureInitialTarget(context);
+
         return State == BreakBetweenPointsToolState.WaitingForTargetEntity
             ? SnapKind.EntityOnly
             : context.EnabledSnaps;
@@ -50,13 +57,16 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
     {
         ArgumentNullException.ThrowIfNull(context);
 
+        EnsureInitialTarget(context);
+
         return State switch
         {
             BreakBetweenPointsToolState.WaitingForTargetEntity => new CommandPromptState(
                 "BREAK",
-                "Select entity",
+                "Select entity or press Enter to finish",
                 CommandInputKind.Selection,
-                placeholder: "Click a line, arc, circle, ellipse, elliptical arc, polyline or open spline"),
+                acceptsEmptyEnter: true,
+                placeholder: "Click a line, arc, circle, ellipse, elliptical arc, polyline or open spline; Enter finishes"),
 
             BreakBetweenPointsToolState.WaitingForFirstBreakPoint => new CommandPromptState(
                 "BREAK",
@@ -81,6 +91,16 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(context);
 
+        EnsureInitialTarget(context);
+
+        if (State == BreakBetweenPointsToolState.WaitingForTargetEntity &&
+            input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            Reset(context);
+            IsCommandFinished = true;
+            return ToolResult.Completed("Break Segment command finished.");
+        }
+
         if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
         {
             return State == BreakBetweenPointsToolState.WaitingForTargetEntity
@@ -103,6 +123,8 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
+
+        EnsureInitialTarget(context);
 
         return State switch
         {
@@ -131,6 +153,11 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
             _firstBreakPoint is null)
         {
             return ToolResult.None();
+        }
+
+        if (!IsTargetCurrent(context))
+        {
+            return ResetForChangedTarget(context);
         }
 
         Point2D point = ResolvePoint(
@@ -247,24 +274,93 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
 
         CadEntity entity = context.Document.Entities.GetRequired(selectedId.Value);
 
+        string? error = ValidateTarget(context, entity);
+        if (error is not null)
+        {
+            return ToolResult.None(error);
+        }
+
+        return AdoptTarget(context, entity, entity.GetClosestPoint(pointer.ModelPoint));
+    }
+
+    private static string? ValidateTarget(
+        ToolContext context,
+        CadEntity entity)
+    {
         if (entity is not LineEntity and not ArcEntity and not CircleEntity and not EllipseEntity and not EllipticalArcEntity and not PolylineEntity and not BezierSplineEntity)
         {
-            return ToolResult.None("Break Segment supports lines, arcs, circles, ellipses, elliptical arcs, polylines and open splines only.");
+            return "Break Segment supports lines, arcs, circles, ellipses, elliptical arcs, polylines and open splines only.";
         }
 
         if (!context.Document.IsEntitySelectable(entity))
         {
-            return ToolResult.None("Target entity is not editable.");
+            return "Target entity is not editable.";
         }
 
+        return null;
+    }
+
+    private ToolResult AdoptTarget(
+        ToolContext context,
+        CadEntity entity,
+        Point2D? basePoint)
+    {
         _targetEntityId = entity.Id;
         _targetEntity = entity;
         State = BreakBetweenPointsToolState.WaitingForFirstBreakPoint;
-
-        Point2D basePoint = entity.GetClosestPoint(pointer.ModelPoint);
         context.CurrentBasePoint = basePoint;
 
         return ToolResult.Started("Specify first break point on entity. For closed curves, point order defines which side is removed.");
+    }
+
+    /// <summary>
+    /// Uses a single editable supported entity selected before the command as the target,
+    /// matching the selection-first behavior of the other modify tools.
+    /// </summary>
+    private void EnsureInitialTarget(ToolContext context)
+    {
+        if (_isInitialized)
+        {
+            return;
+        }
+
+        _isInitialized = true;
+
+        if (State != BreakBetweenPointsToolState.WaitingForTargetEntity ||
+            context.Selection.SelectedIds.Count != 1)
+        {
+            return;
+        }
+
+        EntityId id = context.Selection.SelectedIds.First();
+        if (context.Document.Entities.TryGet(id, out CadEntity? entity) &&
+            entity is not null &&
+            ValidateTarget(context, entity) is null)
+        {
+            AdoptTarget(context, entity, basePoint: null);
+        }
+    }
+
+    /// <summary>
+    /// The target is captured when it is picked. Undo, delete, a grip edit or a layer lock can
+    /// change it before the break points are given; breaking the captured copy would then fail
+    /// half-way or bring back geometry that no longer exists.
+    /// </summary>
+    private bool IsTargetCurrent(ToolContext context)
+    {
+        return _targetEntityId is { } id &&
+               context.Document.Entities.TryGet(id, out CadEntity? current) &&
+               current is not null &&
+               ReferenceEquals(current, _targetEntity) &&
+               context.Document.IsEntitySelectable(current);
+    }
+
+    private ToolResult ResetForChangedTarget(ToolContext context)
+    {
+        Reset(context);
+
+        return ToolResult.None(
+            "The selected entity was changed, deleted or is no longer editable. Select the entity to break again.");
     }
 
     private ToolResult AcceptFirstBreakPoint(
@@ -288,14 +384,15 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
                 "Cannot accept first break point before selecting a target entity.");
         }
 
-        Point2D projectedPoint = _targetEntity.GetClosestPoint(point);
-
-        if (_targetEntity.DistanceTo(projectedPoint) > context.GeometryTolerance.Distance)
+        if (!IsTargetCurrent(context))
         {
-            return ToolResult.None("First break point must be on the target entity.");
+            return ResetForChangedTarget(context);
         }
 
-        _firstBreakPoint = projectedPoint;
+        // Like Break Point and the second break point, the first point is projected onto the
+        // native curve (the former "must be on the entity" check measured the projection
+        // against its own entity and could never fail).
+        _firstBreakPoint = _targetEntity.GetClosestPoint(point);
 
         _currentSecondBreakPoint = null;
         _previewSegments = Array.Empty<CadEntity>();
@@ -328,6 +425,11 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
                 "Cannot accept second break point before selecting a target entity and first break point.");
         }
 
+        if (!IsTargetCurrent(context))
+        {
+            return ResetForChangedTarget(context);
+        }
+
         IReadOnlyList<CadEntity> segments = CadBreakService.BreakBetweenPoints(
             _targetEntity,
             _firstBreakPoint.Value,
@@ -351,6 +453,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
                 segments,
                 "Break entity between points"));
 
+        context.Selection.Set.Deselect(_targetEntity.Id);
         Reset(context);
 
         return ToolResult.Completed("Entity segment removed.");
@@ -415,6 +518,7 @@ public sealed class BreakBetweenPointsTool : ICadTool, ICommandDrivenTool, ITool
         _currentSecondBreakPoint = null;
         _previewSegments = Array.Empty<CadEntity>();
         _removedPreviewSegments = Array.Empty<CadEntity>();
+        IsCommandFinished = false;
         State = BreakBetweenPointsToolState.WaitingForTargetEntity;
 
         if (context is not null)

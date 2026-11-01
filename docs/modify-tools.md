@@ -101,7 +101,7 @@ Circle is not applicable in the current Break Point workflow; use Break Segment 
 Workflow:
 
 ```text
-BREAKPOINT: Select entity:
+BREAKPOINT: Select entity or press Enter to finish:
 BREAKPOINT: Specify break point:
 ```
 
@@ -123,12 +123,20 @@ Current targets:
 Workflow:
 
 ```text
-BREAK: Select entity:
+BREAK: Select entity or press Enter to finish:
 BREAK: Specify first break point:
 BREAK: Specify second break point:
 ```
 
 For circles, the minor arc between the two projected points is removed and the result is a native `ArcEntity`. For ellipses, the removed portion is represented by native `EllipticalArcEntity` fragments rather than permanent polyline approximations. Open polylines can be broken on internal segments. Closed polylines and regular polygons are opened and the shortest path between points is removed.
+
+### Rules shared by Break Point and Break Segment
+
+- Both break points (and the Break Point point) are projected onto the native curve, also when they are typed far from the entity.
+- When exactly one editable supported entity is selected before the command starts, it is used as the target and the command starts at the first point prompt; otherwise, or for unsupported/non-editable entities, the target is picked on the canvas.
+- The target is checked again before every preview and before the break: if it was deleted, changed (undo, grip edit, another command) or its layer was hidden or locked in the meantime, the command asks for the target again instead of failing or restoring the old geometry.
+- Typed coordinates are exact; snaps apply to pointer input only.
+- After each break the tool asks for the next target; Enter/right-click at the target prompt ends the command. The broken entity is removed from the selection.
 
 ---
 

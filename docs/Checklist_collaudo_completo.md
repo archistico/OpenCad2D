@@ -800,7 +800,11 @@ Per ogni entità sotto, verificare almeno: creazione, rendering, hit test, selez
 - [ ] Funziona su Ellipse se supportato.
 - [ ] Funziona su Polyline.
 - [ ] Funziona su Spline aperta se supportato.
-- [ ] Punto fuori entità viene respinto.
+- [ ] Punto fuori entità viene proiettato sulla curva (come da `modify-tools.md`).
+- [ ] Punto su estremo o vertice viene respinto con messaggio chiaro.
+- [ ] Con una sola entità supportata già selezionata, il comando parte dal punto di rottura.
+- [ ] Se l'entità viene annullata/modificata/bloccata dopo la scelta, il comando chiede di nuovo l'entità senza errori.
+- [ ] Invio sul prompt "Select entity" termina il comando.
 - [ ] Entità risultanti sono selezionabili.
 - [ ] Undo/Redo funzionano.
 
@@ -813,6 +817,10 @@ Per ogni entità sotto, verificare almeno: creazione, rendering, hit test, selez
 - [ ] Funziona su Polyline.
 - [ ] Funziona su Spline aperta se supportato.
 - [ ] Segmento nullo o troppo piccolo viene gestito senza crash.
+- [ ] Punti digitati lontano dall'entità vengono proiettati sulla curva.
+- [ ] Con una sola entità supportata già selezionata, il comando parte dal primo punto.
+- [ ] Se l'entità viene annullata/modificata/bloccata dopo la scelta, il comando chiede di nuovo l'entità senza errori.
+- [ ] Invio sul prompt "Select entity" termina il comando.
 - [ ] Undo/Redo funzionano.
 
 ### 8.9 Extend
