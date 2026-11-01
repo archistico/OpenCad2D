@@ -132,7 +132,7 @@ EXPLODE: Select polylines or blocks to explode:
 JOIN: Select connected lines, arcs and open polylines to join:
 ```
 
-Both tools are selection-first, support multi-pick selection, use EntityOnly snap while selecting entities and accept Enter/right-click to confirm. Explode supports open and closed polylines, including mixed bulge segments: straight segments become `LineEntity` objects and curved bulge segments become `ArcEntity` objects. Block references still explode into transformed world-space child entities. Join supports connected line, arc and open-polyline chains and can create either open or closed polylines; disconnected connected groups become separate polylines.
+Both tools are selection-first, support multi-pick selection (a click always adds or removes the clicked entity, also with a preselection), use EntityOnly snap while selecting entities and accept Enter/right-click to confirm; a successful confirmation, or Enter with nothing selected, ends the command. Deleted entities and entities on hidden or locked layers are skipped, and zero-length segments are ignored (see `modify-tools.md`). Explode supports open and closed polylines, including mixed bulge segments: straight segments become `LineEntity` objects and curved bulge segments become `ArcEntity` objects. Block references still explode into transformed world-space child entities. Join supports connected line, arc and open-polyline chains and can create either open or closed polylines; disconnected connected groups become separate polylines.
 
 ---
 

@@ -13,12 +13,14 @@ namespace OpenCad2D.Tools.Editing;
 /// <summary>
 /// Joins selected lines, arcs and open polylines into one or more polyline entities.
 /// Arc geometry is preserved through DXF-compatible polyline bulges.
+/// Clicks add or remove entities from the selection; Enter/right-click joins the selection and ends the command,
+/// or ends it directly when nothing is selected.
 /// </summary>
 public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 {
-    private bool _isSelectingObjects;
-
     public string Name => "Join";
+
+    public bool IsCommandFinished { get; private set; }
 
     public SnapKind GetActiveSnapKind(ToolContext context)
     {
@@ -35,8 +37,8 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
         {
             int count = context.Selection.SelectedIds.Count;
             string message = count == 1
-                ? "1 entity selected. Press Enter or right-click to join lines, arcs and open polylines."
-                : $"{count} entities selected. Press Enter or right-click to join lines, arcs and open polylines.";
+                ? "1 entity selected. Click to add or remove entities; Enter or right-click joins lines, arcs and open polylines."
+                : $"{count} entities selected. Click to add or remove entities; Enter or right-click joins lines, arcs and open polylines.";
 
             return new CommandPromptState(
                 "JOIN",
@@ -48,7 +50,7 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 
         return new CommandPromptState(
             "JOIN",
-            "Select lines, arcs and open polylines to join",
+            "Select lines, arcs and open polylines to join, or press Enter to finish",
             CommandInputKind.Selection,
             acceptsEmptyEnter: true,
             placeholder: "Select entities, then press Enter/right-click");
@@ -63,7 +65,7 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 
         if (input.Kind == CommandInputSubmissionKind.Confirm)
         {
-            return Execute(context);
+            return Confirm(context);
         }
 
         return ToolResult.None("Select lines, arcs and open polylines to join, then press Enter or right-click.");
@@ -76,13 +78,8 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(pointer);
 
-        if (!_isSelectingObjects && context.Selection.HasSelection)
-        {
-            return Execute(context);
-        }
-
-        _isSelectingObjects = true;
-
+        // A click always picks: with a preselection it adds or removes the clicked entity
+        // instead of joining immediately, so the click target is never ignored.
         EntityId? selectedId = context.Selection.Service.SelectByPoint(
             context.Document,
             pointer.ModelPoint,
@@ -126,7 +123,7 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        _isSelectingObjects = false;
+        IsCommandFinished = false;
 
         return ToolResult.Cancelled("Join command cancelled.");
     }
@@ -135,16 +132,39 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
     {
         ArgumentNullException.ThrowIfNull(context);
 
-        _isSelectingObjects = false;
-
         return ToolResult.None("Join tool deactivated.");
     }
 
-    private ToolResult Execute(ToolContext context)
+    private ToolResult Confirm(ToolContext context)
     {
-        IReadOnlyList<CadEntity> selectedEntities = context.Selection.SelectedIds
-            .Select(context.Document.Entities.GetRequired)
-            .ToList();
+        if (!context.Selection.HasSelection)
+        {
+            IsCommandFinished = true;
+            return ToolResult.Completed("Join command finished.");
+        }
+
+        int skipped = EditableSelection.Prune(context);
+        if (!context.Selection.HasSelection)
+        {
+            return ToolResult.None(
+                "The selected entities were deleted or are on hidden or locked layers. Select lines, arcs and open polylines to join.");
+        }
+
+        ToolResult result = Execute(context, skipped);
+        if (result.Kind == ToolResultKind.Completed)
+        {
+            IsCommandFinished = true;
+        }
+
+        return result;
+    }
+
+    private static ToolResult Execute(
+        ToolContext context,
+        int skippedCount)
+    {
+        double tolerance = context.GeometryTolerance.Distance;
+        IReadOnlyList<CadEntity> selectedEntities = EditableSelection.GetEntities(context);
 
         IReadOnlyList<CadEntity> unsupportedEntities = selectedEntities
             .Where(entity => !IsSupportedJoinEntity(entity))
@@ -165,8 +185,11 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
             return ToolResult.None("Only editable visible lines, arcs and open polylines can be joined.");
         }
 
+        // Zero-length segments (a degenerate line or a repeated polyline vertex) carry no
+        // geometry; as graph edges they would look like a branching junction.
         IReadOnlyList<JoinSegment> segments = selectedEntities
             .SelectMany(CreateSegments)
+            .Where(segment => !AreSamePoint(segment.Start, segment.End, tolerance))
             .ToList();
 
         if (segments.Count < 2)
@@ -190,7 +213,7 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
             return ToolResult.None("Selected entities use different layers or styles and cannot be joined.");
         }
 
-        BuildGraphResult graphResult = BuildGraph(segments, context.GeometryTolerance.Distance);
+        BuildGraphResult graphResult = BuildGraph(segments, tolerance);
         if (graphResult.HasBranchingNode)
         {
             return ToolResult.None("Selected entities create a branching junction and cannot be joined into a single polyline.");
@@ -198,10 +221,11 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
 
         IReadOnlyList<JoinedSegmentChain> chains = BuildChains(
             graphResult.Segments,
-            context.GeometryTolerance.Distance);
+            tolerance);
 
         IReadOnlyList<JoinedSegmentChain> joinableChains = chains
             .Where(chain => chain.SourceIds.Count >= 2 && chain.Segments.Count >= 2)
+            .Where(chain => !IsDegenerateClosedChain(chain))
             .ToList();
 
         if (joinableChains.Count == 0)
@@ -229,9 +253,30 @@ public sealed class JoinTool : ICadTool, ICommandDrivenTool, ISnapModeProvider
                 }));
 
         context.Selection.Set.Clear();
-        _isSelectingObjects = false;
 
-        return ToolResult.Completed(GetCompletedMessage(consumedIds.Count, polylines));
+        return ToolResult.Completed(
+            GetCompletedMessage(consumedIds.Count, polylines) +
+            EditableSelection.FormatSkippedSuffix(skippedCount));
+    }
+
+    /// <summary>
+    /// Two segments that close on each other while one is the reverse of the other describe the
+    /// same curve twice (for example two overlapping copies of a line): the result would be a
+    /// zero-area closed polyline. A line and an arc closing a D shape remain valid.
+    /// </summary>
+    private static bool IsDegenerateClosedChain(JoinedSegmentChain chain)
+    {
+        if (chain.Segments.Count != 2)
+        {
+            return false;
+        }
+
+        OrientedJoinSegment first = chain.Segments[0];
+        OrientedJoinSegment second = chain.Segments[1];
+
+        return first.Start == second.End &&
+               first.End == second.Start &&
+               Tolerance.IsZero(first.Bulge + second.Bulge);
     }
 
     private static bool IsSupportedJoinEntity(CadEntity entity)

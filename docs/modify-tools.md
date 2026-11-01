@@ -32,22 +32,26 @@ The Select area includes explicit selection actions:
 
 ## Explode and Join
 
-`EXPLODE` and `JOIN` are selection-first modify tools and follow the same confirmation policy as Delete:
+`EXPLODE` and `JOIN` are selection-first modify tools:
 
 ```text
-EXPLODE: Select polylines to explode into lines:
-JOIN: Select connected lines to join into polylines:
+EXPLODE: Select polylines or blocks to explode, or press Enter to finish:
+JOIN: Select lines, arcs and open polylines to join, or press Enter to finish:
 ```
 
 Behavior:
 
-- `EXPLODE` converts selected straight-segment `PolylineEntity` objects into individual `LineEntity` segments; closed polylines produce a final closing segment.
-- `JOIN` converts selected connected `LineEntity` chains into one or more `PolylineEntity` objects. Closed chains are detected and stored as closed polylines.
+- `EXPLODE` converts selected polylines into `LineEntity` (straight segments) and `ArcEntity` (bulge segments) objects, including the closing segment of closed polylines, and block references into their world-space entities.
+- `JOIN` converts selected connected line, arc and open-polyline chains into one or more `PolylineEntity` objects. Closed chains are detected and stored as closed polylines.
 - Both tools use `SnapKind.EntityOnly` during selection.
-- Enter/right-click confirms the current selection.
+- A click always picks: it adds or removes the clicked entity, also when a selection already existed before the command started.
+- Enter/right-click executes the current selection and ends the command; with nothing selected it ends the command directly. If nothing can be converted, the tool stays active with an explanation.
+- Only editable entities are used: deleted entities and entities on hidden or locked layers are removed from the selection and reported as skipped.
+- Zero-length segments (degenerate lines, repeated polyline vertices, a repeated closing vertex) are ignored: Explode creates no zero-length entities and Join does not mistake them for a branching junction or keep duplicate vertices.
+- Join rejects two segments that describe the same curve twice (for example two overlapping copies of a line), which would otherwise become a zero-area closed polyline; a line and an arc closing a D shape stay valid.
+- Explode places block entities whose layer no longer exists on the block reference layer and skips nested block references whose definition is missing; the completion message reports both cases.
 - Created entities preserve the source layer, style, visibility, lock flag and draw order.
-- The operation is wrapped in a single undoable composite command.
-- Non-supported or unconnected entities are ignored; if no valid conversion is possible, the document is left unchanged.
+- The operation is a single undoable command. `CadDocument.AddEntities` validates the whole batch before adding anything, and `ModifyEntitiesCommand` restores the removed entities if the additions are rejected, so a failure never leaves the document half-modified.
 
 ---
 

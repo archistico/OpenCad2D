@@ -56,7 +56,21 @@ public sealed class ModifyEntitiesCommand : ICadCommand
 
         if (_addedEntities.Count > 0)
         {
-            document.AddEntities(_addedEntities);
+            try
+            {
+                document.AddEntities(_addedEntities);
+            }
+            catch
+            {
+                // AddEntities validates the whole batch before adding, so only the removal
+                // has to be rolled back to leave the document exactly as it was.
+                if (_removedEntities.Count > 0)
+                {
+                    document.AddEntities(_removedEntities);
+                }
+
+                throw;
+            }
         }
 
         DimensionStaleStateHelper.MarkAllStale(document);

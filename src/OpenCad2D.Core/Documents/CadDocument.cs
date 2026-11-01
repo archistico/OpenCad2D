@@ -80,6 +80,38 @@ public sealed class CadDocument
 
     public void AddEntity(CadEntity entity)
     {
+        EnsureEntityCanBeAdded(entity);
+
+        Entities.Add(entity);
+    }
+
+    public void AddEntities(IEnumerable<CadEntity> entities)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        List<CadEntity> additions = entities.ToList();
+
+        // Validate the whole batch before changing anything, as for replace and remove.
+        var batchIds = new HashSet<EntityId>();
+        foreach (CadEntity entity in additions)
+        {
+            EnsureEntityCanBeAdded(entity);
+
+            if (!batchIds.Add(entity.Id))
+            {
+                throw new InvalidOperationException(
+                    $"Entity '{entity.Id}' appears more than once in the same batch.");
+            }
+        }
+
+        foreach (CadEntity entity in additions)
+        {
+            Entities.Add(entity);
+        }
+    }
+
+    private void EnsureEntityCanBeAdded(CadEntity entity)
+    {
         ArgumentNullException.ThrowIfNull(entity);
 
         if (!Layers.Contains(entity.LayerId))
@@ -90,16 +122,10 @@ public sealed class CadDocument
 
         EnsureReferencedBlockDefinitionExists(entity);
 
-        Entities.Add(entity);
-    }
-
-    public void AddEntities(IEnumerable<CadEntity> entities)
-    {
-        ArgumentNullException.ThrowIfNull(entities);
-
-        foreach (CadEntity entity in entities)
+        if (Entities.Contains(entity.Id))
         {
-            AddEntity(entity);
+            throw new InvalidOperationException(
+                $"Entity '{entity.Id}' already exists.");
         }
     }
 
