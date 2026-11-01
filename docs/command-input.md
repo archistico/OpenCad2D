@@ -578,6 +578,8 @@ The distance-angle behavior follows the same rule already stabilized for Line an
 
 The contextual parser now treats `PointOrAngle` as accepting either a point or a numeric angle, and `PointOrNumber` as accepting either a point or a numeric value. This allows the HUD `Angle` field for Rotate and the HUD `Factor` field for Scale to submit scalar values through the same command-driven input path as typed command input.
 
+Since the AutoCAD-style Rotate/Scale workflow, these fields are available right after the base point (`PointOrAngleOrOption` / `PointOrNumberOrOption` with the `Copy` and `Reference` options). In the Scale reference phases the HUD `Distance` field is labelled `Reference length` / `New length` and submits the typed length.
+
 ## Dynamic HUD behavior for modify tools
 
 The dynamic HUD now distinguishes point/scalar tools from selection-only tools.

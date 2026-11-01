@@ -5,11 +5,25 @@ using OpenCad2D.Geometry.Primitives;
 using OpenCad2D.Interaction.Snapping;
 using OpenCad2D.Tools.Common;
 using OpenCad2D.Tools.Editing;
+using OpenCad2D.Tools.Input;
 
 namespace OpenCad2D.Tools.Tests;
 
-public sealed class ScaleToolTests
+[Collection(TransformToolDefaultsCollection.Name)]
+public sealed class ScaleToolTests : IDisposable
 {
+    public ScaleToolTests()
+    {
+        RotateTool.ResetDefaultsForTests();
+        ScaleTool.ResetDefaultsForTests();
+    }
+
+    public void Dispose()
+    {
+        RotateTool.ResetDefaultsForTests();
+        ScaleTool.ResetDefaultsForTests();
+    }
+
     [Fact]
     public void Constructor_ShouldStartWaitingForBasePoint()
     {
@@ -83,157 +97,198 @@ public sealed class ScaleToolTests
     }
 
     [Fact]
-    public void FirstPointerPress_WithSelection_ShouldStoreBasePoint()
+    public void FirstPointerPress_WithSelection_ShouldStoreBasePointAndAskForScaleFactor()
     {
         var context = CreateContextWithSelectedLine();
         var tool = new ScaleTool();
 
         ToolResult result = tool.OnPointerPressed(
             context,
-            new PointerInfo(new Point2D(0, 0)));
+            new PointerInfo(new Point2D(5, 5)));
 
         Assert.Equal(ToolResultKind.Started, result.Kind);
-        Assert.Equal(ScaleToolState.WaitingForReferencePoint, tool.State);
-        Assert.Equal(new Point2D(0, 0), tool.BasePoint);
-        Assert.Equal(new Point2D(0, 0), context.CurrentBasePoint);
+        Assert.Equal(ScaleToolState.WaitingForScaleFactor, tool.State);
+        Assert.Equal(new Point2D(5, 5), tool.BasePoint);
+        Assert.Equal(new Point2D(5, 5), context.CurrentBasePoint);
+
+        CommandPromptState prompt = tool.GetPromptState(context);
+        Assert.Equal(CommandInputKind.PointOrNumberOrOption, prompt.ExpectedInput);
+        Assert.True(prompt.AcceptsEmptyEnter);
+        Assert.Contains(prompt.Options, option => option.Keyword == "Copy");
+        Assert.Contains(prompt.Options, option => option.Keyword == "Reference");
     }
 
     [Fact]
-    public void PointerMove_WhileWaitingForReferencePoint_ShouldUpdateReferencePreviewPoint()
+    public void TypedFactorAfterBasePoint_ShouldScaleImmediately()
     {
         var context = CreateContextWithSelectedLine();
         var tool = new ScaleTool();
 
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        ToolResult result = tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
 
-        ToolResult result = tool.OnPointerMoved(
-            context,
-            new PointerInfo(new Point2D(10, 0)));
-
-        Assert.Equal(ToolResultKind.Updated, result.Kind);
-        Assert.Equal(ScaleToolState.WaitingForReferencePoint, tool.State);
-        Assert.Null(tool.ReferencePoint);
-        Assert.Equal(new Point2D(10, 0), tool.CurrentDestinationPoint);
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Contains("2", result.Message);
+        Assert.Equal(ScaleToolState.WaitingForBasePoint, tool.State);
+        Assert.Null(context.CurrentBasePoint);
+        AssertSingleLineEnd(context, 20);
+        Assert.Equal(2, ScaleTool.LastScaleFactor, precision: 9);
     }
 
-    [Fact]
-    public void ReferencePointEqualToBasePoint_ShouldBeRejected()
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-2)]
+    public void TypedNonPositiveFactor_ShouldBeRejected(double factor)
     {
         var context = CreateContextWithSelectedLine();
         var tool = new ScaleTool();
 
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
-
-        ToolResult result = tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        ToolResult result = tool.HandleCommandInput(CommandInputSubmission.FromNumber("x", factor), context);
 
         Assert.Equal(ToolResultKind.None, result.Kind);
-        Assert.Equal(ScaleToolState.WaitingForReferencePoint, tool.State);
-        Assert.Null(tool.ReferencePoint);
-    }
-
-    [Fact]
-    public void SecondPointerPress_ShouldStoreReferencePoint()
-    {
-        var context = CreateContextWithSelectedLine();
-        var tool = new ScaleTool();
-
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
-
-        ToolResult result = tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(10, 0)));
-
-        Assert.Equal(ToolResultKind.Started, result.Kind);
-        Assert.Equal(ScaleToolState.WaitingForDestinationPoint, tool.State);
-        Assert.Equal(new Point2D(10, 0), tool.ReferencePoint);
-        Assert.Equal(new Point2D(10, 0), tool.CurrentDestinationPoint);
-        Assert.Equal(1.0, tool.CurrentFactor);
-    }
-
-    [Fact]
-    public void PointerMove_AfterReferencePoint_ShouldUpdatePreview()
-    {
-        var context = CreateContextWithSelectedLine();
-        var tool = new ScaleTool();
-
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(10, 0)));
-
-        ToolResult result = tool.OnPointerMoved(
-            context,
-            new PointerInfo(new Point2D(20, 0)));
-
-        Assert.Equal(ToolResultKind.Updated, result.Kind);
-        Assert.True(tool.HasPreview);
-        Assert.Equal(2.0, tool.CurrentFactor, precision: 6);
-
-        IReadOnlyList<CadEntity> preview = tool.GetPreviewEntities(context);
-        var line = Assert.Single(preview.OfType<LineEntity>());
-
-        Assert.Equal(new Point2D(0, 0), line.Start);
-        Assert.Equal(new Point2D(20, 0), line.End);
-    }
-
-    [Fact]
-    public void DestinationPointEqualToBasePoint_ShouldBeRejected()
-    {
-        var context = CreateContextWithSelectedLine();
-        var tool = new ScaleTool();
-
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(10, 0)));
-
-        ToolResult result = tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
-
-        Assert.Equal(ToolResultKind.None, result.Kind);
-        Assert.Equal(ScaleToolState.WaitingForDestinationPoint, tool.State);
+        Assert.Equal(ScaleToolState.WaitingForScaleFactor, tool.State);
         Assert.False(context.CommandHistory.CanUndo);
     }
 
     [Fact]
-    public void ThirdPointerPress_ShouldScaleSelectedEntities()
+    public void ClickInScaleFactorPhase_ShouldUseDistanceFromBasePointAsFactor()
     {
         var context = CreateContextWithSelectedLine();
         var tool = new ScaleTool();
 
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(10, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.OnPointerMoved(context, new PointerInfo(new Point2D(0, 3)));
+        Assert.True(tool.HasPreview);
+        Assert.Equal(3, tool.CurrentFactor, precision: 9);
 
-        ToolResult result = tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(20, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 3)));
 
         Assert.Equal(ToolResultKind.Completed, result.Kind);
-        Assert.Equal(ScaleToolState.WaitingForBasePoint, tool.State);
-        Assert.Null(context.CurrentBasePoint);
-        Assert.True(context.CommandHistory.CanUndo);
+        AssertSingleLineEnd(context, 30);
+    }
 
-        var line = Assert.Single(context.Document.Entities.All.OfType<LineEntity>());
+    [Fact]
+    public void ClickOnBasePointInScaleFactorPhase_ShouldBeRejected()
+    {
+        var context = CreateContextWithSelectedLine();
+        var tool = new ScaleTool();
 
-        Assert.Equal(new Point2D(0, 0), line.Start);
-        Assert.Equal(new Point2D(20, 0), line.End);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(ScaleToolState.WaitingForScaleFactor, tool.State);
+        Assert.False(context.CommandHistory.CanUndo);
+    }
+
+    [Fact]
+    public void EnterInScaleFactorPhase_ShouldReuseLastFactor()
+    {
+        var context = CreateContextWithSelectedLine();
+        var tool = new ScaleTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        Assert.Contains("<2>", tool.GetPromptState(context).Prompt);
+        ToolResult result = tool.HandleCommandInput(CommandInputSubmission.Confirm(string.Empty), context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        AssertSingleLineEnd(context, 40);
+    }
+
+    [Fact]
+    public void ReferenceOptionWithPoints_ShouldScaleReferenceLengthToNewLength()
+    {
+        var context = CreateContextWithSelectedLine();
+        var tool = new ScaleTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Reference"), context);
+        Assert.Equal(ScaleToolState.WaitingForReferenceLength, tool.State);
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        Assert.Equal(ScaleToolState.WaitingForReferenceSecondPoint, tool.State);
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(10, 0)));
+        Assert.Equal(ScaleToolState.WaitingForNewLength, tool.State);
+        Assert.Equal(10, tool.ReferenceLength!.Value, precision: 9);
+
+        tool.OnPointerMoved(context, new PointerInfo(new Point2D(0, 25)));
+        Assert.Equal(2.5, tool.CurrentFactor, precision: 9);
+
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 25)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        AssertSingleLineEnd(context, 25);
+    }
+
+    [Fact]
+    public void ReferenceOptionWithTypedLengths_ShouldScaleByRatio()
+    {
+        var context = CreateContextWithSelectedLine();
+        var tool = new ScaleTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Reference"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("4", 4), context);
+        ToolResult result = tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        AssertSingleLineEnd(context, 5);
+    }
+
+    [Fact]
+    public void NewLengthPointsOption_ShouldUseTwoPointDistance()
+    {
+        var context = CreateContextWithSelectedLine();
+        var tool = new ScaleTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Reference"), context);
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("10", 10), context);
+        tool.HandleCommandInput(CommandInputSubmission.Option("P", "Points"), context);
+        Assert.Equal(ScaleToolState.WaitingForNewLengthFirstPoint, tool.State);
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(100, 100)));
+        ToolResult result = tool.OnPointerPressed(context, new PointerInfo(new Point2D(100, 115)));
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        AssertSingleLineEnd(context, 15);
+    }
+
+    [Fact]
+    public void ZeroReferenceLength_ShouldBeRejected()
+    {
+        var context = CreateContextWithSelectedLine();
+        var tool = new ScaleTool();
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.HandleCommandInput(CommandInputSubmission.Option("R", "Reference"), context);
+        ToolResult result = tool.HandleCommandInput(CommandInputSubmission.FromNumber("0", 0), context);
+
+        Assert.Equal(ToolResultKind.None, result.Kind);
+        Assert.Equal(ScaleToolState.WaitingForReferenceLength, tool.State);
+    }
+
+    [Fact]
+    public void CopyOption_ShouldAddScaledCopyAndKeepOriginal()
+    {
+        var context = CreateContextWithSelectedLine();
+        var tool = new ScaleTool();
+        LineEntity original = Assert.Single(context.Document.Entities.All.OfType<LineEntity>());
+
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.HandleCommandInput(CommandInputSubmission.Option("C", "Copy"), context);
+        ToolResult result = tool.HandleCommandInput(CommandInputSubmission.FromNumber("3", 3), context);
+
+        Assert.Equal(ToolResultKind.Completed, result.Kind);
+        Assert.Same(original, context.Document.Entities.GetRequired(original.Id));
+        LineEntity copy = Assert.Single(
+            context.Document.Entities.All.OfType<LineEntity>(),
+            line => !line.Id.Equals(original.Id));
+        Assert.Equal(30, copy.End.X, precision: 6);
     }
 
     [Fact]
@@ -242,15 +297,8 @@ public sealed class ScaleToolTests
         var context = CreateContextWithSelectedLine();
         var tool = new ScaleTool();
 
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(0, 0)));
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(10, 0)));
-        tool.OnPointerPressed(
-            context,
-            new PointerInfo(new Point2D(20, 0)));
+        tool.OnPointerPressed(context, new PointerInfo(new Point2D(0, 0)));
+        tool.HandleCommandInput(CommandInputSubmission.FromNumber("2", 2), context);
 
         context.CommandHistory.Undo(context.Document);
 
@@ -258,6 +306,16 @@ public sealed class ScaleToolTests
 
         Assert.Equal(new Point2D(0, 0), line.Start);
         Assert.Equal(new Point2D(10, 0), line.End);
+    }
+
+    private static void AssertSingleLineEnd(ToolContext context, double x)
+    {
+        var line = Assert.Single(context.Document.Entities.All.OfType<LineEntity>());
+
+        Assert.Equal(0, line.Start.X, precision: 6);
+        Assert.Equal(0, line.Start.Y, precision: 6);
+        Assert.Equal(x, line.End.X, precision: 6);
+        Assert.Equal(0, line.End.Y, precision: 6);
     }
 
     private static ToolContext CreateContext()

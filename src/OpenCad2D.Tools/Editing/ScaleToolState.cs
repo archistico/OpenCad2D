@@ -7,6 +7,10 @@ public enum ScaleToolState
 {
     WaitingForEntitySelection,
     WaitingForBasePoint,
-    WaitingForReferencePoint,
-    WaitingForDestinationPoint
+    WaitingForScaleFactor,
+    WaitingForReferenceLength,
+    WaitingForReferenceSecondPoint,
+    WaitingForNewLength,
+    WaitingForNewLengthFirstPoint,
+    WaitingForNewLengthSecondPoint
 }

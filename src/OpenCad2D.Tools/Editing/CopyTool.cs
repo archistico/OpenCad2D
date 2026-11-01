@@ -19,6 +19,7 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
     private Point2D? _basePoint;
     private Point2D? _currentPoint;
     private MoveToolState _state;
+    private int _skippedCount;
 
     public CopyTool()
     {
@@ -28,6 +29,8 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
     public string Name => "Copy";
 
     public MoveToolState CopyState => _state;
+
+    public bool IsCommandFinished { get; private set; }
 
     /// <summary>
     /// Compatibility state for existing UI/tests that only need to know whether the tool is waiting
@@ -63,9 +66,10 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
             MoveToolState.WaitingForBasePoint => new CommandPromptState(
                 "COPY",
-                "Specify base point",
+                "Specify base point or press Enter to finish",
                 CommandInputKind.Point,
-                placeholder: "100,50"),
+                acceptsEmptyEnter: true,
+                placeholder: "100,50   |   Enter finishes"),
 
             MoveToolState.WaitingForDestinationPoint => new CommandPromptState(
                 "COPY",
@@ -88,7 +92,9 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
         if (input.Kind == CommandInputSubmissionKind.Confirm)
         {
-            return ConfirmEntitySelection(context);
+            return _state == MoveToolState.WaitingForBasePoint
+                ? FinishCommand(context)
+                : ConfirmEntitySelection(context);
         }
 
         if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
@@ -151,8 +157,7 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
             displacement.X,
             displacement.Y);
 
-        return context.Document.Entities
-            .GetByIds(context.Selection.SelectedIds)
+        return EditableSelection.GetEntities(context)
             .Select(entity => entity.Transform(matrix).WithId(EntityId.New()))
             .ToList();
     }
@@ -231,11 +236,15 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
             return ToolResult.None();
         }
 
+        int skipped = EditableSelection.Prune(context);
         if (!context.Selection.HasSelection)
         {
-            return ToolResult.None("Select entities to copy.");
+            return ToolResult.None(skipped > 0
+                ? "The selected entities were deleted or are on hidden or locked layers. Select entities to copy."
+                : "Select entities to copy.");
         }
 
+        _skippedCount += skipped;
         _state = MoveToolState.WaitingForBasePoint;
 
         return ToolResult.Started("Specify base point.");
@@ -291,13 +300,17 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         ToolContext context,
         Point2D point)
     {
+        int skipped = EditableSelection.Prune(context);
         if (!context.Selection.HasSelection)
         {
             _state = MoveToolState.WaitingForEntitySelection;
 
-            return ToolResult.Started("Select entities to copy.");
+            return ToolResult.Started(skipped > 0
+                ? "The selected entities were deleted or are on hidden or locked layers. Select entities to copy."
+                : "Select entities to copy.");
         }
 
+        _skippedCount += skipped;
         _basePoint = point;
         _currentPoint = point;
         context.CurrentBasePoint = point;
@@ -333,13 +346,6 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
         ToolContext context,
         Point2D point)
     {
-        if (!context.Selection.HasSelection)
-        {
-            Reset(context);
-
-            return ToolResult.None("No entities selected.");
-        }
-
         if (_basePoint is null)
         {
             throw new InvalidOperationException(
@@ -353,8 +359,15 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
         Vector2D displacement = _basePoint.Value.VectorTo(point);
 
-        IReadOnlyList<EntityId> selectedIds =
-            context.Selection.SelectedIds.ToList();
+        int skipped = _skippedCount + EditableSelection.Prune(context);
+        IReadOnlyList<EntityId> selectedIds = EditableSelection.GetIds(context);
+
+        if (selectedIds.Count == 0)
+        {
+            Reset(context);
+
+            return ToolResult.None("No editable entities selected." + EditableSelection.FormatSkippedSuffix(skipped));
+        }
 
         context.Commands.Execute(
             context.Document,
@@ -364,7 +377,7 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
 
         Reset(context);
 
-        return ToolResult.Completed("Entities copied.");
+        return ToolResult.Completed("Entities copied." + EditableSelection.FormatSkippedSuffix(skipped));
     }
 
     private Point2D ApplyGeometricSnap(
@@ -406,18 +419,28 @@ public sealed class CopyTool : ICadTool, ISnapModeProvider, ICommandDrivenTool, 
             return;
         }
 
-        _state = context.Selection.HasSelection
+        _state = EditableSelection.HasAny(context)
             ? MoveToolState.WaitingForBasePoint
             : MoveToolState.WaitingForEntitySelection;
+    }
+
+    private ToolResult FinishCommand(ToolContext context)
+    {
+        Reset(context);
+        IsCommandFinished = true;
+
+        return ToolResult.Completed("Copy command finished.");
     }
 
     private void Reset(ToolContext context)
     {
         _basePoint = null;
         _currentPoint = null;
+        _skippedCount = 0;
+        IsCommandFinished = false;
         context.CurrentBasePoint = null;
 
-        _state = context.Selection.HasSelection
+        _state = EditableSelection.HasAny(context)
             ? MoveToolState.WaitingForBasePoint
             : MoveToolState.WaitingForEntitySelection;
     }

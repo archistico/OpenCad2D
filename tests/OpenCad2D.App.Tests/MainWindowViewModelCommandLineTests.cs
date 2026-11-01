@@ -1828,17 +1828,6 @@ public sealed class MainWindowViewModelCommandLineTests
             confirm: true,
             out _));
 
-        Assert.True(viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.X,
-            "1",
-            confirm: false,
-            out _));
-        Assert.True(viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Y,
-            "0",
-            confirm: true,
-            out _));
-
         bool angleHandled = viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.Angle,
             "90",
@@ -1869,17 +1858,6 @@ public sealed class MainWindowViewModelCommandLineTests
         Assert.True(viewModel.TryCommitCommandHudFieldInput(
             CommandHudFieldKind.X,
             "0",
-            confirm: false,
-            out _));
-        Assert.True(viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.Y,
-            "0",
-            confirm: true,
-            out _));
-
-        Assert.True(viewModel.TryCommitCommandHudFieldInput(
-            CommandHudFieldKind.X,
-            "1",
             confirm: false,
             out _));
         Assert.True(viewModel.TryCommitCommandHudFieldInput(

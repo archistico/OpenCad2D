@@ -476,8 +476,8 @@ public sealed class CadToolPreviewRenderer
     {
         DrawBaseReferenceDestinationPreview(
             context,
-            tool.BasePoint,
-            tool.ReferencePoint,
+            tool.GuideOrigin,
+            null,
             tool.CurrentDestinationPoint);
     }
 
@@ -487,8 +487,8 @@ public sealed class CadToolPreviewRenderer
     {
         DrawBaseReferenceDestinationPreview(
             context,
-            tool.BasePoint,
-            tool.ReferencePoint,
+            tool.GuideOrigin,
+            null,
             tool.CurrentDestinationPoint);
     }
 

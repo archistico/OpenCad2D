@@ -105,6 +105,57 @@ public sealed class CadDocument
 
     public void ReplaceEntity(CadEntity entity)
     {
+        EnsureEntityCanBeReplaced(entity);
+
+        Entities.Replace(entity);
+    }
+
+    public void ReplaceEntities(IEnumerable<CadEntity> entities)
+    {
+        ArgumentNullException.ThrowIfNull(entities);
+
+        List<CadEntity> replacements = entities.ToList();
+
+        // Validate the whole batch before changing anything: a locked or missing entity in
+        // the middle of the batch must not leave the document partially modified outside
+        // command history.
+        foreach (CadEntity entity in replacements)
+        {
+            EnsureEntityCanBeReplaced(entity);
+        }
+
+        foreach (CadEntity entity in replacements)
+        {
+            Entities.Replace(entity);
+        }
+    }
+
+    public void RemoveEntity(EntityId id)
+    {
+        EnsureEntityCanBeRemoved(id);
+
+        Entities.RemoveRequired(id);
+    }
+
+    public void RemoveEntities(IEnumerable<EntityId> ids)
+    {
+        ArgumentNullException.ThrowIfNull(ids);
+
+        List<EntityId> removals = ids.Distinct().ToList();
+
+        foreach (EntityId id in removals)
+        {
+            EnsureEntityCanBeRemoved(id);
+        }
+
+        foreach (EntityId id in removals)
+        {
+            Entities.RemoveRequired(id);
+        }
+    }
+
+    private void EnsureEntityCanBeReplaced(CadEntity entity)
+    {
         ArgumentNullException.ThrowIfNull(entity);
 
         if (!Layers.Contains(entity.LayerId))
@@ -120,39 +171,15 @@ public sealed class CadDocument
         EnsureEntityIsEditable(
             existingEntity,
             "replace");
-
-        Entities.Replace(entity);
     }
 
-    public void ReplaceEntities(IEnumerable<CadEntity> entities)
-    {
-        ArgumentNullException.ThrowIfNull(entities);
-
-        foreach (CadEntity entity in entities.ToList())
-        {
-            ReplaceEntity(entity);
-        }
-    }
-
-    public void RemoveEntity(EntityId id)
+    private void EnsureEntityCanBeRemoved(EntityId id)
     {
         CadEntity existingEntity = Entities.GetRequired(id);
 
         EnsureEntityIsEditable(
             existingEntity,
             "remove");
-
-        Entities.RemoveRequired(id);
-    }
-
-    public void RemoveEntities(IEnumerable<EntityId> ids)
-    {
-        ArgumentNullException.ThrowIfNull(ids);
-
-        foreach (EntityId id in ids.ToList())
-        {
-            RemoveEntity(id);
-        }
     }
 
     public bool IsEntityVisible(CadEntity entity)

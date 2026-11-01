@@ -236,7 +236,10 @@ Rules:
 - the mirror axis is an infinite line defined by two points;
 - the default final Enter/right-click keeps the source entities and creates mirrored copies;
 - `Yes` deletes/replaces the source entities by mirroring them in place;
-- preview is shown while choosing the second axis point.
+- preview is shown while choosing the second axis point;
+- only editable entities are mirrored: deleted entities and entities on hidden or locked layers are removed from the selection and reported as skipped;
+- axis points use geometric snaps without entity snap; ortho/polar apply to the clicked second point only, typed coordinates stay exact;
+- Enter/right-click at the first-point prompt ends the command.
 
 
 ## Draw order

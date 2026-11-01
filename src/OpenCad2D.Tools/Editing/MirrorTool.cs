@@ -22,6 +22,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
     private Point2D? _firstAxisPoint;
     private Point2D? _secondAxisPoint;
     private MirrorToolState _state;
+    private int _skippedCount;
 
     public MirrorTool()
     {
@@ -31,6 +32,8 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
     public string Name => "Mirror";
 
     public MirrorToolState State => _state;
+
+    public bool IsCommandFinished { get; private set; }
 
     public Point2D? FirstAxisPoint => _firstAxisPoint;
 
@@ -59,9 +62,10 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
 
             MirrorToolState.WaitingForFirstAxisPoint => new CommandPromptState(
                 "MIRROR",
-                "Specify first point of mirror line",
+                "Specify first point of mirror line or press Enter to finish",
                 CommandInputKind.Point,
-                placeholder: "100,50"),
+                acceptsEmptyEnter: true,
+                placeholder: "100,50   |   Enter finishes"),
 
             MirrorToolState.WaitingForSecondAxisPoint => new CommandPromptState(
                 "MIRROR",
@@ -115,6 +119,15 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             return ToolResult.None(input.ErrorMessage ?? "Type Yes or No.");
         }
 
+        if (_state == MirrorToolState.WaitingForFirstAxisPoint &&
+            input.Kind == CommandInputSubmissionKind.Confirm)
+        {
+            Reset(context);
+            IsCommandFinished = true;
+
+            return ToolResult.Completed("Mirror command finished.");
+        }
+
         if (input.Kind != CommandInputSubmissionKind.Point || input.Point is null)
         {
             return ToolResult.None(input.ErrorMessage ?? "MIRROR expects a point input.");
@@ -134,9 +147,10 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
 
         EnsureInitialState(context);
 
+        // The tool snaps axis points without entity snap, so the canvas must not offer it either.
         return _state == MirrorToolState.WaitingForEntitySelection
             ? SnapKind.EntityOnly
-            : context.EnabledSnaps;
+            : context.EnabledSnaps & ~SnapKind.Entity;
     }
 
     public IReadOnlyList<CadEntity> GetPreviewEntities(ToolContext context)
@@ -152,8 +166,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             _firstAxisPoint.Value,
             _secondAxisPoint.Value));
 
-        return context.Document.Entities
-            .GetByIds(context.Selection.SelectedIds)
+        return EditableSelection.GetEntities(context)
             .Select(entity => entity.Transform(matrix).WithId(EntityId.New()))
             .ToList();
     }
@@ -211,7 +224,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
                 ApplyGeometricSnap(context, pointer.ModelPoint, null)),
             MirrorToolState.WaitingForSecondAxisPoint => AcceptSecondAxisPoint(
                 context,
-                ApplyGeometricSnap(context, pointer.ModelPoint, _firstAxisPoint)),
+                ApplyPointerConstraints(context, pointer.ModelPoint)),
             MirrorToolState.WaitingForDeleteSourceOption => ToolResult.None("Type Yes or No, or press Enter/right-click to keep source objects."),
             _ => ToolResult.None()
         };
@@ -231,8 +244,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             return ToolResult.None();
         }
 
-        Point2D point = ApplyGeometricSnap(context, pointer.ModelPoint, _firstAxisPoint);
-        point = ToolInputConstraintService.ApplyAngleConstraint(context, _firstAxisPoint.Value, point);
+        Point2D point = ApplyPointerConstraints(context, pointer.ModelPoint);
 
         if (context.GeometryTolerance.ArePointsEqual(_firstAxisPoint.Value, point))
         {
@@ -273,11 +285,15 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             return ToolResult.None();
         }
 
+        int skipped = EditableSelection.Prune(context);
         if (!context.Selection.HasSelection)
         {
-            return ToolResult.None("Select entities to mirror.");
+            return ToolResult.None(skipped > 0
+                ? "The selected entities were deleted or are on hidden or locked layers. Select entities to mirror."
+                : "Select entities to mirror.");
         }
 
+        _skippedCount += skipped;
         _state = MirrorToolState.WaitingForFirstAxisPoint;
 
         return ToolResult.Started("Specify first point of mirror line.");
@@ -321,13 +337,17 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
         ToolContext context,
         Point2D point)
     {
+        int skipped = EditableSelection.Prune(context);
         if (!context.Selection.HasSelection)
         {
             _state = MirrorToolState.WaitingForEntitySelection;
 
-            return ToolResult.Started("Select entities to mirror.");
+            return ToolResult.Started(skipped > 0
+                ? "The selected entities were deleted or are on hidden or locked layers. Select entities to mirror."
+                : "Select entities to mirror.");
         }
 
+        _skippedCount += skipped;
         _firstAxisPoint = point;
         _secondAxisPoint = null;
         context.CurrentBasePoint = point;
@@ -345,20 +365,14 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             throw new InvalidOperationException("Cannot accept second mirror point before first point.");
         }
 
+        // Pointer input is snapped and constrained before reaching this method; typed
+        // coordinates are explicit and must stay exact, so no ortho/polar adjustment here.
         if (context.GeometryTolerance.ArePointsEqual(_firstAxisPoint.Value, point))
         {
             return ToolResult.None("Second mirror point must be different from first point.");
         }
 
-        _secondAxisPoint = ToolInputConstraintService.ApplyAngleConstraint(
-            context,
-            _firstAxisPoint.Value,
-            point);
-
-        if (context.GeometryTolerance.ArePointsEqual(_firstAxisPoint.Value, _secondAxisPoint.Value))
-        {
-            return ToolResult.None("Second mirror point must be different from first point.");
-        }
+        _secondAxisPoint = point;
 
         _state = MirrorToolState.WaitingForDeleteSourceOption;
         context.CurrentBasePoint = null;
@@ -392,39 +406,34 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             return ToolResult.None("Specify mirror line before completing the command.");
         }
 
-        if (!context.Selection.HasSelection)
+        int skipped = _skippedCount + EditableSelection.Prune(context);
+        IReadOnlyList<CadEntity> entities = EditableSelection.GetEntities(context);
+
+        if (entities.Count == 0)
         {
             Reset(context);
-            return ToolResult.None("No entities selected.");
+            return ToolResult.None("No editable entities selected." + EditableSelection.FormatSkippedSuffix(skipped));
         }
 
         Line2D mirrorLine = Line2D.FromPoints(_firstAxisPoint.Value, _secondAxisPoint.Value);
-        IReadOnlyList<EntityId> selectedIds = context.Selection.SelectedIds.ToList();
 
         if (deleteSource)
         {
             context.Commands.Execute(
                 context.Document,
                 new MirrorEntitiesCommand(
-                    selectedIds,
+                    entities.Select(entity => entity.Id).ToList(),
                     mirrorLine));
 
             Reset(context);
 
-            return ToolResult.Completed("Entities mirrored.");
+            return ToolResult.Completed("Entities mirrored." + EditableSelection.FormatSkippedSuffix(skipped));
         }
 
         Matrix2D matrix = Matrix2D.Mirror(mirrorLine);
-        IReadOnlyList<CadEntity> mirroredEntities = context.Document.Entities
-            .GetByIds(selectedIds)
+        IReadOnlyList<CadEntity> mirroredEntities = entities
             .Select(entity => entity.Transform(matrix).WithId(EntityId.New()))
             .ToList();
-
-        if (mirroredEntities.Count == 0)
-        {
-            Reset(context);
-            return ToolResult.None("No selectable entities were mirrored.");
-        }
 
         context.Commands.Execute(
             context.Document,
@@ -432,7 +441,18 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
 
         Reset(context);
 
-        return ToolResult.Completed("Mirrored copy created.");
+        return ToolResult.Completed("Mirrored copy created." + EditableSelection.FormatSkippedSuffix(skipped));
+    }
+
+    private Point2D ApplyPointerConstraints(
+        ToolContext context,
+        Point2D cursorPoint)
+    {
+        Point2D point = ApplyGeometricSnap(context, cursorPoint, _firstAxisPoint);
+
+        return _firstAxisPoint is null
+            ? point
+            : ToolInputConstraintService.ApplyAngleConstraint(context, _firstAxisPoint.Value, point);
     }
 
     private static Point2D ApplyGeometricSnap(
@@ -475,7 +495,7 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
             return;
         }
 
-        _state = context.Selection.HasSelection
+        _state = EditableSelection.HasAny(context)
             ? MirrorToolState.WaitingForFirstAxisPoint
             : MirrorToolState.WaitingForEntitySelection;
     }
@@ -484,9 +504,11 @@ public sealed class MirrorTool : ICadTool, ISnapModeProvider, ICommandDrivenTool
     {
         _firstAxisPoint = null;
         _secondAxisPoint = null;
+        _skippedCount = 0;
+        IsCommandFinished = false;
         context.CurrentBasePoint = null;
 
-        _state = context.Selection.HasSelection
+        _state = EditableSelection.HasAny(context)
             ? MirrorToolState.WaitingForFirstAxisPoint
             : MirrorToolState.WaitingForEntitySelection;
     }

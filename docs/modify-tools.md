@@ -201,6 +201,37 @@ Features:
 
 ---
 
+## Move, Copy, Rotate and Scale
+
+Workflow:
+
+```text
+MOVE / COPY:  [select objects] -> base point -> destination point
+ROTATE:       [select objects] -> base point -> rotation angle or [Copy/Reference] <last>
+                Reference: reference angle <last> (typed, or two points) -> new angle or [Points] <reference>
+SCALE:        [select objects] -> base point -> scale factor or [Copy/Reference] <last>
+                Reference: reference length <last> (typed, or two points) -> new length or [Points] <reference>
+```
+
+Rotate and Scale follow the AutoCAD workflow:
+
+- right after the base point a typed value is the rotation angle (counter-clockwise degrees, negative values allowed) or the scale factor; Enter/right-click reuses the last value shown in `<...>`;
+- a clicked point defines the angle of the direction from the base point, measured from the X axis of the current UCS; for Scale its distance from the base point, in drawing units, is used as the factor;
+- `C` / `Copy` transforms a copy and keeps the source objects (it applies to the current operation only);
+- `R` / `Reference` asks for a reference angle or length (typed, or two clicked points) and then for the new angle or length (typed, clicked from the base point, or `P` / `Points` for two points); the result is new minus reference for Rotate and new divided by reference for Scale;
+- ortho and polar tracking apply to clicked direction points only; typed coordinates stay exact;
+- the HUD shows `Angle` (Rotate) or `Factor` (Scale) as the first editable field in the value phases, `Reference length`/`New length` in the Scale reference phases, and `X/Y` for clicked points.
+
+Rules:
+
+- the tools only change editable entities: selected entities that were deleted (for example by undo) or that are on hidden or locked layers are removed from the selection and skipped, and the completion message reports how many were skipped; if nothing editable remains the tool returns to object selection;
+- the operation is a single undoable command; the document never ends up partially transformed when a selected entity cannot be changed (`CadDocument.ReplaceEntities` and `RemoveEntities` validate the whole batch before changing anything);
+- operations that would not change the geometry are rejected with a message and create no undo step: zero displacement, a rotation of 0° or a full turn (including a destination point on the reference ray or on the base point) and a scale factor of 1;
+- typed points stay exact for every tool: ortho and polar adjustments apply only to pointer input;
+- after each completed operation the tool stays active for another base point; Enter or right-click at the base-point prompt ends the command, so a new command can be typed.
+
+---
+
 ## Offset
 
 Workflow:

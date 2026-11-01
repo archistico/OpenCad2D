@@ -1,12 +1,16 @@
 namespace OpenCad2D.Tools.Editing;
 
 /// <summary>
-/// Represents the current input step of the rotate tool.
+/// Represents the interaction state of <see cref="RotateTool" />.
 /// </summary>
 public enum RotateToolState
 {
     WaitingForEntitySelection,
     WaitingForBasePoint,
-    WaitingForReferencePoint,
-    WaitingForDestinationPoint
+    WaitingForRotationAngle,
+    WaitingForReferenceAngle,
+    WaitingForReferenceSecondPoint,
+    WaitingForNewAngle,
+    WaitingForNewAngleFirstPoint,
+    WaitingForNewAngleSecondPoint
 }

@@ -1098,13 +1098,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         return rotateTool.State switch
         {
-            RotateToolState.WaitingForReferencePoint => BuildDistanceAngleCoordinateOverrideFields(measurement),
-
-            RotateToolState.WaitingForDestinationPoint when rotateTool.HasPreview => BuildAngleCoordinateOverrideFields(
+            RotateToolState.WaitingForRotationAngle when rotateTool.HasPreview => BuildAngleCoordinateOverrideFields(
                 _commandHudInputState.AngleDegrees ?? rotateTool.CurrentAngle.Degrees),
 
-            RotateToolState.WaitingForDestinationPoint => BuildAngleCoordinateOverrideFields(
+            RotateToolState.WaitingForRotationAngle => BuildAngleCoordinateOverrideFields(
                 _commandHudInputState.AngleDegrees ?? measurement.AngleDegrees),
+
+            RotateToolState.WaitingForReferenceAngle => BuildAngleCoordinateOverrideFields(
+                _commandHudInputState.AngleDegrees ?? RotateTool.LastReferenceDegrees),
+
+            RotateToolState.WaitingForNewAngle => BuildAngleCoordinateOverrideFields(
+                _commandHudInputState.AngleDegrees ??
+                (rotateTool.HasPreview
+                    ? (rotateTool.ReferenceAngleDegrees ?? 0) + rotateTool.CurrentAngle.Degrees
+                    : measurement.AngleDegrees)),
+
+            RotateToolState.WaitingForReferenceSecondPoint or
+            RotateToolState.WaitingForNewAngleSecondPoint => BuildDistanceAngleCoordinateOverrideFields(measurement),
+
+            RotateToolState.WaitingForNewAngleFirstPoint => BuildCoordinateOverrideFields(),
 
             _ => Array.Empty<CommandHudFieldViewModel>()
         };
@@ -1116,13 +1128,26 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
     {
         return scaleTool.State switch
         {
-            ScaleToolState.WaitingForReferencePoint => BuildDistanceAngleCoordinateOverrideFields(measurement),
-
-            ScaleToolState.WaitingForDestinationPoint when scaleTool.HasPreview => BuildFactorCoordinateOverrideFields(
+            ScaleToolState.WaitingForScaleFactor when scaleTool.HasPreview => BuildFactorCoordinateOverrideFields(
                 _commandHudInputState.Factor ?? scaleTool.CurrentFactor),
 
-            ScaleToolState.WaitingForDestinationPoint => BuildFactorCoordinateOverrideFields(
+            ScaleToolState.WaitingForScaleFactor => BuildFactorCoordinateOverrideFields(
                 _commandHudInputState.Factor),
+
+            ScaleToolState.WaitingForReferenceLength => BuildSingleDistanceCoordinateOverrideField(
+                "distance",
+                "Reference length",
+                _commandHudInputState.Distance ?? ScaleTool.LastReferenceLength),
+
+            ScaleToolState.WaitingForNewLength => BuildSingleDistanceCoordinateOverrideField(
+                "distance",
+                "New length",
+                _commandHudInputState.Distance ?? measurement.Distance),
+
+            ScaleToolState.WaitingForReferenceSecondPoint or
+            ScaleToolState.WaitingForNewLengthSecondPoint => BuildDistanceAngleCoordinateOverrideFields(measurement),
+
+            ScaleToolState.WaitingForNewLengthFirstPoint => BuildCoordinateOverrideFields(),
 
             _ => Array.Empty<CommandHudFieldViewModel>()
         };
@@ -3815,7 +3840,12 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (Workspace.ToolController.ActiveTool is RotateTool { State: RotateToolState.WaitingForDestinationPoint } &&
+        if (Workspace.ToolController.ActiveTool is RotateTool
+            {
+                State: RotateToolState.WaitingForRotationAngle or
+                    RotateToolState.WaitingForReferenceAngle or
+                    RotateToolState.WaitingForNewAngle
+            } &&
             fieldKind == CommandHudFieldKind.Angle)
         {
             if (!confirm)
@@ -3830,8 +3860,13 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             return true;
         }
 
-        if (Workspace.ToolController.ActiveTool is ScaleTool { State: ScaleToolState.WaitingForDestinationPoint } &&
-            fieldKind == CommandHudFieldKind.Factor)
+        if ((Workspace.ToolController.ActiveTool is ScaleTool { State: ScaleToolState.WaitingForScaleFactor } &&
+             fieldKind == CommandHudFieldKind.Factor) ||
+            (Workspace.ToolController.ActiveTool is ScaleTool
+             {
+                 State: ScaleToolState.WaitingForReferenceLength or ScaleToolState.WaitingForNewLength
+             } &&
+             fieldKind == CommandHudFieldKind.Distance))
         {
             if (!confirm)
             {
@@ -3966,8 +4001,8 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged
             activeTool is RectangleBySidesTool { State: RectangleBySidesToolState.WaitingForFirstSideEndPoint } ||
             activeTool is EllipseTool { State: EllipseToolState.WaitingForMajorAxis } ||
             activeTool is OffsetTool { State: OffsetToolState.WaitingForDistanceSecondPoint } ||
-            activeTool is RotateTool { State: RotateToolState.WaitingForReferencePoint } ||
-            activeTool is ScaleTool { State: ScaleToolState.WaitingForReferencePoint })
+            activeTool is RotateTool { State: RotateToolState.WaitingForReferenceSecondPoint or RotateToolState.WaitingForNewAngleSecondPoint } ||
+            activeTool is ScaleTool { State: ScaleToolState.WaitingForReferenceSecondPoint or ScaleToolState.WaitingForNewLengthSecondPoint })
         {
             return true;
         }
